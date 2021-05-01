@@ -327,55 +327,28 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 
 
 /**
- * Dropin-replacement for the built-in function PlaySound().
+ * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found a message is logged but
- * execution continues.
+ * Plays a sound asynchronously, instead of synchronously and UI blocking as the terminal does. Also plays a sound if the
+ * terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
- * @param  int    flags
  *
  * @return bool - success status
  */
-bool PlaySoundEx(string soundfile, int flags = NULL) {
+bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
 
    if (!IsFileA(fullName)) {
       fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
       if (!IsFileA(fullName)) {
-         if (!(flags & MB_DONT_LOG)) {
-            if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
-         }
+         if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
    return(!catch("PlaySoundEx(2)"));
-}
-
-
-/**
- * Asynchronously plays a sound (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it (e.g. in Strategy Tester). If the specified sound file is not found an error is triggered.
- *
- * @param  string soundfile
- *
- * @return bool - success status
- */
-bool PlaySoundOrFail(string soundfile) {
-   string filename = StrReplace(soundfile, "/", "\\");
-   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
-
-   if (!IsFileA(fullName)) {
-      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
-      if (!IsFileA(fullName))
-         return(!catch("PlaySoundOrFail(1)  file not found: \""+ soundfile +"\"", ERR_FILE_NOT_FOUND));
-   }
-
-   PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   return(!catch("PlaySoundOrFail(2)"));
 }
 
 
@@ -413,7 +386,7 @@ void ForceAlert(string message) {
       string sCaption = "Strategy Tester "+ Symbol() +","+ sPeriod;
       string sMessage = TimeToStr(TimeCurrent(), TIME_FULL) + NL + message;
 
-      PlaySoundEx("alert.wav", MB_DONT_LOG);
+      PlaySoundEx("alert.wav");
       MessageBoxEx(sCaption, sMessage, MB_ICONERROR|MB_OK|MB_DONT_LOG);
    }
 }
@@ -928,7 +901,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
          else {
-            logDebug("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+            if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
          }
       }
       baseCommission = value;
@@ -946,6 +919,261 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          return(baseCommission/pipValue * Pip);
    }
    return(_EMPTY(catch("GetCommission(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the current standard symbol. Alias of GetStandardSymbol(Symbol()).
+ *
+ * e.g.: Symbol() => "EURUSDm"; StdSymbol() => "EURUSD"
+ *
+ * @return string - standard symbol or the current symbol if standard symbol is unknown
+ */
+string StdSymbol() {
+   static string lastSymbol="", lastResult="";
+
+    if (lastResult != "") {
+      if (Symbol() == lastSymbol) {
+         return(lastResult);
+      }
+   }
+   lastSymbol = Symbol();
+   lastResult = GetStandardSymbol(Symbol());
+
+   return(lastResult);
+}
+
+
+/**
+ * Find the standard symbol of a broker-specific symbol.
+ *
+ * e.g.: GetStandardSymbol("EURUSDm") => "EURUSD"
+ *
+ * @param  string symbol              - broker-specific symbol
+ * @param  string altValue [optional] - value to return if no standard symbol was found (default: the same value)
+ *
+ * @return string - standard symbol or the specified alternative value; an empty string in case of errors
+ */
+string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {
+   if (!StringLen(symbol)) return(_EMPTY_STR(catch("GetStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+
+   string _symbol = StrToUpper(symbol);
+   if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
+   else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
+
+   string result = "";
+
+   switch (StringGetChar(_symbol, 0)) {
+      case '_': if      (_symbol=="_BRENT" )   result = "BRENT";
+                else if (_symbol=="_DJI"   )   result = "DJIA";
+                else if (_symbol=="_DJT"   )   result = "DJTA";
+                else if (_symbol=="_N225"  )   result = "NIK225";
+                else if (_symbol=="_NQ100" )   result = "NAS100";
+                else if (_symbol=="_NQCOMP")   result = "NASCOMP";
+                else if (_symbol=="_SP500" )   result = "SP500";
+                else if (_symbol=="_WTI"   )   result = "WTI";
+                break;
+
+      case '#': if      (_symbol=="#DAX.XEI" ) result = "DAX";
+                else if (_symbol=="#DJI.XDJ" ) result = "DJIA";
+                else if (_symbol=="#DJT.XDJ" ) result = "DJTA";
+                else if (_symbol=="#SPX.X.XP") result = "SP500";
+                break;
+
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': break;
+
+      case 'A': if      (StrStartsWith(_symbol, "AUDCAD"))     result = "AUDCAD";
+                else if (StrStartsWith(_symbol, "AUDCHF"))     result = "AUDCHF";
+                else if (StrStartsWith(_symbol, "AUDDKK"))     result = "AUDDKK";
+                else if (StrStartsWith(_symbol, "AUDJPY"))     result = "AUDJPY";
+                else if (StrStartsWith(_symbol, "AUDLFX"))     result = "AUDLFX";
+                else if (StrStartsWith(_symbol, "AUDNZD"))     result = "AUDNZD";
+                else if (StrStartsWith(_symbol, "AUDPLN"))     result = "AUDPLN";
+                else if (StrStartsWith(_symbol, "AUDSGD"))     result = "AUDSGD";
+                else if (StrStartsWith(_symbol, "AUDUSD"))     result = "AUDUSD";
+                else if (              _symbol=="AUS200" )     result = "ASX200";
+                break;
+
+      case 'B': if      (StrStartsWith(_symbol, "BRENT_"))     result = "BRENT";
+                break;
+
+      case 'C': if      (StrStartsWith(_symbol, "CADCHF")  )   result = "CADCHF";
+                else if (StrStartsWith(_symbol, "CADJPY")  )   result = "CADJPY";
+                else if (StrStartsWith(_symbol, "CADLFX")  )   result = "CADLFX";
+                else if (StrStartsWith(_symbol, "CADSGD")  )   result = "CADSGD";
+                else if (StrStartsWith(_symbol, "CHFJPY")  )   result = "CHFJPY";
+                else if (StrStartsWith(_symbol, "CHFLFX")  )   result = "CHFLFX";
+                else if (StrStartsWith(_symbol, "CHFPLN")  )   result = "CHFPLN";
+                else if (StrStartsWith(_symbol, "CHFSGD")  )   result = "CHFSGD";
+                else if (StrStartsWith(_symbol, "CHFZAR")  )   result = "CHFZAR";
+                else if (              _symbol=="CLX5"     )   result = "WTI";
+                else if (              _symbol=="CRUDE_OIL")   result = "WTI";
+                break;
+
+      case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                break;
+
+      case 'E': if      (              _symbol=="ECX"   )      result = "EURX";
+                else if (StrStartsWith(_symbol, "EURAUD"))     result = "EURAUD";
+                else if (StrStartsWith(_symbol, "EURCAD"))     result = "EURCAD";
+                else if (StrStartsWith(_symbol, "EURCCK"))     result = "EURCZK";
+                else if (StrStartsWith(_symbol, "EURCZK"))     result = "EURCZK";
+                else if (StrStartsWith(_symbol, "EURCHF"))     result = "EURCHF";
+                else if (StrStartsWith(_symbol, "EURDKK"))     result = "EURDKK";
+                else if (StrStartsWith(_symbol, "EURGBP"))     result = "EURGBP";
+                else if (StrStartsWith(_symbol, "EURHKD"))     result = "EURHKD";
+                else if (StrStartsWith(_symbol, "EURHUF"))     result = "EURHUF";
+                else if (StrStartsWith(_symbol, "EURJPY"))     result = "EURJPY";
+                else if (StrStartsWith(_symbol, "EURLFX"))     result = "EURLFX";
+                else if (StrStartsWith(_symbol, "EURLVL"))     result = "EURLVL";
+                else if (StrStartsWith(_symbol, "EURMXN"))     result = "EURMXN";
+                else if (StrStartsWith(_symbol, "EURNOK"))     result = "EURNOK";
+                else if (StrStartsWith(_symbol, "EURNZD"))     result = "EURNZD";
+                else if (StrStartsWith(_symbol, "EURPLN"))     result = "EURPLN";
+                else if (StrStartsWith(_symbol, "EURRUB"))     result = "EURRUB";
+                else if (StrStartsWith(_symbol, "EURRUR"))     result = "EURRUB";
+                else if (StrStartsWith(_symbol, "EURSEK"))     result = "EURSEK";
+                else if (StrStartsWith(_symbol, "EURSGD"))     result = "EURSGD";
+                else if (StrStartsWith(_symbol, "EURTRY"))     result = "EURTRY";
+                else if (StrStartsWith(_symbol, "EURUSD"))     result = "EURUSD";
+                else if (StrStartsWith(_symbol, "EURZAR"))     result = "EURZAR";
+                else if (              _symbol=="EURX"  )      result = "EURX";
+                break;
+
+      case 'F': break;
+
+      case 'G': if      (StrStartsWith(_symbol, "GBPAUD") )    result = "GBPAUD";
+                else if (StrStartsWith(_symbol, "GBPCAD") )    result = "GBPCAD";
+                else if (StrStartsWith(_symbol, "GBPCHF") )    result = "GBPCHF";
+                else if (StrStartsWith(_symbol, "GBPDKK") )    result = "GBPDKK";
+                else if (StrStartsWith(_symbol, "GBPJPY") )    result = "GBPJPY";
+                else if (StrStartsWith(_symbol, "GBPLFX") )    result = "GBPLFX";
+                else if (StrStartsWith(_symbol, "GBPNOK") )    result = "GBPNOK";
+                else if (StrStartsWith(_symbol, "GBPNZD") )    result = "GBPNZD";
+                else if (StrStartsWith(_symbol, "GBPPLN") )    result = "GBPPLN";
+                else if (StrStartsWith(_symbol, "GBPRUB") )    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPRUR") )    result = "GBPRUB";
+                else if (StrStartsWith(_symbol, "GBPSEK") )    result = "GBPSEK";
+                else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
+                else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
+                else if (              _symbol=="GOLD"    )    result = "XAUUSD";
+                else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
+                break;
+
+      case 'H': if      (StrStartsWith(_symbol, "HKDJPY"))     result = "HKDJPY";
+                break;
+
+      case 'I': break;
+
+      case 'J': if      (StrStartsWith(_symbol, "JPYLFX"))     result = "JPYLFX";
+                break;
+
+      case 'K': break;
+
+      case 'L': if      (StrStartsWith(_symbol, "LFXJPY"))     result = "LFXJPY";
+                else if (              _symbol=="LCOX5"  )     result = "BRENT";
+                break;
+
+      case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
+                break;
+
+      case 'N': if      (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
+                else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
+                else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
+                else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";
+                else if (StrStartsWith(_symbol, "NZDJPY"))     result = "NZDJPY";
+                else if (StrStartsWith(_symbol, "NZDLFX"))     result = "NZDLFX";
+                else if (StrStartsWith(_symbol, "NZDSGD"))     result = "NZDSGD";
+                else if (StrStartsWith(_symbol, "NZDUSD"))     result = "NZDUSD";
+                break;
+
+      case 'O': break;
+
+      case 'P': if      (StrStartsWith(_symbol, "PLNJPY"))     result = "PLNJPY";
+                break;
+
+      case 'Q': break;
+
+      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUS2000";
+                break;
+
+      case 'S': if      (              _symbol=="S&P_500"   )  result = "SP500";
+                else if (StrStartsWith(_symbol, "SEKJPY")   )  result = "SEKJPY";
+                else if (StrStartsWith(_symbol, "SGDJPY")   )  result = "SGDJPY";
+                else if (              _symbol=="SILVER"    )  result = "XAGUSD";
+                else if (              _symbol=="SILVEREURO")  result = "XAGEUR";
+                break;
+
+      case 'T': if      (StrStartsWith(_symbol, "TRYJPY"))     result = "TRYJPY";
+                break;
+
+      case 'U':
+                if      (              _symbol=="US30"   )     result = "DJIA";
+                else if (              _symbol=="US500"  )     result = "SP500";
+                else if (              _symbol=="US2000" )     result = "RUS2000";
+                else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
+                else if (StrStartsWith(_symbol, "USDCHF"))     result = "USDCHF";
+                else if (StrStartsWith(_symbol, "USDCCK"))     result = "USDCZK";
+                else if (StrStartsWith(_symbol, "USDCNY"))     result = "USDCNY";
+                else if (StrStartsWith(_symbol, "USDCZK"))     result = "USDCZK";
+                else if (StrStartsWith(_symbol, "USDDKK"))     result = "USDDKK";
+                else if (StrStartsWith(_symbol, "USDHKD"))     result = "USDHKD";
+                else if (StrStartsWith(_symbol, "USDHRK"))     result = "USDHRK";
+                else if (StrStartsWith(_symbol, "USDHUF"))     result = "USDHUF";
+                else if (StrStartsWith(_symbol, "USDINR"))     result = "USDINR";
+                else if (StrStartsWith(_symbol, "USDJPY"))     result = "USDJPY";
+                else if (StrStartsWith(_symbol, "USDLFX"))     result = "USDLFX";
+                else if (StrStartsWith(_symbol, "USDLTL"))     result = "USDLTL";
+                else if (StrStartsWith(_symbol, "USDLVL"))     result = "USDLVL";
+                else if (StrStartsWith(_symbol, "USDMXN"))     result = "USDMXN";
+                else if (StrStartsWith(_symbol, "USDNOK"))     result = "USDNOK";
+                else if (StrStartsWith(_symbol, "USDPLN"))     result = "USDPLN";
+                else if (StrStartsWith(_symbol, "USDRUB"))     result = "USDRUB";
+                else if (StrStartsWith(_symbol, "USDRUR"))     result = "USDRUB";
+                else if (StrStartsWith(_symbol, "USDSEK"))     result = "USDSEK";
+                else if (StrStartsWith(_symbol, "USDSAR"))     result = "USDSAR";
+                else if (StrStartsWith(_symbol, "USDSGD"))     result = "USDSGD";
+                else if (StrStartsWith(_symbol, "USDTHB"))     result = "USDTHB";
+                else if (StrStartsWith(_symbol, "USDTRY"))     result = "USDTRY";
+                else if (StrStartsWith(_symbol, "USDTWD"))     result = "USDTWD";
+                else if (              _symbol=="USDX"   )     result = "USDX";
+                else if (StrStartsWith(_symbol, "USDZAR"))     result = "USDZAR";
+                else if (              _symbol=="USTEC"  )     result = "NAS100";
+                break;
+
+      case 'V': break;
+
+      case 'W': if      (StrStartsWith(_symbol, "WTI_"))       result = "WTI";
+                break;
+
+      case 'X': if      (StrStartsWith(_symbol, "XAGEUR"))     result = "XAGEUR";
+                else if (StrStartsWith(_symbol, "XAGJPY"))     result = "XAGJPY";
+                else if (StrStartsWith(_symbol, "XAGUSD"))     result = "XAGUSD";
+                else if (StrStartsWith(_symbol, "XAUEUR"))     result = "XAUEUR";
+                else if (StrStartsWith(_symbol, "XAUJPY"))     result = "XAUJPY";
+                else if (StrStartsWith(_symbol, "XAUUSD"))     result = "XAUUSD";
+                break;
+
+      case 'Y': break;
+
+      case 'Z': if      (StrStartsWith(_symbol, "ZARJPY"))     result = "ZARJPY";
+                break;
+   }
+
+   if (!StringLen(result)) {
+      if (altValue == "¨‡ ‡¨") result = symbol;       // magic value with a protected space in the middle
+      else                     result = altValue;
+   }
+   return(result);
 }
 
 
@@ -3918,43 +4146,49 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 
 /**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
- * characters only.
+ * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
+ * different company identifier via section [AccountCompanies] of the framework configuration.
  *
- * Among others the identifier is used for reading/writing company-wide configurations and for log messages. It is derived
- * from the name of the current trade server. If the trade server is not explicitely mapped to a different company identifier
- * (see below) the returned default identifier matches the first word of the current trade server name.
- *
- * @return string - company identifier or an empty string in case of errors
+ * @return string - original or mapped company identifier or an empty string in case of errors
  *
  * Example:
- * +--------------------+----------------------------+
- * | Trade server name  | Default company identifier |
- * +--------------------+----------------------------+
- * | Alpari-Standard1   | Alpari                     |
- * +--------------------+----------------------------+
+ * +--------------------+--------------------+
+ * | Tradeserver        | Default identifier |
+ * +--------------------+--------------------+
+ * | Alpari-Standard1   | Alpari             | Without name mapping all servers have different company identifiers.
+ * | AlpariBroker-Demo  | AlpariBroker       |
+ * | AlpariUK-Classic-1 | AlpariUK           |
+ * | AlpariUK-Live2     | AlpariUK           |
+ * +--------------------+--------------------+
  *
- * Via the global framework configuration a default company indentifier can be mapped to a different one.
- *
- * Example:
- * +--------------------+----------------------------+---------------------------+
- * | Trade server name  | Default company identifier | Mapped company identifier |
- * +--------------------+----------------------------+---------------------------+
- * | Alpari-Standard1   | Alpari                     | -                         |
- * | AlpariUK-Classic-1 | AlpariUK                   | Alpari                    |
- * +--------------------+----------------------------+---------------------------+
- *
- * Note: For the long and elaborated company name use the built-in function AccountCompany().
+ * Mapping via framework configuration:
+ * [AccountCompanies]
+ *  alparibroker   = Alpari                  ; With name mapping different servers can be grouped together.
+ *  alpariuk       = Alpari
+ *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default identifier.
  */
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
    // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
-   //
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
-   string name = StrLeftTo(server, "-");
+   static string lastServer="", lastId="";
 
-   return(GetGlobalConfigString("AccountCompanies", name, name));
+   string server = GetAccountServer(); if (!StringLen(server)) return("");
+   if (server == lastServer)
+      return(lastId);
+
+   string mapping = GetGlobalConfigString("AccountCompanies", server);     // global only to prevent recursion
+   if (StringLen(mapping) > 0) {
+      lastServer = server;
+      lastId = mapping;
+      return(lastId);
+   }
+
+   string word1 = StrLeftTo(server, "-");
+   lastId = GetGlobalConfigString("AccountCompanies", word1, word1);
+   lastServer = server;
+   return(lastId);
 }
 
 
@@ -6571,6 +6805,7 @@ void __DummyCalls() {
    GetMqlFilesPath();
    GetRandomValue(NULL, NULL);
    GetServerTime();
+   GetStandardSymbol(NULL);
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HandleCommands();
@@ -6657,7 +6892,6 @@ void __DummyCalls() {
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);
-   PlaySoundOrFail(NULL);
    Pluralize(NULL);
    PriceTypeDescription(NULL);
    PriceTypeToStr(NULL);
@@ -6677,6 +6911,7 @@ void __DummyCalls() {
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
+   StdSymbol();
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
@@ -6769,7 +7004,6 @@ void __DummyCalls() {
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
-   string   StdSymbol();
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);
