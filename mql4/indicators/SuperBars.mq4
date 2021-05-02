@@ -18,7 +18,7 @@
  *  MaxBars.H1                   = {int}              ; max. number of H1 superbars (performance, default: all)
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
- * @see  https://www.forexfactory.com/forum/69-platform-tech
+ * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};
