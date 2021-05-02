@@ -15,7 +15,7 @@
  *  Legend.FontSize              = {int}              ; font size
  *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  MaxH1Days                    = {int}              ; max. number of days with H1 superbars (performance; default: all)
+ *  MaxBars.H1                   = {int}              ; max. number of H1 superbars (performance, default: all)
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
  * @see  https://www.forexfactory.com/forum/69-platform-tech
@@ -52,8 +52,8 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 
 int    superTimeframe;                                // the currently active super bar period
 double maxChangeUnchanged = 0.05;                     // max. price change in % for a superbar to be drawn as unchanged
-int    maxH1Days;                                     // max. number of days to draw H1 superbars (performance)
 bool   ethEnabled;                                    // whether CME sessions are enabled
+int    maxBarsH1;                                     // max. number of H1 superbars to draw (performance)
 
 string legendLabel      = "";
 int    legendCorner     = CORNER_TOP_LEFT;
@@ -102,7 +102,7 @@ int onInit() {
    // read external configuration
    double dValue; int iValue;
    dValue          = GetConfigDouble(indicator, "UnchangedBars.MaxPriceChange");    maxChangeUnchanged = MathAbs(ifDouble(!dValue, maxChangeUnchanged, dValue));
-   iValue          = GetConfigInt   (indicator, "MaxH1Days",        -1);            maxH1Days          = ifInt(iValue > 0, iValue, NULL);
+   iValue          = GetConfigInt   (indicator, "MaxBars.H1",       -1);            maxBarsH1          = ifInt(iValue > 0, iValue, NULL);
    iValue          = GetConfigInt   (indicator, "Legend.Corner",    -1);            legendCorner       = ifInt(iValue >= CORNER_TOP_LEFT && iValue <= CORNER_BOTTOM_RIGHT, iValue, legendCorner);
    iValue          = GetConfigInt   (indicator, "Legend.xDistance", -1);            legend_xDistance   = ifInt(iValue >= 0, iValue, legend_xDistance);
    iValue          = GetConfigInt   (indicator, "Legend.yDistance", -1);            legend_yDistance   = ifInt(iValue >= 0, iValue, legend_yDistance);
@@ -113,7 +113,7 @@ int onInit() {
 
    // display configuration, names, labels
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
-   legendLabel = CreateDescriptionLabel();               // create legend label
+   legendLabel = CreateStatusLabel();                    // create status label
 
    // restore a stored runtime status
    if (!RestoreRuntimeStatus()) return(last_error);
@@ -295,7 +295,7 @@ bool UpdateSuperBars() {
    if (isTimeframeChange) {
       if (PERIOD_M1 <= lastSuperTimeframe && lastSuperTimeframe <= PERIOD_Q1) {
          DeleteRegisteredObjects();                                  // in all other cases previous SuperBars have already been deleted
-         legendLabel = CreateDescriptionLabel();
+         legendLabel = CreateStatusLabel();
       }
       UpdateDescription();
    }
@@ -315,8 +315,7 @@ bool UpdateSuperBars() {
          return(true);
 
       case PERIOD_H1:                                                // limit number of H1 superbars (performance)
-         if (maxH1Days > 0)
-            maxBars = maxH1Days * DAYS/HOURS;
+         if (maxBarsH1 > 0) maxBars = maxBarsH1;
          break;
 
       case PERIOD_D1_ETH:                                            // no limit for everything else
@@ -627,14 +626,14 @@ bool UpdateDescription() {
 
 
 /**
- * Create a text label for the Superbars legend.
+ * Create a text label for the indicator status.
  *
- * @return string - label name
+ * @return string - the label or an empty string in case of errors
  */
-string CreateDescriptionLabel() {
+string CreateStatusLabel() {
    if (IsSuperContext()) return("");
 
-   string label = "rsf."+ ProgramName() +".legend";
+   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -646,7 +645,10 @@ string CreateDescriptionLabel() {
       ObjectSetText(label, " ", 1);
       RegisterObject(label);
    }
-   return(ifString(catch("CreateDescriptionLabel(1)"), "", label));
+
+   if (!catch("CreateStatusLabel(1)"))
+      return(label);
+   return("");
 }
 
 
