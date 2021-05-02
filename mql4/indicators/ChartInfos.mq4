@@ -4019,7 +4019,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" at "+ price;
+      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price;
 
       if (IsLogDebug()) logDebug("onPositionOpen(2)  "+ message);
 
@@ -4063,7 +4063,7 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ GetStandardSymbol(OrderSymbol()) +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
+      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
       if (IsLogDebug()) logDebug("onPositionClose(2)  "+ message);
 

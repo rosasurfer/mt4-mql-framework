@@ -923,11 +923,11 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
 
 
 /**
- * Return the current standard symbol. Alias of GetStandardSymbol(Symbol()).
+ * Return the current standard symbol. Shortcut for FindStandardSymbol(Symbol(), strict=false).
  *
  * e.g.: Symbol() => "EURUSDm"; StdSymbol() => "EURUSD"
  *
- * @return string - standard symbol or the current symbol if standard symbol is unknown
+ * @return string - standard symbol or the current symbol if the standard symbol is not known
  */
 string StdSymbol() {
    static string lastSymbol="", lastResult="";
@@ -938,7 +938,7 @@ string StdSymbol() {
       }
    }
    lastSymbol = Symbol();
-   lastResult = GetStandardSymbol(Symbol());
+   lastResult = FindStandardSymbol(Symbol());
 
    return(lastResult);
 }
@@ -947,15 +947,18 @@ string StdSymbol() {
 /**
  * Find the standard symbol of a broker-specific symbol.
  *
- * e.g.: GetStandardSymbol("EURUSDm") => "EURUSD"
+ * e.g.: FindStandardSymbol("EURUSDm") => "EURUSD"
  *
- * @param  string symbol              - broker-specific symbol
- * @param  string altValue [optional] - value to return if no standard symbol was found (default: the same value)
+ * @param  string symbol            - broker-specific symbol
+ * @param  bool   strict [optional] - value to return if a standard symbol is not known:
+ *                                    TRUE  - an empty string
+ *                                    FALSE - the same symbol (default)
  *
- * @return string - standard symbol or the specified alternative value; an empty string in case of errors
+ * @return string - symbol or an empty string in case of errors
  */
-string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {
-   if (!StringLen(symbol)) return(_EMPTY_STR(catch("GetStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+string FindStandardSymbol(string symbol, bool strict = false) {
+   strict = strict!=0;
+   if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
    if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
@@ -1169,9 +1172,8 @@ string GetStandardSymbol(string symbol, string altValue = "¨‡ ‡¨") {
                 break;
    }
 
-   if (!StringLen(result)) {
-      if (altValue == "¨‡ ‡¨") result = symbol;       // magic value with a protected space in the middle
-      else                     result = altValue;
+   if (result=="" && !strict) {
+      result = symbol;
    }
    return(result);
 }
@@ -6779,6 +6781,7 @@ void __DummyCalls() {
    ErrorDescription(NULL);
    EventListener.NewTick();
    FileAccessModeToStr(NULL);
+   FindStandardSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
    FullModuleName();
@@ -6805,7 +6808,6 @@ void __DummyCalls() {
    GetMqlFilesPath();
    GetRandomValue(NULL, NULL);
    GetServerTime();
-   GetStandardSymbol(NULL);
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HandleCommands();
