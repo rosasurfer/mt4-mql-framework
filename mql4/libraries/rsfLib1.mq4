@@ -2863,7 +2863,7 @@ string GetSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return(_EMPTY_STR(catch("GetSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
-   symbol = GetStandardSymbol(symbol, "");
+   symbol = FindStandardSymbol(symbol, /*strict=*/true);
    if (!StringLen(symbol))
       return("");
 
@@ -3085,8 +3085,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (!StringLen(symbol))
       return(_EMPTY_STR(catch("GetLongSymbolNameStrict()  invalid parameter symbol = \""+ symbol +"\"", ERR_INVALID_PARAMETER)));
 
-   symbol = GetStandardSymbol(symbol, "");
-
+   symbol = FindStandardSymbol(symbol, /*strict=*/true);
    if (!StringLen(symbol))
       return("");
 

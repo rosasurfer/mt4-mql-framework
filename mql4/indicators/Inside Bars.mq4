@@ -871,19 +871,19 @@ bool GetRates() {
 
 
 /**
- * Create a text label for the status display.
+ * Create a text label for the indicator status.
  *
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = ProgramName() +" status ["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
 
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 450);            // the SuperBars label starts at xDist=300
+      ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
       ObjectSet    (label, OBJPROP_YDISTANCE,   3);
       ObjectSetText(label, " ", 1);
       RegisterObject(label);
