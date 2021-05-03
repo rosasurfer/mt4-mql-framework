@@ -8,8 +8,8 @@
  *
  * @link    https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html              [Triangular Moving Average]
  * @link    https://forex-station.com/viewtopic.php?p=1295176455#p1295176455         [TriangularMA Centered Asymmetric Bands]
- * @author  Mladen Rakic
- * @author  Chris Brobeck (aka gammarat)
+ * @author  Mladen Rakic (centered TMA algorythm)
+ * @author  Chris Brobeck aka gammarat (channel algorythm)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
