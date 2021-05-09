@@ -158,7 +158,7 @@ int onTick() {
    // (1) calculate start bar
    int maxBar = Bars-Fisher.Periods;
    int startBar = Min(ChangedBars-1, maxBar);
-   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid prices

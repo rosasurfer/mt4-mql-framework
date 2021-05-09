@@ -171,7 +171,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = Min(changedBars-1, Bars-rsi.periods);
-   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    double fast.ma, slow.ma;
