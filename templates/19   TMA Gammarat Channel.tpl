@@ -8809,9 +8809,10 @@ color_0=16711935
 style_0=2
 color_1=16436871
 color_2=16436871
-style_3=2
-color_6=16711935
-weight_6=2
+color_3=16711680
+color_4=16711680
+color_5=16711935
+weight_5=2
 
 period_flags=0
 show_data=1

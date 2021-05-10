@@ -27,7 +27,7 @@ extern string __a____________________________;
 
 extern bool   RepaintingMode   = false;            // toggle repainting mode
 extern bool   MarkReversals    = false;
-extern int    Max.Bars         = 10000;            // max. values to calculate (-1: all available)
+extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
 extern string __b____________________________;
 
 extern bool   AlertsOn         = false;
@@ -46,45 +46,36 @@ extern bool   AlertsOn         = false;
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
 #define MODE_LOWER_BAND_RP       2                 //
-#define MODE_TMA_NRP             3                 //
-#define MODE_UPPER_BAND_NRP      4                 //
-#define MODE_LOWER_BAND_NRP      5                 //
-#define MODE_REVERSAL_MARKER     6                 //
-#define MODE_REVERSAL_AGE        7                 //
-#define MODE_UPPER_VARIANCE_RP   8                 // managed by the framework
-#define MODE_LOWER_VARIANCE_RP   9                 // ...
-#define MODE_UPPER_VARIANCE_NRP 10                 // ...
-#define MODE_LOWER_VARIANCE_NRP 11                 // ...
+#define MODE_UPPER_BAND_NRP      3                 //
+#define MODE_LOWER_BAND_NRP      4                 //
+#define MODE_REVERSAL_MARKER     5                 //
+#define MODE_REVERSAL_AGE        6                 //
+#define MODE_UPPER_VARIANCE_RP   7                 //
+#define MODE_LOWER_VARIANCE_RP   8                 // managed by the framework
 
 #property indicator_chart_window
-#property indicator_buffers   8                    // buffers managed by the terminal (visible in input dialog)
-int       framework_buffers = 4;                   // buffers managed by the framework
+#property indicator_buffers   7                    // buffers visible in input dialog
+int       terminal_buffers  = 8;                   // buffers managed by the terminal
+int       framework_buffers = 1;                   // buffers managed by the framework
 
 #property indicator_color1    Magenta              // repainting TMA
 #property indicator_color2    CLR_NONE             // repainting upper channel band
 #property indicator_color3    CLR_NONE             // repainting lower channel band
-#property indicator_color4    CLR_NONE             // non-repainting TMA
-#property indicator_color5    Blue                 // non-repainting upper channel band
-#property indicator_color6    Blue                 // non-repainting lower channel band
-#property indicator_color7    Magenta              // breakout reversals
-#property indicator_color8    CLR_NONE             // reversal age
+#property indicator_color4    Blue                 // non-repainting upper channel band
+#property indicator_color5    Blue                 // non-repainting lower channel band
+#property indicator_color6    Magenta              // breakout reversals
 
 #property indicator_style1    STYLE_DOT
-#property indicator_style4    STYLE_DOT
 
-#property indicator_width7    2                    // breakout reversal markers
+#property indicator_width6    2                    // breakout reversal markers
 
 double tmaRP          [];
 double upperVarianceRP[];
 double lowerVarianceRP[];
 double upperBandRP    [];
 double lowerBandRP    [];
-
-double tmaNRP          [];
-double upperVarianceNRP[];
-double lowerVarianceNRP[];
-double upperBandNRP    [];
-double lowerBandNRP    [];
+double upperBandNRP   [];
+double lowerBandNRP   [];
 
 double reversalMarker[];
 double reversalAge   [];
@@ -92,6 +83,7 @@ double reversalAge   [];
 int    maPeriods;
 int    maAppliedPrice;
 int    maxValues;
+double tmaWindow[];
 
 string indicatorName;
 string legendLabel;
@@ -139,7 +131,6 @@ int onInit() {
    SetIndexBuffer(MODE_TMA_RP,          tmaRP         ); SetIndexEmptyValue(MODE_TMA_RP,          0);
    SetIndexBuffer(MODE_UPPER_BAND_RP,   upperBandRP   ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,   0);
    SetIndexBuffer(MODE_LOWER_BAND_RP,   lowerBandRP   ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,   0);
-   SetIndexBuffer(MODE_TMA_NRP,         tmaNRP        ); SetIndexEmptyValue(MODE_TMA_NRP,         0);
    SetIndexBuffer(MODE_UPPER_BAND_NRP,  upperBandNRP  ); SetIndexEmptyValue(MODE_UPPER_BAND_NRP,  0);
    SetIndexBuffer(MODE_LOWER_BAND_NRP,  lowerBandNRP  ); SetIndexEmptyValue(MODE_LOWER_BAND_NRP,  0);
    SetIndexBuffer(MODE_REVERSAL_MARKER, reversalMarker); SetIndexEmptyValue(MODE_REVERSAL_MARKER, 0);
@@ -157,15 +148,17 @@ int onInit() {
    string shortName = "TMA("+ maPeriods +") Gammarat Channel";
    IndicatorShortName(shortName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_TMA_RP,          "TMA");              // chart tooltips and "Data" window
-   SetIndexLabel(MODE_UPPER_BAND_RP,   "TMA upper band");
-   SetIndexLabel(MODE_LOWER_BAND_RP,   "TMA lower band");
-   SetIndexLabel(MODE_TMA_NRP,         NULL);
-   SetIndexLabel(MODE_UPPER_BAND_NRP,  NULL);
-   SetIndexLabel(MODE_LOWER_BAND_NRP,  NULL);
+   SetIndexLabel(MODE_UPPER_BAND_RP,   "GC upper band RP");
+   SetIndexLabel(MODE_LOWER_BAND_RP,   "GC lower band RP");
+   SetIndexLabel(MODE_UPPER_BAND_NRP,  "GC upper band NRP");
+   SetIndexLabel(MODE_LOWER_BAND_NRP,  "GC lower band NRP");
    SetIndexLabel(MODE_REVERSAL_MARKER, NULL);
    SetIndexLabel(MODE_REVERSAL_AGE,    "Reversal age");
-   IndicatorDigits(Digits);
+   IndicatorDigits(8);                                      // TODO: reset to Digits after finishing
    SetIndicatorOptions();
+
+   // initialize global vars
+   ArrayResize(tmaWindow, maPeriods);
 
    return(catch("onInit(9)"));
 }
@@ -191,42 +184,34 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(tmaRP)) return(logDebug("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_UPPER_VARIANCE_RP,  upperVarianceRP);
-   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP,  lowerVarianceRP);
-   ManageIndicatorBuffer(MODE_UPPER_VARIANCE_NRP, upperVarianceNRP);
-   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_NRP, lowerVarianceNRP);
+   ManageIndicatorBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);
+   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
    // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {
-      ArrayInitialize(tmaRP,            0);
-      ArrayInitialize(upperVarianceRP,  0);
-      ArrayInitialize(lowerVarianceRP,  0);
-      ArrayInitialize(upperBandRP,      0);
-      ArrayInitialize(lowerBandRP,      0);
-      ArrayInitialize(tmaNRP,           0);
-      ArrayInitialize(upperVarianceNRP, 0);
-      ArrayInitialize(lowerVarianceNRP, 0);
-      ArrayInitialize(upperBandNRP,     0);
-      ArrayInitialize(lowerBandNRP,     0);
-      ArrayInitialize(reversalMarker,   0);
-      ArrayInitialize(reversalAge,      0);
+      ArrayInitialize(tmaRP,           0);
+      ArrayInitialize(upperVarianceRP, 0);
+      ArrayInitialize(lowerVarianceRP, 0);
+      ArrayInitialize(upperBandRP,     0);
+      ArrayInitialize(lowerBandRP,     0);
+      ArrayInitialize(upperBandNRP,    0);
+      ArrayInitialize(lowerBandNRP,    0);
+      ArrayInitialize(reversalMarker,  0);
+      ArrayInitialize(reversalAge,     0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(tmaRP,            Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperVarianceRP,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerVarianceRP,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperBandRP,      Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerBandRP,      Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(tmaNRP,           Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperVarianceNRP, Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerVarianceNRP, Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperBandNRP,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerBandNRP,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(reversalMarker,   Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(reversalAge,      Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(tmaRP,           Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(upperVarianceRP, Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(lowerVarianceRP, Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(upperBandRP,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(lowerBandRP,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(upperBandNRP,    Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(lowerBandNRP,    Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(reversalMarker,  Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(reversalAge,     Bars, ShiftedBars, 0);
    }
 
    // calculate start bars
@@ -252,8 +237,8 @@ int onTick() {
    }
    if (!RepaintingMode) {
       RecalculateChannel(channelStartbarNRP);                  // non-repainting calculation
-      CalculateBreakoutReversals(tmaNRP, upperBandNRP, lowerBandNRP, channelStartbarNRP);
-      CheckSignals(upperBandNRP, lowerBandNRP);
+      //CalculateBreakoutReversals(tmaRP, upperBandNRP, lowerBandNRP, channelStartbarNRP);
+      //CheckSignals(upperBandNRP, lowerBandNRP);
    }
 
    return(catch("onTick(4)"));
@@ -284,7 +269,7 @@ void CalculateRepaintingTMA(int startBar) {
 
       double diff = price - tmaRP[i];
 
-      // rolling variance using the previous values (highly inaccurate)
+      // rolling variance using the previous values
       if (diff > 0) {
          upperVarianceRP[i] = (upperVarianceRP[i+1] * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
          lowerVarianceRP[i] = (lowerVarianceRP[i+1] * (maPeriods-1) + 0)               /maPeriods;
@@ -296,13 +281,6 @@ void CalculateRepaintingTMA(int startBar) {
       // non-standard deviation
       upperBandRP[i] = tmaRP[i] + Bands.Deviations * MathSqrt(upperVarianceRP[i]);
       lowerBandRP[i] = tmaRP[i] - Bands.Deviations * MathSqrt(lowerVarianceRP[i]);
-   }
-
-
-   // testing: visualization of the NRP state
-   if (false && RepaintingMode) {
-      upperBandNRP[0] = upperBandRP[0];
-      lowerBandNRP[0] = lowerBandRP[0];
    }
 
    if (!IsSuperContext()) {
@@ -321,55 +299,47 @@ void CalculateRepaintingTMA(int startBar) {
  * @return bool - success status
  */
 bool RecalculateChannel(int startbar) {
-    for (int i=startbar; i >= 0; i--) {
-      RecalculateTMASeries(i);
-      CalculateGammaratChannel(i);
-   }
+   int maHalfLength = maPeriods/2;
+   double diff, upperVariance, lowerVariance;
 
-   if (!UnchangedBars) {
-      double values[]; ArrayResize(values, 0);
+   for (int i=startbar; i >= 0; i--) {
+      CalculateTMASeries(i, tmaWindow);                     // populate the TMA window with the TMA series at offset i without peeking
+      upperVariance = upperVarianceRP[i+maHalfLength+1];
+      lowerVariance = lowerVarianceRP[i+maHalfLength+1];
 
-      ArrayCopy(values, tmaRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.1)    tma(rp)="+ DoublesToStr(values, NULL));
+      for (int n=i+maHalfLength; n >= i; n--) {
+         diff = GetPrice(n) - tmaWindow[n-i];
 
-      ArrayCopy(values, tmaNRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.1)   tma(nrp)="+ DoublesToStr(values, NULL));
-
-      ArrayCopy(values, upperVarianceRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.2)  varUp(rp)="+ DoublesToStrEx(values, NULL, 9));
-
-      ArrayCopy(values, upperVarianceNRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.2) varUp(nrp)="+ DoublesToStrEx(values, NULL, 9));
-
-      debug("RecalculateChannel(0.3)  upper(rp)="+ NumberToStr(upperBandRP [0], ".1+"));
-      debug("RecalculateChannel(0.3) upper(nrp)="+ NumberToStr(upperBandNRP[0], ".1+"));
-
-      ArrayCopy(values, lowerVarianceRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.4)  varDn(rp)="+ DoublesToStrEx(values, NULL, 9));
-
-      ArrayCopy(values, lowerVarianceNRP, 0, 0, maPeriods);
-      debug("RecalculateChannel(0.4) varDn(nrp)="+ DoublesToStrEx(values, NULL, 9));
-
-      debug("RecalculateChannel(0.5)  lower(rp)="+ NumberToStr(lowerBandRP [0], ".1+"));
-      debug("RecalculateChannel(0.5) lower(nrp)="+ NumberToStr(lowerBandNRP[0], ".1+"));
+         if (diff > 0) {
+            upperVariance = (upperVariance * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
+            lowerVariance = (lowerVariance * (maPeriods-1) + 0)               /maPeriods;
+         }
+         else {                                             // with real prices diff==0 is not possible
+            upperVariance = (upperVariance * (maPeriods-1) + 0)               /maPeriods;
+            lowerVariance = (lowerVariance * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
+         }
+      }
+      upperBandNRP[i] = tmaWindow[0] + Bands.Deviations * MathSqrt(upperVariance);
+      lowerBandNRP[i] = tmaWindow[0] - Bands.Deviations * MathSqrt(lowerVariance);
    }
    return(!catch("RecalculateChannel(1)"));
 }
 
 
 /**
- * Recalculate the centered TMA series at the specified bar offset using history only (no peeking into the future, i.e. no
+ * Calculate the centered TMA series at the specified bar offset using history only (no peeking into the future, i.e. no
  * access of data younger than the specified offset).
  *
- * @param  int bar - bar offset
+ * @param  _In_  int    bar    - bar offset
+ * @param  _Out_ double values - resulting TMA values
  *
  * @return bool - success status
  */
-bool RecalculateTMASeries(int bar) {
+bool CalculateTMASeries(int bar, double &values[]) {
    for (int i=maPeriods-1; i >= 0 ; i--) {
-      tmaNRP[bar+i] = CalculateTMA(bar+i, bar);
+      values[i] = CalculateTMA(bar+i, bar);
    }
-   return(!catch("RecalculateTMASeries(1)"));
+   return(!catch("CalculateTMASeries(1)"));
 }
 
 
@@ -403,34 +373,6 @@ double CalculateTMA(int bar, int limit) {
       }
    }
    return(sum/sumW);
-}
-
-
-/**
- * Calculate the Gammarat channel at the specified bar offset.
- *
- * @param  int bar - bar offset
- *
- * @return bool - success status
- */
-bool CalculateGammaratChannel(int bar) {
-   double diff = GetPrice(bar)-tmaNRP[bar];
-
-   // rolling variance using the previous values (inaccurate but reproduces the faulty series of the repainting algorithm)
-   if (diff > 0) {
-      upperVarianceNRP[bar] = (upperVarianceNRP[bar+1] * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
-      lowerVarianceNRP[bar] = (lowerVarianceNRP[bar+1] * (maPeriods-1) + 0)               /maPeriods;
-   }
-   else {                                                // with real prices diff==0 is not possible
-      upperVarianceNRP[bar] = (upperVarianceNRP[bar+1] * (maPeriods-1) + 0)               /maPeriods;
-      lowerVarianceNRP[bar] = (lowerVarianceNRP[bar+1] * (maPeriods-1) + MathPow(diff, 2))/maPeriods;
-   }
-
-   // non-standard deviation
-   upperBandNRP[bar] = tmaNRP[bar] + Bands.Deviations * MathSqrt(upperVarianceNRP[bar]);
-   lowerBandNRP[bar] = tmaNRP[bar] - Bands.Deviations * MathSqrt(lowerVarianceNRP[bar]);
-
-   return(!catch("CalculateGammaratChannel(1)"));
 }
 
 
@@ -661,22 +603,21 @@ void onSignal(int signal, string msg) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle( int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
-   IndicatorBuffers(indicator_buffers);
+   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   IndicatorBuffers(terminal_buffers);
 
    if (!Bands.LineWidth) { int bandsDrawType = DRAW_NONE, bandsWidth = EMPTY;           }
    else                  {     bandsDrawType = DRAW_LINE; bandsWidth = Bands.LineWidth; }
 
-   SetIndexStyle(MODE_TMA_RP,          DRAW_LINE);
-   SetIndexStyle(MODE_UPPER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color);
-   SetIndexStyle(MODE_LOWER_BAND_RP,   bandsDrawType, EMPTY, bandsWidth, Bands.Color);
+   SetIndexStyle(MODE_TMA_RP,        DRAW_LINE);
+   SetIndexStyle(MODE_UPPER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
+   SetIndexStyle(MODE_LOWER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
 
-   SetIndexStyle(MODE_TMA_NRP,         DRAW_LINE);
-   SetIndexStyle(MODE_UPPER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color5);
-   SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color6);
+   //SetIndexStyle(MODE_UPPER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color5);
+   //SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color6);
 
    SetIndexStyle(MODE_REVERSAL_MARKER, DRAW_ARROW); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
-   SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE, EMPTY, EMPTY, indicator_color8);
+   SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
 
