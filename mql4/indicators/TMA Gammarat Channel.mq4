@@ -128,13 +128,14 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
-   SetIndexBuffer(MODE_TMA_RP,          tmaRP         ); SetIndexEmptyValue(MODE_TMA_RP,          0);
-   SetIndexBuffer(MODE_UPPER_BAND_RP,   upperBandRP   ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,   0);
-   SetIndexBuffer(MODE_LOWER_BAND_RP,   lowerBandRP   ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,   0);
-   SetIndexBuffer(MODE_UPPER_BAND_NRP,  upperBandNRP  ); SetIndexEmptyValue(MODE_UPPER_BAND_NRP,  0);
-   SetIndexBuffer(MODE_LOWER_BAND_NRP,  lowerBandNRP  ); SetIndexEmptyValue(MODE_LOWER_BAND_NRP,  0);
-   SetIndexBuffer(MODE_REVERSAL_MARKER, reversalMarker); SetIndexEmptyValue(MODE_REVERSAL_MARKER, 0);
-   SetIndexBuffer(MODE_REVERSAL_AGE,    reversalAge   ); SetIndexEmptyValue(MODE_REVERSAL_AGE,    0);
+   SetIndexBuffer(MODE_TMA_RP,            tmaRP          ); SetIndexEmptyValue(MODE_TMA_RP,          0);
+   SetIndexBuffer(MODE_UPPER_BAND_RP,     upperBandRP    ); SetIndexEmptyValue(MODE_UPPER_BAND_RP,   0);
+   SetIndexBuffer(MODE_LOWER_BAND_RP,     lowerBandRP    ); SetIndexEmptyValue(MODE_LOWER_BAND_RP,   0);
+   SetIndexBuffer(MODE_UPPER_BAND_NRP,    upperBandNRP   ); SetIndexEmptyValue(MODE_UPPER_BAND_NRP,  0);
+   SetIndexBuffer(MODE_LOWER_BAND_NRP,    lowerBandNRP   ); SetIndexEmptyValue(MODE_LOWER_BAND_NRP,  0);
+   SetIndexBuffer(MODE_REVERSAL_MARKER,   reversalMarker ); SetIndexEmptyValue(MODE_REVERSAL_MARKER, 0);
+   SetIndexBuffer(MODE_REVERSAL_AGE,      reversalAge    ); SetIndexEmptyValue(MODE_REVERSAL_AGE,    0);
+   SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
    // chart legend
    if (!IsSuperContext()) {
