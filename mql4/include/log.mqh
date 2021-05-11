@@ -1,35 +1,37 @@
 /**
  * Error reporting and logging
  *
- * +----------------+-------------------------------------------------+------------------+
- * | Function       | Functionality                                   | Notes            |
- * +----------------+-------------------------------------------------+------------------+
- * | debug()        | send a message to the system debugger           | no configuration |
- * | catch()        | if (GetLastError()) logError() + SetLastError() | error detection  |
- * +----------------+-------------------------------------------------+------------------+
- * | IsLog()        | whether any loglevel is active                  |                  |
- * | IsLogDebug()   | whether LOG_DEBUG is active                     |                  |
- * | IsLogInfo()    | whether LOG_INFO is active                      |                  |
- * | IsLogNotice()  | whether LOG_NOTICE is active                    |                  |
- * | IsLogWarn()    | whether LOG_WARN is active                      |                  |
- * | IsLogError()   | whether LOG_ERROR is active                     |                  |
- * +----------------+-------------------------------------------------+------------------+
- * | log()          | dispatch a message to active log appenders      | configurable     |
- * | logDebug()     | alias of log(..., LOG_DEBUG)                    |                  |
- * | logInfo()      | alias of log(..., LOG_INFO)                     |                  |
- * | logNotice()    | alias of log(..., LOG_NOTICE)                   |                  |
- * | logWarn()      | alias of log(..., LOG_WARN)                     |                  |
- * | logError()     | alias of log(..., LOG_ERROR)                    |                  |
- * +----------------+-------------------------------------------------+------------------+
- * | log2Terminal() | TerminalLogAppender                             | configurable     |
- * | log2Alert()    | TerminalAlertAppender                           | configurable     |
- * | log2Debugger() | DebugOutputAppender                             | configurable     |
- * | log2File()     | LogfileAppender                                 | configurable     |
- * | log2Mail()     | MailAppender                                    | configurable     |
- * | log2SMS()      | SMSAppender                                     | configurable     |
- * +----------------+-------------------------------------------------+------------------+
- * | SetLogfile()   | set a logfile for the LogfileAppender           | per MQL program  |
- * +----------------+-------------------------------------------------+------------------+
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | Function       | Functionality                                                | Notes            |
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | debug()        | send a message to the system debugger                        | no configuration |
+ * | catch()        | if (GetLastError()) logFatal() + SetLastError() + STATUS_OFF | error trapping   |
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | IsLog()        | whether any loglevel is active                               |                  |
+ * | IsLogDebug()   | whether LOG_DEBUG is active                                  |                  |
+ * | IsLogInfo()    | whether LOG_INFO is active                                   |                  |
+ * | IsLogNotice()  | whether LOG_NOTICE is active                                 |                  |
+ * | IsLogWarn()    | whether LOG_WARN is active                                   |                  |
+ * | IsLogError()   | whether LOG_ERROR is active                                  |                  |
+ * | IsLogFatal()   | whether LOG_FATAL is active                                  | always TRUE      |
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | log()          | dispatch a message to active log appenders                   | configurable     |
+ * | logDebug()     | alias of log(..., LOG_DEBUG)                                 |                  |
+ * | logInfo()      | alias of log(..., LOG_INFO)                                  |                  |
+ * | logNotice()    | alias of log(..., LOG_NOTICE)                                |                  |
+ * | logWarn()      | alias of log(..., LOG_WARN)                                  |                  |
+ * | logError()     | alias of log(..., LOG_ERROR)                                 |                  |
+ * | logFatal()     | alias of log(..., LOG_FATAL)                                 | used by catch()  |
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | log2Terminal() | TerminalLogAppender                                          | configurable     |
+ * | log2Alert()    | TerminalAlertAppender                                        | configurable     |
+ * | log2Debugger() | DebugOutputAppender                                          | configurable     |
+ * | log2File()     | LogfileAppender                                              | configurable     |
+ * | log2Mail()     | MailAppender                                                 | configurable     |
+ * | log2SMS()      | SMSAppender                                                  | configurable     |
+ * +----------------+--------------------------------------------------------------+------------------+
+ * | SetLogfile()   | set a logfile for the LogfileAppender                        | per MQL program  |
+ * +----------------+--------------------------------------------------------------+------------------+
  */
 
 
@@ -91,7 +93,7 @@ int catch(string location, int error=NO_ERROR, bool popOrder=false) {
       }
       isRecursion = true;
 
-      log(location, error, LOG_FATAL);                                        // handle the error
+      logFatal(location, error);                                              // handle the error
       SetLastError(error);                                                    // set the error
    }
 
@@ -174,6 +176,18 @@ bool IsLogError() {
 
 
 /**
+ * Whether the loglevel LOG_FATAL is active for the current program.
+ *
+ * This function exists for API completeness only. Loglevel LOG_FATAL cannot be deactivated, even if logging is switched off.
+ *
+ * @return bool - always TRUE
+ */
+bool IsLogFatal() {
+   return(true);
+}
+
+
+/**
  * Logger main function. Process a log message and dispatch it to the enabled log appenders.
  *
  * @param  string message - log message
@@ -220,7 +234,7 @@ int log(string message, int error, int level) {
 
 
 /**
- * Helper function to simplify logging of a message of level LOG_DEBUG.
+ * Helper function to simplify logging of messages of level LOG_DEBUG.
  *
  * @param  string message          - location identifier and/or log message
  * @param  int    error [optional] - error linked to the message (default: none)
@@ -233,7 +247,7 @@ int logDebug(string message, int error = NO_ERROR) {
 
 
 /**
- * Helper function to simplify logging of a message of level LOG_INFO.
+ * Helper function to simplify logging of messages of level LOG_INFO.
  *
  * @param  string message          - location identifier and/or log message
  * @param  int    error [optional] - error linked to the message (default: none)
@@ -246,7 +260,7 @@ int logInfo(string message, int error = NO_ERROR) {
 
 
 /**
- * Helper function to simplify logging of a message of level LOG_NOTICE.
+ * Helper function to simplify logging of messages of level LOG_NOTICE.
  *
  * @param  string message          - location identifier and/or log message
  * @param  int    error [optional] - error linked to the message (default: none)
@@ -259,7 +273,7 @@ int logNotice(string message, int error = NO_ERROR) {
 
 
 /**
- * Helper function to simplify logging of a message of level LOG_WARN.
+ * Helper function to simplify logging of messages of level LOG_WARN.
  *
  * @param  string message          - location identifier and/or log message
  * @param  int    error [optional] - error linked to the message (default: none)
@@ -272,15 +286,29 @@ int logWarn(string message, int error = NO_ERROR) {
 
 
 /**
- * Helper function to simplify logging of a message of level LOG_ERROR.
+ * Helper function to simplify logging of messages of level LOG_ERROR.
  *
- * @param  string message          - location identifier and/or log message
- * @param  int    error [optional] - error linked to the message (default: none)
+ * @param  string message - location identifier and/or log message
+ * @param  int    error   - error linked to the message
  *
  * @return int - the same error
  */
-int logError(string message, int error = NO_ERROR) {
+int logError(string message, int error) {
    return(log(message, error, LOG_ERROR));
+}
+
+
+/**
+ * Helper function to simplify logging of messages of level LOG_FATAL. Used by catch() to log detected and otherwise
+ * unhandled errors.
+ *
+ * @param  string message - location identifier and/or log message
+ * @param  int    error   - error linked to the message
+ *
+ * @return int - the same error
+ */
+int logFatal(string message, int error) {
+   return(log(message, error, LOG_FATAL));
 }
 
 
@@ -551,13 +579,15 @@ int log2Terminal(string message, int error, int level) {
    IsLogNotice();
    IsLogWarn();
    IsLogError();
+   IsLogFatal();
 
    log(NULL, NULL, NULL);
    logDebug (NULL);
    logInfo  (NULL);
    logNotice(NULL);
    logWarn  (NULL);
-   logError (NULL);
+   logError (NULL, NULL);
+   logFatal (NULL, NULL);
 
    log2Alert   (NULL, NULL, NULL);
    log2Debugger(NULL, NULL, NULL);
