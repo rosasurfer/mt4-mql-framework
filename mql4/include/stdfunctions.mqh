@@ -144,10 +144,10 @@ string ErrorDescription(int error) {
       case ERR_SYMBOL_NOT_AVAILABLE       : return("symbol not available"                                      );    //   4106
       case ERR_INVALID_PRICE_PARAM        : return("invalid price parameter for trade function"                );    //   4107
       case ERR_INVALID_TICKET             : return("invalid ticket"                                            );    //   4108
-      case ERR_TRADE_NOT_ALLOWED          : return("automated trading disabled in terminal"                    );    //   4109
-      case ERR_LONGS_NOT_ALLOWED          : return("long trades not enabled"                                   );    //   4110
-      case ERR_SHORTS_NOT_ALLOWED         : return("short trades not enabled"                                  );    //   4111
-      case ERR_AUTOMATED_TRADING_DISABLED : return("automated trading disabled by broker"                      );    //   4112
+      case ERR_TERMINAL_AUTOTRADE_DISABLED: return("automated trading disabled in terminal"                    );    //   4109
+      case ERR_PROGRAM_LONGS_DISABLED     : return("long trades disabled for program"                          );    //   4110
+      case ERR_PROGRAM_SHORTS_DISABLED    : return("short trades disabled for program"                         );    //   4111
+      case ERR_BROKER_AUTOTRADE_DISABLED  : return("automated trading disabled by broker"                      );    //   4112
       case ERR_OBJECT_ALREADY_EXISTS      : return("object already exists"                                     );    //   4200
       case ERR_UNKNOWN_OBJECT_PROPERTY    : return("unknown object property"                                   );    //   4201
       case ERR_OBJECT_DOES_NOT_EXIST      : return("object doesn't exist"                                      );    //   4202
