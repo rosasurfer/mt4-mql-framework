@@ -42,11 +42,10 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
    }
    else if (Bars > prevBars) {
       // the number of Bars increased                                // new bars have been inserted or appended (anywhere, all cases are covered by ChangedBars)
-      ManageIndicatorBuffer.Resize(buffer, Bars);
-
       if (prevBars && Time[Bars-1]!=prevOldestBarTime) {             // the oldest bar changed: bars have been added at the end (data pumping)
          if (UnchangedBars != 0) return(!catch("ManageIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but UnchangedBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", UnchangedBars="+ UnchangedBars +")", ERR_ILLEGAL_STATE));
       }
+      ManageIndicatorBuffer.Resize(buffer, Bars);
    }
    else /*Bars < prevBars*/ {
       // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ca. 1200 bars)
@@ -57,8 +56,8 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
 
       if (IsLogNotice()) logNotice("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
 
-      if (i > 0) {                                                   // manually shift the content according to the found Time[0] offset
-         ManageIndicatorBuffer.Resize(buffer, ArraySize(buffer)+i);
+      if (i > 0) {
+         ManageIndicatorBuffer.Resize(buffer, ArraySize(buffer)+i);  // manually shift the content according to the found Time[0] offset
       }
       ManageIndicatorBuffer.Resize(buffer, Bars);
    }
