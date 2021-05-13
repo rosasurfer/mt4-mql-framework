@@ -134,7 +134,7 @@ int onTick() {
    if (!ArraySize(fisherMain)) return(logDebug("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
       ArrayInitialize(fisherSection,               0);
       ArrayInitialize(fisherUpper,      EMPTY_VALUE);
@@ -158,7 +158,7 @@ int onTick() {
    // (1) calculate start bar
    int maxBar = Bars-Fisher.Periods;
    int startBar = Min(ChangedBars-1, maxBar);
-   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid prices

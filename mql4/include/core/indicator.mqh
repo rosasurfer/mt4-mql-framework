@@ -223,10 +223,10 @@ int start() {
    }
 
 
-   // (1) ChangedBars und UnchangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
-   UnchangedBars = IndicatorCounted();
-   ChangedBars   = Bars - UnchangedBars;
-   ShiftedBars   = 0;
+   // (1) ValidBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
+   ValidBars   = IndicatorCounted();
+   ChangedBars = Bars - ValidBars;
+   ShiftedBars = 0;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
@@ -244,7 +244,7 @@ int start() {
    // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
    static datetime last.startBarOpenTime, last.endBarOpenTime;
-   if (!UnchangedBars) /*&&*/ if (!IsConnected()) {                                 // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
+   if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
       // Initialisierung
       if (last.bars == -1) {
          ChangedBars = Bars;                                                        // erster Zugriff auf die Zeitreihe
@@ -308,7 +308,7 @@ int start() {
    last.bars             = Bars;
    last.startBarOpenTime = Time[0];
    last.endBarOpenTime   = Time[Bars-1];
-   UnchangedBars         = Bars - ChangedBars;                                      // UnchangedBars neu definieren
+   ValidBars             = Bars - ChangedBars;                                      // ValidBars neu definieren
 
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
@@ -327,21 +327,21 @@ int start() {
             return(error);
          }
       }
-      last_error    = NO_ERROR;                                                     // init() war erfolgreich
-      UnchangedBars = 0;
+      last_error = NO_ERROR;                                                        // init() war erfolgreich
+      ValidBars  = 0;
    }
    else {
       // normaler Tick
       prev_error = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
    }
-   if (!UnchangedBars) ShiftedBars = 0;
-   ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)
+   if (!ValidBars) ShiftedBars = 0;
+   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
 
    __STATUS_HISTORY_UPDATE = false;
 
@@ -563,7 +563,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
 
-   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int bars, double emptyValue);
+   bool   ShiftIndicatorBuffer(double buffer[], int bufferSize, int elements, double emptyValue);
 
    int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);

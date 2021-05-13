@@ -8794,18 +8794,25 @@ name=TMA Gammarat Channel
 flags=339
 window_num=0
 <inputs>
-MA.HalfLength=55
+MA.Periods=111
 MA.AppliedPrice=Weighted
 Bands.Deviations=2.5
+Bands.Color=16436871
+Bands.LineWidth=3
+RepaintingMode=1
+MarkReversals=1
 AlertsOn=1
 </inputs>
 </expert>
 
 color_0=16711935
 style_0=2
-style_3=2
-weight_6=2
-color_6=16711935
+color_1=16436871
+color_2=16436871
+color_3=16711680
+color_4=16711680
+color_5=16711935
+weight_5=2
 
 period_flags=0
 show_data=1

@@ -101,7 +101,7 @@ int onTick() {
    if (!ArraySize(bufferVola)) return(logDebug("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(bufferVola, EMPTY_VALUE);
       SetIndicatorOptions();
    }
@@ -114,7 +114,7 @@ int onTick() {
 
    // (1) calculate start bar
    int startBar = Min(ChangedBars-1, Bars-volaPeriods-1);
-   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid indicator values

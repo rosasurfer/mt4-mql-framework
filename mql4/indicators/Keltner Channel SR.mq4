@@ -217,7 +217,7 @@ int onTick() {
    if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(ma,            0);
       ArrayInitialize(atr,           0);
       ArrayInitialize(upperBand,     0);
@@ -278,7 +278,7 @@ int onTick() {
    initBars = 1;                                      // 1 bar for comparison with the previous value
    int srBars = Min(maBars, channelBars)-initBars;
    int srStartBar = Min(ChangedBars, srBars) - 1;
-   if (srStartBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (srStartBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    double prevSR = lineUp[srStartBar+1] + lineDown[srStartBar+1];
    if (!prevSR) prevSR = ma[srStartBar+1];

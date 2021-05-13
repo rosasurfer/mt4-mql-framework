@@ -210,7 +210,7 @@ int onTick() {
    if (!ArraySize(maLong)) return(logDebug("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
       ArrayInitialize(maShort,         EMPTY_VALUE);
@@ -241,7 +241,7 @@ int onTick() {
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startBar       = bars - 1;
-   if (startBar < 0) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
    if (Time[startBar]+Period()*MINUTES-1 < startTime)
       startBar = iBarShiftNext(NULL, NULL, startTime);
 
