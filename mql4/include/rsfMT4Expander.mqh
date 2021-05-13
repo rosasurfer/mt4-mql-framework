@@ -91,6 +91,10 @@
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
+   // array functions
+   //bool   InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
+   //bool   ShiftIndicatorBuffer(double &buffer[], int bufferSize, int elements, double emptyValue);
+
    // string functions
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);

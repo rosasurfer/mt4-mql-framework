@@ -629,14 +629,14 @@ int GetIniSections(string fileName, string &names[]) {
  * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServer() {
-   // Der Servername wird zwischengespeichert und der Cache bei UnchangedBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
+   // Der Servername wird zwischengespeichert und der Cache bei ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
-   // alten Serververzeichnis. Erst nach UnchangedBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
+   // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
 
    static string static.serverName[1];
    static int    static.lastTick;                     // für Erkennung von Mehrfachaufrufen während desselben Ticks
 
-   // invalidate cache if a new tick and UnchangedBars==0
+   // invalidate cache if a new tick and ValidBars==0
    int tick = __ExecutionContext[EC.ticks];
    if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
@@ -4113,19 +4113,19 @@ string GetServerTimezone() {
    // - On account change indicators do not perform an init cycle.
    // - The builtin account functions can't be used to detect an account change. They already return new account data even if
    //   the program still operates on previous chart data and processes old ticks. On the first tick received for the new
-   //   account UnchangedBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
+   //   account ValidBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
    // - This function is stored in the library to make the cache survive an indicator init cyle.
 
    #define IDX_SERVER   0
    #define IDX_COMPANY  1
    #define IDX_TIMEZONE 2
 
-   int Tick=__ExecutionContext[EC.ticks], UnchangedBars=__ExecutionContext[EC.unchangedBars];
+   int Tick=__ExecutionContext[EC.ticks], ValidBars=__ExecutionContext[EC.unchangedBars];
    static int lastTick = -1;
    static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
    if (Tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) && !UnchangedBars) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !ValidBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";

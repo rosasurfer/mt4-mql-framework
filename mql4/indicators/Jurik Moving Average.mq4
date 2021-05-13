@@ -326,7 +326,7 @@ int onTick() {
    if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
       ArrayInitialize(uptrend1,  EMPTY_VALUE);
@@ -345,8 +345,8 @@ int onTick() {
    }
 
    // calculate start bar
-   if (Bars < 32) return(logDebug("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
-   int validBars = UnchangedBars, error;
+   if (Bars < 32) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int validBars = ValidBars, error;
    if (validBars > 0) validBars--;
    int oldestBar = Bars-1;
    int startBar  = oldestBar - validBars;                // TODO: startBar is 1 too big

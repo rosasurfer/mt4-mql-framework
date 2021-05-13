@@ -181,7 +181,7 @@ int onTick() {
    if (!ArraySize(bufferMain)) return(logDebug("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(bufferMain,   EMPTY_VALUE);
       ArrayInitialize(bufferSignal,           0);
       ArrayInitialize(bufferLong,   EMPTY_VALUE);
@@ -203,7 +203,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startBar = changedBars-1;
-   if (startBar < 0) return(logDebug("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startBar < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars

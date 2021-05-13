@@ -2,8 +2,9 @@
  * Return the number of changed bars of the specified timeseries since the last tick. Equivalent to resolving the number of
  * changed bars in indicators for the current chart by computing:
  *
- *   UnchangedBars = IndicatorCounted()
- *   ChangedBars   = Bars - UnchangedBars
+ *   ValidBars   = IndicatorCounted()
+ *   ChangedBars = Bars - ValidBars
+ *   Bars        = ValidBars + ChangedBars
  *
  * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with a timeseries
  * different from the current one.
@@ -79,7 +80,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
          changedBars = 1;                                                        // a regular tick
       }
       else if (bars==data[i][CB.Bars]) {                                         // number of bars is unchanged but last bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
-         debug("iChangedBars(4)  number of bars unchanged but oldest bar differs, hit the timeseries MAX_CHART_BARS? (bars="+ bars +", lastBar="+ TimeToStr(lastBarTime, TIME_FULL) +", prevLastBar="+ TimeToStr(data[i][CB.LastBarTime], TIME_FULL) +")");
+         if (IsLogInfo()) logInfo("iChangedBars(4)  number of bars unchanged but oldest bar differs, hit the timeseries MAX_CHART_BARS? (bars="+ bars +", lastBar="+ TimeToStr(lastBarTime, TIME_FULL) +", prevLastBar="+ TimeToStr(data[i][CB.LastBarTime], TIME_FULL) +")");
          // find the bar stored in data[i][CB.FirstBarTime]
          int offset = iBarShift(symbol, timeframe, data[i][CB.FirstBarTime], true);
          if (offset == -1) changedBars = bars;                                   // CB.FirstBarTime not found: mark all bars as changed

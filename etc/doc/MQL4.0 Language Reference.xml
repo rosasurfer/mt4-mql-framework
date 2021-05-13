@@ -4735,14 +4735,14 @@ Optional data output mode can be one or combination of:<br/>
       <b>Notes:</b><br/>
       <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
           Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen
-          <span class="global">UnchangedBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
-          - <span class="global">UnchangedBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+          <span class="global">ValidBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
+          - <span class="global">ValidBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
           - <span class="global">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
           Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="global">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
           BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
           (<span class="global">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
           <br/>
-          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span><br/><br/></li>
+          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">ValidBars</span></span><br/><br/></li>
 
       <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
@@ -4766,8 +4766,8 @@ For use of <span class="function">IndicatorCounted</span>() vs <span class="func
 <span class="keyword code">extern</span> <span class="type code">int</span> Periods = 20;
 ...
 <span class="type code">int</span> <span class="core code">start</span>() {
-   <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
-   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
+   <span class="type code">int</span> <span class="global code">ValidBars</span> = <span class="function code">IndicatorCounted</span>();
+   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">ValidBars</span>;<br/>
    <span class="comment">// main loop</span>
    <span class="keyword code">for</span> (<span class="type code">int</span> i=ChangedBars-1; i &gt;= 0; i--) {
       buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);

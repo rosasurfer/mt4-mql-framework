@@ -117,8 +117,8 @@ int start() {
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   ChangedBars    = -1;                                                       // in scripts not available
-   UnchangedBars  = -1;                                                       // ...
+   ValidBars      = -1;                                                       // in scripts not available
+   ChangedBars    = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...
 
    ArrayCopyRates(__rates);
