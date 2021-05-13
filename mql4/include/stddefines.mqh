@@ -28,8 +28,8 @@ string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des 
 int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                         // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                       // Bars = ChangedBars + UnchangedBars
-int      UnchangedBars;                                     // used in indicators only, otherwise IndicatorCounted() is not supported
+int      ValidBars;                                         // it holds: Bars = ValidBars + ChangedBars
+int      ChangedBars;                                       // used in indicators only, otherwise IndicatorCounted() is not supported
 int      ShiftedBars;                                       // used in offline charts only
 
 int      last_error;                                        // last error of the current core function call
