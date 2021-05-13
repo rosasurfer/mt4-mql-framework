@@ -217,7 +217,7 @@ int onTick() {
    if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(ma,            0);
       ArrayInitialize(atr,           0);
       ArrayInitialize(upperBand,     0);

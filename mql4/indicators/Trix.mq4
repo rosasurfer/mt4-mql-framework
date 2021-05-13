@@ -172,7 +172,7 @@ int onTick() {
    if (!ArraySize(trixMain)) return(logDebug("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
       ArrayInitialize(thirdEma,  EMPTY_VALUE);
