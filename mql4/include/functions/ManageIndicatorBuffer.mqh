@@ -35,10 +35,10 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
 
    if (Bars == prevBars) {
       // the number of Bars is unchanged
-      if (Time[Bars-1] != prevOldestBarTime) {                       // the oldest bar changed: bars have been shifted off the end (in self-updating offline charts with MAX_CHART_BARS on each new bar)
-         // TODO !!!
-         // find previous NewestBarTime and shift content accordingly
-         return(!catch("ManageIndicatorBuffer(4)  id="+ id +", Tick="+ Tick +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_NOT_IMPLEMENTED));
+      if (Time[Bars-1] != prevOldestBarTime) {                       // the oldest bar changed and bars have been shifted off the end (e.g. in self-updating offline charts when MAX_CHART_BARS is hit on each new bar)
+         if (!ShiftedBars || Time[ShiftedBars]!=prevNewestBarTime) {
+            return(!catch("ManageIndicatorBuffer(4)  id="+ id +", Tick="+ Tick +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", ShiftedBars="+ ShiftedBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_ILLEGAL_STATE));
+         }
       }
    }
    else if (Bars > prevBars) {
@@ -54,13 +54,12 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
          if (Time[i] == prevNewestBarTime) break;                    // find the index of previous Time[0] aka prevNewestBarTime
       }
       if (i == Bars) return(!catch("ManageIndicatorBuffer(6)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" but previous Time[0] not found", ERR_ILLEGAL_STATE));
-
-      if (IsLogNotice()) logNotice("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
-
       if (i > 0) {                                                   // manually shift the content according to the found Time[0] offset
          ManageIndicatorBuffer.Resize(buffer, ArraySize(buffer)+i, emptyValue);
       }
-      ManageIndicatorBuffer.Resize(buffer, Bars, emptyValue);
+      ManageIndicatorBuffer.Resize(buffer, Bars);
+
+      if (IsLogNotice()) logNotice("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
    }
 
    data[id][IB.Tick         ] = Tick;
@@ -79,13 +78,13 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
  * Adjust the size of a managed timeseries buffer. If size increases new elements are appended at index 0. If size decreases
  * existing elements are removed from the end (the oldest elements).
  *
- * @param  double &buffer[]  - buffer
- * @param  int    newSize    - new buffer size
- * @param  double emptyValue - new buffer elements will be initialized with this value
+ * @param  double &buffer[]             - buffer
+ * @param  int    newSize               - new buffer size
+ * @param  double emptyValue [optional] - new buffer elements will be initialized with this value (default: NULL)
  *
  * @return bool - success status
  */
-bool ManageIndicatorBuffer.Resize(double &buffer[], int newSize, double emptyValue) {
+bool ManageIndicatorBuffer.Resize(double &buffer[], int newSize, double emptyValue = NULL) {
    int oldSize = ArraySize(buffer);
 
    if      (newSize > oldSize) ArraySetAsSeries(buffer, false);   // new elements are added at index 0
