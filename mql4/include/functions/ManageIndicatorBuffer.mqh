@@ -94,21 +94,24 @@ bool ManageIndicatorBuffer.Resize(double &buffer[], int newSize, double emptyVal
    ArrayResize(buffer, newSize);                                  // reallocates memory and keeps existing content (does nothing if the size doesn't change)
    ArraySetAsSeries(buffer, true);
 
-   if (emptyValue != 0) {
-      if (oldSize > 0) {
+   if (newSize > oldSize && emptyValue) {
+      if (!oldSize) {
+         ArrayInitialize(buffer, emptyValue);
+      }
+      else {
          int newBars = newSize-oldSize;
          if (newBars == 1) {
             buffer[0] = emptyValue;                               // a single new bar after a regular BarOpen event
          }
          else {
-            for (int i=newBars-1; i >= 0; i--) {
-               buffer[i] = emptyValue;                            // TODO: data pumping, replace manual initialization with DLL
-            }
+            InitializeDoubleArray(buffer, newSize, emptyValue, oldSize, newBars);
          }
-      }
-      else if (newSize > 0) {
-         ArrayInitialize(buffer, emptyValue);
       }
    }
    return(!catch("ManageIndicatorBuffer.Resize(1)"));
 }
+
+
+#import "rsfMT4Expander.dll"
+   bool InitializeDoubleArray(double values[], int size, double initValue, int from, int count);
+#import
