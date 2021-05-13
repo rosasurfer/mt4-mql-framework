@@ -44,7 +44,7 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
    else if (Bars > prevBars) {
       // the number of Bars increased                                // new bars have been inserted or appended (anywhere, all cases are covered by ChangedBars)
       if (prevBars && Time[Bars-1]!=prevOldestBarTime) {             // the oldest bar changed: bars have been added at the end (data pumping)
-         if (UnchangedBars != 0) return(!catch("ManageIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but UnchangedBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", UnchangedBars="+ UnchangedBars +")", ERR_ILLEGAL_STATE));
+         if (ValidBars != 0) return(!catch("ManageIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but ValidBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", ValidBars="+ ValidBars +")", ERR_ILLEGAL_STATE));
       }
       ManageIndicatorBuffer.Resize(buffer, Bars, emptyValue);
    }

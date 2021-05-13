@@ -134,7 +134,7 @@ int onTick() {
    if (!ArraySize(fisherMain)) return(logDebug("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset all buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
       ArrayInitialize(fisherSection,               0);
       ArrayInitialize(fisherUpper,      EMPTY_VALUE);
