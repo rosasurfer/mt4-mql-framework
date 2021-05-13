@@ -185,7 +185,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(tmaRP)) return(logDebug("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
+   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP, 0);
 
    // reset all buffers before performing a full recalculation
    if (!UnchangedBars) {

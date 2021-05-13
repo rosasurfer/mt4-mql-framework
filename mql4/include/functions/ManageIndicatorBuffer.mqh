@@ -3,12 +3,13 @@
  * can be used but must be managed by the framework. Such additional buffers are for internal calculations only, they can't
  * be drawn on the chart or accessed via iCustom().
  *
- * @param  int    id       - buffer id
- * @param  double buffer[] - buffer
+ * @param  int    id         - buffer id
+ * @param  double buffer[]   - buffer
+ * @param  double emptyValue - buffer value interpreted as "no value"
  *
  * @return bool - success status
  */
-bool ManageIndicatorBuffer(int id, double buffer[]) {
+bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue) {
    // TODO: At the moment the function reallocates memory each time the number of bars changes.
    //       Pre-allocate excess memory and use a dynamic offset to improve the performance of additional buffers.
 
@@ -45,7 +46,7 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
       if (prevBars && Time[Bars-1]!=prevOldestBarTime) {             // the oldest bar changed: bars have been added at the end (data pumping)
          if (UnchangedBars != 0) return(!catch("ManageIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but UnchangedBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", UnchangedBars="+ UnchangedBars +")", ERR_ILLEGAL_STATE));
       }
-      ManageIndicatorBuffer.Resize(buffer, Bars);
+      ManageIndicatorBuffer.Resize(buffer, Bars, emptyValue);
    }
    else /*Bars < prevBars*/ {
       // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ca. 1200 bars)
@@ -56,10 +57,10 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
 
       if (IsLogNotice()) logNotice("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
 
-      if (i > 0) {
-         ManageIndicatorBuffer.Resize(buffer, ArraySize(buffer)+i);  // manually shift the content according to the found Time[0] offset
+      if (i > 0) {                                                   // manually shift the content according to the found Time[0] offset
+         ManageIndicatorBuffer.Resize(buffer, ArraySize(buffer)+i, emptyValue);
       }
-      ManageIndicatorBuffer.Resize(buffer, Bars);
+      ManageIndicatorBuffer.Resize(buffer, Bars, emptyValue);
    }
 
    data[id][IB.Tick         ] = Tick;
@@ -75,15 +76,16 @@ bool ManageIndicatorBuffer(int id, double buffer[]) {
 
 
 /**
- * Adjust the size of a managed timeseries buffer. If size increases, new elements are appended at index 0. If size decreases,
+ * Adjust the size of a managed timeseries buffer. If size increases new elements are appended at index 0. If size decreases
  * existing elements are removed from the end (the oldest elements).
  *
- * @param  double buffer[] - buffer
- * @param  int    newSize  - new buffer size
+ * @param  double &buffer[]  - buffer
+ * @param  int    newSize    - new buffer size
+ * @param  double emptyValue - new buffer elements will be initialized with this value
  *
  * @return bool - success status
  */
-bool ManageIndicatorBuffer.Resize(double buffer[], int newSize) {
+bool ManageIndicatorBuffer.Resize(double &buffer[], int newSize, double emptyValue) {
    int oldSize = ArraySize(buffer);
 
    if      (newSize > oldSize) ArraySetAsSeries(buffer, false);   // new elements are added at index 0
@@ -92,5 +94,10 @@ bool ManageIndicatorBuffer.Resize(double buffer[], int newSize) {
    ArrayResize(buffer, newSize);                                  // reallocates memory and keeps existing content (does nothing if the size doesn't change)
    ArraySetAsSeries(buffer, true);
 
+   if (emptyValue != NULL) {
+      for (int i=newSize-oldSize-1; i >= 0; i--) {                // TODO: move to DLL as the first initialization may be very heavy
+         buffer[i] = emptyValue;
+      }
+   }
    return(!catch("ManageIndicatorBuffer.Resize(1)"));
 }
