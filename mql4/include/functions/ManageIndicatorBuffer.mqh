@@ -3,13 +3,13 @@
  * can be used but must be managed by the framework. Such additional buffers are for internal calculations only, they can't
  * be drawn on the chart or accessed via iCustom().
  *
- * @param  int    id         - buffer id
- * @param  double buffer[]   - buffer
- * @param  double emptyValue - buffer value interpreted as "no value"
+ * @param  int    id                    - buffer id
+ * @param  double buffer[]              - buffer
+ * @param  double emptyValue [optional] - buffer value interpreted as "no value" (default: 0)
  *
  * @return bool - success status
  */
-bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue) {
+bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
    // TODO: At the moment the function reallocates memory each time the number of bars changes.
    //       Pre-allocate excess memory and use a dynamic offset to improve the performance of additional buffers.
 
@@ -94,9 +94,20 @@ bool ManageIndicatorBuffer.Resize(double &buffer[], int newSize, double emptyVal
    ArrayResize(buffer, newSize);                                  // reallocates memory and keeps existing content (does nothing if the size doesn't change)
    ArraySetAsSeries(buffer, true);
 
-   if (emptyValue != NULL) {
-      for (int i=newSize-oldSize-1; i >= 0; i--) {                // TODO: move to DLL as the first initialization may be very heavy
-         buffer[i] = emptyValue;
+   if (emptyValue != 0) {
+      if (oldSize > 0) {
+         int newBars = newSize-oldSize;
+         if (newBars == 1) {
+            buffer[0] = emptyValue;                               // a single new bar after a regular BarOpen event
+         }
+         else {
+            for (int i=newBars-1; i >= 0; i--) {
+               buffer[i] = emptyValue;                            // TODO: data pumping, replace manual initialization with DLL
+            }
+         }
+      }
+      else if (newSize > 0) {
+         ArrayInitialize(buffer, emptyValue);
       }
    }
    return(!catch("ManageIndicatorBuffer.Resize(1)"));
