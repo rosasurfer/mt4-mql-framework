@@ -59,7 +59,7 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
       }
       ManageIndicatorBuffer.Resize(buffer, Bars);
 
-      if (IsLogNotice()) logNotice("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
+      if (IsLogInfo()) logInfo("ManageIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
    }
 
    data[id][IB.Tick         ] = Tick;

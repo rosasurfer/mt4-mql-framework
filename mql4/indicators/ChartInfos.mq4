@@ -275,7 +275,7 @@ bool CheckLastError(string location) {
  * Messageformat: "cmd=account:[{companyId}:{account}]" - Schaltet den externen Account um.
  *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
  *                "cmd=ToggleTradeHistory"              - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleAuM"                       - Schaltet die Assets-under-Management-Anzeige ein/aus.
+ *                "cmd=ToggleAccountBalance"            - Schaltet die AccountBalance-Anzeige ein/aus.
  */
 bool onCommand(string commands[]) {
    int size = ArraySize(commands);
@@ -292,8 +292,8 @@ bool onCommand(string commands[]) {
             return(false);
          continue;
       }
-      if (commands[i] == "cmd=ToggleAuM") {
-         if (!ToggleAuM())
+      if (commands[i] == "cmd=ToggleAccountBalance") {
+         if (!ToggleAccountBalance())
             return(false);
          continue;
       }
@@ -889,49 +889,48 @@ bool Positions.ToggleProfits() {
 
 
 /**
- * Schaltet die Assets-under-Management-Anzeige ein/aus.
+ * Toggle the display of the account balance.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool ToggleAuM() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetAuMDisplayStatus();
+bool ToggleAccountBalance() {
+   // get current display status and toggle it
+   bool enabled = !GetAccountBalanceDisplayStatus();
 
-   // Status ON
-   if (status) {
-      mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number, /*refresh=*/true);
-      string sExternalAssets = " ";
-
-      if (mode.intern) sExternalAssets = ifString(!mm.externalAssets, "Balance: ", "Assets: ") + DoubleToStr(AccountBalance() + mm.externalAssets, 2) +" "+ AccountCurrency();
-      else { status = false; PlaySoundEx("Plonk.wav"); }             // not yet implemented
-
-      ObjectSetText(label.externalAssets, sExternalAssets, 9, "Tahoma", SlateGray);
+   if (enabled) {
+      string sBalance = " ";
+      if (mode.intern) {
+         sBalance = "Balance: " + DoubleToStr(AccountBalance(), 2) +" "+ AccountCurrency();
+      }
+      else {
+         enabled = false;                                      // mode.extern not yet implemented
+         PlaySoundEx("Plonk.wav");
+      }
+      ObjectSetText(label.externalAssets, sBalance, 9, "Tahoma", SlateGray);
    }
-
-   // Status OFF
    else {
       ObjectSetText(label.externalAssets, " ", 1);
    }
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on Object::onDrag() or opened "Properties" dialog
-      return(!catch("ToggleAuM(1)", error));
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on Object::onDrag() or opened "Properties" dialog
+      return(!catch("AccountBalance(1)", error));
 
-   // Anzeigestatus im Chart speichern
-   SetAuMDisplayStatus(status);
+   // store current display status
+   SetAuMDisplayStatus(enabled);
 
    if (This.IsTesting())
       WindowRedraw();
-   return(!catch("ToggleAuM(2)"));
+   return(!catch("AccountBalance(2)"));
 }
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen AuM-Anzeigestatus aus.
+ * Return the stored account balance display status.
  *
- * @return bool - Status: ON/OFF
+ * @return bool - status: enabled/disabled
  */
-bool GetAuMDisplayStatus() {
+bool GetAccountBalanceDisplayStatus() {
    // TODO: Status statt im Chart im Fenster lesen/schreiben
    string label = ProgramName() +".AuMDisplay.status";
    if (ObjectFind(label) != -1)
