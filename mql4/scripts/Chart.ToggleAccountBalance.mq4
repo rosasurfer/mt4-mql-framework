@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Assets-under-Management-Anzeige umzuschalten.
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die AccountBalance-Anzeige umzuschalten.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -14,6 +14,6 @@ int __DeinitFlags[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "cmd=ToggleAuM");
+   SendChartCommand("ChartInfos.command", "cmd=ToggleAccountBalance");
    return(catch("onStart(1)"));
 }
