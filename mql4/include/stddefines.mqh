@@ -41,7 +41,6 @@ int      stack.OrderSelect[];                               // FIFO stack of sel
 // special constants
 #define NULL                        0
 #define EMPTY_STR                   ""
-#define WHOLE_ARRAY                 0                       // MetaQuotes
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
 #define HTML_TAB                    "&Tab;"                 // tab                        \t
