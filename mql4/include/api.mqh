@@ -655,7 +655,6 @@ string   GetSymbolNameStrict(string symbol);;
 string   GetTempPath();;
 bool     GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
 string   GetWindowsShortcutTarget(string lnkFilename);;
-string   GetWindowText(int hWnd);;
 datetime GmtToFxtTime(datetime gmtTime);;
 datetime GmtToServerTime(datetime gmtTime);;
 color    HSLToRGB(double hsl[3]);;
@@ -832,6 +831,7 @@ int      GetIniKeysA(string fileName, string section, int &buffer[], int bufferS
 int      GetIniSectionsA(string fileName, int &buffer[], int bufferSize);;
 string   GetIniStringA(string fileName, string section, string key, string defaultValue);;
 string   GetIniStringRawA(string fileName, string section, string key, string defaultValue);;
+string   GetInternalWindowTextA(int hWnd);;
 int      GetIntsAddress(int &array[]);;
 int      GetLastWin32Error();;
 datetime GetLocalTime();;
