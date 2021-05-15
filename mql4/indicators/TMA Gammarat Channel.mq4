@@ -88,6 +88,9 @@ double tmaWindow[];
 string indicatorName;
 string legendLabel;
 
+// debug settings                                  // see ::afterInit()
+bool   test.onSignalPause = false;                 // whether to pause a test on a signal
+
 
 /**
  * Initialization
@@ -162,6 +165,20 @@ int onInit() {
    ArrayResize(tmaWindow, maPeriods);
 
    return(catch("onInit(9)"));
+}
+
+
+/**
+ * Initialization postprocessing. Called only if the reason-specific handler returned without error.
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   if (This.IsTesting()) {                                  // read test configuration
+      string section = ProgramName() +".Tester";
+      test.onSignalPause = GetConfigBool(section, "OnSignalPause", false);
+   }
+   return(catch("afterInit(1)"));
 }
 
 
@@ -594,6 +611,10 @@ void onSignal(int signal, string msg) {
       lastSignal = signal;
       lastTime = Time[0];
       logNotice(" "+ msg);
+
+      if (This.IsTesting()) {                         // pause a test if configured
+         if (__isChart && test.onSignalPause) Tester.Pause("onSignal(1)");
+      }
    }
 }
 

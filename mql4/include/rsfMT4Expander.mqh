@@ -153,6 +153,7 @@
    string   RemoveWindowStringA(int hWnd, string name);
 
    // Win32 helpers
+   string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
 
    // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.

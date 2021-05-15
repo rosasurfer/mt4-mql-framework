@@ -453,10 +453,12 @@ string GetClassName(int hWnd) {
 
 
 /**
- * Ob das aktuelle Programm im Tester läuft und der VisualMode-Status aktiv ist.
+ * Whether the current program is executed in the tester or on a test chart with VisualMode=On.
  *
- * Bugfix für IsVisualMode(). IsVisualMode() wird in Libraries zwischen aufeinanderfolgenden Tests nicht zurückgesetzt und
- * gibt bis zur Neuinitialisierung der Library den Status des ersten Tests zurück.
+ * Replacement for IsVisualMode() in
+ *  - indicators: not supported
+ *  - scripts:    not supported
+ *  - libraries:  broken (returns always the value of the first test, irrespective of changes)
  *
  * @return bool
  */
@@ -2984,7 +2986,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    static int sublevel;
    if (!sublevel) {
       wndClass = GetClassName(hWnd);
-      wndTitle = GetWindowText(hWnd);
+      wndTitle = GetInternalWindowTextA(hWnd);
       ctrlId   = GetDlgCtrlID(hWnd);
       debug("EnumChildWindows()  "+ IntToHexStr(hWnd) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
    }
@@ -2995,7 +2997,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    while (hWndNext != 0) {
       i++;
       wndClass = GetClassName(hWndNext);
-      wndTitle = GetWindowText(hWndNext);
+      wndTitle = GetInternalWindowTextA(hWndNext);
       ctrlId   = GetDlgCtrlID(hWndNext);
       debug("EnumChildWindows()  "+ padding +"-> "+ IntToHexStr(hWndNext) +": "+ wndClass +" \""+ wndTitle +"\""+ ifString(ctrlId, " ("+ ctrlId +")", ""));
 
@@ -3679,8 +3681,8 @@ int Tester.Pause(string location = "") {
    if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
- //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread lock which is
-   return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
+ //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread dead-lock
+   return(NO_ERROR);                                                    // which is accounted for by Tester.IsStopped()
 }
 
 
@@ -3718,10 +3720,10 @@ bool Tester.IsPaused() {
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
 
-   int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
-   int hWnd = GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_PAUSERESUME);
+   int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
+   int hWndPauseResumeBtn = GetDlgItem(hWndTesterSettings, IDC_TESTER_SETTINGS_PAUSERESUME);
 
-   return(GetWindowText(hWnd) == ">>");
+   return(GetInternalWindowTextA(hWndPauseResumeBtn) == ">>");
 }
 
 
@@ -3734,8 +3736,9 @@ bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
-      int hWndSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
-      return(GetWindowText(GetDlgItem(hWndSettings, IDC_TESTER_SETTINGS_STARTSTOP)) == "Start");
+      int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
+      int hWndStartStopBtn   = GetDlgItem(hWndTesterSettings, IDC_TESTER_SETTINGS_STARTSTOP);
+      return(GetInternalWindowTextA(hWndStartStopBtn) == "Start");
    }
    return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);     // if in deinit() the tester was already stopped,
 }                                                                       // no matter whether in an expert or an indicator
@@ -7007,7 +7010,6 @@ void __DummyCalls() {
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetAccountServer();
    string   GetServerTimezone();
-   string   GetWindowText(int hWnd);
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
