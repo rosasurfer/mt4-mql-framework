@@ -1933,30 +1933,38 @@ double RoundCeil(double number, int decimals = 0) {
 
 
 /**
- * Multiply two integer values and prevent an integer overflow.
+ * Multiply two integer values and detect an integer overflow.
  *
- * @param  int a - first operand
- * @param  int b - second operand
+ * @param  int  a                             - first operand
+ * @param  int  b                             - second operand
+ * @param  bool boundaryOnOverflow [optional] - whether to return the boundary value (INT_MIN, INT_MAX) on an overflow
+ *                                              (default: runtime error)
  *
- * @return int - multiplication result or maximum value in direction of the overflow (INT_MIN or INT_MAX)
+ * @return int - result or NULL (0) if an integer overflow occurred and the boundary flag was not set
  */
-int Mul(int a, int b) {
+int Mul(int a, int b, bool boundaryOnOverflow = false) {
+   boundaryOnOverflow = boundaryOnOverflow!=0;
+
    // @see  https://www.geeksforgeeks.org/check-integer-overflow-multiplication/
    if ( !a  ||  !b ) return(0);
    if (a==1 || b==1) return(a * b);
 
    int result = a * b;
 
-   if (Sign(a) == Sign(b)) {              // positive result
-      if (result > 0 && result/a == b)
-         return(result);
-      return(INT_MAX);
+   if ((a > 0) == (b > 0)) {              // operands have the same sign: positive result
+      if (result > 0) {
+         if (result/a == b) return(result);
+      }
+      if (boundaryOnOverflow) return(INT_MAX);
    }
-   else {                                 // negative result
-      if (result < 0 && result/a == b)
-         return(result);
-      return(INT_MIN);
+   else {                                 // operands have different sign: negative result
+      if (result < 0) {
+         if (result/a == b) return(result);
+      }
+      if (boundaryOnOverflow) return(INT_MIN);
    }
+
+   return(!catch("Mul(1)  integer overflow caused by a * b", ERR_RUNTIME_ERROR));
 }
 
 

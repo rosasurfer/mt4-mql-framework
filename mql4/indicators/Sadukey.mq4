@@ -324,7 +324,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
    if (timeframe == currentTimeframe) {
       // the displayed timeframe equals the chart timeframe
       static int _maxValues = -1; if (_maxValues < 0) {
-         _maxValues = Mul(maxValues, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1));
+         _maxValues = Mul(maxValues, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1), /*boundaryOnOverflow=*/true);
       }
       changedBars = Min(ChangedBars, _maxValues);
       startBar    = Min(changedBars-1, Bars-filterLength);
