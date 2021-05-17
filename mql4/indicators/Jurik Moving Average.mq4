@@ -1,7 +1,7 @@
 /**
  * JMA - Jurik Moving Average
  *
- * A non-repainting version with sources based on the original Jurik algorythm published by Nikolay Kositsin.
+ * A non-repainting version with sources based on the original Jurik algorithm published by Nikolay Kositsin.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
