@@ -1,16 +1,14 @@
 /**
  * TMA Gammarat Channel
  *
- * An asymmetric non-standard deviation channel around a shifted - thus repainting - Triangular Moving Average (TMA). The TMA
- * is a twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
+ * An asymmetric non-standard deviation channel around a shifted and repainting Triangular Moving Average (TMA). The TMA is a
+ * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
  *
  *  TMA(n) = SMA(floor(n/2)+1) of SMA(ceil(n/2))
  *
- * @link    https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html#             [Triangular Moving Average]
- * @link    https://forex-station.com/viewtopic.php?f=579496&t=8423458#                  [Centered Triangular Moving Average]
- * @link    http://www.gammarat.com/Forex/#                                                                  [GammaRat Forex]
- * @author  Mladen Rakic (centered TMA algorithm)
- * @author  Chris Brobeck aka gammarat (channel algorithm)
+ * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html#               [Triangular Moving Average]
+ * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458#                    [Centered Triangular Moving Average]
+ * @link  http://www.gammarat.com/Forex/#                                                                    [GammaRat Forex]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -18,8 +16,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods       = 9;
-extern int    MA.HalfLength    = 55;
+extern int    MA.Periods       = 9;                // 111
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 
 extern double Bands.Deviations = 2.5;
@@ -98,16 +95,10 @@ bool   test.onSignalPause = false;                 // whether to pause a test on
  */
 int onInit() {
    // validate inputs
-   // MA.Periods / MA.HalfLength
-   if (!MA.Periods) {
-      if (MA.HalfLength < 1)                                  return(catch("onInit(1)  invalid input parameter MA.HalfLength: "+ MA.HalfLength, ERR_INVALID_INPUT_PARAMETER));
-      maPeriods = 2 * MA.HalfLength + 1;
-   }
-   else {
-      if (MA.Periods < 1)                                     return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      if (MA.Periods & 1 == 0)                                return(catch("onInit(3)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
-      maPeriods = MA.Periods;
-   }
+   // MA.Periods
+   if (MA.Periods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods & 1 == 0)                                   return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
+   maPeriods = MA.Periods;
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -116,17 +107,17 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Bands.Deviations
-   if (Bands.Deviations < 0)                                  return(catch("onInit(5)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.Deviations < 0)                                  return(catch("onInit(4)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
-   if (Bands.LineWidth < 0)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5)                                   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(8)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(7)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -163,7 +154,7 @@ int onInit() {
    // initialize global vars
    ArrayResize(tmaWindow, maPeriods);
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -535,7 +526,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                logInfo("CheckSignals(2.2)  upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
                lastHigh = High[0];                                            // reset the current high
             }
-            else logDebug("CheckSignals(2.3)  upper band crossed but not the first crossing");
+            else logDebug("CheckSignals(2.3)  upper band crossed but it's not the first crossing");
          }
          lastTimeUp = Time[0];
       }
@@ -551,7 +542,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                logInfo("CheckSignals(2.4)  lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
                lastLow = Low[0];                                              // reset the current low
             }
-            else logDebug("CheckSignals(2.5)  lower band crossed but not the first crossing");
+            else logDebug("CheckSignals(2.5)  lower band crossed but it's not the first crossing");
          }
          lastTimeDn = Time[0];
       }
@@ -572,8 +563,8 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
    // finally detect finished price reversals
    if (ChangedBars == 2) {
-      if      (reversalAge[1] == -1) logNotice("CheckSignals(5)  new price reversal: short");
-      else if (reversalAge[1] == +1) logNotice("CheckSignals(6)  new price reversal: long");
+      if      (EQ(reversalAge[1], -1)) logNotice("CheckSignals(5)  price reversal: short");
+      else if (EQ(reversalAge[1], +1)) logNotice("CheckSignals(6)  price reversal: long");
    }
 
    return(!catch("CheckSignals(7)"));
@@ -787,7 +778,6 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("MA.Periods=",       MA.Periods,                           ";", NL,
-                            "MA.HalfLength=",    MA.HalfLength,                        ";", NL,
                             "MA.AppliedPrice=",  DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
                             "Bands.Deviations=", NumberToStr(Bands.Deviations, ".1+"), ";", NL,
                             "Bands.Color=",      ColorToStr(Bands.Color),              ";", NL,
