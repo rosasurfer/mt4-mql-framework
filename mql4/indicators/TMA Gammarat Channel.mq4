@@ -523,7 +523,6 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                   onSignal("upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
                   lastHigh = High[0];                                         // reset the current high
                }
-               else logDebug("CheckSignals(2.2)  upper band crossed but not the first crossing");
             }
          }
          lastTimeUp = Time[0];
@@ -537,7 +536,6 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                   onSignal("lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
                   lastLow = Low[0];                                           // reset the current low
                }
-               else logDebug("CheckSignals(2.3)  lower band crossed but not the first crossing");
             }
          }
          lastTimeDn = Time[0];
@@ -559,8 +557,8 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
    // finally detect finished price reversals
    if (ChangedBars == 2) {
-      if      (EQ(reversalAge[1], -1)) logNotice("CheckSignals(5)  price reversal: short");
-      else if (EQ(reversalAge[1], +1)) logNotice("CheckSignals(6)  price reversal: long");
+      if      (EQ(reversalAge[1], -1)) logInfo("CheckSignals(5)  price reversal SHORT");
+      else if (EQ(reversalAge[1], +1)) logInfo("CheckSignals(6)  price reversal LONG");
    }
 
    return(!catch("CheckSignals(7)"));
