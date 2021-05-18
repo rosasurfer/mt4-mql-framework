@@ -477,7 +477,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
    static double lastBid, lastHigh, lastLow;                                  // last prices
    static datetime lastTimeUp, lastTimeDn;                                    // bar opentimes of last crossings
-   int iRef, iNull;
+   int iMaCross, iNull;
 
    // reinitialize last high/Low
    if (ChangedBars > 2 || !lastHigh) {
@@ -492,7 +492,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
          if (reversalAge[i] < 0) {                                            // always -1 or +1
             if (lastShortReversal == -1) {
-               lastShortReversal = i;                                         // resolve the previous high
+               lastShortReversal = i;                                         // resolve the previous high                    // TODO: IsFullyBelow() is not enough
                if (!IsFullyBelow(upperBand, lastShortReversal+1, Bars-1, n)) return(!catch("CheckSignals(1)  IsFullyBelow(buffer, from="+ lastShortReversal +" ("+ TimeToStr(Time[lastShortReversal], TIME_MINUTES) +"), ...) => FALSE", ERR_ILLEGAL_STATE));
                lastHigh = High[iHighest(NULL, NULL, MODE_HIGH, n, 0)];
 
@@ -501,7 +501,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
          }
          else {
             if (lastLongReversal == -1) {
-               lastLongReversal = i;                                          // resolve the previous low
+               lastLongReversal = i;                                          // resolve the previous low                     // TODO: IsFullyAbove() is not enough
                if (!IsFullyAbove(lowerBand, lastLongReversal+1, Bars-1, n)) return(!catch("CheckSignals(2)  IsFullyAbove(buffer, from="+ lastLongReversal +" ("+ TimeToStr(Time[lastLongReversal], TIME_MINUTES) +"), ...) => FALSE", ERR_ILLEGAL_STATE));
                lastLow = Low[iLowest(NULL, NULL, MODE_LOW, n, 0)];
 
@@ -513,20 +513,18 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
       if (!lastLow)  lastLow  = INT_MIN;
    }
 
-   // first detect new channel crossings (higher signal priority), then new high/lows (lower signal priority)
+   // first detect new channel crossings (higher priority), then new high/lows (lower priority)
    if (lastBid != NULL) {
       // upper band crossings
       if (lastBid < upperBand[0] && Bid > upperBand[0]) {                     // price crossed the upper band
          if (Time[0] > lastTimeUp) {                                          // process only the first crossing per bar
-            if (reversalAge[0] > 0) iRef = reversalAge[0]-1;                  // the last reversal was long
-            else                    IsCross(ma, 0, -reversalAge[0]-1, iRef);  // the last reversal was short, check whether the MA was crossed in between
-
-            if (!IsPartiallyAbove(upperBand, 1, iRef, iNull)) {               // signal if there was no previous crossing
-               //onSignal("upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
-               logInfo("CheckSignals(2.2)  upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
-               lastHigh = High[0];                                            // reset the current high
+            if (IsCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {        // get the last MA cross
+               if (!IsPartiallyAbove(upperBand, 1, iMaCross, iNull)) {        // signal if the first crossing since the MA cross
+                  onSignal("upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
+                  lastHigh = High[0];                                         // reset the current high
+               }
+               else logDebug("CheckSignals(2.2)  upper band crossed but not the first crossing");
             }
-            else logDebug("CheckSignals(2.3)  upper band crossed but it's not the first crossing");
          }
          lastTimeUp = Time[0];
       }
@@ -534,15 +532,13 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
       // lower band crossings
       if (lastBid > lowerBand[0] && Bid < lowerBand[0]) {                     // price crossed the lower band
          if (Time[0] > lastTimeDn) {                                          // process only the first crossing per bar
-            if (reversalAge[0] < 0) iRef = -reversalAge[0]-1;                 // the last reversal was short
-            else                    IsCross(ma, 0, reversalAge[0]-1, iRef);   // the last reversal was long, check whether the MA was crossed in between
-
-            if (!IsPartiallyBelow(lowerBand, 1, iRef, iNull)) {               // signal if there was no previous crossing
-               //onSignal("lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
-               logInfo("CheckSignals(2.4)  lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
-               lastLow = Low[0];                                              // reset the current low
+            if (IsCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {        // get the last MA cross
+               if (!IsPartiallyBelow(lowerBand, 1, iMaCross, iNull)) {        // signal if the first crossing since the MA cross
+                  onSignal("lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
+                  lastLow = Low[0];                                           // reset the current low
+               }
+               else logDebug("CheckSignals(2.3)  lower band crossed but not the first crossing");
             }
-            else logDebug("CheckSignals(2.5)  lower band crossed but it's not the first crossing");
          }
          lastTimeDn = Time[0];
       }
@@ -740,7 +736,8 @@ bool IsPartiallyBelow(double buffer[], int from, int to, int &bar) {
  *
  */
 void onSignal(string msg) {
-   if (IsLogNotice()) logNotice(" "+ msg);
+   //if (IsLogNotice()) logNotice(" "+ msg);
+   if (IsLogInfo()) logInfo(" "+ msg);
 
    if (This.IsTesting()) {                            // pause a test if configured
       if (__isChart && test.onSignalPause) Tester.Pause("onSignal(1)");
