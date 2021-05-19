@@ -399,7 +399,7 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
  	for (int i=startbar; i >= 0; i--) {
  	   if (!lowerBand[i+1]) continue;
 
-      bool isCross, longReversal=false, shortReversal=false, bullishPattern=false, bearishPattern=IsBearishPattern(i);
+      bool wasCross, longReversal=false, shortReversal=false, bullishPattern=false, bearishPattern=IsBearishPattern(i);
       if (!bearishPattern) bullishPattern = IsBullishPattern(i);
  	   int iMaCross, iCurrMax, iCurrMin, iPrevMax, iPrevMin, iNull;      // bar index of TMA cross and swing extrems
 
@@ -407,10 +407,10 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
       if (reversalAge[i+1] < 0) {                                       // previous short reversal
          // check for another short or a new long reversal
          if (bearishPattern) {
-            isCross = IsCross(ma, i+1, i-reversalAge[i+1]-1, iMaCross);
+            wasCross = WasPriceCross(ma, i+1, i-reversalAge[i+1]-1, iMaCross);
 
-            if (IsPartiallyAbove(upperBand, i, ifInt(isCross, iMaCross-1, i-reversalAge[i+1]-1), iNull)) {
-               if (!isCross) {
+            if (WasPriceAbove(upperBand, i, ifInt(wasCross, iMaCross-1, i-reversalAge[i+1]-1), iNull)) {
+               if (!wasCross) {
                   iCurrMax = iHighest(NULL, NULL, MODE_HIGH, -reversalAge[i+1], i);
                   iPrevMax = iHighest(NULL, NULL, MODE_HIGH, MathAbs(reversalAge[_int(i-reversalAge[i+1]+1)]), i-reversalAge[i+1]);
                   shortReversal = (High[iCurrMax] > High[iPrevMax]);    // the current swing exceeds the previous one
@@ -418,15 +418,15 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
                else shortReversal = true;
             }
          }
-         else if (bullishPattern) longReversal = IsPartiallyBelow(lowerBand, i, i-reversalAge[i+1]-1, iNull);
+         else if (bullishPattern) longReversal = WasPriceBelow(lowerBand, i, i-reversalAge[i+1]-1, iNull);
       }
       else if (reversalAge[i+1] > 0) {                                  // previous long reversal
          // check for another long or a new short reversal
          if (bullishPattern) {
-            isCross = IsCross(ma, i+1, i+reversalAge[i+1]-1, iMaCross);
+            wasCross = WasPriceCross(ma, i+1, i+reversalAge[i+1]-1, iMaCross);
 
-            if (IsPartiallyBelow(lowerBand, i, ifInt(isCross, iMaCross-1, i+reversalAge[i+1]-1), iNull)) {
-               if (!isCross) {
+            if (WasPriceBelow(lowerBand, i, ifInt(wasCross, iMaCross-1, i+reversalAge[i+1]-1), iNull)) {
+               if (!wasCross) {
                   iCurrMin = iLowest(NULL, NULL, MODE_LOW, reversalAge[i+1], i);
                   iPrevMin = iLowest(NULL, NULL, MODE_LOW, MathAbs(reversalAge[_int(i+reversalAge[i+1]+1)]), i+reversalAge[i+1]);
                   longReversal = (Low[iCurrMin] < Low[iPrevMin]);       // the current swing exceeds the previous one
@@ -434,11 +434,11 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
                else longReversal = true;
             }
          }
-         else if (bearishPattern) shortReversal = IsPartiallyAbove(upperBand, i, i+reversalAge[i+1]-1, iNull);
+         else if (bearishPattern) shortReversal = WasPriceAbove(upperBand, i, i+reversalAge[i+1]-1, iNull);
       }
       else {                                                            // no previous signal
-         if      (bullishPattern) longReversal  = IsPartiallyBelow(lowerBand, i, i+1, iNull);
-         else if (bearishPattern) shortReversal = IsPartiallyAbove(upperBand, i, i+1, iNull);
+         if      (bullishPattern) longReversal  = WasPriceBelow(lowerBand, i, i+1, iNull);
+         else if (bearishPattern) shortReversal = WasPriceAbove(upperBand, i, i+1, iNull);
       }
 
       // set marker and update reversal age
@@ -492,20 +492,20 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
          if (reversalAge[i] < 0) {                                            // always -1 or +1
             if (lastShortReversal == -1) {
-               lastShortReversal = i;                                         // resolve the previous high                    // TODO: IsFullyBelow() is not enough
-               if (!IsFullyBelow(upperBand, lastShortReversal+1, Bars-1, n)) return(!catch("CheckSignals(1)  IsFullyBelow(buffer, from="+ lastShortReversal +" ("+ TimeToStr(Time[lastShortReversal], TIME_MINUTES) +"), ...) => FALSE", ERR_ILLEGAL_STATE));
+               lastShortReversal = i;                                         // resolve the previous high
+               WasPriceAbove(upperBand, lastShortReversal, Bars-1, n);        // find the first price above the band
+               WasBarBelow(upperBand, n+1, Bars-1, n);                        // find the next full bar below the band
                lastHigh = High[iHighest(NULL, NULL, MODE_HIGH, n, 0)];
-
-               logDebug("CheckSignals(1.1)  lastShort="+ lastShortReversal +" ("+ TimeToStr(Time[lastShortReversal], TIME_MINUTES) +")  lastBelowUpper="+ n +" ("+ TimeToStr(Time[n], TIME_MINUTES) +")  H="+ NumberToStr(lastHigh, PriceFormat));
+               if (IsLogDebug()) logDebug("CheckSignals(0.1)  lastShortReversal="+ TimeToStr(Time[lastShortReversal], TIME_MINUTES) +"  lastBarBelowUpperBand="+ TimeToStr(Time[n], TIME_MINUTES) +"  H="+ NumberToStr(lastHigh, PriceFormat));
             }
          }
          else {
             if (lastLongReversal == -1) {
-               lastLongReversal = i;                                          // resolve the previous low                     // TODO: IsFullyAbove() is not enough
-               if (!IsFullyAbove(lowerBand, lastLongReversal+1, Bars-1, n)) return(!catch("CheckSignals(2)  IsFullyAbove(buffer, from="+ lastLongReversal +" ("+ TimeToStr(Time[lastLongReversal], TIME_MINUTES) +"), ...) => FALSE", ERR_ILLEGAL_STATE));
+               lastLongReversal = i;                                          // resolve the previous low
+               WasPriceBelow(lowerBand, lastLongReversal, Bars-1, n);         // find the first price bar below the band
+               WasBarAbove(lowerBand, n+1, Bars-1, n);                        // find the next full bar above the band
                lastLow = Low[iLowest(NULL, NULL, MODE_LOW, n, 0)];
-
-               logDebug("CheckSignals(2.1)  lastLong="+ lastLongReversal +" ("+ TimeToStr(Time[lastLongReversal], TIME_MINUTES) +")  lastAboveLower="+ n +" ("+ TimeToStr(Time[n], TIME_MINUTES) +")  L="+ NumberToStr(lastLow, PriceFormat));
+               if (IsLogDebug()) logDebug("CheckSignals(0.2)  lastLongReversal="+ TimeToStr(Time[lastLongReversal], TIME_MINUTES) +"  lastBarAboveLowerBand="+ TimeToStr(Time[n], TIME_MINUTES) +"  L="+ NumberToStr(lastLow, PriceFormat));
             }
          }
       }
@@ -513,14 +513,14 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
       if (!lastLow)  lastLow  = INT_MIN;
    }
 
-   // first detect new channel crossings (higher priority), then new high/lows (lower priority)
+   // detect new channel crossings (higher priority) and new high/lows (lower priority)
    if (lastBid != NULL) {
       // upper band crossings
       if (lastBid < upperBand[0] && Bid > upperBand[0]) {                     // price crossed the upper band
-         if (Time[0] > lastTimeUp) {                                          // process only the first crossing per bar
-            if (IsCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {        // get the last MA cross
-               if (!IsPartiallyAbove(upperBand, 1, iMaCross, iNull)) {        // signal if the first crossing since the MA cross
-                  onSignal("upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
+         if (Time[0] > lastTimeUp) {                                          // handle only the first crossing per bar
+            if (WasPriceCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {  // get the last MA cross
+               if (!WasPriceAbove(upperBand, 1, iMaCross, iNull)) {           // signal if the first crossing since the MA cross
+                  onNewCrossing("upper band crossing at "+ NumberToStr(upperBand[0], PriceFormat));
                   lastHigh = High[0];                                         // reset the current high
                }
             }
@@ -530,10 +530,10 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
       // lower band crossings
       if (lastBid > lowerBand[0] && Bid < lowerBand[0]) {                     // price crossed the lower band
-         if (Time[0] > lastTimeDn) {                                          // process only the first crossing per bar
-            if (IsCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {        // get the last MA cross
-               if (!IsPartiallyBelow(lowerBand, 1, iMaCross, iNull)) {        // signal if the first crossing since the MA cross
-                  onSignal("lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
+         if (Time[0] > lastTimeDn) {                                          // handle only the first crossing per bar
+            if (WasPriceCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {  // get the last MA cross
+               if (!WasPriceBelow(lowerBand, 1, iMaCross, iNull)) {           // signal if the first crossing since the MA cross
+                  onNewCrossing("lower band crossing at "+ NumberToStr(lowerBand[0], PriceFormat));
                   lastLow = Low[0];                                           // reset the current low
                }
             }
@@ -541,29 +541,18 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
          lastTimeDn = Time[0];
       }
 
-      // new highs
-      if (Bid > lastHigh) {
-         logInfo("CheckSignals(3)  new high: Bid="+ NumberToStr(Bid, PriceFormat));
-         lastHigh = High[0];                                                  // update the current high
-      }
-
-      // new lows
-      if (Bid < lastLow) {
-         logInfo("CheckSignals(4)  new low: Bid="+ NumberToStr(Bid, PriceFormat));
-         lastLow = Low[0];                                                    // update the current low
-      }
+      // new highs/lows
+      if (Bid > lastHigh) { onNewHigh(); lastHigh = High[0]; }                // update the current high
+      if (Bid < lastLow)  { onNewLow();  lastLow  = Low[0];  }                // update the current low
    }
    lastBid = Bid;
 
    // finally detect finished price reversals
    if (ChangedBars == 2) {
-      if      (EQ(reversalAge[1], -1)) logInfo("CheckSignals(5)  price reversal SHORT");
-      else if (EQ(reversalAge[1], +1)) logInfo("CheckSignals(6)  price reversal LONG");
+      if (Abs(reversalAge[1]) == 1) logInfo("CheckSignals(1)  price reversal "+ ifString(reversalAge[1] > 0, "LONG", "SHORT"));
    }
 
-   return(!catch("CheckSignals(7)"));
-
-   onSignal(NULL); // dummy call
+   return(!catch("CheckSignals(2)"));
 }
 
 
@@ -603,6 +592,7 @@ double GetLWMA(int bar) {
  * @return bool
  */
 bool IsBullishPattern(int bar) {
+   if (bar >= Bars || bar < 0) return(false);
    return(Open[bar] < Close[bar] || (EQ(Open[bar], Close[bar]) && Close[bar+1] < Close[bar]));
 }
 
@@ -615,12 +605,63 @@ bool IsBullishPattern(int bar) {
  * @return bool
  */
 bool IsBearishPattern(int bar) {
+   if (bar >= Bars || bar < 0) return(false);
    return(Open[bar] > Close[bar] || (EQ(Open[bar], Close[bar]) && Close[bar+1] > Close[bar]));
 }
 
 
 /**
- * Whether a bar crossed the given indicator line in the specified bar range.
+ * Whether price in the specified bar range was at least once above the given indicator line.
+ *
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ *
+ * @return bool
+ */
+bool WasPriceAbove(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
+   for (int i=from; i <= to; i++) {
+      if (High[i] >= buffer[i]) {
+         bar = i;
+         break;
+      }
+   }
+   return(bar != -1);
+}
+
+
+/**
+ * Whether price in the specified bar range was at least once below the given indicator line.
+ *
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ *
+ * @return bool
+ */
+bool WasPriceBelow(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
+   for (int i=from; i <= to; i++) {
+      if (Low[i] <= buffer[i]) {
+         bar = i;
+         break;
+      }
+   }
+   return(bar != -1);
+}
+
+
+/**
+ * Whether price in the specified bar range crossed the given indicator line.
  *
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
@@ -629,8 +670,11 @@ bool IsBearishPattern(int bar) {
  *
  * @return bool
  */
-bool IsCross(double buffer[], int from, int to, int &bar) {
+bool WasPriceCross(double buffer[], int from, int to, int &bar) {
    bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
       if (High[i] > buffer[i] && Low[i] < buffer[i]) {   // in practice High==buffer or Low==buffer cannot happen
          bar = i;
@@ -642,7 +686,7 @@ bool IsCross(double buffer[], int from, int to, int &bar) {
 
 
 /**
- * Whether at least one bar was completely above the given indicator line in the specified bar range.
+ * Whether any bar in the specified bar range was completely above the given indicator line.
  *
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
@@ -651,8 +695,11 @@ bool IsCross(double buffer[], int from, int to, int &bar) {
  *
  * @return bool
  */
-bool IsFullyAbove(double buffer[], int from, int to, int &bar) {
+bool WasBarAbove(double buffer[], int from, int to, int &bar) {
    bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
       if (Low[i] > buffer[i]) {
          bar = i;
@@ -665,7 +712,7 @@ bool IsFullyAbove(double buffer[], int from, int to, int &bar) {
 
 
 /**
- * Whether at least one bar was completely below the given indicator line in the specified bar range.
+ * Whether any bar in the specified bar range was completely below the given indicator line.
  *
  * @param  _In_  double buffer[] - indicator line buffer
  * @param  _In_  int    from     - start offset of the bar range to check
@@ -674,8 +721,11 @@ bool IsFullyAbove(double buffer[], int from, int to, int &bar) {
  *
  * @return bool
  */
-bool IsFullyBelow(double buffer[], int from, int to, int &bar) {
+bool WasBarBelow(double buffer[], int from, int to, int &bar) {
    bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
       if (High[i] < buffer[i]) {
          bar = i;
@@ -687,59 +737,31 @@ bool IsFullyBelow(double buffer[], int from, int to, int &bar) {
 
 
 /**
- * Whether the High price in the specified bar range was at least once above the given indicator line.
- *
- * @param  _In_  double buffer[] - indicator line buffer
- * @param  _In_  int    from     - start offset of the bar range to check
- * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
- *
- * @return bool
- */
-bool IsPartiallyAbove(double buffer[], int from, int to, int &bar) {
-   bar = -1;
-   for (int i=from; i <= to; i++) {
-      if (High[i] >= buffer[i]) {
-         bar = i;
-         break;
-      }
-   }
-   return(bar != -1);
-}
-
-
-/**
- * Whether the Low price in the specified bar range was at least once below the given indicator line.
- *
- * @param  _In_  double buffer[] - indicator line buffer
- * @param  _In_  int    from     - start offset of the bar range to check
- * @param  _In_  int    to       - end offset of the bar range to check
- * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
- *
- * @return bool
- */
-bool IsPartiallyBelow(double buffer[], int from, int to, int &bar) {
-   bar = -1;
-   for (int i=from; i <= to; i++) {
-      if (Low[i] <= buffer[i]) {
-         bar = i;
-         break;
-      }
-   }
-   return(bar != -1);
-}
-
-
-/**
  *
  */
-void onSignal(string msg) {
+void onNewCrossing(string msg) {
    //if (IsLogNotice()) logNotice(" "+ msg);
    if (IsLogInfo()) logInfo(" "+ msg);
 
    if (This.IsTesting()) {                            // pause a test if configured
       if (__isChart && test.onSignalPause) Tester.Pause("onSignal(1)");
    }
+}
+
+
+/**
+ *
+ */
+void onNewHigh() {
+   logInfo("  new high: "+ NumberToStr(Bid, PriceFormat));
+}
+
+
+/**
+ *
+ */
+void onNewLow() {
+   logInfo("  new low: "+ NumberToStr(Bid, PriceFormat));
 }
 
 
