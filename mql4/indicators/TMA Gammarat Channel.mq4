@@ -496,7 +496,6 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                WasPriceAbove(upperBand, lastShortReversal, Bars-1, n);        // find the first price above the band
                WasBarBelow(upperBand, n+1, Bars-1, n);                        // find the next full bar below the band
                lastHigh = High[iHighest(NULL, NULL, MODE_HIGH, n, 0)];
-               if (IsLogDebug()) logDebug("CheckSignals(0.1)  lastShortReversal="+ TimeToStr(Time[lastShortReversal], TIME_MINUTES) +"  lastBarBelowUpperBand="+ TimeToStr(Time[n], TIME_MINUTES) +"  H="+ NumberToStr(lastHigh, PriceFormat));
             }
          }
          else {
@@ -505,7 +504,6 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
                WasPriceBelow(lowerBand, lastLongReversal, Bars-1, n);         // find the first price bar below the band
                WasBarAbove(lowerBand, n+1, Bars-1, n);                        // find the next full bar above the band
                lastLow = Low[iLowest(NULL, NULL, MODE_LOW, n, 0)];
-               if (IsLogDebug()) logDebug("CheckSignals(0.2)  lastLongReversal="+ TimeToStr(Time[lastLongReversal], TIME_MINUTES) +"  lastBarAboveLowerBand="+ TimeToStr(Time[n], TIME_MINUTES) +"  L="+ NumberToStr(lastLow, PriceFormat));
             }
          }
       }
@@ -549,10 +547,10 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
 
    // finally detect finished price reversals
    if (ChangedBars == 2) {
-      if (Abs(reversalAge[1]) == 1) logInfo("CheckSignals(1)  price reversal "+ ifString(reversalAge[1] > 0, "LONG", "SHORT"));
+      if (Abs(reversalAge[1]) == 1) onReversal();
    }
 
-   return(!catch("CheckSignals(2)"));
+   return(!catch("CheckSignals(1)"));
 }
 
 
@@ -740,12 +738,7 @@ bool WasBarBelow(double buffer[], int from, int to, int &bar) {
  *
  */
 void onNewCrossing(string msg) {
-   //if (IsLogNotice()) logNotice(" "+ msg);
-   if (IsLogInfo()) logInfo(" "+ msg);
-
-   if (This.IsTesting()) {                            // pause a test if configured
-      if (__isChart && test.onSignalPause) Tester.Pause("onSignal(1)");
-   }
+   logNotice(" "+ msg);
 }
 
 
@@ -753,7 +746,7 @@ void onNewCrossing(string msg) {
  *
  */
 void onNewHigh() {
-   logInfo("  new high: "+ NumberToStr(Bid, PriceFormat));
+   logInfo("  new high "+ NumberToStr(Bid, PriceFormat));
 }
 
 
@@ -761,7 +754,15 @@ void onNewHigh() {
  *
  */
 void onNewLow() {
-   logInfo("  new low: "+ NumberToStr(Bid, PriceFormat));
+   logInfo("  new low "+ NumberToStr(Bid, PriceFormat));
+}
+
+
+/**
+ *
+ */
+void onReversal() {
+   logNotice(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
 }
 
 
