@@ -305,14 +305,11 @@ bool CheckErrors(string location, int error = NULL) {
 }
 
 
-#import "rsfLib1.ex4"
-   string GetWindowText(int hWnd);
-
 #import "rsfMT4Expander.dll"
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int    SyncMainContext_deinit(int ec[], int uninitReason);
+   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int SyncMainContext_deinit(int ec[], int uninitReason);
 
 #import "user32.dll"
-   int    GetParent(int hWnd);
+   int GetParent(int hWnd);
 #import

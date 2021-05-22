@@ -8814,7 +8814,6 @@ color_4=16711680
 color_5=16711935
 weight_5=2
 
-period_flags=0
 show_data=1
 </indicator>
 

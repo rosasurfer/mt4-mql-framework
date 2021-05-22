@@ -78,7 +78,6 @@
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
-   int  GetWindowTextA(int hWnd, string lpBuffer, int bufferSize);
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
    bool IsIconic(int hWnd);
    bool IsWindow(int hWnd);

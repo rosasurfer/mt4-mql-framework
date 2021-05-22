@@ -259,7 +259,6 @@
    // other
 #import "rsfLib1.ex4"
    string   GetWindowsShortcutTarget(string lnkFile);
-   string   GetWindowText(int hWnd);
    int      WinExecWait(string cmdLine, int cmdShow);
 #import "rsfLib2.ex4"
    int      GetTerminalRuntime();
