@@ -132,7 +132,6 @@
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
-   string   TimeframeDescription(int timeframe);         // alias of PeriodDescription()
    string   TimeframeToStr(int timeframe);               // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
