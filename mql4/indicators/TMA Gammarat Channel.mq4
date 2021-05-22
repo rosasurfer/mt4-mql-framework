@@ -1,14 +1,14 @@
 /**
  * TMA Gammarat Channel
  *
- * An asymmetric non-standard deviation channel around a shifted - thus repainting - Triangular Moving Average (TMA). The TMA
- * is a twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
+ * An asymmetric non-standard deviation channel around a shifted and repainting Triangular Moving Average (TMA). The TMA is a
+ * twice applied Simple Moving Average (SMA) who's resulting MA weights form the shape of a triangle. It holds:
  *
  *  TMA(n) = SMA(floor(n/2)+1) of SMA(ceil(n/2))
  *
- * @link    https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html#             [Triangular Moving Average]
- * @link    https://forex-station.com/viewtopic.php?f=579496&t=8423458#                  [Centered Triangular Moving Average]
- * @author  Chris Brobeck aka gammarat (channel algorythm)
+ * @link  https://user42.tuxfamily.org/chart/manual/Triangular-Moving-Average.html#               [Triangular Moving Average]
+ * @link  https://forex-station.com/viewtopic.php?f=579496&t=8423458#                    [Centered Triangular Moving Average]
+ * @link  http://www.gammarat.com/Forex/#                                                                    [GammaRat Forex]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -16,21 +16,20 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods       = 7;
-extern int    MA.HalfLength    = 55;
+extern int    MA.Periods       = 9;                // 111
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 
 extern double Bands.Deviations = 2.5;
-extern color  Bands.Color      = Magenta;          // Gold LightSkyBlue
+extern color  Bands.Color      = Magenta;          // LightSkyBlue
 extern int    Bands.LineWidth  = 1;                // 3
 extern string __a____________________________;
 
-extern bool   RepaintingMode   = false;            // toggle repainting mode
-extern bool   MarkReversals    = false;
+extern bool   RepaintingMode   = true;             // toggle repainting mode
+extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
 extern string __b____________________________;
 
-extern bool   AlertsOn         = false;
+extern bool   AlertsOn         = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,9 +38,6 @@ extern bool   AlertsOn         = false;
 #include <rsfLibs.mqh>
 #include <functions/@Bands.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
-
-#define SIGNAL_UP                1                 // signal ids
-#define SIGNAL_DOWN              2
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
@@ -63,11 +59,11 @@ int       framework_buffers = 1;                   // buffers managed by the fra
 #property indicator_color3    CLR_NONE             // repainting lower channel band
 #property indicator_color4    Blue                 // non-repainting upper channel band
 #property indicator_color5    Blue                 // non-repainting lower channel band
-#property indicator_color6    Magenta              // breakout reversals
+#property indicator_color6    Magenta              // price reversals
 
 #property indicator_style1    STYLE_DOT
 
-#property indicator_width6    2                    // breakout reversal markers
+#property indicator_width6    2                    // reversal markers
 
 double tmaRP          [];
 double upperVarianceRP[];
@@ -88,6 +84,9 @@ double tmaWindow[];
 string indicatorName;
 string legendLabel;
 
+// debug settings                                  // see ::afterInit()
+bool   test.onSignalPause = false;                 // whether to pause a test on a signal
+
 
 /**
  * Initialization
@@ -96,16 +95,10 @@ string legendLabel;
  */
 int onInit() {
    // validate inputs
-   // MA.Periods / MA.HalfLength
-   if (!MA.Periods) {
-      if (MA.HalfLength < 1)                                  return(catch("onInit(1)  invalid input parameter MA.HalfLength: "+ MA.HalfLength, ERR_INVALID_INPUT_PARAMETER));
-      maPeriods = 2 * MA.HalfLength + 1;
-   }
-   else {
-      if (MA.Periods < 1)                                     return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-      if (MA.Periods & 1 == 0)                                return(catch("onInit(3)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
-      maPeriods = MA.Periods;
-   }
+   // MA.Periods
+   if (MA.Periods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods & 1 == 0)                                   return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods +" (must be an odd value)", ERR_INVALID_INPUT_PARAMETER));
+   maPeriods = MA.Periods;
    // MA.AppliedPrice
    string sValues[], sValue = StrToLower(MA.AppliedPrice);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -114,17 +107,17 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Bands.Deviations
-   if (Bands.Deviations < 0)                                  return(catch("onInit(5)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.Deviations < 0)                                  return(catch("onInit(4)  invalid input parameter Bands.Deviations: "+ NumberToStr(Bands.Deviations, ".1+"), ERR_INVALID_INPUT_PARAMETER));
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
-   if (Bands.LineWidth < 0)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5)                                   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth > 5)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(8)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(7)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -149,19 +142,33 @@ int onInit() {
    string shortName = "TMA("+ maPeriods +") Gammarat Channel";
    IndicatorShortName(shortName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_TMA_RP,          "TMA");              // chart tooltips and "Data" window
-   SetIndexLabel(MODE_UPPER_BAND_RP,   "GC upper band RP");
-   SetIndexLabel(MODE_LOWER_BAND_RP,   "GC lower band RP");
-   SetIndexLabel(MODE_UPPER_BAND_NRP,  "GC upper band NRP");
-   SetIndexLabel(MODE_LOWER_BAND_NRP,  "GC lower band NRP");
+   SetIndexLabel(MODE_UPPER_BAND_RP,   "Gamma Upper Band");
+   SetIndexLabel(MODE_LOWER_BAND_RP,   "Gamma Lower Band");
+   SetIndexLabel(MODE_UPPER_BAND_NRP,  "Gamma Upper Band NRP"); if (RepaintingMode) SetIndexLabel(MODE_UPPER_BAND_NRP, NULL);
+   SetIndexLabel(MODE_LOWER_BAND_NRP,  "Gamma Lower Band NRP"); if (RepaintingMode) SetIndexLabel(MODE_LOWER_BAND_NRP, NULL);
    SetIndexLabel(MODE_REVERSAL_MARKER, NULL);
    SetIndexLabel(MODE_REVERSAL_AGE,    "Reversal age");
-   IndicatorDigits(8);                                      // TODO: reset to Digits after finishing
+   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
    // initialize global vars
    ArrayResize(tmaWindow, maPeriods);
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(8)"));
+}
+
+
+/**
+ * Initialization postprocessing. Called only if the reason-specific handler returned without error.
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   if (This.IsTesting()) {                                  // read test configuration
+      string section = ProgramName() +".Tester";
+      test.onSignalPause = GetConfigBool(section, "OnSignalPause", false);
+   }
+   return(catch("afterInit(1)"));
 }
 
 
@@ -232,13 +239,13 @@ int onTick() {
    // recalculate TMA and Gammarat channel
    if (true || RepaintingMode) {
       CalculateRepaintingTMA(tmaStartbarRP);                   // repainting calculation
-      CalculateBreakoutReversals(tmaRP, upperBandRP, lowerBandRP, tmaStartbarRP);
-      CheckSignals(upperBandRP, lowerBandRP);
+      UpdatePriceReversals(tmaRP, upperBandRP, lowerBandRP, tmaStartbarRP);
+      CheckSignals(tmaRP, upperBandRP, lowerBandRP);
    }
    if (!RepaintingMode) {
       RecalculateChannel(channelStartbarNRP);                  // non-repainting calculation
-      //CalculateBreakoutReversals(tmaRP, upperBandNRP, lowerBandNRP, channelStartbarNRP);
-      //CheckSignals(upperBandNRP, lowerBandNRP);
+      //UpdatePriceReversals(tmaRP, upperBandNRP, lowerBandNRP, channelStartbarNRP);
+      //CheckSignals(tmaRP, upperBandNRP, lowerBandNRP);
    }
 
    return(catch("onTick(4)"));
@@ -377,61 +384,61 @@ double CalculateTMA(int bar, int limit) {
 
 
 /**
- * Recalculate breakout reversals starting from the specified bar offset.
+ * Recalculate and update price reversals starting from the specified bar offset.
  *
- * @param  double tma[]       - timeseries array holding the TMA values
+ * @param  double ma[]        - timeseries array holding the MA values
  * @param  double upperBand[] - timeseries array holding the upper band values
  * @param  double lowerBand[] - timeseries array holding the lower band values
  * @param  int    startbar    - startbar offset
  *
  * @return bool - success status
  */
-bool CalculateBreakoutReversals(double tma[], double upperBand[], double lowerBand[], int startbar) {
+bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], int startbar) {
    if (!MarkReversals) return(false);
 
  	for (int i=startbar; i >= 0; i--) {
  	   if (!lowerBand[i+1]) continue;
 
-      bool longReversal=false, shortReversal=false, bullishPattern=false, bearishPattern=IsBearishPattern(i);
+      bool wasCross, longReversal=false, shortReversal=false, bullishPattern=false, bearishPattern=IsBearishPattern(i);
       if (!bearishPattern) bullishPattern = IsBullishPattern(i);
- 	   int iMaCross, iCurrMax, iCurrMin, iPrevMax, iPrevMin;                // bar index of TMA cross and swing extrems
+ 	   int iMaCross, iCurrMax, iCurrMin, iPrevMax, iPrevMin, iNull;      // bar index of TMA cross and swing extrems
 
       // check new reversals
-      if (reversalAge[i+1] < 0) {                                          // previous short reversal
+      if (reversalAge[i+1] < 0) {                                       // previous short reversal
          // check for another short or a new long reversal
          if (bearishPattern) {
-            iMaCross = iMedianCross(tma, i+1, i-reversalAge[i+1]-1);
+            wasCross = WasPriceCross(ma, i+1, i-reversalAge[i+1]-1, iMaCross);
 
-            if (HasPriceCrossedUpperBand(upperBand, i, ifInt(iMaCross, iMaCross-1, i-reversalAge[i+1]-1))) {
-               if (!iMaCross) {
+            if (WasPriceAbove(upperBand, i, ifInt(wasCross, iMaCross-1, i-reversalAge[i+1]-1), iNull)) {
+               if (!wasCross) {
                   iCurrMax = iHighest(NULL, NULL, MODE_HIGH, -reversalAge[i+1], i);
                   iPrevMax = iHighest(NULL, NULL, MODE_HIGH, MathAbs(reversalAge[_int(i-reversalAge[i+1]+1)]), i-reversalAge[i+1]);
-                  shortReversal = (High[iCurrMax] > High[iPrevMax]);       // the current swing exceeds the previous one
+                  shortReversal = (High[iCurrMax] > High[iPrevMax]);    // the current swing exceeds the previous one
                }
                else shortReversal = true;
             }
          }
-         else if (bullishPattern) longReversal = HasPriceCrossedLowerBand(lowerBand, i, i-reversalAge[i+1]-1);
+         else if (bullishPattern) longReversal = WasPriceBelow(lowerBand, i, i-reversalAge[i+1]-1, iNull);
       }
-      else if (reversalAge[i+1] > 0) {                                     // previous long reversal
+      else if (reversalAge[i+1] > 0) {                                  // previous long reversal
          // check for another long or a new short reversal
          if (bullishPattern) {
-            iMaCross = iMedianCross(tma, i+1, i+reversalAge[i+1]-1);
+            wasCross = WasPriceCross(ma, i+1, i+reversalAge[i+1]-1, iMaCross);
 
-            if (HasPriceCrossedLowerBand(lowerBand, i, ifInt(iMaCross, iMaCross-1, i+reversalAge[i+1]-1))) {
-               if (!iMaCross) {
+            if (WasPriceBelow(lowerBand, i, ifInt(wasCross, iMaCross-1, i+reversalAge[i+1]-1), iNull)) {
+               if (!wasCross) {
                   iCurrMin = iLowest(NULL, NULL, MODE_LOW, reversalAge[i+1], i);
                   iPrevMin = iLowest(NULL, NULL, MODE_LOW, MathAbs(reversalAge[_int(i+reversalAge[i+1]+1)]), i+reversalAge[i+1]);
-                  longReversal = (Low[iCurrMin] < Low[iPrevMin]);          // the current swing exceeds the previous one
+                  longReversal = (Low[iCurrMin] < Low[iPrevMin]);       // the current swing exceeds the previous one
                }
                else longReversal = true;
             }
          }
-         else if (bearishPattern) shortReversal = HasPriceCrossedUpperBand(upperBand, i, i+reversalAge[i+1]-1);
+         else if (bearishPattern) shortReversal = WasPriceAbove(upperBand, i, i+reversalAge[i+1]-1, iNull);
       }
-      else {                                                               // no previous signal
-         if      (bullishPattern) longReversal  = HasPriceCrossedLowerBand(lowerBand, i, i+1);
-         else if (bearishPattern) shortReversal = HasPriceCrossedUpperBand(upperBand, i, i+1);
+      else {                                                            // no previous signal
+         if      (bullishPattern) longReversal  = WasPriceBelow(lowerBand, i, i+1, iNull);
+         else if (bearishPattern) shortReversal = WasPriceAbove(upperBand, i, i+1, iNull);
       }
 
       // set marker and update reversal age
@@ -449,26 +456,99 @@ bool CalculateBreakoutReversals(double tma[], double upperBand[], double lowerBa
       }
    }
 
-   return(!catch("CalculateBreakoutReversals(1)"));
+   return(!catch("UpdatePriceReversals(1)"));
 }
 
 
 /**
- * Check for and process signals.
+ * Check for and trigger signals. The following signals are monitored:
+ *  - the crossing of a channel band since last crossing of the MA (strong signal)
+ *  - a new high/low after a previous channel band crossing        (weak signal)
+ *  - on BarOpen a finished price reversal                         (strong signal)
  *
+ * @param  double ma[]        - timeseries array holding the MA values
  * @param  double upperBand[] - timeseries array holding the upper band values
  * @param  double lowerBand[] - timeseries array holding the lower band values
  *
  * @return bool - success status
  */
-bool CheckSignals(double upperBand[], double lowerBand[]) {
+bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
    if (!AlertsOn) return(false);
 
-   static double lastBid; if (lastBid != NULL) {
-      if (Open[0] < upperBand[0] && lastBid < upperBand[0] && Bid > upperBand[0]) onSignal(SIGNAL_UP,   "upper band at "+ NumberToStr(upperBand[0], PriceFormat) +" crossed");
-      if (Open[0] > lowerBand[0] && lastBid > lowerBand[0] && Bid < lowerBand[0]) onSignal(SIGNAL_DOWN, "lower band at "+ NumberToStr(lowerBand[0], PriceFormat) +" crossed");
+   static double lastBid, lastHigh, lastLow;                                  // last prices
+   static datetime lastTimeUp, lastTimeDn;                                    // bar opentimes of last crossings
+   int iMaCross, iNull;
+
+   // reinitialize last high/Low
+   if (ChangedBars > 2 || !lastHigh) {
+      int i=-1, n, lastLongReversal=-1, lastShortReversal=-1;
+      lastHigh = NULL;
+      lastLow  = NULL;
+
+      while (lastLongReversal==-1 || lastShortReversal==-1) {                 // find the last long and short reversal
+         i++;
+         i += Abs(reversalAge[i])-1;
+         if (i >= Bars) break;
+
+         if (reversalAge[i] < 0) {                                            // always -1 or +1
+            if (lastShortReversal == -1) {
+               lastShortReversal = i;                                         // resolve the previous high
+               WasPriceAbove(upperBand, lastShortReversal, Bars-1, n);        // find the first price above the band
+               WasBarBelow(upperBand, n+1, Bars-1, n);                        // find the next full bar below the band
+               lastHigh = High[iHighest(NULL, NULL, MODE_HIGH, n, 0)];
+            }
+         }
+         else {
+            if (lastLongReversal == -1) {
+               lastLongReversal = i;                                          // resolve the previous low
+               WasPriceBelow(lowerBand, lastLongReversal, Bars-1, n);         // find the first price bar below the band
+               WasBarAbove(lowerBand, n+1, Bars-1, n);                        // find the next full bar above the band
+               lastLow = Low[iLowest(NULL, NULL, MODE_LOW, n, 0)];
+            }
+         }
+      }
+      if (!lastHigh) lastHigh = INT_MAX;                                      // in this case high/low monitoring is reset at the next reversal
+      if (!lastLow)  lastLow  = INT_MIN;
+   }
+
+   // detect new channel crossings (higher priority) and new high/lows (lower priority)
+   if (lastBid != NULL) {
+      // upper band crossings
+      if (lastBid < upperBand[0] && Bid > upperBand[0]) {                     // price crossed the upper band
+         if (Time[0] > lastTimeUp) {                                          // handle only the first crossing per bar
+            if (WasPriceCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {  // get the last MA cross
+               if (!WasPriceAbove(upperBand, 1, iMaCross, iNull)) {           // signal if the first crossing since the MA cross
+                  onNewCrossing("upper band crossing at "+ NumberToStr(upperBand[0], PriceFormat));
+                  lastHigh = High[0];                                         // reset the current high
+               }
+            }
+         }
+         lastTimeUp = Time[0];
+      }
+
+      // lower band crossings
+      if (lastBid > lowerBand[0] && Bid < lowerBand[0]) {                     // price crossed the lower band
+         if (Time[0] > lastTimeDn) {                                          // handle only the first crossing per bar
+            if (WasPriceCross(ma, 0, MathAbs(reversalAge[0])-1, iMaCross)) {  // get the last MA cross
+               if (!WasPriceBelow(lowerBand, 1, iMaCross, iNull)) {           // signal if the first crossing since the MA cross
+                  onNewCrossing("lower band crossing at "+ NumberToStr(lowerBand[0], PriceFormat));
+                  lastLow = Low[0];                                           // reset the current low
+               }
+            }
+         }
+         lastTimeDn = Time[0];
+      }
+
+      // new highs/lows
+      if (Bid > lastHigh) { onNewHigh(); lastHigh = High[0]; }                // update the current high
+      if (Bid < lastLow)  { onNewLow();  lastLow  = Low[0];  }                // update the current low
    }
    lastBid = Bid;
+
+   // finally detect finished price reversals
+   if (ChangedBars == 2) {
+      if (Abs(reversalAge[1]) == 1) onReversal();
+   }
 
    return(!catch("CheckSignals(1)"));
 }
@@ -510,7 +590,8 @@ double GetLWMA(int bar) {
  * @return bool
  */
 bool IsBullishPattern(int bar) {
-   return(Open[bar] < Close[bar] || (Open[bar]==Close[bar] && Close[bar+1] < Close[bar]));
+   if (bar >= Bars || bar < 0) return(false);
+   return(Open[bar] < Close[bar] || (EQ(Open[bar], Close[bar]) && Close[bar+1] < Close[bar]));
 }
 
 
@@ -522,79 +603,166 @@ bool IsBullishPattern(int bar) {
  * @return bool
  */
 bool IsBearishPattern(int bar) {
-   return(Open[bar] > Close[bar] || (Open[bar]==Close[bar] && Close[bar+1] > Close[bar]));
+   if (bar >= Bars || bar < 0) return(false);
+   return(Open[bar] > Close[bar] || (EQ(Open[bar], Close[bar]) && Close[bar+1] > Close[bar]));
 }
 
 
 /**
- * Whether the High price of the specified bar range has crossed the upper channel band.
+ * Whether price in the specified bar range was at least once above the given indicator line.
  *
- * @param  double band[] - upper channel band
- * @param  int    from   - start offset of the bar range to check
- * @param  int    to     - end offset of the bar range to check
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */
-bool HasPriceCrossedUpperBand(double band[], int from, int to) {
+bool WasPriceAbove(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
-      if (High[i] >= band[i]) {
-         return(true);
+      if (High[i] >= buffer[i]) {
+         bar = i;
+         break;
       }
    }
-   return(false);
+   return(bar != -1);
 }
 
 
 /**
- * Whether the Low price of the specified bar range has crossed the lower channel band.
+ * Whether price in the specified bar range was at least once below the given indicator line.
  *
- * @param  double band[] - lower channel band
- * @param  int    from   - start offset of the bar range to check
- * @param  int    to     - end offset of the bar range to check
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
  *
  * @return bool
  */
-bool HasPriceCrossedLowerBand(double band[], int from, int to) {
+bool WasPriceBelow(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
-      if (Low[i] <= band[i]) {
-         return(true);
+      if (Low[i] <= buffer[i]) {
+         bar = i;
+         break;
       }
    }
-   return(false);
+   return(bar != -1);
 }
 
 
 /**
- * Return the offset of the bar in the specified range which crossed the channel mean (i.e. the Moving Average).
+ * Whether price in the specified bar range crossed the given indicator line.
  *
- * @param  double ma[] - moving average
- * @param  int    from - start offset of the bar range to check
- * @param  int    to   - end offset of the bar range to check
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - bar offset of the first crossing or EMPTY (-1) if there was none
  *
- * @return int - positive bar offset or NULL (0) if no bar in the specified range crossed the MA
+ * @return bool
  */
-int iMedianCross(double ma[], int from, int to) {
+bool WasPriceCross(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
    for (int i=from; i <= to; i++) {
-      if (High[i] > ma[i] && Low[i] < ma[i]) {        // in practice High==ma or Low==ma cannot happen
-         return(i);
+      if (High[i] > buffer[i] && Low[i] < buffer[i]) {   // in practice High==buffer or Low==buffer cannot happen
+         bar = i;
+         break;
       }
    }
-   return(NULL);
+   return(bar != -1);
+}
+
+
+/**
+ * Whether any bar in the specified bar range was completely above the given indicator line.
+ *
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ *
+ * @return bool
+ */
+bool WasBarAbove(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
+   for (int i=from; i <= to; i++) {
+      if (Low[i] > buffer[i]) {
+         bar = i;
+         break;
+      }
+   }
+   return(bar != -1);
+}
+
+
+
+/**
+ * Whether any bar in the specified bar range was completely below the given indicator line.
+ *
+ * @param  _In_  double buffer[] - indicator line buffer
+ * @param  _In_  int    from     - start offset of the bar range to check
+ * @param  _In_  int    to       - end offset of the bar range to check
+ * @param  _Out_ int    &bar     - offset of the first found bar or EMPTY (-1) if there was none
+ *
+ * @return bool
+ */
+bool WasBarBelow(double buffer[], int from, int to, int &bar) {
+   bar = -1;
+   if (from >= Bars) return(false);
+   if (to   >= Bars) to = Bars-1;
+
+   for (int i=from; i <= to; i++) {
+      if (High[i] < buffer[i]) {
+         bar = i;
+         break;
+      }
+   }
+   return(bar != -1);
 }
 
 
 /**
  *
  */
-void onSignal(int signal, string msg) {
-   static int lastSignal;
-   static datetime lastTime;
+void onNewCrossing(string msg) {
+   logNotice(" "+ msg);
+}
 
-   if (signal!=lastSignal || Time[0]!=lastTime) {
-      lastSignal = signal;
-      lastTime = Time[0];
-      logNotice(" "+ msg);
-   }
+
+/**
+ *
+ */
+void onNewHigh() {
+   logInfo("  new high "+ NumberToStr(Bid, PriceFormat));
+}
+
+
+/**
+ *
+ */
+void onNewLow() {
+   logInfo("  new low "+ NumberToStr(Bid, PriceFormat));
+}
+
+
+/**
+ *
+ */
+void onReversal() {
+   logNotice(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
 }
 
 
@@ -628,7 +796,6 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("MA.Periods=",       MA.Periods,                           ";", NL,
-                            "MA.HalfLength=",    MA.HalfLength,                        ";", NL,
                             "MA.AppliedPrice=",  DoubleQuoteStr(MA.AppliedPrice),      ";", NL,
                             "Bands.Deviations=", NumberToStr(Bands.Deviations, ".1+"), ";", NL,
                             "Bands.Color=",      ColorToStr(Bands.Color),              ";", NL,

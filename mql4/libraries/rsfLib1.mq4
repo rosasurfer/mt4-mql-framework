@@ -3901,14 +3901,14 @@ int GetAccountNumber() {
 
    int account = AccountNumber();
 
-   if (account == 0x4000) {                                          // im Tester ohne Server-Verbindung
+   if (account == 0x4000) {                                             // im Tester ohne Server-Verbindung
       if (!IsTesting())          return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
       account = 0;
    }
 
-   if (!account) {                                                   // Titelzeile des Hauptfensters auswerten
-      string title = GetWindowText(GetTerminalMainWindow());         // benutzt SendMessage(), nicht nach Tester.Stop() bei VisualMode=On benutzen => Deadlock UI-Thread
-      if (!StringLen(title))     return(_NULL(logDebug("GetAccountNumber(2)->GetWindowText(hWndMain) = \""+ title +"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+   if (!account) {                                                      // Titelzeile des Hauptfensters auswerten
+      string title = GetInternalWindowTextA(GetTerminalMainWindow());
+      if (!StringLen(title))     return(_NULL(logDebug("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
 
       int pos = StringFind(title, ":");
       if (pos < 1)               return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
@@ -3919,12 +3919,12 @@ int GetAccountNumber() {
       account = StrToInteger(strValue);
    }
 
-   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks bei Aufruf von GetWindowText() in deinit() zu vermeiden.
+   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks bei evt. Aufrufen von GetWindowText() in deinit() zu vermeiden.
    // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
       tester.result = account;
 
-   return(account);                                                  // nicht die statische Testervariable zurückgeben (ist online immer 0)
+   return(account);                                                     // nicht die statische Testervariable zurückgeben (ist online immer 0)
 }
 
 
@@ -4157,34 +4157,6 @@ string GetServerTimezone() {
 
    lastTick = Tick;
    return(lastResult[IDX_TIMEZONE]);
-}
-
-
-/**
- * Gibt den Titelzeilentext des angegebenen Fensters oder den Text des angegebenen Windows-Controls zurück.
- *
- * @param  int hWnd - Handle
- *
- * @return string - Text oder Leerstring, falls ein Fehler auftrat
- *
- *
- * NOTE: Ruft intern SendMessage() auf, deshalb nicht im Tester bei VisualMode=On in Expert::deinit() benutzen, da sonst UI-Thread-Deadlock.
- */
-string GetWindowText(int hWnd) {
-   if (hWnd <= 0)       return(_EMPTY_STR(catch("GetWindowText(1)  invalid parameter hWnd = "+ hWnd, ERR_INVALID_PARAMETER)));
-   if (!IsWindow(hWnd)) return(_EMPTY_STR(catch("GetWindowText(2)  not an existing window hWnd = 0x"+ IntToHexStr(hWnd), ERR_RUNTIME_ERROR)));
-
-   int    bufferSize = 255;
-   string buffer[]; InitializeStringBuffer(buffer, bufferSize);
-
-   int chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
-
-   while (chars >= bufferSize-1) {                                   // GetWindowTextA() gibt beim Abschneiden zu langer Titelzeilen mal {bufferSize},
-      bufferSize <<= 1;                                              // mal {bufferSize-1} zurück.
-      InitializeStringBuffer(buffer, bufferSize);
-      chars = GetWindowTextA(hWnd, buffer[0], bufferSize);
-   }
-   return(buffer[0]);
 }
 
 
