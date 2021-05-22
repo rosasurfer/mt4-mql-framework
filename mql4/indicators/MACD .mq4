@@ -354,7 +354,7 @@ bool onCross(int section) {
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive";
       logDebug("onCross(1)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
@@ -365,7 +365,7 @@ bool onCross(int section) {
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative";
       logDebug("onCross(2)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)

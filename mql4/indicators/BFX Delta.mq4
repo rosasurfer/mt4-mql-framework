@@ -263,7 +263,7 @@ bool onLevelCross(int mode) {
    if (mode == MODE_UPPER) {
       message = indicatorName +" crossed level "+ Signal.Level;
       logDebug("onLevelCross(1)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.long);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
@@ -274,7 +274,7 @@ bool onLevelCross(int mode) {
    if (mode == MODE_LOWER) {
       message = indicatorName +" crossed level "+ (-Signal.Level);
       logDebug("onLevelCross(2)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.short);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body

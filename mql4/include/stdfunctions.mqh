@@ -378,7 +378,7 @@ string Pluralize(int count, string singular="", string plural="s") {
 void ForceAlert(string message) {
    debug(message);                                                          // send the message to the debug output
 
-   string sPeriod = PeriodDescription(Period());
+   string sPeriod = PeriodDescription();
    Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
@@ -404,7 +404,7 @@ void ForceAlert(string message) {
  * @return int - the pressed button's key code
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
+   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription());
 
    if (!StrContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
@@ -5387,13 +5387,13 @@ string LoglevelDescription(int level) {
 /**
  * Return the description of a timeframe identifier. Supports custom timeframes.
  *
- * @param  int period - timeframe identifier or amount of minutes per bar period
+ * @param  int period [optional] - timeframe identifier or number of minutes per period (default: the current chart period)
  *
  * @return string
  *
- * Note: Implemented in MQL and in MT4Expander to be available if DLL calls are disabled.
+ * Note: As DLL calls may be disabled we need an MQL implementation. This one should match the one in the MT4Expander.
  */
-string PeriodDescription(int period) {
+string PeriodDescription(int period = NULL) {
    if (!period) period = Period();
 
    switch (period) {
@@ -5413,6 +5413,20 @@ string PeriodDescription(int period) {
       case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
    }
    return(""+ period);
+}
+
+
+/**
+ * Alias of PeriodDescription().
+ *
+ * Return the description of a timeframe identifier. Supports custom timeframes.
+ *
+ * @param  int period [optional] - timeframe identifier or number of minutes per period (default: the current chart period)
+ *
+ * @return string
+ */
+string TimeframeDescription(int timeframe = NULL) {
+   return(PeriodDescription(timeframe));
 }
 
 
@@ -6151,7 +6165,7 @@ bool icChartInfos() {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icChartInfos(1)", error));
-      logWarn("icChartInfos(2)  "+ PeriodDescription(Period()) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6900,6 +6914,7 @@ void __DummyCalls() {
    OrderPush(NULL);
    ParseDate(NULL);
    ParseDateTime(NULL);
+   PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
    PipValue();
@@ -6974,6 +6989,7 @@ void __DummyCalls() {
    TimeCurrentEx();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
+   TimeframeDescription();
    TimeframeFlag();
    TimeframeFlagToStr(NULL);
    TimeFXT();

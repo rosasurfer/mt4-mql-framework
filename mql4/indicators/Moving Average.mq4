@@ -286,7 +286,7 @@ bool onTrendChange(int trend) {
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (IsLogDebug()) logDebug("onTrendChange(1)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
@@ -297,7 +297,7 @@ bool onTrendChange(int trend) {
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (IsLogDebug()) logDebug("onTrendChange(2)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
