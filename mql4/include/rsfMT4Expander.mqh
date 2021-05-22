@@ -93,7 +93,7 @@
 
    // array functions
    //bool   InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
-   //bool   ShiftIndicatorBuffer(double &buffer[], int bufferSize, int elements, double emptyValue);
+   //bool   ShiftIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
    //int    AnsiToWCharStr(string source, int dest[], int destSize);
@@ -153,6 +153,7 @@
    string   RemoveWindowStringA(int hWnd, string name);
 
    // Win32 helpers
+   string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
 
    // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.
