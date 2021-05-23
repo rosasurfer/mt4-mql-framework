@@ -1,8 +1,9 @@
 <chart>
 symbol=USDCHF
 period=60
-leftpos=13564
 digits=5
+
+leftpos=13564
 scale=4
 graph=1
 fore=0
