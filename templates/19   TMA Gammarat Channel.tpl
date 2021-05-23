@@ -1,8 +1,9 @@
 <chart>
 symbol=GBPUSD
 period=60
-leftpos=9229
 digits=5
+
+leftpos=9229
 scale=2
 graph=1
 fore=0
