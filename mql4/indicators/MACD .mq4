@@ -1,8 +1,8 @@
 /**
- * A MACD (Moving Average Convergence-Divergence) with support for non-standard moving average types.
+ * A MACD (Moving Average Convergence/Divergence) with support for non-standard Moving Average types.
  *
  *
- * Available Moving Average types:
+ * Moving Average types:
  *  • SMA  - Simple Moving Average:          equal bar weighting
  *  • LWMA - Linear Weighted Moving Average: bar weighting using a linear function
  *  • EMA  - Exponential Moving Average:     bar weighting using an exponential function
@@ -353,7 +353,7 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive";
-      logDebug("onCross(1)  "+ message);
+      if (IsLogInfo()) logInfo("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
@@ -364,7 +364,7 @@ bool onCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative";
-      logDebug("onCross(2)  "+ message);
+      if (IsLogInfo()) logInfo("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
@@ -373,7 +373,7 @@ bool onCross(int section) {
       return(!error);
    }
 
-   return(!catch("onCross(3)  invalid parameter section = "+ section, ERR_INVALID_PARAMETER));
+   return(!catch("onCross(3)  invalid parameter section: "+ section, ERR_INVALID_PARAMETER));
 }
 
 
