@@ -9,13 +9,14 @@ graph=1
 fore=0
 grid=0
 volume=0
-scroll=0
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
+scroll=0
+shift=1
 shift_size=50
+
 fixed_pos=620
 window_left=0
 window_top=0
