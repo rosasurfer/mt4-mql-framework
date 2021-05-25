@@ -69,7 +69,7 @@ double mm.equity;                                                 // total appli
 #define POSITION_CONFIG_TERM.doubleSize 5                         // in Doubles
 
 double positions.config[][POSITION_CONFIG_TERM.doubleSize];       // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
-string positions.config.comments[];                               // Kommentare konfigurierter Positionen (Größe entspricht der Anzahl der konfigurierten Positionen)
+string positions.config.comments[];                               // Kommentare konfigurierter Positionen (Arraygröße entspricht positions.config[])
 
 #define TERM_OPEN_LONG                  1                         // ConfigTerm-Types
 #define TERM_OPEN_SHORT                 2
@@ -1193,7 +1193,7 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
 
-   // (2) PendingTickets-Marker unten rechts ein-/ausblenden
+   // (2) PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -1242,7 +1242,7 @@ bool UpdatePositions() {
       commentCol          = cols - 1;
       lastAbsoluteProfits = positions.absoluteProfits;
 
-      // nach (Re-)Initialisierung alle vorhandenen Zeilen löschen
+      // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
          for (int col=0; col < 8; col++) {                           // alle Spalten testen: mit und ohne absoluten Beträgen
             label = StringConcatenate(label.position, ".line", lines, "_col", col);
@@ -2082,13 +2082,13 @@ bool CustomPositions.ReadConfig() {
                isPositionEmpty = false;
             }
 
-            if (!isPositionEmpty) {                                  // Zeile mit Leer-Term abschließen (markiert Zeilenende)
+            if (!isPositionEmpty) {                                     // Zeile mit Leer-Term abschließen (markiert Zeilenende)
                confSize = ArrayRange(positions.config, 0);
-               ArrayResize(positions.config, confSize+1);            // initialisiert Term mit NULL
-                  comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
-                  comment = comment     + ifString(StringLen(comment    ) && StringLen(confComment), ", ", "") + confComment;
+               ArrayResize(positions.config, confSize+1);               // initialisiert Term mit NULL
+                  if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
+                  else                         comment = confComment;   // configured comments override generated ones
                ArrayPushString(positions.config.comments, comment);
-               positionStartOffset = confSize + 1;                   // Start-Offset der nächsten Custom-Position speichern (falls noch eine weitere Position folgt)
+               positionStartOffset = confSize + 1;                      // Start-Offset der nächsten Custom-Position speichern (falls noch eine weitere Position folgt)
             }
          }
       }
