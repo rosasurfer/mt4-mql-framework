@@ -460,9 +460,9 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
 
 /**
  * Check for and trigger signals. The following signals are monitored:
- *  - the crossing of a channel band since last crossing of the MA (strong signal)
- *  - a new high/low after a previous channel band crossing        (weak signal)
- *  - on BarOpen a finished price reversal                         (strong signal)
+ *  - the crossing of a channel band since last crossing of the MA
+ *  - a new high/low after a previous channel band crossing
+ *  - on BarOpen a finished price reversal
  *
  * @param  double ma[]        - timeseries array holding the MA values
  * @param  double upperBand[] - timeseries array holding the upper band values
@@ -537,13 +537,13 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
          lastTimeDn = Time[0];
       }
 
-      // new highs/lows
+      // detect new highs/lows
       if (Bid > lastHigh) { onNewHigh(); lastHigh = High[0]; }                // update the current high
       if (Bid < lastLow)  { onNewLow();  lastLow  = Low[0];  }                // update the current low
    }
    lastBid = Bid;
 
-   // finally detect finished price reversals
+   // detect finished price reversals
    if (ChangedBars == 2) {
       if (Abs(reversalAge[1]) == 1) onReversal();
    }
@@ -760,7 +760,7 @@ void onNewLow() {
  *
  */
 void onReversal() {
-   logNotice(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
+   logInfo(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
 }
 
 
