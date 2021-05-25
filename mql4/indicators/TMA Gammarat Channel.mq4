@@ -394,8 +394,6 @@ double CalculateTMA(int bar, int limit) {
  * @return bool - success status
  */
 bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], int startbar) {
-   if (!MarkReversals) return(false);
-
  	for (int i=startbar; i >= 0; i--) {
  	   if (!lowerBand[i+1]) continue;
 
@@ -771,20 +769,22 @@ void onReversal() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(terminal_buffers);
 
-   if (!Bands.LineWidth) { int bandsDrawType = DRAW_NONE, bandsWidth = EMPTY;           }
-   else                  {     bandsDrawType = DRAW_LINE; bandsWidth = Bands.LineWidth; }
+   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   if (!Bands.LineWidth) { int drawType = DRAW_NONE, drawWidth = EMPTY;           }
+   else                  {     drawType = DRAW_LINE; drawWidth = Bands.LineWidth; }
 
    SetIndexStyle(MODE_TMA_RP,        DRAW_LINE);
-   SetIndexStyle(MODE_UPPER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
-   SetIndexStyle(MODE_LOWER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
+   SetIndexStyle(MODE_UPPER_BAND_RP, drawType, EMPTY, drawWidth, Bands.Color);
+   SetIndexStyle(MODE_LOWER_BAND_RP, drawType, EMPTY, drawWidth, Bands.Color);
 
    //SetIndexStyle(MODE_UPPER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color5);
    //SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color6);
 
-   SetIndexStyle(MODE_REVERSAL_MARKER, DRAW_ARROW); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
+   if (MarkReversals) drawType = DRAW_ARROW;
+   else               drawType = DRAW_NONE;
+   SetIndexStyle(MODE_REVERSAL_MARKER, drawType); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
    SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
