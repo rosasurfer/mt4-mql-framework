@@ -352,7 +352,7 @@ bool onCross(int section) {
    int error = 0;
 
    if (section == MODE_UPPER_SECTION) {
-      message = indicatorName +" turned positive";
+      message = indicatorName +" turned positive at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
       if (IsLogInfo()) logInfo("onCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -363,7 +363,7 @@ bool onCross(int section) {
    }
 
    if (section == MODE_LOWER_SECTION) {
-      message = indicatorName +" turned negative";
+      message = indicatorName +" turned negative at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
       if (IsLogInfo()) logInfo("onCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
