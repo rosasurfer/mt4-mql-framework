@@ -244,10 +244,7 @@ string ErrorDescription(int error) {
  * @param  string replace              - replacement string
  * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
- * @return string - resulting string
- *
- * Note: If the "recursive" flag is set it's the caller's responsibility to prevent an infinite loop caused by an inappropriate
- *       "search"/"replace" parameter combination.
+ * @return string - resulting string or an empty string in case of errors
  */
 string StrReplace(string value, string search, string replace, bool recursive = false) {
    recursive = recursive!=0;
@@ -268,10 +265,18 @@ string StrReplace(string value, string search, string replace, bool recursive = 
       result = StringConcatenate(result, StrSubstr(value, from));
    }
    else {
+      int counter = 0;
       result = value;
+
       while (result != lastResult) {
          lastResult = result;
          result = StrReplace(result, search, replace);
+         counter++;
+         if (counter >= 100) {
+            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop", ERR_RUNTIME_ERROR);
+            result = "";
+            break;
+         }
       }
    }
 
