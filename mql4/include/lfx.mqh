@@ -549,7 +549,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // (2) Orderdaten validieren
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, (-)OpenTime, OpenPrice, TakeProfitPrice, TakeProfitValue, TakeProfitPercent, TakeProfitTriggered, StopLossPrice, StopLossValue, StopLossPercent, StopLossTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
    string sValue, values[];
-   if (Explode(value, ",", values, NULL) != 22)       return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Explode(value, ",", values, NULL) != 22)       return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int digits = 5;
 
    // Comment
@@ -558,146 +558,146 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // OrderType
    sValue = StrTrim(values[2]);
    int _orderType = StrToOperationType(sValue);
-   if (!IsOrderType(_orderType))                      return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!IsOrderType(_orderType))                      return(!catch("LFX.GetOrder(4)  invalid order type \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderUnits
    sValue = StrTrim(values[3]);
-   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(5)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderUnits = StrToDouble(sValue);
-   if (_orderUnits <= 0)                              return(!catch("LFX.GetOrder(6)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_orderUnits <= 0)                              return(!catch("LFX.GetOrder(6)  invalid unit size \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _orderUnits = NormalizeDouble(_orderUnits, 1);
 
    // OpenEquity
    sValue = StrTrim(values[4]);
-   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(7)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openEquity = StrToDouble(sValue);
    if (!IsPendingOrderType(_orderType))
-      if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openEquity <= 0)                           return(!catch("LFX.GetOrder(8)  invalid open equity \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openEquity = NormalizeDouble(_openEquity, 2);
 
    // OpenTriggerTime
    sValue = StrTrim(values[5]);
    if (StrIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
    else                             _openTriggerTime =    StrToTime(sValue);
-   if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
-      if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenTime
    sValue = StrTrim(values[6]);
    if      (StrIsInteger(sValue)) datetime _openTime =  StrToInteger(sValue);
    else if (StrStartsWith(sValue, "-"))    _openTime = -StrToTime(StringSubstr(sValue, 1));
    else                                    _openTime =  StrToTime(sValue);
-   if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!_openTime)                                    return(!catch("LFX.GetOrder(11)  invalid open time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_openTime) > GetFxtTime())                 return(!catch("LFX.GetOrder(12)  invalid open time \""+ TimeToStr(Abs(_openTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OpenPrice
    sValue = StrTrim(values[7]);
-   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(13)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _openPrice = StrToDouble(sValue);
-   if (_openPrice <= 0)                               return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_openPrice <= 0)                               return(!catch("LFX.GetOrder(14)  invalid open price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _openPrice = NormalizeDouble(_openPrice, digits);
 
    // TakeProfitPrice
    sValue = StrTrim(values[8]);
    if (!StringLen(sValue)) double _takeProfitPrice = 0;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(15)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPrice = StrToDouble(sValue);
-      if (_takeProfitPrice < 0)                       return(!catch("LFX.GetOrder(16)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_takeProfitPrice < 0)                       return(!catch("LFX.GetOrder(16)  invalid takeprofit price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       _takeProfitPrice = NormalizeDouble(_takeProfitPrice, digits);
    }
 
    // TakeProfitValue
    sValue = StrTrim(values[9]);
    if      (!StringLen(sValue)) double _takeProfitValue = EMPTY_VALUE;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(17)  invalid takeprofit value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else                                _takeProfitValue = NormalizeDouble(StrToDouble(sValue), 2);
 
    // TakeProfitPercent
    sValue = StrTrim(values[10]);
    if      (!StringLen(sValue)) double _takeProfitPercent = EMPTY_VALUE;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(18)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _takeProfitPercent = NormalizeDouble(StrToDouble(sValue), 2);
-      if (_takeProfitPercent < -100)                  return(!catch("LFX.GetOrder(19)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_takeProfitPercent < -100)                  return(!catch("LFX.GetOrder(19)  invalid takeprofit percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // TakeProfitTriggered
    sValue = StrTrim(values[11]);
    if      (sValue == "0") bool _takeProfitTriggered = false;
    else if (sValue == "1")      _takeProfitTriggered = true;
-   else                                               return(!catch("LFX.GetOrder(20)  invalid takeProfit-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                               return(!catch("LFX.GetOrder(20)  invalid takeProfit-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // StopLossPrice
    sValue = StrTrim(values[12]);
    if (!StringLen(sValue)) double _stopLossPrice = 0;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(21)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPrice = StrToDouble(sValue);
-      if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_stopLossPrice < 0)                         return(!catch("LFX.GetOrder(22)  invalid stoploss price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       _stopLossPrice = NormalizeDouble(_stopLossPrice, digits);
       if (_stopLossPrice && _takeProfitPrice) {
          if (IsLongOrderType(_orderType)) {
-            if (_stopLossPrice >= _takeProfitPrice)   return(!catch("LFX.GetOrder(23)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+            if (_stopLossPrice >= _takeProfitPrice)   return(!catch("LFX.GetOrder(23)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
          }
-         else if (_stopLossPrice <= _takeProfitPrice) return(!catch("LFX.GetOrder(24)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         else if (_stopLossPrice <= _takeProfitPrice) return(!catch("LFX.GetOrder(24)  stoploss/takeprofit price mis-match "+ DoubleToStr(_stopLossPrice, digits) +"/"+ DoubleToStr(_takeProfitPrice, digits) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       }
    }
 
    // StopLossValue
    sValue = StrTrim(values[13]);
    if      (!StringLen(sValue)) double _stopLossValue = EMPTY_VALUE;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(25)  invalid stoploss value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossValue = NormalizeDouble(StrToDouble(sValue), 2);
       if (!IsEmptyValue(_stopLossValue) && !IsEmptyValue(_takeProfitValue))
-         if (_stopLossValue >= _takeProfitValue)      return(!catch("LFX.GetOrder(26)  stoploss/takeprofit value mis-match "+ DoubleToStr(_stopLossValue, 2) +"/"+ DoubleToStr(_takeProfitValue, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         if (_stopLossValue >= _takeProfitValue)      return(!catch("LFX.GetOrder(26)  stoploss/takeprofit value mis-match "+ DoubleToStr(_stopLossValue, 2) +"/"+ DoubleToStr(_takeProfitValue, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // StopLossPercent
    sValue = StrTrim(values[14]);
    if      (!StringLen(sValue)) double _stopLossPercent = EMPTY_VALUE;
-   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else if (!StrIsNumeric(sValue))                    return(!catch("LFX.GetOrder(27)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else {
       _stopLossPercent = NormalizeDouble(StrToDouble(sValue), 2);
-      if (_stopLossPercent < -100)                    return(!catch("LFX.GetOrder(28)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_stopLossPercent < -100)                    return(!catch("LFX.GetOrder(28)  invalid stoploss percent value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
       if (!IsEmptyValue(_stopLossPercent) && !IsEmptyValue(_takeProfitPercent))
-         if (_stopLossPercent >= _takeProfitPercent)  return(!catch("LFX.GetOrder(29)  stoploss/takeprofit percent mis-match "+ DoubleToStr(_stopLossPercent, 2) +"/"+ DoubleToStr(_takeProfitPercent, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+         if (_stopLossPercent >= _takeProfitPercent)  return(!catch("LFX.GetOrder(29)  stoploss/takeprofit percent mis-match "+ DoubleToStr(_stopLossPercent, 2) +"/"+ DoubleToStr(_takeProfitPercent, 2) +" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    }
 
    // StopLossTriggered
    sValue = StrTrim(values[15]);
    if      (sValue == "0") bool _stopLossTriggered = false;
    else if (sValue == "1")      _stopLossTriggered = true;
-   else                                               return(!catch("LFX.GetOrder(30)  invalid stoploss-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   else                                               return(!catch("LFX.GetOrder(30)  invalid stoploss-triggered value \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTriggerTime
    sValue = StrTrim(values[16]);
    if (StrIsDigit(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
    else                             _closeTriggerTime =    StrToTime(sValue);
-   if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
-      if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+      if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // CloseTime
    sValue = StrTrim(values[17]);
    if      (StrIsInteger(sValue)) datetime _closeTime =  StrToInteger(sValue);
    else if (StrStartsWith(sValue, "-"))    _closeTime = -StrToTime(StringSubstr(sValue, 1));
    else                                    _closeTime =  StrToTime(sValue);
-   if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (Abs(_closeTime) > GetFxtTime())                return(!catch("LFX.GetOrder(33)  invalid close time \""+ TimeToStr(Abs(_closeTime), TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // ClosePrice
    sValue = StrTrim(values[18]);
-   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(34)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _closePrice = StrToDouble(sValue);
-   if (_closePrice < 0)                               return(!catch("LFX.GetOrder(35)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_closePrice < 0)                               return(!catch("LFX.GetOrder(35)  invalid close price \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    _closePrice = NormalizeDouble(_closePrice, digits);
-   if (_closeTime > 0 && !_closePrice)                return(!catch("LFX.GetOrder(36)  close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_closeTime > 0 && !_closePrice)                return(!catch("LFX.GetOrder(36)  close time/price mis-match \""+ TimeToStr(_closeTime, TIME_FULL) +"\"/0 in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // OrderProfit
    sValue = StrTrim(values[19]);
-   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsNumeric(sValue))                         return(!catch("LFX.GetOrder(37)  invalid order profit \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    double _orderProfit = StrToDouble(sValue);
    _orderProfit = NormalizeDouble(_orderProfit, 2);
 
@@ -705,14 +705,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    sValue = StrTrim(values[20]);
    if (StrIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
    else                             _modificationTime =    StrToTime(sValue);
-   if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
-   if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
    sValue = StrTrim(values[21]);
-   if (!StrIsDigit(sValue))                           return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsDigit(sValue))                           return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int _version = StrToInteger(sValue);
-   if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
 
    // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
@@ -928,7 +928,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplaceR(StrReplaceR(value, " ,", ","), ",  ", ", ") +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
+      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
    // (5) Version der übergebenen Order aktualisieren

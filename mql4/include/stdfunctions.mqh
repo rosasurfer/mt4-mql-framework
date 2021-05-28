@@ -237,56 +237,45 @@ string ErrorDescription(int error) {
 
 
 /**
- * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
+ * Replace all occurences of a substring in a string by another string.
  *
- * @param  string value   - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
+ * @param  string value                - string to process
+ * @param  string search               - search string
+ * @param  string replace              - replacement string
+ * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
- * @return string - modifizierter String
+ * @return string - resulting string
+ *
+ * Note: If the "recursive" flag is set it's the caller's responsibility to prevent an infinite loop caused by an inappropriate
+ *       "search"/"replace" parameter combination.
  */
-string StrReplace(string value, string search, string replace) {
+string StrReplace(string value, string search, string replace, bool recursive = false) {
+   recursive = recursive!=0;
    if (!StringLen(value))  return(value);
    if (!StringLen(search)) return(value);
    if (search == replace)  return(value);
 
-   int from=0, found=StringFind(value, search);
-   if (found == -1)
-      return(value);
+   string result="", lastResult="";
 
-   string result = "";
+   if (!recursive) {
+      int from=0, found=StringFind(value, search);
 
-   while (found > -1) {
-      result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
-      from   = found + StringLen(search);
-      found  = StringFind(value, search, from);
+      while (found > -1) {
+         result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
+         from   = found + StringLen(search);
+         found  = StringFind(value, search, from);
+      }
+      result = StringConcatenate(result, StrSubstr(value, from));
    }
-   result = StringConcatenate(result, StringSubstr(value, from));
+   else {
+      result = value;
+      while (result != lastResult) {
+         lastResult = result;
+         result = StrReplace(result, search, replace);
+      }
+   }
 
    return(result);
-}
-
-
-/**
- * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
- * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
- *
- * @param  string value   - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
- *
- * @return string - rekursiv modifizierter String
- */
-string StrReplaceR(string value, string search, string replace) {
-   if (!StringLen(value)) return(value);
-
-   string lastResult="", result=value;
-
-   while (result != lastResult) {
-      lastResult = result;
-      result     = StrReplace(result, search, replace);
-   }
-   return(lastResult);
 }
 
 
@@ -5991,7 +5980,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - success status
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
@@ -6958,7 +6947,6 @@ void __DummyCalls() {
    StrPadRight(NULL, NULL);
    StrRepeat(NULL, NULL);
    StrReplace(NULL, NULL, NULL);
-   StrReplaceR(NULL, NULL, NULL);
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
