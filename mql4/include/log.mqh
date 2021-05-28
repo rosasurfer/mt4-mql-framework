@@ -62,7 +62,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
           sLoglevel = StrPadRight(sLoglevel, 6);
    string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", FullModuleName(), "::", StrReplace(StrReplaceR(message, NL+NL, NL), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", FullModuleName(), "::", StrReplace(StrReplace(message, NL+NL, NL, true), NL, " "), sError));
 
    isRecursion = false;
    return(error);
