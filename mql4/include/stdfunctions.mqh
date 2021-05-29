@@ -273,7 +273,7 @@ string StrReplace(string value, string search, string replace, bool recursive = 
          result = StrReplace(result, search, replace);
          counter++;
          if (counter >= 100) {
-            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop", ERR_RUNTIME_ERROR);
+            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop (search="+ DoubleQuoteStr(search) +", replace="+ DoubleQuoteStr(replace) +")", ERR_RUNTIME_ERROR);
             result = "";
             break;
          }
@@ -285,15 +285,15 @@ string StrReplace(string value, string search, string replace, bool recursive = 
 
 
 /**
- * Drop-in replacement for the flawed built-in function StringSubstr()
+ * Drop-in replacement for the flawed built-in MQL function StringSubstr().
  *
- * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
- * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
+ * Fixes the case StringSubstr(string, start, length=0) where the built-in function returns the whole string.
+ * Additionally supports negative values for the parameters "start" and "length".
  *
- * @param  string str
- * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
- * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
- *
+ * @param  string str    - string to process
+ * @param  int    start  - start index; if negative counted from the end of the string
+ * @param  int    length - number of chars to return; if positive chars on the right side, if negative chars on the left side
+ *                         of the start index
  * @return string
  */
 string StrSubstr(string str, int start, int length = INT_MAX) {
@@ -323,7 +323,7 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 /**
  * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Plays a sound asynchronously, instead of synchronously and UI blocking as the terminal does. Also plays a sound if the
+ * Plays a sound asynchronously (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
  * terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
@@ -347,7 +347,7 @@ bool PlaySoundEx(string soundfile) {
 
 
 /**
- * Return a pluralized string according to the specified number of items.
+ * Return a pluralized string corresponding to the specified number of items.
  *
  * @param  int    count               - number of items to determine the result from
  * @param  string singular [optional] - singular form of string
@@ -1696,8 +1696,8 @@ string FullModuleName() {
    static string name = ""; if (!StringLen(name)) {
       string program = ProgramName();
       if (program == "???")
-         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));
-      name = program + ifString(IsLibrary(), "::"+ ModuleName(), "");
+         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));           // don't cache in static var
+      name = StrTrim(program) + ifString(IsLibrary(), "::"+ ModuleName(), "");
    }
    return(name);
 }
