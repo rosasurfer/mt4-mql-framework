@@ -1,10 +1,13 @@
+<!--
+ Displays XMT-Scalper metrics in a subwindow.
+-->
 <chart>
 symbol=GBPUSD
 period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=1
 graph=1
 fore=0
 grid=0
@@ -23,7 +26,6 @@ window_top=0
 window_right=1292
 window_bottom=812
 window_type=3
-
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -37,10 +39,11 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+height=5000
 
 <indicator>
 name=main
+
 <object>
 type=1
 object_name=Horizontal Line 0.50
@@ -8774,6 +8777,24 @@ window_num=0
 period_flags=255
 show_data=0
 </indicator>
-
 </window>
+
+<window>
+height=5000
+fixed_height=0
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=systems/XMT Metrics
+flags=339
+window_num=1
+<inputs>
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+</window>
+
 </chart>
