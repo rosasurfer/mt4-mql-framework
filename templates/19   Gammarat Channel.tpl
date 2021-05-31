@@ -8777,21 +8777,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Inside Bars
-flags=339
-window_num=0
-<inputs>
-Timeframes=H1
-Max.InsideBars=1
-</inputs>
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=TMA Gammarat Channel
 flags=339
 window_num=0
