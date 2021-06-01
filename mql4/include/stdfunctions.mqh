@@ -317,7 +317,7 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 
 
 #define SND_ASYNC           0x01       // play asynchronously
-#define SND_FILENAME  0x00020000       // parameter is a file name
+#define SND_FILENAME     0x20000       // parameter is a file name
 
 
 /**
