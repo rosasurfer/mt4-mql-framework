@@ -2381,7 +2381,7 @@ bool StrIsPhoneNumber(string value) {
    }
 
    string s = StrReplace(StrTrim(value), " ", "");
-   int char, length=StringLen(s);
+   int chr, length=StringLen(s);
 
    // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
    int pos = StringFind(s, "-");
@@ -2389,17 +2389,17 @@ bool StrIsPhoneNumber(string value) {
       if (pos   == 0     ) return(false);
       if (pos+1 == length) return(false);
 
-      char = StringGetChar(s, pos-1);           // left char
-      if (char < '0') return(false);
-      if (char > '9') return(false);
+      chr = StringGetChar(s, pos-1);            // left char
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);
 
-      char = StringGetChar(s, pos+1);           // right char
-      if (char < '0') return(false);
-      if (char > '9') return(false);
+      chr = StringGetChar(s, pos+1);            // right char
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);
 
       pos = StringFind(s, "-", pos+1);
    }
-   if (char != 0) s = StrReplace(s, "-", "");
+   if (chr != 0) s = StrReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
@@ -3057,7 +3057,7 @@ bool StrToBool(string value, bool strict = false) {
 
 
 /**
- * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (code-page: ANSI westlich).
+ * Convert a string to lower case.
  *
  * @param  string value
  *
@@ -3065,34 +3065,34 @@ bool StrToBool(string value, bool strict = false) {
  */
 string StrToLower(string value) {
    string result = value;
-   int char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      ( 65 <= char && char <=  90) result = StringSetChar(result, i, char+32);  // A-Z->a-z
-      //else if (192 <= char && char <= 214) result = StringSetChar(result, i, char+32);  // À-Ö->à-ö
-      //else if (216 <= char && char <= 222) result = StringSetChar(result, i, char+32);  // Ø-Þ->ø-þ
-      //else if (char == 138)                result = StringSetChar(result, i, 154);      // Š->š
-      //else if (char == 140)                result = StringSetChar(result, i, 156);      // Œ->œ
-      //else if (char == 142)                result = StringSetChar(result, i, 158);      // Ž->ž
-      //else if (char == 159)                result = StringSetChar(result, i, 255);      // Ÿ->ÿ
+      chr = StringGetChar(value, i);
+      // logical version
+      //if      ( 65 <= chr && chr <=  90) result = StringSetChar(result, i, chr+32);     // A-Z->a-z
+      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // À-Ö->à-ö
+      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // Ø-Þ->ø-þ
+      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // Š->š
+      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // Œ->œ
+      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
+      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
 
-      // für MQL optimierte Version
-      if (char > 64) {
-         if (char < 91) {
-            result = StringSetChar(result, i, char+32);                 // A-Z->a-z
+      // MQL4 version
+      if (chr > 64) {
+         if (chr < 91) {
+            result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
          }
-         else if (char > 191) {
-            if (char < 223) {
-               if (char != 215)
-                  result = StringSetChar(result, i, char+32);           // À-Ö->à-ö, Ø-Þ->ø-þ
+         else if (chr > 191) {
+            if (chr < 223) {
+               if (chr != 215)
+                  result = StringSetChar(result, i, chr+32);            // À-Ö->à-ö, Ø-Þ->ø-þ
             }
          }
-         else if (char == 138) result = StringSetChar(result, i, 154);  // Š->š
-         else if (char == 140) result = StringSetChar(result, i, 156);  // Œ->œ
-         else if (char == 142) result = StringSetChar(result, i, 158);  // Ž->ž
-         else if (char == 159) result = StringSetChar(result, i, 255);  // Ÿ->ÿ
+         else if (chr == 138) result = StringSetChar(result, i, 154);   // Š->š
+         else if (chr == 140) result = StringSetChar(result, i, 156);   // Œ->œ
+         else if (chr == 142) result = StringSetChar(result, i, 158);   // Ž->ž
+         else if (chr == 159) result = StringSetChar(result, i, 255);   // Ÿ->ÿ
       }
    }
    return(result);
@@ -3100,7 +3100,7 @@ string StrToLower(string value) {
 
 
 /**
- * Konvertiert einen String in Großschreibweise.
+ * Convert a string to upper case.
  *
  * @param  string value
  *
@@ -3108,23 +3108,23 @@ string StrToLower(string value) {
  */
 string StrToUpper(string value) {
    string result = value;
-   int char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      (96 < char && char < 123)             result = StringSetChar(result, i, char-32);
-      //else if (char==154 || char==156 || char==158) result = StringSetChar(result, i, char-16);
-      //else if (char==255)                           result = StringSetChar(result, i,     159);  // ÿ -> Ÿ
-      //else if (char > 223)                          result = StringSetChar(result, i, char-32);
+      chr = StringGetChar(value, i);
+      // logical version
+      //if      (96 < chr && chr < 123)            result = StringSetChar(result, i, chr-32);
+      //else if (chr==154 || chr==156 || chr==158) result = StringSetChar(result, i, chr-16);
+      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
+      //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
 
-      // für MQL optimierte Version
-      if      (char == 255)                 result = StringSetChar(result, i,     159);            // ÿ -> Ÿ
-      else if (char  > 223)                 result = StringSetChar(result, i, char-32);
-      else if (char == 158)                 result = StringSetChar(result, i, char-16);
-      else if (char == 156)                 result = StringSetChar(result, i, char-16);
-      else if (char == 154)                 result = StringSetChar(result, i, char-16);
-      else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
+      // MQL4 version
+      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
+      else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
+      else if (chr == 158)                result = StringSetChar(result, i, chr-16);
+      else if (chr == 156)                result = StringSetChar(result, i, chr-16);
+      else if (chr == 154)                result = StringSetChar(result, i, chr-16);
+      else if (chr  >  96) if (chr < 123) result = StringSetChar(result, i, chr-32);
    }
    return(result);
 }
@@ -3175,17 +3175,17 @@ string StrTrimRight(string value) {
  */
 string UrlEncode(string value) {
    string strChar, result="";
-   int    char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
       strChar = StringSubstr(value, i, 1);
-      char    = StringGetChar(strChar, 0);
+      chr     = StringGetChar(strChar, 0);
 
-      if      (47 < char && char <  58) result = StringConcatenate(result, strChar);                  // 0-9
-      else if (64 < char && char <  91) result = StringConcatenate(result, strChar);                  // A-Z
-      else if (96 < char && char < 123) result = StringConcatenate(result, strChar);                  // a-z
-      else if (char == ' ')             result = StringConcatenate(result, "+");
-      else                              result = StringConcatenate(result, "%", CharToHexStr(char));
+      if      (47 < chr && chr <  58) result = StringConcatenate(result, strChar);                  // 0-9
+      else if (64 < chr && chr <  91) result = StringConcatenate(result, strChar);                  // A-Z
+      else if (96 < chr && chr < 123) result = StringConcatenate(result, strChar);                  // a-z
+      else if (chr == ' ')            result = StringConcatenate(result, "+");
+      else                            result = StringConcatenate(result, "%", CharToHexStr(chr));
    }
 
    if (!catch("UrlEncode(1)"))
@@ -5145,12 +5145,12 @@ string NumberToStr(double value, string mask) {
       dotPos = maskLen;
 
    // Anzahl der linken Stellen
-   int char, nLeft;
+   int chr, nLeft;
    bool nDigit;
    for (int i=0; i < dotPos; i++) {
-      char = StringGetChar(mask, i);
-      if ('0' <= char) /*&&*/ if (char <= '9') {
-         nLeft = 10*nLeft + char-'0';
+      chr = StringGetChar(mask, i);
+      if ('0' <= chr) /*&&*/ if (chr <= '9') {
+         nLeft = 10*nLeft + chr-'0';
          nDigit = true;
       }
    }
@@ -5161,17 +5161,17 @@ string NumberToStr(double value, string mask) {
    if (dotGiven) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
-         char = StringGetChar(mask, i);
-         if ('0' <= char && char <= '9') {
-            nRight = 10*nRight + char-'0';
+         chr = StringGetChar(mask, i);
+         if ('0' <= chr && chr <= '9') {
+            nRight = 10*nRight + chr-'0';
             nDigit = true;
          }
-         else if (nDigit && char==39) {                     // 39 => '
+         else if (nDigit && chr==39) {                      // 39 => '
             nSubpip = nRight;
             continue;
          }
          else {
-            if  (char == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
+            if  (chr == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
             else if (!nDigit) nRight = CountDecimals(value);
             break;
          }
@@ -7009,7 +7009,7 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
-   string   CharToHexStr(int char);
+   string   CharToHexStr(int chr);
    string   CreateTempFile(string path, string prefix);
    int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);

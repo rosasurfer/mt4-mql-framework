@@ -590,7 +590,7 @@ int      BufferGetChar(int &buffer[], int pos);;
 string   BufferToHexStr(int &buffer[]);;
 string   BufferToStr(int &buffer[]);;
 string   BufferWCharsToStr(int &buffer[], int from, int length);;
-string   CharToHexStr(int char);;
+string   CharToHexStr(int chr);;
 bool     ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor);;
 bool     ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice);;
 bool     ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice, int digits, color markerColor);;

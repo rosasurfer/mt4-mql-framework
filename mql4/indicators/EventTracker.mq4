@@ -265,10 +265,10 @@ bool Configure() {
          }
          else if (StrIsDigit(StrLeft(sValue, 1))) {                                             // z.B. "96-M15.BarRange"
             sDigits = StrLeft(sValue, 1);                                                       // Zahl vorn parsen
-            for (int char, j=1; j < sLen; j++) {
-               char = StringGetChar(sValue, j);
-               if ('0'<=char && char<='9') sDigits = StrLeft(sValue, j+1);
-               else                        break;
+            for (int chr, j=1; j < sLen; j++) {
+               chr = StringGetChar(sValue, j);
+               if ('0'<=chr && chr<='9') sDigits = StrLeft(sValue, j+1);
+               else                      break;
             }
             sValue     = StrTrim(StrSubstr(sValue, j));                                         // Zahl vorn abschneiden
             signal.bar = StrToInteger(sDigits);
@@ -435,9 +435,9 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
 
          string sDigits = StrLeft(value, 1);                                              // Zahl vorn parsen
          for (int j=1; j < lenValue; j++) {
-            int char = StringGetChar(value, j);
-            if ('0'<=char && char<='9') sDigits = StrLeft(value, j+1);
-            else                        break;
+            int chr = StringGetChar(value, j);
+            if ('0'<=chr && chr<='9') sDigits = StrLeft(value, j+1);
+            else                      break;
          }
          int iValue = StrToInteger(sDigits);
          value = StrToUpper(StrTrim(StrSubstr(value, j)));                                // Zahl vorn abschneiden

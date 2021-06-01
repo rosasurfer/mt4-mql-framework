@@ -2228,12 +2228,12 @@ string BufferToStr(int buffer[]) {
       int integer = buffer[i];                                          // Integers nacheinander verarbeiten
                                                                                                                      // +---+------------+------+
       for (int b=0; b < 4; b++) {                                                                                    // | b |    byte    | char |
-         int char = integer & 0xFF;                                     // ein einzelnes Byte des Integers lesen     // +---+------------+------+
-         if (char < 0x20) {                                             // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-            if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;              // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-            else              char = PLACEHOLDER_CTRL_CHAR;             // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+         int chr = integer & 0xFF;                                      // ein einzelnes Byte des Integers lesen     // +---+------------+------+
+         if (chr < 0x20) {                                              // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
+            if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;                // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+            else             chr = PLACEHOLDER_CTRL_CHAR;               // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
          }                                                                                                           // | 3 | 0xFF000000 |   4  |
-         result = StringConcatenate(result, CharToStr(char));                                                        // +---+------------+------+
+         result = StringConcatenate(result, CharToStr(chr));                                                         // +---+------------+------+
          integer >>= 8;
       }
    }
@@ -2267,12 +2267,12 @@ string __BuffersToStr(int buffer[][]) {
          int integer = buffer[i][n];                                    // Integers nacheinander verarbeiten
                                                                                                                      // +---+------------+------+
          for (int b=0; b < 4; b++) {                                                                                 // | b |    byte    | char |
-            int char = integer & 0xFF;                                  // ein einzelnes Byte des Integers lesen     // +---+------------+------+
-            if (char < 0x20) {                                          // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
-               if (char == 0x00) char = PLACEHOLDER_NUL_CHAR;           // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
-               else              char = PLACEHOLDER_CTRL_CHAR;          // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
+            int chr = integer & 0xFF;                                   // ein einzelnes Byte des Integers lesen     // +---+------------+------+
+            if (chr < 0x20) {                                           // nicht darstellbare Zeichen ersetzen       // | 0 | 0x000000FF |   1  |
+               if (chr == 0x00) chr = PLACEHOLDER_NUL_CHAR;             // NUL-Byte          (…)                     // | 1 | 0x0000FF00 |   2  |
+               else             chr = PLACEHOLDER_CTRL_CHAR;            // Control-Character (•)                     // | 2 | 0x00FF0000 |   3  |
             }                                                                                                        // | 3 | 0xFF000000 |   4  |
-            result = StringConcatenate(result, CharToStr(char));                                                     // +---+------------+------+
+            result = StringConcatenate(result, CharToStr(chr));                                                      // +---+------------+------+
             integer >>= 8;
          }
       }
@@ -2366,9 +2366,9 @@ int BufferGetChar(int buffer[], int pos) {
    int b = pos & 0x03;                    // Index des relevanten Bytes des Integers      // | b |    byte    |
                                                                                           // +---+------------+
    int integer = buffer[i] >> (b<<3);                                                     // | 0 | 0x000000FF |
-   int char    = integer & 0xFF;                                                          // | 1 | 0x0000FF00 |
+   int chr     = integer & 0xFF;                                                          // | 1 | 0x0000FF00 |
                                                                                           // | 2 | 0x00FF0000 |
-   return(char);                                                                          // | 3 | 0xFF000000 |
+   return(chr);                                                                           // | 3 | 0xFF000000 |
 }                                                                                         // +---+------------+
 
 
@@ -3672,18 +3672,18 @@ datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
 /**
  * Convert a character to its hexadecimal representation.
  *
- * @param  int char - character (1 byte)
+ * @param  int chr - character (1 byte)
  *
  * @return string
  *
  * @example
  *   CharToHexStr(10) => "0A"
  */
-string CharToHexStr(int char) {
+string CharToHexStr(int chr) {
    string str="", chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
 
-   str = StringConcatenate(str, chars[char >> 4 & 0x0F]);
-   str = StringConcatenate(str, chars[char      & 0x0F]);
+   str = StringConcatenate(str, chars[chr >> 4 & 0x0F]);
+   str = StringConcatenate(str, chars[chr      & 0x0F]);
 
    return(str);
 }
@@ -3724,12 +3724,12 @@ string IntegerToHexStr(int integer) {
    if (integer == 0)
       return("0");
 
-   string hexStr, char, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   string hexStr, chr, chrs[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
    int    value = integer;
 
    while (value != 0) {
-      char   = chars[value & 0x0F];                // value % 16
-      hexStr = StringConcatenate(char, hexStr);
+      chr    = chrs[value & 0x0F];                  // value % 16
+      hexStr = StringConcatenate(chr, hexStr);
       value >>= 4;                                 // value / 16
    }
    return(hexStr);
