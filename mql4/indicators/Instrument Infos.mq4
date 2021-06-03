@@ -231,4 +231,20 @@ int UpdateInstrumentInfos() {
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
       return(NO_ERROR);
    return(catch("UpdateInstrumentInfos(1)", error));
+
+   ADR();
+}
+
+
+
+/**
+ * XARD ADR: an approximation of LWMA(ADR(n))
+ */
+double ADR() {
+   double adr1  = iATR(NULL, PERIOD_D1, 1, 1);
+   double adr5  = iATR(NULL, PERIOD_D1, 5, 1);
+   double adr10 = iATR(NULL, PERIOD_D1, 10, 1);
+   double adr20 = iATR(NULL, PERIOD_D1, 20, 1);
+
+   return((adr1 + adr5 + adr10 + adr20)/4);
 }
