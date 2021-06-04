@@ -214,9 +214,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(ma)) return(logInfo("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,            0);
       ArrayInitialize(atr,           0);
@@ -246,18 +246,18 @@ int onTick() {
    if (maMethod==MODE_EMA || maMethod==MODE_SMMA)
       initBars = Max(10, maPeriods*3);                // IIR filters need at least 10 bars for initialization
    int maBars = Bars-initBars;
-   int maStartBar = Min(ChangedBars, maBars) - 1;
+   int maStartbar = Min(ChangedBars, maBars) - 1;
 
-   for (int bar=maStartBar; bar >= 0; bar--) {
+   for (int bar=maStartbar; bar >= 0; bar--) {
       ma[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
    }
 
    // recalculate changed ATR values
    initBars = atrPeriods-1;
    int atrBars = Bars-initBars;
-   int atrStartBar = Min(ChangedBars, atrBars) - 1;
+   int atrStartbar = Min(ChangedBars, atrBars) - 1;
 
-   for (bar=atrStartBar; bar >= 0; bar--) {
+   for (bar=atrStartbar; bar >= 0; bar--) {
       atr[bar] = iATR(NULL, NULL, atrPeriods, bar);
    }
 
@@ -266,9 +266,9 @@ int onTick() {
    if (atrSmoothingMethod==MODE_EMA || atrSmoothingMethod==MODE_SMMA)
       initBars = Max(10, atrSmoothingPeriods*3);      // IIR filters need at least 10 bars for initialization
    int channelBars = Min(maBars, atrBars)-initBars;
-   int channelStartBar = Min(ChangedBars, channelBars) - 1;
+   int channelStartbar = Min(ChangedBars, channelBars) - 1;
 
-   for (bar=channelStartBar; bar >= 0; bar--) {
+   for (bar=channelStartbar; bar >= 0; bar--) {
       double channelWidth = atrMultiplier * iMAOnArray(atr, WHOLE_ARRAY, atrSmoothingPeriods, 0, atrSmoothingMethod, bar);
       upperBand[bar] = ma[bar] + channelWidth;
       lowerBand[bar] = ma[bar] - channelWidth;
@@ -277,13 +277,13 @@ int onTick() {
    // recalculate changed SR values
    initBars = 1;                                      // 1 bar for comparison with the previous value
    int srBars = Min(maBars, channelBars)-initBars;
-   int srStartBar = Min(ChangedBars, srBars) - 1;
-   if (srStartBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int srStartbar = Min(ChangedBars, srBars) - 1;
+   if (srStartbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
-   double prevSR = lineUp[srStartBar+1] + lineDown[srStartBar+1];
-   if (!prevSR) prevSR = ma[srStartBar+1];
+   double prevSR = lineUp[srStartbar+1] + lineDown[srStartbar+1];
+   if (!prevSR) prevSR = ma[srStartbar+1];
 
-   for (bar=srStartBar; bar >= 0; bar--) {
+   for (bar=srStartbar; bar >= 0; bar--) {
       if (ma[bar+1] < prevSR) {
          if (ma[bar] < prevSR) {
             lineUp  [bar] = 0;

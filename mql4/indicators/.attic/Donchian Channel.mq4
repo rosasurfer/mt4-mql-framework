@@ -85,9 +85,9 @@ int onDeinit() {
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (!ArraySize(iUpperLevel))                                      // kann bei Terminal-Start auftreten
-      return(logDebug("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(logInfo("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(iUpperLevel, EMPTY_VALUE);
       ArrayInitialize(iLowerLevel, EMPTY_VALUE);
@@ -103,11 +103,11 @@ int onTick() {
 
 
    // Startbar ermitteln
-   int startBar = Min(ChangedBars-1, Bars-Periods);
+   int startbar = Min(ChangedBars-1, Bars-Periods);
 
 
    // Schleife über alle zu aktualisierenden Bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       iUpperLevel[bar] = High[iHighest(NULL, NULL, MODE_HIGH, Periods, bar+1)];
       iLowerLevel[bar] = Low [iLowest (NULL, NULL, MODE_LOW,  Periods, bar+1)];
    }

@@ -131,9 +131,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(fisherMain)) return(logDebug("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(fisherMain)) return(logInfo("onTick(1)  size(fisherMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(fisherMain,       EMPTY_VALUE);
       ArrayInitialize(fisherSection,               0);
@@ -157,8 +157,8 @@ int onTick() {
 
    // (1) calculate start bar
    int maxBar = Bars-Fisher.Periods;
-   int startBar = Min(ChangedBars-1, maxBar);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(ChangedBars-1, maxBar);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid prices
@@ -171,7 +171,7 @@ int onTick() {
 
 
    // (3) recalculate invalid indicator values
-   for (bar=startBar; bar >= 0; bar--) {
+   for (bar=startbar; bar >= 0; bar--) {
       rangeHigh = rawPrices[ArrayMaximum(rawPrices, Fisher.Periods, bar)];
       rangeLow  = rawPrices[ArrayMinimum(rawPrices, Fisher.Periods, bar)];
       range     = rangeHigh - rangeLow;

@@ -127,9 +127,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(buffer1)) return(logDebug("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(buffer1)) return(logInfo("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(buffer1, EMPTY_VALUE);
       ArrayInitialize(buffer2, EMPTY_VALUE);
@@ -319,7 +319,7 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
    int currentTimeframe = Period();
    if (!timeframe) timeframe = currentTimeframe;
 
-   int bars, changedBars, startBar, filterLength = 66;
+   int bars, changedBars, startbar, filterLength = 66;
 
    if (timeframe == currentTimeframe) {
       // the displayed timeframe equals the chart timeframe
@@ -327,29 +327,29 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
          _maxValues = Mul(maxValues, ifInt(dataTimeframe > currentTimeframe, dataTimeframe/currentTimeframe, 1), /*boundaryOnOverflow=*/true);
       }
       changedBars = Min(ChangedBars, _maxValues);
-      startBar    = Min(changedBars-1, Bars-filterLength);
-      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
-      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
-         startBar = iBarShiftNext(NULL, NULL, startTime);
-      changedBars = startBar + 1;
+      startbar    = Min(changedBars-1, Bars-filterLength);
+      if (startbar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  Bars="+ Bars +"  ChangedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
+      if (limitStartTime) /*&&*/ if (Time[startbar]+currentTimeframe*MINUTES-1 < startTime)
+         startbar = iBarShiftNext(NULL, NULL, startTime);
+      changedBars = startbar + 1;
    }
    else {
       // the displayed timeframe is different from the chart timeframe
       // resolve startbar to update in the data timeframe
       bars        = iBars(NULL, timeframe);
       changedBars = Min(iChangedBars(NULL, timeframe), maxValues);
-      startBar    = Min(changedBars-1, bars-filterLength);
-      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
+      startbar    = Min(changedBars-1, bars-filterLength);
+      if (startbar < 0) return(_EMPTY(catch("ComputeChangedBars(2)  timeframe="+ TimeframeDescription(timeframe) +"  bars="+ bars +"  changedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
 
       // resolve corresponding bar offset in the current timeframe
-      startBar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startBar));
+      startbar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startbar));
 
       // cross-check the changed bars of the current timeframe against the data timeframe
-      changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe, false));
-      startBar    = changedBars - 1;
-      if (limitStartTime) /*&&*/ if (Time[startBar]+currentTimeframe*MINUTES-1 < startTime)
-         startBar = iBarShiftNext(NULL, NULL, startTime);
-      changedBars = startBar + 1;
+      changedBars = Max(startbar+1, ComputeChangedBars(currentTimeframe, false));
+      startbar    = changedBars - 1;
+      if (limitStartTime) /*&&*/ if (Time[startbar]+currentTimeframe*MINUTES-1 < startTime)
+         startbar = iBarShiftNext(NULL, NULL, startTime);
+      changedBars = startbar + 1;
    }
    return(changedBars);
 }

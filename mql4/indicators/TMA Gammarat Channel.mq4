@@ -22,12 +22,12 @@ extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical |
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = Magenta;          // LightSkyBlue
 extern int    Bands.LineWidth  = 1;                // 3
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern bool   RepaintingMode   = true;             // toggle repainting mode
 extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
-extern string __b____________________________;
+extern string __b___________________________;
 
 extern bool   AlertsOn         = true;
 
@@ -190,11 +190,11 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(tmaRP)) return(logDebug("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(tmaRP)) return(logInfo("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(tmaRP,           0);
       ArrayInitialize(upperVarianceRP, 0);
@@ -255,10 +255,10 @@ int onTick() {
 /**
  * Original repainting TMA and channel calculation.
  */
-void CalculateRepaintingTMA(int startBar) {
+void CalculateRepaintingTMA(int startbar) {
    int j, w, maHalfLength=maPeriods/2;
 
-   for (int i=startBar; i >= 0; i--) {
+   for (int i=startbar; i >= 0; i--) {
       // TMA calculation
       double price = GetPrice(i);
       double sum = (maHalfLength+1) * price;

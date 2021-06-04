@@ -132,9 +132,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,  EMPTY_VALUE);
       ArrayInitialize(upper, EMPTY_VALUE);
@@ -151,11 +151,11 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-fdiPeriods-1);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-fdiPeriods-1);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   UpdateChangedBars(startBar);
+   UpdateChangedBars(startbar);
 
    return(last_error);
 }
@@ -164,11 +164,11 @@ int onTick() {
 /**
  * Update changed bars.
  *
- * @param  int startBar - index of the oldest changed bar
+ * @param  int startbar - index of the oldest changed bar
  *
  * @return bool - success status
  */
-bool UpdateChangedBars(int startBar) {
+bool UpdateChangedBars(int startbar) {
    int periodsPlus1   = fdiPeriods + 1;
    double log2        = MathLog(2);
    double log2Periods = MathLog(2 * fdiPeriods);
@@ -178,7 +178,7 @@ bool UpdateChangedBars(int startBar) {
    //
    //   FDI(N, Matulich) = FDI(N+1, Sevcik)
    //
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       double priceMax = Close[ArrayMaximum(Close, periodsPlus1, bar)];     // fixes a Matulich error
       double priceMin = Close[ArrayMinimum(Close, periodsPlus1, bar)];
       double range    = NormalizeDouble(priceMax-priceMin, Digits), length=0, fdi=0;

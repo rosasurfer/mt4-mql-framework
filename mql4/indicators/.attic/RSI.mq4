@@ -146,9 +146,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferRSI)) return(logDebug("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferRSI)) return(logInfo("onTick(1)  size(bufferRSI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferRSI,     EMPTY_VALUE);
       ArrayInitialize(bufferSection,           0);
@@ -170,15 +170,15 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = Min(changedBars-1, Bars-rsi.periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars-1, Bars-rsi.periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    double fast.ma, slow.ma;
 
 
    // (2) recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       // actual RSI
       bufferRSI[bar] = iRSI(NULL, NULL, rsi.periods, rsi.appliedPrice, bar);
 

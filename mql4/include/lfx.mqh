@@ -412,7 +412,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          triggerTime = los.CloseTriggerTime(orders, i); break;
 
       default:
-         return(!catch("LFX.SendTradeCommand(1)  invalid parameter limitType = "+ limitType +" (no limit type)", ERR_INVALID_PARAMETER));
+         return(!catch("LFX.SendTradeCommand(1)  invalid parameter limitType: "+ limitType +" (no limit type)", ERR_INVALID_PARAMETER));
    }
 
    /*
@@ -532,7 +532,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
  */
 int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
    // Parametervaliderung
-   if (ticket <= 0) return(!catch("LFX.GetOrder(1)  invalid parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
+   if (ticket <= 0) return(!catch("LFX.GetOrder(1)  invalid parameter ticket: "+ ticket, ERR_INVALID_PARAMETER));
 
 
    // (1) Orderdaten lesen
@@ -859,7 +859,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
-   int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders = "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
+   int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders: "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
 
    /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER.intSize);
    if (dims == 1) {
@@ -871,7 +871,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
       // Parameter orders[] ist Order-Array
       if (ArrayRange(orders, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       int ordersSize = ArrayRange(orders, 0);
-      if (index < 0 || index > ordersSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index = "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
+      if (index < 0 || index > ordersSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index: "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
       int src  = GetIntsAddress(orders) + index*LFX_ORDER.intSize*4;
       int dest = GetIntsAddress(order);
       CopyMemory(dest, src, LFX_ORDER.intSize*4);
@@ -994,7 +994,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
  * @return bool - Erfolgsstatus
  */
 bool QC.SendTradeCommand(string cmd) {
-   if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd = "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
+   if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd: "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
 
    cmd = StrReplace(cmd, TAB, HTML_TAB);
 
@@ -1154,7 +1154,7 @@ bool QC.StopTradeCmdReceiver() {
  */
 bool QC.SendOrderNotification(int cid, string msg) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
-      return(!catch("QC.SendOrderNotification(1)  illegal parameter cid = "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+      return(!catch("QC.SendOrderNotification(1)  illegal parameter cid: "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
 
    if (!hQC.TradeToLfxSenders[cid]) /*&&*/ if (!QC.StartLfxSender(cid))
       return(false);
@@ -1175,7 +1175,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
  */
 bool QC.StartLfxSender(int cid) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
-      return(!catch("QC.StartLfxSender(1)  illegal parameter cid = "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
+      return(!catch("QC.StartLfxSender(1)  illegal parameter cid: "+ cid, ERR_ARRAY_INDEX_OUT_OF_RANGE));
    if (hQC.TradeToLfxSenders[cid] > 0)
       return(true);
                                                                      // Channel-Name: "{AccountCompanyAlias}:{AccountNumber}:LFX.Profit.{Currency}"

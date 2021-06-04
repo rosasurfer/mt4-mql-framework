@@ -89,9 +89,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMMI)) return(logDebug("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMMI)) return(logInfo("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -107,12 +107,12 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = Min(changedBars-1, Bars-mmi.periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars-1, Bars-mmi.periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       int revertingUp   = 0;
       int revertingDown = 0;
       double avgPrice   = iMA(NULL, NULL, mmi.periods+1, 0, MODE_SMA, PRICE_CLOSE, bar);

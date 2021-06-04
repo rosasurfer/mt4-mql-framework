@@ -185,7 +185,7 @@ int onInit() {
       outputMaPeriods = 1;
    }
 
-   // initialize lookback periods: IIR filters need at least 10 bars for initialization
+   // resolve lookback init periods: IIR filters (EMA, SMMA) need at least 10 bars for initialization
    inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 
@@ -211,11 +211,11 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(haOpen)) return(logDebug("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(haOpen)) return(logInfo("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(haOpen,     0);
       ArrayInitialize(haHigh,     0);
@@ -245,11 +245,11 @@ int onTick() {
    // +-----------------------------------------------------------+-------------------------------------------------------+
    // | Top down                                                  | Bottom up                                             |
    // +-----------------------------------------------------------+-------------------------------------------------------+
-   // | RequestedBars    = 5000                                   | ResultingBars    = startBar(Output) + 1               |
-   // | startBar(Output) = RequestedBars - 1                      | startBar(Output) = startBar(HA) - outputMaPeriods + 1 |
-   // | startBar(HA)     = startBar(Output) + outputMaPeriods - 1 | startBar(HA)     = startBar(Input) - 1                |
-   // | startBar(Input)  = startBar(HA) + 1                       | startBar(Input)  = oldestBar - inputMaPeriods + 1     |
-   // | oldestBar        = startBar(Input) + inputMaPeriods - 1   | oldestBar        = AvailableBars - 1                  |
+   // | RequestedBars    = 5000                                   | ResultingBars    = startbar(Output) + 1               |
+   // | startbar(Output) = RequestedBars - 1                      | startbar(Output) = startbar(HA) - outputMaPeriods + 1 |
+   // | startbar(HA)     = startbar(Output) + outputMaPeriods - 1 | startbar(HA)     = startbar(Input) - 1                |
+   // | startbar(Input)  = startbar(HA) + 1                       | startbar(Input)  = oldestBar - inputMaPeriods + 1     |
+   // | oldestBar        = startbar(Input) + inputMaPeriods - 1   | oldestBar        = AvailableBars - 1                  |
    // | RequiredBars     = oldestBar + 1                          | AvailableBars    = Bars                               |
    // +-----------------------------------------------------------+-------------------------------------------------------+
    // |                  --->                                                     ---^                                    |
@@ -261,14 +261,14 @@ int onTick() {
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    int bars           = Min(requestedBars, resultingBars);              // actual number of bars to be updated
-   int outputStartBar = bars - 1;
-   int haStartBar     = outputStartBar + outputInitPeriods - 1;
+   int outputStartbar = bars - 1;
+   int haStartbar     = outputStartbar + outputInitPeriods - 1;
 
    double inO,  inH,  inL,  inC;                                        // input prices
    double outO, outH, outL, outC, dNull[];                              // output prices
 
    // initialize HA values of the oldest bar
-   int bar = haStartBar;
+   int bar = haStartbar;
    if (!haOpen[bar+1]) {
       inO = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_OPEN,  bar+1);
       inH = iMA(NULL, NULL, inputMaPeriods, 0, inputMaMethod, PRICE_HIGH,  bar+1);
@@ -292,7 +292,7 @@ int onTick() {
    }
 
    // recalculate changed output bars (2nd smoothing)
-   for (bar=outputStartBar; bar >= 0; bar--) {
+   for (bar=outputStartbar; bar >= 0; bar--) {
       outO = iMAOnArray(haOpen,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       outH = iMAOnArray(haHigh,  WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);
       outL = iMAOnArray(haLow,   WHOLE_ARRAY, outputMaPeriods, 0, outputMaMethod, bar);

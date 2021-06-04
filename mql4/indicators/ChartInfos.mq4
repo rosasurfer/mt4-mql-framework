@@ -22,7 +22,7 @@ int __DeinitFlags[];
 
 extern string Track.Orders         = "on | off | auto*";
 extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
@@ -2132,7 +2132,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
 
    string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
-   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
+   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotal = false;
@@ -2317,7 +2317,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
    string term.orig = StrTrim(term);
           term      = StrToUpper(term.orig);
-   if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term = "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
+   if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term: "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotalHistory = false;

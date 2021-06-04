@@ -651,7 +651,7 @@ bool WaitForTicket(int ticket, bool select = false) {
    select = select!=0;
 
    if (ticket <= 0)
-      return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
+      return(!catch("WaitForTicket(1)  illegal parameter ticket: "+ ticket, ERR_INVALID_PARAMETER));
 
    if (!select) {
       if (!OrderPush("WaitForTicket(2)")) return(false);
@@ -1019,6 +1019,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
       case 'E': if      (              _symbol=="ECX"   )      result = "EURX";
@@ -1149,7 +1150,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (              _symbol=="USTEC"  )     result = "NAS100";
                 break;
 
-      case 'V': break;
+      case 'V': if      (StrStartsWith(_symbol, "VIX_"))       result = "VIX";
+                break;
 
       case 'W': if      (StrStartsWith(_symbol, "WTI_"))       result = "WTI";
                 break;
@@ -1327,7 +1329,7 @@ bool LE(double double1, double double2, int digits = 8) {
  */
 bool EQ(double double1, double double2, int digits = 8) {
    if (digits < 0 || digits > 8)
-      return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
+      return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -1354,7 +1356,7 @@ bool EQ(double double1, double double2, int digits = 8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
+   return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
    */
 }
 
@@ -2209,7 +2211,7 @@ bool StrStartsWithI(string value, string prefix) {
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
 
    return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
@@ -2428,7 +2430,7 @@ bool StrIsPhoneNumber(string value) {
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -2629,8 +2631,8 @@ int TimeYearEx(datetime time) {
  * @return int - Fehlerstatus
  */
 void CopyMemory(int destination, int source, int bytes) {
-   if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
-   if (source     >=0 && source    < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination: 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (source     >=0 && source    < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source: 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
 
    RtlMoveMemory(destination, source, bytes);
    return(NO_ERROR);
@@ -2645,7 +2647,7 @@ void CopyMemory(int destination, int source, int bytes) {
  * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
  */
 int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int sum, size=ArraySize(values);
 
@@ -3787,7 +3789,7 @@ string CreateLegendLabel() {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
    if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
    if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
@@ -4072,7 +4074,7 @@ string UninitializeReasonDescription(int reason) {
       case UR_INITFAILED : return("OnInit() failed"                    );
       case UR_CLOSE      : return("terminal closed"                    );
    }
-   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5017,7 +5019,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value: \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5081,7 +5083,7 @@ string TradeCommandToStr(int cmd) {
       case TC_LFX_ORDER_MODIFY : return("TC_LFX_ORDER_MODIFY" );
       case TC_LFX_ORDER_DELETE : return("TC_LFX_ORDER_DELETE" );
    }
-   return(_EMPTY_STR(catch("TradeCommandToStr(1)  invalid parameter cmd = "+ cmd +" (not a trade command )", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("TradeCommandToStr(1)  invalid parameter cmd: "+ cmd +" (not a trade command )", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5451,7 +5453,7 @@ int PeriodFlag(int period = NULL) {
       case PERIOD_MN1: return(F_PERIOD_MN1);
       case PERIOD_Q1 : return(F_PERIOD_Q1 );
    }
-   return(_NULL(catch("PeriodFlag(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   return(_NULL(catch("PeriodFlag(1)  invalid parameter period: "+ period, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5806,7 +5808,7 @@ string SwapCalculationModeToStr(int mode) {
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5896,7 +5898,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/terminal configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // Receiver
@@ -5908,12 +5910,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/terminal configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // Subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
    _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen

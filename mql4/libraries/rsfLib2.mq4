@@ -25,7 +25,7 @@ int __DeinitFlags[];
  * @return bool - Erfolgsstatus
  */
 bool DoubleQuoteStrings(string &values[]) {
-   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
 
    int size = ArraySize(values);
 
@@ -47,7 +47,7 @@ bool DoubleQuoteStrings(string &values[]) {
  */
 string RatesToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("RatesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("RatesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (size == 0)
@@ -99,7 +99,7 @@ string PricesToStr(double values[], string separator=", ") {
  */
 string MoneysToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("MoneysToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("MoneysToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -135,7 +135,7 @@ string MoneysToStr(double values[], string separator=", ") {
  */
 string iBufferToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("iBufferToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("iBufferToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (size == 0)
@@ -239,7 +239,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStr()  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_EMPTY_STR(catch("__DoublesToStr()  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -265,7 +265,7 @@ string DoublesToStrEx(double values[][], string separator, int digits) {
  */
 string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
    if (digits < 0 || digits > 16)
-      return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER)));
+      return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    if (separator == "0")                                             // (string) NULL
       separator = ", ";
@@ -326,7 +326,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -340,7 +340,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
  */
 string TimesToStr(datetime values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("TimesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("TimesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -375,7 +375,7 @@ string TimesToStr(datetime values[], string separator=", ") {
  */
 string OperationTypesToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("OperationTypesToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("OperationTypesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -409,7 +409,7 @@ string OperationTypesToStr(int values[], string separator=", ") {
  */
 string CharsToStr(int values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("CharsToStr()  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("CharsToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
@@ -510,7 +510,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
       return(result);
    }
 
-   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
 }
 
 
@@ -524,7 +524,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
  */
 string TicketsToStr.Lots(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(tickets);
    if (!size)
@@ -568,7 +568,7 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
  */
 string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
    if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr.LotsSymbols(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("TicketsToStr.LotsSymbols(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(tickets);
    if (!size)
@@ -611,7 +611,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
  */
 string TicketsToStr.Position(int tickets[]) {
    if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr.Position(1)  illegal dimensions of parameter tickets = "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("TicketsToStr.Position(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
 
    int ticketsSize = ArraySize(tickets);
    if (!ticketsSize)
@@ -711,12 +711,12 @@ int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[
  * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
-   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
    int array.dim1 = ArrayRange(array, 0);
    int array.dim2 = ArrayRange(array, 1);
    if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
-   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset = "+ offset, ERR_INVALID_PARAMETER));
+   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset: "+ offset, ERR_INVALID_PARAMETER));
 
    // Ausgangsarray vergrößern
    int newSize = array.dim1 + 1;
@@ -749,10 +749,10 @@ int ArrayInsertDoubleArray(double array[][], int offset, double values[]) {
  * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
  */
 int ArrayInsertString(string &array[], int offset, string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
    int size = ArraySize(array);
-   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
+   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
 
    // Einfügen am Anfang des Arrays
    if (offset == 0)
@@ -782,11 +782,11 @@ int ArrayInsertString(string &array[], int offset, string value) {
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
 int ArrayInsertStrings(string array[], int offset, string values[]) {
-   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
-   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset = "+ offset, ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
    int sizeOfArray = ArraySize(array);
-   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset = "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_PARAMETER)));
-   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
    int sizeOfValues = ArraySize(values);
 
    // Einfügen am Anfang des Arrays

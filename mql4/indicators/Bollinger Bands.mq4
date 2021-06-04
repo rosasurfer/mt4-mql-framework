@@ -27,7 +27,7 @@ extern color  Bands.Color       = RoyalBlue;
 extern int    Bands.LineWidth   = 1;
 
 extern int    Max.Bars          = 10000;              // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onTouchBand   = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -201,9 +201,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMa)) return(logDebug("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMa)) return(logInfo("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
@@ -223,14 +223,14 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = Min(changedBars-1, Bars-MA.Periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars-1, Bars-MA.Periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // recalculate changed bars
    double deviation, price, sum;
 
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       if (maMethod == MODE_ALMA) {
          bufferMa[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
