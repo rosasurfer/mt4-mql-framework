@@ -52,7 +52,7 @@ int __DeinitFlags[];
 
 extern string Track.Orders         = "on | off | auto*";
 extern string Track.Signals        = "on | off | auto*";
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
@@ -860,7 +860,7 @@ string BarCloseSignal.Status(int index) {
  */
 bool onBarCloseSignal(int index, int direction) {
    if (!track.signals)                                 return(true);
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    string message = "";
    if (IsLogDebug()) logDebug("onBarCloseSignal(2)  "+ message);
@@ -1164,7 +1164,7 @@ string BarRangeDescription(int timeframe, int bar) {
  */
 bool onBarRangeSignal(int index, int direction, double level, double price, datetime time.srv) {
    if (!track.signals)                                 return(true);
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    int signal.timeframe = signal.config[index][SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][SIGNAL_CONFIG_BAR      ];

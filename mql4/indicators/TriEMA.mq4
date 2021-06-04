@@ -25,7 +25,7 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -222,9 +222,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(firstEma)) return(logDebug("onTick(1)  size(firstEma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(firstEma)) return(logInfo("onTick(1)  size(firstEma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
@@ -249,13 +249,13 @@ int onTick() {
 
    // calculate start bar
    int i, bars  = Min(ChangedBars, maxValues);                                              // Because EMA(EMA(EMA)) is used in the calculation TriEMA
-   int startBar = Min(bars-1, Bars - (3*MA.Periods-2));                                     // needs 3*<period>-2 samples to start producing values,
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));   // in contrast to <period> samples needed by a regular EMA.
+   int startbar = Min(bars-1, Bars - (3*MA.Periods-2));                                     // needs 3*<period>-2 samples to start producing values,
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));   // in contrast to <period> samples needed by a regular EMA.
 
    // recalculate changed bars
    for (i=ChangedBars-1; i >= 0; i--)   firstEma [i] =        iMA(NULL,      NULL,        MA.Periods, 0, MODE_EMA, maAppliedPrice, i);
    for (i=ChangedBars-1; i >= 0; i--)   secondEma[i] = iMAOnArray(firstEma,  WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
-   for (i=startBar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
+   for (i=startbar;      i >= 0; i--) { thirdEma [i] = iMAOnArray(secondEma, WHOLE_ARRAY, MA.Periods, 0, MODE_EMA,                 i);
       @Trend.UpdateDirection(thirdEma, i, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
@@ -306,7 +306,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

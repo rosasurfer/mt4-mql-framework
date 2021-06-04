@@ -41,7 +41,7 @@ extern color  Color.MovingAverage  = CLR_NONE;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -217,9 +217,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -244,11 +244,11 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-Max(ATR.Periods, SMA.Periods));
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-Max(ATR.Periods, SMA.Periods));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   for (int i=startBar; i >= 0; i--) {
+   for (int i=startbar; i >= 0; i--) {
       // calculate ATR and SMA
       double atr = iATR(NULL, NULL, ATR.Periods, i);
       if (i == 0) {                                                  // suppress ATR jitter at unfinished bar 0 if ATR.Periods is very small
@@ -358,7 +358,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

@@ -169,9 +169,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(trixMain)) return(logDebug("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(trixMain)) return(logInfo("onTick(1)  size(trixMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(firstEma,  EMPTY_VALUE);
       ArrayInitialize(secondEma, EMPTY_VALUE);
@@ -199,8 +199,8 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
       changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
-   int bar, startBar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int bar, startbar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -209,9 +209,9 @@ int onTick() {
    for (bar=ChangedBars-1; bar >= 0; bar--) secondEma[bar] = iMAOnArray(firstEma,  WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
    for (bar=ChangedBars-1; bar >= 0; bar--) thirdEma [bar] = iMAOnArray(secondEma, WHOLE_ARRAY, EMA.Periods, 0, MODE_EMA,                   bar);
 
-   for (bar=startBar; bar >= 0; bar--) {
+   for (bar=startbar; bar >= 0; bar--) {
       if (!thirdEma[bar+1]) {
-         debug("onTick(0."+ Tick +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startBar="+ startBar);
+         debug("onTick(0."+ Tick +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startbar="+ startbar);
          continue;
       }
       // Trix main value

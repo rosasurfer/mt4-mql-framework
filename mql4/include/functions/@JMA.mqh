@@ -8,7 +8,7 @@
  *
  * @param  int    iMaxBar   - The maximum value parameter "bar" can take. Usually equals "Bars-1-periods" where "period" is
  *                            the number of bars on which the dJMA.series is not calculated.
- * @param  int    iStartBar - The number of bars not yet counted plus one or the number of the last uncounted bar. Must be
+ * @param  int    iStartbar - The number of bars not yet counted plus one or the number of the last uncounted bar. Must be
  *                            equal to "Bars-IndicatorCounted()-1" and non-zero.
  *
  * @param  int    length    - smoothing period in bars, may be variable for adaptive indicators                                 OK
@@ -20,7 +20,7 @@
  *
  * @links  https://www.mql5.com/en/articles/1450                                               [NK-Library, Nikolay Kositsin]
  */
-double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, double series, int bar) {
+double JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar) {
 
    double   dJMA[], dJMASum1[], dJMASum2[], dJMASum3[], dList128A[][128], dList128ABak[][128], dList128B[][128], dList128BBak[][128], dRing11[][11], dRing11Bak[][11];
    double   dSeries62[][62], dBak8[][8], dLengthDivider[], dPhaseParam[], dLogParamA[], dLogParamB[], dParamA[], dParamB[], dSqrtDivider[], dSqrtParam[], dCycleDelta[];
@@ -30,9 +30,9 @@ double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, doubl
    bool     bInitialized[];
 
    // parameter validation
-   if (h < 0)                return(!catch("JMASeries(1)  invalid parameter h = "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
-   if (length < 1)           return(!catch("JMASeries(2)  h="+ h +": invalid parameter length = "+ length +" (min. 1)", ERR_INVALID_PARAMETER));
-   if (MathAbs(phase) > 100) return(!catch("JMASeries(3)  h="+ h +": invalid parameter phase = "+ phase +" (must be between -100...+100)", ERR_INVALID_PARAMETER));
+   if (h < 0)                return(!catch("JMASeries(1)  invalid parameter h: "+ h +" (must be non-negative)", ERR_INVALID_PARAMETER));
+   if (length < 1)           return(!catch("JMASeries(2)  h="+ h +", invalid parameter length: "+ length +" (min. 1)", ERR_INVALID_PARAMETER));
+   if (MathAbs(phase) > 100) return(!catch("JMASeries(3)  h="+ h +", invalid parameter phase: "+ phase +" (must be between -100...+100)", ERR_INVALID_PARAMETER));
 
    // buffer initialization
    if (h > ArraySize(dJMA)-1) {
@@ -46,7 +46,7 @@ double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, doubl
 
 
    // validate bar parameters
-   if (iStartBar>=iMaxBar && !bar && iMaxBar>30 && !dtTime[h])
+   if (iStartbar>=iMaxBar && !bar && iMaxBar>30 && !dtTime[h])
       logWarn("JMASeries(4)  h="+ h +": illegal bar parameters", ERR_INVALID_PARAMETER);
    if (bar > iMaxBar)
       return(0);
@@ -65,12 +65,12 @@ double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, doubl
       iLastPhase[h]     = phase;
    }
 
-   if (bar==iStartBar && iStartBar < iMaxBar) {
+   if (bar==iStartbar && iStartbar < iMaxBar) {
       // restore values
       //debug("JMASeries(0.2)  Tick="+ Tick +"  bar="+ bar +"  restore");
-      datetime dtNew = Time[iStartBar+1];
+      datetime dtNew = Time[iStartbar+1];
       datetime dtOld = dtTime[h];
-      if (dtNew != dtOld) return(!catch("JMASeries(5)  h="+ h +": invalid parameter iStartBar = "+ iStartBar +" (too "+ ifString(dtNew > dtOld, "small", "large") +")", ERR_INVALID_PARAMETER));
+      if (dtNew != dtOld) return(!catch("JMASeries(5)  h="+ h +", invalid parameter iStartbar: "+ iStartbar +" (too "+ ifString(dtNew > dtOld, "small", "large") +")", ERR_INVALID_PARAMETER));
 
       for (int i=127; i >= 0; i--) dList128A[h][i] = dList128ABak[h][i];
       for (    i=127; i >= 0; i--) dList128B[h][i] = dList128BBak[h][i];
@@ -87,7 +87,7 @@ double JMASeries(int h, int iMaxBar, int iStartBar, int length, int phase, doubl
    }
 
    if (bar == 1) {
-      if (iStartBar!=1 || Time[iStartBar+2]==dtTime[h]) {
+      if (iStartbar!=1 || Time[iStartbar+2]==dtTime[h]) {
          // store values
          //debug("JMASeries(0.1)  Tick="+ Tick +"  bar="+ bar +"  backup");
          for (i=127; i >= 0; i--) dList128ABak[h][i] = dList128A[h][i];

@@ -1,5 +1,5 @@
 /**
- * A Moving Average with support for non-standard moving average types.
+ * A Moving Average with support for non-standard calculation methods.
  *
  *
  * Available Moving Average types:
@@ -31,7 +31,7 @@ extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
@@ -103,16 +103,13 @@ string signal.info = "";                                 // additional chart leg
 int onInit() {
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // MA.Method
-   string sValue, sValues[];
-   if (Explode(MA.Method, "*", sValues, 2) > 1) {
+   string sValues[], sValue = MA.Method;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
-   }
-   else {
-      sValue = StrTrim(MA.Method);
    }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (maMethod == -1)        return(catch("onInit(2)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
@@ -120,16 +117,14 @@ int onInit() {
    MA.Method = MaMethodDescription(maMethod);
 
    // MA.AppliedPrice
-   sValue = StrToLower(MA.AppliedPrice);
+   sValue = MA.AppliedPrice;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "close";                   // default price type
+   if (StrTrim(sValue) == "") sValue = "close";               // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                       return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED) return(catch("onInit(4)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -218,9 +213,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
@@ -241,11 +236,11 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-MA.Periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-MA.Periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       if (maMethod == MODE_ALMA) {           // ALMA
          main[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {
@@ -305,7 +300,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend = "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

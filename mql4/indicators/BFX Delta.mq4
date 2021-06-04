@@ -24,7 +24,7 @@ extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
 extern int    Max.Bars              = 10000;                   // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern int    Signal.Level          = 20;
 extern string Signal.onLevelCross   = "on | off | auto*";
@@ -175,12 +175,12 @@ int onDeinitRecompile() {
 int onTick() {
    // wait for account number initialization (required for BFX license validation)
    if (!AccountNumber())
-      return(logDebug("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(logInfo("onInit(1)  waiting for account number initialization", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMain)) return(logDebug("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMain)) return(logInfo("onTick(2)  size(bufferMain) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMain,   EMPTY_VALUE);
       ArrayInitialize(bufferSignal,           0);
@@ -202,13 +202,13 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = changedBars-1;
-   if (startBar < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = changedBars-1;
+   if (startbar < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
    double delta;
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       bufferLong [bar] = GetBfxCoreVolume(MODE_CVI_LONG, bar);  if (last_error != NO_ERROR) return(last_error);
       bufferShort[bar] = GetBfxCoreVolume(MODE_CVI_SHORT, bar); if (last_error != NO_ERROR) return(last_error);
 
@@ -282,7 +282,7 @@ bool onLevelCross(int mode) {
       return(!error);
    }
 
-   return(!catch("onLevelCross(3)  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER));
+   return(!catch("onLevelCross(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 }
 
 

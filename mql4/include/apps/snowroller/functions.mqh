@@ -1102,7 +1102,7 @@ string StatusDescription(int status) {
       case STATUS_STOPPING   : return("stopping"   );
       case STATUS_STOPPED    : return("stopped"    );
    }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -1122,7 +1122,7 @@ string StatusToStr(int status) {
       case STATUS_STOPPING   : return("STATUS_STOPPING"   );
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
-   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 

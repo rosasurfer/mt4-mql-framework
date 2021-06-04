@@ -38,7 +38,7 @@ extern color  MainLine.Color        = DodgerBlue;
 extern int    MainLine.Width        = 1;
 
 extern int    Max.Bars              = 10000;                // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onCross        = "on | off | auto*";
 extern string Signal.Sound          = "on | off | auto*";
@@ -260,9 +260,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMACD)) return(logDebug("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMACD,  EMPTY_VALUE);
       ArrayInitialize(bufferSection,         0);
@@ -281,13 +281,13 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-slowMA.periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-slowMA.periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    double fastMA, slowMA;
 
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       // fast MA
       if (fastMA.method == MODE_ALMA) {
          fastMA = 0;

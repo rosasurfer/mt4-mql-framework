@@ -47,7 +47,7 @@ int onInit() {
    // (2.1) Parametervalidierung: LFX.Currency
    string value = StrToUpper(StrTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency = \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency: \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
@@ -55,11 +55,11 @@ int onInit() {
    value = StrToUpper(StrTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
-   else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction = \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction: \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // (2.3) Units
-   if (!EQ(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
-   if (Units < 0.1 || Units > 3)          return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
+   if (!EQ(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(3)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
+   if (Units < 0.1 || Units > 3)          return(HandleScriptError("onInit(4)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
 

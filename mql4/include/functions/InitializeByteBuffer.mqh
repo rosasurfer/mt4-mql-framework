@@ -9,8 +9,8 @@
 int InitializeByteBuffer(int buffer[], int bytes) {
    int dimensions = ArrayDimension(buffer);
 
-   if (dimensions > 2) return(catch("InitializeByteBuffer(1)  too many dimensions of parameter buffer = "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
-   if (bytes < 0)      return(catch("InitializeByteBuffer(2)  invalid parameter bytes = "+ bytes, ERR_INVALID_PARAMETER));
+   if (dimensions > 2) return(catch("InitializeByteBuffer(1)  too many dimensions of parameter buffer: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS));
+   if (bytes < 0)      return(catch("InitializeByteBuffer(2)  invalid parameter bytes: "+ bytes, ERR_INVALID_PARAMETER));
 
    int ints = bytes/4;
    if (bytes % 4 != 0)

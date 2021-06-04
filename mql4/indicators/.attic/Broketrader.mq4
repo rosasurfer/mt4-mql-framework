@@ -28,7 +28,7 @@ extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
 extern int    Max.Bars               = 10000;               // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
 extern string Signal.Sound           = "on | off | auto*";
@@ -207,9 +207,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(maLong)) return(logDebug("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(maLong)) return(logInfo("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
@@ -240,16 +240,16 @@ int onTick() {
    int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values (see Stochastic of RSI)
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
-   int startBar       = bars - 1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
-   if (Time[startBar]+Period()*MINUTES-1 < startTime)
-      startBar = iBarShiftNext(NULL, NULL, startTime);
+   int startbar       = bars - 1;
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (Time[startbar]+Period()*MINUTES-1 < startTime)
+      startbar = iBarShiftNext(NULL, NULL, startTime);
 
    double sma, stoch, price1, price2;
 
-   // initialize the reversal state of the previous bar => Bar[startBar+1]
+   // initialize the reversal state of the previous bar => Bar[startbar+1]
    if (!reversalInitialized || ChangedBars > 2) {
-      int prevBar = startBar + 1;
+      int prevBar = startbar + 1;
       sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, prevBar);
       stoch = GetStochasticOfRSI(prevBar); if (last_error != 0) return(last_error);
 
@@ -260,7 +260,7 @@ int onTick() {
    }
 
    // recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, bar);
       stoch = GetStochasticOfRSI(bar); if (last_error != 0) return(last_error);
 

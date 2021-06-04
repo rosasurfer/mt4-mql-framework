@@ -184,9 +184,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(ma)) return(logInfo("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,        EMPTY_VALUE);
       ArrayInitialize(upperBand, EMPTY_VALUE);
@@ -203,15 +203,15 @@ int onTick() {
 
    // calculate start bar
    int changedBars = Min(ChangedBars, maxValues);
-   int startBar = Min(changedBars, Bars-maPeriods+1) - 1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars, Bars-maPeriods+1) - 1;
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    if (maMethod == MODE_ALMA) {
-      RecalcALMAChannel(startBar);
+      RecalcALMAChannel(startbar);
    }
    else {
-      for (int bar=startBar; bar >= 0; bar--) {
+      for (int bar=startbar; bar >= 0; bar--) {
          double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
 
          ma       [bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
@@ -229,12 +229,12 @@ int onTick() {
 /**
  * Recalculate the changed bars of an ALMA based Keltner Channel.
  *
- * @param  int startBar
+ * @param  int startbar
  *
  * @return bool - success status
  */
-bool RecalcALMAChannel(int startBar) {
-   for (int i, j, bar=startBar; bar >= 0; bar--) {
+bool RecalcALMAChannel(int startbar) {
+   for (int i, j, bar=startbar; bar >= 0; bar--) {
       double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
 
       ma[bar] = 0;

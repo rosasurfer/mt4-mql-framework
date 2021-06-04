@@ -115,8 +115,8 @@ double   oes.RemainingLots     (/*ORDER_EXECUTION*/int oe[][], int i) {         
 // Setter
 int      oe.setError           (/*ORDER_EXECUTION*/int &oe[],          int      error     ) { oe[OE.error          ]  = error;                                                       return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setSymbol          (/*ORDER_EXECUTION*/int  oe[],          string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oe.setSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oe.setSymbol(2)  too long parameter symbol: \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + OE.symbol*4;
@@ -144,7 +144,7 @@ double   oe.setProfit          (/*ORDER_EXECUTION*/int &oe[],          double   
 double   oe.addProfit          (/*ORDER_EXECUTION*/int &oe[],          double   profit    ) { oe[OE.profit         ] += MathRound(profit * 100);                                     return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oe.setComment         (/*ORDER_EXECUTION*/int  oe[],          string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
+   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oe.setComment()  too long parameter comment: \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + OE.comment*4;
@@ -161,8 +161,8 @@ int      oes.setError          (/*ORDER_EXECUTION*/int &oe[][], int i, int error
    if (i == -1) { for (int n=ArrayRange(oe, 0)-1; n >= 0; n--)                                oe[n][OE.error          ] = error;                                                     return(error     ); }
                                                                                               oe[i][OE.error          ] = error;                                                     return(error     ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   symbol    ) {
-   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol = \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(_EMPTY_STR(catch("oes.setSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol)), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol: \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4;
@@ -190,7 +190,7 @@ double   oes.setProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 double   oes.addProfit         (/*ORDER_EXECUTION*/int &oe[][], int i, double   profit    ) { oe[i][OE.profit         ] += MathRound(profit * 100);                                  return(profit    ); ORDER_EXECUTION.toStr(oe); }
 string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   comment   ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment = \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
+   if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment: \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.comment)*4;
@@ -212,7 +212,7 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
  */
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    int dimensions = ArrayDimension(oe);
-   if (dimensions > 2)                                          return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe = "+ dimensions, ERR_INVALID_PARAMETER)));
+   if (dimensions > 2)                                          return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe: "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;
