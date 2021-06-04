@@ -2,7 +2,7 @@
  * Displays additional market and account infos on the chart.
  *
  *  - Symbol (in builds <= 509), price and spread.
- *  - The calculated position size according to the configured risk profile.
+ *  - The calculated unitsize according to the configured risk profile.
  *  - Total open position and risk according to the configured risk profile.
  *  - P/L of open positions and/or trade history supporting two different modes:
  *     • internal: positions and/or history from the current account,
@@ -49,15 +49,15 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
 
 
-// position size calculation
+// unitsize calculation
 bool   mm.done;                                                   // processing flag
 double mm.lotValue;                                               // value of 1 lot in account currency
-double mm.unleveragedLots;                                        // unleveraged position size
+double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
 double mm.stopDistance;                                           // configured stop distance in pip
-double mm.positionSize;                                           // calculated position size according to risk and stop distance
-double mm.normPositionSize;                                       // mm.positionSize normalized to MODE_LOTSTEP
-double mm.positionSizeLeverage;                                   // leverage of the calculated position size
+double mm.unitSize;                                               // calculated unitsize according to risk and stop distance
+double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
+double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
 double mm.externalAssets;                                         // additional assets not hold in the broker's account
 double mm.equity;                                                 // total applied equity value
                                                                   //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
@@ -227,7 +227,7 @@ int onTick() {
    else {
       if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(4)")) return(last_error);    // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
       if (!UpdateSpread())                 if (CheckLastError("onTick(5)")) return(last_error);
-      if (!UpdatePositionSize())           if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdateUnitSize())               if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
       if (!UpdatePositions())              if (CheckLastError("onTick(7)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
       if (!UpdateStopoutLevel())           if (CheckLastError("onTick(8)")) return(last_error);    // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (CheckLastError("onTick(9)")) return(last_error);    // aktualisiert die Anzeige der Anzahl der offenen Orders
@@ -1140,25 +1140,25 @@ bool UpdateSpread() {
 
 
 /**
- * Update the display of the calculated position size for the configured risk profile (bottom-right).
+ * Update the display of the calculated unitsize for the configured risk profile (bottom-right).
  *
  * @return bool - success status
  */
-bool UpdatePositionSize() {
-   if (IsTesting())                                   return(true);        // skip in tester
-   if (!mm.done) /*&&*/ if (!CalculatePositionSize()) return(_false(CheckLastError("UpdatePositionSize(1)->CalculatePositionSize()")));
-   if (!mm.done)                                      return(true);
+bool UpdateUnitSize() {
+   if (IsTesting())                               return(true);            // skip in tester
+   if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(_false(CheckLastError("UpdateUnitSize(1)->CalculateUnitSize()")));
+   if (!mm.done)                                  return(true);
 
-   string sPositionSize = "";         // R - risk / stop distance                                                                  L - leverage                                           position size
+   string sUnitSize = "";         // R - risk / stop distance                                                                  L - leverage                                       unitsize
    if (mode.intern && mm.risk && mm.stopDistance) {
-      sPositionSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", DoubleToStr(mm.stopDistance, Digits & 1), "pip     L", DoubleToStr(mm.positionSizeLeverage, 1), "      ", NumberToStr(mm.normPositionSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", DoubleToStr(mm.stopDistance, Digits & 1), "pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
-   ObjectSetText(label.unitSize, sPositionSize, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
       return(true);
-   return(!catch("UpdatePositionSize(2)", error));
+   return(!catch("UpdateUnitSize(2)", error));
 }
 
 
@@ -1170,7 +1170,7 @@ bool UpdatePositionSize() {
 bool UpdatePositions() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
    if (mode.intern && !mm.done) {
-      if (!CalculatePositionSize())                         return(false);
+      if (!CalculateUnitSize())                             return(false);
       if (!mm.done)                                         return(true);
    }
 
@@ -1719,21 +1719,21 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
 
 
 /**
- * Calculate the position size according to the configured risk profile.
+ * Calculate the unitsize according to the configured risk profile.
  *
  * @return bool - success status
  */
-bool CalculatePositionSize() {
+bool CalculateUnitSize() {
    if (mode.extern || mm.done) return(true);                               // only for internal account
 
-   mm.lotValue             = 0;
-   mm.unleveragedLots      = 0;                                            // unleveraged position size
-   mm.positionSize         = 0;                                            // position size for the configured risk
-   mm.normPositionSize     = 0;                                            // normalized position size
-   mm.positionSizeLeverage = 0;                                            // leverage of the calculated position size
-   mm.equity               = 0;                                            // currently used equity value incl. extern assets
+   mm.lotValue         = 0;
+   mm.unleveragedLots  = 0;                                                // unleveraged unitsize
+   mm.unitSize         = 0;                                                // unitsize for the configured risk
+   mm.normUnitSize     = 0;                                                // normalized unitsize
+   mm.unitSizeLeverage = 0;                                                // leverage of the calculated unitsize
+   mm.equity           = 0;                                                // currently used equity value incl. extern assets
 
-   // calculate lot values and position sizes
+   // calculate lot values and unitsizes
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
@@ -1741,7 +1741,7 @@ bool CalculatePositionSize() {
       if (error || !Bid || !tickSize || !tickValue || !marginRequired) {   // can happen on terminal start, on change of account or template, or in offline charts
          if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
             return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-         return(!catch("CalculatePositionSize(1)", error));
+         return(!catch("CalculateUnitSize(1)", error));
       }
    double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue       = PipPoints * pointValue;                         // pip value in account currency
@@ -1756,34 +1756,34 @@ bool CalculatePositionSize() {
    }
 
    mm.lotValue             = Bid/tickSize * tickValue;                     // value of 1 lot in account currency
-   mm.unleveragedLots      = mm.equity/mm.lotValue;                        // unleveraged position size
+   mm.unleveragedLots      = mm.equity/mm.lotValue;                        // unleveraged unitsize
 
    if (mm.risk && mm.stopDistance) {
       double risk = mm.risk/100 * mm.equity;                               // risked amount in account currency
-      mm.positionSize         = risk/mm.stopDistance/pipValue;             // position size for risk and stop distance
-      mm.positionSizeLeverage = mm.positionSize/mm.unleveragedLots;        // leverage of the calculated position size
+      mm.unitSize         = risk/mm.stopDistance/pipValue;                 // unitsize for risk and stop distance
+      mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                // leverage of the calculated unitsize
 
-      // normalize the calculated position size
-      if (mm.positionSize > 0) {                                                                                                          // Abstufung max. 6.7% je Schritt
-         if      (mm.positionSize <=    0.03) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
-         else if (mm.positionSize <=   0.075) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
-         else if (mm.positionSize <=    0.1 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
-         else if (mm.positionSize <=    0.3 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
-         else if (mm.positionSize <=    0.75) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
-         else if (mm.positionSize <=    1.2 ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-         else if (mm.positionSize <=   10.  ) mm.normPositionSize = NormalizeDouble(MathRound(mm.positionSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
-         else if (mm.positionSize <=   30.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
-         else if (mm.positionSize <=   75.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
-         else if (mm.positionSize <=  120.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
-         else if (mm.positionSize <=  300.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
-         else if (mm.positionSize <=  750.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
-         else if (mm.positionSize <= 1200.  ) mm.normPositionSize =       MathRound(MathRound(mm.positionSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
-         else                                 mm.normPositionSize =       MathRound(MathRound(mm.positionSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
+      // normalize the calculated unitsize
+      if (mm.unitSize > 0) {                                                                                                  // Abstufung max. 6.7% je Schritt
+         if      (mm.unitSize <=    0.03) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
+         else if (mm.unitSize <=   0.075) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
+         else if (mm.unitSize <=    0.1 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
+         else if (mm.unitSize <=    0.3 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
+         else if (mm.unitSize <=    0.75) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
+         else if (mm.unitSize <=    1.2 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
+         else if (mm.unitSize <=   10.  ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
+         else if (mm.unitSize <=   30.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
+         else if (mm.unitSize <=   75.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
+         else if (mm.unitSize <=  120.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
+         else if (mm.unitSize <=  300.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
+         else if (mm.unitSize <=  750.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
+         else if (mm.unitSize <= 1200.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
+         else                             mm.normUnitSize =       MathRound(MathRound(mm.unitSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
       }
    }
 
    mm.done = true;
-   return(!catch("CalculatePositionSize(2)"));
+   return(!catch("CalculateUnitSize(2)"));
 }
 
 

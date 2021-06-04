@@ -4110,8 +4110,8 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
- * account's size (e.g. for testing in a real account).
+ * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
+ * account size (e.g. for testing in a real account).
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
  * @param  int    account [optional] - account number (default: the current account number)
