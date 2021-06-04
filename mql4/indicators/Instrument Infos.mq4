@@ -15,31 +15,32 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
 #define I_TICKSIZE             2
 #define I_PIPVALUE             3
 #define I_ADR                  4
-#define I_STOPLEVEL            5
-#define I_FREEZELEVEL          6
-#define I_LOTSIZE              7
-#define I_MINLOT               8
-#define I_LOTSTEP              9
-#define I_MAXLOT              10
-#define I_MARGINREQUIRED      11
-#define I_MARGINHEDGED        12
-#define I_SPREAD              13
-#define I_COMMISSION          14
-#define I_TOTALFEES           15
-#define I_SWAPLONG            16
-#define I_SWAPSHORT           17
-#define I_ACCOUNT_LEVERAGE    18
-#define I_STOPOUT_LEVEL       19
-#define I_SERVER_NAME         20
-#define I_SERVER_TIMEZONE     21
-#define I_SERVER_SESSION      22
+#define I_VOLA                 5
+#define I_STOPLEVEL            6
+#define I_FREEZELEVEL          7
+#define I_LOTSIZE              8
+#define I_MINLOT               9
+#define I_LOTSTEP             10
+#define I_MAXLOT              11
+#define I_MARGINREQUIRED      12
+#define I_MARGINHEDGED        13
+#define I_SPREAD              14
+#define I_COMMISSION          15
+#define I_TOTALFEES           16
+#define I_SWAPLONG            17
+#define I_SWAPSHORT           18
+#define I_ACCOUNT_LEVERAGE    19
+#define I_STOPOUT_LEVEL       20
+#define I_SERVER_NAME         21
+#define I_SERVER_TIMEZONE     22
+#define I_SERVER_SESSION      23
 
 
 /**
@@ -99,15 +100,18 @@ int CreateChartObjects() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xPos    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+136);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+150);
       ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
       RegisterObject(label);
    }
    else GetLastError();
 
-   // text labels
-   int yCoord = yPos + 4;
-   for (int i=0; i < ArraySize(labels); i++) {
+   // text labels: lines with some additional margin-top
+   int marginTop[] = {I_POINT, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
+   int size   = ArraySize(labels);
+   int yCoord = yPos+4;
+
+   for (int i=0; i < size; i++) {
       n++;
       label = ProgramName() +"."+ n +"."+ labels[i];
       if (ObjectFind(label) == 0)
@@ -115,10 +119,7 @@ int CreateChartObjects() {
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
          ObjectSet    (label, OBJPROP_XDISTANCE, xPos+6);
-            // lines followed by extra space (paragraph end)
-            static int fields[] = {I_POINT, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
-            if (IntInArray(fields, i)) yCoord += 8;
-
+         if (IntInArray(marginTop, i)) yCoord += 8;
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fgFontSize, fgFontName);
          RegisterObject(label);
@@ -148,7 +149,8 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                     fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                      fgFontSize, fgFontName, fgFontColor);
+   double vola            = CalculateUnitSize(10);                          ObjectSetText(labels[I_VOLA          ], "Vola:        "    + ifString(!vola,     "", "10%/d = "+ NumberToStr(vola, ".1+") +" lot"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -227,7 +229,7 @@ int UpdateInstrumentInfos() {
 
 
 /**
- * Calculate and return the ADR (average daily range) which is implemented as an approximation of LWMA(20xADR(1)).
+ * Calculate and return the ADR (average daily range). Implemented as an approximation of LWMA(20xADR(1)).
  *
  * @return double
  */
@@ -238,4 +240,44 @@ double iADR() {
    double adr20 = iATR(NULL, PERIOD_D1, 20, 1);
 
    return((adr1 + adr5 + adr10 + adr20)/4);
+}
+
+
+/**
+ * Calculate and return the unitsize for the specified daily equity volatility.
+ *
+ * @param  double - daily volatility of equity in percent
+ *
+ * @return double - unitsize in lots or NULL in case of errors
+ */
+double CalculateUnitSize(double vola) {
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double pointValue = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double pipValue   = PipPoints * pointValue;                          // pip value in account currency
+
+   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets();
+   double volaAmount = vola/100 * equity;                               // vola amount in account currency
+   double adr        = iADR()/Pip;                                      // ADR in pip
+   double unitsize   = MathDiv(MathDiv(volaAmount, adr), pipValue);     // unitsize for vola amount and ADR
+
+   // normalize the unitsize
+   double normsize = 0;
+   if (unitsize > 0) {                                                                                      // max. 6.7% per step
+      if      (unitsize <=    0.03) normsize = NormalizeDouble(MathRound(unitsize/  0.001) *   0.001, 3);   //     0-0.03: multiple of   0.001
+      else if (unitsize <=   0.075) normsize = NormalizeDouble(MathRound(unitsize/  0.002) *   0.002, 3);   // 0.03-0.075: multiple of   0.002
+      else if (unitsize <=    0.1 ) normsize = NormalizeDouble(MathRound(unitsize/  0.005) *   0.005, 3);   //  0.075-0.1: multiple of   0.005
+      else if (unitsize <=    0.3 ) normsize = NormalizeDouble(MathRound(unitsize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: multiple of   0.01
+      else if (unitsize <=    0.75) normsize = NormalizeDouble(MathRound(unitsize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: multiple of   0.02
+      else if (unitsize <=    1.2 ) normsize = NormalizeDouble(MathRound(unitsize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: multiple of   0.05
+      else if (unitsize <=   10.  ) normsize = NormalizeDouble(MathRound(unitsize/  0.1  ) *   0.1  , 1);   //     1.2-10: multiple of   0.1
+      else if (unitsize <=   30.  ) normsize =       MathRound(MathRound(unitsize/  1    ) *   1       );   //      12-30: multiple of   1
+      else if (unitsize <=   75.  ) normsize =       MathRound(MathRound(unitsize/  2    ) *   2       );   //      30-75: multiple of   2
+      else if (unitsize <=  120.  ) normsize =       MathRound(MathRound(unitsize/  5    ) *   5       );   //     75-120: multiple of   5
+      else if (unitsize <=  300.  ) normsize =       MathRound(MathRound(unitsize/ 10    ) *  10       );   //    120-300: multiple of  10
+      else if (unitsize <=  750.  ) normsize =       MathRound(MathRound(unitsize/ 20    ) *  20       );   //    300-750: multiple of  20
+      else if (unitsize <= 1200.  ) normsize =       MathRound(MathRound(unitsize/ 50    ) *  50       );   //   750-1200: multiple of  50
+      else                          normsize =       MathRound(MathRound(unitsize/100    ) * 100       );   //   1200-...: multiple of 100
+   }
+   return(normsize);
 }

@@ -22,10 +22,10 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    if (mode.intern) {
-      mm.risk         = 0;                                                    // default: position size calculator disabled
+      mm.risk         = 0;                                                    // default: unitsize calculation disabled
       mm.stopDistance = 0;
 
-      // read config: position size calculation
+      // read config: unitsize calculation
       section = "PositionSize";
       string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
       string sDefaultRisk = GetConfigString(section, defaultRiskKey);
