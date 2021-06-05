@@ -50,12 +50,12 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/@ALMA.mqh>
-#include <functions/BarOpenEvent.mqh>
 #include <functions/ConfigureSignal.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
+#include <functions/@ALMA.mqh>
+#include <functions/IsBarOpen.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
 #define MODE_SECTION          MACD.MODE_SECTION
@@ -330,10 +330,10 @@ int onTick() {
 
    if (!IsSuperContext()) {
       // signal zero line crossings
-      if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         int iSection = Round(bufferSection[1]);
-         if      (iSection ==  1) onCross(MODE_UPPER_SECTION);
-         else if (iSection == -1) onCross(MODE_LOWER_SECTION);
+      if (signals) /*&&*/ if (IsBarOpen()) {
+         int direction = bufferSection[1];
+         if      (direction ==  1) onCross(MODE_UPPER_SECTION);   // TODO: doesn't detect crosses on bars without ticks
+         else if (direction == -1) onCross(MODE_LOWER_SECTION);
       }
    }
    return(last_error);

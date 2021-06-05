@@ -37,11 +37,11 @@ extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
 #include <functions/ConfigureSignal.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
+#include <functions/IsBarOpen.mqh>
 
 #define MODE_DELTA_MAIN       0                                // this indicator's buffer ids
 #define MODE_DELTA_SIGNAL     1
@@ -241,7 +241,7 @@ int onTick() {
    }
 
    // signal zero line crossings
-   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpenEvent()) {
+   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen()) {
       if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
       else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }

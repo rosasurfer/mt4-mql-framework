@@ -37,6 +37,7 @@ extern bool   AlertsOn         = true;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Bands.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
@@ -477,7 +478,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
    static datetime lastTimeUp, lastTimeDn;                                    // bar opentimes of last crossings
    int iMaCross, iNull;
 
-   // reinitialize last high/Low
+   // re/initialize last high/Low
    if (ChangedBars > 2 || !lastHigh) {
       int i=-1, n, lastLongReversal=-1, lastShortReversal=-1;
       lastHigh = NULL;
@@ -544,7 +545,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
    lastBid = Bid;
 
    // detect finished price reversals
-   if (ChangedBars == 2) {
+   if (IsBarOpen()) {
       if (Abs(reversalAge[1]) == 1) onReversal();
    }
 

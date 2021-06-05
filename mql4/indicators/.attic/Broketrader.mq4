@@ -40,12 +40,12 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
 #include <functions/ConfigureSignal.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
 #include <functions/iBarShiftNext.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
@@ -247,7 +247,7 @@ int onTick() {
 
    double sma, stoch, price1, price2;
 
-   // initialize the reversal state of the previous bar => Bar[startbar+1]
+   // re/initialize the reversal state of the previous bar => Bar[startbar+1]
    if (!reversalInitialized || ChangedBars > 2) {
       int prevBar = startbar + 1;
       sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, prevBar);
@@ -344,7 +344,7 @@ int onTick() {
       @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
-      if (signals) /*&&*/ if (IsBarOpenEvent()) {
+      if (signals) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[0]);
          if      (iTrend ==  1) onReversal(D_LONG);
          else if (iTrend == -1) onReversal(D_SHORT);
