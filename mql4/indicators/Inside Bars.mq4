@@ -24,13 +24,13 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
 #include <functions/ConfigureSignal.mqh>
 #include <functions/ConfigureSignalMail.mqh>
 #include <functions/ConfigureSignalSMS.mqh>
 #include <functions/ConfigureSignalSound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
@@ -314,7 +314,7 @@ bool CheckInsideBarsH2() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H2)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H2)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H2 inside bar only
          bars = 5;                                                // covers hours of 2 finished H2 bars
       }
@@ -365,7 +365,7 @@ bool CheckInsideBarsH3() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H3)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H3)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H3 inside bar only
          bars = 7;                                                // covers hours of 2 finished H3 bars
       }
@@ -416,7 +416,7 @@ bool CheckInsideBarsH4() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H4)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H4 inside bar only
          bars = 9;                                                // covers hours of 2 finished H4 bars
       }
@@ -467,7 +467,7 @@ bool CheckInsideBarsH6() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H6)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H6)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H6 inside bar only
          bars = 13;                                               // covers hours of 2 finished H6 bars
       }
@@ -518,7 +518,7 @@ bool CheckInsideBarsH8() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H8)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H8)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H8 inside bar only
          bars = 17;                                               // covers hours of 2 finished H8 bars
       }
@@ -569,7 +569,7 @@ bool CheckInsideBarsD1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_D1)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one D1 inside bar only
          bars = 49;                                               // covers hours of 2 finished D1 bars
       }
@@ -620,7 +620,7 @@ bool CheckInsideBarsW1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_W1)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one W1 inside bar only
          bars = 169;                                              // covers hours of 2 finished W1 bars
       }
@@ -673,7 +673,7 @@ bool CheckInsideBarsMN1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_MN1)) return(true);           // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBars = 1
          more = 1;                                                // check for one MN1 inside bar only
          bars = 745;                                              // covers hours of 2 finished MN1 bars
       }
@@ -773,7 +773,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // signal new inside bars
-   if (!IsSuperContext() && IsBarOpenEvent(timeframe) && signals)
+   if (!IsSuperContext() && IsBarOpen(timeframe) && signals)
       return(onInsideBar(timeframe));
    return(true);
 }

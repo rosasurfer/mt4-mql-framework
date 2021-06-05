@@ -335,7 +335,7 @@ int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
 int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
 int      InitializeByteBuffer(int &buffer[], int bytes);;
 bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTimeFxt=NULL, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv);;
-bool     IsBarOpenEvent(int timeframe = NULL);;
+bool     IsBarOpen(int timeframe = NULL);;
 double   JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar);;
 string   JoinBools(bool &values[], string separator = ", ");;
 string   JoinDoubles(double &values[], string separator = ", ");;
