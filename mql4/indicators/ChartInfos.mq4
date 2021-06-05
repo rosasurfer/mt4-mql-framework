@@ -1724,27 +1724,27 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
  * @return bool - success status
  */
 bool CalculateUnitSize() {
-   if (mode.extern || mm.done) return(true);                               // only for internal account
+   if (mode.extern || mm.done) return(true);                                  // only for internal account
 
    mm.lotValue         = 0;
-   mm.unleveragedLots  = 0;                                                // unleveraged unitsize
-   mm.unitSize         = 0;                                                // unitsize for the configured risk
-   mm.normUnitSize     = 0;                                                // normalized unitsize
-   mm.unitSizeLeverage = 0;                                                // leverage of the calculated unitsize
-   mm.equity           = 0;                                                // currently used equity value incl. extern assets
+   mm.unleveragedLots  = 0;                                                   // unleveraged unitsize
+   mm.unitSize         = 0;                                                   // unitsize for the configured risk
+   mm.normUnitSize     = 0;                                                   // normalized unitsize
+   mm.unitSizeLeverage = 0;                                                   // leverage of the calculated unitsize
+   mm.equity           = 0;                                                   // currently used equity value incl. extern assets
 
    // calculate lot values and unitsizes
    double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
    double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
-      if (error || !Bid || !tickSize || !tickValue || !marginRequired) {   // can happen on terminal start, on change of account or template, or in offline charts
+      if (error || !Close[0] || !tickSize || !tickValue || !marginRequired) { // can happen on terminal start, on change of account or template, or in offline charts
          if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
             return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
          return(!catch("CalculateUnitSize(1)", error));
       }
    double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double pipValue       = PipPoints * pointValue;                         // pip value in account currency
+   double pipValue       = PipPoints * pointValue;                            // pip value in account currency
    double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
    if (mode.intern) {
       double accountEquity = AccountEquity()-AccountCredit();
@@ -1752,33 +1752,33 @@ bool CalculateUnitSize() {
       mm.equity = accountEquity + externalAssets;
    }
    else {
-      mm.equity = externalAssets;                                          // TODO: wrong, not updated as GetExternalAssets() caches the result
+      mm.equity = externalAssets;                                             // TODO: wrong, not updated as GetExternalAssets() caches the result
    }
 
-   mm.lotValue             = Bid/tickSize * tickValue;                     // value of 1 lot in account currency
-   mm.unleveragedLots      = mm.equity/mm.lotValue;                        // unleveraged unitsize
+   mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
+   mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
 
    if (mm.risk && mm.stopDistance) {
-      double risk = mm.risk/100 * mm.equity;                               // risked amount in account currency
-      mm.unitSize         = risk/mm.stopDistance/pipValue;                 // unitsize for risk and stop distance
-      mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                // leverage of the calculated unitsize
+      double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
+      mm.unitSize         = risk/mm.stopDistance/pipValue;                    // unitsize for risk and stop distance
+      mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
 
       // normalize the calculated unitsize
-      if (mm.unitSize > 0) {                                                                                                  // Abstufung max. 6.7% je Schritt
-         if      (mm.unitSize <=    0.03) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);     //     0-0.03: Vielfaches von   0.001
-         else if (mm.unitSize <=   0.075) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);     // 0.03-0.075: Vielfaches von   0.002
-         else if (mm.unitSize <=    0.1 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);     //  0.075-0.1: Vielfaches von   0.005
-         else if (mm.unitSize <=    0.3 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: Vielfaches von   0.01
-         else if (mm.unitSize <=    0.75) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: Vielfaches von   0.02
-         else if (mm.unitSize <=    1.2 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: Vielfaches von   0.05
-         else if (mm.unitSize <=   10.  ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);     //     1.2-10: Vielfaches von   0.1
-         else if (mm.unitSize <=   30.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );     //      12-30: Vielfaches von   1
-         else if (mm.unitSize <=   75.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );     //      30-75: Vielfaches von   2
-         else if (mm.unitSize <=  120.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );     //     75-120: Vielfaches von   5
-         else if (mm.unitSize <=  300.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );     //    120-300: Vielfaches von  10
-         else if (mm.unitSize <=  750.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );     //    300-750: Vielfaches von  20
-         else if (mm.unitSize <= 1200.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );     //   750-1200: Vielfaches von  50
-         else                             mm.normUnitSize =       MathRound(MathRound(mm.unitSize/100    ) * 100       );     //   1200-...: Vielfaches von 100
+      if (mm.unitSize > 0) {                                                                                                  // max. 6.7% per step
+         if      (mm.unitSize <=    0.03) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);     //     0-0.03: multiple of   0.001
+         else if (mm.unitSize <=   0.075) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);     // 0.03-0.075: multiple of   0.002
+         else if (mm.unitSize <=    0.1 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);     //  0.075-0.1: multiple of   0.005
+         else if (mm.unitSize <=    0.3 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: multiple of   0.01
+         else if (mm.unitSize <=    0.75) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: multiple of   0.02
+         else if (mm.unitSize <=    1.2 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: multiple of   0.05
+         else if (mm.unitSize <=   10.  ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);     //     1.2-10: multiple of   0.1
+         else if (mm.unitSize <=   30.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );     //      12-30: multiple of   1
+         else if (mm.unitSize <=   75.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );     //      30-75: multiple of   2
+         else if (mm.unitSize <=  120.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );     //     75-120: multiple of   5
+         else if (mm.unitSize <=  300.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );     //    120-300: multiple of  10
+         else if (mm.unitSize <=  750.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );     //    300-750: multiple of  20
+         else if (mm.unitSize <= 1200.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );     //   750-1200: multiple of  50
+         else                             mm.normUnitSize =       MathRound(MathRound(mm.unitSize/100    ) * 100       );     //   1200-...: multiple of 100
       }
    }
 
