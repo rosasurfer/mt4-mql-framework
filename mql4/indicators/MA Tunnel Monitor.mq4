@@ -299,11 +299,11 @@ bool CheckSignals() {
    if (signal.onTick) {
    }
 
-   // detect tunnel breakouts to the opposite side of the current trend (no trend continuation signal)
+   // detect tunnel breakouts to the opposite side of the current trend (but not trend continuation signals)
    if (signal.onBarOpen) /*&&*/ if (IsBarOpen()) {
       static int lastTrend; if (!lastTrend) lastTrend = totalTrend[2];
       int trend = totalTrend[1];
-      if      (lastTrend<=0 && trend > 0) onBreakout(MODE_LONG);        // also detects breakouts on bars without ticks
+      if      (lastTrend<=0 && trend > 0) onBreakout(MODE_LONG);        // also detects breakouts on bars without ticks (M1)
       else if (lastTrend>=0 && trend < 0) onBreakout(MODE_SHORT);
       lastTrend = trend;
    }
@@ -319,12 +319,12 @@ bool CheckSignals() {
  */
 bool onBreakout(int mode) {
    if (mode == MODE_LONG) {
-      debug("onBreakout(0.1)  breakout LONG");
+      debug("onBreakout(1)  breakout LONG");
    }
    else if (mode == MODE_SHORT) {
-      debug("onBreakout(0.2)  breakout SHORT");
+      debug("onBreakout(2)  breakout SHORT");
    }
-   else return(!catch("onBreakout(1)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
+   else return(!catch("onBreakout(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 
    return(true);
 }
