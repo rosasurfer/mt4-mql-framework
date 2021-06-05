@@ -328,12 +328,14 @@ int onTick() {
       else                                                       bufferSection[bar] = Sign(bufferMACD[bar]);
    }
 
+   // detect zero line crossings
    if (!IsSuperContext()) {
-      // signal zero line crossings
       if (signals) /*&&*/ if (IsBarOpen()) {
-         int direction = bufferSection[1];
-         if      (direction ==  1) onCross(MODE_UPPER_SECTION);   // TODO: doesn't detect crosses on bars without ticks
-         else if (direction == -1) onCross(MODE_LOWER_SECTION);
+         static int lastSide; if (!lastSide) lastSide = bufferSection[2];
+         int side = bufferSection[1];
+         if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // also detects crosses on bars without ticks (M1)
+         else if (lastSide>=0 && side < 0) onCross(MODE_LOWER_SECTION);
+         lastSide = side;
       }
    }
    return(last_error);

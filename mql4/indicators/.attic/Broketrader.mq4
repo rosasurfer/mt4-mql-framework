@@ -275,8 +275,9 @@ int onTick() {
       }
       else {
          // update existing trend
-         if (!prevReversal) trend[bar] = trend[bar+1] + Sign(trend[bar+1]);                        // extend existing trend
-         else               trend[bar] = -Sign(trend[bar+1]);                                      // toggle trend
+         int prevTrend = trend[bar+1];
+         if (!prevReversal) trend[bar] = prevTrend + Sign(prevTrend);                              // extend existing trend
+         else               trend[bar] = -Sign(prevTrend);                                         // toggle trend
 
          // update reversal state of the current bar
          if      (trend[bar] < 0) currentReversal = (Close[bar] > sma && stoch > 40);              // mark long reversal
@@ -345,7 +346,7 @@ int onTick() {
 
       // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpen()) {
-         int iTrend = Round(trend[0]);
+         int iTrend = trend[0];
          if      (iTrend ==  1) onReversal(D_LONG);
          else if (iTrend == -1) onReversal(D_SHORT);
       }
