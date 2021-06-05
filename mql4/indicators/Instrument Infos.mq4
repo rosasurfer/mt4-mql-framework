@@ -15,14 +15,14 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","UNITSIZE","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
 #define I_TICKSIZE             2
 #define I_PIPVALUE             3
 #define I_ADR                  4
-#define I_VOLA                 5
+#define I_UNITSIZE             5
 #define I_STOPLEVEL            6
 #define I_FREEZELEVEL          7
 #define I_LOTSIZE              8
@@ -149,8 +149,9 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                      fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateUnitSize(10);                          ObjectSetText(labels[I_VOLA          ], "Vola:        "    + ifString(!vola,     "", "10%/d = "+ NumberToStr(vola, ".1+") +" lot"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                     fgFontSize, fgFontName, fgFontColor);
+   double stdUnit         = CalculateUnitSize(10);
+   double stdLeverage     = CalculateLeverage(stdUnit);                     ObjectSetText(labels[I_UNITSIZE      ], "StdUnit:    "     + ifString(!stdUnit,  "", NumberToStr(stdUnit, ".1+") +" lot = L"+ DoubleToStr(stdLeverage, 1) +"  (10%/ADR)"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -166,7 +167,7 @@ int UpdateInstrumentInfos() {
    double marginHedged    = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged    = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                  fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
 
-   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread, Digits & 1) +" pip"+ ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% ADR"), fgFontSize, fgFontName, fgFontColor);
+   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread, Digits & 1) +" pip"+ ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"), fgFontSize, fgFontName, fgFontColor);
    double commission      = GetCommission();
    double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
@@ -244,40 +245,59 @@ double iADR() {
 
 
 /**
- * Calculate and return the unitsize for the specified daily equity volatility.
+ * Calculate and return the unitsize for the specified equity change per ADR.
  *
- * @param  double - daily volatility of equity in percent
+ * @param  double percent - equity change in percent
  *
  * @return double - unitsize in lots or NULL in case of errors
  */
-double CalculateUnitSize(double vola) {
+double CalculateUnitSize(double percent) {
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
    double pointValue = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue   = PipPoints * pointValue;                          // pip value in account currency
 
    double equity     = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double volaAmount = vola/100 * equity;                               // vola amount in account currency
+   double amount     = percent/100 * equity;                            // equity amount in account currency
    double adr        = iADR()/Pip;                                      // ADR in pip
-   double unitsize   = MathDiv(MathDiv(volaAmount, adr), pipValue);     // unitsize for vola amount and ADR
+   double unitsize   = MathDiv(MathDiv(amount, adr), pipValue);         // unitsize for amount and ADR
 
-   // normalize the unitsize
-   double normsize = 0;
+   // normalize the result
    if (unitsize > 0) {                                                                                      // max. 6.7% per step
-      if      (unitsize <=    0.03) normsize = NormalizeDouble(MathRound(unitsize/  0.001) *   0.001, 3);   //     0-0.03: multiple of   0.001
-      else if (unitsize <=   0.075) normsize = NormalizeDouble(MathRound(unitsize/  0.002) *   0.002, 3);   // 0.03-0.075: multiple of   0.002
-      else if (unitsize <=    0.1 ) normsize = NormalizeDouble(MathRound(unitsize/  0.005) *   0.005, 3);   //  0.075-0.1: multiple of   0.005
-      else if (unitsize <=    0.3 ) normsize = NormalizeDouble(MathRound(unitsize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: multiple of   0.01
-      else if (unitsize <=    0.75) normsize = NormalizeDouble(MathRound(unitsize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: multiple of   0.02
-      else if (unitsize <=    1.2 ) normsize = NormalizeDouble(MathRound(unitsize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: multiple of   0.05
-      else if (unitsize <=   10.  ) normsize = NormalizeDouble(MathRound(unitsize/  0.1  ) *   0.1  , 1);   //     1.2-10: multiple of   0.1
-      else if (unitsize <=   30.  ) normsize =       MathRound(MathRound(unitsize/  1    ) *   1       );   //      12-30: multiple of   1
-      else if (unitsize <=   75.  ) normsize =       MathRound(MathRound(unitsize/  2    ) *   2       );   //      30-75: multiple of   2
-      else if (unitsize <=  120.  ) normsize =       MathRound(MathRound(unitsize/  5    ) *   5       );   //     75-120: multiple of   5
-      else if (unitsize <=  300.  ) normsize =       MathRound(MathRound(unitsize/ 10    ) *  10       );   //    120-300: multiple of  10
-      else if (unitsize <=  750.  ) normsize =       MathRound(MathRound(unitsize/ 20    ) *  20       );   //    300-750: multiple of  20
-      else if (unitsize <= 1200.  ) normsize =       MathRound(MathRound(unitsize/ 50    ) *  50       );   //   750-1200: multiple of  50
-      else                          normsize =       MathRound(MathRound(unitsize/100    ) * 100       );   //   1200-...: multiple of 100
+      if      (unitsize <=    0.03) unitsize = NormalizeDouble(MathRound(unitsize/  0.001) *   0.001, 3);   //     0-0.03: multiple of   0.001
+      else if (unitsize <=   0.075) unitsize = NormalizeDouble(MathRound(unitsize/  0.002) *   0.002, 3);   // 0.03-0.075: multiple of   0.002
+      else if (unitsize <=    0.1 ) unitsize = NormalizeDouble(MathRound(unitsize/  0.005) *   0.005, 3);   //  0.075-0.1: multiple of   0.005
+      else if (unitsize <=    0.3 ) unitsize = NormalizeDouble(MathRound(unitsize/  0.01 ) *   0.01 , 2);   //    0.1-0.3: multiple of   0.01
+      else if (unitsize <=    0.75) unitsize = NormalizeDouble(MathRound(unitsize/  0.02 ) *   0.02 , 2);   //   0.3-0.75: multiple of   0.02
+      else if (unitsize <=    1.2 ) unitsize = NormalizeDouble(MathRound(unitsize/  0.05 ) *   0.05 , 2);   //   0.75-1.2: multiple of   0.05
+      else if (unitsize <=   10.  ) unitsize = NormalizeDouble(MathRound(unitsize/  0.1  ) *   0.1  , 1);   //     1.2-10: multiple of   0.1
+      else if (unitsize <=   30.  ) unitsize =       MathRound(MathRound(unitsize/  1    ) *   1       );   //      12-30: multiple of   1
+      else if (unitsize <=   75.  ) unitsize =       MathRound(MathRound(unitsize/  2    ) *   2       );   //      30-75: multiple of   2
+      else if (unitsize <=  120.  ) unitsize =       MathRound(MathRound(unitsize/  5    ) *   5       );   //     75-120: multiple of   5
+      else if (unitsize <=  300.  ) unitsize =       MathRound(MathRound(unitsize/ 10    ) *  10       );   //    120-300: multiple of  10
+      else if (unitsize <=  750.  ) unitsize =       MathRound(MathRound(unitsize/ 20    ) *  20       );   //    300-750: multiple of  20
+      else if (unitsize <= 1200.  ) unitsize =       MathRound(MathRound(unitsize/ 50    ) *  50       );   //   750-1200: multiple of  50
+      else                          unitsize =       MathRound(MathRound(unitsize/100    ) * 100       );   //   1200-...: multiple of 100
    }
-   return(normsize);
+   return(unitsize);
+}
+
+
+/**
+ * Calculate and return the leverage for the specified lotsize using the current account size.
+ *
+ * @param  double lots - lotsize
+ *
+ * @return double - resulting leverage value or NULL in case of errors
+ */
+double CalculateLeverage(double lots) {
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double equity    = AccountEquity() - AccountCredit() + GetExternalAssets();
+
+   double lotValue        = MathDiv(Close[0], tickSize) * tickValue;    // value of 1 lot in account currency
+   double unleveragedLots = MathDiv(equity, lotValue);                  // unleveraged lotsize
+   double leverage        = MathDiv(lots, unleveragedLots);             // leverage of the specified lotsize
+
+   return(leverage);
 }
