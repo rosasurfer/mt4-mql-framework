@@ -44,18 +44,18 @@ int mmi.periods;
 int onInit() {
    // (1) input validation
    // MMI.Periods
-   if (MMI.Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MMI.Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
    mmi.periods = MMI.Periods;
 
    // Colors (might be wrongly initialized after re-compilation or terminal restart)
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
    // Styles
-   if (Line.Width < 0)  return(catch("onInit(2)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Line.Width > 5)  return(catch("onInit(3)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width < 0)  return(catch("onInit(2)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width > 5)  return(catch("onInit(3)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)   return(catch("onInit(4)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)   return(catch("onInit(4)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) indicator buffer management

@@ -64,11 +64,11 @@ datetime systemStartDate;
  */
 int onInit() {
    // validate inputs
-   if (SMA.Periods < 1)            return(catch("onInit(1)  Invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.Periods < 2)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)            return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.Periods < 1)            return(catch("onInit(1)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 2)     return(catch("onInit(2)  invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)            return(catch("onInit(5)  invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    smaPeriods      = SMA.Periods;
    stochPeriods    = Stochastic.Periods;
    stochMa1Periods = Stochastic.MA1.Periods;
@@ -76,11 +76,11 @@ int onInit() {
    rsiPeriods      = RSI.Periods;
    // Timeframe
    systemTimeframe = StrToTimeframe(Timeframe, F_ERR_INVALID_PARAMETER);
-   if (systemTimeframe == -1)      return(catch("onInit(6)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (systemTimeframe == -1)      return(catch("onInit(6)  invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
    Timeframe = TimeframeDescription(systemTimeframe);
    // StartDate
    systemStartDate = ParseDate(StartDate);
-   if (IsNaT(systemStartDate))     return(catch("onInit(7)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   if (IsNaT(systemStartDate))     return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible
@@ -242,6 +242,7 @@ double iMTF(int iBuffer, int iBar) {
                           Timeframe,                              // string Timeframe
                           StartDate,                              // string StartDate
                           "",                                     // string ______________________
+                          false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -305,9 +306,10 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           "",                                     // string ____________________
                           "off",                                  // string Signal.onReversal
                           "off",                                  // string Signal.Sound
-                          "off",                                  // string Signal.Mail.Receiver
-                          "off",                                  // string Signal.SMS.Receiver
+                          "off",                                  // string Signal.Mail
+                          "off",                                  // string Signal.SMS
                           "",                                     // string ____________________
+                          false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
 
                           iBuffer, iBar);

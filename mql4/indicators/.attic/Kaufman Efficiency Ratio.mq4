@@ -42,7 +42,7 @@ int onInit() {
 
    // input validation
    // Periods
-   if (Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(0, bufferKER);

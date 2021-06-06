@@ -20,13 +20,13 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | auto*";
-extern bool   Offline.Ticker       = true;                        // whether to enable automatic ticking of offline charts
+extern string Track.Orders   = "on | off | auto*";
+extern bool   Offline.Ticker = true;                        // whether to enable automatic ticking of offline charts
 extern string __a___________________________;
 
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto*";
+extern string Signal.Sound   = "on | off | auto*";
+extern string Signal.Mail    = "on | off | auto*";
+extern string Signal.SMS     = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -4084,12 +4084,12 @@ bool onPositionClose(int tickets[][]) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("displayedPrice=",       PriceTypeToStr(displayedPrice),       ";", NL,
-                            "Track.Orders=",         DoubleQuoteStr(Track.Orders),         ";", NL,
-                            "Offline.Ticker=",       BoolToStr(Offline.Ticker),            ";", NL,
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("displayedPrice=", PriceTypeToStr(displayedPrice), ";", NL,
+                            "Track.Orders=",   DoubleQuoteStr(Track.Orders),   ";", NL,
+                            "Offline.Ticker=", BoolToStr(Offline.Ticker),      ";", NL,
+                            "Signal.Sound=",   DoubleQuoteStr(Signal.Sound),   ";", NL,
+                            "Signal.Mail=",    DoubleQuoteStr(Signal.Mail),    ";", NL,
+                            "Signal.SMS=",     DoubleQuoteStr(Signal.SMS),     ";")
    );
 }
 

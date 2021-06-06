@@ -32,8 +32,8 @@ extern string __a___________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
 extern string Signal.Sound           = "on | off | auto*";
-extern string Signal.Mail.Receiver   = "on | off | auto*";
-extern string Signal.SMS.Receiver    = "on | off | auto*";
+extern string Signal.Mail            = "on | off | auto*";
+extern string Signal.SMS             = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,7 +58,7 @@ extern string Signal.SMS.Receiver    = "on | off | auto*";
 #define MODE_TREND            Broketrader.MODE_TREND        // 7
 
 #property indicator_chart_window
-#property indicator_buffers   8                             // buffers visible in input dialog
+#property indicator_buffers   8                             // buffers visible to the user
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -116,11 +116,11 @@ string   signal.info = "";                                  // additional chart 
  */
 int onInit() {
    // validate inputs
-   if (SMA.Periods < 1)            return(catch("onInit(1)  Invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.Periods < 2)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)            return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.Periods < 1)            return(catch("onInit(1)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 2)     return(catch("onInit(2)  invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)            return(catch("onInit(5)  invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    smaPeriods      = SMA.Periods;
    stochPeriods    = Stochastic.Periods;
    stochMa1Periods = Stochastic.MA1.Periods;
@@ -130,24 +130,24 @@ int onInit() {
    if (Color.Long  == 0xFF000000) Color.Long  = CLR_NONE;
    if (Color.Short == 0xFF000000) Color.Short = CLR_NONE;
    // SMA.DrawWidth
-   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    // StartDate
    string sValue = StrToLower(StrTrim(StartDate));
    if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
       startTime = ParseDateTime(sValue);
-      if (IsNaT(startTime))        return(catch("onInit(8)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+      if (IsNaT(startTime))        return(catch("onInit(8)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    }
    // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(9)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)              return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignaling("Broketrader", Signal.onReversal, signals))                                             return(last_error);
+   if (!ConfigureSignaling("Broketrader", Signal.onReversal, signals))                                    return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -466,6 +466,7 @@ double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMai
                           1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -490,20 +491,20 @@ double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMai
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("SMA.Periods=",            SMA.Periods,                          ";", NL,
-                            "Stochastic.Periods=",     Stochastic.Periods,                   ";", NL,
-                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,               ";", NL,
-                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,               ";", NL,
-                            "RSI.Periods=",            RSI.Periods,                          ";", NL,
-                            "Color.Long=",             ColorToStr(Color.Long),               ";", NL,
-                            "Color.Short=",            ColorToStr(Color.Short),              ";", NL,
-                            "FillSections=",           BoolToStr(FillSections),              ";", NL,
-                            "SMA.DrawWidth=",          SMA.DrawWidth,                        ";", NL,
-                            "StartDate=",              DoubleQuoteStr(StartDate),            ";", NL,
-                            "Max.Bars=",               Max.Bars,                             ";", NL,
-                            "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal),    ";", NL,
-                            "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=",   DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",    DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("SMA.Periods=",            SMA.Periods,                       ";", NL,
+                            "Stochastic.Periods=",     Stochastic.Periods,                ";", NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,            ";", NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,            ";", NL,
+                            "RSI.Periods=",            RSI.Periods,                       ";", NL,
+                            "Color.Long=",             ColorToStr(Color.Long),            ";", NL,
+                            "Color.Short=",            ColorToStr(Color.Short),           ";", NL,
+                            "FillSections=",           BoolToStr(FillSections),           ";", NL,
+                            "SMA.DrawWidth=",          SMA.DrawWidth,                     ";", NL,
+                            "StartDate=",              DoubleQuoteStr(StartDate),         ";", NL,
+                            "Max.Bars=",               Max.Bars,                          ";", NL,
+                            "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal), ";", NL,
+                            "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),      ";", NL,
+                            "Signal.Mail=",            DoubleQuoteStr(Signal.Mail),       ";", NL,
+                            "Signal.SMS=",             DoubleQuoteStr(Signal.SMS),        ";")
    );
 }

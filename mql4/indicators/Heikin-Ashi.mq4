@@ -53,7 +53,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #define MODE_HA_CLOSE         8                       // managed by the framework
 
 #property indicator_chart_window
-#property indicator_buffers   4                       // buffers visible in input dialog
+#property indicator_buffers   4                       // buffers visible to the user
 int       terminal_buffers  = 8;                      // buffers managed by the terminal
 int       framework_buffers = 1;                      // buffers managed by the framework
 
@@ -105,11 +105,11 @@ int onInit() {
    }
    else {
       inputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (inputMaMethod == -1)   return(catch("onInit(1)  Invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (inputMaMethod == -1)   return(catch("onInit(1)  invalid input parameter Input.MA.Method: "+ DoubleQuoteStr(Input.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    }
    Input.MA.Method = MaMethodDescription(inputMaMethod, false);
    if (!IsEmpty(inputMaMethod)) {
-      if (Input.MA.Periods < 0)  return(catch("onInit(2)  Invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Input.MA.Periods < 0)  return(catch("onInit(2)  invalid input parameter Input.MA.Periods: "+ Input.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       inputMaPeriods = ifInt(!Input.MA.Periods, 1, Input.MA.Periods);
       if (inputMaPeriods == 1) inputMaMethod = EMPTY;
    }
@@ -125,11 +125,11 @@ int onInit() {
    }
    else {
       outputMaMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (outputMaMethod == -1)  return(catch("onInit(3)  Invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (outputMaMethod == -1)  return(catch("onInit(3)  invalid input parameter Output.MA.Method: "+ DoubleQuoteStr(Output.MA.Method), ERR_INVALID_INPUT_PARAMETER));
    }
    Output.MA.Method = MaMethodDescription(outputMaMethod, false);
    if (!IsEmpty(outputMaMethod)) {
-      if (Output.MA.Periods < 0) return(catch("onInit(4)  Invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+      if (Output.MA.Periods < 0) return(catch("onInit(4)  invalid input parameter Output.MA.Periods: "+ Output.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
       outputMaPeriods = ifInt(!Output.MA.Periods, 1, Output.MA.Periods);
       if (outputMaPeriods == 1) outputMaMethod = EMPTY;
    }
@@ -139,11 +139,11 @@ int onInit() {
    if (Color.BarDown == 0xFF000000) Color.BarDown = CLR_NONE;
 
    // CandleWidth
-   if (CandleWidth < 0)          return(catch("onInit(5)  Invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (CandleWidth > 5)          return(catch("onInit(6)  Invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth < 0)          return(catch("onInit(5)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (CandleWidth > 5)          return(catch("onInit(6)  invalid input parameter CandleWidth: "+ CandleWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)            return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)            return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management

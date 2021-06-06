@@ -42,8 +42,8 @@ extern string __a___________________________;
 
 extern string Signal.onCross        = "on | off | auto*";
 extern string Signal.Sound          = "on | off | auto*";
-extern string Signal.Mail.Receiver  = "on | off | auto*";
-extern string Signal.SMS.Receiver   = "on | off | auto*";
+extern string Signal.Mail           = "on | off | auto*";
+extern string Signal.SMS            = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -113,7 +113,7 @@ int onInit() {
 
    // validate inputs
    // FastMA.Periods
-   if (FastMA.Periods < 1)              return(catch("onInit(1)  Invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    fastMA.periods = FastMA.Periods;
 
    // FastMA.Method
@@ -126,7 +126,7 @@ int onInit() {
       sValue = StrTrim(FastMA.Method);
    }
    fastMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (fastMA.method == -1)             return(catch("onInit(2)  Invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.method == -1)             return(catch("onInit(2)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  Unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
 
@@ -140,11 +140,11 @@ int onInit() {
    if (sValue == "") sValue = "close";                                  // default price type
    fastMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (fastMA.appliedPrice==-1 || fastMA.appliedPrice > PRICE_WEIGHTED)
-                                        return(catch("onInit(4)  Invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                                        return(catch("onInit(4)  invalid input parameter FastMA.AppliedPrice: "+ DoubleQuoteStr(FastMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    FastMA.AppliedPrice = PriceTypeDescription(fastMA.appliedPrice);
 
    // SlowMA.Periods
-   if (SlowMA.Periods < 1)              return(catch("onInit(5)  Invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (SlowMA.Periods < 1)              return(catch("onInit(5)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
    if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  Parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.periods == slowMA.periods) {
@@ -164,7 +164,7 @@ int onInit() {
       sValue = StrTrim(SlowMA.Method);
    }
    slowMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (slowMA.method == -1)             return(catch("onInit(8)  Invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == -1)             return(catch("onInit(8)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  Unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
 
@@ -178,7 +178,7 @@ int onInit() {
    if (sValue == "") sValue = "close";                                  // default price type
    slowMA.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (slowMA.appliedPrice==-1 || slowMA.appliedPrice > PRICE_WEIGHTED)
-                                        return(catch("onInit(10)  Invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                                        return(catch("onInit(10)  invalid input parameter SlowMA.AppliedPrice: "+ DoubleQuoteStr(SlowMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.AppliedPrice = PriceTypeDescription(slowMA.appliedPrice);
 
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -187,21 +187,21 @@ int onInit() {
    if (MainLine.Color        == 0xFF000000) MainLine.Color        = CLR_NONE;
 
    // styles
-   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  Invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width < 0)              return(catch("onInit(13)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)              return(catch("onInit(14)  Invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)              return(catch("onInit(14)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)                   return(catch("onInit(15)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                   return(catch("onInit(15)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignaling("MACD", Signal.onCross, signals))                                                       return(last_error);
+   if (!ConfigureSignaling("MACD", Signal.onCross, signals))                                               return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
    }
@@ -417,8 +417,8 @@ bool StoreInputParameters() {
    Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.StoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   Chart.StoreString(name +".input.Signal.Mail",           Signal.Mail          );
+   Chart.StoreString(name +".input.Signal.SMS",            Signal.SMS           );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -444,8 +444,8 @@ bool RestoreInputParameters() {
    Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
    Chart.RestoreString(name +".input.Signal.onCross",        Signal.onCross       );
    Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   Chart.RestoreString(name +".input.Signal.Mail",           Signal.Mail          );
+   Chart.RestoreString(name +".input.Signal.SMS",            Signal.SMS           );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -470,7 +470,7 @@ string InputsToStr() {
                             "Max.Bars=",              Max.Bars,                             ";"+ NL,
                             "Signal.onCross=",        DoubleQuoteStr(Signal.onCross),       ";"+ NL,
                             "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";"+ NL,
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";"+ NL,
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+                            "Signal.Mail=",           DoubleQuoteStr(Signal.Mail),          ";"+ NL,
+                            "Signal.SMS=",            DoubleQuoteStr(Signal.SMS),           ";")
    );
 }

@@ -50,13 +50,13 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | auto*";
-extern string Track.Signals        = "on | off | auto*";
+extern string Track.Orders  = "on | off | auto*";
+extern string Track.Signals = "on | off | auto*";
 extern string __a___________________________;
 
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto*";
+extern string Signal.Sound  = "on | off | auto*";
+extern string Signal.Mail   = "on | off | auto*";
+extern string Signal.SMS    = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -166,7 +166,7 @@ bool Configure() {
    else if (sValue == "auto") {
       track.orders = GetConfigBool("EventTracker", "Track.Orders");
    }
-   else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(1)  invalid input parameter Track.Orders: \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    if (track.orders) {
       section = "Accounts";
@@ -193,7 +193,7 @@ bool Configure() {
    else if (sValue == "auto") {
       track.signals = GetConfigBool("EventTracker", "Track.Signals");
    }
-   else return(!catch("Configure(3)  Invalid input parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(3)  invalid input parameter Track.Signals: \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    if (track.signals) {
       // (2.1) Signalkonfigurationen einlesen
@@ -372,9 +372,9 @@ bool Configure() {
 
    // (3) Signalisierungs-Methoden einlesen
    if (track.orders || track.signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
    }
 
    return(!ShowStatus(catch("Configure(15)")));
@@ -1302,11 +1302,11 @@ string SignalToStr(int id) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Track.Orders=",         track.orders,                         ";", NL,
-                            "Track.Signals=",        track.signals,                        ";", NL,
+   return(StringConcatenate("Track.Orders=",  track.orders,                         ";", NL,
+                            "Track.Signals=", track.signals,                        ";", NL,
 
-                            "Signal.Sound=",         signal.sound,                         ";", NL,
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(signal.sms.receiver),  ";", NL,
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), ";")
+                            "Signal.Sound=",  signal.sound,                         ";", NL,
+                            "Signal.SMS=",    DoubleQuoteStr(signal.sms.receiver),  ";", NL,
+                            "Signal.Mail=",   DoubleQuoteStr(signal.mail.receiver), ";")
    );
 }

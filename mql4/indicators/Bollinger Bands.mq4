@@ -16,23 +16,23 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;
-extern string MA.Method         = "SMA | LWMA | EMA | ALMA*";
-extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color          = LimeGreen;
-extern int    MA.LineWidth      = 0;
+extern int    MA.Periods         = 200;
+extern string MA.Method          = "SMA | LWMA | EMA | ALMA*";
+extern string MA.AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern color  MA.Color           = LimeGreen;
+extern int    MA.LineWidth       = 0;
 
-extern double Bands.StdDevs     = 2;
-extern color  Bands.Color       = RoyalBlue;
-extern int    Bands.LineWidth   = 1;
+extern double Bands.StdDevs      = 2;
+extern color  Bands.Color        = RoyalBlue;
+extern int    Bands.LineWidth    = 1;
 
-extern int    Max.Bars          = 10000;              // max. values to calculate (-1: all available)
+extern int    Max.Bars           = 10000;             // max. values to calculate (-1: all available)
 extern string __a___________________________;
 
-extern string Signal.onTouchBand   = "on | off | auto*";
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto*";
+extern string Signal.onTouchBand = "on | off | auto*";
+extern string Signal.Sound       = "on | off | auto*";
+extern string Signal.Mail        = "on | off | auto*";
+extern string Signal.SMS         = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,11 +135,11 @@ int onInit() {
    if (Max.Bars < -1)         return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (!ConfigureSignaling("BollingerBand", Signal.onTouchBand, signals))                                          return(last_error);
+   if (!ConfigureSignaling("BollingerBand", Signal.onTouchBand, signals))                                  return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }

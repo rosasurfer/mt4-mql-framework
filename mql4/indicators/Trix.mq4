@@ -42,7 +42,7 @@ extern int    Max.Bars              = 10000;                // max. values to ca
 #include <functions/@Trend.mqh>
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // buffers visible in input dialog
+#property indicator_buffers   4                             // buffers visible to the user
 int       terminal_buffers  = 7;                            // buffers managed by the terminal
 
 #property indicator_width1    1
@@ -83,7 +83,7 @@ int onInit() {
 
    // (1) validate inputs
    // EMA.Periods
-   if (EMA.Periods < 1)           return(catch("onInit(1)  Invalid input parameter EMA.Periods = "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (EMA.Periods < 1)           return(catch("onInit(1)  invalid input parameter EMA.Periods: "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // EMA.AppliedPrice
    string values[], sValue = StrToLower(EMA.AppliedPrice);
@@ -95,7 +95,7 @@ int onInit() {
    if (sValue == "") sValue = "close";                                           // default price type
    ema.appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (ema.appliedPrice==-1 || ema.appliedPrice > PRICE_WEIGHTED)
-                                  return(catch("onInit(2)  Invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                                  return(catch("onInit(2)  invalid input parameter EMA.AppliedPrice: "+ DoubleQuoteStr(EMA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    EMA.AppliedPrice = PriceTypeDescription(ema.appliedPrice);
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -104,13 +104,13 @@ int onInit() {
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (MainLine.Width < 0)        return(catch("onInit(3)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)        return(catch("onInit(4)  Invalid input parameter MainLine.Width = "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 0) return(catch("onInit(5)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5) return(catch("onInit(6)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width < 0)        return(catch("onInit(3)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Width > 5)        return(catch("onInit(4)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(5)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5) return(catch("onInit(6)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)             return(catch("onInit(7)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)             return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management

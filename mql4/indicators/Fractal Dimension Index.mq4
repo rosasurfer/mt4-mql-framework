@@ -56,7 +56,7 @@ extern int    Max.Bars       = 10000;                    // max. values to calcu
 #define MODE_LOWER            2
 
 #property indicator_separate_window
-#property indicator_buffers   3                          // buffers visible in input dialog
+#property indicator_buffers   3                          // buffers visible to the user
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -85,7 +85,7 @@ int maxValues;
 int onInit() {
    // validate inputs
    // Periods
-   if (Periods < 2)   return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 2)   return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Ranging  == 0xFF000000) Color.Ranging  = CLR_NONE;
@@ -99,13 +99,13 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; DrawType = "Dot";  }
-   else               return(catch("onInit(2)  Invalid input parameter DrawType = "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else               return(catch("onInit(2)  invalid input parameter DrawType: "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
    // DrawWidth
-   if (DrawWidth < 0) return(catch("onInit(3)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (DrawWidth > 5) return(catch("onInit(4)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth < 0) return(catch("onInit(3)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth > 5) return(catch("onInit(4)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    drawWidth = DrawWidth;
    // Max.Bars
-   if (Max.Bars < -1) return(catch("onInit(5)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1) return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management

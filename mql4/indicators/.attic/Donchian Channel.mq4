@@ -35,7 +35,7 @@ double iLowerLevel[];                           // unterer Level
  */
 int onInit() {
    // Periods
-   if (Periods < 2) return(catch("onInit(1)  Invalid input parameter Periods = "+ Periods, ERR_INVALID_CONFIG_VALUE));
+   if (Periods < 2) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_CONFIG_VALUE));
 
    // Buffer zuweisen
    SetIndexBuffer(0, iUpperLevel);

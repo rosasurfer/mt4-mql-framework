@@ -29,8 +29,8 @@ extern string __a___________________________;
 extern int    Signal.Level          = 20;
 extern string Signal.onLevelCross   = "on | off | auto*";
 extern string Signal.Sound          = "on | off | auto*";
-extern string Signal.Mail.Receiver  = "on | off | auto*";
-extern string Signal.SMS.Receiver   = "on | off | auto*";
+extern string Signal.Mail           = "on | off | auto*";
+extern string Signal.SMS            = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -96,22 +96,22 @@ int onInit() {
    if (Histogram.Color.Short == 0xFF000000) Histogram.Color.Short = CLR_NONE;
 
    // styles
-   if (Histogram.Style.Width < 0) return(catch("onInit(1)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(1)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5) return(catch("onInit(2)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)             return(catch("onInit(3)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)             return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.Level
-   if (Signal.Level <    0)       return(catch("onInit(4)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
-   if (Signal.Level >= 100)       return(catch("onInit(5)  Invalid input parameter Signal.Level = "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.Level <    0)       return(catch("onInit(4)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.Level >= 100)       return(catch("onInit(5)  invalid input parameter Signal.Level: "+ Signal.Level, ERR_INVALID_INPUT_PARAMETER));
 
    // signal configuration
-   if (!ConfigureSignaling("BFXDelta", Signal.onLevelCross, signals))                                              return(last_error);
+   if (!ConfigureSignaling("BFXDelta", Signal.onLevelCross, signals))                                      return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (!signal.sound && !signal.mail && !signal.sms)
          signals = false;
    }
@@ -375,8 +375,8 @@ bool StoreInputParameters() {
    Chart.StoreInt   (name +".input.Signal.Level",          Signal.Level         );
    Chart.StoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
    Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   Chart.StoreString(name +".input.Signal.Mail",           Signal.Mail          );
+   Chart.StoreString(name +".input.Signal.SMS",            Signal.SMS           );
    return(!catch("StoreInputParameters(1)"));
 }
 
@@ -395,8 +395,8 @@ bool RestoreInputParameters() {
    Chart.RestoreInt   (name +".input.Signal.Level",          Signal.Level         );
    Chart.RestoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
    Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver",  Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",   Signal.SMS.Receiver  );
+   Chart.RestoreString(name +".input.Signal.Mail",           Signal.Mail          );
+   Chart.RestoreString(name +".input.Signal.SMS",            Signal.SMS           );
    return(!catch("RestoreInputParameters(1)"));
 }
 
@@ -407,14 +407,14 @@ bool RestoreInputParameters() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),     ";", NL,
-                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),    ";", NL,
-                            "Histogram.Style.Width=", Histogram.Style.Width,                ";", NL,
-                            "Max.Bars=",              Max.Bars,                             ";", NL,
-                            "Signal.Level=",          Signal.Level,                         ";", NL,
-                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross),  ";", NL,
-                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=",  DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",   DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("Histogram.Color.Long=",  ColorToStr(Histogram.Color.Long),    ";", NL,
+                            "Histogram.Color.Short=", ColorToStr(Histogram.Color.Short),   ";", NL,
+                            "Histogram.Style.Width=", Histogram.Style.Width,               ";", NL,
+                            "Max.Bars=",              Max.Bars,                            ";", NL,
+                            "Signal.Level=",          Signal.Level,                        ";", NL,
+                            "Signal.onLevelCross=",   DoubleQuoteStr(Signal.onLevelCross), ";", NL,
+                            "Signal.Sound=",          DoubleQuoteStr(Signal.Sound),        ";", NL,
+                            "Signal.Mail=",           DoubleQuoteStr(Signal.Mail),         ";", NL,
+                            "Signal.SMS=",            DoubleQuoteStr(Signal.SMS),          ";")
    );
 }
