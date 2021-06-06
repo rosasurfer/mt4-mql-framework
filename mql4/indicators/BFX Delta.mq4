@@ -29,7 +29,7 @@ extern string __a___________________________;
 extern int    Signal.Level          = 20;
 extern string Signal.onLevelCross   = "on | off | auto*";
 extern string Signal.Sound          = "on | off | auto*";
-extern string Signal.Mail.Receiver  = "on | off | auto* | {email-address}";
+extern string Signal.Mail.Receiver  = "on | off | auto*";
 extern string Signal.SMS.Receiver   = "on | off | auto* | {phone-number}";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
