@@ -63,9 +63,9 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
@@ -372,9 +372,9 @@ bool Configure() {
 
    // (3) Signalisierungs-Methoden einlesen
    if (track.orders || track.signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
    }
 
    return(!ShowStatus(catch("Configure(15)")));

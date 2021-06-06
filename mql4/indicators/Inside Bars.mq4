@@ -24,10 +24,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
@@ -102,13 +102,13 @@ int onInit() {
    if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
-   // signals
+   // signaling
    string signalInfo = "";
-   if (!ConfigureSignal("Inside Bars", Signal.onInsideBar, signals))                                          return(last_error);
+   if (!ConfigureSignaling("Inside Bars", Signal.onInsideBar, signals))                                            return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
       }

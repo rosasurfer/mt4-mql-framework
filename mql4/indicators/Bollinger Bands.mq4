@@ -41,10 +41,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
@@ -135,11 +135,11 @@ int onInit() {
    if (Max.Bars < -1)         return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (!ConfigureSignal("BollingerBand", Signal.onTouchBand, signals))                                        return(last_error);
+   if (!ConfigureSignaling("BollingerBand", Signal.onTouchBand, signals))                                          return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
