@@ -32,9 +32,9 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>

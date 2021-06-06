@@ -1,5 +1,5 @@
 /**
- * Configure event signaling.
+ * Configure signaling.
  *
  * @param  _In_    string  name        - program name to check signal configuration for, may differ from ProgramName()
  * @param  _InOut_ string &configValue - configuration value
@@ -7,7 +7,7 @@
  *
  * @return bool - validation success status
  */
-bool ConfigureSignal(string name, string &configValue, bool &enabled) {
+bool ConfigureSignaling(string name, string &configValue, bool &enabled) {
    enabled = false;
 
    string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"

@@ -1,12 +1,12 @@
 /**
- * Configure event signaling via sound.
+ * Configure signaling by sound.
  *
  * @param  _In_  string configValue - configuration value
  * @param  _Out_ bool   enabled     - whether signaling by sound is enabled
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalSound(string configValue, bool &enabled) {
+bool ConfigureSignalingBySound(string configValue, bool &enabled) {
    enabled = false;
 
    string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"
@@ -34,6 +34,5 @@ bool ConfigureSignalSound(string configValue, bool &enabled) {
       enabled = GetConfigBool(section, key);
       return(true);
    }
-
    return(false);
 }

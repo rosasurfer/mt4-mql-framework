@@ -41,10 +41,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
@@ -98,10 +98,6 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // MA.Periods
    if (MA.Periods < 1) return(catch("onInit(1)  Invalid input parameter MA.Periods = "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -142,12 +138,12 @@ int onInit() {
    if (Max.Bars < -1)  return(catch("onInit(6)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-   // signals
-   if (!ConfigureSignal(ProgramName(), Signal.onTrendChange, signals))                                        return(last_error);
+   // signaling
+   if (!ConfigureSignaling(ProgramName(), Signal.onTrendChange, signals))                                          return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -195,17 +191,6 @@ int onInit() {
 int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -332,54 +317,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.MA.Periods",           MA.Periods           );
-   Chart.StoreString(name +".input.MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.StoreDouble(name +".input.Distribution.Offset",  Distribution.Offset  );
-   Chart.StoreDouble(name +".input.Distribution.Sigma",   Distribution.Sigma   );
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars             );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.StoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.MA.Periods",           MA.Periods           );
-   Chart.RestoreString(name +".input.MA.AppliedPrice",      MA.AppliedPrice      );
-   Chart.RestoreDouble(name +".input.Distribution.Offset",  Distribution.Offset  );
-   Chart.RestoreDouble(name +".input.Distribution.Sigma",   Distribution.Sigma   );
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend        );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend      );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type            );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width           );
-   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars             );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange );
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail.Receiver", Signal.Mail.Receiver );
-   Chart.RestoreString(name +".input.Signal.SMS.Receiver",  Signal.SMS.Receiver  );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

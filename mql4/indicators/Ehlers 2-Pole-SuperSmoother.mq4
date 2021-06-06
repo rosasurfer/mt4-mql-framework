@@ -42,10 +42,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/@Trend.mqh>
 
@@ -144,12 +144,12 @@ int onInit() {
    if (Max.Bars < -1)  return(catch("onInit(6)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-   // signals
-   if (!ConfigureSignal("2-Pole-Filter", Signal.onTrendChange, signals))                                      return(last_error);
+   // signaling
+   if (!ConfigureSignaling("2-Pole-Filter", Signal.onTrendChange, signals))                                        return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
 
       debug("onInit(0.1)  signal.sound="+ signal.sound +"  signal.mail="+ signal.mail +"  signal.sms="+ signal.sms);
       if (signal.sound || signal.mail || signal.sms) {
