@@ -21,8 +21,8 @@ int __DeinitFlags[];
 
 extern int    MA.Periods           = 38;
 extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset: 0..1 (offset of parabola vertex)
-extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma        (parabola steepness)
+extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset (offset of parabola vertex: 0..1)
+extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma (parabola steepness)
 
 extern color  Color.UpTrend        = Blue;
 extern color  Color.DownTrend      = Red;
@@ -34,7 +34,7 @@ extern string __a___________________________;
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+extern string Signal.SMS.Receiver  = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

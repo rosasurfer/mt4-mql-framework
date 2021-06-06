@@ -28,7 +28,7 @@ extern string __a___________________________;
 extern string Signal.onTrendChange = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
 extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+extern string Signal.SMS.Receiver  = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

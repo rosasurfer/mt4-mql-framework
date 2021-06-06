@@ -62,5 +62,5 @@ bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender,
    }
 
    receiver = configValue;
-   return(!catch("ConfigureSignalingByMail(4)  invalid email configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_PARAMETER));
+   return(!catch("ConfigureSignalingByMail(4)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
 }

@@ -16,7 +16,7 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
    string smsSection    = "SMS";
    string receiverKey   = "Receiver";
 
-   string sValue = StrToLower(configValue), values[], errorMsg;         // default: "on | off | auto* | {phone-number}"
+   string sValue = StrToLower(configValue), values[], errorMsg;         // default: "on | off | auto*"
    if (Explode(sValue, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -27,7 +27,7 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
    if (sValue == "on") {
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -45,21 +45,13 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
          return(true);
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ receiver, ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
       return(true);
    }
 
-   // {phone-number}
-   if (StrIsPhoneNumber(sValue)) {
-      receiver = sValue;
-      enabled  = true;
-      return(true);
-   }
-
-   catch("ConfigureSignalingBySMS(3)  invalid phone number for parameter configValue: "+ DoubleQuoteStr(configValue), ERR_INVALID_PARAMETER);
    receiver = configValue;
-   return(false);
+   return(!catch("ConfigureSignalingBySMS(3)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
 }
