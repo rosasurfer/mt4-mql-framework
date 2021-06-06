@@ -50,7 +50,7 @@ int onInit() {
 
    // input validation
    // Vola.Periods
-   if (Vola.Periods < 1) return(catch("onInit(1)  Invalid input parameter Vola.Periods = "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Vola.Periods < 1) return(catch("onInit(1)  invalid input parameter Vola.Periods: "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
    volaPeriods = Vola.Periods;
 
    // Vola.Type
@@ -62,7 +62,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
    else if (StrStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
-   else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(2)  invalid input parameter Vola.Type: "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(0, bufferVola);

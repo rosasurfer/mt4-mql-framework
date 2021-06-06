@@ -46,7 +46,7 @@ extern int   Histogram.Style.Width = 2;
 #define MODE_NORMALIZED       5
 
 #property indicator_separate_window
-#property indicator_buffers   4                             // buffers visible in input dialog
+#property indicator_buffers   4                             // buffers visible to the user
 int       terminal_buffers  = 6;                            // buffers managed by the terminal
 
 double fisherMain      [];                                  // main value:                invisible, displayed in "Data" window
@@ -69,15 +69,15 @@ int onInit() {
 
    // (1) validate inputs
    // Fisher.Periods
-   if (Fisher.Periods < 1)        return(catch("onInit(1)  Invalid input parameter Fisher.Periods = "+ Fisher.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Fisher.Periods < 1)        return(catch("onInit(1)  invalid input parameter Fisher.Periods: "+ Fisher.Periods, ERR_INVALID_INPUT_PARAMETER));
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Upper == 0xFF000000) Histogram.Color.Upper = CLR_NONE;
    if (Histogram.Color.Lower == 0xFF000000) Histogram.Color.Lower = CLR_NONE;
 
    // Styles
-   if (Histogram.Style.Width < 0) return(catch("onInit(2)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5) return(catch("onInit(3)  Invalid input parameter Histogram.Style.Width = "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(2)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5) return(catch("onInit(3)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management

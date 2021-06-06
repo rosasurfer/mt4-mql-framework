@@ -61,11 +61,11 @@ int onInit() {
 
    // (1) validate inputs
    // Periods
-   if (Periods < 0)   return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 0)   return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
    pivotPeriods = Periods;
 
-   if (SR.Levels < 0) return(catch("onInit(2)  Invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
-   if (SR.Levels > 3) return(catch("onInit(3)  Invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
+   if (SR.Levels < 0) return(catch("onInit(2)  invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
+   if (SR.Levels > 3) return(catch("onInit(3)  invalid input parameter SR.Levels: "+ SR.Levels, ERR_INVALID_INPUT_PARAMETER));
    srLevels = SR.Levels;
 
    // Colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)

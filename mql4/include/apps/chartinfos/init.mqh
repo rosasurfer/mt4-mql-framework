@@ -185,13 +185,13 @@ bool OrderTracker.Configure() {
    else if (sValue == "auto") {
       track.orders = GetConfigBool("EventTracker", "Track.Orders");
    }
-   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
    // Signal-Methoden einlesen
    if (track.orders) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
    }
    return(!catch("OrderTracker.Configure(2)"));
 }

@@ -6116,9 +6116,10 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6151,10 +6152,12 @@ bool icChartInfos() {
            false,                                                          // bool   Offline.Ticker
            "",                                                             // string ____________________
            "off",                                                          // string Signal.Sound
-           "off",                                                          // string Signal.Mail.Receiver
-           "off",                                                          // string Signal.SMS.Receiver
+           "off",                                                          // string Signal.Mail
+           "off",                                                          // string Signal.SMS
            "",                                                             // string ____________________
+           false,                                                          // bool   AutoConfiguration
            lpSuperContext,                                                 // int    __lpSuperContext
+
            0, 0);
 
    int error = GetLastError();
@@ -6193,9 +6196,10 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6240,9 +6244,10 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6290,9 +6295,10 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6348,9 +6354,10 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6398,9 +6405,10 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6446,9 +6454,10 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6493,6 +6502,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           0,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6533,9 +6543,10 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6581,9 +6592,10 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6631,9 +6643,10 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6679,9 +6692,10 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6726,6 +6740,7 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);

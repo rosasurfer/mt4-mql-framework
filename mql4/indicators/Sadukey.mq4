@@ -75,17 +75,17 @@ int onInit() {
    }
    else {
       dataTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (dataTimeframe == -1) return(catch("onInit(1)  Invalid input parameter MTF.Timeframe: "+ DoubleQuoteStr(MTF.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      if (dataTimeframe == -1) return(catch("onInit(1)  invalid input parameter MTF.Timeframe: "+ DoubleQuoteStr(MTF.Timeframe), ERR_INVALID_INPUT_PARAMETER));
       MTF.Timeframe = TimeframeDescription(dataTimeframe);
    }
    // StartDate
    sValue = StrToLower(StrTrim(StartDate));
    if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
       startTime = ParseDateTime(sValue);
-      if (IsNaT(startTime))    return(catch("onInit(2)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+      if (IsNaT(startTime))    return(catch("onInit(2)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    }
    // Max.Bars
-   if (Max.Bars < -1)          return(catch("onInit(2)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)          return(catch("onInit(2)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -374,7 +374,9 @@ double iMTF(int iBuffer, int iBar) {
                           StartDate,                              // string StartDate
                           Max.Bars,                               // int    Max.Bars
                           "",                                     // string ________________
+                          false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
+
                           iBuffer, iBar);
 
    int error = GetLastError();

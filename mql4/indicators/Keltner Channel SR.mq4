@@ -48,7 +48,7 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #define MODE_ATR              7
 
 #property indicator_chart_window
-#property indicator_buffers   7                       // buffers visible in input dialog
+#property indicator_buffers   7                       // buffers visible to the user
 int       terminal_buffers  = 8;                      // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
@@ -111,10 +111,10 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)              return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)              return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)              return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 0)              return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
    if (maPeriods == 1) maMethod = MODE_SMA;
    // MA.AppliedPrice
@@ -127,14 +127,14 @@ int onInit() {
    if (sValue == "") sValue = "close";                            // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                                    return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                                    return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)             return(catch("onInit(4)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)             return(catch("onInit(4)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrPeriods = ATR.Periods;
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)          return(catch("onInit(5)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)          return(catch("onInit(5)  invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrMultiplier = ATR.Multiplier;
    // ATR.Smoothing.Method
    sValue = ATR.Smoothing.Method;
@@ -149,11 +149,11 @@ int onInit() {
    }
    else {
       atrSmoothingMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrSmoothingMethod == -1) return(catch("onInit(6)  Invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (atrSmoothingMethod == -1) return(catch("onInit(6)  invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
       ATR.Smoothing.Method = MaMethodDescription(atrSmoothingMethod);
    }
    // ATR.Smoothing.Periods
-   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  Invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrSmoothingPeriods = ifInt(atrSmoothingMethod==EMPTY || !ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
    if (atrSmoothingPeriods == 1) atrSmoothingMethod = MODE_SMA;
 

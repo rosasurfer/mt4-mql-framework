@@ -16,8 +16,8 @@ extern string __a___________________________;
 
 extern string Signal.onInsideBar   = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto*";
-extern string Signal.SMS.Receiver  = "on | off | auto*";
+extern string Signal.Mail          = "on | off | auto*";
+extern string Signal.SMS           = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -91,7 +91,7 @@ int onInit() {
    for (int i=0; i < size; i++) {
       sValue = sValues[i];
       int timeframe = StrToTimeframe(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1)        return(catch("onInit(1)  Invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
+      if (timeframe == -1)        return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
       if (timeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported timeframe "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
       fTimeframes |= TimeframeFlag(timeframe);
       sValues[i] = TimeframeDescription(timeframe);
@@ -99,16 +99,16 @@ int onInit() {
    Timeframes = JoinStrings(sValues, ",");
 
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.InsideBars < -1) return(catch("onInit(3)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
    // signaling
    string signalInfo = "";
-   if (!ConfigureSignaling("Inside Bars", Signal.onInsideBar, signals))                                            return(last_error);
+   if (!ConfigureSignaling("Inside Bars", Signal.onInsideBar, signals))                                    return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
       }
@@ -901,12 +901,12 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",           DoubleQuoteStr(Timeframes),           ";", NL,
-                            "Max.InsideBars=",       Max.InsideBars,                       ";", NL,
-                            "Signal.onInsideBar=",   DoubleQuoteStr(Signal.onInsideBar),   ";", NL,
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("Timeframes=",         DoubleQuoteStr(Timeframes),         ";", NL,
+                            "Max.InsideBars=",     Max.InsideBars,                     ";", NL,
+                            "Signal.onInsideBar=", DoubleQuoteStr(Signal.onInsideBar), ";", NL,
+                            "Signal.Sound=",       DoubleQuoteStr(Signal.Sound),       ";", NL,
+                            "Signal.Mail=",        DoubleQuoteStr(Signal.Mail),        ";", NL,
+                            "Signal.SMS=",         DoubleQuoteStr(Signal.SMS),         ";")
 
 
    );
