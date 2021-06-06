@@ -4,6 +4,14 @@
 #include <stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern int Volatility.UsedLeverage =  1;     // unleveraged => 1:1
+extern int Lots.TargetPerformance  = 10;     // in percent
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
@@ -50,6 +58,12 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
+   // Volatility.UsedLeverage
+   if (Volatility.UsedLeverage < 1) return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
+   // Lots.TargetPerformance
+   if (Lots.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Lots.TargetPerformance: "+ Lots.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+
    SetIndexLabel(0, NULL);          // "Data" window
    CreateChartObjects();
    return(catch("onInit(1)"));
@@ -150,11 +164,10 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),          fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateVola();                                ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", DoubleToStr(vola, 2) +"% PL/ADR  (L1)"), fgFontSize, fgFontName, fgFontColor);
-   double targetRate      = 2.0;
-   double lots            = CalculateLots(targetRate);
-   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Lots:        "    + ifString(!lots,     "", NumberToStr(lots, ".1+") +" lot = "+ NumberToStr(targetRate, ".+") +"% PL/ADR  (L"+ DoubleToStr(leverage, 1) +")"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                                                                                        fgFontSize, fgFontName, fgFontColor);
+   double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Vola/L:     "     + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"% PL/ADR  (L"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
+   double lots            = CalculateLots(Lots.TargetPerformance);
+   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Lots/PL:    "     + ifString(!lots,     "", NumberToStr(lots, ".1+") +" lot = "+ NumberToStr(Lots.TargetPerformance, ".0+") +"% PL/ADR  (L"+ DoubleToStr(leverage, 1) +")"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -248,12 +261,14 @@ double iADR() {
 
 
 /**
- * Calculate and return the performance of a non-leveraged position per ADR. Allows to compare the effective volatility of
- * different instruments.
+ * Calculate and return the performance of a position per ADR using the specified leverage. Allows to compare the effective
+ * volatility of different instruments.
+ *
+ * @param  double leverage - used leverage
  *
  * @return double - performance in percent of the current account size or NULL in case of errors
  */
-double CalculateVola() {
+double CalculateVola(double leverage) {
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
    double pointValue = MathDiv(tickValue, tickSize/Point);
@@ -263,7 +278,7 @@ double CalculateVola() {
    double lotValue        = MathDiv(Close[0], tickSize) * tickValue;    // value of 1 lot in account currency
    double unleveragedLots = MathDiv(equity, lotValue);                  // unleveraged lots for the account size
 
-   double gain = unleveragedLots * pipValue * iADR()/Pip;
+   double gain = unleveragedLots * leverage * pipValue * iADR()/Pip;
    double vola = MathDiv(gain, equity) * 100;
    return(vola);
 }
