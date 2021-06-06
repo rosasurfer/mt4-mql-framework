@@ -27,11 +27,19 @@ extern int    MA3.Periods                    = 144;
 extern string MA3.Method                     = "SMA | LWMA | EMA* | SMMA";
 extern string MA3.AppliedPrice               = "Open | High | Low | Close | Median* | Typical | Weighted";
 
+extern string __4___________________________ = "=== Signaling ================================";
+extern bool   Signal.onBreakout              = false;
+extern bool   Signal.onBreakout.Alert        = true;
+extern bool   Signal.onBreakout.Sound        = false;
+extern bool   Signal.onBreakout.Mail         = false;
+extern bool   Signal.onBreakout.SMS          = false;
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/ConfigureSignaling.mqh>
 #include <functions/IsBarOpen.mqh>
 
 #define MODE_MA1              0              // indicator buffer ids
@@ -42,16 +50,16 @@ extern string MA3.AppliedPrice               = "Open | High | Low | Close | Medi
 #define MODE_MA3_TREND        5
 #define MODE_TOTAL_TREND      6
 
-#define MODE_LONG             1              // breakout ids
+#define MODE_LONG             1              // breakout directions
 #define MODE_SHORT            2
 
 #property indicator_chart_window
-#property indicator_buffers   3              // buffers visible in input dialog
+#property indicator_buffers   3              // buffers visible to the user
 int       terminal_buffers =  7;             // buffers managed by the terminal
 
-#property indicator_color1    Red
-#property indicator_color2    Blue
-#property indicator_color3    Magenta
+#property indicator_color1    Magenta
+#property indicator_color2    Red
+#property indicator_color3    Blue
 
 double ma1[];
 double ma1Trend[];
@@ -77,9 +85,12 @@ int    ma3AppliedPrice;
 int    totalInitPeriods;
 double totalTrend[];
 
-bool   signals          = true;
-bool   signal.onTick    = true;
-bool   signal.onBarOpen = true;
+string signalSoundUp      = "Signal-Up.wav";
+string signalSoundDown    = "Signal-Down.wav";
+string signalMailSender   = "";
+string signalMailReceiver = "";
+string signalSmsReceiver  = "";
+string signalDescription  = "";
 
 
 /**
@@ -172,7 +183,19 @@ int onInit() {
    if (!UseMA1 && !UseMA2 && !UseMA3)                              return(catch("onInit(10)  invalid input parameters (at least one MA must be configured)", ERR_INVALID_INPUT_PARAMETER));
    totalInitPeriods = Max(ma1InitPeriods, ma2InitPeriods, ma3InitPeriods);
 
-   // signal configuration
+   // signaling
+   string signalName = "Signal.onBreakout";
+   if (!ConfigureSignaling2(signalName, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
+   if (Signal.onBreakout) {
+      if (!ConfigureSignalingByAlert2(signalName, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
+      if (!ConfigureSignalingBySound2(signalName, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
+      if (!ConfigureSignalingByMail2 (signalName, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
+      if (!ConfigureSignalingBySMS2  (signalName, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
+      if (Signal.onBreakout.Alert || Signal.onBreakout.Sound || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
+         signalDescription = "Breakout="+ StrLeft(ifString(Signal.onBreakout.Alert, "Alert+", "") + ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
+      }
+      else Signal.onBreakout = false;
+   }
 
    // buffer management
    SetIndexBuffer(MODE_MA1,         ma1);
@@ -183,14 +206,14 @@ int onInit() {
    SetIndexBuffer(MODE_MA3_TREND,   ma3Trend);   SetIndexEmptyValue(MODE_MA3_TREND,   0);
    SetIndexBuffer(MODE_TOTAL_TREND, totalTrend); SetIndexEmptyValue(MODE_TOTAL_TREND, 0);
 
+   // display options
    SetIndexLabel(MODE_MA1, NULL);
    SetIndexLabel(MODE_MA2, NULL);
    SetIndexLabel(MODE_MA3, NULL);
-
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(11)"));
 }
 
 
@@ -294,19 +317,19 @@ int onTick() {
  * @return bool - success status
  */
 bool CheckSignals() {
-   if (IsSuperContext() || !signals) return(true);
+   if (IsSuperContext()) return(true);
 
-   if (signal.onTick) {
-   }
-
-   // detect tunnel breakouts to the opposite side of the current trend (but not trend continuation signals)
-   if (signal.onBarOpen) /*&&*/ if (IsBarOpen()) {
+   // detect tunnel breakouts to the opposite side of the current trend (skips trend continuation signals)
+   if (Signal.onBreakout) /*&&*/ if (IsBarOpen()) {
       static int lastTrend; if (!lastTrend) lastTrend = totalTrend[2];
       int trend = totalTrend[1];
       if      (lastTrend<=0 && trend > 0) onBreakout(MODE_LONG);        // also detects breakouts on bars without ticks (M1)
       else if (lastTrend>=0 && trend < 0) onBreakout(MODE_SHORT);
       lastTrend = trend;
    }
+
+   //if (Signal.onMainCross) {
+   //}
 }
 
 
@@ -338,9 +361,9 @@ void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
    //SetIndexStyle(int buffer, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
 
-   SetIndexStyle(MODE_MA1, DRAW_LINE, EMPTY, 2);
-   SetIndexStyle(MODE_MA2, DRAW_LINE, EMPTY, 2);
-   SetIndexStyle(MODE_MA3, DRAW_LINE, EMPTY, 2);
+   SetIndexStyle(MODE_MA1, ifInt(UseMA1, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color1);
+   SetIndexStyle(MODE_MA2, ifInt(UseMA2, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color2);
+   SetIndexStyle(MODE_MA3, ifInt(UseMA3, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color3);
 }
 
 
@@ -379,17 +402,22 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("UseMA1=",           BoolToStr(UseMA1),                ";", NL,
-                            "MA1.Periods=",      MA1.Periods,                      ";", NL,
-                            "MA1.Method=",       DoubleQuoteStr(MA1.Method),       ";", NL,
-                            "MA1.AppliedPrice=", DoubleQuoteStr(MA1.AppliedPrice), ";", NL,
-                            "UseMA2=",           BoolToStr(UseMA2),                ";", NL,
-                            "MA2.Periods=",      MA2.Periods,                      ";", NL,
-                            "MA2.Method=",       DoubleQuoteStr(MA2.Method),       ";", NL,
-                            "MA2.AppliedPrice=", DoubleQuoteStr(MA2.AppliedPrice), ";", NL,
-                            "UseMA3=",           BoolToStr(UseMA3),                ";", NL,
-                            "MA3.Periods=",      MA3.Periods,                      ";", NL,
-                            "MA3.Method=",       DoubleQuoteStr(MA3.Method),       ";", NL,
-                            "MA3.AppliedPrice=", DoubleQuoteStr(MA3.AppliedPrice), ";")
+   return(StringConcatenate("UseMA1="                + BoolToStr(UseMA1)                  +";"+ NL
+                           +"MA1.Periods="           + MA1.Periods                        +";"+ NL
+                           +"MA1.Method="            + DoubleQuoteStr(MA1.Method)         +";"+ NL
+                           +"MA1.AppliedPrice="      + DoubleQuoteStr(MA1.AppliedPrice)   +";"+ NL
+                           +"UseMA2="                + BoolToStr(UseMA2)                  +";"+ NL
+                           +"MA2.Periods="           + MA2.Periods                        +";"+ NL
+                           +"MA2.Method="            + DoubleQuoteStr(MA2.Method)         +";"+ NL
+                           +"MA2.AppliedPrice="      + DoubleQuoteStr(MA2.AppliedPrice)   +";"+ NL
+                           +"UseMA3="                + BoolToStr(UseMA3)                  +";"+ NL
+                           +"MA3.Periods="           + MA3.Periods                        +";"+ NL
+                           +"MA3.Method="            + DoubleQuoteStr(MA3.Method)         +";"+ NL
+                           +"MA3.AppliedPrice="      + DoubleQuoteStr(MA3.AppliedPrice)   +";"+ NL
+                           +"Signal.onBreakout"      + BoolToStr(Signal.onBreakout)       +";"+ NL
+                           +"Signal.onBreakout.Alert"+ BoolToStr(Signal.onBreakout.Alert) +";"+ NL
+                           +"Signal.onBreakout.Sound"+ BoolToStr(Signal.onBreakout.Sound) +";"+ NL
+                           +"Signal.onBreakout.Mail" + BoolToStr(Signal.onBreakout.Mail)  +";"+ NL
+                           +"Signal.onBreakout.SMS"  + BoolToStr(Signal.onBreakout.SMS),   ";")
    );
 }

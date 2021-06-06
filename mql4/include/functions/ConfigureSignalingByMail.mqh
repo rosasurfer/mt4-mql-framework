@@ -2,9 +2,9 @@
  * Configure signaling by email.
  *
  * @param  _In_  string configValue - configuration value
- * @param  _Out_ bool   enabled     - whether signaling by email is enabled
- * @param  _Out_ string sender      - the email sender address or the invalid value in case of errors
- * @param  _Out_ string receiver    - the email receiver address or the invalid value in case of errors
+ * @param  _Out_ bool   &enabled    - whether signaling by email is enabled
+ * @param  _Out_ string &sender     - the email sender address or the invalid value in case of errors
+ * @param  _Out_ string &receiver   - the email receiver address or the invalid value in case of errors
  *
  * @return bool - validation success status
  */
