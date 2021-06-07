@@ -369,7 +369,7 @@ bool onReversal(int direction) {
 
    if (direction == D_LONG) {
       message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogDebug()) logDebug("onReversal(1)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
@@ -380,7 +380,7 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogDebug()) logDebug("onReversal(2)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);

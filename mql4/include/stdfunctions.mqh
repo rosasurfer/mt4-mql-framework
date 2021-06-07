@@ -4202,9 +4202,9 @@ string GetAccountCompany() {
 
 
 /**
- * Return the alias of an account. The alias is configurable via the global framework configuration and is used in outgoing
- * log messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
- * actual account number with all characters except the last 4 digits replaced by wildcards.
+ * Return the alias of an account. The alias is used in outbound messages (SMS, email, chat) to obfuscate the actual account
+ * number and is configurable via the framework configuration. If no alias is configured the function returns the account
+ * number with all characters except the last 4 replaced by wildcards.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -4224,8 +4224,9 @@ string GetAccountAlias(string company="", int account=NULL) {
 
    string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      logNotice("GetAccountAlias(2)  account alias not found for account "+ DoubleQuoteStr(company +":"+ account));
+      logNotice("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
       result = account;
+      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
    }
    return(result);
 }
