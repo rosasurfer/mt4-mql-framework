@@ -4020,7 +4020,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price;
 
-      if (IsLogDebug()) logDebug("onPositionOpen(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
       // TODO: handle signals via log mechanism
       //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -4064,7 +4064,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
-      if (IsLogDebug()) logDebug("onPositionClose(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
       // TODO: handle signals via log mechanism
       //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
