@@ -1,0 +1,3 @@
+#
+# Prevents MetaEditor from creating a "config" directory if executed from the Windows UI.
+#

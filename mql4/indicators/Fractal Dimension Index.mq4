@@ -56,7 +56,7 @@ extern int    Max.Bars       = 10000;                    // max. values to calcu
 #define MODE_LOWER            2
 
 #property indicator_separate_window
-#property indicator_buffers   3                          // buffers visible in input dialog
+#property indicator_buffers   3                          // buffers visible to the user
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -85,7 +85,7 @@ int maxValues;
 int onInit() {
    // validate inputs
    // Periods
-   if (Periods < 2)   return(catch("onInit(1)  Invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Periods < 2)   return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    fdiPeriods = Periods;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Ranging  == 0xFF000000) Color.Ranging  = CLR_NONE;
@@ -99,13 +99,13 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; DrawType = "Dot";  }
-   else               return(catch("onInit(2)  Invalid input parameter DrawType = "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else               return(catch("onInit(2)  invalid input parameter DrawType: "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
    // DrawWidth
-   if (DrawWidth < 0) return(catch("onInit(3)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (DrawWidth > 5) return(catch("onInit(4)  Invalid input parameter DrawWidth = "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth < 0) return(catch("onInit(3)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (DrawWidth > 5) return(catch("onInit(4)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    drawWidth = DrawWidth;
    // Max.Bars
-   if (Max.Bars < -1) return(catch("onInit(5)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1) return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -132,9 +132,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,  EMPTY_VALUE);
       ArrayInitialize(upper, EMPTY_VALUE);
@@ -151,11 +151,11 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startBar = Min(bars-1, Bars-fdiPeriods-1);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-fdiPeriods-1);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
-   UpdateChangedBars(startBar);
+   UpdateChangedBars(startbar);
 
    return(last_error);
 }
@@ -164,11 +164,11 @@ int onTick() {
 /**
  * Update changed bars.
  *
- * @param  int startBar - index of the oldest changed bar
+ * @param  int startbar - index of the oldest changed bar
  *
  * @return bool - success status
  */
-bool UpdateChangedBars(int startBar) {
+bool UpdateChangedBars(int startbar) {
    int periodsPlus1   = fdiPeriods + 1;
    double log2        = MathLog(2);
    double log2Periods = MathLog(2 * fdiPeriods);
@@ -178,7 +178,7 @@ bool UpdateChangedBars(int startBar) {
    //
    //   FDI(N, Matulich) = FDI(N+1, Sevcik)
    //
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       double priceMax = Close[ArrayMaximum(Close, periodsPlus1, bar)];     // fixes a Matulich error
       double priceMin = Close[ArrayMinimum(Close, periodsPlus1, bar)];
       double range    = NormalizeDouble(priceMax-priceMin, Digits), length=0, fdi=0;

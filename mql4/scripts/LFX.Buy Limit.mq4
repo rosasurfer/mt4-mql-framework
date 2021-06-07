@@ -51,29 +51,29 @@ int onInit() {
    sValue = StrReplace(StrToLower(sValue), " ", "");
    if      (sValue=="buylimit" || sValue=="limitbuy") limitType = OP_BUYLIMIT;
    else if (sValue=="buystop"  || sValue=="stopbuy" ) limitType = OP_BUYSTOP;
-   else                                  return(HandleScriptError("onInit(2)", "Invalid parameter Type = \""+ Type +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else                                  return(HandleScriptError("onInit(2)", "Invalid parameter Type: \""+ Type +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // Units
-   if (!EQ(MathModFix(Units, 0.1), 0))   return(HandleScriptError("onInit(3)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
-   if (Units < 0.1 || Units > 3)         return(HandleScriptError("onInit(4)", "Invalid parameter Units = "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
+   if (!EQ(MathModFix(Units, 0.1), 0))   return(HandleScriptError("onInit(3)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
+   if (Units < 0.1 || Units > 3)         return(HandleScriptError("onInit(4)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
    // LimitPrice
    LimitPrice = NormalizeDouble(LimitPrice, SubPipDigits);
-   if (LimitPrice <= 0)                  return(HandleScriptError("onInit(5)", "Illegal parameter LimitPrice = "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (LimitPrice <= 0)                  return(HandleScriptError("onInit(5)", "Illegal parameter LimitPrice: "+ NumberToStr(LimitPrice, ".+") +"\n(must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
    // TakeProfitPrice
    TakeProfitPrice = NormalizeDouble(TakeProfitPrice, SubPipDigits);
    if (TakeProfitPrice != 0) {
-      if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(6)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
-      if (TakeProfitPrice <= LimitPrice) return(HandleScriptError("onInit(7)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(6)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice <= LimitPrice) return(HandleScriptError("onInit(7)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
    // StopLossPrice
    StopLossPrice = NormalizeDouble(StopLossPrice, SubPipDigits);
    if (StopLossPrice != 0) {
-      if (StopLossPrice < 0)             return(HandleScriptError("onInit(8)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
-      if (StopLossPrice >= LimitPrice)   return(HandleScriptError("onInit(9)", "Illegal parameter StopLossPrice = "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (StopLossPrice < 0)             return(HandleScriptError("onInit(8)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
+      if (StopLossPrice >= LimitPrice)   return(HandleScriptError("onInit(9)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
@@ -107,8 +107,8 @@ int onStart() {
 
    // (1) Sicherheitsabfrage
    if ((limitType==OP_BUYLIMIT && LimitPrice >= Close[0]) || (limitType==OP_BUYSTOP && LimitPrice <= Close[0])) {
-      if (TakeProfitPrice && TakeProfitPrice <= Close[0]) return(HandleScriptError("onStart(1)", "Illegal parameter TakeProfitPrice = "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
-      if (StopLossPrice   && StopLossPrice   >= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice = "+   NumberToStr(StopLossPrice,   SubPipPriceFormat) +"\n(must be lower than the current price "+  NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice && TakeProfitPrice <= Close[0]) return(HandleScriptError("onStart(1)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (StopLossPrice   && StopLossPrice   >= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat) +"\n(must be lower than the current price "+  NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
 
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")

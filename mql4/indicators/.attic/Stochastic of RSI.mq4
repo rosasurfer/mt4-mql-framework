@@ -46,7 +46,7 @@ extern int    Max.Bars                 = 10000;          // max. values to calcu
 #define MODE_RSI              3
 
 #property indicator_separate_window
-#property indicator_buffers   2                          // buffers visible in input dialog
+#property indicator_buffers   2                          // buffers visible to the user
 int       terminal_buffers  = 4;                         // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
@@ -80,10 +80,10 @@ int maxValues;
  */
 int onInit() {
    // validate inputs
-   if (Stoch.Main.Periods < 2)       return(catch("onInit(1)  Invalid input parameter Stoch.Main.Periods: "+ Stoch.Main.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stoch.SlowedMain.Periods < 0) return(catch("onInit(2)  Invalid input parameter Stoch.SlowedMain.Periods: "+ Stoch.SlowedMain.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stoch.Signal.Periods < 0)     return(catch("onInit(3)  Invalid input parameter Stoch.Signal.Periods: "+ Stoch.Signal.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)              return(catch("onInit(4)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stoch.Main.Periods < 2)       return(catch("onInit(1)  invalid input parameter Stoch.Main.Periods: "+ Stoch.Main.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stoch.SlowedMain.Periods < 0) return(catch("onInit(2)  invalid input parameter Stoch.SlowedMain.Periods: "+ Stoch.SlowedMain.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stoch.Signal.Periods < 0)     return(catch("onInit(3)  invalid input parameter Stoch.Signal.Periods: "+ Stoch.Signal.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)              return(catch("onInit(4)  invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    stochPeriods = Stoch.Main.Periods;
    ma1Periods   = ifInt(!Stoch.SlowedMain.Periods, 1, Stoch.SlowedMain.Periods);
    ma2Periods   = ifInt(!Stoch.Signal.Periods, 1, Stoch.Signal.Periods);
@@ -102,15 +102,15 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line", sValue)) { signalDrawType = DRAW_LINE;  Signal.DrawType = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { signalDrawType = DRAW_ARROW; Signal.DrawType = "Dot";  }
-   else                            return(catch("onInit(5)  Invalid input parameter Signal.DrawType = "+ DoubleQuoteStr(Signal.DrawType), ERR_INVALID_INPUT_PARAMETER));
+   else                            return(catch("onInit(5)  invalid input parameter Signal.DrawType: "+ DoubleQuoteStr(Signal.DrawType), ERR_INVALID_INPUT_PARAMETER));
 
    // Signal.DrawWidth
-   if (Signal.DrawWidth < 0)       return(catch("onInit(6)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Signal.DrawWidth > 5)       return(catch("onInit(7)  Invalid input parameter Signal.DrawWidth = "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.DrawWidth < 0)       return(catch("onInit(6)  invalid input parameter Signal.DrawWidth: "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Signal.DrawWidth > 5)       return(catch("onInit(7)  invalid input parameter Signal.DrawWidth: "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    signalDrawWidth = Signal.DrawWidth;
 
    // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(8)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)              return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -151,9 +151,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferRsi)) return(logDebug("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferRsi)) return(logInfo("onTick(1)  size(bufferRsi) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferRsi,   EMPTY_VALUE);
       ArrayInitialize(bufferStoch, EMPTY_VALUE);
@@ -173,12 +173,12 @@ int onTick() {
    // +------------------------------------------------------+----------------------------------------------------+
    // | Top down                                             | Bottom up                                          |
    // +------------------------------------------------------+----------------------------------------------------+
-   // | RequestedBars   = 5000                               | ResultingBars   = startBar(MA2) + 1                |
-   // | startBar(MA2)   = RequestedBars - 1                  | startBar(MA2)   = startBar(MA1)   - ma2Periods + 1 |
-   // | startBar(MA1)   = startBar(MA2)   + ma2Periods   - 1 | startBar(MA1)   = startBar(Stoch) - ma1Periods + 1 |
-   // | startBar(Stoch) = startBar(MA1)   + ma1Periods   - 1 | startBar(Stoch) = startBar(RSI) - stochPeriods + 1 |
-   // | startBar(RSI)   = startBar(Stoch) + stochPeriods - 1 | startBar(RSI)   = oldestBar - 5 - rsiPeriods   + 1 | RSI requires at least 5 more bars to initialize the integrated EMA.
-   // | firstBar        = startBar(RSI) + rsiPeriods + 5 - 1 | oldestBar       = AvailableBars - 1                |
+   // | RequestedBars   = 5000                               | ResultingBars   = startbar(MA2) + 1                |
+   // | startbar(MA2)   = RequestedBars - 1                  | startbar(MA2)   = startbar(MA1)   - ma2Periods + 1 |
+   // | startbar(MA1)   = startbar(MA2)   + ma2Periods   - 1 | startbar(MA1)   = startbar(Stoch) - ma1Periods + 1 |
+   // | startbar(Stoch) = startbar(MA1)   + ma1Periods   - 1 | startbar(Stoch) = startbar(RSI) - stochPeriods + 1 |
+   // | startbar(RSI)   = startbar(Stoch) + stochPeriods - 1 | startbar(RSI)   = oldestBar - 5 - rsiPeriods   + 1 | RSI requires at least 5 more bars to initialize the integrated EMA.
+   // | firstBar        = startbar(RSI) + rsiPeriods + 5 - 1 | oldestBar       = AvailableBars - 1                |
    // | RequiredBars    = firstBar + 1                       | AvailableBars   = Bars                             |
    // +------------------------------------------------------+----------------------------------------------------+
    // |                 --->                                                ---^                                  |
@@ -190,27 +190,27 @@ int onTick() {
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    int bars          = Min(requestedBars, resultingBars);                              // actual number of bars to be updated
-   int ma2StartBar   = bars - 1;
-   int ma1StartBar   = ma2StartBar + ma2Periods - 1;
-   int stochStartBar = ma1StartBar + ma1Periods - 1;
-   int rsiStartBar   = stochStartBar + stochPeriods - 1;
+   int ma2Startbar   = bars - 1;
+   int ma1Startbar   = ma2Startbar + ma2Periods - 1;
+   int stochStartbar = ma1Startbar + ma1Periods - 1;
+   int rsiStartbar   = stochStartbar + stochPeriods - 1;
 
    // recalculate changed bars
-   for (int i=rsiStartBar; i >= 0; i--) {
+   for (int i=rsiStartbar; i >= 0; i--) {
       bufferRsi[i] = iRSI(NULL, NULL, rsiPeriods, PRICE_CLOSE, i);
    }
 
-   for (i=stochStartBar; i >= 0; i--) {
+   for (i=stochStartbar; i >= 0; i--) {
       double rsiHigh = bufferRsi[ArrayMaximum(bufferRsi, stochPeriods, i)];
       double rsiLow  = bufferRsi[ArrayMinimum(bufferRsi, stochPeriods, i)];
       bufferStoch[i] = MathDiv(bufferRsi[i]-rsiLow, rsiHigh-rsiLow, 0.5) * 100;        // raw Stochastic
    }
 
-   for (i=ma1StartBar; i >= 0; i--) {
+   for (i=ma1Startbar; i >= 0; i--) {
       bufferMa1[i] = iMAOnArray(bufferStoch, WHOLE_ARRAY, ma1Periods, 0, MODE_SMA, i); // SMA: no performance impact of WHOLE_ARRAY
    }
 
-   for (i=ma2StartBar; i >= 0; i--) {
+   for (i=ma2Startbar; i >= 0; i--) {
       bufferMa2[i] = iMAOnArray(bufferMa1, WHOLE_ARRAY, ma2Periods, 0, MODE_SMA, i);
    }
 

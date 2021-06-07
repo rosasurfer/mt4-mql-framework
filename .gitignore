@@ -8,11 +8,7 @@
 /.project*
 
 # ignore the following directories and files
-/bin/config
-/bin/experts
-/bin/logs
-/bin/MQL4
-/bin/mql4
+/bin/experts/include
 /etc/windows/appdata/*
 mqlcache.dat
 *.ex4

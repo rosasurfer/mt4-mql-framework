@@ -61,7 +61,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
@@ -1378,7 +1378,7 @@ bool IsStartSignal(int &signal) {
    if (IsSessionBreak()) {
       // -- start.trend during sessionbreak: fulfilled on trend change in direction of the sequence -------------------------
       if (start.conditions && start.trend.condition) {
-         if (IsBarOpenEvent(start.trend.timeframe)) {
+         if (IsBarOpen(start.trend.timeframe)) {
             int trend = GetStartTrendValue(1);
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
                if (IsLogDebug()) logDebug("IsStartSignal(1)  "+ sequence.longName +" queuing fulfilled "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\"");
@@ -1442,7 +1442,7 @@ bool IsStartSignal(int &signal) {
 
       // -- start.trend: fulfilled on trend change in direction of the sequence ---------------------------------------------
       if (start.trend.condition) {
-         if (IsBarOpenEvent(start.trend.timeframe)) {
+         if (IsBarOpen(start.trend.timeframe)) {
             trend = GetStartTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
@@ -1492,7 +1492,7 @@ bool IsStopSignal(int &signal) {
    // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
    if (stop.trend.condition) {
       if (sequence.status==STATUS_PROGRESSING || sessionbreak.waiting) {
-         if (IsBarOpenEvent(stop.trend.timeframe)) {
+         if (IsBarOpen(stop.trend.timeframe)) {
             int trend = GetStopTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {

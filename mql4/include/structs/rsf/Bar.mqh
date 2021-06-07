@@ -64,7 +64,7 @@ int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume) { bar[i]
  */
 string BAR.toStr(/*BAR*/double bar[]) {
    int dimensions = ArrayDimension(bar);
-   if (dimensions > 2)                                  return(_EMPTY_STR(catch("BAR.toStr(1)  too many dimensions of parameter bar = "+ dimensions, ERR_INVALID_PARAMETER)));
+   if (dimensions > 2)                                  return(_EMPTY_STR(catch("BAR.toStr(1)  too many dimensions of parameter bar: "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(bar, dimensions-1) != BAR.doubleSize) return(_EMPTY_STR(catch("BAR.toStr(2)  invalid size of parameter bar ("+ ArrayRange(bar, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    string line, lines[]; ArrayResize(lines, 0);

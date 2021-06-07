@@ -17,7 +17,7 @@ extern int    Stochastic.Periods     = 96;                  //
 extern int    Stochastic.MA1.Periods = 10;                  //
 extern int    Stochastic.MA2.Periods = 6;                   //
 extern int    RSI.Periods            = 96;                  //
-extern string __a____________________________;              //
+extern string __a___________________________;               //
 extern string Timeframe              = "H1";                // Broketrader timeframe
 extern string StartDate              = "2019.01.01";        // Broketrader start date
 
@@ -64,11 +64,11 @@ datetime systemStartDate;
  */
 int onInit() {
    // validate inputs
-   if (SMA.Periods < 1)            return(catch("onInit(1)  Invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.Periods < 2)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)            return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.Periods < 1)            return(catch("onInit(1)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 2)     return(catch("onInit(2)  invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)            return(catch("onInit(5)  invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    smaPeriods      = SMA.Periods;
    stochPeriods    = Stochastic.Periods;
    stochMa1Periods = Stochastic.MA1.Periods;
@@ -76,11 +76,11 @@ int onInit() {
    rsiPeriods      = RSI.Periods;
    // Timeframe
    systemTimeframe = StrToTimeframe(Timeframe, F_ERR_INVALID_PARAMETER);
-   if (systemTimeframe == -1)      return(catch("onInit(6)  Invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
+   if (systemTimeframe == -1)      return(catch("onInit(6)  invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
    Timeframe = TimeframeDescription(systemTimeframe);
    // StartDate
    systemStartDate = ParseDate(StartDate);
-   if (IsNaT(systemStartDate))     return(catch("onInit(7)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   if (IsNaT(systemStartDate))     return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible
@@ -106,9 +106,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferTotalPL)) return(logDebug("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferTotalPL)) return(logInfo("onTick(1)  size(bufferTotalPL) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferOpenPL,   EMPTY_VALUE);
       ArrayInitialize(bufferClosedPL, EMPTY_VALUE);
@@ -190,31 +190,31 @@ int ComputeChangedBars(int timeframe = NULL, bool limitStartTime = true) {
    int currentTimeframe = Period();
    if (!timeframe) timeframe = currentTimeframe;
 
-   int changedBars, startBar;
+   int changedBars, startbar;
 
    if (timeframe == currentTimeframe) {
       // the displayed timeframe equals the chart timeframe
-      startBar = ChangedBars-1;
-      if (Time[startBar]+currentTimeframe*MINUTES-1 < systemStartDate)
-         startBar = iBarShiftNext(NULL, NULL, systemStartDate);
-      changedBars = startBar + 1;
+      startbar = ChangedBars-1;
+      if (Time[startbar]+currentTimeframe*MINUTES-1 < systemStartDate)
+         startbar = iBarShiftNext(NULL, NULL, systemStartDate);
+      changedBars = startbar + 1;
    }
    else {
       // the displayed timeframe is different from the chart timeframe
       // resolve startbar to update in the data timeframe
       changedBars = iChangedBars(NULL, timeframe);
-      startBar    = changedBars-1;
-      if (startBar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  changedBars="+ changedBars +"  startBar="+ startBar, ERR_HISTORY_INSUFFICIENT)));
+      startbar    = changedBars-1;
+      if (startbar < 0) return(_EMPTY(catch("ComputeChangedBars(1)  timeframe="+ TimeframeDescription(timeframe) +"  changedBars="+ changedBars +"  startbar="+ startbar, ERR_HISTORY_INSUFFICIENT)));
 
       // resolve corresponding bar offset in the current timeframe
-      startBar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startBar));
+      startbar = iBarShiftNext(NULL, NULL, iTime(NULL, timeframe, startbar));
 
       // cross-check the changed bars of the current timeframe against the data timeframe
-      changedBars = Max(startBar+1, ComputeChangedBars(currentTimeframe, false));
-      startBar    = changedBars - 1;
-      if (Time[startBar]+currentTimeframe*MINUTES-1 < systemStartDate)
-         startBar = iBarShiftNext(NULL, NULL, systemStartDate);
-      changedBars = startBar + 1;
+      changedBars = Max(startbar+1, ComputeChangedBars(currentTimeframe, false));
+      startbar    = changedBars - 1;
+      if (Time[startbar]+currentTimeframe*MINUTES-1 < systemStartDate)
+         startbar = iBarShiftNext(NULL, NULL, systemStartDate);
+      changedBars = startbar + 1;
    }
    return(changedBars);
 }
@@ -242,6 +242,7 @@ double iMTF(int iBuffer, int iBar) {
                           Timeframe,                              // string Timeframe
                           StartDate,                              // string StartDate
                           "",                                     // string ______________________
+                          false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -305,9 +306,10 @@ double iBroketrader(int timeframe, int smaPeriods, int stochasticPeriods, int st
                           "",                                     // string ____________________
                           "off",                                  // string Signal.onReversal
                           "off",                                  // string Signal.Sound
-                          "off",                                  // string Signal.Mail.Receiver
-                          "off",                                  // string Signal.SMS.Receiver
+                          "off",                                  // string Signal.Mail
+                          "off",                                  // string Signal.SMS
                           "",                                     // string ____________________
+                          false,                                  // bool   AutoConfiguration
                           lpSuperContext,                         // int    __lpSuperContext
 
                           iBuffer, iBar);

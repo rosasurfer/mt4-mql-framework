@@ -44,18 +44,18 @@ int mmi.periods;
 int onInit() {
    // (1) input validation
    // MMI.Periods
-   if (MMI.Periods < 1) return(catch("onInit(1)  Invalid input parameter Periods = "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MMI.Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));
    mmi.periods = MMI.Periods;
 
    // Colors (might be wrongly initialized after re-compilation or terminal restart)
    if (Line.Color == 0xFF000000) Line.Color = CLR_NONE;
 
    // Styles
-   if (Line.Width < 0)  return(catch("onInit(2)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Line.Width > 5)  return(catch("onInit(3)  Invalid input parameter Line.Width = "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width < 0)  return(catch("onInit(2)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Line.Width > 5)  return(catch("onInit(3)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)   return(catch("onInit(4)  Invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)   return(catch("onInit(4)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) indicator buffer management
@@ -89,9 +89,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMMI)) return(logDebug("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMMI)) return(logInfo("onTick(1)  size(bufferMMI) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMMI, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -107,12 +107,12 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (ChangedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = Min(changedBars-1, Bars-mmi.periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars-1, Bars-mmi.periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       int revertingUp   = 0;
       int revertingDown = 0;
       double avgPrice   = iMA(NULL, NULL, mmi.periods+1, 0, MODE_SMA, PRICE_CLOSE, bar);

@@ -90,7 +90,7 @@
    string   BufferToHexStr(int buffer[]);
 
    int      BufferGetChar(int buffer[], int pos);
-   //int    BufferSetChar(int buffer[], int pos, int char);
+   //int    BufferSetChar(int buffer[], int pos, int chr);
 
    string   BufferWCharsToStr(int buffer[], int from, int length);  //string BufferGetStringW(int buffer[], int from, int length);     // alias
 
@@ -234,7 +234,7 @@
    string   TicketsToStr(int array[], string separator);
    string   WaitForSingleObjectValueToStr(int value);
 
-   string   CharToHexStr(int char);
+   string   CharToHexStr(int chr);
    string   WordToHexStr(int word);
    string   IntegerToHexStr(int decimal);
 
