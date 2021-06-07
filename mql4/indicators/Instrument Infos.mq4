@@ -235,8 +235,7 @@ int UpdateInstrumentInfos() {
       }
                                                    ObjectSetText(labels[I_SERVER_TIMEZONE], "Server timezone:  "+ serverTimezone, fgFontSize, fgFontName, ifInt(!StringLen(serverTimezone), fgFontColorDisabled, fgFontColor));
 
-   string serverSession = ifString(!StringLen(serverTimezone), "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
-
+   string serverSession = ifString(serverTimezone=="", "", ifString(!tzOffset, "00:00-24:00", GmtTimeFormat(D'1970.01.02' + tzOffset, "%H:%M-%H:%M")));
                                                    ObjectSetText(labels[I_SERVER_SESSION], "Server session:    "+ serverSession, fgFontSize, fgFontName, ifInt(!StringLen(serverSession), fgFontColorDisabled, fgFontColor));
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)
