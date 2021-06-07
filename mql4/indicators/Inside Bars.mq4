@@ -12,25 +12,25 @@ int __DeinitFlags[];
 
 extern string Timeframes           = "H1, D1";           // one or more comma-separated timeframes to analyze
 extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onInsideBar   = "on | off | auto*";
 extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
-extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+extern string Signal.Mail          = "on | off | auto*";
+extern string Signal.SMS           = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
@@ -91,7 +91,7 @@ int onInit() {
    for (int i=0; i < size; i++) {
       sValue = sValues[i];
       int timeframe = StrToTimeframe(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1)        return(catch("onInit(1)  Invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
+      if (timeframe == -1)        return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
       if (timeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported timeframe "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
       fTimeframes |= TimeframeFlag(timeframe);
       sValues[i] = TimeframeDescription(timeframe);
@@ -99,16 +99,16 @@ int onInit() {
    Timeframes = JoinStrings(sValues, ",");
 
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(3)  Invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.InsideBars < -1) return(catch("onInit(3)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
-   // signals
+   // signaling
    string signalInfo = "";
-   if (!ConfigureSignal("Inside Bars", Signal.onInsideBar, signals))                                          return(last_error);
+   if (!ConfigureSignaling("Inside Bars", Signal.onInsideBar, signals))                                    return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
       }
@@ -314,7 +314,7 @@ bool CheckInsideBarsH2() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H2)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H2)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H2 inside bar only
          bars = 5;                                                // covers hours of 2 finished H2 bars
       }
@@ -365,7 +365,7 @@ bool CheckInsideBarsH3() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H3)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H3)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H3 inside bar only
          bars = 7;                                                // covers hours of 2 finished H3 bars
       }
@@ -416,7 +416,7 @@ bool CheckInsideBarsH4() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H4)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H4 inside bar only
          bars = 9;                                                // covers hours of 2 finished H4 bars
       }
@@ -467,7 +467,7 @@ bool CheckInsideBarsH6() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H6)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H6)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H6 inside bar only
          bars = 13;                                               // covers hours of 2 finished H6 bars
       }
@@ -518,7 +518,7 @@ bool CheckInsideBarsH8() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_H8)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_H8)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one H8 inside bar only
          bars = 17;                                               // covers hours of 2 finished H8 bars
       }
@@ -569,7 +569,7 @@ bool CheckInsideBarsD1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_D1)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one D1 inside bar only
          bars = 49;                                               // covers hours of 2 finished D1 bars
       }
@@ -620,7 +620,7 @@ bool CheckInsideBarsW1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_W1)) return(true);            // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBars = 1
          more = 1;                                                // check for one W1 inside bar only
          bars = 169;                                              // covers hours of 2 finished W1 bars
       }
@@ -673,7 +673,7 @@ bool CheckInsideBarsMN1() {
 
    if (changedBars > 1) {
       if (changedBars == 2) {
-         if (!IsBarOpenEvent(PERIOD_MN1)) return(true);           // same as changedBars = 1
+         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBars = 1
          more = 1;                                                // check for one MN1 inside bar only
          bars = 745;                                              // covers hours of 2 finished MN1 bars
       }
@@ -773,7 +773,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // signal new inside bars
-   if (!IsSuperContext() && IsBarOpenEvent(timeframe) && signals)
+   if (!IsSuperContext() && IsBarOpen(timeframe) && signals)
       return(onInsideBar(timeframe));
    return(true);
 }
@@ -790,7 +790,7 @@ bool onInsideBar(int timeframe) {
    string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
-   if (IsLogDebug()) logDebug("onInsideBar(1)  "+ message);
+   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
    message = Symbol() +": "+ message;
 
    int error = 0;
@@ -901,12 +901,12 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",           DoubleQuoteStr(Timeframes),           ";", NL,
-                            "Max.InsideBars=",       Max.InsideBars,                       ";", NL,
-                            "Signal.onInsideBar=",   DoubleQuoteStr(Signal.onInsideBar),   ";", NL,
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("Timeframes=",         DoubleQuoteStr(Timeframes),         ";", NL,
+                            "Max.InsideBars=",     Max.InsideBars,                     ";", NL,
+                            "Signal.onInsideBar=", DoubleQuoteStr(Signal.onInsideBar), ";", NL,
+                            "Signal.Sound=",       DoubleQuoteStr(Signal.Sound),       ";", NL,
+                            "Signal.Mail=",        DoubleQuoteStr(Signal.Mail),        ";", NL,
+                            "Signal.SMS=",         DoubleQuoteStr(Signal.SMS),         ";")
 
 
    );

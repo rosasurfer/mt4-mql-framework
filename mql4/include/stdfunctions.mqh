@@ -237,69 +237,63 @@ string ErrorDescription(int error) {
 
 
 /**
- * Ersetzt in einem String alle Vorkommen eines Substrings durch einen anderen String (kein rekursives Ersetzen).
+ * Replace all occurences of a substring in a string by another string.
  *
- * @param  string value   - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
+ * @param  string value                - string to process
+ * @param  string search               - search string
+ * @param  string replace              - replacement string
+ * @param  bool   recursive [optional] - whether to replace recursively (default: no)
  *
- * @return string - modifizierter String
+ * @return string - resulting string or an empty string in case of errors
  */
-string StrReplace(string value, string search, string replace) {
+string StrReplace(string value, string search, string replace, bool recursive = false) {
+   recursive = recursive!=0;
    if (!StringLen(value))  return(value);
    if (!StringLen(search)) return(value);
    if (search == replace)  return(value);
 
-   int from=0, found=StringFind(value, search);
-   if (found == -1)
-      return(value);
+   string result="", lastResult="";
 
-   string result = "";
+   if (!recursive) {
+      int from=0, found=StringFind(value, search);
 
-   while (found > -1) {
-      result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
-      from   = found + StringLen(search);
-      found  = StringFind(value, search, from);
+      while (found > -1) {
+         result = StringConcatenate(result, StrSubstr(value, from, found-from), replace);
+         from   = found + StringLen(search);
+         found  = StringFind(value, search, from);
+      }
+      result = StringConcatenate(result, StrSubstr(value, from));
    }
-   result = StringConcatenate(result, StringSubstr(value, from));
+   else {
+      int counter = 0;
+      result = value;
+
+      while (result != lastResult) {
+         lastResult = result;
+         result = StrReplace(result, search, replace);
+         counter++;
+         if (counter >= 100) {
+            catch("StrReplace(1)  more than 100 replacements, breaking assumed infinite loop (search="+ DoubleQuoteStr(search) +", replace="+ DoubleQuoteStr(replace) +")", ERR_RUNTIME_ERROR);
+            result = "";
+            break;
+         }
+      }
+   }
 
    return(result);
 }
 
 
 /**
- * Ersetzt in einem String alle Vorkommen eines Substrings rekursiv durch einen anderen String. Die Funktion prüft nicht,
- * ob durch Such- und Ersatzstring eine Endlosschleife ausgelöst wird.
+ * Drop-in replacement for the flawed built-in MQL function StringSubstr().
  *
- * @param  string value   - Ausgangsstring
- * @param  string search  - Suchstring
- * @param  string replace - Ersatzstring
+ * Fixes the case StringSubstr(string, start, length=0) where the built-in function returns the whole string.
+ * Additionally supports negative values for the parameters "start" and "length".
  *
- * @return string - rekursiv modifizierter String
- */
-string StrReplaceR(string value, string search, string replace) {
-   if (!StringLen(value)) return(value);
-
-   string lastResult="", result=value;
-
-   while (result != lastResult) {
-      lastResult = result;
-      result     = StrReplace(result, search, replace);
-   }
-   return(lastResult);
-}
-
-
-/**
- * Drop-in replacement for the flawed built-in function StringSubstr()
- *
- * Bugfix für den Fall StringSubstr(string, start, length=0), in dem die MQL-Funktion Unfug zurückgibt.
- * Ermöglicht zusätzlich die Angabe negativer Werte für start und length.
- *
- * @param  string str
- * @param  int    start  - wenn negativ, Startindex vom Ende des Strings
- * @param  int    length - wenn negativ, Anzahl der zurückzugebenden Zeichen links vom Startindex
- *
+ * @param  string str    - string to process
+ * @param  int    start  - start index; if negative counted from the end of the string
+ * @param  int    length - number of chars to return; if positive chars on the right side, if negative chars on the left side
+ *                         of the start index
  * @return string
  */
 string StrSubstr(string str, int start, int length = INT_MAX) {
@@ -323,13 +317,13 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 
 
 #define SND_ASYNC           0x01       // play asynchronously
-#define SND_FILENAME  0x00020000       // parameter is a file name
+#define SND_FILENAME     0x20000       // parameter is a file name
 
 
 /**
  * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Plays a sound asynchronously, instead of synchronously and UI blocking as the terminal does. Also plays a sound if the
+ * Plays a sound asynchronously (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
  * terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
@@ -353,7 +347,7 @@ bool PlaySoundEx(string soundfile) {
 
 
 /**
- * Return a pluralized string according to the specified number of items.
+ * Return a pluralized string corresponding to the specified number of items.
  *
  * @param  int    count               - number of items to determine the result from
  * @param  string singular [optional] - singular form of string
@@ -378,7 +372,7 @@ string Pluralize(int count, string singular="", string plural="s") {
 void ForceAlert(string message) {
    debug(message);                                                          // send the message to the debug output
 
-   string sPeriod = PeriodDescription(Period());
+   string sPeriod = PeriodDescription();
    Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);   // the message shows up in the terminal log
 
    if (IsTesting()) {
@@ -404,7 +398,7 @@ void ForceAlert(string message) {
  * @return int - the pressed button's key code
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription(Period()));
+   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription());
 
    if (!StrContains(caption, prefix))
       caption = StringConcatenate(prefix, " - ", caption);
@@ -657,7 +651,7 @@ bool WaitForTicket(int ticket, bool select = false) {
    select = select!=0;
 
    if (ticket <= 0)
-      return(!catch("WaitForTicket(1)  illegal parameter ticket = "+ ticket, ERR_INVALID_PARAMETER));
+      return(!catch("WaitForTicket(1)  illegal parameter ticket: "+ ticket, ERR_INVALID_PARAMETER));
 
    if (!select) {
       if (!OrderPush("WaitForTicket(2)")) return(false);
@@ -1025,6 +1019,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
       case 'E': if      (              _symbol=="ECX"   )      result = "EURX";
@@ -1155,7 +1150,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (              _symbol=="USTEC"  )     result = "NAS100";
                 break;
 
-      case 'V': break;
+      case 'V': if      (StrStartsWith(_symbol, "VIX_"))       result = "VIX";
+                break;
 
       case 'W': if      (StrStartsWith(_symbol, "WTI_"))       result = "WTI";
                 break;
@@ -1333,7 +1329,7 @@ bool LE(double double1, double double2, int digits = 8) {
  */
 bool EQ(double double1, double double2, int digits = 8) {
    if (digits < 0 || digits > 8)
-      return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
+      return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
 
    double diff = NormalizeDouble(double1, digits) - NormalizeDouble(double2, digits);
    if (diff < 0)
@@ -1360,7 +1356,7 @@ bool EQ(double double1, double double2, int digits = 8) {
       case 15: return(diff <= 0.000000000000001 );
       case 16: return(diff <= 0.0000000000000001);
    }
-   return(!catch("EQ()  illegal parameter digits = "+ digits, ERR_INVALID_PARAMETER));
+   return(!catch("EQ()  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER));
    */
 }
 
@@ -1702,8 +1698,8 @@ string FullModuleName() {
    static string name = ""; if (!StringLen(name)) {
       string program = ProgramName();
       if (program == "???")
-         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));
-      name = program + ifString(IsLibrary(), "::"+ ModuleName(), "");
+         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));           // don't cache in static var
+      name = StrTrim(program) + ifString(IsLibrary(), "::"+ ModuleName(), "");
    }
    return(name);
 }
@@ -2215,7 +2211,7 @@ bool StrStartsWithI(string value, string prefix) {
       }
       catch("StrStartsWithI(2)", error);
    }
-   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix = \"\"", ERR_INVALID_PARAMETER));
+   if (!StringLen(prefix))      return(!catch("StrStartsWithI(3)  illegal parameter prefix: \"\"", ERR_INVALID_PARAMETER));
 
    return(StringFind(StrToUpper(value), StrToUpper(prefix)) == 0);
 }
@@ -2387,7 +2383,7 @@ bool StrIsPhoneNumber(string value) {
    }
 
    string s = StrReplace(StrTrim(value), " ", "");
-   int char, length=StringLen(s);
+   int chr, length=StringLen(s);
 
    // Enthält die Nummer Bindestriche "-", müssen davor und danach Ziffern stehen.
    int pos = StringFind(s, "-");
@@ -2395,17 +2391,17 @@ bool StrIsPhoneNumber(string value) {
       if (pos   == 0     ) return(false);
       if (pos+1 == length) return(false);
 
-      char = StringGetChar(s, pos-1);           // left char
-      if (char < '0') return(false);
-      if (char > '9') return(false);
+      chr = StringGetChar(s, pos-1);            // left char
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);
 
-      char = StringGetChar(s, pos+1);           // right char
-      if (char < '0') return(false);
-      if (char > '9') return(false);
+      chr = StringGetChar(s, pos+1);            // right char
+      if (chr < '0') return(false);
+      if (chr > '9') return(false);
 
       pos = StringFind(s, "-", pos+1);
    }
-   if (char != 0) s = StrReplace(s, "-", "");
+   if (chr != 0) s = StrReplace(s, "-", "");
 
    // Beginnt eine internationale Nummer mit "+", darf danach keine 0 folgen.
    if (StrStartsWith(s, "+" )) {
@@ -2434,7 +2430,7 @@ bool StrIsPhoneNumber(string value) {
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array = "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -2635,8 +2631,8 @@ int TimeYearEx(datetime time) {
  * @return int - Fehlerstatus
  */
 void CopyMemory(int destination, int source, int bytes) {
-   if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination = 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
-   if (source     >=0 && source    < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source = 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination: 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
+   if (source     >=0 && source    < MIN_VALID_POINTER) return(catch("CopyMemory(2)  invalid parameter source: 0x"+ IntToHexStr(source) +" (not a valid pointer)", ERR_INVALID_POINTER));
 
    RtlMoveMemory(destination, source, bytes);
    return(NO_ERROR);
@@ -2651,7 +2647,7 @@ void CopyMemory(int destination, int source, int bytes) {
  * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
  */
 int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values = "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int sum, size=ArraySize(values);
 
@@ -3063,7 +3059,7 @@ bool StrToBool(string value, bool strict = false) {
 
 
 /**
- * Konvertiert die Großbuchstaben eines String zu Kleinbuchstaben (code-page: ANSI westlich).
+ * Convert a string to lower case.
  *
  * @param  string value
  *
@@ -3071,34 +3067,34 @@ bool StrToBool(string value, bool strict = false) {
  */
 string StrToLower(string value) {
    string result = value;
-   int char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      ( 65 <= char && char <=  90) result = StringSetChar(result, i, char+32);  // A-Z->a-z
-      //else if (192 <= char && char <= 214) result = StringSetChar(result, i, char+32);  // À-Ö->à-ö
-      //else if (216 <= char && char <= 222) result = StringSetChar(result, i, char+32);  // Ø-Þ->ø-þ
-      //else if (char == 138)                result = StringSetChar(result, i, 154);      // Š->š
-      //else if (char == 140)                result = StringSetChar(result, i, 156);      // Œ->œ
-      //else if (char == 142)                result = StringSetChar(result, i, 158);      // Ž->ž
-      //else if (char == 159)                result = StringSetChar(result, i, 255);      // Ÿ->ÿ
+      chr = StringGetChar(value, i);
+      // logical version
+      //if      ( 65 <= chr && chr <=  90) result = StringSetChar(result, i, chr+32);     // A-Z->a-z
+      //else if (192 <= chr && chr <= 214) result = StringSetChar(result, i, chr+32);     // À-Ö->à-ö
+      //else if (216 <= chr && chr <= 222) result = StringSetChar(result, i, chr+32);     // Ø-Þ->ø-þ
+      //else if (chr == 138)               result = StringSetChar(result, i, 154);        // Š->š
+      //else if (chr == 140)               result = StringSetChar(result, i, 156);        // Œ->œ
+      //else if (chr == 142)               result = StringSetChar(result, i, 158);        // Ž->ž
+      //else if (chr == 159)               result = StringSetChar(result, i, 255);        // Ÿ->ÿ
 
-      // für MQL optimierte Version
-      if (char > 64) {
-         if (char < 91) {
-            result = StringSetChar(result, i, char+32);                 // A-Z->a-z
+      // MQL4 version
+      if (chr > 64) {
+         if (chr < 91) {
+            result = StringSetChar(result, i, chr+32);                  // A-Z->a-z
          }
-         else if (char > 191) {
-            if (char < 223) {
-               if (char != 215)
-                  result = StringSetChar(result, i, char+32);           // À-Ö->à-ö, Ø-Þ->ø-þ
+         else if (chr > 191) {
+            if (chr < 223) {
+               if (chr != 215)
+                  result = StringSetChar(result, i, chr+32);            // À-Ö->à-ö, Ø-Þ->ø-þ
             }
          }
-         else if (char == 138) result = StringSetChar(result, i, 154);  // Š->š
-         else if (char == 140) result = StringSetChar(result, i, 156);  // Œ->œ
-         else if (char == 142) result = StringSetChar(result, i, 158);  // Ž->ž
-         else if (char == 159) result = StringSetChar(result, i, 255);  // Ÿ->ÿ
+         else if (chr == 138) result = StringSetChar(result, i, 154);   // Š->š
+         else if (chr == 140) result = StringSetChar(result, i, 156);   // Œ->œ
+         else if (chr == 142) result = StringSetChar(result, i, 158);   // Ž->ž
+         else if (chr == 159) result = StringSetChar(result, i, 255);   // Ÿ->ÿ
       }
    }
    return(result);
@@ -3106,7 +3102,7 @@ string StrToLower(string value) {
 
 
 /**
- * Konvertiert einen String in Großschreibweise.
+ * Convert a string to upper case.
  *
  * @param  string value
  *
@@ -3114,23 +3110,23 @@ string StrToLower(string value) {
  */
 string StrToUpper(string value) {
    string result = value;
-   int char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
-      char = StringGetChar(value, i);
-      //logische Version
-      //if      (96 < char && char < 123)             result = StringSetChar(result, i, char-32);
-      //else if (char==154 || char==156 || char==158) result = StringSetChar(result, i, char-16);
-      //else if (char==255)                           result = StringSetChar(result, i,     159);  // ÿ -> Ÿ
-      //else if (char > 223)                          result = StringSetChar(result, i, char-32);
+      chr = StringGetChar(value, i);
+      // logical version
+      //if      (96 < chr && chr < 123)            result = StringSetChar(result, i, chr-32);
+      //else if (chr==154 || chr==156 || chr==158) result = StringSetChar(result, i, chr-16);
+      //else if (chr==255)                         result = StringSetChar(result, i,    159);   // ÿ -> Ÿ
+      //else if (chr > 223)                        result = StringSetChar(result, i, chr-32);
 
-      // für MQL optimierte Version
-      if      (char == 255)                 result = StringSetChar(result, i,     159);            // ÿ -> Ÿ
-      else if (char  > 223)                 result = StringSetChar(result, i, char-32);
-      else if (char == 158)                 result = StringSetChar(result, i, char-16);
-      else if (char == 156)                 result = StringSetChar(result, i, char-16);
-      else if (char == 154)                 result = StringSetChar(result, i, char-16);
-      else if (char  >  96) if (char < 123) result = StringSetChar(result, i, char-32);
+      // MQL4 version
+      if      (chr == 255)                result = StringSetChar(result, i,    159);            // ÿ -> Ÿ
+      else if (chr  > 223)                result = StringSetChar(result, i, chr-32);
+      else if (chr == 158)                result = StringSetChar(result, i, chr-16);
+      else if (chr == 156)                result = StringSetChar(result, i, chr-16);
+      else if (chr == 154)                result = StringSetChar(result, i, chr-16);
+      else if (chr  >  96) if (chr < 123) result = StringSetChar(result, i, chr-32);
    }
    return(result);
 }
@@ -3181,17 +3177,17 @@ string StrTrimRight(string value) {
  */
 string UrlEncode(string value) {
    string strChar, result="";
-   int    char, len=StringLen(value);
+   int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
       strChar = StringSubstr(value, i, 1);
-      char    = StringGetChar(strChar, 0);
+      chr     = StringGetChar(strChar, 0);
 
-      if      (47 < char && char <  58) result = StringConcatenate(result, strChar);                  // 0-9
-      else if (64 < char && char <  91) result = StringConcatenate(result, strChar);                  // A-Z
-      else if (96 < char && char < 123) result = StringConcatenate(result, strChar);                  // a-z
-      else if (char == ' ')             result = StringConcatenate(result, "+");
-      else                              result = StringConcatenate(result, "%", CharToHexStr(char));
+      if      (47 < chr && chr <  58) result = StringConcatenate(result, strChar);                  // 0-9
+      else if (64 < chr && chr <  91) result = StringConcatenate(result, strChar);                  // A-Z
+      else if (96 < chr && chr < 123) result = StringConcatenate(result, strChar);                  // a-z
+      else if (chr == ' ')            result = StringConcatenate(result, "+");
+      else                            result = StringConcatenate(result, "%", CharToHexStr(chr));
    }
 
    if (!catch("UrlEncode(1)"))
@@ -3793,7 +3789,7 @@ string CreateLegendLabel() {
  * @return string
  */
 string CreateString(int length) {
-   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length = "+ length, ERR_INVALID_PARAMETER)));
+   if (length < 0)        return(_EMPTY_STR(catch("CreateString(1)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
    if (length == INT_MAX) return(_EMPTY_STR(catch("CreateString(2)  too large parameter length: INT_MAX", ERR_INVALID_PARAMETER)));
 
    if (!length) return(StringConcatenate("", ""));                   // Um immer einen neuen String zu erhalten (MT4-Zeigerproblematik), darf Ausgangsbasis kein Literal sein.
@@ -4078,7 +4074,7 @@ string UninitializeReasonDescription(int reason) {
       case UR_INITFAILED : return("OnInit() failed"                    );
       case UR_CLOSE      : return("terminal closed"                    );
    }
-   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason = "+ reason, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("UninitializeReasonDescription()  invalid parameter reason: "+ reason, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -4116,8 +4112,8 @@ string InitReasonDescription(int reason) {
 
 
 /**
- * Get the configured value of externally hold assets of an account. The returned value can be negative to scale-down an
- * account's size (e.g. for testing in a real account).
+ * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
+ * account size (e.g. for testing in a real account).
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -4206,9 +4202,9 @@ string GetAccountCompany() {
 
 
 /**
- * Return the alias of an account. The alias is configurable via the global framework configuration and is used in outgoing
- * log messages (SMS, email, chat) to obfuscate an actual account number. If no alias is configured the function returns the
- * actual account number with all characters except the last 4 digits replaced by wildcards.
+ * Return the alias of an account. The alias is used in outbound messages (SMS, email, chat) to obfuscate the actual account
+ * number and is configurable via the framework configuration. If no alias is configured the function returns the account
+ * number with all characters except the last 4 replaced by wildcards.
  *
  * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
  * @param  int    account [optional] - account number (default: the current account number)
@@ -4228,8 +4224,9 @@ string GetAccountAlias(string company="", int account=NULL) {
 
    string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      logNotice("GetAccountAlias(2)  account alias not found for account "+ DoubleQuoteStr(company +":"+ account));
+      logNotice("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
       result = account;
+      result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
    }
    return(result);
 }
@@ -5023,7 +5020,7 @@ int StrToOperationType(string value) {
       if (str == "CREDIT"    ) return(OP_CREDIT   );
    }
 
-   if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value = \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
+   if (IsLogDebug()) logDebug("StrToOperationType(1)  invalid parameter value: \""+ value +"\" (not an operation type)", ERR_INVALID_PARAMETER);
    return(OP_UNDEFINED);
 }
 
@@ -5087,7 +5084,7 @@ string TradeCommandToStr(int cmd) {
       case TC_LFX_ORDER_MODIFY : return("TC_LFX_ORDER_MODIFY" );
       case TC_LFX_ORDER_DELETE : return("TC_LFX_ORDER_DELETE" );
    }
-   return(_EMPTY_STR(catch("TradeCommandToStr(1)  invalid parameter cmd = "+ cmd +" (not a trade command )", ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("TradeCommandToStr(1)  invalid parameter cmd: "+ cmd +" (not a trade command )", ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5151,12 +5148,12 @@ string NumberToStr(double value, string mask) {
       dotPos = maskLen;
 
    // Anzahl der linken Stellen
-   int char, nLeft;
+   int chr, nLeft;
    bool nDigit;
    for (int i=0; i < dotPos; i++) {
-      char = StringGetChar(mask, i);
-      if ('0' <= char) /*&&*/ if (char <= '9') {
-         nLeft = 10*nLeft + char-'0';
+      chr = StringGetChar(mask, i);
+      if ('0' <= chr) /*&&*/ if (chr <= '9') {
+         nLeft = 10*nLeft + chr-'0';
          nDigit = true;
       }
    }
@@ -5167,17 +5164,17 @@ string NumberToStr(double value, string mask) {
    if (dotGiven) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
-         char = StringGetChar(mask, i);
-         if ('0' <= char && char <= '9') {
-            nRight = 10*nRight + char-'0';
+         chr = StringGetChar(mask, i);
+         if ('0' <= chr && chr <= '9') {
+            nRight = 10*nRight + chr-'0';
             nDigit = true;
          }
-         else if (nDigit && char==39) {                     // 39 => '
+         else if (nDigit && chr==39) {                      // 39 => '
             nSubpip = nRight;
             continue;
          }
          else {
-            if  (char == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
+            if  (chr == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
             else if (!nDigit) nRight = CountDecimals(value);
             break;
          }
@@ -5387,13 +5384,13 @@ string LoglevelDescription(int level) {
 /**
  * Return the description of a timeframe identifier. Supports custom timeframes.
  *
- * @param  int period - timeframe identifier or amount of minutes per bar period
+ * @param  int period [optional] - timeframe identifier or number of minutes per period (default: the current chart period)
  *
  * @return string
  *
- * Note: Implemented in MQL and in MT4Expander to be available if DLL calls are disabled.
+ * Note: As DLL calls may be disabled we need an MQL implementation. This one should match the one in the MT4Expander.
  */
-string PeriodDescription(int period) {
+string PeriodDescription(int period = NULL) {
    if (!period) period = Period();
 
    switch (period) {
@@ -5413,6 +5410,20 @@ string PeriodDescription(int period) {
       case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
    }
    return(""+ period);
+}
+
+
+/**
+ * Alias of PeriodDescription().
+ *
+ * Return the description of a timeframe identifier. Supports custom timeframes.
+ *
+ * @param  int period [optional] - timeframe identifier or number of minutes per period (default: the current chart period)
+ *
+ * @return string
+ */
+string TimeframeDescription(int timeframe = NULL) {
+   return(PeriodDescription(timeframe));
 }
 
 
@@ -5443,7 +5454,7 @@ int PeriodFlag(int period = NULL) {
       case PERIOD_MN1: return(F_PERIOD_MN1);
       case PERIOD_Q1 : return(F_PERIOD_Q1 );
    }
-   return(_NULL(catch("PeriodFlag(1)  invalid parameter period = "+ period, ERR_INVALID_PARAMETER)));
+   return(_NULL(catch("PeriodFlag(1)  invalid parameter period: "+ period, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5798,7 +5809,7 @@ string SwapCalculationModeToStr(int mode) {
       case SCM_INTEREST       : return("SCM_INTEREST"       );
       case SCM_MARGIN_CURRENCY: return("SCM_MARGIN_CURRENCY");       // Stringo: non-standard calculation (vom Broker abhängig)
    }
-   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode = "+ mode, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("SwapCalculationModeToStr()  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -5888,7 +5899,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       if (!StringLen(_sender))             return(!catch("SendEmail(1)  missing global/terminal configuration ["+ section +"]->"+ key,                                 ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_sender))     return(!catch("SendEmail(2)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_sender), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender = "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_sender))   return(!catch("SendEmail(3)  invalid parameter sender: "+ DoubleQuoteStr(sender), ERR_INVALID_PARAMETER));
    sender = _sender;
 
    // Receiver
@@ -5900,12 +5911,12 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
       if (!StringLen(_receiver))           return(!catch("SendEmail(4)  missing global/terminal configuration ["+ section +"]->"+ key,                                   ERR_INVALID_CONFIG_VALUE));
       if (!StrIsEmailAddress(_receiver))   return(!catch("SendEmail(5)  invalid global/terminal configuration ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
    }
-   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver = "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   else if (!StrIsEmailAddress(_receiver)) return(!catch("SendEmail(6)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
    receiver = _receiver;
 
    // Subject
    string _subject = StrTrim(subject);
-   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject = "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
+   if (!StringLen(_subject))               return(!catch("SendEmail(7)  invalid parameter subject: "+ DoubleQuoteStr(subject), ERR_INVALID_PARAMETER));
    _subject = StrReplace(StrReplace(StrReplace(_subject, "\r\n", "\n"), "\r", " "), "\n", " ");          // Linebreaks mit Leerzeichen ersetzen
    _subject = StrReplace(_subject, "\"", "\\\"");                                                        // Double-Quotes in email-Parametern escapen
    _subject = StrReplace(_subject, "'", "'\"'\"'");                                                      // Single-Quotes im bash-Parameter escapen
@@ -5977,7 +5988,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
  * @return bool - success status
  */
 bool SendSMS(string receiver, string message) {
-   string _receiver = StrReplaceR(StrReplace(StrTrim(receiver), "-", ""), " ", "");
+   string _receiver = StrReplace(StrReplace(StrTrim(receiver), "-", ""), " ", "", true);
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
@@ -6106,9 +6117,10 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6141,17 +6153,19 @@ bool icChartInfos() {
            false,                                                          // bool   Offline.Ticker
            "",                                                             // string ____________________
            "off",                                                          // string Signal.Sound
-           "off",                                                          // string Signal.Mail.Receiver
-           "off",                                                          // string Signal.SMS.Receiver
+           "off",                                                          // string Signal.Mail
+           "off",                                                          // string Signal.SMS
            "",                                                             // string ____________________
+           false,                                                          // bool   AutoConfiguration
            lpSuperContext,                                                 // int    __lpSuperContext
+
            0, 0);
 
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icChartInfos(1)", error));
-      logWarn("icChartInfos(2)  "+ PeriodDescription(Period()) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
@@ -6183,9 +6197,10 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6230,9 +6245,10 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6280,9 +6296,10 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6338,9 +6355,10 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
                           "",                                              // string _____________________
                           "off",                                           // string Signal.onZeroCross
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6388,9 +6406,10 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6436,9 +6455,10 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6483,6 +6503,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
                           0,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6523,9 +6544,10 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6571,9 +6593,10 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6621,9 +6644,10 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6669,9 +6693,10 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
                           "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail.Receiver
-                          "off",                                           // string Signal.SMS.Receiver
+                          "off",                                           // string Signal.Mail
+                          "off",                                           // string Signal.SMS
                           "",                                              // string ____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6716,6 +6741,7 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
                           2,                                               // int    Histogram.Style.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string _____________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -6900,6 +6926,7 @@ void __DummyCalls() {
    OrderPush(NULL);
    ParseDate(NULL);
    ParseDateTime(NULL);
+   PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
    PipValue();
@@ -6943,7 +6970,6 @@ void __DummyCalls() {
    StrPadRight(NULL, NULL);
    StrRepeat(NULL, NULL);
    StrReplace(NULL, NULL, NULL);
-   StrReplaceR(NULL, NULL, NULL);
    StrRight(NULL, NULL);
    StrRightFrom(NULL, NULL);
    StrRightPad(NULL, NULL);
@@ -6974,6 +7000,7 @@ void __DummyCalls() {
    TimeCurrentEx();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
+   TimeframeDescription();
    TimeframeFlag();
    TimeframeFlagToStr(NULL);
    TimeFXT();
@@ -7000,7 +7027,7 @@ void __DummyCalls() {
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
    int      ArrayPushString(string array[], string value);
-   string   CharToHexStr(int char);
+   string   CharToHexStr(int chr);
    string   CreateTempFile(string path, string prefix);
    int      DeleteRegisteredObjects();
    string   DoubleToStrEx(double value, int digits);

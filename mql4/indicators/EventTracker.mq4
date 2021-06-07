@@ -50,22 +50,22 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders         = "on | off | auto*";
-extern string Track.Signals        = "on | off | auto*";
-extern string __a____________________________;
+extern string Track.Orders  = "on | off | auto*";
+extern string Track.Signals = "on | off | auto*";
+extern string __a___________________________;
 
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
-extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+extern string Signal.Sound  = "on | off | auto*";
+extern string Signal.Mail   = "on | off | auto*";
+extern string Signal.SMS    = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
@@ -166,7 +166,7 @@ bool Configure() {
    else if (sValue == "auto") {
       track.orders = GetConfigBool("EventTracker", "Track.Orders");
    }
-   else return(!catch("Configure(1)  Invalid input parameter Track.Orders = \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(1)  invalid input parameter Track.Orders: \""+ Track.Orders +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    if (track.orders) {
       section = "Accounts";
@@ -193,7 +193,7 @@ bool Configure() {
    else if (sValue == "auto") {
       track.signals = GetConfigBool("EventTracker", "Track.Signals");
    }
-   else return(!catch("Configure(3)  Invalid input parameter Track.Signals = \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("Configure(3)  invalid input parameter Track.Signals: \""+ Track.Signals +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    if (track.signals) {
       // (2.1) Signalkonfigurationen einlesen
@@ -265,10 +265,10 @@ bool Configure() {
          }
          else if (StrIsDigit(StrLeft(sValue, 1))) {                                             // z.B. "96-M15.BarRange"
             sDigits = StrLeft(sValue, 1);                                                       // Zahl vorn parsen
-            for (int char, j=1; j < sLen; j++) {
-               char = StringGetChar(sValue, j);
-               if ('0'<=char && char<='9') sDigits = StrLeft(sValue, j+1);
-               else                        break;
+            for (int chr, j=1; j < sLen; j++) {
+               chr = StringGetChar(sValue, j);
+               if ('0'<=chr && chr<='9') sDigits = StrLeft(sValue, j+1);
+               else                      break;
             }
             sValue     = StrTrim(StrSubstr(sValue, j));                                         // Zahl vorn abschneiden
             signal.bar = StrToInteger(sDigits);
@@ -372,9 +372,9 @@ bool Configure() {
 
    // (3) Signalisierungs-Methoden einlesen
    if (track.orders || track.signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
    }
 
    return(!ShowStatus(catch("Configure(15)")));
@@ -435,9 +435,9 @@ bool Configure.SetParameter(int signal, int timeframe, int lookback, string para
 
          string sDigits = StrLeft(value, 1);                                              // Zahl vorn parsen
          for (int j=1; j < lenValue; j++) {
-            int char = StringGetChar(value, j);
-            if ('0'<=char && char<='9') sDigits = StrLeft(value, j+1);
-            else                        break;
+            int chr = StringGetChar(value, j);
+            if ('0'<=chr && chr<='9') sDigits = StrLeft(value, j+1);
+            else                      break;
          }
          int iValue = StrToInteger(sDigits);
          value = StrToUpper(StrTrim(StrSubstr(value, j)));                                // Zahl vorn abschneiden
@@ -683,7 +683,7 @@ bool onOrderFail(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (IsLogDebug()) logDebug("onOrderFail(2)  "+ message);
+      if (IsLogInfo()) logInfo("onOrderFail(2)  "+ message);
 
       // Signale für jede Order einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -723,7 +723,7 @@ bool onPositionOpen(int tickets[]) {
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (IsLogDebug()) logDebug("onPositionOpen(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -768,7 +768,7 @@ bool onPositionClose(int tickets[][]) {
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
-      if (IsLogDebug()) logDebug("onPositionClose(2)  "+ message);
+      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
       // Signale für jede Position einzeln verschicken
       if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
@@ -860,10 +860,10 @@ string BarCloseSignal.Status(int index) {
  */
 bool onBarCloseSignal(int index, int direction) {
    if (!track.signals)                                 return(true);
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarCloseSignal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    string message = "";
-   if (IsLogDebug()) logDebug("onBarCloseSignal(2)  "+ message);
+   if (IsLogInfo()) logInfo("onBarCloseSignal(2)  "+ message);
 
 
    // (1) Sound abspielen
@@ -1164,13 +1164,13 @@ string BarRangeDescription(int timeframe, int bar) {
  */
 bool onBarRangeSignal(int index, int direction, double level, double price, datetime time.srv) {
    if (!track.signals)                                 return(true);
-   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction = "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    int signal.timeframe = signal.config[index][SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][SIGNAL_CONFIG_BAR      ];
 
    string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +")";
-   if (IsLogDebug()) logDebug("onBarRangeSignal(2)  "+ message);
+   if (IsLogInfo()) logInfo("onBarRangeSignal(2)  "+ message);
 
    int error = 0;
 
@@ -1302,11 +1302,11 @@ string SignalToStr(int id) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Track.Orders=",         track.orders,                         ";", NL,
-                            "Track.Signals=",        track.signals,                        ";", NL,
+   return(StringConcatenate("Track.Orders=",  track.orders,                         ";", NL,
+                            "Track.Signals=", track.signals,                        ";", NL,
 
-                            "Signal.Sound=",         signal.sound,                         ";", NL,
-                            "Signal.SMS.Receiver=",  DoubleQuoteStr(signal.sms.receiver),  ";", NL,
-                            "Signal.Mail.Receiver=", DoubleQuoteStr(signal.mail.receiver), ";")
+                            "Signal.Sound=",  signal.sound,                         ";", NL,
+                            "Signal.SMS=",    DoubleQuoteStr(signal.sms.receiver),  ";", NL,
+                            "Signal.Mail=",   DoubleQuoteStr(signal.mail.receiver), ";")
    );
 }

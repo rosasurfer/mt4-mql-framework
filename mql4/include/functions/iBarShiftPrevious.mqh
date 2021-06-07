@@ -16,7 +16,7 @@
 int iBarShiftPrevious(string symbol/*=NULL*/, int period/*=NULL*/, datetime time, int muteFlags=NULL) {
    if (symbol == "0")                                       // (string) NULL
       symbol = Symbol();
-   if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftPrevious(1)  invalid parameter time = "+ time, ERR_INVALID_PARAMETER)));
+   if (time < 0) return(_EMPTY_VALUE(catch("iBarShiftPrevious(1)  invalid parameter time: "+ time, ERR_INVALID_PARAMETER)));
 
    /*
    int iBarShift(symbol, period, time, exact=[true|false]);

@@ -25,7 +25,7 @@ extern int    SignalLine.MA.Periods = 1;                 // %D line (MA 2 of res
 extern color  MainLine.Color        = DodgerBlue;
 extern color  SignalLine.Color      = Red;
 extern int    MaxBars               = 10000;             // max. number of values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern int    SignalLevel.Long      = 73;                // signal level to cross upwards to trigger a long signal         //         73        70
 extern int    SignalLevel.Short     = 27;                // signal level to cross downwards to trigger a short signal      //         27        30
@@ -47,7 +47,7 @@ extern int    SignalBars            = 1000;              // max. number of bars 
 #define PRICERANGE_CLOSE      1                          // use close prices for range calculation
 
 #property indicator_separate_window
-#property indicator_buffers   3                          // buffers visible in input dialog
+#property indicator_buffers   3                          // buffers visible to the user
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -78,22 +78,22 @@ int maxSignalBars;
  */
 int onInit() {
    // validate inputs
-   if (MainLine.Periods < 2)                             return(catch("onInit(1)  Invalid input parameter MainLine.Periods: "+ MainLine.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (SlowedMain.MA.Periods < 0)                        return(catch("onInit(2)  Invalid input parameter SlowedMain.MA.Periods: "+ SlowedMain.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (SignalLine.MA.Periods < 0)                        return(catch("onInit(3)  Invalid input parameter SignalLine.MA.Periods: "+ SignalLine.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MainLine.Periods < 2)                             return(catch("onInit(1)  invalid input parameter MainLine.Periods: "+ MainLine.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (SlowedMain.MA.Periods < 0)                        return(catch("onInit(2)  invalid input parameter SlowedMain.MA.Periods: "+ SlowedMain.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (SignalLine.MA.Periods < 0)                        return(catch("onInit(3)  invalid input parameter SignalLine.MA.Periods: "+ SignalLine.MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    stochPeriods = MainLine.Periods;
    ma1Periods   = ifInt(!SlowedMain.MA.Periods, 1, SlowedMain.MA.Periods);
    ma2Periods   = ifInt(!SignalLine.MA.Periods, 1, SignalLine.MA.Periods);
    // signal levels
-   if (SignalLevel.Long  < 0 || SignalLevel.Long  > 100) return(catch("onInit(4)  Invalid input parameter SignalLevel.Long: "+ SignalLevel.Long +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
-   if (SignalLevel.Short < 0 || SignalLevel.Short > 100) return(catch("onInit(5)  Invalid input parameter SignalLevel.Short: "+ SignalLevel.Short +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
+   if (SignalLevel.Long  < 0 || SignalLevel.Long  > 100) return(catch("onInit(4)  invalid input parameter SignalLevel.Long: "+ SignalLevel.Long +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
+   if (SignalLevel.Short < 0 || SignalLevel.Short > 100) return(catch("onInit(5)  invalid input parameter SignalLevel.Short: "+ SignalLevel.Short +" (from 0..100)", ERR_INVALID_INPUT_PARAMETER));
    signalLevelLong  = SignalLevel.Long;
    signalLevelShort = SignalLevel.Short;
    // MaxBars
-   if (MaxBars < -1)                                     return(catch("onInit(6)  Invalid input parameter MaxBars: "+ MaxBars, ERR_INVALID_INPUT_PARAMETER));
+   if (MaxBars < -1)                                     return(catch("onInit(6)  invalid input parameter MaxBars: "+ MaxBars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(MaxBars==-1, INT_MAX, MaxBars);
    // SignalBars
-   if (SignalBars < 0)                                   return(catch("onInit(7)  Invalid input parameter SignalBars: "+ SignalBars, ERR_INVALID_INPUT_PARAMETER));
+   if (SignalBars < 0)                                   return(catch("onInit(7)  invalid input parameter SignalBars: "+ SignalBars, ERR_INVALID_INPUT_PARAMETER));
    maxSignalBars = SignalBars;
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (MainLine.Color    == 0xFF000000) MainLine.Color    = CLR_NONE;
@@ -132,9 +132,9 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logDebug("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,   EMPTY_VALUE);
       ArrayInitialize(signal, EMPTY_VALUE);
@@ -153,11 +153,11 @@ int onTick() {
    // +------------------------------------------------------+----------------------------------------------------+
    // | Top down                                             | Bottom up                                          |
    // +------------------------------------------------------+----------------------------------------------------+
-   // | RequestedBars   = 10000                              | ResultingBars   = startBar(MA2) + 1                |
-   // | startBar(MA2)   = RequestedBars - 1                  | startBar(MA2)   = startBar(MA1)   - ma2Periods + 1 |
-   // | startBar(MA1)   = startBar(MA2)   + ma2Periods   - 1 | startBar(MA1)   = startBar(Stoch) - ma1Periods + 1 |
-   // | startBar(Stoch) = startBar(MA1)   + ma1Periods   - 1 | startBar(Stoch) = oldestBar - stochPeriods + 1     |
-   // | firstBar        = startBar(Stoch) + stochPeriods - 1 | oldestBar       = AvailableBars - 1                |
+   // | RequestedBars   = 10000                              | ResultingBars   = startbar(MA2) + 1                |
+   // | startbar(MA2)   = RequestedBars - 1                  | startbar(MA2)   = startbar(MA1)   - ma2Periods + 1 |
+   // | startbar(MA1)   = startbar(MA2)   + ma2Periods   - 1 | startbar(MA1)   = startbar(Stoch) - ma1Periods + 1 |
+   // | startbar(Stoch) = startbar(MA1)   + ma1Periods   - 1 | startbar(Stoch) = oldestBar - stochPeriods + 1     |
+   // | firstBar        = startbar(Stoch) + stochPeriods - 1 | oldestBar       = AvailableBars - 1                |
    // | RequiredBars    = firstBar + 1                       | AvailableBars   = Bars                             |
    // +------------------------------------------------------+----------------------------------------------------+
    // |                 --->                                                ---^                                  |
@@ -167,12 +167,12 @@ int onTick() {
    if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    int bars          = Min(requestedBars, resultingBars);                  // actual number of bars to be updated
-   int ma2StartBar   = bars - 1;
-   int ma1StartBar   = ma2StartBar + ma2Periods - 1;
-   int stochStartBar = ma1StartBar + ma1Periods - 1;
+   int ma2Startbar   = bars - 1;
+   int ma1Startbar   = ma2Startbar + ma2Periods - 1;
+   int stochStartbar = ma1Startbar + ma1Periods - 1;
 
    // recalculate changed bars
-   for (int bar=stochStartBar; bar >= 0; bar--) {
+   for (int bar=stochStartbar; bar >= 0; bar--) {
       main  [bar] = iStochastic(NULL, NULL, stochPeriods, ma2Periods, ma1Periods, MODE_SMA, PRICERANGE_HIGHLOW, MODE_MAIN, bar);
       signal[bar] = iStochastic(NULL, NULL, stochPeriods, ma2Periods, ma1Periods, MODE_SMA, PRICERANGE_HIGHLOW, MODE_SIGNAL, bar);
       trend [bar] = CalculateTrend(bar);

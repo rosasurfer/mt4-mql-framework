@@ -16,23 +16,23 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods        = 200;
-extern string MA.Method         = "SMA | LWMA | EMA | ALMA*";
-extern string MA.AppliedPrice   = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern color  MA.Color          = LimeGreen;
-extern int    MA.LineWidth      = 0;
+extern int    MA.Periods         = 200;
+extern string MA.Method          = "SMA | LWMA | EMA | ALMA*";
+extern string MA.AppliedPrice    = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern color  MA.Color           = LimeGreen;
+extern int    MA.LineWidth       = 0;
 
-extern double Bands.StdDevs     = 2;
-extern color  Bands.Color       = RoyalBlue;
-extern int    Bands.LineWidth   = 1;
+extern double Bands.StdDevs      = 2;
+extern color  Bands.Color        = RoyalBlue;
+extern int    Bands.LineWidth    = 1;
 
-extern int    Max.Bars          = 10000;              // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern int    Max.Bars           = 10000;             // max. values to calculate (-1: all available)
+extern string __a___________________________;
 
-extern string Signal.onTouchBand   = "on | off | auto*";
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail.Receiver = "on | off | auto* | {email-address}";
-extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
+extern string Signal.onTouchBand = "on | off | auto*";
+extern string Signal.Sound       = "on | off | auto*";
+extern string Signal.Mail        = "on | off | auto*";
+extern string Signal.SMS         = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,10 +41,10 @@ extern string Signal.SMS.Receiver  = "on | off | auto* | {phone-number}";
 #include <rsfLibs.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignalingByMail.mqh>
+#include <functions/ConfigureSignalingBySMS.mqh>
+#include <functions/ConfigureSignalingBySound.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
@@ -135,11 +135,11 @@ int onInit() {
    if (Max.Bars < -1)         return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
-   if (!ConfigureSignal("BollingerBand", Signal.onTouchBand, signals))                                        return(last_error);
+   if (!ConfigureSignaling("BollingerBand", Signal.onTouchBand, signals))                                  return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -201,9 +201,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMa)) return(logDebug("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMa)) return(logInfo("onTick(1)  size(buffeMa) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferMa,    EMPTY_VALUE);
       ArrayInitialize(bufferUpper, EMPTY_VALUE);
@@ -223,14 +223,14 @@ int onTick() {
    int changedBars = ChangedBars;
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
-   int startBar = Min(changedBars-1, Bars-MA.Periods);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars-1, Bars-MA.Periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // recalculate changed bars
    double deviation, price, sum;
 
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       if (maMethod == MODE_ALMA) {
          bufferMa[bar] = 0;
          for (int i=0; i < MA.Periods; i++) {

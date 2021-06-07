@@ -212,8 +212,8 @@ int DrawGrid() {
  * @return datetime - erster Wochentag des Monats oder EMPTY (-1), falls ein Fehler auftrat
  */
 datetime GetFirstWeekdayOfMonth(int year, int month) {
-   if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)  illegal parameter year = "+ year +" (not between 1970 and 2037)", ERR_INVALID_PARAMETER)));
-   if (month <    1 ||   12 < month) return(_EMPTY(catch("GetFirstWeekdayOfMonth(2)  invalid parameter month = "+ month, ERR_INVALID_PARAMETER)));
+   if (year  < 1970 || 2037 < year ) return(_EMPTY(catch("GetFirstWeekdayOfMonth(1)  illegal parameter year: "+ year +" (not between 1970 and 2037)", ERR_INVALID_PARAMETER)));
+   if (month <    1 ||   12 < month) return(_EMPTY(catch("GetFirstWeekdayOfMonth(2)  invalid parameter month: "+ month, ERR_INVALID_PARAMETER)));
 
    datetime firstDayOfMonth = StrToTime(StringConcatenate(year, ".", StrRight("0"+month, 2), ".01 00:00:00"));
 

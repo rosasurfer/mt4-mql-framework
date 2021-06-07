@@ -1,20 +1,22 @@
 <chart>
 symbol=GBPUSD
 period=60
-leftpos=9229
 digits=5
+
+leftpos=9229
 scale=2
 graph=1
 fore=0
 grid=0
 volume=0
-scroll=0
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
+scroll=0
+shift=1
 shift_size=50
+
 fixed_pos=620
 window_left=0
 window_top=0
@@ -38,6 +40,7 @@ height=300
 
 <indicator>
 name=main
+
 <object>
 type=1
 object_name=Horizontal Line 0.50
@@ -8775,21 +8778,6 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Inside Bars
-flags=339
-window_num=0
-<inputs>
-Timeframes=H1
-Max.InsideBars=1
-</inputs>
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
 name=TMA Gammarat Channel
 flags=339
 window_num=0
@@ -8800,7 +8788,7 @@ Bands.Deviations=2.5
 Bands.Color=16436871
 Bands.LineWidth=3
 RepaintingMode=1
-MarkReversals=1
+MarkReversals=0
 AlertsOn=1
 </inputs>
 </expert>
