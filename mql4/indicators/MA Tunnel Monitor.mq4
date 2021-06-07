@@ -30,7 +30,7 @@ extern string MA3.AppliedPrice               = "Open | High | Low | Close | Medi
 extern string __4___________________________ = "=== Signaling ================================";
 extern bool   Signal.onBreakout              = false;
 extern bool   Signal.onBreakout.Alert        = true;
-extern bool   Signal.onBreakout.Sound        = false;
+extern bool   Signal.onBreakout.Sound        = true;
 extern bool   Signal.onBreakout.Mail         = false;
 extern bool   Signal.onBreakout.SMS          = false;
 
@@ -341,15 +341,34 @@ bool CheckSignals() {
  * @return bool - success status
  */
 bool onBreakout(int mode) {
-   if (mode == MODE_LONG) {
-      debug("onBreakout(1)  breakout LONG");
-   }
-   else if (mode == MODE_SHORT) {
-      debug("onBreakout(2)  breakout SHORT");
-   }
-   else return(!catch("onBreakout(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
+   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   int error = NO_ERROR;
 
-   return(true);
+   if (mode == MODE_LONG) {
+      message = "MA tunnel breakout LONG";
+      if (IsLogInfo()) logInfo("onBreakout(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
+
+      if (Signal.onBreakout.Alert)           Alert(message);
+      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundUp);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message +NL+ accountTime);
+      if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
+      return(!error);
+   }
+
+   if (mode == MODE_SHORT) {
+      message = "MA tunnel breakout SHORT";
+      if (IsLogInfo()) logInfo("onBreakout(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
+
+      if (Signal.onBreakout.Alert)           Alert(message);
+      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundDown);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message +NL+ accountTime);
+      if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
+      return(!error);
+   }
+
+   return(!catch("onBreakout(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 }
 
 
