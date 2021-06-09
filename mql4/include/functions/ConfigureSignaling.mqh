@@ -55,20 +55,19 @@ bool ConfigureSignaling(string name, string &configValue, bool &enabled) {
 /**
  * Configure general signaling.
  *
- * @param  _In_    string id         - signal id (case-insensitive)
+ * @param  _In_    string signalId   - signal identifier (case-insensitive)
  * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
  * @param  _InOut_ bool   &enabled   - input config value and resulting final activation status
  *
  * @return bool - success status
  */
-bool ConfigureSignaling2(string id, bool autoConfig, bool &enabled) {
+bool ConfigureSignaling2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
    if (autoConfig) {
       string section = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-      string key = id;
-      enabled = GetConfigBool(section, key, enabled);
+      enabled = GetConfigBool(section, signalId, enabled);
    }
    return(true);
 
@@ -82,20 +81,19 @@ bool ConfigureSignaling2(string id, bool autoConfig, bool &enabled) {
 /**
  * Configure signaling by alert.
  *
- * @param  _In_    string id         - signal id (case-insensitive)
+ * @param  _In_    string signalId   - signal identifier (case-insensitive)
  * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
  * @param  _InOut_ bool   &enabled   - input config value and resulting final activation status
  *
  * @return bool - success status
  */
-bool ConfigureSignalingByAlert2(string id, bool autoConfig, bool &enabled) {
+bool ConfigureSignalingByAlert2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
    if (autoConfig) {
       string section = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-      string key = id;
-      enabled = GetConfigBool(section, key, enabled);
+      enabled = GetConfigBool(section, signalId +".Alert", enabled);
    }
    return(true);
 }
@@ -104,20 +102,19 @@ bool ConfigureSignalingByAlert2(string id, bool autoConfig, bool &enabled) {
 /**
  * Configure signaling by sound.
  *
- * @param  _In_    string id         - signal id (case-insensitive)
+ * @param  _In_    string signalId   - signal identifier (case-insensitive)
  * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
  * @param  _InOut_ bool   &enabled   - input config value and resulting final activation status
  *
  * @return bool - success status
  */
-bool ConfigureSignalingBySound2(string id, bool autoConfig, bool &enabled) {
+bool ConfigureSignalingBySound2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
    if (autoConfig) {
       string section = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-      string key = id;
-      enabled = GetConfigBool(section, key, enabled);
+      enabled = GetConfigBool(section, signalId +".Sound", enabled);
    }
    return(true);
 }
@@ -126,7 +123,7 @@ bool ConfigureSignalingBySound2(string id, bool autoConfig, bool &enabled) {
 /**
  * Configure signaling by email.
  *
- * @param  _In_    string id         - signal id (case-insensitive)
+ * @param  _In_    string signalId   - signal identifier (case-insensitive)
  * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
  * @param  _InOut_ bool   &enabled   - input config value and resulting final activation status
  * @param  _Out_   string &sender    - the configured email sender address
@@ -134,14 +131,13 @@ bool ConfigureSignalingBySound2(string id, bool autoConfig, bool &enabled) {
  *
  * @return bool - success status
  */
-bool ConfigureSignalingByMail2(string id, bool autoConfig, bool &enabled, string &sender, string &receiver) {
+bool ConfigureSignalingByMail2(string signalId, bool autoConfig, bool &enabled, string &sender, string &receiver) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
    sender = "";
    receiver = "";
 
    string signalSection = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-   string signalKey     = id;
    string mailSection   = "Mail";
    string senderKey     = "Sender";
    string receiverKey   = "Receiver";
@@ -151,7 +147,7 @@ bool ConfigureSignalingByMail2(string id, bool autoConfig, bool &enabled, string
    enabled = false;
 
    if (autoConfig) {
-      if (GetConfigBool(signalSection, signalKey, _enabled)) {
+      if (GetConfigBool(signalSection, signalId +".Mail", _enabled)) {
          _sender = GetConfigString(mailSection, senderKey, defaultSender);
          if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalingByMail2(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
 
@@ -178,24 +174,23 @@ bool ConfigureSignalingByMail2(string id, bool autoConfig, bool &enabled, string
 /**
  * Configure signaling by text message.
  *
- * @param  _In_    string id         - signal id (case-insensitive)
+ * @param  _In_    string signalId   - signal identifier (case-insensitive)
  * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
  * @param  _InOut_ bool   &enabled   - input config value and resulting final activation status
  * @param  _Out_   string &receiver  - the configured receiver phone number
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalingBySMS2(string id, bool autoConfig, bool &enabled, string &receiver) {
+bool ConfigureSignalingBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
    string signalSection = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-   string signalKey     = id;
-   string smsSection    = "SMS";
-   string receiverKey   = "Receiver";
+   string smsSection = "SMS";
+   string receiverKey = "Receiver";
 
    bool _enabled = enabled;
-   if (autoConfig) _enabled = GetConfigBool(signalSection, signalKey, _enabled);
+   if (autoConfig) _enabled = GetConfigBool(signalSection, signalId +".SMS", _enabled);
 
    enabled = false;
    receiver = "";
