@@ -24,7 +24,7 @@ extern color  Bands.Color      = Magenta;          // LightSkyBlue
 extern int    Bands.LineWidth  = 1;                // 3
 extern string __a___________________________;
 
-extern bool   RepaintingMode   = true;             // toggle repainting mode
+extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
 extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
 extern string __b___________________________;
