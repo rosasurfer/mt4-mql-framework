@@ -1,8 +1,8 @@
 /**
  * Update a trendline's indicator buffers for trend direction and coloring.
  *
- * @param  _In_  double  values[]                  - Trendline values (a timeseries).
- * @param  _In_  int     bar                       - Bar offset to update.
+ * @param  _In_  double values[]                   - Trendline values (a timeseries).
+ * @param  _In_  int    offset                     - Bar offset to update.
  * @param  _Out_ double &trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
  * @param  _Out_ double &uptrend[]                 - Buffer for rising trendline values.
  * @param  _Out_ double &downtrend[]               - Buffer for falling trendline values.
@@ -20,25 +20,25 @@
  *
  * @return bool - success status
  */
-bool @Trend.UpdateDirection(double values[], int bar, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
+bool @Trend.UpdateDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 
-   if (bar >= Bars-1) {
-      if (bar >= Bars) return(!catch("@Trend.UpdateDirection(1)  illegal parameter bar: "+ bar, ERR_INVALID_PARAMETER));
-      trend[bar] = 0;
+   if (offset >= Bars-1) {
+      if (offset >= Bars) return(!catch("@Trend.UpdateDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
+      trend[offset] = 0;
 
       if (enableColoring) {
-         uptrend  [bar] = EMPTY_VALUE;
-         downtrend[bar] = EMPTY_VALUE;
+         uptrend  [offset] = EMPTY_VALUE;
+         downtrend[offset] = EMPTY_VALUE;
          if (enableUptrend2)
-            uptrend2[bar] = EMPTY_VALUE;
+            uptrend2[offset] = EMPTY_VALUE;
       }
       return(true);
    }
 
-   double curValue  = values[bar  ];
-   double prevValue = values[bar+1];
+   double curValue  = values[offset];
+   double prevValue = values[offset+1];
 
    // normalization has the affect of reversal smoothing and can prevent jitter of a seemingly flat line
    if (digits != EMPTY_VALUE) {
@@ -48,69 +48,70 @@ bool @Trend.UpdateDirection(double values[], int bar, double &trend[], double &u
 
    // trend direction
    if (prevValue == EMPTY_VALUE) {
-      trend[bar] = 0;
+      trend[offset] = 0;
    }
-   else if (trend[bar+1] == 0) {
-      trend[bar] = 0;
+   else if (trend[offset+1] == 0) {
+      trend[offset] = 0;
 
-      if (bar < Bars-2) {
-         double pre2Value = values[bar+2];
-         if      (pre2Value == EMPTY_VALUE)                       trend[bar] =  0;
-         else if (pre2Value <= prevValue && prevValue > curValue) trend[bar] = -1;  // curValue is a change of direction
-         else if (pre2Value >= prevValue && prevValue < curValue) trend[bar] =  1;  // curValue is a change of direction
+      if (offset < Bars-2) {
+         double pre2Value = values[offset+2];
+         if      (pre2Value == EMPTY_VALUE)                       trend[offset] =  0;
+         else if (pre2Value <= prevValue && prevValue > curValue) trend[offset] = -1;  // curValue is a change of direction
+         else if (pre2Value >= prevValue && prevValue < curValue) trend[offset] =  1;  // curValue is a change of direction
       }
    }
    else {
-      if      (curValue > prevValue) trend[bar] =  Max(trend[bar+1], 0) + 1;
-      else if (curValue < prevValue) trend[bar] =  Min(trend[bar+1], 0) - 1;
-      else   /*curValue== prevValue*/trend[bar] = _int(trend[bar+1]) + Sign(trend[bar+1]);
+      int prevTrend = trend[offset+1];
+      if      (curValue > prevValue) trend[offset] = Max(prevTrend, 0) + 1;
+      else if (curValue < prevValue) trend[offset] = Min(prevTrend, 0) - 1;
+      else   /*curValue== prevValue*/trend[offset] = prevTrend + Sign(prevTrend);
    }
 
    // trend coloring
    if (!enableColoring) return(true);
 
-   if (trend[bar] > 0) {                                                // now uptrend
-      uptrend  [bar] = values[bar];
-      downtrend[bar] = EMPTY_VALUE;
+   if (trend[offset] > 0) {                                                      // now uptrend
+      uptrend  [offset] = values[offset];
+      downtrend[offset] = EMPTY_VALUE;
 
-      if (lineStyle == DRAW_LINE) {                                     // if DRAW_LINE...
-         if      (trend[bar+1] < 0) uptrend  [bar+1] = values[bar+1];   // and downtrend before, set another data point to make the terminal draw the line
-         else if (trend[bar+1] > 0) downtrend[bar+1] = EMPTY_VALUE;
+      if (lineStyle == DRAW_LINE) {                                              // if DRAW_LINE...
+         if      (trend[offset+1] < 0) uptrend  [offset+1] = values[offset+1];   // and downtrend before, set another data point to make the terminal draw the line
+         else if (trend[offset+1] > 0) downtrend[offset+1] = EMPTY_VALUE;
       }
    }
-   else if (trend[bar] < 0) {                                           // now downtrend
-      uptrend  [bar] = EMPTY_VALUE;
-      downtrend[bar] = values[bar];
+   else if (trend[offset] < 0) {                                                 // now downtrend
+      uptrend  [offset] = EMPTY_VALUE;
+      downtrend[offset] = values[offset];
 
-      if (lineStyle == DRAW_LINE) {                                     // if DRAW_LINE...
-         if (trend[bar+1] > 0) {                                        // and uptrend before, set another data point to make the terminal draw the line
-            downtrend[bar+1] = values[bar+1];
+      if (lineStyle == DRAW_LINE) {                                              // if DRAW_LINE...
+         if (trend[offset+1] > 0) {                                              // and uptrend before, set another data point to make the terminal draw the line
+            downtrend[offset+1] = values[offset+1];
             if (enableUptrend2) {
-               if (Bars > bar+2) {
-                  if (trend[bar+2] < 0) {                               // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
-                     uptrend2[bar+2] = values[bar+2];                   // otherwise the visual gets lost through the just added data point
-                     uptrend2[bar+1] = values[bar+1];
+               if (Bars > offset+2) {
+                  if (trend[offset+2] < 0) {                                     // if that uptrend was a 1-bar reversal, copy it to uptrend2 (to overlay),
+                     uptrend2[offset+2] = values[offset+2];                      // otherwise the visual gets lost through the just added data point
+                     uptrend2[offset+1] = values[offset+1];
                   }
                }
             }
          }
-         else if (trend[bar+1] < 0) {
-            uptrend[bar+1] = EMPTY_VALUE;
+         else if (trend[offset+1] < 0) {
+            uptrend[offset+1] = EMPTY_VALUE;
          }
       }
    }
-   else if (values[bar] != EMPTY_VALUE) {                               // trend length is 0 (still undefined during the first visible swing)
+   else if (values[offset] != EMPTY_VALUE) {                                     // trend length is 0 (still undefined during the first visible swing)
       if (prevValue == EMPTY_VALUE) {
-         uptrend  [bar] = EMPTY_VALUE;
-         downtrend[bar] = EMPTY_VALUE;
+         uptrend  [offset] = EMPTY_VALUE;
+         downtrend[offset] = EMPTY_VALUE;
       }
       else if (curValue > prevValue) {
-         uptrend  [bar] = values[bar];
-         downtrend[bar] = EMPTY_VALUE;
+         uptrend  [offset] = values[offset];
+         downtrend[offset] = EMPTY_VALUE;
       }
       else /*curValue < prevValue*/ {
-         uptrend  [bar] = EMPTY_VALUE;
-         downtrend[bar] = values[bar];
+         uptrend  [offset] = EMPTY_VALUE;
+         downtrend[offset] = values[offset];
       }
    }
    return(true);

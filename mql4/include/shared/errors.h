@@ -88,7 +88,7 @@
 #define ERR_ARRAY_INVALID                                          4029    // invalid array
 #define ERR_CHART_NOREPLY                                          4030    // no reply from chart
 #define ERR_INVALID_FUNCTION_PARAMSCNT                             4050    // invalid parameters count
-#define ERR_INVALID_PARAMETER                                      4051    // invalid parameter
+#define ERR_INVALID_PARAMETER                                      4051
 #define ERR_STRING_FUNCTION_INTERNAL                               4052    // internal string function error
 #define ERR_ARRAY_ERROR                                            4053
 #define ERR_SERIES_NOT_AVAILABLE                                   4054    // requested time series not available
@@ -114,7 +114,7 @@
 #define ERR_NO_MEMORY_FOR_HISTORY                                  4074    // no memory for history data
 #define ERR_NO_MEMORY_FOR_INDICATOR                                4075    // not enough memory for indicator calculation
 #define ERR_END_OF_FILE                                            4099    // end of file
-#define ERR_FILE_ERROR                                             4100    // file error
+#define ERR_FILE_ERROR                                             4100
 #define ERR_WRONG_FILE_NAME                                        4101
 #define ERR_TOO_MANY_OPENED_FILES                                  4102
 #define ERR_CANNOT_OPEN_FILE                                       4103
@@ -170,7 +170,7 @@
 #define ERR_FILE_BIN_STRINGSIZE                                    5017    // string size must be specified for binary file
 #define ERR_FILE_INCOMPATIBLE                                      5018    // incompatible file (for string arrays-TXT, for others-BIN)
 #define ERR_FILE_IS_DIRECTORY                                      5019    // file is a directory
-#define ERR_FILE_NOT_FOUND                                         5020    // file not found (framework name)
+#define ERR_FILE_NOT_FOUND                                         5020    // framework name
 #define ERR_FILE_CANNOT_REWRITE                                    5021    // file cannot be rewritten
 #define ERR_FILE_WRONG_DIRECTORYNAME                               5022    // wrong directory name
 #define ERR_FILE_DIRECTORY_NOT_EXIST                               5023    // directory does not exist

@@ -1,20 +1,22 @@
 <chart>
-symbol=GBPUSD
+symbol=USDCHF
 period=60
-leftpos=9229
 digits=5
-scale=2
+
+leftpos=9229
+scale=1
 graph=1
 fore=0
 grid=0
 volume=0
-scroll=0
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
+scroll=0
+shift=1
 shift_size=50
+
 fixed_pos=620
 window_left=0
 window_top=0
@@ -34,10 +36,11 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+height=100
 
 <indicator>
 name=main
+
 <object>
 type=1
 object_name=Horizontal Line 0.50
@@ -8775,45 +8778,17 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Inside Bars
+name=Moving Average
 flags=339
 window_num=0
 <inputs>
-Timeframes=H1
-Max.InsideBars=1
+MA.Periods=144
+MA.Method=EMA
+MA.AppliedPrice=Median
+AutoConfiguration=0
 </inputs>
 </expert>
 period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=TMA Gammarat Channel
-flags=339
-window_num=0
-<inputs>
-MA.Periods=111
-MA.AppliedPrice=Weighted
-Bands.Deviations=2.5
-Bands.Color=16436871
-Bands.LineWidth=3
-RepaintingMode=1
-MarkReversals=1
-AlertsOn=1
-</inputs>
-</expert>
-
-color_0=16711935
-style_0=2
-color_1=16436871
-color_2=16436871
-color_3=16711680
-color_4=16711680
-color_5=16711935
-weight_5=2
-
 show_data=1
 </indicator>
 

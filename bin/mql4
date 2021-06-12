@@ -1,0 +1,3 @@
+#
+# Prevents MetaEditor from creating a "mql4" directory if executed from the Windows UI.
+#

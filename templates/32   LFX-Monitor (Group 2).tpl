@@ -1,25 +1,27 @@
 <chart>
-symbol=USDCHF
+symbol=GBPAUD
 period=60
-leftpos=13564
 digits=5
-scale=2
+
+leftpos=17392
+scale=1
 graph=1
 fore=0
 grid=0
 volume=0
-scroll=0
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
+scroll=1
+shift=1
 shift_size=50
+
 fixed_pos=620
 window_left=0
-window_top=0
-window_right=1304
-window_bottom=1032
+window_top=47
+window_right=996
+window_bottom=632
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -34,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=10
 
 <indicator>
 name=main
@@ -8743,48 +8745,30 @@ value_0=120.00
 <indicator>
 name=Custom Indicator
 <expert>
-name=Grid
-flags=347
-window_num=0
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ChartInfos
-flags=347
-window_num=0
-</expert>
-period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=SuperBars
-flags=339
-window_num=0
-</expert>
-period_flags=255
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Jurik Moving Average
+name=LFX-Monitor
 flags=339
 window_num=0
 <inputs>
-Periods=20
+Recording.Enabled=1
+AUDLFX.Enabled=0
+CADLFX.Enabled=0
+CHFLFX.Enabled=0
+EURLFX.Enabled=0
+GBPLFX.Enabled=0
+JPYLFX.Enabled=0
+NZDLFX.Enabled=0
+USDLFX.Enabled=1
+NOKFX7.Enabled=1
+SEKFX7.Enabled=1
+SGDFX7.Enabled=1
+ZARFX7.Enabled=1
+USDX.Enabled=1
+EURX.Enabled=1
+XAUI.Enabled=0
 </inputs>
 </expert>
 period_flags=0
-show_data=1
+show_data=0
 </indicator>
 
 </window>

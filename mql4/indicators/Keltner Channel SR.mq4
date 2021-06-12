@@ -48,7 +48,7 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #define MODE_ATR              7
 
 #property indicator_chart_window
-#property indicator_buffers   7                       // buffers visible in input dialog
+#property indicator_buffers   7                       // buffers visible to the user
 int       terminal_buffers  = 8;                      // buffers managed by the terminal
 
 #property indicator_color1    CLR_NONE
@@ -111,10 +111,10 @@ int onInit() {
       sValue = sValues[size-1];
    }
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)              return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)              return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)              return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 0)              return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
    if (maPeriods == 1) maMethod = MODE_SMA;
    // MA.AppliedPrice
@@ -127,14 +127,14 @@ int onInit() {
    if (sValue == "") sValue = "close";                            // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                                    return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                                    return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR.Periods
-   if (ATR.Periods < 1)             return(catch("onInit(4)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)             return(catch("onInit(4)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrPeriods = ATR.Periods;
    // ATR.Multiplier
-   if (ATR.Multiplier < 0)          return(catch("onInit(5)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)          return(catch("onInit(5)  invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrMultiplier = ATR.Multiplier;
    // ATR.Smoothing.Method
    sValue = ATR.Smoothing.Method;
@@ -149,11 +149,11 @@ int onInit() {
    }
    else {
       atrSmoothingMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrSmoothingMethod == -1) return(catch("onInit(6)  Invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
+      if (atrSmoothingMethod == -1) return(catch("onInit(6)  invalid input parameter ATR.Smoothing.Method: "+ DoubleQuoteStr(ATR.Smoothing.Method), ERR_INVALID_INPUT_PARAMETER));
       ATR.Smoothing.Method = MaMethodDescription(atrSmoothingMethod);
    }
    // ATR.Smoothing.Periods
-   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  Invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Smoothing.Periods < 0)   return(catch("onInit(7)  invalid input parameter ATR.Smoothing.Periods: "+ ATR.Smoothing.Periods, ERR_INVALID_INPUT_PARAMETER));
    atrSmoothingPeriods = ifInt(atrSmoothingMethod==EMPTY || !ATR.Smoothing.Periods, 1, ATR.Smoothing.Periods);
    if (atrSmoothingPeriods == 1) atrSmoothingMethod = MODE_SMA;
 
@@ -214,9 +214,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(ma)) return(logInfo("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,            0);
       ArrayInitialize(atr,           0);
@@ -246,18 +246,18 @@ int onTick() {
    if (maMethod==MODE_EMA || maMethod==MODE_SMMA)
       initBars = Max(10, maPeriods*3);                // IIR filters need at least 10 bars for initialization
    int maBars = Bars-initBars;
-   int maStartBar = Min(ChangedBars, maBars) - 1;
+   int maStartbar = Min(ChangedBars, maBars) - 1;
 
-   for (int bar=maStartBar; bar >= 0; bar--) {
+   for (int bar=maStartbar; bar >= 0; bar--) {
       ma[bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
    }
 
    // recalculate changed ATR values
    initBars = atrPeriods-1;
    int atrBars = Bars-initBars;
-   int atrStartBar = Min(ChangedBars, atrBars) - 1;
+   int atrStartbar = Min(ChangedBars, atrBars) - 1;
 
-   for (bar=atrStartBar; bar >= 0; bar--) {
+   for (bar=atrStartbar; bar >= 0; bar--) {
       atr[bar] = iATR(NULL, NULL, atrPeriods, bar);
    }
 
@@ -266,9 +266,9 @@ int onTick() {
    if (atrSmoothingMethod==MODE_EMA || atrSmoothingMethod==MODE_SMMA)
       initBars = Max(10, atrSmoothingPeriods*3);      // IIR filters need at least 10 bars for initialization
    int channelBars = Min(maBars, atrBars)-initBars;
-   int channelStartBar = Min(ChangedBars, channelBars) - 1;
+   int channelStartbar = Min(ChangedBars, channelBars) - 1;
 
-   for (bar=channelStartBar; bar >= 0; bar--) {
+   for (bar=channelStartbar; bar >= 0; bar--) {
       double channelWidth = atrMultiplier * iMAOnArray(atr, WHOLE_ARRAY, atrSmoothingPeriods, 0, atrSmoothingMethod, bar);
       upperBand[bar] = ma[bar] + channelWidth;
       lowerBand[bar] = ma[bar] - channelWidth;
@@ -277,13 +277,13 @@ int onTick() {
    // recalculate changed SR values
    initBars = 1;                                      // 1 bar for comparison with the previous value
    int srBars = Min(maBars, channelBars)-initBars;
-   int srStartBar = Min(ChangedBars, srBars) - 1;
-   if (srStartBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int srStartbar = Min(ChangedBars, srBars) - 1;
+   if (srStartbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
-   double prevSR = lineUp[srStartBar+1] + lineDown[srStartBar+1];
-   if (!prevSR) prevSR = ma[srStartBar+1];
+   double prevSR = lineUp[srStartbar+1] + lineDown[srStartbar+1];
+   if (!prevSR) prevSR = ma[srStartbar+1];
 
-   for (bar=srStartBar; bar >= 0; bar--) {
+   for (bar=srStartbar; bar >= 0; bar--) {
       if (ma[bar+1] < prevSR) {
          if (ma[bar] < prevSR) {
             lineUp  [bar] = 0;

@@ -176,7 +176,7 @@ double   lo.setClosePrice          (/*LFX_ORDER*/int &lo[],          double   cl
 double   lo.setProfit              (/*LFX_ORDER*/int &lo[],          double   profit             ) { int v=MathRound(profit * 100);                                                               lo[LFX_ORDER.profit             ] = v;    return(profit                  ); LFX_ORDER.toStr(lo); }
 string   lo.setComment             (/*LFX_ORDER*/int &lo[],          string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if (StringLen(comment) > 31) return(_EMPTY_STR(catch("lo.setComment()  too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
+   if (StringLen(comment) > 31) return(_EMPTY_STR(catch("lo.setComment()  too long parameter comment: \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(lo) + LFX_ORDER.comment*4;
@@ -208,7 +208,7 @@ double   los.setClosePrice         (/*LFX_ORDER*/int &lo[][], int i, double   cl
 double   los.setProfit             (/*LFX_ORDER*/int &lo[][], int i, double   profit             ) { int v=MathRound(profit * 100);                                                               lo[i][LFX_ORDER.profit             ] = v; return(profit                  ); LFX_ORDER.toStr(lo); }
 string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   comment            ) {
    if (!StringLen(comment)) comment = "";                            // sicherstellen, daß der String initialisiert ist
-   if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment = \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
+   if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment: \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
    int dest = GetIntsAddress(lo) + (i*LFX_ORDER.intSize + LFX_ORDER.comment)*4;
@@ -232,7 +232,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
 
    int dimensions = ArrayDimension(lo);
 
-   if (dimensions > 2)                                    return(_EMPTY_STR(catch("LFX_ORDER.toStr(1)  too many dimensions of parameter lo = "+ dimensions, ERR_INVALID_PARAMETER)));
+   if (dimensions > 2)                                    return(_EMPTY_STR(catch("LFX_ORDER.toStr(1)  too many dimensions of parameter lo: "+ dimensions, ERR_INVALID_PARAMETER)));
    if (ArrayRange(lo, dimensions-1) != LFX_ORDER.intSize) return(_EMPTY_STR(catch("LFX_ORDER.toStr(2)  invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;

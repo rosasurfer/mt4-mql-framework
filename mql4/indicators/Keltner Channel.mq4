@@ -87,10 +87,10 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maMethod = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
-   if (maMethod == -1)        return(catch("onInit(1)  Invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (maMethod == -1)        return(catch("onInit(1)  invalid input parameter MA.Method: "+ DoubleQuoteStr(MA.Method), ERR_INVALID_INPUT_PARAMETER));
    MA.Method = MaMethodDescription(maMethod);
    // MA.Periods
-   if (MA.Periods < 0)        return(catch("onInit(2)  Invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Periods < 0)        return(catch("onInit(2)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
    maPeriods = ifInt(!MA.Periods, 1, MA.Periods);
    // MA.AppliedPrice
    sValue = StrToLower(MA.AppliedPrice);
@@ -102,7 +102,7 @@ int onInit() {
    if (sValue == "") sValue = "close";                            // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                              return(catch("onInit(3)  Invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+                              return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
    // ATR
@@ -118,11 +118,11 @@ int onInit() {
    }
    else {
       atrTimeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (atrTimeframe == -1) return(catch("onInit(4)  Invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
+      if (atrTimeframe == -1) return(catch("onInit(4)  invalid input parameter ATR.Timeframe: "+ DoubleQuoteStr(ATR.Timeframe), ERR_INVALID_INPUT_PARAMETER));
       ATR.Timeframe = TimeframeDescription(atrTimeframe);
    }
-   if (ATR.Periods < 1)       return(catch("onInit(5)  Invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (ATR.Multiplier < 0)    return(catch("onInit(6)  Invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Periods < 1)       return(catch("onInit(5)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ATR.Multiplier < 0)    return(catch("onInit(6)  invalid input parameter ATR.Multiplier: "+ NumberToStr(ATR.Multiplier, ".+"), ERR_INVALID_INPUT_PARAMETER));
    atrPeriods    = ATR.Periods;
    atrMultiplier = ATR.Multiplier;
 
@@ -131,7 +131,7 @@ int onInit() {
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Max.Bars
-   if (Max.Bars < -1)         return(catch("onInit(7)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)         return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -184,9 +184,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ma)) return(logDebug("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(ma)) return(logInfo("onTick(1)  size(ma) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,        EMPTY_VALUE);
       ArrayInitialize(upperBand, EMPTY_VALUE);
@@ -203,15 +203,15 @@ int onTick() {
 
    // calculate start bar
    int changedBars = Min(ChangedBars, maxValues);
-   int startBar = Min(changedBars, Bars-maPeriods+1) - 1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(changedBars, Bars-maPeriods+1) - 1;
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    if (maMethod == MODE_ALMA) {
-      RecalcALMAChannel(startBar);
+      RecalcALMAChannel(startbar);
    }
    else {
-      for (int bar=startBar; bar >= 0; bar--) {
+      for (int bar=startbar; bar >= 0; bar--) {
          double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
 
          ma       [bar] = iMA(NULL, NULL, maPeriods, 0, maMethod, maAppliedPrice, bar);
@@ -229,12 +229,12 @@ int onTick() {
 /**
  * Recalculate the changed bars of an ALMA based Keltner Channel.
  *
- * @param  int startBar
+ * @param  int startbar
  *
  * @return bool - success status
  */
-bool RecalcALMAChannel(int startBar) {
-   for (int i, j, bar=startBar; bar >= 0; bar--) {
+bool RecalcALMAChannel(int startbar) {
+   for (int i, j, bar=startbar; bar >= 0; bar--) {
       double atr = iATR(NULL, atrTimeframe, atrPeriods, bar) * atrMultiplier;
 
       ma[bar] = 0;

@@ -22,12 +22,12 @@ extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical |
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = Magenta;          // LightSkyBlue
 extern int    Bands.LineWidth  = 1;                // 3
-extern string __a____________________________;
+extern string __a___________________________;
 
-extern bool   RepaintingMode   = true;             // toggle repainting mode
+extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
 extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
-extern string __b____________________________;
+extern string __b___________________________;
 
 extern bool   AlertsOn         = true;
 
@@ -37,6 +37,7 @@ extern bool   AlertsOn         = true;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Bands.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/ManageIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
@@ -50,7 +51,7 @@ extern bool   AlertsOn         = true;
 #define MODE_LOWER_VARIANCE_RP   8                 // managed by the framework
 
 #property indicator_chart_window
-#property indicator_buffers   7                    // buffers visible in input dialog
+#property indicator_buffers   7                    // buffers visible to the user
 int       terminal_buffers  = 8;                   // buffers managed by the terminal
 int       framework_buffers = 1;                   // buffers managed by the framework
 
@@ -117,7 +118,7 @@ int onInit() {
    if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    if (Bands.LineWidth > 5)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(7)  invalid input parameter Max.Bars = "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -190,11 +191,11 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(tmaRP)) return(logDebug("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(tmaRP)) return(logInfo("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(tmaRP,           0);
       ArrayInitialize(upperVarianceRP, 0);
@@ -255,10 +256,10 @@ int onTick() {
 /**
  * Original repainting TMA and channel calculation.
  */
-void CalculateRepaintingTMA(int startBar) {
+void CalculateRepaintingTMA(int startbar) {
    int j, w, maHalfLength=maPeriods/2;
 
-   for (int i=startBar; i >= 0; i--) {
+   for (int i=startbar; i >= 0; i--) {
       // TMA calculation
       double price = GetPrice(i);
       double sum = (maHalfLength+1) * price;
@@ -394,8 +395,6 @@ double CalculateTMA(int bar, int limit) {
  * @return bool - success status
  */
 bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], int startbar) {
-   if (!MarkReversals) return(false);
-
  	for (int i=startbar; i >= 0; i--) {
  	   if (!lowerBand[i+1]) continue;
 
@@ -462,9 +461,9 @@ bool UpdatePriceReversals(double ma[], double upperBand[], double lowerBand[], i
 
 /**
  * Check for and trigger signals. The following signals are monitored:
- *  - the crossing of a channel band since last crossing of the MA (strong signal)
- *  - a new high/low after a previous channel band crossing        (weak signal)
- *  - on BarOpen a finished price reversal                         (strong signal)
+ *  - the crossing of a channel band since last crossing of the MA
+ *  - a new high/low after a previous channel band crossing
+ *  - on BarOpen a finished price reversal
  *
  * @param  double ma[]        - timeseries array holding the MA values
  * @param  double upperBand[] - timeseries array holding the upper band values
@@ -479,7 +478,7 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
    static datetime lastTimeUp, lastTimeDn;                                    // bar opentimes of last crossings
    int iMaCross, iNull;
 
-   // reinitialize last high/Low
+   // re/initialize last high/Low
    if (ChangedBars > 2 || !lastHigh) {
       int i=-1, n, lastLongReversal=-1, lastShortReversal=-1;
       lastHigh = NULL;
@@ -539,14 +538,14 @@ bool CheckSignals(double ma[], double upperBand[], double lowerBand[]) {
          lastTimeDn = Time[0];
       }
 
-      // new highs/lows
+      // detect new highs/lows
       if (Bid > lastHigh) { onNewHigh(); lastHigh = High[0]; }                // update the current high
       if (Bid < lastLow)  { onNewLow();  lastLow  = Low[0];  }                // update the current low
    }
    lastBid = Bid;
 
-   // finally detect finished price reversals
-   if (ChangedBars == 2) {
+   // detect finished price reversals
+   if (IsBarOpen()) {
       if (Abs(reversalAge[1]) == 1) onReversal();
    }
 
@@ -762,7 +761,7 @@ void onNewLow() {
  *
  */
 void onReversal() {
-   logNotice(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
+   logInfo(" "+ ifString(reversalAge[1] > 0, "LONG", "SHORT") +" reversal at "+ NumberToStr(Close[1], PriceFormat));
 }
 
 
@@ -771,20 +770,22 @@ void onReversal() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
    IndicatorBuffers(terminal_buffers);
 
-   if (!Bands.LineWidth) { int bandsDrawType = DRAW_NONE, bandsWidth = EMPTY;           }
-   else                  {     bandsDrawType = DRAW_LINE; bandsWidth = Bands.LineWidth; }
+   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL)
+   if (!Bands.LineWidth) { int drawType = DRAW_NONE, drawWidth = EMPTY;           }
+   else                  {     drawType = DRAW_LINE; drawWidth = Bands.LineWidth; }
 
    SetIndexStyle(MODE_TMA_RP,        DRAW_LINE);
-   SetIndexStyle(MODE_UPPER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
-   SetIndexStyle(MODE_LOWER_BAND_RP, bandsDrawType, EMPTY, bandsWidth, Bands.Color);
+   SetIndexStyle(MODE_UPPER_BAND_RP, drawType, EMPTY, drawWidth, Bands.Color);
+   SetIndexStyle(MODE_LOWER_BAND_RP, drawType, EMPTY, drawWidth, Bands.Color);
 
    //SetIndexStyle(MODE_UPPER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color5);
    //SetIndexStyle(MODE_LOWER_BAND_NRP,  DRAW_LINE, EMPTY, EMPTY, indicator_color6);
 
-   SetIndexStyle(MODE_REVERSAL_MARKER, DRAW_ARROW); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
+   if (MarkReversals) drawType = DRAW_ARROW;
+   else               drawType = DRAW_NONE;
+   SetIndexStyle(MODE_REVERSAL_MARKER, drawType); SetIndexArrow(MODE_REVERSAL_MARKER, 82);
    SetIndexStyle(MODE_REVERSAL_AGE,    DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 

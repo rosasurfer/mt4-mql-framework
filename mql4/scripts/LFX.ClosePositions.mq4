@@ -47,7 +47,7 @@ int onInit() {
 
    // Parametervalidierung
    LFX.Labels = StrTrim(LFX.Labels);
-   if (!StringLen(LFX.Labels)) return(HandleScriptError("onInit(1)", "Invalid input parameter LFX.Labels = \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringLen(LFX.Labels)) return(HandleScriptError("onInit(1)", "invalid input parameter LFX.Labels: \""+ LFX.Labels +"\"", ERR_INVALID_INPUT_PARAMETER));
 
    // Labels splitten und trimmen
    int size = Explode(LFX.Labels, ",", inputLabels, NULL);

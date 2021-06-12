@@ -126,9 +126,9 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  */
 int HistorySet1.Create(string symbol, string copyright, int digits, int format, string server="") {
    // Parametervalidierung
-   if (!StringLen(symbol))                    return(!catch("HistorySet1.Create(1)  invalid parameter symbol = "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Create(2)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
-   if (StrContains(symbol, " "))              return(!catch("HistorySet1.Create(3)  invalid parameter symbol = "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+   if (!StringLen(symbol))                    return(!catch("HistorySet1.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("HistorySet1.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (!StringLen(copyright)) {
       copyright = "";                                                            // NULL-Pointer => Leerstring
@@ -137,8 +137,8 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
       logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
       copyright = StrLeft(copyright, 63);
    }
-   if (digits < 0)                            return(!catch("HistorySet1.Create(5)  invalid parameter digits = "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet1.Create(6)  invalid parameter format = "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (digits < 0)                            return(!catch("HistorySet1.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
+   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet1.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (server == "0")      server = "";                                          // (string) NULL
    if (!StringLen(server)) server = GetAccountServer();
 
@@ -379,14 +379,14 @@ bool HistorySet1.Close(int hSet) {
  */
 bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags=NULL) {
    // Validierung
-   if (hSet <= 0)                     return(!catch("HistorySet1.AddTick(1)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
+   if (hSet <= 0)                     return(!catch("HistorySet1.AddTick(1)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
-      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet1.AddTick(2)  invalid parameter hSet = "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet1.AddTick(3)  invalid parameter hSet = "+ hSet +" (unknown handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet1.AddTick(4)  invalid parameter hSet = "+ hSet +" (closed handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet1.AddTick(2)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet1.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet1.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
       hs.hSet.lastValid = hSet;
    }
-   if (time <= 0)                     return(!catch("HistorySet1.AddTick(5)  invalid parameter time = "+ time +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+   if (time <= 0)                     return(!catch("HistorySet1.AddTick(5)  invalid parameter time: "+ time +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
 
    // Dateihandles holen und jeweils Tick hinzufügen
    int hFile, sizeOfPeriods=ArraySize(periods);
