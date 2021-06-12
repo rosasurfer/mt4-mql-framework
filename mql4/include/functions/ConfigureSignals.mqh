@@ -7,7 +7,7 @@
  *
  * @return bool - validation success status
  */
-bool ConfigureSignaling(string name, string &configValue, bool &enabled) {
+bool ConfigureSignals(string name, string &configValue, bool &enabled) {
    enabled = false;
 
    string sValue = StrToLower(configValue), values[];                // default: "on | off | auto*"
@@ -44,11 +44,11 @@ bool ConfigureSignaling(string name, string &configValue, bool &enabled) {
    // dummy calls
    bool bNull;
    string sNull;
-   ConfigureSignaling2(NULL, NULL, bNull);
-   ConfigureSignalingByAlert2(NULL, NULL, bNull);
-   ConfigureSignalingBySound2(NULL, NULL, bNull);
-   ConfigureSignalingByMail2(NULL, NULL, bNull, sNull, sNull);
-   ConfigureSignalingBySMS2(NULL, NULL, bNull, sNull);
+   ConfigureSignals2(NULL, NULL, bNull);
+   ConfigureSignalsByAlert2(NULL, NULL, bNull);
+   ConfigureSignalsBySound2(NULL, NULL, bNull);
+   ConfigureSignalsByMail2(NULL, NULL, bNull, sNull, sNull);
+   ConfigureSignalsBySMS2(NULL, NULL, bNull, sNull);
 }
 
 
@@ -61,7 +61,7 @@ bool ConfigureSignaling(string name, string &configValue, bool &enabled) {
  *
  * @return bool - success status
  */
-bool ConfigureSignaling2(string signalId, bool autoConfig, bool &enabled) {
+bool ConfigureSignals2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
@@ -74,7 +74,7 @@ bool ConfigureSignaling2(string signalId, bool autoConfig, bool &enabled) {
    // dummy calls
    bool bNull;
    string sNull;
-   ConfigureSignaling(NULL, sNull, bNull);
+   ConfigureSignals(NULL, sNull, bNull);
 }
 
 
@@ -87,7 +87,7 @@ bool ConfigureSignaling2(string signalId, bool autoConfig, bool &enabled) {
  *
  * @return bool - success status
  */
-bool ConfigureSignalingByAlert2(string signalId, bool autoConfig, bool &enabled) {
+bool ConfigureSignalsByAlert2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
@@ -108,7 +108,7 @@ bool ConfigureSignalingByAlert2(string signalId, bool autoConfig, bool &enabled)
  *
  * @return bool - success status
  */
-bool ConfigureSignalingBySound2(string signalId, bool autoConfig, bool &enabled) {
+bool ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
@@ -131,7 +131,7 @@ bool ConfigureSignalingBySound2(string signalId, bool autoConfig, bool &enabled)
  *
  * @return bool - success status
  */
-bool ConfigureSignalingByMail2(string signalId, bool autoConfig, bool &enabled, string &sender, string &receiver) {
+bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled, string &sender, string &receiver) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
    sender = "";
@@ -149,19 +149,19 @@ bool ConfigureSignalingByMail2(string signalId, bool autoConfig, bool &enabled, 
    if (autoConfig) {
       if (GetConfigBool(signalSection, signalId +".Mail", _enabled)) {
          _sender = GetConfigString(mailSection, senderKey, defaultSender);
-         if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalingByMail2(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
+         if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalsByMail2(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
 
          _receiver = GetConfigString(mailSection, receiverKey);
-         if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalingByMail2(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+         if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalsByMail2(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
          enabled = true;
       }
    }
    else if (_enabled) {
       _sender = GetConfigString(mailSection, senderKey, defaultSender);
-      if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalingByMail2(3)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_sender))   return(!catch("ConfigureSignalsByMail2(3)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(_sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
 
       _receiver = GetConfigString(mailSection, receiverKey);
-      if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalingByMail2(4)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsEmailAddress(_receiver)) return(!catch("ConfigureSignalsByMail2(4)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(_receiver), ERR_INVALID_CONFIG_VALUE));
       enabled = true;
    }
 
@@ -181,7 +181,7 @@ bool ConfigureSignalingByMail2(string signalId, bool autoConfig, bool &enabled, 
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalingBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver) {
+bool ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled, string &receiver) {
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
@@ -197,7 +197,7 @@ bool ConfigureSignalingBySMS2(string signalId, bool autoConfig, bool &enabled, s
 
    if (_enabled) {
       string sValue = GetConfigString(smsSection, receiverKey);
-      if (!StrIsPhoneNumber(sValue)) return(!catch("ConfigureSignalingBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsPhoneNumber(sValue)) return(!catch("ConfigureSignalsBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE));
       enabled  = true;
       receiver = sValue;
    }
