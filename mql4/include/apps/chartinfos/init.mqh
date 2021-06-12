@@ -22,10 +22,10 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    if (mode.intern) {
-      mm.risk         = 0;                                                    // default: position size calculator disabled
+      mm.risk         = 0;                                                    // default: unitsize calculation disabled
       mm.stopDistance = 0;
 
-      // read config: position size calculation
+      // read config: unitsize calculation
       section = "PositionSize";
       string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
       string sDefaultRisk = GetConfigString(section, defaultRiskKey);
@@ -185,13 +185,13 @@ bool OrderTracker.Configure() {
    else if (sValue == "auto") {
       track.orders = GetConfigBool("EventTracker", "Track.Orders");
    }
-   else return(!catch("OrderTracker.Configure(1)  Invalid input parameter Track.Orders = "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
+   else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
    // Signal-Methoden einlesen
    if (track.orders) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
    }
    return(!catch("OrderTracker.Configure(2)"));
 }

@@ -50,7 +50,7 @@ int onInit() {
 
    // input validation
    // Vola.Periods
-   if (Vola.Periods < 1) return(catch("onInit(1)  Invalid input parameter Vola.Periods = "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Vola.Periods < 1) return(catch("onInit(1)  invalid input parameter Vola.Periods: "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
    volaPeriods = Vola.Periods;
 
    // Vola.Type
@@ -62,7 +62,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("kaufman",   sValue)) { volaType = VOLA_KAUFMAN;  Vola.Type = "Kaufman";   }
    else if (StrStartsWith("intra-bar", sValue)) { volaType = VOLA_INTRABAR; Vola.Type = "Intra-Bar"; }
-   else                  return(catch("onInit(2)  Invalid input parameter Vola.Type = "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                  return(catch("onInit(2)  invalid input parameter Vola.Type: "+ DoubleQuoteStr(Vola.Type), ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(0, bufferVola);
@@ -98,9 +98,9 @@ int onDeinitRecompile() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferVola)) return(logDebug("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferVola)) return(logInfo("onTick(1)  size(bufferVola) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(bufferVola, EMPTY_VALUE);
       SetIndicatorOptions();
@@ -113,12 +113,12 @@ int onTick() {
 
 
    // (1) calculate start bar
-   int startBar = Min(ChangedBars-1, Bars-volaPeriods-1);
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(ChangedBars-1, Bars-volaPeriods-1);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate invalid indicator values
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       bufferVola[bar] = Volatility(bar);
    }
    return(last_error);

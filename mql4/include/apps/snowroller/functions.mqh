@@ -372,8 +372,8 @@ double CalculateUnitSize(double equity) {
       int steps      = result / lotStep;
       result         = NormalizeDouble(steps * lotStep, 2);
 
-      if (LT(result, minLot))               return(!catch("CalculateUnitSize(10)  "+ sequence.longName +" too low parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_PARAMETER));
-      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(11)  "+ sequence.longName +" too high parameter equity = "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_PARAMETER));
+      if (LT(result, minLot))               return(!catch("CalculateUnitSize(10)  "+ sequence.longName +" too low parameter equity: "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_PARAMETER));
+      if (GT(result, maxLot))               return(!catch("CalculateUnitSize(11)  "+ sequence.longName +" too high parameter equity: "+ NumberToStr(equity, ".2") +", calculated unitsize: "+ NumberToStr(result, ".+") +" (MaxLot="+ NumberToStr(maxLot, ".+") +")", ERR_INVALID_PARAMETER));
    }
    else {
       if (LT(result, minLot))               return(!catch("CalculateUnitSize(12)  "+ sequence.longName +" invalid input parameter UnitSize: "+ DoubleQuoteStr(UnitSize) +" (MinLot="+ NumberToStr(minLot, ".+") +")", ERR_INVALID_INPUT_PARAMETER));
@@ -1102,7 +1102,7 @@ string StatusDescription(int status) {
       case STATUS_STOPPING   : return("stopping"   );
       case STATUS_STOPPED    : return("stopped"    );
    }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.longName +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -1122,7 +1122,7 @@ string StatusToStr(int status) {
       case STATUS_STOPPING   : return("STATUS_STOPPING"   );
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
-   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status = "+ status, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 

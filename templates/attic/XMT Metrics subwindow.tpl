@@ -1,25 +1,30 @@
+<!--
+ Displays XMT-Scalper metrics in a subwindow.
+-->
 <chart>
-symbol=GBPAUD
+symbol=GBPUSD
 period=60
-leftpos=17392
 digits=5
+
+leftpos=9229
 scale=1
 graph=1
 fore=0
 grid=0
 volume=0
-scroll=1
-shift=1
 ohlc=0
 askline=0
 days=0
 descriptions=1
+scroll=0
+shift=1
 shift_size=50
+
 fixed_pos=620
 window_left=0
-window_top=47
-window_right=996
-window_bottom=632
+window_top=0
+window_right=1292
+window_bottom=812
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -34,7 +39,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=10
+height=5000
 
 <indicator>
 name=main
@@ -8743,31 +8748,53 @@ value_0=120.00
 <indicator>
 name=Custom Indicator
 <expert>
-name=LFX-Monitor
-flags=339
+name=Grid
+flags=347
 window_num=0
-<inputs>
-Recording.Enabled=1
-AUDLFX.Enabled=1
-CADLFX.Enabled=1
-CHFLFX.Enabled=1
-EURLFX.Enabled=1
-GBPLFX.Enabled=1
-JPYLFX.Enabled=1
-NZDLFX.Enabled=1
-USDLFX.Enabled=0
-NOKFX7.Enabled=0
-SEKFX7.Enabled=0
-SGDFX7.Enabled=0
-ZARFX7.Enabled=0
-USDX.Enabled=0
-EURX.Enabled=0
-XAUI.Enabled=0
-</inputs>
 </expert>
 period_flags=0
 show_data=0
 </indicator>
 
+<indicator>
+name=Custom Indicator
+<expert>
+name=ChartInfos
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=SuperBars
+flags=339
+window_num=0
+</expert>
+period_flags=255
+show_data=0
+</indicator>
 </window>
+
+<window>
+height=5000
+fixed_height=0
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=systems/XMT Metrics
+flags=339
+window_num=1
+<inputs>
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+</window>
+
 </chart>

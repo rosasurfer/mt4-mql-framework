@@ -28,24 +28,24 @@ extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
 extern int    Max.Bars               = 10000;               // max. values to calculate (-1: all available)
-extern string __a____________________________;
+extern string __a___________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
 extern string Signal.Sound           = "on | off | auto*";
-extern string Signal.Mail.Receiver   = "on | off | auto* | {email-address}";
-extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
+extern string Signal.Mail            = "on | off | auto*";
+extern string Signal.SMS             = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/BarOpenEvent.mqh>
-#include <functions/ConfigureSignal.mqh>
-#include <functions/ConfigureSignalMail.mqh>
-#include <functions/ConfigureSignalSMS.mqh>
-#include <functions/ConfigureSignalSound.mqh>
+#include <functions/ConfigureSignals.mqh>
+#include <functions/ConfigureSignalsByMail.mqh>
+#include <functions/ConfigureSignalsBySMS.mqh>
+#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
+#include <functions/IsBarOpen.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
@@ -58,7 +58,7 @@ extern string Signal.SMS.Receiver    = "on | off | auto* | {phone-number}";
 #define MODE_TREND            Broketrader.MODE_TREND        // 7
 
 #property indicator_chart_window
-#property indicator_buffers   8                             // buffers visible in input dialog
+#property indicator_buffers   8                             // buffers visible to the user
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -116,11 +116,11 @@ string   signal.info = "";                                  // additional chart 
  */
 int onInit() {
    // validate inputs
-   if (SMA.Periods < 1)            return(catch("onInit(1)  Invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.Periods < 2)     return(catch("onInit(2)  Invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  Invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  Invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
-   if (RSI.Periods < 2)            return(catch("onInit(5)  Invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.Periods < 1)            return(catch("onInit(1)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.Periods < 2)     return(catch("onInit(2)  invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA1.Periods < 1) return(catch("onInit(3)  invalid input parameter Stochastic.MA1.Periods: "+ Stochastic.MA1.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (Stochastic.MA2.Periods < 1) return(catch("onInit(4)  invalid input parameter Stochastic.MA2.Periods: "+ Stochastic.MA2.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (RSI.Periods < 2)            return(catch("onInit(5)  invalid input parameter RSI.Periods: "+ RSI.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    smaPeriods      = SMA.Periods;
    stochPeriods    = Stochastic.Periods;
    stochMa1Periods = Stochastic.MA1.Periods;
@@ -130,24 +130,24 @@ int onInit() {
    if (Color.Long  == 0xFF000000) Color.Long  = CLR_NONE;
    if (Color.Short == 0xFF000000) Color.Short = CLR_NONE;
    // SMA.DrawWidth
-   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  Invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.DrawWidth < 0)          return(catch("onInit(6)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    // StartDate
    string sValue = StrToLower(StrTrim(StartDate));
    if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
       startTime = ParseDateTime(sValue);
-      if (IsNaT(startTime))        return(catch("onInit(8)  Invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+      if (IsNaT(startTime))        return(catch("onInit(8)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    }
    // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(9)  Invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)              return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
-   // signals
-   if (!ConfigureSignal("Broketrader", Signal.onReversal, signals))                                           return(last_error);
+   // signaling
+   if (!ConfigureSignals("Broketrader", Signal.onReversal, signals))                                    return(last_error);
    if (signals) {
-      if (!ConfigureSignalSound(Signal.Sound,         signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalMail (Signal.Mail.Receiver, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalSMS  (Signal.SMS.Receiver,  signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound,         signal.sound                                )) return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
@@ -207,9 +207,9 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(maLong)) return(logDebug("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(maLong)) return(logInfo("onTick(1)  size(maLong) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // reset all buffers before performing a full recalculation
+   // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(ma,              EMPTY_VALUE);
       ArrayInitialize(maLong,          EMPTY_VALUE);
@@ -240,16 +240,16 @@ int onTick() {
    int maxStochValues = Bars - rsiPeriods - stochPeriods - stochMa1Periods - stochMa2Periods - 1;  // max. possible Stochastic values (see Stochastic of RSI)
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
-   int startBar       = bars - 1;
-   if (startBar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
-   if (Time[startBar]+Period()*MINUTES-1 < startTime)
-      startBar = iBarShiftNext(NULL, NULL, startTime);
+   int startbar       = bars - 1;
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (Time[startbar]+Period()*MINUTES-1 < startTime)
+      startbar = iBarShiftNext(NULL, NULL, startTime);
 
    double sma, stoch, price1, price2;
 
-   // initialize the reversal state of the previous bar => Bar[startBar+1]
+   // re/initialize the reversal state of the previous bar => Bar[startbar+1]
    if (!reversalInitialized || ChangedBars > 2) {
-      int prevBar = startBar + 1;
+      int prevBar = startbar + 1;
       sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, prevBar);
       stoch = GetStochasticOfRSI(prevBar); if (last_error != 0) return(last_error);
 
@@ -260,7 +260,7 @@ int onTick() {
    }
 
    // recalculate changed bars
-   for (int bar=startBar; bar >= 0; bar--) {
+   for (int bar=startbar; bar >= 0; bar--) {
       sma   = iMA(NULL, NULL, smaPeriods, 0, MODE_SMA, PRICE_CLOSE, bar);
       stoch = GetStochasticOfRSI(bar); if (last_error != 0) return(last_error);
 
@@ -275,8 +275,9 @@ int onTick() {
       }
       else {
          // update existing trend
-         if (!prevReversal) trend[bar] = trend[bar+1] + Sign(trend[bar+1]);                        // extend existing trend
-         else               trend[bar] = -Sign(trend[bar+1]);                                      // toggle trend
+         int prevTrend = trend[bar+1];
+         if (!prevReversal) trend[bar] = prevTrend + Sign(prevTrend);                              // extend existing trend
+         else               trend[bar] = -Sign(prevTrend);                                         // toggle trend
 
          // update reversal state of the current bar
          if      (trend[bar] < 0) currentReversal = (Close[bar] > sma && stoch > 40);              // mark long reversal
@@ -344,8 +345,8 @@ int onTick() {
       @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
-      if (signals) /*&&*/ if (IsBarOpenEvent()) {
-         int iTrend = Round(trend[0]);
+      if (signals) /*&&*/ if (IsBarOpen()) {
+         int iTrend = trend[0];
          if      (iTrend ==  1) onReversal(D_LONG);
          else if (iTrend == -1) onReversal(D_SHORT);
       }
@@ -368,8 +369,8 @@ bool onReversal(int direction) {
 
    if (direction == D_LONG) {
       message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogDebug()) logDebug("onReversal(1)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      if (IsLogInfo()) logInfo("onReversal(1)  "+ message);
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
@@ -379,8 +380,8 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogDebug()) logDebug("onReversal(2)  "+ message);
-      message = Symbol() +","+ PeriodDescription(Period()) +": "+ message;
+      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
+      message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
@@ -465,6 +466,7 @@ double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMai
                           1,                                               // int    Signal.DrawWidth
                           -1,                                              // int    Max.Bars
                           "",                                              // string ______________________
+                          false,                                           // bool   AutoConfiguration
                           lpSuperContext,                                  // int    __lpSuperContext
 
                           iBuffer, iBar);
@@ -489,20 +491,20 @@ double icStochasticOfRSI(int timeframe, int stochMainPeriods, int stochSlowedMai
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("SMA.Periods=",            SMA.Periods,                          ";", NL,
-                            "Stochastic.Periods=",     Stochastic.Periods,                   ";", NL,
-                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,               ";", NL,
-                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,               ";", NL,
-                            "RSI.Periods=",            RSI.Periods,                          ";", NL,
-                            "Color.Long=",             ColorToStr(Color.Long),               ";", NL,
-                            "Color.Short=",            ColorToStr(Color.Short),              ";", NL,
-                            "FillSections=",           BoolToStr(FillSections),              ";", NL,
-                            "SMA.DrawWidth=",          SMA.DrawWidth,                        ";", NL,
-                            "StartDate=",              DoubleQuoteStr(StartDate),            ";", NL,
-                            "Max.Bars=",               Max.Bars,                             ";", NL,
-                            "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal),    ";", NL,
-                            "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),         ";", NL,
-                            "Signal.Mail.Receiver=",   DoubleQuoteStr(Signal.Mail.Receiver), ";", NL,
-                            "Signal.SMS.Receiver=",    DoubleQuoteStr(Signal.SMS.Receiver),  ";")
+   return(StringConcatenate("SMA.Periods=",            SMA.Periods,                       ";", NL,
+                            "Stochastic.Periods=",     Stochastic.Periods,                ";", NL,
+                            "Stochastic.MA1.Periods=", Stochastic.MA1.Periods,            ";", NL,
+                            "Stochastic.MA2.Periods=", Stochastic.MA2.Periods,            ";", NL,
+                            "RSI.Periods=",            RSI.Periods,                       ";", NL,
+                            "Color.Long=",             ColorToStr(Color.Long),            ";", NL,
+                            "Color.Short=",            ColorToStr(Color.Short),           ";", NL,
+                            "FillSections=",           BoolToStr(FillSections),           ";", NL,
+                            "SMA.DrawWidth=",          SMA.DrawWidth,                     ";", NL,
+                            "StartDate=",              DoubleQuoteStr(StartDate),         ";", NL,
+                            "Max.Bars=",               Max.Bars,                          ";", NL,
+                            "Signal.onReversal=",      DoubleQuoteStr(Signal.onReversal), ";", NL,
+                            "Signal.Sound=",           DoubleQuoteStr(Signal.Sound),      ";", NL,
+                            "Signal.Mail=",            DoubleQuoteStr(Signal.Mail),       ";", NL,
+                            "Signal.SMS=",             DoubleQuoteStr(Signal.SMS),        ";")
    );
 }

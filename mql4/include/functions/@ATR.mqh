@@ -1,6 +1,6 @@
 /**
  * Return the average true range from the built-in function iATR() and perform additional error handling.
- * The function always writes the last_error variable (on success it is reset).
+ * This function always sets the variable 'last_error' (on success it is reset).
  *
  * @param  string symbol                   - symbol    (NULL = the current symbol)
  * @param  int    timeframe                - timeframe (NULL = the current timeframe)

@@ -12,7 +12,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a___________________________;
+extern string __a___________________________;
 extern bool   AUDLFX.Enabled    = true;                  // by default all indexes are enabled
 extern bool   CADLFX.Enabled    = true;
 extern bool   CHFLFX.Enabled    = true;
@@ -21,17 +21,17 @@ extern bool   GBPLFX.Enabled    = true;
 extern bool   JPYLFX.Enabled    = true;
 extern bool   NZDLFX.Enabled    = true;
 extern bool   USDLFX.Enabled    = true;
-extern string ___b___________________________;
+extern string __b___________________________;
 extern bool   NOKFX7.Enabled    = true;
 extern bool   SEKFX7.Enabled    = true;
 extern bool   SGDFX7.Enabled    = true;
 extern bool   ZARFX7.Enabled    = true;
-extern string ___c___________________________;
+extern string __c___________________________;
 extern bool   EURX.Enabled      = true;
 extern bool   USDX.Enabled      = true;
-extern string ___d___________________________;
+extern string __d___________________________;
 extern bool   XAUI.Enabled      = true;
-extern string ___e___________________________;
+extern string __e___________________________;
 extern bool   Recording.Enabled = false;                 // by default recording is disabled
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
