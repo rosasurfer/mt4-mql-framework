@@ -10,24 +10,24 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes           = "H1, D1";           // one or more comma-separated timeframes to analyze
-extern int    Max.InsideBars       = 3;                  // max. number of inside bars per timeframe to find (-1: all available)
+extern string Timeframes         = "H1, D1";             // one or more comma-separated timeframes to analyze
+extern int    Max.InsideBars     = 3;                    // max. number of inside bars per timeframe to find (-1: all available)
 extern string __a___________________________;
 
-extern string Signal.onInsideBar   = "on | off | auto*";
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail          = "on | off | auto*";
-extern string Signal.SMS           = "on | off | auto*";
+extern string Signal.onInsideBar = "on | off | auto*";
+extern string Signal.Sound       = "on | off | auto*";
+extern string Signal.Mail        = "on | off | auto*";
+extern string Signal.SMS         = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignaling.mqh>
-#include <functions/ConfigureSignalingByMail.mqh>
-#include <functions/ConfigureSignalingBySMS.mqh>
-#include <functions/ConfigureSignalingBySound.mqh>
+#include <functions/ConfigureSignals.mqh>
+#include <functions/ConfigureSignalsByMail.mqh>
+#include <functions/ConfigureSignalsBySMS.mqh>
+#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
@@ -104,11 +104,11 @@ int onInit() {
 
    // signaling
    string signalInfo = "";
-   if (!ConfigureSignaling("Inside Bars", Signal.onInsideBar, signals))                                    return(last_error);
+   if (!ConfigureSignals("Inside Bars", Signal.onInsideBar, signals))                                    return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
       }

@@ -189,9 +189,9 @@ bool OrderTracker.Configure() {
 
    // Signal-Methoden einlesen
    if (track.orders) {
-      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
    }
    return(!catch("OrderTracker.Configure(2)"));
 }
