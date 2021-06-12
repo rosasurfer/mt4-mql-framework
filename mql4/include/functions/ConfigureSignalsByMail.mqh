@@ -8,7 +8,7 @@
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender, string &receiver) {
+bool ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver) {
    enabled  = false;
    sender   = "";
    receiver = "";
@@ -21,7 +21,7 @@ bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender,
 
    string defaultSender = "mt4@"+ GetHostName() +".localdomain";
    sender = GetConfigString(mailSection, senderKey, defaultSender);
-   if (!StrIsEmailAddress(sender)) return(!catch("ConfigureSignalingByMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
+   if (!StrIsEmailAddress(sender)) return(!catch("ConfigureSignalsByMail(1)  invalid email address: "+ ifString(IsConfigKey(mailSection, senderKey), "["+ mailSection +"]->"+ senderKey +" = "+ DoubleQuoteStr(sender), "defaultSender = "+ DoubleQuoteStr(defaultSender)), ERR_INVALID_CONFIG_VALUE));
 
    string sValue = StrToLower(configValue), values[], errorMsg;         // default: "on | off | auto*"
    if (Explode(sValue, "*", values, 2) > 1) {
@@ -35,7 +35,7 @@ bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender,
       receiver = GetConfigString(mailSection, receiverKey);
       if (!StrIsEmailAddress(receiver)) {
          sender = "";
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingByMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalsByMail(2)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -54,7 +54,7 @@ bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender,
       receiver = GetConfigString(mailSection, receiverKey);
       if (!StrIsEmailAddress(receiver)) {
          sender = "";
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingByMail(3)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalsByMail(3)  invalid email address: ["+ mailSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -62,5 +62,5 @@ bool ConfigureSignalingByMail(string configValue, bool &enabled, string &sender,
    }
 
    receiver = configValue;
-   return(!catch("ConfigureSignalingByMail(4)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
+   return(!catch("ConfigureSignalsByMail(4)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
 }

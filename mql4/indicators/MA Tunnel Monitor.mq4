@@ -39,22 +39,22 @@ extern bool   Signal.onBreakout.SMS          = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
 
 #define MODE_MA1              0              // indicator buffer ids
 #define MODE_MA2              1
 #define MODE_MA3              2
-#define MODE_MA1_TREND        3
-#define MODE_MA2_TREND        4
-#define MODE_MA3_TREND        5
-#define MODE_TOTAL_TREND      6
+#define MODE_TOTAL_TREND      3
+#define MODE_MA1_TREND        4
+#define MODE_MA2_TREND        5
+#define MODE_MA3_TREND        6
 
 #define MODE_LONG             1              // breakout directions
 #define MODE_SHORT            2
 
 #property indicator_chart_window
-#property indicator_buffers   3              // buffers visible to the user
+#property indicator_buffers   4              // buffers visible to the user
 int       terminal_buffers =  7;             // buffers managed by the terminal
 
 #property indicator_color1    Magenta
@@ -184,15 +184,16 @@ int onInit() {
    totalInitPeriods = Max(ma1InitPeriods, ma2InitPeriods, ma3InitPeriods);
 
    // signaling
-   string signalName = "Signal.onBreakout";
-   if (!ConfigureSignaling2(signalName, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
+   string signalId = "Signal.onBreakout";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalingByAlert2(signalName, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
-      if (!ConfigureSignalingBySound2(signalName, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
-      if (!ConfigureSignalingByMail2 (signalName, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
-      if (!ConfigureSignalingBySMS2  (signalName, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
+      if (!ConfigureSignalsByAlert2(signalId, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
       if (Signal.onBreakout.Alert || Signal.onBreakout.Sound || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
-         signalDescription = "Breakout="+ StrLeft(ifString(Signal.onBreakout.Alert, "Alert+", "") + ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
+         signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Alert, "Alert+", "") + ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
+         if (IsLogDebug()) logDebug("onInit(11)  "+ signalDescription);
       }
       else Signal.onBreakout = false;
    }
@@ -207,13 +208,15 @@ int onInit() {
    SetIndexBuffer(MODE_TOTAL_TREND, totalTrend); SetIndexEmptyValue(MODE_TOTAL_TREND, 0);
 
    // display options
-   SetIndexLabel(MODE_MA1, NULL);
-   SetIndexLabel(MODE_MA2, NULL);
-   SetIndexLabel(MODE_MA3, NULL);
+   SetIndexLabel(MODE_MA1, NULL); if (UseMA1) SetIndexLabel(MODE_MA1, "MA Tunnel "+ MA1.Method +"("+ MA1.Periods +")");
+   SetIndexLabel(MODE_MA2, NULL); if (UseMA2) SetIndexLabel(MODE_MA2, "MA Tunnel "+ MA2.Method +"("+ MA2.Periods +")");
+   SetIndexLabel(MODE_MA3, NULL); if (UseMA3) SetIndexLabel(MODE_MA3, "MA Tunnel "+ MA3.Method +"("+ MA3.Periods +")");
+   SetIndexLabel(MODE_TOTAL_TREND, "MA Tunnel trend");
+
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(11)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -383,6 +386,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_MA1, ifInt(UseMA1, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color1);
    SetIndexStyle(MODE_MA2, ifInt(UseMA2, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color2);
    SetIndexStyle(MODE_MA3, ifInt(UseMA3, DRAW_LINE, DRAW_NONE), EMPTY, 2, indicator_color3);
+
+   SetIndexStyle(MODE_TOTAL_TREND, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
 }
 
 

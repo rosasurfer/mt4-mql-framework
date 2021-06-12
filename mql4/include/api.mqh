@@ -324,10 +324,10 @@ void     @Bands.UpdateLegend(string label, string name, string status, color ban
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 bool     @Trend.UpdateDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
-bool     ConfigureSignaling(string name, string &configValue, bool &enabled);;
-bool     ConfigureSignalingByMail(string configValue, bool &enabled, string &sender, string &receiver);;
-bool     ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver);;
-bool     ConfigureSignalingBySound(string configValue, bool &enabled);;
+bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
+bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver);;
+bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
+bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;

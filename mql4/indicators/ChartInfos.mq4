@@ -1,18 +1,19 @@
 /**
  * Displays additional market and account infos on the chart.
  *
- *  - Symbol (in builds <= 509), price and spread.
- *  - The calculated unitsize according to the configured risk profile.
- *  - Total open position and risk according to the configured risk profile.
- *  - P/L of open positions and/or trade history supporting two different modes:
- *     • internal: positions and/or history from the current account,
- *                 P/L as provided by the current account,
- *                 order execution notifications
- *     • external: positions and/or history from an external account (e.g. synthetic instruments),
- *                 P/L as provided by the external source,
- *                 limit monitoring and notifications
+ *  - The current price and spread.
+ *  - In builds <= 509 the current instrument name.
+ *  - The calculated unitsize according to the configured risk profiles.
+ *  - The open position and the used leverage.
  *  - The current account stopout level.
- *  - A warning when the account's open order limit is approached.
+ *  - A warning in different colors when the account's open order limit is approached.
+ *  - P/L of open positions and/or trade history in two different modes, i.e.
+ *     internal: positions and/or history from the current account,
+ *               P/L as provided by the current account,
+ *               order execution notifications
+ *     external: positions and/or history from an external account (e.g. synthetic instruments),
+ *               P/L as provided by the external source,
+ *               limit monitoring and notifications
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -21,7 +22,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Track.Orders   = "on | off | auto*";
-extern bool   Offline.Ticker = true;                        // whether to enable automatic ticking of offline charts
+extern bool   Offline.Ticker = true;                        // whether to enable self-ticking of offline charts
 extern string __a___________________________;
 
 extern string Signal.Sound   = "on | off | auto*";
@@ -32,9 +33,9 @@ extern string Signal.SMS     = "on | off | auto*";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ConfigureSignalingByMail.mqh>
-#include <functions/ConfigureSignalingBySMS.mqh>
-#include <functions/ConfigureSignalingBySound.mqh>
+#include <functions/ConfigureSignalsByMail.mqh>
+#include <functions/ConfigureSignalsBySMS.mqh>
+#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
@@ -54,7 +55,7 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.stopDistance;                                           // configured stop distance in pip
+double mm.stopDistance;                                           // configured stop distance in subpip
 double mm.unitSize;                                               // calculated unitsize according to risk and stop distance
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
@@ -208,60 +209,45 @@ int    orders.knownOrders.type  [];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
    mm.done            = false;
    positions.analyzed = false;
 
-   HandleCommands();                                                                               // ChartCommands verarbeiten
+   HandleCommands();                                                                // ChartCommands verarbeiten
 
-   if (!UpdatePrice())                     if (CheckLastError("onTick(1)")) return(last_error);    // aktualisiert die Kursanzeige oben rechts
+   if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // aktualisiert die Kursanzeige oben rechts
 
    if (mode.extern) {
-      if (!QC.HandleLfxTerminalMessages()) if (CheckLastError("onTick(2)")) return(last_error);    // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdatePositions())              if (CheckLastError("onTick(3)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
+      if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (CheckLastError("onTick(4)")) return(last_error);    // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdateSpread())                 if (CheckLastError("onTick(5)")) return(last_error);
-      if (!UpdateUnitSize())               if (CheckLastError("onTick(6)")) return(last_error);    // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (CheckLastError("onTick(7)")) return(last_error);    // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (CheckLastError("onTick(8)")) return(last_error);    // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (CheckLastError("onTick(9)")) return(last_error);    // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
+      if (!UpdateSpread())                 if (IsLastError()) return(last_error);
+      if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
+      if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
+      if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
       // ggf. Orders überwachen
       if (mode.intern && track.orders) {
-         int failedOrders      []; ArrayResize(failedOrders,    0);
-         int openedPositions   []; ArrayResize(openedPositions, 0);
-         int closedPositions[][2]; ArrayResize(closedPositions, 0);     // { Ticket, CloseType=[CLOSE_TYPE_TP | CLOSE_TYPE_SL | CLOSE_TYPE_SO] }
+         int failedOrders   [];    ArrayResize(failedOrders,    0);
+         int openedPositions[];    ArrayResize(openedPositions, 0);
+         int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
 
          if (!OrderTracker.CheckPositions(failedOrders, openedPositions, closedPositions))
             return(last_error);
 
-         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders   );
+         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
       }
    }
    return(last_error);
-}
-
-
-/**
- * Prüft, ob ein Fehler gesetzt ist und gibt eine Warnung aus, wenn das nicht der Fall ist. Zum Debugging in onTick()
- *
- * @param  string location - Ort der Prüfung
- *
- * @return bool - ob ein Fehler gesetzt ist
- */
-bool CheckLastError(string location) {
-   if (IsLastError())
-      return(true);
-   //debug(location +"  returned FALSE but set no error");
-   return(false);
 }
 
 
@@ -1094,15 +1080,13 @@ bool CreateLabels() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePrice() {
-   static string priceFormat;
-   if (!StringLen(priceFormat))
+   static string priceFormat; if (!StringLen(priceFormat)) {
       priceFormat = StringConcatenate(",,", PriceFormat);
-
-   //debug("UpdatePrice(0.1)  Bid/Ask="+ Bid +"/"+ Ask +"  MarketInfo="+ MarketInfo(Symbol(), MODE_BID) +"/"+ MarketInfo(Symbol(), MODE_ASK));
-   double price;
+   }
+   double price = Bid;
 
    if (!Bid) {                                           // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
-      price = RoundEx(Close[0], Digits);                 // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
+      price = NormalizeDouble(Close[0], Digits);         // History-Daten können unnormalisiert sein, wenn sie nicht von MetaTrader erstellt wurden
    }
    else {
       switch (displayedPrice) {
@@ -1146,19 +1130,19 @@ bool UpdateSpread() {
  */
 bool UpdateUnitSize() {
    if (IsTesting())                               return(true);            // skip in tester
-   if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(_false(CheckLastError("UpdateUnitSize(1)->CalculateUnitSize()")));
+   if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / stop distance                                                                  L - leverage                                       unitsize
+   string sUnitSize = "";         // R - risk / stop distance                                                             L - leverage                                       unitsize
    if (mode.intern && mm.risk && mm.stopDistance) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", DoubleToStr(mm.stopDistance, Digits & 1), "pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(mm.stopDistance, ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateUnitSize(2)", error));
+   return(!catch("UpdateUnitSize(1)", error));
 }
 
 
@@ -1214,28 +1198,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    279,   366,      427};
+         // col.xShifts[] = {20,   66,    149, 177,      243,    282,   369,      430};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
-         col.xShifts[3] = 174;
-         col.xShifts[4] = 240;
-         col.xShifts[5] = 279;
-         col.xShifts[6] = 366;
-         col.xShifts[7] = 427;
+         col.xShifts[3] = 177;
+         col.xShifts[4] = 243;
+         col.xShifts[5] = 282;
+         col.xShifts[6] = 369;
+         col.xShifts[7] = 430;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    279,      340};
+         // col.xShifts[] = {20,   66,    149, 177,      243,    282,      343};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
-         col.xShifts[3] = 174;
-         col.xShifts[4] = 240;
-         col.xShifts[5] = 279;
-         col.xShifts[6] = 340;
+         col.xShifts[3] = 177;
+         col.xShifts[4] = 243;
+         col.xShifts[5] = 282;
+         col.xShifts[6] = 343;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;

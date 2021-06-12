@@ -7,7 +7,7 @@
  *
  * @return bool - validation success status
  */
-bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver) {
+bool ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver) {
    enabled  = false;
    receiver = "";
 
@@ -27,7 +27,7 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
    if (sValue == "on") {
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalsBySMS(1)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -45,7 +45,7 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
          return(true);
       receiver = GetConfigString(smsSection, receiverKey);
       if (!StrIsPhoneNumber(receiver)) {
-         if (StringLen(receiver) > 0) catch("ConfigureSignalingBySMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
+         if (StringLen(receiver) > 0) catch("ConfigureSignalsBySMS(2)  invalid phone number: ["+ smsSection +"]->"+ receiverKey +" = "+ DoubleQuoteStr(receiver), ERR_INVALID_CONFIG_VALUE);
          return(false);
       }
       enabled = true;
@@ -53,5 +53,5 @@ bool ConfigureSignalingBySMS(string configValue, bool &enabled, string &receiver
    }
 
    receiver = configValue;
-   return(!catch("ConfigureSignalingBySMS(3)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
+   return(!catch("ConfigureSignalsBySMS(3)  invalid configuration value: "+ DoubleQuoteStr(configValue), ERR_INVALID_CONFIG_VALUE));
 }
