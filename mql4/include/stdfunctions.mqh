@@ -6399,9 +6399,9 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
                           maAppliedPrice,                                  // string MA.AppliedPrice
 
                           Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
+                          Blue,                                            // color  Color.DownTrend
                           "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
+                          0,                                               // int    Draw.Width
                           -1,                                              // int    Max.Bars
                           "",                                              // string ____________________
                           "off",                                           // string Signal.onTrendChange
