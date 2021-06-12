@@ -1,13 +1,12 @@
 /**
  * XMT-Scalper revisited
  *
- *
- * This EA is originally based on the infamous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
+ * This EA is originally based on the famous "MillionDollarPips EA". The core idea of the strategy is scalping based on a
  * reversal from a channel breakout. Over the years it has gone through multiple transformations. Today various versions with
  * different names circulate in the internet (MDP-Plus, XMT-Scalper, Assar). None of them is suitable for real trading, mainly
- * due to lack of signal documentation and a significant amount of issues in the program logic.
+ * due to lack of signal documentation and a significant amount of issues in the program logic. This version is a full rewrite.
  *
- * This version is a complete rewrite.
+ * WARNING: This code is unfinished work-in-progress. Only use it in demo accounts. Don't risk real money.
  *
  * Sources:
  *  @link  https://github.com/rosasurfer/mt4-mql/blob/a1b22d0/mql4/experts/mdp#             [MillionDollarPips v2 decompiled]
