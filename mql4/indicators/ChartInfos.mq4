@@ -33,9 +33,9 @@ extern string Signal.SMS     = "on | off | auto*";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <functions/ConfigureSignalingByMail.mqh>
-#include <functions/ConfigureSignalingBySMS.mqh>
-#include <functions/ConfigureSignalingBySound.mqh>
+#include <functions/ConfigureSignalsByMail.mqh>
+#include <functions/ConfigureSignalsBySMS.mqh>
+#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>

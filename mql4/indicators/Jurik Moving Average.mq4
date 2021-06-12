@@ -148,10 +148,10 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignaling.mqh>
-#include <functions/ConfigureSignalingByMail.mqh>
-#include <functions/ConfigureSignalingBySMS.mqh>
-#include <functions/ConfigureSignalingBySound.mqh>
+#include <functions/ConfigureSignals.mqh>
+#include <functions/ConfigureSignalsByMail.mqh>
+#include <functions/ConfigureSignalsBySMS.mqh>
+#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/@JMA.mqh>
 #include <functions/@Trend.mqh>
@@ -252,11 +252,11 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignaling(ProgramName(), Signal.onTrendChange, signals))                                  return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals))                                  return(last_error);
    if (signals) {
-      if (!ConfigureSignalingBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalingByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalingBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
+      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
+      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
          signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }

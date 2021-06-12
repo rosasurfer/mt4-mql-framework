@@ -39,7 +39,7 @@ extern bool   Signal.onBreakout.SMS          = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
-#include <functions/ConfigureSignaling.mqh>
+#include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
 
 #define MODE_MA1              0              // indicator buffer ids
@@ -185,12 +185,12 @@ int onInit() {
 
    // signaling
    string signalId = "Signal.onBreakout";
-   if (!ConfigureSignaling2(signalId, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
+   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalingByAlert2(signalId, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
-      if (!ConfigureSignalingBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
-      if (!ConfigureSignalingByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
-      if (!ConfigureSignalingBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
+      if (!ConfigureSignalsByAlert2(signalId, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
       if (Signal.onBreakout.Alert || Signal.onBreakout.Sound || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
          signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Alert, "Alert+", "") + ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
          if (IsLogDebug()) logDebug("onInit(11)  "+ signalDescription);
