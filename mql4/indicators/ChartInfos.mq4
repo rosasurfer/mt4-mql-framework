@@ -54,7 +54,7 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.stopDistance;                                           // configured stop distance in pip
+double mm.stopDistance;                                           // configured stop distance in subpip
 double mm.unitSize;                                               // calculated unitsize according to risk and stop distance
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
@@ -1149,9 +1149,9 @@ bool UpdateUnitSize() {
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(_false(CheckLastError("UpdateUnitSize(1)->CalculateUnitSize()")));
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / stop distance                                                                  L - leverage                                       unitsize
+   string sUnitSize = "";         // R - risk / stop distance                                                             L - leverage                                       unitsize
    if (mode.intern && mm.risk && mm.stopDistance) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", DoubleToStr(mm.stopDistance, Digits & 1), "pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(mm.stopDistance, ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
@@ -1214,28 +1214,28 @@ bool UpdatePositions() {
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
       if (positions.absoluteProfits) {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    279,   366,      427};
+         // col.xShifts[] = {20,   66,    149, 177,      243,    282,   369,      430};
          ArrayResize(col.xShifts, 8);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
-         col.xShifts[3] = 174;
-         col.xShifts[4] = 240;
-         col.xShifts[5] = 279;
-         col.xShifts[6] = 366;
-         col.xShifts[7] = 427;
+         col.xShifts[3] = 177;
+         col.xShifts[4] = 243;
+         col.xShifts[5] = 282;
+         col.xShifts[6] = 369;
+         col.xShifts[7] = 430;
       }
       else {
          // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 174,      240,    279,      340};
+         // col.xShifts[] = {20,   66,    149, 177,      243,    282,      343};
          ArrayResize(col.xShifts, 7);
          col.xShifts[0] =  20;
          col.xShifts[1] =  66;
          col.xShifts[2] = 149;
-         col.xShifts[3] = 174;
-         col.xShifts[4] = 240;
-         col.xShifts[5] = 279;
-         col.xShifts[6] = 340;
+         col.xShifts[3] = 177;
+         col.xShifts[4] = 243;
+         col.xShifts[5] = 282;
+         col.xShifts[6] = 343;
       }
       cols                = ArraySize(col.xShifts);
       percentCol          = cols - 2;
