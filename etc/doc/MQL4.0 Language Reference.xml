@@ -8589,50 +8589,54 @@ double value = iIchimoku(NULL, 0, 9, 26, 52, MODE_TENKANSEN, 1);
       caption=iMAOnArray() - Moving Average on custom data
       type=double
       <content>
-        Calculates the Moving Average indicator on custom data. To improve performance the calculated MA series is cached.
+        Calculates the Moving Average on custom data. To improve performance the calculated MA price series is cached.
         Write access to the source array invalidates the cache.<br/><br/>
         @see <a target="_blank" href="https://www.mql5.com/en/forum/110380#comment_3057406">https://www.mql5.com/en/forum/110380#comment_3057406</a>
       </content>
       <example>
-<span class="type">double</span> maCurrent     = <span class="function">iMAOnArray</span>(buffer, <span class="const">WHOLE_ARRAY</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">0</span>);
-<span class="type">double</span> maCurrentSlow = <span class="function">iMAOnArray</span>(buffer, <span class="const">WHOLE_ARRAY</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">0</span>);
-<span class="type">double</span> maPrev        = <span class="function">iMAOnArray</span>(buffer, <span class="const">WHOLE_ARRAY</span>, <span class="number">5</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">1</span>);
-<span class="type">double</span> maPrevSlow    = <span class="function">iMAOnArray</span>(buffer, <span class="const">WHOLE_ARRAY</span>, <span class="number">10</span>, <span class="number">0</span>, <span class="const">MODE_LWMA</span>, <span class="number">1</span>);
+<span class="type code">double</span> currFast = <span class="function code">iMAOnArray</span>(array, <span class="const code">WHOLE_ARRAY</span>, <span class="number code"> 5</span>, <span class="number code">0</span>, <span class="const code">MODE_LWMA</span>, <span class="number code">0</span>);
+<span class="type code">double</span> currSlow = <span class="function code">iMAOnArray</span>(array, <span class="const code">WHOLE_ARRAY</span>, <span class="number code">10</span>, <span class="number code">0</span>, <span class="const code">MODE_LWMA</span>, <span class="number code">0</span>);
+<span class="type code">double</span> prevFast = <span class="function code">iMAOnArray</span>(array, <span class="const code">WHOLE_ARRAY</span>, <span class="number code"> 5</span>, <span class="number code">0</span>, <span class="const code">MODE_LWMA</span>, <span class="number code">1</span>);
+<span class="type code">double</span> prevSlow = <span class="function code">iMAOnArray</span>(array, <span class="const code">WHOLE_ARRAY</span>, <span class="number code">10</span>, <span class="number code">0</span>, <span class="const code">MODE_LWMA</span>, <span class="number code">1</span>);
 <br/>
 
-<span class="keyword">if</span> (maPrev &lt; maPrevSlow &amp;&amp; maCurrent &gt;= maCurrentSlow) {
-   <span class="function">Alert</span>(<span class="string">&quot;crossing up&quot;</span>);
+<span class="keyword code">if</span> (prevFast &lt; prevSlow &amp;&amp; currFast &gt;= currSlow) {
+   <span class="function code">Alert</span>(<span class="string code">"crossing up"</span>);
 }
       </example>
       <parameter>
         type=double
-        name=<nobr>array[]</nobr>
+        name=<nobr>values[]</nobr>
         description=Array with custom data.
       </parameter>
       <parameter>
         type=int
-        name=values
-        description=Amount of values to recalculate. Positive value or <span class="const">WHOLE_ARRAY</span> to initialize the indicator on first usage.
+        name=size
+        <description>
+          Number of source values to create the MA price series from. Positive value or <span class="const">WHOLE_ARRAY</span> (<span class="number">0</span>) 
+          to use all available values.<br/>MA creation happens on an invalid cache only (e.g. on first usage or after write access to the source values). 
+          On a valid cache the parameter is ignored and the cache is used.
+        </description>
       </parameter>
       <parameter>
         type=int
-        name=maPeriods
-        description=Averaging period.
+        name=periods
+        description=MA periods.
       </parameter>
       <parameter>
         type=int
-        name=maShift
+        name=shift
         description=MA shift.
       </parameter>
       <parameter>
         type=int
-        name=maMethod
-        description=MA method. Can be any of the <a href="help://constants_movings">Moving Average method enumeration</a> values.
+        name=method
+        description=MA method. One of the <a href="help://constants_movings">Moving Average method</a> identifiers.
       </parameter>
       <parameter>
         type=int
-        name=index
-        description=Array index of the value to return.
+        name=offset
+        description=Array offset of the value to return.
       </parameter>
     </function>
 
