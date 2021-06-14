@@ -3682,16 +3682,19 @@ Search direction. It can be any of the following values:<br/>
          and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first
          dimension of the target array (rows) is automatically increased.<br/>
          <br/>
-<b>Notes:</b>
-<br/>
-<li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
+         
+         <b>Notes:</b>
+         <br/>
+         <li>The source array range to copy must be non-empty.</li>
 
-<li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-    <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
-    of the indexing order of the arrays.</li>
-
-<li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-    <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
+         <li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
+         
+         <li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
+             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
+             of the indexing order of the arrays.</li>
+         
+         <li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
+             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
 
       </content>
       <example>
@@ -3717,13 +3720,13 @@ Search direction. It can be any of the following values:<br/>
         type=int
         name=to
         def_value=<span class="number">0</span>
-        description=target array start index to copy to (default: <span class="number">0</span>)
+        description=target start index to copy to (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
         name=from
         def_value=<span class="number">0</span>
-        description=source array start index to copy from (default: <span class="number">0</span>)
+        description=source start index to copy from (default: <span class="number">0</span>)
       </parameter>
       <parameter>
         type=int
