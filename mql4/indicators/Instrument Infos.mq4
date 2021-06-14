@@ -164,10 +164,10 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                                                                                        fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Vola/L:     "     + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"% PL/ADR  (L"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                                                                                      fgFontSize, fgFontName, fgFontColor);
+   double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
    double lots            = CalculateLots(Lots.TargetPerformance);
-   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Lots/PL:    "     + ifString(!lots,     "", NumberToStr(lots, ".0+") +" lot = "+ NumberToStr(Lots.TargetPerformance, ".0+") +"% PL/ADR  (L"+ DoubleToStr(leverage, 1) +")"), fgFontSize, fgFontName, fgFontColor);
+   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Unitsize:   "    + ifString(!lots,     "", NumberToStr(Lots.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(lots, ".0+") +" lot  (1:"+ DoubleToStr(leverage, 1) +")"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -245,17 +245,23 @@ int UpdateInstrumentInfos() {
 
 
 /**
- * Calculate and return the ADR (average daily range). Implemented as an approximation of LWMA(20xADR(1)).
+ * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
  *
  * @return double
  */
 double iADR() {
-   double adr1  = iATR(NULL, PERIOD_D1, 1, 1);     // TODO: convert to current timeframe and real ADR
-   double adr5  = iATR(NULL, PERIOD_D1, 5, 1);
-   double adr10 = iATR(NULL, PERIOD_D1, 10, 1);
-   double adr20 = iATR(NULL, PERIOD_D1, 20, 1);
+   static double ranges[], adr;
 
-   return((adr1 + adr5 + adr10 + adr20)/4);
+   if (!ArraySize(ranges)) {
+      int maPeriods = 20;
+      ArrayResize(ranges, maPeriods);
+      ArraySetAsSeries(ranges, true);
+      for (int i=0; i < maPeriods; i++) {
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+      }
+      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+   }
+   return(adr);
 }
 
 
