@@ -27,7 +27,7 @@ int onInit() {
 
       // read config: unitsize calculation
       section = "PositionSize";
-      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".StopDistance";
+      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".Distance";
       string sDefaultRisk = GetConfigString(section, defaultRiskKey);
       string sSymbolRisk  = GetConfigString(section, symbolRiskKey);
       string sSymbolDist  = GetConfigString(section, symbolDistKey);
