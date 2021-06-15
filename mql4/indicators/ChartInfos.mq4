@@ -55,8 +55,8 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.stopDistance;                                           // configured stop distance in subpip
-double mm.unitSize;                                               // calculated unitsize according to risk and stop distance
+double mm.pipTarget;                                              // configured target distance in pip
+double mm.unitSize;                                               // calculated unitsize according to risk and pip target
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
 double mm.externalAssets;                                         // additional assets not hold in the broker's account
@@ -1133,9 +1133,9 @@ bool UpdateUnitSize() {
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / stop distance                                                             L - leverage                                       unitsize
-   if (mode.intern && mm.risk && mm.stopDistance) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(mm.stopDistance, ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+   string sUnitSize = "";         // R - risk / pip target                                                                                 L - leverage                                       unitsize
+   if (mode.intern && mm.risk && mm.pipTarget) {
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(NormalizeDouble(mm.pipTarget, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
@@ -1742,9 +1742,9 @@ bool CalculateUnitSize() {
    mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
    mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
 
-   if (mm.risk && mm.stopDistance) {
+   if (mm.risk && mm.pipTarget) {
       double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
-      mm.unitSize         = risk/mm.stopDistance/pipValue;                    // unitsize for risk and stop distance
+      mm.unitSize         = risk/mm.pipTarget/pipValue;                       // unitsize for risk and pip target
       mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
 
       // normalize the calculated unitsize
@@ -4063,6 +4063,30 @@ bool onPositionClose(int tickets[][]) {
 
 
 /**
+ * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ *
+ * @return double - ADR or NULL in case of errors
+ */
+double iADR() {
+   static double ranges[], adr;
+
+   if (!ArraySize(ranges)) {                                // TODO: invalidate static cache on BarOpen(D1)
+      int maPeriods = 20;
+      ArrayResize(ranges, maPeriods);
+      ArraySetAsSeries(ranges, true);
+      for (int i=0; i < maPeriods; i++) {
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+      }
+      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+
+      if (IsError(catch("iADR(1)")))
+         return(NULL);
+   }
+   return(adr);
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -4102,8 +4126,8 @@ string InputsToStr() {
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
 
-   string   IntsToStr            (int    array[], string separator);
-   string   DoublesToStr         (double array[], string separator);
-   string   TicketsToStr.Lots    (int    array[], string separator);
-   string   TicketsToStr.Position(int    array[]);
+   string   DoublesToStr(double array[], string separator);
+   string   IntsToStr            (int array[], string separator);
+   string   TicketsToStr.Lots    (int array[], string separator);
+   string   TicketsToStr.Position(int array[]);
 #import
