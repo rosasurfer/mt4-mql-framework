@@ -55,7 +55,7 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.pipTarget;                                              // configured target distance in pip
+double mm.pipRange;                                               // configured target distance in pip
 double mm.unitSize;                                               // calculated unitsize according to risk and pip target
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
@@ -1133,9 +1133,9 @@ bool UpdateUnitSize() {
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / pip target                                                                                 L - leverage                                       unitsize
-   if (mode.intern && mm.risk && mm.pipTarget) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(NormalizeDouble(mm.pipTarget, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+   string sUnitSize = "";         // R - risk / pip range                                                                                 L - leverage                                       unitsize
+   if (mode.intern && mm.risk && mm.pipRange) {
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
@@ -1742,9 +1742,9 @@ bool CalculateUnitSize() {
    mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
    mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
 
-   if (mm.risk && mm.pipTarget) {
+   if (mm.risk && mm.pipRange) {
       double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
-      mm.unitSize         = risk/mm.pipTarget/pipValue;                       // unitsize for risk and pip target
+      mm.unitSize         = risk/mm.pipRange/pipValue;                        // unitsize for risk and pip target
       mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
 
       // normalize the calculated unitsize

@@ -22,17 +22,17 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    if (mode.intern) {
-      mm.risk      = 0;                                                       // default: unitsize calculation disabled
-      mm.pipTarget = 0;
+      mm.risk     = 0;                                                        // default: unitsize calculation disabled
+      mm.pipRange = 0;
 
       // read config: unitsize calculation
       section = "Unitsize";
-      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolDistKey=stdSymbol +".Distance";
-      string sDefaultRisk = GetConfigString(section, defaultRiskKey); bool isDefaultRisk    = (sDefaultRisk != "");
-      string sSymbolRisk  = GetConfigString(section, symbolRiskKey);  bool isSymbolRisk     = (sSymbolRisk  != "");
-      string sSymbolDist  = GetConfigString(section, symbolDistKey);  bool isSymbolDistance = (sSymbolDist  != "");
+      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolRangeKey=stdSymbol +".PipRange";
+      string sDefaultRisk = GetConfigString(section, defaultRiskKey); bool isDefaultRisk = (sDefaultRisk != "");
+      string sSymbolRisk  = GetConfigString(section, symbolRiskKey);  bool isSymbolRisk  = (sSymbolRisk  != "");
+      string sSymbolRange = GetConfigString(section, symbolRangeKey); bool isSymbolRange = (sSymbolRange != "");
 
-      if ((isDefaultRisk || isSymbolRisk) && isSymbolDistance) {
+      if ((isDefaultRisk || isSymbolRisk) && isSymbolRange) {
          key    = ifString(isSymbolRisk, symbolRiskKey, defaultRiskKey);
          sValue = ifString(isSymbolRisk, sSymbolRisk,   sDefaultRisk);
 
@@ -41,17 +41,17 @@ int onInit() {
          if (dValue <= 0)           return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +": "+ sValue +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
          mm.risk = dValue;
 
-         key    = symbolDistKey;
-         sValue = sSymbolDist;
+         key    = symbolRangeKey;
+         sValue = sSymbolRange;
          if (StrCompareI(sValue, "ADR")) {
-            mm.pipTarget = iADR()/Pip;
-            debug("onInit(4)  using ADR of "+ NumberToStr(mm.pipTarget, ".+") +" pip for unitsize calculation");
+            mm.pipRange = iADR()/Pip;
+            debug("onInit(4)  using ADR of "+ NumberToStr(mm.pipRange, ".+") +" pip for unitsize calculation");
          }
          else {
             if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
             dValue = StrToDouble(sValue);
             if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +": "+ sValue +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-            mm.pipTarget = dValue;
+            mm.pipRange = dValue;
          }
       }
 
