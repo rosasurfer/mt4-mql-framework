@@ -45,13 +45,14 @@ int onInit() {
          sValue = sSymbolRange;
          if (StrCompareI(sValue, "ADR")) {
             mm.pipRange = iADR()/Pip;
-            debug("onInit(4)  using ADR of "+ NumberToStr(mm.pipRange, ".+") +" pip for unitsize calculation");
+            mm.pipRangeIsADR = true;
          }
          else {
             if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
             dValue = StrToDouble(sValue);
             if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +": "+ sValue +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
             mm.pipRange = dValue;
+            mm.pipRangeIsADR = false;
          }
       }
 
