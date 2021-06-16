@@ -55,7 +55,8 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.pipRange;                                               // configured target distance in pip
+double mm.pipRange;                                               // configured target range in pip
+double mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
 double mm.unitSize;                                               // calculated unitsize according to risk and pip target
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
@@ -1024,7 +1025,7 @@ bool CreateLabels() {
       ObjectDelete(label.externalAssets);
    if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 270);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 350);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
       RegisterObject(label.externalAssets);
@@ -1133,9 +1134,9 @@ bool UpdateUnitSize() {
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / pip range                                                                                 L - leverage                                       unitsize
+   string sUnitSize = "";         // R - risk / pip range                                                                                                                          L - leverage                                       unitsize
    if (mode.intern && mm.risk && mm.pipRange) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", ifString(mm.pipRangeIsADR, "ADR=", "") + NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
