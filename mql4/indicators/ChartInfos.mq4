@@ -56,7 +56,7 @@ double mm.lotValue;                                               // value of 1 
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
 double mm.pipRange;                                               // configured target range in pip
-double mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
+bool   mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
 double mm.unitSize;                                               // calculated unitsize according to risk and pip target
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
@@ -1134,9 +1134,17 @@ bool UpdateUnitSize() {
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / pip range                                                                                                                          L - leverage                                       unitsize
+   string sUnitSize="", sPipRange="";
    if (mode.intern && mm.risk && mm.pipRange) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", ifString(mm.pipRangeIsADR, "ADR=", "") + NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      if (mm.pipRangeIsADR) {
+         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ DoubleToStr(MathRound(mm.pipRange/100), 2);
+         else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
+      }
+      else {
+         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ".2+");
+         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+") +" pip";
+      }                           // R - risk / pip range                                    L - leverage                                       unitsize
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
