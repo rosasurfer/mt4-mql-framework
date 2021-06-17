@@ -1106,19 +1106,21 @@ bool UpdatePrice() {
 
 
 /**
- * Update the displayed spread.
+ * Update the spread display.
  *
  * @return bool - success status
  */
 bool UpdateSpread() {
-   if (!Bid) return(true);                                                 // symbol not (yet) subscribed: on start, account/template change, offline chart
+   string sSpread = " ";
 
-   string sSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);              // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-
+   if (Bid > 0) {                                                                   // handle symbol not (yet) subscribed: on start, account/template change, offline chart
+      if (Digits==2 && Bid>=500) sSpread = DoubleToStr((Ask-Bid)/Pip/100, 2);
+      else                       sSpread = DoubleToStr((Ask-Bid)/Pip, Digits & 1);  // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+   }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1130,7 +1132,7 @@ bool UpdateSpread() {
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                               return(true);            // skip in tester
+   if (IsTesting())                               return(true);                     // skip in tester
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
@@ -1149,7 +1151,7 @@ bool UpdateUnitSize() {
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
