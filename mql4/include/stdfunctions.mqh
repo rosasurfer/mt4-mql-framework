@@ -1117,9 +1117,9 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
+                else if (              _symbol=="US2000" )     result = "RUS2000";
                 if      (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
-                else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
                 else if (StrStartsWith(_symbol, "USDCHF"))     result = "USDCHF";
                 else if (StrStartsWith(_symbol, "USDCCK"))     result = "USDCZK";
