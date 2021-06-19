@@ -8778,7 +8778,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Gammarat Channel
+name=.attic/Gammarat Channel
 flags=339
 window_num=0
 <inputs>

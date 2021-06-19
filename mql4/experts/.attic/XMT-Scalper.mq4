@@ -2759,8 +2759,8 @@ bool ValidateInputs.SID() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog or may have been read and applied
- * from a status file.
+ * Validate all input parameters. Parameters may have been entered through the input dialog or read and applied from
+ * a status file.
  *
  * @return bool - whether input parameters are valid
  */
@@ -2864,7 +2864,7 @@ bool ValidateInputs() {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a (non-)terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a non-/terminating error is set.
  *
  * @param  string message - error message
  *
@@ -2874,7 +2874,7 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                      // a non-terminating error
+      return(logError(message, error));                      // non-terminating
    return(catch(message, error));
 }
 

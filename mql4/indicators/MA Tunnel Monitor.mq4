@@ -348,25 +348,25 @@ bool onBreakout(int mode) {
    int error = NO_ERROR;
 
    if (mode == MODE_LONG) {
-      message = "MA tunnel breakout LONG";
+      message = "MA tunnel breakout LONG ("+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onBreakout(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Alert)           Alert(message);
       if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundUp);
-      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message +NL+ accountTime);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);
    }
 
    if (mode == MODE_SHORT) {
-      message = "MA tunnel breakout SHORT";
+      message = "MA tunnel breakout SHORT ("+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onBreakout(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Alert)           Alert(message);
       if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundDown);
-      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message +NL+ accountTime);
+      if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);
    }
