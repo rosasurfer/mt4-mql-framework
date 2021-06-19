@@ -55,8 +55,9 @@ bool   mm.done;                                                   // processing 
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
 double mm.risk;                                                   // configured position risk in %
-double mm.stopDistance;                                           // configured stop distance in subpip
-double mm.unitSize;                                               // calculated unitsize according to risk and stop distance
+double mm.pipRange;                                               // configured target range in pip
+bool   mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
+double mm.unitSize;                                               // calculated unitsize according to risk and pip target
 double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
 double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
 double mm.externalAssets;                                         // additional assets not hold in the broker's account
@@ -1024,7 +1025,7 @@ bool CreateLabels() {
       ObjectDelete(label.externalAssets);
    if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 270);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 350);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
       RegisterObject(label.externalAssets);
@@ -1105,19 +1106,21 @@ bool UpdatePrice() {
 
 
 /**
- * Update the displayed spread.
+ * Update the spread display.
  *
  * @return bool - success status
  */
 bool UpdateSpread() {
-   if (!Bid) return(true);                                                 // symbol not (yet) subscribed: on start, account/template change, offline chart
+   string sSpread = " ";
 
-   string sSpread = DoubleToStr((Ask - Bid)/Pip, Digits & 1);              // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-
+   if (Bid > 0) {                                                                   // handle symbol not (yet) subscribed: on start, account/template change, offline chart
+      if (Digits==2 && Bid>=500) sSpread = DoubleToStr((Ask-Bid)/Pip/100, 2);
+      else                       sSpread = DoubleToStr((Ask-Bid)/Pip, Digits & 1);  // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+   }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1129,18 +1132,26 @@ bool UpdateSpread() {
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                               return(true);            // skip in tester
+   if (IsTesting())                               return(true);                     // skip in tester
    if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
    if (!mm.done)                                  return(true);
 
-   string sUnitSize = "";         // R - risk / stop distance                                                             L - leverage                                       unitsize
-   if (mode.intern && mm.risk && mm.stopDistance) {
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", NumberToStr(mm.stopDistance, ".+"), " pip     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+   string sUnitSize="", sPipRange="";
+   if (mode.intern && mm.risk && mm.pipRange) {
+      if (mm.pipRangeIsADR) {
+         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ DoubleToStr(MathRound(mm.pipRange/100), 2);
+         else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
+      }
+      else {
+         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ".2+");
+         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+") +" pip";
+      }                           // R - risk / pip range                                    L - leverage                                       unitsize
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                         // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1742,9 +1753,9 @@ bool CalculateUnitSize() {
    mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
    mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
 
-   if (mm.risk && mm.stopDistance) {
+   if (mm.risk && mm.pipRange) {
       double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
-      mm.unitSize         = risk/mm.stopDistance/pipValue;                    // unitsize for risk and stop distance
+      mm.unitSize         = risk/mm.pipRange/pipValue;                        // unitsize for risk and pip target
       mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
 
       // normalize the calculated unitsize
@@ -4063,6 +4074,30 @@ bool onPositionClose(int tickets[][]) {
 
 
 /**
+ * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ *
+ * @return double - ADR or NULL in case of errors
+ */
+double iADR() {
+   static double ranges[], adr;
+
+   if (!ArraySize(ranges)) {                                // TODO: invalidate static cache on BarOpen(D1)
+      int maPeriods = 20;
+      ArrayResize(ranges, maPeriods);
+      ArraySetAsSeries(ranges, true);
+      for (int i=0; i < maPeriods; i++) {
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+      }
+      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+
+      if (IsError(catch("iADR(1)")))
+         return(NULL);
+   }
+   return(adr);
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -4102,8 +4137,8 @@ string InputsToStr() {
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
 
-   string   IntsToStr            (int    array[], string separator);
-   string   DoublesToStr         (double array[], string separator);
-   string   TicketsToStr.Lots    (int    array[], string separator);
-   string   TicketsToStr.Position(int    array[]);
+   string   DoublesToStr(double array[], string separator);
+   string   IntsToStr            (int array[], string separator);
+   string   TicketsToStr.Lots    (int array[], string separator);
+   string   TicketsToStr.Position(int array[]);
 #import

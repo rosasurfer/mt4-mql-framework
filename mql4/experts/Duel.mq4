@@ -1,10 +1,18 @@
 /**
- * Duel. A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
+ * Duel
  *
  * Eye to eye stand winners and losers
  * Hurt by envy, cut by greed
  * Face to face with their own disillusions
  * The scars of old romances still on their cheeks
+ *
+ * The first cut won't hurt at all
+ * The second only makes you wonder
+ * The third will have you on your knees
+ * You start bleeding, I start screaming
+ *
+ *
+ * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
@@ -14,7 +22,9 @@
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
  * @todo  generate consecutive sequence ids in tester
- * @todo  many more...
+ * @todo  and many more...
+ *
+ * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [Liner notes: I've looked at life from both sides now.]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
@@ -29,8 +39,8 @@ extern double   UnitSize               = 0.1;                     // lots at the
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{amount}[%]";           // TP as absolute or percentage value
-extern string   StopLoss               = "{amount}[%]";           // SL as absolute or percentage value
+extern string   TakeProfit             = "{number}[%]";           // TP as absolute or percentage value
+extern string   StopLoss               = "{number}[%]";           // SL as absolute or percentage value
 extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // server time, the date part is ignored
@@ -1735,8 +1745,8 @@ void RestoreInputs() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
- * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
+ * Validate input parameters. Parameters may have been entered through the input dialog, read from a status file or
+ * deserialized and applied programmatically by the terminal (e.g. at terminal restart).
  *
  * @return bool - whether input parameters are valid
  */
@@ -1790,7 +1800,7 @@ bool ValidateInputs() {
    // TakeProfit
    bool unsetTpPct = false, unsetTpAbs = false;
    sValue = StrTrim(TakeProfit);
-   if (StringLen(sValue) && sValue!="{amount}[%]") {
+   if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
       if (!StrIsNumeric(sValue))                             return(!onInputError("ValidateInputs(11)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit)));
@@ -1825,7 +1835,7 @@ bool ValidateInputs() {
    // StopLoss
    bool unsetSlPct = false, unsetSlAbs = false;
    sValue = StrTrim(StopLoss);
-   if (StringLen(sValue) && sValue!="{amount}[%]") {
+   if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
       if (!StrIsNumeric(sValue))                             return(!onInputError("ValidateInputs(12)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss)));

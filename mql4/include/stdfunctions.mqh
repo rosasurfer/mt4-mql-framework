@@ -532,18 +532,18 @@ bool IsTicket(int ticket) {
  * Select a ticket.
  *
  * @param  int    ticket                      - ticket id
- * @param  string label                       - label for potential error message
+ * @param  string id                          - identifier of a potential error message
  * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
  * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
  *                                              (default: yes on pushTicket=TRUE, no on pushTicket=FALSE)
  * @return bool - success status
  */
-bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorPopTicket=false) {
+bool SelectTicket(int ticket, string id, bool pushTicket=false, bool onErrorPopTicket=false) {
    pushTicket       = pushTicket!=0;
    onErrorPopTicket = onErrorPopTicket!=0;
 
    if (pushTicket) {
-      if (!OrderPush(label)) return(false);
+      if (!OrderPush(id)) return(false);
       onErrorPopTicket = true;
    }
 
@@ -551,12 +551,12 @@ bool SelectTicket(int ticket, string label, bool pushTicket=false, bool onErrorP
       return(true);                             // success
 
    if (onErrorPopTicket)                        // error
-      if (!OrderPop(label)) return(false);
+      if (!OrderPop(id)) return(false);
 
    int error = GetLastError();
    if (!error)
       error = ERR_INVALID_TICKET;
-   return(!catch(label +"->SelectTicket()   ticket="+ ticket, error));
+   return(!catch(id +"->SelectTicket()   ticket="+ ticket, error));
 }
 
 
@@ -1117,9 +1117,9 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
-                if      (              _symbol=="US30"   )     result = "DJIA";
+                if      (              _symbol=="US2000" )     result = "RUS2000";
+                else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
-                else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
                 else if (StrStartsWith(_symbol, "USDCHF"))     result = "USDCHF";
                 else if (StrStartsWith(_symbol, "USDCCK"))     result = "USDCZK";
