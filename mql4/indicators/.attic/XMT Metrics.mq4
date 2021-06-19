@@ -3,7 +3,7 @@
  *
  * Visualizes performance metrics of an XMT-Scalper sequence.
  *
- * @see  mql4/experts/XMT-Scalper.mq4
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
