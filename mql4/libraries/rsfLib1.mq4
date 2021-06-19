@@ -4704,7 +4704,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
  * Notes: Typical trade operation errors returned in oe.Error are:
  *        - ERR_INVALID_TRADE_VOLUME:   the trade volume is not supported by the broker
  *        - ERR_INVALID_STOP:           the pending order price violates the current market
- *        - ERR_STOP_DISTANCE_VIOLATED: SL or TP violate the broker's stop distance
+ *        - ERR_STOP_DISTANCE_VIOLATED: SL or TP violates the broker's stop distance
  */
 int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
