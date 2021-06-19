@@ -1,5 +1,7 @@
 /**
  * Management and processing of system performance metrics
+ *
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 #define METRIC_RC1      0              // real: cumulative PL in pip w/o commission
 #define METRIC_RC2      1              // real: cumulative PL in pip with commission

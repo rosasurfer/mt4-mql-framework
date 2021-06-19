@@ -16,12 +16,12 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods       = 9;                // 111
+extern int    MA.Periods       = 111;
 extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical | Weighted*";
 
 extern double Bands.Deviations = 2.5;
-extern color  Bands.Color      = Magenta;          // LightSkyBlue
-extern int    Bands.LineWidth  = 1;                // 3
+extern color  Bands.Color      = LightSkyBlue;
+extern int    Bands.LineWidth  = 3;
 extern string __a___________________________;
 
 extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
@@ -29,7 +29,7 @@ extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
 extern string __b___________________________;
 
-extern bool   AlertsOn         = true;
+extern bool   AlertsOn         = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

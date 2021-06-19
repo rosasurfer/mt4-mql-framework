@@ -1237,8 +1237,8 @@ bool ValidateInputs.SID() {
 
 
 /**
- * Validate all input parameters. Parameters may have been entered through the input dialog, may have been read and applied
- * from a status file or may have been deserialized and applied programmatically by the terminal (e.g. at terminal restart).
+ * Validate input parameters. Parameters may have been entered through the input dialog or deserialized and applied
+ * programmatically by the terminal (e.g. at terminal restart).
  *
  * @return bool - whether input parameters are valid
  */

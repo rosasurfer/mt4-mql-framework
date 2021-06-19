@@ -3,6 +3,8 @@
  * dialog.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 int onInitUser() {
    // check for and validate a specified sequence id
