@@ -215,6 +215,7 @@ int onTick() {
    else if (sequence.status == STATUS_STOPPED) {
    }
 
+   if (false) MakeScreenshot();
    return(catch("onTick(1)"));
 }
 
@@ -1473,22 +1474,28 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
 string GetLogFilename() {
    string name = GetStatusFilename();
    if (!StringLen(name)) return("");
-   return(StrLeft(name, -3) +"log");
+   return(StrLeftTo(name, ".", -1) +".log");
 }
 
 
 /**
  * Return the full name of the instance status file.
  *
+ * @param  relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
+ *                               (default: the absolute path)
+ *
  * @return string - filename or an empty string in case of errors
  */
-string GetStatusFilename() {
+string GetStatusFilename(bool relative = false) {
+   relative = relative!=0;
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string directory = "\\presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+   string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
    string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
 
-   return(GetMqlFilesPath() + directory + baseName);
+   if (relative)
+      return(directory + baseName);
+   return(GetMqlFilesPath() +"\\"+ directory + baseName);
 }
 
 
@@ -2395,6 +2402,30 @@ int CreateStatusBox() {
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
    return(catch("CreateStatusBox(1)"));
+}
+
+
+/**
+ * Create a screenshot of the running sequence and store it next to the status file.
+ *
+ * @return bool - success status
+ */
+bool MakeScreenshot() {
+   string filename = GetStatusFilename(/*relative=*/true);
+   if (!StringLen(filename)) return(false);
+
+   filename = StrLeftTo(filename, ".", -1) +" "+ GmtTimeFormat(TimeServer(), "%Y.%m.%d %H.%M.%S") +".gif";
+   // debug("MakeScreenshot(0.1)  image file: "+ DoubleQuoteStr(filename));
+
+   int width      = 1600;
+   int height     =  900;
+   int startbar   =    0;        // all visible bars with bar 0 at the right edge
+   int chartScale =    2;
+   int barMode    =   -1;        // the current bar mode
+
+   if (WindowScreenShot(filename, width, height, startbar, chartScale, barMode))
+      return(true);
+   return(!logError("MakeScreenshot(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));    // don't terminate the program
 }
 
 
