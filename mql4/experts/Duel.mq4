@@ -2217,8 +2217,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.pyramidEnabled,    ", Pyramid: "+    NumberToStr(Pyramid.Multiplier, ".1+"), "");
-      sMartingale = ifString(sequence.martingaleEnabled, ", Martingale: "+ NumberToStr(Martingale.Multiplier, ".1+"), "");
+      sPyramid    = ifString(sequence.pyramidEnabled,    ",  Pyramid.M="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      sMartingale = ifString(sequence.martingaleEnabled, ",  Martingale.M="+ NumberToStr(Martingale.Multiplier, ".+"), "");
    }
 }
 
@@ -2371,7 +2371,7 @@ void SS.UnitSize() {
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
+ * Create the status display box. It consists of overlapping rectangles made of char "g", font "Webdings". Called only from
  * afterInit().
  *
  * @return int - error status
@@ -2379,7 +2379,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 60}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 115}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
