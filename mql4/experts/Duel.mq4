@@ -9,7 +9,6 @@
  * The first cut won't hurt at all
  * The second only makes you wonder
  * The third will have you on your knees
- * You start bleeding, I start screaming
  *
  *
  * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.

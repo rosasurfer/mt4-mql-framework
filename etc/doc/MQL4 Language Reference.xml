@@ -251,7 +251,7 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
       caption=Boolean values
       keywords=;bool;true;false;
       <content>
-        <p>Booleans can have the value of <span class="const">true</span> or <span class="const">false</span>, the numeric representation is 1 and 0.
+        <p>Booleans can have the value of <span class="const">TRUE</span> or <span class="const">FALSE</span>, the numeric representation is 1 and 0.
         <span class="const">True</span> or <span class="const">TRUE</span> and <span class="const">False</span> or
         <span class="const">FALSE</span> can be used as well.</p>
         <p class="doctabhdr">Examples:</p>
@@ -263,8 +263,8 @@ bool c = 1;</pre>
         <span style="color:red">Bug:</span>
         <br/>
         Ausdr&uuml;cke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch f&uuml;r
-        die &Uuml;bergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">true</span> oder
-        <span class="const">false</span> schlagen immer fehl.<br/>
+        die &Uuml;bergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">TRUE</span> oder
+        <span class="const">FALSE</span> schlagen immer fehl.<br/>
         Workaround: Die Ausdr&uuml;cke m&uuml;ssen bei der Zuweisung explizit gecastet werden.
       </content>
     </text>
@@ -460,9 +460,9 @@ so the shift is for the range of 0 to 31 bit. By %= operation (modulo x of y) th
       caption=Conditional operators
       keywords=;==;!=;&lt;;&gt;;&lt;=;&gt;=;
       <content>
-<p>The logical value <span class="const">false</span> is represented with an integer zero value, while the logical value <span class="const">true</span> is
+<p>The logical value <span class="const">FALSE</span> is represented with an integer zero value, while the logical value <span class="const">TRUE</span> is
 represented with any value differing from zero.<br/>The value of expressions
-containing conditional or logical operators is 0 (<span class="const">false</span>) or 1 (<span class="const">true</span>).</p>
+containing conditional or logical operators is 0 (<span class="const">FALSE</span>) or 1 (<span class="const">TRUE</span>).</p>
 <pre class="docmql4">
 True if a equals b                        a == b;
 True if a does not equal b                a != b;
@@ -482,16 +482,16 @@ outcome needs to be compared to <span class="const">NULL</span>.</p>
       caption=Boolean operators
       keywords=;||;&amp;&amp;;
       <content>
-<p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals <span class="const">true</span> (1) if the operand value is <span class="const">false</span> (0);
-and it equals <span class="const">false</span> (0) if the operand differs from <span class="const">false</span> (0).</p>
+<p>Operand of logical negation (operation NOT displayed as exclamation mark) must be of arithmetic type. The result equals <span class="const">TRUE</span> (1) if the operand value is <span class="const">FALSE</span> (0);
+and it equals <span class="const">FALSE</span> (0) if the operand differs from <span class="const">FALSE</span> (0).</p>
         <pre class="docmql4">if(!a) Print(&quot;not 'a'&quot;);</pre><br/>
 
-<p>Logical operation OR (||) of x and y values. The expression value is <span class="const">true</span> (1) if x or y value is <span class="const">true</span> (not <span class="const">NULL</span>).
-Otherwise, it is <span class="const">false</span> (0). Logical expressions are calculated completely, i.e., the so-called "short estimate" method does not apply to them.</p>
+<p>Logical operation OR (||) of x and y values. The expression value is <span class="const">TRUE</span> (1) if x or y value is <span class="const">TRUE</span> (not <span class="const">NULL</span>).
+Otherwise, it is <span class="const">FALSE</span> (0). Logical expressions are calculated completely, i.e., the so-called "short estimate" method does not apply to them.</p>
     <pre class="docmql4">if(x&lt;0 || x&gt;=max_bars) Print(&quot;out of range&quot;);</pre><br/>
 
-<p>Logical operation AND (&amp;&amp;) of x and y values. The expression value is <span class="const">true</span> (1) if both x and y values are <span class="const">true</span> (not <span class="const">NULL</span>).
-Otherwise, it is <span class="const">false</span> (0). </p>
+<p>Logical operation AND (&amp;&amp;) of x and y values. The expression value is <span class="const">TRUE</span> (1) if both x and y values are <span class="const">TRUE</span> (not <span class="const">NULL</span>).
+Otherwise, it is <span class="const">FALSE</span> (0). </p>
 <pre class="docmql4">if(p!=x &amp;&amp; p&gt;y) Print(&quot;true&quot;);</pre>
       </content>
     </text>
@@ -513,8 +513,8 @@ i.e., the freed left-side bits will be filled with zeros.</p>
 be filled with zeroes.</p>
         <pre class="docmql4">x = x &lt;&lt; y;</pre><br/>
 
-<p>Bitwise operation AND of binary-coded x and y representations. The value of the expression contains 1 (<span class="const">true</span>)
-in all digits where both x and y do not contain zero; and it contains 0 (<span class="const">false</span>) in all other digits.</p>
+<p>Bitwise operation AND of binary-coded x and y representations. The value of the expression contains 1 (<span class="const">TRUE</span>)
+in all digits where both x and y do not contain zero; and it contains 0 (<span class="const">FALSE</span>) in all other digits.</p>
         <pre class="docmql4">b = ((x &amp; y) != 0);</pre><br/>
 
 <p>Bitwise operation OR of binary-coded x and y representations. The expression value contains 1 in all digits
@@ -748,8 +748,8 @@ must be enclosed in parentheses and should not contain an assignment operator.</
       caption=Conditional operator if-else
       keywords=;else;
       <content>
-        <p>If the expression is <span class="const">true</span>, operator1 is executed and the control is given to the operator that follows
-      operator2 (operator2 is not executed). If the expression is <span class="const">false</span>, operator2 is executed.</p>
+        <p>If the expression is <span class="const">TRUE</span>, operator1 is executed and the control is given to the operator that follows
+      operator2 (operator2 is not executed). If the expression is <span class="const">FALSE</span>, operator2 is executed.</p>
         <pre class="docmql4"><i>if (expression)
      operator1
 else
@@ -836,11 +836,11 @@ the same values.</p>
       caption=while() loop construct
       keywords=;while;
       <content>
-        <p>If the expression is <span class="const">true</span>, the operator is executed until the expression becomes <span class="const">false</span>. If the expression
-      is <span class="const">false</span>, the control will be given to the next operator.</p>
+        <p>If the expression is <span class="const">TRUE</span>, the operator is executed until the expression becomes <span class="const">FALSE</span>. If the expression
+      is <span class="const">FALSE</span>, the control will be given to the next operator.</p>
         <pre class="docmql4"><i>while(expression)
   operator;</i></pre><br/>
-        <p>An expression value has been defined before the operator is executed. Therefore, if the expression is <span class="const">false</span>
+        <p>An expression value has been defined before the operator is executed. Therefore, if the expression is <span class="const">FALSE</span>
       from the very beginning, the operator will not be executed at all.</p>
         <p class="doctabhdr">Example:</p>
         <pre class="docmql4">while(k&lt;n)
@@ -857,8 +857,8 @@ the same values.</p>
       keywords=;for;
       <content>
         <p><em>Expression1</em> describes the cycle initialization. <em>Expression2</em> is the conditional test for the cycle
-      termination. If it is <span class="const">true</span>, the loop body <em>for</em> operator will be executed. The cycle repeats until <em>Expression2</em>
-      becomes <span class="const">false</span>. If it is <span class="const">false</span>, the cycle will be terminated, and the control will be given to the next operator. <em>Expression3</em>
+      termination. If it is <span class="const">TRUE</span>, the loop body <em>for</em> operator will be executed. The cycle repeats until <em>Expression2</em>
+      becomes <span class="const">FALSE</span>. If it is <span class="const">FALSE</span>, the cycle will be terminated, and the control will be given to the next operator. <em>Expression3</em>
       is calculated after each iteration.</p>
       <pre class="docmql4"><i>for (Expression1; Expression2; Expression3)
    operator;</i></pre><br/>
@@ -872,7 +872,7 @@ while(Expression2)
   };</i></pre><br/>
 
         <p>Any of the three or all three expressions can be absent in the <em>for</em> operator, but the semicolons (;) that
-separate them must not be omitted. If Expression2 is omitted, it is considered constantly <span class="const">true</span>. The <em>for</em> (;;) operator is a
+separate them must not be omitted. If Expression2 is omitted, it is considered constantly <span class="const">TRUE</span>. The <em>for</em> (;;) operator is a
 continuous cycle equivalent to the <em>while(1)</em> operator. Either expression 1 or 3 can consist of several expressions combined by a comma operator ','.</p>
 
         <p class="doctabhdr">Examples:</p>
@@ -1011,7 +1011,7 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
       variables are used for them to be defined and for types to be declared. Description is not an operator.</p>
       <p><b>The basic types are:</b></p>
       <ul>
-          <li><a href="help://basics_types_bool">bool</a> - boolean values of <em><span class="const">true</span></em> and <em><span class="const">false</span></em>;</li>
+          <li><a href="help://basics_types_bool">bool</a> - boolean values of <em><span class="const">TRUE</span></em> and <em><span class="const">FALSE</span></em>;</li>
           <li><a href="help://basics_types_string">string</a> - character strings;</li>
           <li><a href="help://basics_types_double">double</a> - double-precision numbers with floating point.</li>
       </ul>
@@ -3133,8 +3133,8 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsConnected()
       type=bool
       <content>
-      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns <span class="const">true</span> if connection to the server was
-     successfully established, otherwise, it returns <span class="const">false</span>.
+      The function returns the status of the main connection between client terminal and server that performs data pumping. It returns <span class="const">TRUE</span> if connection to the server was
+     successfully established, otherwise, it returns <span class="const">FALSE</span>.
       </content>
       <example>
   if(!IsConnected())
@@ -3155,7 +3155,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      In builds &lt;= 509 the function returns <span class="const">false</span> in Strategy Tester.<br/>
+      In builds &lt;= 509 the function returns <span class="const">FALSE</span> in Strategy Tester.<br/>
       <br/>
       Workaround: Use the framework function <span class="function">IsDemoFix</span>() instead.
       </content>
@@ -3197,7 +3197,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsExpertEnabled()
       type=bool
       <content>
-        Returns <span class="const">true</span> if expert advisors are enabled for running, otherwise returns <span class="const">false</span>.
+        Returns <span class="const">TRUE</span> if expert advisors are enabled for running, otherwise returns <span class="const">FALSE</span>.
       </content>
       <example>
   while(!IsStopped())
@@ -3236,7 +3236,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsOptimization()
       type=bool
       <content>
-      Returns <span class="const">true</span> if expert runs in the strategy tester optimization mode, otherwise returns <span class="const">false</span>.
+      Returns <span class="const">TRUE</span> if expert runs in the strategy tester optimization mode, otherwise returns <span class="const">FALSE</span>.
       </content>
       <example>
   if(IsOptimization()) return(0);
@@ -3248,7 +3248,7 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       caption=IsStopped()
       type=bool
       <content>
-        Returns <span class="const">true</span> if the program (an expert or a script) has been commanded to stop its operation, otherwise returns <span class="const">false</span>.
+        Returns <span class="const">TRUE</span> if the program (an expert or a script) has been commanded to stop its operation, otherwise returns <span class="const">FALSE</span>.
       The program can continue operation for 2.5 seconds more before the client terminal stops its <a href="help://runtime_start">performing</a> forcedly.
       </content>
       <example>
@@ -3266,7 +3266,7 @@ while (expr!=false) {
       caption=IsTesting()
       type=bool
       <content>
-      Returns <span class="const">true</span> if expert runs in the testing mode, otherwise returns <span class="const">false</span>.
+      Returns <span class="const">TRUE</span> if expert runs in the testing mode, otherwise returns <span class="const">FALSE</span>.
       </content>
       <example>
   if(IsTesting()) Print(&quot;I am testing now&quot;);
@@ -3278,7 +3278,7 @@ while (expr!=false) {
       caption=IsTradeAllowed()
       type=bool
       <content>
-        Returns <span class="const">true</span> if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns <span class="const">false</span>.<br/>
+        Returns <span class="const">TRUE</span> if the expert is allowed to trade and a thread for trading is not occupied, otherwise returns <span class="const">FALSE</span>.<br/>
         <b>See also</b> <a href="help://runtimestatus_IsDllsAllowed">IsDllsAllowed()</a>, <a href="help://runtimestatus_IsLibrariesAllowed">IsLibrariesAllowed()</a>, <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy()</a>.
       </content>
       <example>
@@ -3291,7 +3291,7 @@ while (expr!=false) {
       caption=IsTradeContextBusy()
       type=bool
       <content>
-Returns <span class="const">true</span> if a thread for trading is occupied by another expert advisor, otherwise returns <span class="const">false</span>.<br/>
+Returns <span class="const">TRUE</span> if a thread for trading is occupied by another expert advisor, otherwise returns <span class="const">FALSE</span>.<br/>
 <b>See also</b> <a href="help://runtimestatus_IsTradeAllowed">IsTradeAllowed()</a>.
       </content>
       <example>
@@ -3884,7 +3884,7 @@ dim_size=ArrayDimension(num_array);
       caption=ArrayGetAsSeries()
       type=bool
       <content>
-        Returns <span class="const">true</span> if an array is organized as a series array (element storage is reverse-indexed, access to index 0 returns the last element), or <span class="const">false</span> otherwise.
+        Returns <span class="const">TRUE</span> if an array is organized as a series array (element storage is reverse-indexed, access to index 0 returns the last element), or <span class="const">FALSE</span> otherwise.
       </content>
       <example>
   if (ArrayGetAsSeries(array) == true) {
@@ -3933,7 +3933,7 @@ dim_size=ArrayDimension(num_array);
       caption=ArrayIsSeries()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the array under check is a series array (Time[],Open[],Close[],High[],Low[], or Volume[]), otherwise returns <span class="const">false</span>.
+      Returns <span class="const">TRUE</span> if the array under check is a series array (Time[],Open[],Close[],High[],Low[], or Volume[]), otherwise returns <span class="const">FALSE</span>.
       </content>
       <example>
    if(ArrayIsSeries(array1)==false)
@@ -4075,8 +4075,8 @@ dim_size=ArrayRange(num_array, 1);
       caption=ArraySetAsSeries()
       type=bool
       <content>
-        Sets the indexing direction of an array. If <i>reverse</i> is <span class="const">true</span> the array will be indexed in reversed order,
-        i.e. accessing index 0 returns the last element. Setting <i>reverse</i> to <span class="const">false</span> sets standard indexing order.<br/>
+        Sets the indexing direction of an array. If <i>reverse</i> is <span class="const">TRUE</span> the array will be indexed in reversed order,
+        i.e. accessing index 0 returns the last element. Setting <i>reverse</i> to <span class="const">FALSE</span> sets standard indexing order.<br/>
         Returns the previous state.<br/>
         <br/>
         <b>Notes:</b>
@@ -4305,7 +4305,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
 <span class="keyword">if</span> (!<span class="function">ObjectCreate</span>(&quot;text_object&quot;, <span class="const">OBJ_TEXT</span>, 0, D<span class="string">'2004.02.20 12:30'</span>, 1.0045)) {
    int button = <span class="function">MessageBox</span>(&quot;ObjectCreate() returned &quot;+ <span class="function">GetLastError</span>() +&quot;\nContinue?&quot;, &quot;Question&quot;, <span class="const">MB_YESNO</span>|<span class="const">MB_ICONQUESTION</span>);
    <span class="keyword">if</span> (button == <span class="const">IDNO</span>)
-      <span class="keyword">return</span>(<span class="const">false</span>);
+      <span class="keyword">return</span>(<span class="const">FALSE</span>);
 }
       </example>
       <parameter>
@@ -4384,7 +4384,7 @@ for (int i=0; i &lt; 10; i++) {
       caption=SendFTP()
       type=bool
       <content>
-Uploads a file to the FTP server configured in the Tools->Options->Publisher tab. If the attempt fails, it returns <span class="const">false</span>.<br/>
+Uploads a file to the FTP server configured in the Tools->Options->Publisher tab. If the attempt fails, it returns <span class="const">FALSE</span>.<br/>
 The function can neither be called in the Strategy Tester nor from custom indicators.<br/>
 The file to be sent must be stored in <span class="string">"{terminal-data-directory}\experts\files"</span> or its subdirectories.<br/>
 It will not be sent if there is no FTP address and/or access password specified in settings.
@@ -4443,7 +4443,7 @@ if (close &lt; my_signal) {
       type=bool
       <content>
          Sends a push notification to the mobile terminal whose MetaQuotes ID is specified Tools->Options->Notifications window.<br/>
-         On error the function returns <span class="const">false</span>. To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
+         On error the function returns <span class="const">FALSE</span>. To get error informations call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
          <br/>
          Note: Consecutive calls of SendNotification() are rate limited. No more than 2 calls per second and 10 calls per minute are allowed. If a limit is reached the function blocks.
       </content>
@@ -4904,7 +4904,7 @@ int init() {
       <content>
 Binds the array variable declared at a global level to the custom indicator pre-defined buffer.
 The amount of buffers needed to calculate the indicator is set with the <a href="help://indicatormanagement_IndicatorBuffers">IndicatorBuffers()</a> function and cannot
-exceed 8. If it succeeds, <span class="const">true</span> will be returned, otherwise, it will be <span class="const">false</span>.
+exceed 8. If it succeeds, <span class="const">TRUE</span> will be returned, otherwise, it will be <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
      </content>
       <example>
@@ -5666,7 +5666,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsEnding()
       type=bool
       <content>
-        Returns logical <span class="const">true</span> if file pointer is at the end of the file, otherwise returns <span class="const">false</span>.
+        Returns logical <span class="const">TRUE</span> if file pointer is at the end of the file, otherwise returns <span class="const">FALSE</span>.
         To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
         If the end of file is reached <a href="help://runtimestatus_GetLastError">GetLastError()</a> will return <span class="const">ERR_END_OF_FILE</span> (4099).
       </content>
@@ -5688,7 +5688,7 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsLineEnding()
       type=bool
       <content>
-        For CSV file returns logical <span class="const">true</span> if file pointer is at the end of the line, otherwise returns <span class="const">false</span>.
+        For CSV file returns logical <span class="const">TRUE</span> if file pointer is at the end of the line, otherwise returns <span class="const">FALSE</span>.
         To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
       </content>
       <example>
@@ -5964,7 +5964,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <content>
 The function moves the file pointer to a new position that is an offset, in bytes, from the beginning, the end or the
 current file position. The next reading or writing are made at a new position.<br/>
-If file pointer has been moved successfully, the function returns <span class="const">true</span>, otherwise, it returns <span class="const">false</span>.
+If file pointer has been moved successfully, the function returns <span class="const">TRUE</span>, otherwise, it returns <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -6275,7 +6275,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=GlobalVariableCheck()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the global variable exists and <span class="const">false</span> otherwise.
+      Returns <span class="const">TRUE</span> if the global variable exists and <span class="const">FALSE</span> otherwise.
       </content>
       <example>
 // check variable before use
@@ -6296,7 +6296,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       type=bool
       <content>
 Deletes the global variable.
-If the function succeeds the returned value will be <span class="const">true</span>, otherwise, it will be <span class="const">false</span>.
+If the function succeeds the returned value will be <span class="const">TRUE</span>, otherwise, it will be <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -6389,9 +6389,9 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <content>
 Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
 is no global variable, the function will generate <a href="help://constants_errors">error</a> <span class="const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)
-and return <span class="const">false</span>. When successfully executed, the function returns <span class="const">true</span>, otherwise, it returns <span class="const">false</span>. To get detailed error information,
+and return <span class="const">FALSE</span>. When successfully executed, the function returns <span class="const">TRUE</span>, otherwise, it returns <span class="const">FALSE</span>. To get detailed error information,
 call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="const">false</span>.<br/>
+If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="const">FALSE</span>.<br/>
 The function provides atomic access to the global variable, this is why it can be used for providing of a semaphore at interaction of
 several experts working simultaneously within one client terminal.
      </content>
@@ -7012,7 +7012,7 @@ a loss of significance in the result occurs and the function returns <span class
       type=bool
       <content>
 Deletes object having the specified name.
-If the function succeeds the returned value will be <span class="const">true</span>. Otherwise, it will be <span class="const">false</span>.<br/>
+If the function succeeds the returned value will be <span class="const">TRUE</span>. Otherwise, it will be <span class="const">FALSE</span>.<br/>
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       example=ObjectDelete(&quot;text_object&quot;);
@@ -7187,7 +7187,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       <content>
 The function moves an object coordinate in the chart. Objects can have from one to three coordinates depending on their
 <a href="help://constants_objects">types</a>.
-If the function succeeds the returned value will be <span class="const">true</span>. Otherwise, it will be <span class="const">false</span>.
+If the function succeeds the returned value will be <span class="const">TRUE</span>. Otherwise, it will be <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 The object coordinates are numbered starting from 0.
      </content>
@@ -7279,7 +7279,7 @@ Optional parameter. An object type to be deleted.
       caption=ObjectSet()
       type=bool
       <content>
-Changes the value of the specified object property. If the function succeeds the returned value will be <span class="const">true</span>. Otherwise, it will be <span class="const">false</span>.
+Changes the value of the specified object property. If the function succeeds the returned value will be <span class="const">TRUE</span>. Otherwise, it will be <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
 <br/><b>See also</b> <a href="help://objects_ObjectGet">ObjectGet()</a> function.
       </content>
@@ -7341,7 +7341,7 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       type=bool
       <content>
 Changes an object's description. For objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> the description is shown as text in the chart.
-Returns <span class="const">true</span> on success, otherwise <span class="const">false</span>. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
+Returns <span class="const">TRUE</span> on success, otherwise <span class="const">FALSE</span>. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
 The parameters <i>fontSize</i>, <i>fontName</i> and <i>fontColor</i> are used for objects of <span class="const">OBJ_TEXT</span> and <span class="const">OBJ_LABEL</span> only.
 For objects of <a href="help://constants_objects">other types</a> these parameters are ignored.<br/>
 <br/>
@@ -9234,9 +9234,9 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       <br/>
       <span style="color:red">Notes:</span>
       <br/>
-      exact = <span class="const">true</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
+      exact = <span class="const">TRUE</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, -1.
       <br/>
-      exact = <span class="const">false</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der
+      exact = <span class="const">FALSE</span>: Gibt den Index der Bar zur&uuml;ck, die den angegebenen Zeitpunkt abdeckt oder, falls keine solche Bar existiert, den Index der
       vorhergehenden, &auml;lteren Bar. Existiert keine solche vorhergehende Bar, wird der Index der letzten Bar zur&uuml;ckgegeben.<br/>
       <br/>
       Existieren keine Kursdaten, wird -1 zur&uuml;ckgegeben. Ist das Symbol unbekannt, d.h. es existiert nicht in der Datei "symbols.raw", oder ist der Timeframe kein Standard-Timeframe,
@@ -9270,7 +9270,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
         type=bool
         name=exact
         def_value=<span class="const">false</span>
-        description=Return mode when a covering bar is not found. <span class="const">true</span> - returns -1. <span class="const">false</span> - returns nearest bar.
+        description=Return mode when a covering bar is not found. <span class="const">TRUE</span> - returns -1. <span class="const">FALSE</span> - returns nearest bar.
       </parameter>
     </function>
 
@@ -9585,7 +9585,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       <content>
         <p>Any trade operation (functions of <a href="help://trading_OrderSend">OrderSend()</a>, <a href="help://trading_OrderClose">OrderClose</a>,
         <a href="help://trading_OrderCloseBy">OrderCloseBy</a>, <a href="help://trading_OrderDelete">OrderDelete</a> or <a href="help://trading_OrderModify">OrderModify</a>)
-        can fail, for a number of reasons, and return either negative <a href="help://trading_OrderSend">ticket number</a> or <span class="const">false</span>.
+        can fail, for a number of reasons, and return either negative <a href="help://trading_OrderSend">ticket number</a> or <span class="const">FALSE</span>.
         One can find out about the reason for fail by calling of the <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
         Every error must be processed in a special way. The most common recommendations are given below.</p>
 
@@ -9637,7 +9637,7 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
         <tr><td><span class="const">ERR_TRADE_MODIFY_DENIED</span></td><td>145</td><td>Modifying has been denied since the order is too close to market and locked for possible soon execution.
                                                  The <a href="help://predefined_variables">data</a> can be refreshed after more than 15 seconds using the <a href="help://windows_RefreshRates">RefreshRates</a> function, and
                                                  a retry can be made.</td></tr>
-        <tr><td><span class="const">ERR_TRADE_CONTEXT_BUSY</span></td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="const">false</span>.</td></tr>
+        <tr><td><span class="const">ERR_TRADE_CONTEXT_BUSY</span></td><td>146</td><td>The trade thread is busy. Retry only after the <a href="help://runtimestatus_IsTradeContextBusy">IsTradeContextBusy</a> function has returned <span class="const">FALSE</span>.</td></tr>
         <tr><td><span class="const">ERR_TRADE_EXPIRATION_DENIED</span></td><td>147</td><td>The use of pending order expiration date has been denied by the broker. The operation can only be repeated if the expiration parameter has been zeroized.</td></tr>
         <tr><td><span class="const">ERR_TRADE_TOO_MANY_ORDERS</span></td><td>148</td><td>The amount of open and pending orders has reached the limit set by the broker. New open positions and pending orders can be placed only after the existing positions or orders have been closed or deleted.</td></tr>
         <tr><td><span class="const">ERR_TRADE_HEDGE_PROHIBITED</span></td><td>149</td><td>An attempt to open a position opposite to the existing one when hedging is disabled. First the existing opposite position should be closed, all attempts of such trade operations must be stopped, or the program logic must be changed.</td></tr>
@@ -9652,8 +9652,8 @@ double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
       type=bool
       <content>
 Closes opened order.
-If the function succeeds the returned value is <span class="const">true</span>.
-If the function fails the returned value is <span class="const">false</span>.
+If the function succeeds the returned value is <span class="const">TRUE</span>.
+If the function fails the returned value is <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -9700,8 +9700,8 @@ Color of the closing arrow on the chart.
       type=bool
       <content>
 Closes an opened order by another opposite opened order.
-If the function succeeds the returned value is <span class="const">true</span>.
-If the function fails the returned value is <span class="const">false</span>.
+If the function succeeds the returned value is <span class="const">TRUE</span>.
+If the function fails the returned value is <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -9812,8 +9812,8 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=bool
       <content>
 Deletes previously opened pending order.
-If the function succeeds the returned value is <span class="const">true</span>.
-If the function fails the returned value is <span class="const">false</span>.
+If the function succeeds the returned value is <span class="const">TRUE</span>.
+If the function fails the returned value is <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.
       </content>
       <example>
@@ -9893,8 +9893,8 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=bool
       <content>
 Modification of characteristics for the previously opened position or pending orders.
-If the function succeeds the returned value will be <span class="const">true</span>.
-If the function fails the returned value will be <span class="const">false</span>.
+If the function succeeds the returned value will be <span class="const">TRUE</span>.
+If the function fails the returned value will be <span class="const">FALSE</span>.
 To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
 Notes: Open price and expiration time can be changed only for pending orders.<br/>
 If unchanged values are passed as the function parameters, the <a href="help://constants_errors">error</a> 1 (<span class="const">ERR_NO_RESULT</span>) will be generated.<br/>
@@ -10027,7 +10027,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
       type=bool
       keywords=;SELECT_BY_POS;SELECT_BY_TICKET;MODE_TRADES;MODE_HISTORY;
       <content>
-         Selects an order for further processing and returns <span class="const">true</span> on success or <span class="const">false</span> otherwise. For detailed error information
+         Selects an order for further processing and returns <span class="const">TRUE</span> on success or <span class="const">FALSE</span> otherwise. For detailed error information
          call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
          If the order is selected by ticket number the parameter <i>origin</i> is ignored.<br/>
          To find out the origin of an order its <a href="help://trading_OrderCloseTime">close time</a> needs to be analyzed. If the <a href="help://trading_OrderCloseTime">close time</a>
@@ -10037,7 +10037,7 @@ Note: The order must be previously selected by the <a href="help://trading_Order
          <br/>
          <span style="color:red">Bug:</span>
          <br/>
-         <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ung&uuml;ltiger Ticket-Nummer <span class="const">false</span> zur&uuml;ck, setzt jedoch keinen Fehler-Code.<br/>
+         <span class="function">OrderSelect</span>(int ticket, ...) gibt bei ung&uuml;ltiger Ticket-Nummer <span class="const">FALSE</span> zur&uuml;ck, setzt jedoch keinen Fehler-Code.<br/>
          Workaround: <span class="function">OrderSelectByTicket</span>() verwenden<br/>
          <br/>
       </content>
@@ -10337,7 +10337,7 @@ Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect
       <parameter>
         type=bool
         name=hide
-        description=<span class="const">true</span>, if there is a need to hide indicators, or else <span class="const">false</span>.
+        description=<span class="const">TRUE</span>, if there is a need to hide indicators, or else <span class="const">FALSE</span>.
       </parameter>
     </function>
 
@@ -10360,7 +10360,7 @@ Note: order must be selected by <a href="help://trading_OrderSelect">OrderSelect
       <content>
  Refreshing of data in <a href="help://predefined_variables">pre-defined variables and series arrays</a>.
  This function is used when expert advisor has been calculating for a long time and needs data refreshing.
- Returns <span class="const">true</span> if data are refreshed, otherwise returns <span class="const">false</span>. The only reason for data cannot be refreshed is that
+ Returns <span class="const">TRUE</span> if data are refreshed, otherwise returns <span class="const">FALSE</span>. The only reason for data cannot be refreshed is that
  they are the current data of the client terminal.<br/><br/>
  Experts and scripts operate with their own copy of history data. Data of the current symbol are copied at the first launch of the expert or script.
  At each subsequent launch of the expert (remember that script is <a href="help://runtime_start">executed</a> only once and does not depend on
@@ -10528,7 +10528,7 @@ if (hWnd != 0)
       caption=WindowIsVisible()
       type=bool
       <content>
-      Returns <span class="const">true</span> if the chart subwindow is visible, otherwise returns <span class="const">false</span>. The chart subwindow can be
+      Returns <span class="const">TRUE</span> if the chart subwindow is visible, otherwise returns <span class="const">FALSE</span>. The chart subwindow can be
       hidden due to the visibility properties of the indicator placed in it.
       </content>
       <example>
@@ -10679,7 +10679,7 @@ Note: For custom indicators, this value is undefined.
       caption=WindowScreenShot()
       type=bool
       <content>
-         Saves current chart screen shot as a GIF file. Returns <span class="const">false</span> if it fails. To get the error code, one has to use the
+         Saves current chart screen shot as a GIF file. Returns <span class="const">FALSE</span> if it fails. To get the error code, one has to use the
          <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
          The screen shot is saved in <span class="string">"{terminal-data-directory}\experts\files"</span> (<span class="string">"{terminal-data-directory}\tester\files"</span> during
          testing) directory or its subdirectories.
