@@ -619,7 +619,7 @@ bool SetLogfile(string filename) {
          }
       }
       else {
-         if (IsLogDebug()) logDebug("SetLogfile(2)  "+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=OFF: skipping custom logfile "+ DoubleQuoteStr(filename));
+         if (IsLogDebug()) logDebug("SetLogfile(2)  "+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=OFF: skipping custom logfile");
       }
    }
    return(SetLogfileA(__ExecutionContext, filename));
