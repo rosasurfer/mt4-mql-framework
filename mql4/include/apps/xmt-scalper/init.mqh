@@ -38,7 +38,7 @@ int onInitParameters() {
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  */

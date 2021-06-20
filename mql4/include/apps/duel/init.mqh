@@ -3,6 +3,8 @@
  * There was an input dialog.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/Duel.mq4
  */
 int onInitUser() {
    if (ValidateInputs()) {                                     // on success create a new sequence
@@ -13,8 +15,7 @@ int onInitUser() {
       long.enabled     = (sequence.directions & D_LONG  && 1);
       short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.SequenceName();
-      logDebug("onInitUser(1)  sequence "+ sequence.name +" created");
-      SetLogfile(GetLogFilename());
+      logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
    }
    return(catch("onInitUser(2)"));
 }
@@ -33,13 +34,23 @@ int onInitParameters() {
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  */
 int onInitTimeframeChange() {
    RestoreInputs();
    return(NO_ERROR);
+}
+
+
+/**
+ * Called after the chart symbol has changed. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitSymbolChange() {
+   return(SetLastError(ERR_ILLEGAL_STATE));
 }
 
 
@@ -51,6 +62,8 @@ int onInitTimeframeChange() {
 int afterInit() {
    CreateStatusBox();
    SS.All();
+
+   if (!SetLogfile(GetLogFilename())) return(last_error);
 
    if (IsTesting()) {                                          // initialize tester configuration
       string section = ProgramName() +".Tester";

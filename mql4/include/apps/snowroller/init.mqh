@@ -20,10 +20,8 @@ int onInit() {
 int onInitUser() {
    // check for a specified sequence id
    if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
-      SetLogfile(GetLogFilename());
-
       sequence.status = STATUS_WAITING;
-      if (!RestoreSequence()) SetLogfile("");
+      RestoreSequence();
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
@@ -41,7 +39,6 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      SetLogfile(GetLogFilename());
       SS.SequenceName();
       SaveStatus();
 
@@ -64,8 +61,7 @@ int onInitUser() {
 int onInitTemplate() {
    // restore sequence data from the chart
    if (RestoreChartStatus()) {
-      SetLogfile(GetLogFilename());                            // on success a sequence id was restored
-      RestoreSequence();
+      RestoreSequence();                                       // on success a sequence id was restored
    }
    DeleteChartStatus();
    return(last_error);
@@ -98,7 +94,7 @@ int onInitParameters() {
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  */
@@ -109,12 +105,11 @@ int onInitTimeframeChange() {
 
 
 /**
- * Called after the current chart symbol has changed. There was no input dialog.
+ * Called after the chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  */
 int onInitSymbolChange() {
-   SetLogfile("");
    return(SetLastError(ERR_ILLEGAL_STATE));
 }
 
@@ -138,6 +133,9 @@ int afterInit() {
    // initialize status display
    CreateStatusBox();
    SS.All();
+
+   if (!SetLogfile(GetLogFilename())) return(last_error);
+
    string section = ProgramName();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 

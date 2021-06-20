@@ -23,7 +23,7 @@
  * @todo  generate consecutive sequence ids in tester
  * @todo  and many more...
  *
- * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [Liner notes: I've looked at life from both sides now.]
+ * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [liner notes: I've looked at life from both sides now.]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};

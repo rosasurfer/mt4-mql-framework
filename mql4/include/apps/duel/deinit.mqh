@@ -2,6 +2,8 @@
  * Called before input parameters are changed.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/Duel.mq4
  */
 int onDeinitParameters() {
    BackupInputs();
