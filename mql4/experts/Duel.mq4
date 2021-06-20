@@ -2408,14 +2408,15 @@ int CreateStatusBox() {
 /**
  * Create a screenshot of the running sequence and store it next to the status file.
  *
+ * @param  string comment [optional] - additional comment to append to the filename (default: none)
+ *
  * @return bool - success status
  */
-bool MakeScreenshot() {
+bool MakeScreenshot(string comment = "") {
    string filename = GetStatusFilename(/*relative=*/true);
    if (!StringLen(filename)) return(false);
 
-   filename = StrLeftTo(filename, ".", -1) +" "+ GmtTimeFormat(TimeServer(), "%Y.%m.%d %H.%M.%S") +".gif";
-   // debug("MakeScreenshot(0.1)  image file: "+ DoubleQuoteStr(filename));
+   filename = StrLeftTo(filename, ".", -1) +" "+ GmtTimeFormat(TimeServer(), "%Y.%m.%d %H.%M.%S") + ifString(StringLen(comment), " "+ comment, "") +".gif";
 
    int width      = 1600;
    int height     =  900;
