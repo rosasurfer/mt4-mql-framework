@@ -1,7 +1,11 @@
 /**
  * MA Tunnel Monitor
  *
- * A signal monitor for an "MA Tunnel" setup.
+ * A signal monitor for trends defined by multiple moving averages. Can be used e.g. for the "XARD trend following" or the
+ * "Vegas tunnel" system.
+ *
+ * @link  https://forex-station.com/viewtopic.php?f=578267&t=8416709#                  [XARD - Simple Trend Following System]
+ * @link  https://www.forexfactory.com/thread/4365#                                                     [Vegas Tunnel Method]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
