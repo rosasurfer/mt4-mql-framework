@@ -5242,9 +5242,33 @@ string NumberToStr(double value, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   //debug("NumberToStr(double="+ DoubleToStr(value, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
    catch("NumberToStr(1)");
    return(outStr);
+}
+
+
+/**
+ * Format a value representing a pip range of the current symbol. Depending on the symbol and the size of the value the
+ * resulting string is in money or subpip notation.
+ *
+ * @param  double value                   - price range in pip
+ * @param  bool   appendSuffix [optional] - whether to append the suffix " pip" to the formatted value (default: no)
+ *
+ * @return string
+ */
+string PipToStr(double value, bool appendSuffix = false) {
+   string sValue = value;
+   if (StringGetChar(sValue, 3) == '#')                        // "-1.#IND0000" => NaN
+      return(sValue);                                          // "-1.#INF0000" => Infinite
+
+   if (Digits==2 && Close[0]>=500) {
+      sValue = NumberToStr(value/100, ",'R.2");                // 123 pip => 1.23
+   }
+   else {
+      sValue = NumberToStr(value, ",'R."+ (Digits & 1));       // 123 pip
+      if (appendSuffix) sValue = StringConcatenate(sValue, " pip");
+   }
+   return(sValue);
 }
 
 
@@ -6929,6 +6953,7 @@ void __DummyCalls() {
    PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
+   PipToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);

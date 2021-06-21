@@ -1109,15 +1109,13 @@ bool UpdatePrice() {
  */
 bool UpdateSpread() {
    string sSpread = " ";
+   if (Bid > 0)                                          // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+      sSpread = PipToStr((Ask-Bid)/Pip);                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
 
-   if (Bid > 0) {                                                                   // handle symbol not (yet) subscribed: on start, account/template change, offline chart
-      if (Digits==2 && Bid>=500) sSpread = DoubleToStr((Ask-Bid)/Pip/100, 2);
-      else                       sSpread = DoubleToStr((Ask-Bid)/Pip, Digits & 1);  // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-   }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1136,12 +1134,12 @@ bool UpdateUnitSize() {
    string sUnitSize="", sPipRange="";
    if (mode.intern && mm.risk && mm.pipRange) {
       if (mm.pipRangeIsADR) {
-         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ DoubleToStr(MathRound(mm.pipRange/100), 2);
+         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ NumberToStr(MathRound(mm.pipRange/100), ",'.2");
          else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
       }
       else {
-         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ".2+");
-         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+") +" pip";
+         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ",'.2+");
+         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ",'.+") +" pip";
       }                           // R - risk / pip range                                    L - leverage                                       unitsize
       sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ",'.+"), " lot");
    }
