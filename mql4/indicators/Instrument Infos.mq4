@@ -7,8 +7,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Volatility.UsedLeverage =  1;     // unleveraged => 1:1
-extern int Lots.TargetPerformance  = 10;     // in percent
+extern int Volatility.UsedLeverage    =  1;     // 1: unleveraged => 1:1
+extern int Unitsize.TargetPerformance = 10;     // in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,9 +60,9 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
 int onInit() {
    // validate inputs
    // Volatility.UsedLeverage
-   if (Volatility.UsedLeverage < 1) return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
-   // Lots.TargetPerformance
-   if (Lots.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Lots.TargetPerformance: "+ Lots.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (Volatility.UsedLeverage < 1)     return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
+   // Unitsize.TargetPerformance
+   if (Unitsize.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Unitsize.TargetPerformance: "+ Unitsize.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
    SetIndexLabel(0, NULL);          // "Data" window
    CreateChartObjects();
@@ -166,8 +166,8 @@ int UpdateInstrumentInfos() {
 
    double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                                                                                      fgFontSize, fgFontName, fgFontColor);
    double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
-   double lots            = CalculateLots(Lots.TargetPerformance);
-   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!lots,     "(not enough money)", NumberToStr(Lots.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(lots, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
+   double unitsize        = CalculateLots(Unitsize.TargetPerformance);
+   double leverage        = CalculateLeverage(unitsize);                    ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!unitsize, "(not enough money)", NumberToStr(Unitsize.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(unitsize, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
