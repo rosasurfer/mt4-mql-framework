@@ -235,6 +235,7 @@ datetime ParseDateTime(string value);;
 string   PeriodDescription(int period = NULL);;
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
+string   PipToStr(double value, bool appendSuffix = false);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
 double   PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
 bool     PlaySoundEx(string soundfile);;
