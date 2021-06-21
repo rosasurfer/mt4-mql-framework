@@ -38,8 +38,8 @@ extern double   UnitSize               = 0.1;                     // lots at the
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{number}[%]";           // TP as absolute or percentage value
-extern string   StopLoss               = "{number}[%]";           // SL as absolute or percentage value
+extern string   TakeProfit             = "{number}[%]";           // TP as absolute or percentage equity value
+extern string   StopLoss               = "{number}[%]";           // SL as absolute or percentage equity value
 extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // server time, the date part is ignored
@@ -187,8 +187,9 @@ string   sSequenceBePrice     = "";
 string   sSequenceTpPrice     = "";
 string   sSequenceSlPrice     = "";
 
-// debug settings                                        // configurable via framework config, @see Duel::afterInit()
-bool     tester.onStopPause = false;                     // whether to pause the tester after StopSequence()
+// debug settings                                        // configurable via framework config, see ::afterInit()
+bool     tester.onStopPause = false;                     // whether to pause a test after StopSequence()
+bool     test.reduceStatusWrites  = true;                // whether to minimize status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -200,23 +201,25 @@ bool     tester.onStopPause = false;                     // whether to pause the
  * @return int - error status
  */
 int onTick() {
-   if (sequence.status == STATUS_WAITING) {              // start a new sequence
+   if (sequence.status == STATUS_WAITING) {                    // start a new sequence
       if (IsStartSignal()) StartSequence();
    }
-   else if (sequence.status == STATUS_PROGRESSING) {     // manage a running sequence
-      bool gridChanged=false, gridError=false;           // whether the current gridlevel changed, and/or a grid error occurred
+   else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
+      bool gridChanged=false, gridError=false;                 // whether the current gridlevel changed, and/or a grid error occurred
 
-      if (UpdateStatus(gridChanged, gridError)) {        // check pending orders and open positions
+      if (UpdateStatus(gridChanged, gridError)) {              // check pending orders and open positions
          if      (gridError)      StopSequence();
          else if (IsStopSignal()) StopSequence();
-         else if (gridChanged)    UpdatePendingOrders(); // update pending orders
+         else if (gridChanged)    UpdatePendingOrders(true);   // saveStatus = true
       }
    }
    else if (sequence.status == STATUS_STOPPED) {
    }
 
-   if (false) MakeScreenshot();
    return(catch("onTick(1)"));
+
+   // dummy call
+   MakeScreenshot();
 }
 
 
@@ -373,7 +376,7 @@ bool StartSequence() {
    if (!UpdatePendingOrders()) return(false);                           // update pending orders
 
    if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
-   return(!catch("StartSequence(4)"));
+   return(SaveStatus());
 }
 
 
@@ -422,8 +425,9 @@ bool StopSequence() {
    sequence.status = STATUS_STOPPED;
    SS.StopConditions();
    if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped");
+   SaveStatus();
 
-   // pause/stop the tester according to the debug configuration
+   // pause or stop the tester according to the debug configuration
    if (IsTesting()) {
       if (!IsVisualMode())         Tester.Stop("StopSequence(4)");
       else if (tester.onStopPause) Tester.Pause("StopSequence(5)");
@@ -625,7 +629,8 @@ bool Grid.RemovePendingOrders() {
 bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   bool positionChanged = false;
+
+   bool positionChanged=false, saveStatus=false;
 
    if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.slippage,  long.openLots,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
    if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.slippage, short.openLots, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
@@ -633,9 +638,11 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (gridChanged || positionChanged) {
       sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
       SS.OpenLots();
+      saveStatus = true;
    }
    if (!ComputeProfit(positionChanged)) return(false);
 
+   if (saveStatus) SaveStatus();
    return(!catch("UpdateStatus(2)"));
 }
 
@@ -907,9 +914,12 @@ int UpdateStatus.OnGridError(string message, int error) {
 /**
  * Check existing pending orders and add new or missing ones.
  *
+ * @param bool saveStatus [optional] - whether to save the sequence status before function return (default: no)
+ *
  * @return bool - success status
  */
-bool UpdatePendingOrders() {
+bool UpdatePendingOrders(bool saveStatus = false) {
+   saveStatus = saveStatus!=0;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdatePendingOrders(1)  "+ sequence.name +" cannot update orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    bool gridChanged = false;
@@ -972,8 +982,9 @@ bool UpdatePendingOrders() {
       }
    }
 
-   if (gridChanged)                                            // call the function again if sequence levels have been missed
-      return(UpdatePendingOrders());
+   if (gridChanged) UpdatePendingOrders(false);                // call the function again if sequence levels have been missed
+   if (saveStatus)  SaveStatus();
+
    return(!catch("UpdatePendingOrders(4)"));
 }
 
@@ -2132,6 +2143,23 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
 
 
 /**
+ * Write the current sequence status to the status file.
+ *
+ * @return bool - success status
+ */
+bool SaveStatus() {
+   if (last_error || !sequence.id) return(false);
+
+   // In tester skip updating the status file except at the first call and at test end.
+   if (IsTesting() && test.reduceStatusWrites) {
+      static bool saved = false;
+      if (saved && __CoreFunction!=CF_DEINIT) return(true);
+      saved = true;
+   }
+}
+
+
+/**
  * Return a description of a sequence status code.
  *
  * @param  int status
@@ -2224,8 +2252,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.pyramidEnabled,    ",  Pyramid.M="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
-      sMartingale = ifString(sequence.martingaleEnabled, ",  Martingale.M="+ NumberToStr(Martingale.Multiplier, ".+"), "");
+      sPyramid    = ifString(sequence.pyramidEnabled,    ",  Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      sMartingale = ifString(sequence.martingaleEnabled, ",  Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
    }
 }
 
@@ -2386,7 +2414,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 115}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 155}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'
    string label;
 
@@ -2420,7 +2448,7 @@ bool MakeScreenshot(string comment = "") {
 
    int width      = 1600;
    int height     =  900;
-   int startbar   =    0;        // all visible bars with bar 0 at the right edge
+   int startbar   =  360;        // left-side bar index for an image width of 1600 pixel and margin-right of ~70 pixel with scale=2
    int chartScale =    2;
    int barMode    =   -1;        // the current bar mode
 
