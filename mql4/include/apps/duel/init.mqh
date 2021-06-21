@@ -16,6 +16,7 @@ int onInitUser() {
       short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.SequenceName();
       logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
+      SaveStatus();
    }
    return(catch("onInitUser(2)"));
 }
@@ -27,8 +28,8 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (!ValidateInputs())
-      RestoreInputs();
+   if (ValidateInputs()) SaveStatus();
+   else                  RestoreInputs();
    return(last_error);
 }
 
@@ -55,6 +56,16 @@ int onInitSymbolChange() {
 
 
 /**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   return(SetLastError(ERR_NOT_IMPLEMENTED));
+}
+
+
+/**
  * Initialization postprocessing. Not called if the reason-specific init handler returned with an error.
  *
  * @return int - error status
@@ -65,9 +76,10 @@ int afterInit() {
 
    if (!SetLogfile(GetLogFilename())) return(last_error);
 
-   if (IsTesting()) {                                          // initialize tester configuration
+   if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
-      tester.onStopPause = GetConfigBool(section, "OnStopPause", false);
+      tester.onStopPause      = GetConfigBool(section, "OnStopPause",       false);
+      test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
    }
    return(catch("afterInit(1)"));
 }
