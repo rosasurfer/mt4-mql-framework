@@ -1013,7 +1013,7 @@ bool CreateLabels() {
       ObjectDelete(label.orderCounter);
    if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 440);
+      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
       ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.orderCounter, " ", 1);
       RegisterObject(label.orderCounter);
@@ -1025,7 +1025,7 @@ bool CreateLabels() {
       ObjectDelete(label.externalAssets);
    if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 350);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 330);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
       RegisterObject(label.externalAssets);
@@ -1081,9 +1081,6 @@ bool CreateLabels() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePrice() {
-   static string priceFormat; if (!StringLen(priceFormat)) {
-      priceFormat = StringConcatenate(",,", PriceFormat);
-   }
    double price = Bid;
 
    if (!Bid) {                                           // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
@@ -1096,7 +1093,7 @@ bool UpdatePrice() {
          case PRICE_MEDIAN: price = NormalizeDouble((Bid + Ask)/2, Digits); break;
       }
    }
-   ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
+   ObjectSetText(label.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
@@ -1146,7 +1143,7 @@ bool UpdateUnitSize() {
          if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ".2+");
          else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+") +" pip";
       }                           // R - risk / pip range                                    L - leverage                                       unitsize
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ",'.+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
@@ -1172,7 +1169,7 @@ bool UpdatePositions() {
    // (1) Gesamtpositionsanzeige unten rechts
    string sCurrentLeverage, sCurrentPosition;
    if      (!isPosition   ) sCurrentPosition = " ";
-   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
