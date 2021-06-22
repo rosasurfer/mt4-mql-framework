@@ -1,5 +1,5 @@
 /**
- * Duel
+ * Duel:  A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
  * Eye to eye stand winners and losers
  * Hurt by envy, cut by greed
@@ -11,8 +11,6 @@
  * The third will have you on your knees
  *
  *
- * A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
- *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
@@ -20,7 +18,6 @@
  *
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
- * @todo  generate consecutive sequence ids in tester
  * @todo  and many more...
  *
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [liner notes: I've looked at life from both sides now.]
@@ -172,6 +169,7 @@ datetime sessionbreak.endtime;
 
 // cache vars to speed-up ShowStatus()
 string   sUnitSize            = "";
+string   sGridSize            = "";
 string   sGridBase            = "";
 string   sPyramid             = "";
 string   sMartingale          = "";
@@ -361,19 +359,19 @@ bool StartSequence() {
    else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
    SS.GridBase();
 
-   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
    sequence.status      = STATUS_PROGRESSING;
 
    if (long.enabled) {
-      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);              // open a long position for level 1
+      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);        // open a long position for level 1
    }
    if (short.enabled) {
-      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);              // open a short position for level 1
+      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);        // open a short position for level 1
    }
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
-   if (!UpdatePendingOrders()) return(false);                           // update pending orders
+   if (!UpdatePendingOrders()) return(false);                     // update pending orders
 
    if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(SaveStatus());
@@ -2211,21 +2209,21 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
-                                                                                                              NL,
-                                  "Grid:              ",  GridSize, " pip", sGridBase, sPyramid, sMartingale, NL,
-                                  "UnitSize:        ",    sUnitSize,                                          NL,
-                                  "Stop:             ",   sStopConditions,                                    NL,
-                                                                                                              NL,
-                                  "Long:             ",   sOpenLongLots,                                      NL,
-                                  "Short:            ",   sOpenShortLots,                                     NL,
-                                  "Total:            ",   sOpenTotalLots,                                     NL,
-                                                                                                              NL,
-                                  "BE:                 ", sSequenceBePrice,                                   NL,
-                                  "TP:                 ", sSequenceTpPrice,                                   NL,
-                                  "SL:                 ", sSequenceSlPrice,                                   NL,
-                                                                                                              NL,
-                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,                 NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                 NL,
+                                                                                                       NL,
+                                  "Grid:              ",  sGridSize, sGridBase, sPyramid, sMartingale, NL,
+                                  "UnitSize:        ",    sUnitSize,                                   NL,
+                                  "Stop:             ",   sStopConditions,                             NL,
+                                                                                                       NL,
+                                  "Long:             ",   sOpenLongLots,                               NL,
+                                  "Short:            ",   sOpenShortLots,                              NL,
+                                  "Total:            ",   sOpenTotalLots,                              NL,
+                                                                                                       NL,
+                                  "BE:                 ", sSequenceBePrice,                            NL,
+                                  "TP:                 ", sSequenceTpPrice,                            NL,
+                                  "SL:                 ", sSequenceSlPrice,                            NL,
+                                                                                                       NL,
+                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,          NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -2245,6 +2243,7 @@ void SS.All() {
    if (__isChart) {
       SS.SequenceName();
       SS.GridBase();
+      SS.GridSize();
       SS.UnitSize();
       SS.StopConditions();
       SS.OpenLots();
@@ -2263,9 +2262,19 @@ void SS.All() {
  */
 void SS.GridBase() {
    if (__isChart) {
-      sGridBase = "";
-      if (!sequence.gridbase) return;
-      sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+      if (!sequence.gridbase) sGridBase = "";
+      else                    sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the grid size.
+ */
+void SS.GridSize() {
+   if (__isChart) {
+      if (!GridSize) sGridSize = "";
+      else           sGridSize = PipToStr(GridSize, true);
    }
 }
 
@@ -2414,8 +2423,8 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 155}, y=61, fontSize=112, rectangles=ArraySize(x);
-   color  bgColor = LemonChiffon;                                 // Cyan LemonChiffon bgColor=C'248,248,248'
+   int x[]={2, 140}, y=61, fontSize=112, rectangles=ArraySize(x);
+   color  bgColor = LemonChiffon;
    string label;
 
    for (int i=0; i < rectangles; i++) {

@@ -304,16 +304,8 @@ int onTick() {
       else                                                                                                   totalTrend[i] = prevTrend + Sign(prevTrend);
    }
 
-
-   //if (!ValidBars) {
-   //   debug("onTick(0.1)  ma1="+ NumberToStr(ma1[0], ".+") +"  trend="+ _int(ma1Trend[0]) +" ("+ ColorToStr(indicator_color1) +")");
-   //   debug("onTick(0.2)  ma2="+ NumberToStr(ma2[0], ".+") +"  trend="+ _int(ma2Trend[0]) +" ("+ ColorToStr(indicator_color2) +")");
-   //   debug("onTick(0.3)  ma3="+ NumberToStr(ma3[0], ".+") +"  trend="+ _int(ma3Trend[0]) +" ("+ ColorToStr(indicator_color3) +")");
-   //}
-   //if (IsBarOpen()) debug("onTick(0.4)  totalTrend="+ _int(totalTrend[1]));
-
    CheckSignals();
-   ShowStatus();
+   ShowStatus();                 // TODO: implement it (currently empty)
    return(last_error);
 }
 
