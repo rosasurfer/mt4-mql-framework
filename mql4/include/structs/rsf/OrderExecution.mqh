@@ -223,7 +223,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
       // oe ist einzelnes Struct ORDER_EXECUTION (eine Dimension)
       digits      = oe.Digits(oe);
       pipDigits   = digits & (~1);
-      priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       line        = StringConcatenate("{error="          ,          ifString(!oe.Error          (oe), 0, StringConcatenate(oe.Error(oe), " [", ErrorDescription(oe.Error(oe)), "]")),
                                      ", symbol=\""       ,                    oe.Symbol         (oe), "\"",
                                      ", digits="         ,                    oe.Digits         (oe),
@@ -258,7 +258,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
       for (int i=0; i < size; i++) {
          digits      = oes.Digits(oe, i);
          pipDigits   = digits & (~1);
-         priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+         priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
          line        = StringConcatenate("[", i, "]={error="          ,          ifString(!oes.Error          (oe, i), 0, StringConcatenate(oes.Error(oe, i), " [", ErrorDescription(oes.Error(oe, i)), "]")),
                                                   ", symbol=\""       ,                    oes.Symbol         (oe, i), "\"",
                                                   ", digits="         ,                    oes.Digits         (oe, i),

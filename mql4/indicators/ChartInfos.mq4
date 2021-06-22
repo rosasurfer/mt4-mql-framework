@@ -3954,8 +3954,7 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
  * @return bool - Erfolgsstatus
  */
 bool onOrderFail(int tickets[]) {
-   if (!track.orders)
-      return(true);
+   if (!track.orders) return(true);
 
    int error = 0;
    int positions = ArraySize(tickets);
@@ -3967,15 +3966,11 @@ bool onOrderFail(int tickets[]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
 
       logWarn("onOrderFail(2)  "+ message);
-
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Orders gemeinsam abspielen
@@ -3993,8 +3988,7 @@ bool onOrderFail(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionOpen(int tickets[]) {
-   if (!track.orders)
-      return(true);
+   if (!track.orders) return(true);
 
    int error = 0;
    int positions = ArraySize(tickets);
@@ -4006,15 +4000,11 @@ bool onPositionOpen(int tickets[]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price;
 
       if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
-
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen
@@ -4032,8 +4022,7 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - Erfolgsstatus
  */
 bool onPositionClose(int tickets[][]) {
-   if (!track.orders)
-      return(true);
+   if (!track.orders) return(true);
 
    string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
@@ -4049,16 +4038,12 @@ bool onPositionClose(int tickets[][]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
 
       if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
-
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
    }
 
    // Sound für alle Positionen gemeinsam abspielen

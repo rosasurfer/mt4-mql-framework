@@ -243,7 +243,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
       // lo ist einzelnes Struct LFX_ORDER (eine Dimension)
       digits      = lo.Digits(lo);
       pipDigits   = digits & (~1);
-      priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       line        = StringConcatenate("{ticket="             ,                    lo.Ticket             (lo),
                                      ", currency=\""         ,                    lo.Currency           (lo), "\"",
                                      ", type="               , OperationTypeToStr(lo.Type               (lo)),
@@ -279,7 +279,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
       for (int i=0; i < size; i++) {
          digits      = los.Digits(lo, i);
          pipDigits   = digits & (~1);
-         priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+         priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
          line        = StringConcatenate("[", i, "]={ticket="             ,                    los.Ticket             (lo, i),
                                                   ", currency=\""         ,                    los.Currency           (lo, i), "\"",
                                                   ", type="               , OperationTypeToStr(los.Type               (lo, i)),

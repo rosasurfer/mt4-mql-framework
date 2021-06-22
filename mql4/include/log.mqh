@@ -615,7 +615,7 @@ bool SetLogfile(string filename) {
       if (loglevel!=LOG_OFF && loglevelFile!=LOG_OFF) {
          string prevName = ec_LogFilename(__ExecutionContext);
          if (filename != prevName) {
-            if (IsLogInfo()) logInfo("SetLogfile(1)  log="+ LoglevelDescription(loglevel) +", log2File="+ LoglevelDescription(loglevelFile) +": file="+ DoubleQuoteStr(filename));
+            if (IsLogDebug()) logDebug("SetLogfile(1)  log="+ LoglevelDescription(loglevel) +", log2File="+ LoglevelDescription(loglevelFile) +": file="+ DoubleQuoteStr(filename));
          }
       }
       else {
