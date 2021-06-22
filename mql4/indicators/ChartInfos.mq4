@@ -1316,7 +1316,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                     sDistance = DoubleToStr(RoundFloor(positions.dData[i][I_PIP_DISTANCE], Digits-PipDigits), Digits-PipDigits) +" pip";
+                  else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
             }
 
@@ -3148,14 +3148,14 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       return(true);
 
    if (closedProfit == EMPTY_VALUE)
-      closedProfit = 0;                                                       // 0.00 ist gültiger P/L
+      closedProfit = 0;                                                    // 0.00 ist gültiger P/L
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    if (customEquity != NULL) equity  = customEquity;
    else {                    equity  = externalAssets;
-      if (mode.intern)       equity += (AccountEquity()-AccountCredit());   // TODO: tatsächlichen Wert von openEquity ermitteln
+      if (mode.intern)       equity += (AccountEquity()-AccountCredit());  // TODO: tatsächlichen Wert von openEquity ermitteln
    }
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
