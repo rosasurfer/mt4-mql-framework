@@ -2360,8 +2360,8 @@ void SS.OpenLots() {
 
       if (!long.openLots) sOpenLongLots = "-";
       else {
-         sMinLevel = ifString(long.minLevel==INT_MAX, "", NumberToStr(long.minLevel, "+.0"));
-         sMaxLevel = ifString(long.maxLevel==INT_MIN, "", NumberToStr(long.maxLevel, "+.0"));
+         sMinLevel = ifString(long.minLevel==INT_MAX, "", long.minLevel);
+         sMaxLevel = ifString(long.maxLevel==INT_MIN, "", long.maxLevel);
 
          if (long.minLevel == long.maxLevel) sLevels = "level "+ sMaxLevel;
          else                                sLevels = ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "level ", "levels ") + sMinLevel + ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
@@ -2371,8 +2371,8 @@ void SS.OpenLots() {
 
       if (!short.openLots) sOpenShortLots = "-";
       else {
-         sMinLevel = ifString(short.minLevel==INT_MAX, "", NumberToStr(short.minLevel, "+.0"));
-         sMaxLevel = ifString(short.maxLevel==INT_MIN, "", NumberToStr(short.maxLevel, "+.0"));
+         sMinLevel = ifString(short.minLevel==INT_MAX, "", short.minLevel);
+         sMaxLevel = ifString(short.maxLevel==INT_MIN, "", short.maxLevel);
 
          if (short.minLevel == short.maxLevel) sLevels = "level "+ sMaxLevel;
          else                                  sLevels   = ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "level", "levels ") + sMinLevel + ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
