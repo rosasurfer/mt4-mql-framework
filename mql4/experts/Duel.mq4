@@ -360,7 +360,7 @@ bool StartSequence() {
    SS.GridBase();
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
-   sequence.status      = STATUS_PROGRESSING;
+   sequence.status = STATUS_PROGRESSING;
 
    if (long.enabled) {
       if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);        // open a long position for level 1
@@ -2356,11 +2356,29 @@ void SS.StopConditions() {
  */
 void SS.OpenLots() {
    if (__isChart) {
+      string sLevels="", sMinLevel="", sMaxLevel="";
+
       if (!long.openLots) sOpenLongLots = "-";
-      else                sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot, level "+ long.maxLevel + ifString(!long.slippage, "", ", slippage: "+ NumberToStr(long.slippage/Pip, "+.1R") +" pip");
+      else {
+         sMinLevel = ifString(long.minLevel==INT_MAX, "", NumberToStr(long.minLevel, "+.0"));
+         sMaxLevel = ifString(long.maxLevel==INT_MIN, "", NumberToStr(long.maxLevel, "+.0"));
+
+         if (long.minLevel == long.maxLevel) sLevels = "level "+ sMaxLevel;
+         else                                sLevels = ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "level ", "levels ") + sMinLevel + ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
+
+         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot, "+ sLevels + ifString(!long.slippage, "", ", slippage: "+ PipToStr(long.slippage/Pip, true));
+      }
 
       if (!short.openLots) sOpenShortLots = "-";
-      else                 sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot, level "+ short.maxLevel + ifString(!short.slippage, "", ", slippage: "+ NumberToStr(short.slippage/Pip, "+.1R") +" pip");
+      else {
+         sMinLevel = ifString(short.minLevel==INT_MAX, "", NumberToStr(short.minLevel, "+.0"));
+         sMaxLevel = ifString(short.maxLevel==INT_MIN, "", NumberToStr(short.maxLevel, "+.0"));
+
+         if (short.minLevel == short.maxLevel) sLevels = "level "+ sMaxLevel;
+         else                                  sLevels   = ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "level", "levels ") + sMinLevel + ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
+
+         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot, "+ sLevels + ifString(!short.slippage, "", ", slippage: "+ PipToStr(short.slippage/Pip, true));
+      }
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
       else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
@@ -2423,7 +2441,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 140}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 141}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 

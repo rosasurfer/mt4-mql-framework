@@ -5101,10 +5101,10 @@ string TradeCommandToStr(int cmd) {
  *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
  *    .d'     = all left and number of right digits plus 1 additional subpip digit,
  *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits,
+ *    .d+     = + anywhere right of .d: all left and minimum number of right digits,
  *              e.g. NumberToStr(123.456, ".2+") => "123.456"
- *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
- *    R       = anywhere in mask: round result at the last displayed digit,
+ *  +n.d      = + anywhere left of n.: plus sign for positive values
+ *    R       = anywhere: round result at the last displayed digit,
  *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
  *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
  *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
