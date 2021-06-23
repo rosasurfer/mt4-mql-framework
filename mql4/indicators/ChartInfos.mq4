@@ -314,42 +314,48 @@ bool onCommand(string commands[]) {
  * @return bool - Erfolgsstatus
  */
 bool ToggleOpenOrders() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetOpenOrderDisplayStatus();
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
 
-   // Status ON: offene Orders anzeigen
-   if (status) {
+   // status ON: display open orders
+   if (showOrders) {
       int orders = ShowOpenOrders();
       if (orders == -1)
          return(false);
-      if (!orders) {                                                 // ohne offene Orders bleibt die Anzeige unverändert
-         status = false;
-         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
+      if (!orders) {                                  // without open orders state must be reset
+         showOrders = false;
+         PlaySoundEx("Plonk.wav");
       }
    }
 
-   // Status OFF: Chartobjekte offener Orders löschen
-   else {
+   // status OFF: hide open orders
+   if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
+
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name)==OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR    );
-               if (arrow == SYMBOL_ORDEROPEN)
-                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT)
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT) {
                      continue;
-               if (arrow == SYMBOL_ORDERCLOSE)
-                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS)
+                  }
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS) {
                      continue;
+                  }
+               }
                ObjectDelete(name);
             }
          }
       }
    }
 
-   // Anzeigestatus im Chart speichern
-   SetOpenOrderDisplayStatus(status);
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
 
    if (This.IsTesting())
       WindowRedraw();
@@ -360,7 +366,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - amount of displayed orders or EMPTY (-1) in case of an error
+ * @return int - number of displayed open orders or EMPTY (-1) in case of errors
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -388,10 +394,10 @@ int ShowOpenOrders() {
          comment    = OrderComment();
 
          if (OrderType() > OP_SELL) {
-            // pending order
+            // a pending order
             label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display order
+            // display pending order marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
@@ -401,10 +407,10 @@ int ShowOpenOrders() {
             }
          }
          else {
-            // open position
+            // an open position
             label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display TakeProfit
+            // display TakeProfit marker
             if (takeProfit != NULL) {
                sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
                label2 = StringConcatenate(label1, ",  ", sTP);
@@ -417,7 +423,7 @@ int ShowOpenOrders() {
             }
             else sTP = "";
 
-            // display StopLoss
+            // display StopLoss marker
             if (stopLoss != NULL) {
                sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
                label3 = StringConcatenate(label1, ",  ", sSL);
@@ -430,7 +436,7 @@ int ShowOpenOrders() {
             }
             else sSL = "";
 
-            // display order
+            // display open position marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
@@ -562,34 +568,38 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * @return bool - Erfolgsstatus
  */
 bool ToggleTradeHistory() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetTradeHistoryDisplayStatus();
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
 
-   // neuer Status ON: Trade-History anzeigen
-   if (status) {
+   // status ON: display history
+   if (showHistory) {
       int trades = ShowTradeHistory();
       if (trades == -1)
          return(false);
-      if (!trades) {                                                 // ohne Trade-History bleiben Anzeige und Status unverändert
-         status = false;
-         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
+      if (!trades) {                                  // without any history state must be reset
+         showHistory = false;
+         PlaySoundEx("Plonk.wav");
       }
    }
 
-   // neuer Status OFF: Chartobjekte der Trade-History löschen
-   else {
+   // status OFF: hide history
+   if (!showHistory) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
+
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
                color clr = ObjectGet(name, OBJPROP_COLOR    );
-               if (arrow == SYMBOL_ORDEROPEN)
-                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT)
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT) {
                      continue;
-               if (arrow == SYMBOL_ORDERCLOSE)
-                  if (clr!=CLR_CLOSE)
-                     continue;
+                  }
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSE) continue;
+               }
                ObjectDelete(name);
             }
             else if (ObjectType(name) == OBJ_TREND) {
@@ -599,8 +609,8 @@ bool ToggleTradeHistory() {
       }
    }
 
-   // neuen Anzeigestatus im Chart speichern
-   SetTradeHistoryDisplayStatus(status);
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
 
    if (This.IsTesting())
       WindowRedraw();
@@ -647,7 +657,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 /**
  * Display the currently available trade history.
  *
- * @return int - amount of displayed closed positions or EMPTY (-1) in case of an error
+ * @return int - number of displayed closed positions or EMPTY (-1) in case of errors
  */
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
