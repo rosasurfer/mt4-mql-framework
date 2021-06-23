@@ -3947,11 +3947,11 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
 
 
 /**
- * Handler für OrderFail-Events.
+ * Handle an OrderFail event.
  *
- * @param  int tickets[] - Tickets der fehlgeschlagenen Orders (immer Pending-Orders)
+ * @param  int tickets[] - ticket ids of the failed pending orders
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onOrderFail(int tickets[]) {
    if (!track.orders) return(true);
@@ -3962,30 +3962,30 @@ bool onOrderFail(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
-      string lots        = DoubleToStr(OrderLots(), 2);
+      string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
+      string sLots       = NumberToStr(OrderLots(), ".+");
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
+      string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+      string sReason     = ifString(StringLen(OrderComment()), "error \""+ OrderComment() +"\"", "unknown error");
+      string message     = "Order failed: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +"with "+ sReason;
 
       logWarn("onOrderFail(2)  "+ message);
    }
 
-   // Sound für alle Orders gemeinsam abspielen
+   // a single sound for all events
    if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
-
    return(!error);
 }
 
 
 /**
- * Handler für PositionOpen-Events.
+ * Handle a PositionOpen event.
  *
- * @param  int tickets[] - Tickets der neu geöffneten Positionen
+ * @param  int tickets[] - ticket ids of the opened positions
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
    if (!track.orders) return(true);
@@ -3996,35 +3996,35 @@ bool onPositionOpen(int tickets[]) {
    for (int i=0; i < positions; i++) {
       if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType());
-      string lots        = DoubleToStr(OrderLots(), 2);
+      string sType       = OperationTypeDescription(OrderType());
+      string sLots       = NumberToStr(OrderLots(), ".+");
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price;
+      string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+      string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+      string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
 
       if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
    }
 
-   // Sound für alle Positionen gemeinsam abspielen
+   // a single sound for all events
    if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
-
    return(!error);
 }
 
 
 /**
- * Handler für PositionClose-Events.
+ * Handle a PositionClose event.
  *
- * @param  int tickets[] - Tickets der geschlossenen Positionen
+ * @param  int tickets[] - ticket ids of the closed positions
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onPositionClose(int tickets[][]) {
    if (!track.orders) return(true);
 
-   string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
 
    int error = 0;
    int positions = ArrayRange(tickets, 0);
@@ -4034,21 +4034,21 @@ bool onPositionClose(int tickets[][]) {
       int closeType = tickets[i][1];
       if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
 
-      string type        = OperationTypeDescription(OrderType());
-      string lots        = DoubleToStr(OrderLots(), 2);
+      string sType       = OperationTypeDescription(OrderType());
+      string sLots       = NumberToStr(OrderLots(), ".+");
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
-      string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
+      string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+      string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
+      string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+      string message     = "Position closed: #"+ ticket +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[closeType];
 
       if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
    }
 
-   // Sound für alle Positionen gemeinsam abspielen
+   // a single sound for all events
    if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
-
    return(!error);
 }
 

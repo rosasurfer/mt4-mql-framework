@@ -2366,7 +2366,7 @@ void SS.OpenLots() {
          if (long.minLevel == long.maxLevel) sLevels = "level "+ sMaxLevel;
          else                                sLevels = ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "level ", "levels ") + sMinLevel + ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
 
-         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot, "+ sLevels + ifString(!long.slippage, "", ", slippage: "+ PipToStr(long.slippage/Pip, true));
+         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot,  "+ sLevels + ifString(!long.slippage, "", ",  slippage: "+ PipToStr(long.slippage/Pip, true));
       }
 
       if (!short.openLots) sOpenShortLots = "-";
@@ -2377,7 +2377,7 @@ void SS.OpenLots() {
          if (short.minLevel == short.maxLevel) sLevels = "level "+ sMaxLevel;
          else                                  sLevels   = ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "level", "levels ") + sMinLevel + ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
 
-         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot, "+ sLevels + ifString(!short.slippage, "", ", slippage: "+ PipToStr(short.slippage/Pip, true));
+         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot,  "+ sLevels + ifString(!short.slippage, "", ",  slippage: "+ PipToStr(short.slippage/Pip, true));
       }
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
