@@ -33,7 +33,7 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
-         ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
+         ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
          onLibraryInit();
       }
    }
