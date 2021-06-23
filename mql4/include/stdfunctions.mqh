@@ -523,7 +523,6 @@ bool IsTicket(int ticket) {
 
    GetLastError();
    if (!OrderPop("IsTicket(2)")) return(false);
-
    return(result);
 }
 
@@ -598,34 +597,33 @@ string OrderLogMessage(int ticket) {
 
 
 /**
- * Schiebt den aktuellen Orderkontext auf den Kontextstack (fügt ihn ans Ende an).
+ * Append the currently selected order ticket to the order stack.
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  string location [optional] - error identifier (default: none)
  *
  * @return bool - success status
  */
-bool OrderPush(string location) {
+bool OrderPush(string location = "") {
    int ticket = OrderTicket();
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
       return(!catch(location +"->OrderPush(1)", error));
 
-   ArrayPushInt(stack.OrderSelect, ticket);
+   ArrayPushInt(__orderStack, ticket);
    return(true);
 }
 
 
 /**
- * Entfernt den letzten Orderkontext vom Ende des Kontextstacks und restauriert ihn.
+ * Remove the last order ticket from the order stack and restore (i.e. select) it.
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  string location [optional] - error identifier (default: none)
  *
  * @return bool - success status
  */
-bool OrderPop(string location) {
-   int ticket = ArrayPopInt(stack.OrderSelect);
-
+bool OrderPop(string location = "") {
+   int ticket = ArrayPopInt(__orderStack);
    if (ticket > 0)
       return(SelectTicket(ticket, location +"->OrderPop(1)"));
 
@@ -634,7 +632,6 @@ bool OrderPop(string location) {
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
       return(!catch(location +"->OrderPop(2)", error));
-
    return(true);
 }
 

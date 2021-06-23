@@ -234,8 +234,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      // ggf. Orders überwachen
-      if (mode.intern && track.orders) {
+      if (mode.intern && track.orders) {                                            // order tracking
          int failedOrders   [];    ArrayResize(failedOrders,    0);
          int openedPositions[];    ArrayResize(openedPositions, 0);
          int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
@@ -3964,28 +3963,28 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
  * @return bool - success status
  */
 bool onOrderFail(int tickets[]) {
-   if (!track.orders) return(true);
+   int error=0, size=ArraySize(tickets);
 
-   int error = 0;
-   int positions = ArraySize(tickets);
+   if (size > 0) {
+      OrderPush();
 
-   for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
+      for (int i=0; i < size; i++) {
+         if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
 
-      string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
-      string sLots       = NumberToStr(OrderLots(), ".+");
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-      string sReason     = ifString(StringLen(OrderComment()), "error \""+ OrderComment() +"\"", "unknown error");
-      string message     = "Order failed: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +"with "+ sReason;
+         string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
+         string sLots       = NumberToStr(OrderLots(), ".+");
+         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         int    pipDigits   = digits & (~1);
+         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+         string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+         string sReason     = ifString(StringLen(OrderComment()), "error \""+ OrderComment() +"\"", "unknown error");
+         string message     = "Order failed: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +"with "+ sReason;
+         logWarn("onOrderFail(2)  "+ message);
+      }
 
-      logWarn("onOrderFail(2)  "+ message);
+      OrderPop();
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
    }
-
-   // a single sound for all events
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
    return(!error);
 }
 
@@ -3998,28 +3997,29 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
-   if (!track.orders) return(true);
+   int error=0, size=ArraySize(tickets);
 
-   int error = 0;
-   int positions = ArraySize(tickets);
+   if (size > 0) {
+      OrderPush();
+      bool isLogInfo = IsLogInfo();
 
-   for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
+      for (int i=0; i < size && isLogInfo; i++) {
+         if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
-      string sType       = OperationTypeDescription(OrderType());
-      string sLots       = NumberToStr(OrderLots(), ".+");
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-      string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-      string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+         string sType       = OperationTypeDescription(OrderType());
+         string sLots       = NumberToStr(OrderLots(), ".+");
+         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         int    pipDigits   = digits & (~1);
+         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+         string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+         string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+         string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+         logInfo("onPositionOpen(2)  "+ message);
+      }
 
-      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
+      OrderPop();
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
    }
-
-   // a single sound for all events
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
    return(!error);
 }
 
@@ -4032,33 +4032,33 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - success status
  */
 bool onPositionClose(int tickets[][]) {
-   if (!track.orders) return(true);
-
    string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   int error=0, size=ArrayRange(tickets, 0);
 
-   int error = 0;
-   int positions = ArrayRange(tickets, 0);
+   if (size > 0) {
+      OrderPush();
+      bool isLogInfo = IsLogInfo();
 
-   for (int i=0; i < positions; i++) {
-      int ticket    = tickets[i][0];
-      int closeType = tickets[i][1];
-      if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
+      for (int i=0; i < size && isLogInfo; i++) {
+         int ticket    = tickets[i][0];
+         int closeType = tickets[i][1];
+         if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
 
-      string sType       = OperationTypeDescription(OrderType());
-      string sLots       = NumberToStr(OrderLots(), ".+");
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
-      string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
-      string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-      string message     = "Position closed: #"+ ticket +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[closeType];
+         string sType       = OperationTypeDescription(OrderType());
+         string sLots       = NumberToStr(OrderLots(), ".+");
+         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+         int    pipDigits   = digits & (~1);
+         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+         string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+         string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
+         string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+         string message     = "Position closed: #"+ ticket +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[closeType];
+         logInfo("onPositionClose(2)  "+ message);
+      }
 
-      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
+      OrderPop();
+      if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
    }
-
-   // a single sound for all events
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
    return(!error);
 }
 
