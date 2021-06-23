@@ -9,7 +9,7 @@
  * @param  int    fIgnoreErrors [optional] - flags of errors to ignore (default: none)
  *                                           supported values: F_ERS_HISTORY_UPDATE (see notes)
  *
- * @return double - ATR value or NULL in case of an error not covered by the passed fIgnoreErrors flags
+ * @return double - ATR value or NULL in case of errors not covered by the passed fIgnoreErrors flags
  *
  * Note: As ERS_HISTORY_UPDATE is a status and not a regular error the status is set even if the error is ignored
  *       (by passing F_ERS_HISTORY_UPDATE). Thus it is possible to ignore the error and to query a set ERS_HISTORY_UPDATE
