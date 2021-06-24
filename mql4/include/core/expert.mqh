@@ -122,7 +122,7 @@ int init() {
    }
 
    // log input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogInfo()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogDebug()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
@@ -130,7 +130,7 @@ int init() {
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logInfo("init(14)  inputs: "+ sInputs);
+         logDebug("init(14)  inputs: "+ sInputs);
       }
    }
 

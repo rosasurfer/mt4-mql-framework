@@ -45,10 +45,8 @@ extern string Signal.SMS     = "on | off | auto*";
 
 #property indicator_chart_window
 
-
 // chart infos
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
-
 
 // unitsize calculation
 bool   mm.done;                                                   // processing flag
@@ -82,7 +80,6 @@ string positions.config.comments[];                               // Kommentare 
 #define TERM_ADJUSTMENT                 7
 #define TERM_EQUITY                     8
 
-
 // internal + external position data
 bool   isPendings;                                                // ob Pending-Limite im Markt liegen (Orders oder Positions)
 bool   isPosition;                                                // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
@@ -93,7 +90,6 @@ int    positions.iData[][3];                                      // Positionsde
 double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
 bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
-
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
 #define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
@@ -143,7 +139,6 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 #define DC.stopLossAmount           5
 #define DC.stopLossPercent          6
 
-
 // Textlabel für die einzelnen Anzeigen
 string label.instrument     = "${__NAME__}.Instrument";
 string label.price          = "${__NAME__}.Price";
@@ -155,7 +150,6 @@ string label.orderCounter   = "${__NAME__}.OrderCounter";
 string label.tradeAccount   = "${__NAME__}.TradeAccount";
 string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 
-
 // Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
@@ -164,7 +158,6 @@ color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
 color  positions.fontColor.history = C'128,128,0';
-
 
 // Farben für Orderanzeige
 #define CLR_PENDING_OPEN         DeepSkyBlue
@@ -176,13 +169,20 @@ color  positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSED_SHORT         Red
 #define CLR_CLOSE                Orange
 
-
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
-
 // Ordertracking                                                  // entspricht dem Code im EventTracker
 bool   track.orders;
+
+// Order-Events
+int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
+int    orders.knownOrders.type  [];
+
+// Close-Typen für automatisch geschlossene Positionen
+#define CLOSE_TYPE_TP               1                             // TakeProfit
+#define CLOSE_TYPE_SL               2                             // StopLoss
+#define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
 
 // Konfiguration der Signalisierung
 bool   signal.sound;
@@ -194,15 +194,6 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-
-// Order-Events
-int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
-int    orders.knownOrders.type  [];
-
-// Close-Typen für automatisch geschlossene Positionen
-#define CLOSE_TYPE_TP               1                             // TakeProfit
-#define CLOSE_TYPE_SL               2                             // StopLoss
-#define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
 
 
 #include <apps/chartinfos/init.mqh>
@@ -3997,30 +3988,39 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
-   int error=0, size=ArraySize(tickets);
+   int size = ArraySize(tickets);
+   if (!size) return(true);
 
-   if (size > 0) {
-      OrderPush();
-      bool isLogInfo = IsLogInfo();
+   OrderPush();
+   bool playSound=false, isLogInfo=IsLogInfo();
 
-      for (int i=0; i < size && isLogInfo; i++) {
-         if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
+   for (int i=0; i < size && isLogInfo; i++) {
+      if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
-         string sType       = OperationTypeDescription(OrderType());
-         string sLots       = NumberToStr(OrderLots(), ".+");
-         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         int    pipDigits   = digits & (~1);
-         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-         string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-         string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-         string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
-         logInfo("onPositionOpen(2)  "+ message);
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false, notYetLogged=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
+
+      if (isMySymbol || !isOtherListener) {
+         notYetLogged = true;                   // TODO
+         if (notYetLogged) {
+            string sType       = OperationTypeDescription(OrderType());
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+            string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+            string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            logInfo("onPositionOpen(2)  "+ message);
+            playSound = true;
+         }
       }
-
-      OrderPop();
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
    }
-   return(!error);
+   OrderPop();
+
+   if (signal.sound && playSound)
+      return(PlaySoundEx(signal.sound.positionOpened));
+   return(!catch("onPositionOpen(3)"));
 }
 
 
@@ -4060,6 +4060,21 @@ bool onPositionClose(int tickets[][]) {
       if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
    }
    return(!error);
+}
+
+
+/**
+ * Whether there is a registered order event listener for the specified symbol.
+ *
+ * @return bool
+ */
+bool IsOrderEventListener(string symbol) {
+   static int hWnd;
+   if (!hWnd) hWnd = GetTerminalMainWindow();
+
+   string name = "order-tracker:"+ StrToLower(symbol);
+   int counter = GetWindowIntegerA(hWnd, name);
+   return(counter != 0);
 }
 
 
