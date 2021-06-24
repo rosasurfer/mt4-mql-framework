@@ -68,10 +68,9 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
 #define CLR_PENDING           DeepSkyBlue                // order marker colors
-#define CLR_LONG              Blue
-#define CLR_SHORT             Red
+#define CLR_LONG              C'0,0,254'                 // Blue - rgb(1,1,1)
+#define CLR_SHORT             C'254,0,0'                 // Red - rgb(1,1,1)
 #define CLR_CLOSE             Orange
-
 
 // sequence data
 int      sequence.id;
@@ -170,7 +169,6 @@ datetime sessionbreak.endtime;
 // cache vars to speed-up ShowStatus()
 string   sUnitSize            = "";
 string   sGridSize            = "";
-string   sGridBase            = "";
 string   sPyramid             = "";
 string   sMartingale          = "";
 string   sStopConditions      = "";
@@ -352,26 +350,32 @@ bool IsSessionBreak() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   if (!IsTesting() && (sequence.martingaleEnabled || sequence.directions==D_BOTH)) {  // confirm dangerous modes
+      PlaySoundEx("Windows Notify.wav");
+      if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL))
+         return(_false(StopSequence()));
+      RefreshRates();
+   }
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
    else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
-   SS.GridBase();
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
    sequence.status = STATUS_PROGRESSING;
 
    if (long.enabled) {
-      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);        // open a long position for level 1
+      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);                             // open a long position for level 1
    }
    if (short.enabled) {
-      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);        // open a short position for level 1
+      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);                             // open a short position for level 1
    }
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
-   if (!UpdatePendingOrders()) return(false);                     // update pending orders
+   if (!UpdatePendingOrders()) return(false);                                          // update pending orders
 
    if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(SaveStatus());
@@ -384,49 +388,47 @@ bool StartSequence() {
  * @return bool - success status
  */
 bool StopSequence() {
-   if (IsLastError())                         return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
+   if (IsLastError())                                                          return(false);
+   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int hedgeTicket, oe[];
+   if (sequence.status == STATUS_PROGRESSING) {                      // a progressing sequence has open orders to close (a waiting sequence has none)
+      if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
+      int hedgeTicket, oe[];
 
-   // hedge the total open position: execution price = sequence close price
-   if (NE(sequence.openLots, 0)) {
-      int      type        = ifInt(GT(sequence.openLots, 0), OP_SELL, OP_BUY);
-      double   lots        = MathAbs(sequence.openLots);
-      double   price       = NULL;
-      int      slippage    = 10;    // point
-      double   stopLoss    = NULL;
-      double   takeProfit  = NULL;
-      string   comment     = "";
-      int      magicNumber = CreateMagicNumber();
-      datetime expires     = NULL;
-      color    markerColor = CLR_NONE;
-      int      oeFlags     = NULL;
-      if (!OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      hedgeTicket = oe.Ticket(oe);
+      if (NE(sequence.openLots, 0)) {                                // hedge the total open position: execution price = sequence close price
+         int      type        = ifInt(GT(sequence.openLots, 0), OP_SELL, OP_BUY);
+         double   lots        = MathAbs(sequence.openLots);
+         double   price       = NULL;
+         int      slippage    = 10;                                  // point
+         double   stopLoss    = NULL;
+         double   takeProfit  = NULL;
+         string   comment     = "";
+         int      magicNumber = CreateMagicNumber();
+         datetime expires     = NULL;
+         color    markerColor = CLR_NONE;
+         int      oeFlags     = NULL;
+         if (!OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+         hedgeTicket = oe.Ticket(oe);
+      }
+
+      if (!Grid.RemovePendingOrders()) return(false);                // cancel and remove all pending orders
+
+      if (!StopSequence.ClosePositions(hedgeTicket)) return(false);  // close all open and the hedging position
+
+      sequence.openPL   = 0;                                         // update total PL numbers
+      sequence.closedPL = long.closedPL + short.closedPL;
+      sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
+      if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
+      else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
    }
 
-   // cancel and remove all pending orders
-   if (!Grid.RemovePendingOrders()) return(false);
-
-   // close all open and the hedging position
-   if (!StopSequence.ClosePositions(hedgeTicket)) return(false);
-
-   // update total PL numbers
-   sequence.openPL   = 0;
-   sequence.closedPL = long.closedPL + short.closedPL;
-   sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
-
    sequence.status = STATUS_STOPPED;
-   SS.StopConditions();
    if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped");
+
+   SS.StopConditions();
    SaveStatus();
 
-   // pause or stop the tester according to the debug configuration
-   if (IsTesting()) {
+   if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
       if (!IsVisualMode())         Tester.Stop("StopSequence(4)");
       else if (tester.onStopPause) Tester.Pause("StopSequence(5)");
    }
@@ -2209,21 +2211,20 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                 NL,
-                                                                                                       NL,
-                                  "Grid:              ",  sGridSize, sGridBase, sPyramid, sMartingale, NL,
-                                  "UnitSize:        ",    sUnitSize,                                   NL,
-                                  "Stop:             ",   sStopConditions,                             NL,
-                                                                                                       NL,
-                                  "Long:             ",   sOpenLongLots,                               NL,
-                                  "Short:            ",   sOpenShortLots,                              NL,
-                                  "Total:            ",   sOpenTotalLots,                              NL,
-                                                                                                       NL,
-                                  "BE:                 ", sSequenceBePrice,                            NL,
-                                  "TP:                 ", sSequenceTpPrice,                            NL,
-                                  "SL:                 ", sSequenceSlPrice,                            NL,
-                                                                                                       NL,
-                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,          NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
+                                                                                                              NL,
+                                  "Grid:              ",  sGridSize, " x ", sUnitSize, sPyramid, sMartingale, NL,
+                                  "Stop:             ",   sStopConditions,                                    NL,
+                                                                                                              NL,
+                                  "Long:             ",   sOpenLongLots,                                      NL,
+                                  "Short:            ",   sOpenShortLots,                                     NL,
+                                  "Total:             ",  sOpenTotalLots,                                     NL,
+                                                                                                              NL,
+                                  "BE:                 ", sSequenceBePrice,                                   NL,
+                                  "TP:                 ", sSequenceTpPrice,                                   NL,
+                                  "SL:                 ", sSequenceSlPrice,                                   NL,
+                                                                                                              NL,
+                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,                 NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -2242,7 +2243,6 @@ int ShowStatus(int error = NO_ERROR) {
 void SS.All() {
    if (__isChart) {
       SS.SequenceName();
-      SS.GridBase();
       SS.GridSize();
       SS.UnitSize();
       SS.StopConditions();
@@ -2251,19 +2251,8 @@ void SS.All() {
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.pyramidEnabled,    ",  Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
-      sMartingale = ifString(sequence.martingaleEnabled, ",  Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of the grid base.
- */
-void SS.GridBase() {
-   if (__isChart) {
-      if (!sequence.gridbase) sGridBase = "";
-      else                    sGridBase = " @ "+ NumberToStr(sequence.gridbase, PriceFormat);
+      sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
    }
 }
 
@@ -2273,8 +2262,9 @@ void SS.GridBase() {
  */
 void SS.GridSize() {
    if (__isChart) {
-      if (!GridSize) sGridSize = "";
-      else           sGridSize = PipToStr(GridSize, true);
+      if      (!GridSize)                  sGridSize = "";
+      else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(GridSize/100, ",'R.2");      // 123 pip => 1.23
+      else                                 sGridSize = NumberToStr(GridSize, ".+") +" pip";     // 12.3 pip
    }
 }
 
@@ -2304,6 +2294,51 @@ void SS.MaxProfit() {
 
 
 /**
+ * ShowStatus: Update the string representation of "long.openLots", "short.openLots" and "sequence.openLots".
+ */
+void SS.OpenLots() {
+   if (__isChart) {
+      string sLevels="", sMinLevel="", sMaxLevel="", sSlippage="";
+      int minusLevels;
+
+      if (!long.openLots) sOpenLongLots = "-";
+      else {
+         sMinLevel   = ifString(long.minLevel==INT_MAX, "", long.minLevel);
+         sMaxLevel   = ifString(long.maxLevel==INT_MIN, "", long.maxLevel);
+         minusLevels = ifInt(long.minLevel < 0, long.minLevel+1, 0);
+
+         if (sequence.pyramidEnabled && sequence.martingaleEnabled) sLevels = "levels: "+ (ifInt(long.maxLevel==INT_MIN, 0, long.maxLevel) - minusLevels) + ifString(minusLevels, " ("+ minusLevels +")", "");
+         else                                                       sLevels = "level: "+ ifString(sequence.pyramidEnabled, sMaxLevel, sMinLevel);
+
+         sSlippage = PipToStr(long.slippage/Pip, true);
+         if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
+
+         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot    "+ sLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
+      }
+
+      if (!short.openLots) sOpenShortLots = "-";
+      else {
+         sMinLevel   = ifString(short.minLevel==INT_MAX, "", short.minLevel);
+         sMaxLevel   = ifString(short.maxLevel==INT_MIN, "", short.maxLevel);
+         minusLevels = ifInt(short.minLevel < 0, short.minLevel+1, 0);
+
+         if (sequence.pyramidEnabled && sequence.martingaleEnabled) sLevels = "levels: "+ (ifInt(short.maxLevel==INT_MIN, 0, short.maxLevel) - minusLevels) + ifString(minusLevels, " ("+ minusLevels +")", "");
+         else                                                       sLevels = "level: "+ ifString(sequence.pyramidEnabled, sMaxLevel, sMinLevel);
+
+         sSlippage = PipToStr(short.slippage/Pip, true);
+         if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
+
+         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot    "+ sLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);
+      }
+
+      if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
+      else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
+      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";
+   }
+}
+
+
+/**
  * ShowStatus: Update the string representaton of the P/L statistics.
  */
 void SS.PLStats() {
@@ -2312,6 +2347,33 @@ void SS.PLStats() {
          sSequencePlStats = StringConcatenate("  (", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
       }
       else sSequencePlStats = "";
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of "sequence.bePrice", "sequence.tpPrice" and "sequence.slPrice".
+ */
+void SS.ProfitTargets() {
+   if (__isChart) {
+      sSequenceBePrice = "";
+      if (long.enabled) {
+         if (!sequence.bePrice.long)     sSequenceBePrice = sSequenceBePrice +"-";
+         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
+      }
+      if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
+      if (short.enabled) {
+         if (!sequence.bePrice.short)    sSequenceBePrice = sSequenceBePrice +"-";
+         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(sequence.bePrice.short, Digits), PriceFormat);
+      }
+
+      if      (!sequence.tpPrice)     sSequenceTpPrice = "";
+      else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
+      else                            sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
+
+      if      (!sequence.slPrice)     sSequenceSlPrice = "";
+      else if (sequence.openLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
+      else                            sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
    }
 }
 
@@ -2352,69 +2414,6 @@ void SS.StopConditions() {
 
 
 /**
- * ShowStatus: Update the string representation of "long.openLots", "short.openLots" and "sequence.openLots".
- */
-void SS.OpenLots() {
-   if (__isChart) {
-      string sLevels="", sMinLevel="", sMaxLevel="", sSlippage="";
-
-      if (!long.openLots) sOpenLongLots = "-";
-      else {
-         sMinLevel = ifString(long.minLevel==INT_MAX, "", long.minLevel);
-         sMaxLevel = ifString(long.maxLevel==INT_MIN, "", long.maxLevel);
-
-         if (long.minLevel == long.maxLevel) sLevels = "level "+ sMaxLevel;
-         else                                sLevels = ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "level ", "levels ") + sMinLevel + ifString(long.minLevel==INT_MAX || long.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
-
-         sSlippage = PipToStr(long.slippage/Pip, true);
-         if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
-
-         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot,  "+ sLevels + ifString(!long.slippage, "", ",  slippage: "+ sSlippage);
-      }
-
-      if (!short.openLots) sOpenShortLots = "-";
-      else {
-         sMinLevel = ifString(short.minLevel==INT_MAX, "", short.minLevel);
-         sMaxLevel = ifString(short.maxLevel==INT_MIN, "", short.maxLevel);
-
-         if (short.minLevel == short.maxLevel) sLevels = "level "+ sMaxLevel;
-         else                                  sLevels   = ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "level", "levels ") + sMinLevel + ifString(short.minLevel==INT_MAX || short.maxLevel==INT_MIN, "", " ... ") + sMaxLevel;
-
-         sSlippage = PipToStr(short.slippage/Pip, true);
-         if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
-
-         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot,  "+ sLevels + ifString(!short.slippage, "", ",  slippage: "+ sSlippage);
-      }
-
-      if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
-      else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
-      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.bePrice", "sequence.tpPrice" and "sequence.slPrice".
- */
-void SS.ProfitTargets() {
-   if (__isChart) {
-      sSequenceBePrice = "";
-      if (long.enabled)                  sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
-      if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
-      if (short.enabled)                 sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(sequence.bePrice.short, Digits), PriceFormat);
-
-      if      (!sequence.tpPrice)     sSequenceTpPrice = "";
-      else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
-      else                            sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
-
-      if      (!sequence.slPrice)     sSequenceSlPrice = "";
-      else if (sequence.openLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
-      else                            sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
-   }
-}
-
-
-/**
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
@@ -2447,7 +2446,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 141}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 140}, y=61, fontSize=106, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 
