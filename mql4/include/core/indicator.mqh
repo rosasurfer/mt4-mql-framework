@@ -90,7 +90,7 @@ int init() {
    if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
       string sInput = InputsToStr();
       if (StringLen(sInput) > 0) {
-         sInput = sInput + NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
+         sInput = sInput +" __lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
          logDebug("init(13)  input: "+ sInput);
       }
    }

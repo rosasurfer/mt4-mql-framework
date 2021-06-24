@@ -13,6 +13,21 @@ int onDeinit() {
    // in allen deinit()-Szenarien Laufzeitstatus speichern
    if (!StoreRuntimeStatus()) return(last_error);
 
+   // unregister the order event listener
+   if (track.orders) {
+      static int hWnd;
+      if (!hWnd) hWnd = GetTerminalMainWindow();
+      string name = "order-tracker:"+ StrToLower(Symbol());
+      int counter = GetWindowIntegerA(hWnd, name);
+
+      if (counter > 0) {
+         counter--;
+         if (!SetWindowIntegerA(hWnd, name, counter))
+            return(!catch("onDeinit(2)->SetWindowIntegerA() => FALSE", ERR_RUNTIME_ERROR));
+      }
+      else logError("onDeinit(3)  illegal event listener counter in main window: "+ counter, ERR_ILLEGAL_STATE);
+   }
+
    QC.StopChannels();
    ScriptRunner.StopParamSender();
    return(last_error);
