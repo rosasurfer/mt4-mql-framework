@@ -685,7 +685,7 @@ bool StopSequence(int signal) {
       }
    }
 
-   // pause/stop the tester according to the configuration
+   // pause or stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
          if      (tester.onStopPause)                                         Tester.Pause("StopSequence(12)");
