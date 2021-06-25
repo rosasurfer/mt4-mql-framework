@@ -3976,8 +3976,8 @@ bool onPositionOpen(int tickets[]) {
             int    pipDigits   = digits & (~1);
             string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-            string message     = "Position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
+            string message     = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
             logInfo("onPositionOpen(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4023,8 +4023,8 @@ bool onPositionClose(int tickets[][]) {
             string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
             string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
             string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
-            string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-            string message     = "Position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[tickets[i][1]];
+            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
+            string message     = "position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[tickets[i][1]];
             logInfo("onPositionClose(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4068,8 +4068,8 @@ bool onOrderFail(int tickets[]) {
             int    pipDigits   = digits & (~1);
             string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            string sError      = ifString(StringLen(OrderComment()), "error "+ DoubleQuoteStr(OrderComment()), "unknown error");
-            string message     = "Order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +", "+ sError;
+            string sError      = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", " (unknown error)");
+            string message     = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + sError;
             logWarn("onOrderFail(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
