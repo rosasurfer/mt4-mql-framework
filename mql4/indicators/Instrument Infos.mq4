@@ -257,7 +257,7 @@ double iADR() {
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);                     // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
    }
@@ -266,26 +266,20 @@ double iADR() {
 
 
 /**
- * Calculate and return the performance of a position per ADR using the specified leverage. Allows to compare the effective
- * volatility of different instruments.
+ * Calculate and return the performance volatility of a position per ADR using the specified leverage. Allows to compare the
+ * effective volatility of different instruments.
  *
  * @param  double leverage - used leverage
  *
- * @return double - performance in percent of the current account size or NULL in case of errors
+ * @return double - performance volatility (i.e. equity change) in percent or NULL in case of errors
  */
 double CalculateVola(double leverage) {
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double pointValue = MathDiv(tickValue, tickSize/Point);
-   double pipValue   = PipPoints * pointValue;                          // pip value of 1 lot in account currency
-
-   double equity          = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double lotValue        = MathDiv(Close[0], tickSize) * tickValue;    // value of 1 lot in account currency
-   double unleveragedLots = MathDiv(equity, lotValue);                  // unleveraged lots for the account size
-
-   double gain = unleveragedLots * leverage * pipValue * iADR()/Pip;
-   double vola = MathDiv(gain, equity) * 100;
-   return(vola);
+   double pointValue = MathDiv(tickValue, tickSize/Point);              // point value of 1 lot in account currency
+   double lotValue   = MathDiv(Close[0], tickSize) * tickValue;         // value of 1 lot in account currency
+   double vola       = MathDiv(leverage, lotValue) * pointValue * iADR()/Point;
+   return(vola * 100);
 }
 
 

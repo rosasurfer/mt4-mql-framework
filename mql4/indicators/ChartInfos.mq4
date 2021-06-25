@@ -4135,7 +4135,7 @@ double iADR() {
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
 
