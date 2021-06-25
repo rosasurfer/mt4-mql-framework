@@ -172,8 +172,9 @@ color  positions.fontColor.history = C'128,128,0';
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
-// Ordertracking                                                  // entspricht dem Code im EventTracker
+// order tracking
 bool   track.orders;
+int    hWndTerminal;                                              // handle of the terminal main window (listener registration)
 
 // Order-Events
 int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
@@ -3947,40 +3948,6 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
 
 
 /**
- * Handle an OrderFail event.
- *
- * @param  int tickets[] - ticket ids of the failed pending orders
- *
- * @return bool - success status
- */
-bool onOrderFail(int tickets[]) {
-   int error=0, size=ArraySize(tickets);
-
-   if (size > 0) {
-      OrderPush();
-
-      for (int i=0; i < size; i++) {
-         if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
-
-         string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
-         string sLots       = NumberToStr(OrderLots(), ".+");
-         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         int    pipDigits   = digits & (~1);
-         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-         string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-         string sReason     = ifString(StringLen(OrderComment()), "error \""+ OrderComment() +"\"", "unknown error");
-         string message     = "Order failed: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +"with "+ sReason;
-         logWarn("onOrderFail(2)  "+ message);
-      }
-
-      OrderPop();
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
-   }
-   return(!error);
-}
-
-
-/**
  * Handle a PositionOpen event.
  *
  * @param  int tickets[] - ticket ids of the opened positions
@@ -3988,21 +3955,21 @@ bool onOrderFail(int tickets[]) {
  * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
+   bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArraySize(tickets);
-   if (!size) return(true);
+   if (!size || !isLogInfo) return(true);
 
    OrderPush();
-   bool playSound=false, isLogInfo=IsLogInfo();
-
-   for (int i=0; i < size && isLogInfo; i++) {
+   for (int i=0; i < size; i++) {
       if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
-      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false, notYetLogged=false;
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
       if (isMySymbol || !isOtherListener) {
-         notYetLogged = true;                   // TODO
-         if (notYetLogged) {
+         string event = "rsf::PositionOpen::#"+ OrderTicket();
+
+         if (!IsOrderEventLogged(event)) {
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
@@ -4010,15 +3977,15 @@ bool onPositionOpen(int tickets[]) {
             string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
             string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-            string message     = "Position opened: #"+ tickets[i] +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            string message     = "Position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
             logInfo("onPositionOpen(2)  "+ message);
-            playSound = true;
+            eventLogged = SetOrderEventLogged(event, true);
          }
       }
    }
    OrderPop();
 
-   if (signal.sound && playSound)
+   if (eventLogged && signal.sound)
       return(PlaySoundEx(signal.sound.positionOpened));
    return(!catch("onPositionOpen(3)"));
 }
@@ -4032,49 +3999,126 @@ bool onPositionOpen(int tickets[]) {
  * @return bool - success status
  */
 bool onPositionClose(int tickets[][]) {
+   bool isLogInfo=IsLogInfo(), eventLogged=false;
+   int size = ArraySize(tickets);
+   if (!size || !isLogInfo) return(true);
+
    string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
-   int error=0, size=ArrayRange(tickets, 0);
+   OrderPush();
 
-   if (size > 0) {
-      OrderPush();
-      bool isLogInfo = IsLogInfo();
+   for (int i=0; i < size; i++) {
+      if (!SelectTicket(tickets[i][0], "onPositionClose(1)")) continue;
 
-      for (int i=0; i < size && isLogInfo; i++) {
-         int ticket    = tickets[i][0];
-         int closeType = tickets[i][1];
-         if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
-         string sType       = OperationTypeDescription(OrderType());
-         string sLots       = NumberToStr(OrderLots(), ".+");
-         int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-         int    pipDigits   = digits & (~1);
-         string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
-         string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
-         string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
-         string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
-         string message     = "Position closed: #"+ ticket +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[closeType];
-         logInfo("onPositionClose(2)  "+ message);
+      if (isMySymbol || !isOtherListener) {
+         string event = "rsf::PositionClose::#"+ OrderTicket();
+
+         if (!IsOrderEventLogged(event)) {
+            string sType       = OperationTypeDescription(OrderType());
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+            string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
+            string comment     = ifString(StringLen(OrderComment()), " (\""+ OrderComment() +"\")", "");
+            string message     = "Position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[tickets[i][1]];
+            logInfo("onPositionClose(2)  "+ message);
+            eventLogged = SetOrderEventLogged(event, true);
+         }
       }
-
-      OrderPop();
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
    }
-   return(!error);
+   OrderPop();
+
+   if (eventLogged && signal.sound)
+      return(PlaySoundEx(signal.sound.positionClosed));
+   return(!catch("onPositionClose(3)"));
+}
+
+
+/**
+ * Handle an OrderFail event.
+ *
+ * @param  int tickets[] - ticket ids of the failed pending orders
+ *
+ * @return bool - success status
+ */
+bool onOrderFail(int tickets[]) {
+   int size = ArraySize(tickets);
+   if (!size) return(true);
+
+   bool eventLogged = false;
+   OrderPush();
+
+   for (int i=0; i < size; i++) {
+      if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
+
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
+
+      if (isMySymbol || !isOtherListener) {
+         string event = "rsf::OrderFail::#"+ OrderTicket();
+
+         if (!IsOrderEventLogged(event)) {
+            string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+            string sError      = ifString(StringLen(OrderComment()), "error "+ DoubleQuoteStr(OrderComment()), "unknown error");
+            string message     = "Order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice +", "+ sError;
+            logWarn("onOrderFail(2)  "+ message);
+            eventLogged = SetOrderEventLogged(event, true);
+         }
+      }
+   }
+   OrderPop();
+
+   if (eventLogged && signal.sound)
+      return(PlaySoundEx(signal.sound.orderFailed));
+   return(!catch("onOrderFail(3)"));
 }
 
 
 /**
  * Whether there is a registered order event listener for the specified symbol.
  *
+ * @param  string symbol
+ *
  * @return bool
  */
 bool IsOrderEventListener(string symbol) {
-   static int hWnd;
-   if (!hWnd) hWnd = GetTerminalMainWindow();
+   string name = "rsf::order-tracker::"+ StrToLower(symbol);
+   return(GetWindowIntegerA(hWndTerminal, name) > 0);
+}
 
-   string name = "order-tracker:"+ StrToLower(symbol);
-   int counter = GetWindowIntegerA(hWnd, name);
-   return(counter != 0);
+
+/**
+ * Whether the specified order event was already logged.
+ *
+ * @param  string event - event identifier
+ *
+ * @return bool
+ */
+bool IsOrderEventLogged(string event) {
+   return(GetWindowIntegerA(hWndTerminal, event) > 0);
+}
+
+
+/**
+ * Set the logging status of the specified order event.
+ *
+ * @param  string event  - event identifier
+ * @param  bool   status - logging status
+ *
+ * @return bool - success status
+ */
+bool SetOrderEventLogged(string event, bool status) {
+   status = status!=0;
+   return(SetWindowIntegerA(hWndTerminal, event, status) != 0);
 }
 
 

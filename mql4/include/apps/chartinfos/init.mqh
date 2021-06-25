@@ -4,6 +4,8 @@
  * @return int - error status
  */
 int onInit() {
+   hWndTerminal = GetTerminalMainWindow();
+
    if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()
    if (!RestoreRuntimeStatus()) return(last_error);                           // restores positions.absoluteProfits
    if (!InitTradeAccount())     return(last_error);                           // set used trade account
@@ -200,14 +202,10 @@ bool OrderTracker.Configure() {
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
 
-      // register the tracker as event listener
-      static int hWnd;
-      if (!hWnd) hWnd = GetTerminalMainWindow();
-      string name = "order-tracker:"+ StrToLower(Symbol());
-      int counter = GetWindowIntegerA(hWnd, name);
-      counter++;
-      if (!SetWindowIntegerA(hWnd, name, counter))
-         return(!catch("OrderTracker.Configure(2)->SetWindowIntegerA() => FALSE", ERR_RUNTIME_ERROR));
+      // register the indicator as order event listener
+      string name = "rsf::order-tracker::"+ StrToLower(Symbol());
+      int counter = Max(GetWindowIntegerA(hWndTerminal, name), 0) + 1;
+      SetWindowIntegerA(hWndTerminal, name, counter);
    }
    return(!catch("OrderTracker.Configure(2)"));
 }
