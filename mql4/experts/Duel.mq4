@@ -29,7 +29,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   GridDirections         = "Long | Short | Both*";
-extern int      GridSize               = 20;
+extern double   GridSize               = 20;
 extern double   UnitSize               = 0.1;                     // lots at the first grid level
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
@@ -82,8 +82,9 @@ int      sequence.directions;
 bool     sequence.pyramidEnabled;                        // whether the sequence scales in on the winning side (pyramid)
 bool     sequence.martingaleEnabled;                     // whether the sequence scales in on the losing side (martingale)
 double   sequence.startEquity;
-double   sequence.gridbase;
 double   sequence.unitsize;                              // lots at the first level
+double   sequence.gridsize;
+double   sequence.gridbase;
 double   sequence.openLots;                              // total open lots: long.openLots - short.openLots
 double   sequence.hedgedPL;                              // P/L of the hedged open positions
 double   sequence.floatingPL;                            // P/L of the floating open positions
@@ -354,7 +355,7 @@ bool StartSequence() {
    if (!IsTesting() && !IsDemoFix()) {
       if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {     // confirm dangerous live modes
          PlaySoundEx("Windows Notify.wav");
-         if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL))
+         if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check for coming news?", MB_ICONQUESTION|MB_OKCANCEL))
             return(_false(StopSequence()));
          RefreshRates();
       }
@@ -1041,12 +1042,12 @@ double CalculateGridLevel(int direction, int level) {
    double price = 0;
 
    if (direction == D_LONG) {
-      if (level > 0) price = sequence.gridbase + (level-1) * GridSize*Pip;
-      else           price = sequence.gridbase + (level+1) * GridSize*Pip;
+      if (level > 0) price = sequence.gridbase + (level-1) * sequence.gridsize*Pip;
+      else           price = sequence.gridbase + (level+1) * sequence.gridsize*Pip;
    }
    else {
-      if (level > 0) price = sequence.gridbase - (level-1) * GridSize*Pip;
-      else           price = sequence.gridbase - (level+1) * GridSize*Pip;
+      if (level > 0) price = sequence.gridbase - (level-1) * sequence.gridsize*Pip;
+      else           price = sequence.gridbase - (level+1) * sequence.gridsize*Pip;
    }
    price = NormalizeDouble(price, Digits);
 
@@ -1625,7 +1626,7 @@ bool IsTestSequence() {
 
 // backed-up input parameters
 string   prev.GridDirections = "";
-int      prev.GridSize;
+double   prev.GridSize;
 double   prev.UnitSize;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
@@ -1645,6 +1646,7 @@ int      prev.sequence.directions;
 bool     prev.sequence.pyramidEnabled;
 bool     prev.sequence.martingaleEnabled;
 double   prev.sequence.unitsize;
+double   prev.sequence.gridsize;
 
 bool     prev.tpAbs.condition;
 double   prev.tpAbs.value;
@@ -1693,6 +1695,7 @@ void BackupInputs() {
    prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
    prev.sequence.martingaleEnabled = sequence.martingaleEnabled;
    prev.sequence.unitsize          = sequence.unitsize;
+   prev.sequence.gridsize          = sequence.gridsize;
 
    prev.tpAbs.condition            = tpAbs.condition;
    prev.tpAbs.value                = tpAbs.value;
@@ -1741,6 +1744,7 @@ void RestoreInputs() {
    sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
    sequence.martingaleEnabled = prev.sequence.martingaleEnabled;
    sequence.unitsize          = prev.sequence.unitsize;
+   sequence.gridsize          = prev.sequence.gridsize;
 
    tpAbs.condition            = prev.tpAbs.condition;
    tpAbs.value                = prev.tpAbs.value;
@@ -1790,10 +1794,11 @@ bool ValidateInputs() {
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridSize
-   if (isParameterChange && GridSize!=prev.GridSize) {
+   if (isParameterChange && NE(GridSize, prev.GridSize)) {
       if (ArraySize(long.ticket) || ArraySize(short.ticket)) return(!onInputError("ValidateInputs(3)  cannot change input parameter GridSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (GridSize < 1)                                         return(!onInputError("ValidateInputs(4)  invalid input parameter GridSize: "+ GridSize));
+   if (LT(GridSize, 1))                                      return(!onInputError("ValidateInputs(4)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+")));
+   sequence.gridsize = GridSize;
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
@@ -2264,9 +2269,9 @@ void SS.All() {
  */
 void SS.GridSize() {
    if (__isChart) {
-      if      (!GridSize)                  sGridSize = "";
-      else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(GridSize/100, ",'R.2");      // 123 pip => 1.23
-      else                                 sGridSize = NumberToStr(GridSize, ".+") +" pip";     // 12.3 pip
+      if      (!sequence.gridsize)         sGridSize = "";
+      else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(sequence.gridsize/100, ",'R.2");      // 123 pip => 1.23
+      else                                 sGridSize = NumberToStr(sequence.gridsize, ".+") +" pip";     // 12.3 pip
    }
 }
 
@@ -2499,7 +2504,7 @@ bool MakeScreenshot(string comment = "") {
  */
 string InputsToStr() {
    return(StringConcatenate("GridDirections=",         DoubleQuoteStr(GridDirections),               ";", NL,
-                            "GridSize=",               GridSize,                                     ";", NL,
+                            "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
                             "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
                             "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
