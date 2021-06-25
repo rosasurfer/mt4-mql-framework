@@ -351,11 +351,13 @@ bool IsSessionBreak() {
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (!IsTesting() && (sequence.martingaleEnabled || sequence.directions==D_BOTH)) {  // confirm dangerous modes
-      PlaySoundEx("Windows Notify.wav");
-      if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL))
-         return(_false(StopSequence()));
-      RefreshRates();
+   if (!IsTesting() && !IsDemoFix()) {
+      if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {     // confirm dangerous live modes
+         PlaySoundEx("Windows Notify.wav");
+         if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL))
+            return(_false(StopSequence()));
+         RefreshRates();
+      }
    }
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
@@ -367,15 +369,15 @@ bool StartSequence() {
    sequence.status = STATUS_PROGRESSING;
 
    if (long.enabled) {
-      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);                             // open a long position for level 1
+      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);                 // open a long position for level 1
    }
    if (short.enabled) {
-      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);                             // open a short position for level 1
+      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);                 // open a short position for level 1
    }
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
-   if (!UpdatePendingOrders()) return(false);                                          // update pending orders
+   if (!UpdatePendingOrders()) return(false);                              // update pending orders
 
    if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(SaveStatus());
