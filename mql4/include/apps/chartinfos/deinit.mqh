@@ -15,17 +15,9 @@ int onDeinit() {
 
    // unregister the order event listener
    if (track.orders) {
-      static int hWnd;
-      if (!hWnd) hWnd = GetTerminalMainWindow();
-      string name = "order-tracker:"+ StrToLower(Symbol());
-      int counter = GetWindowIntegerA(hWnd, name);
-
-      if (counter > 0) {
-         counter--;
-         if (!SetWindowIntegerA(hWnd, name, counter))
-            return(!catch("onDeinit(2)->SetWindowIntegerA() => FALSE", ERR_RUNTIME_ERROR));
-      }
-      else logError("onDeinit(3)  illegal event listener counter in main window: "+ counter, ERR_ILLEGAL_STATE);
+      string name = "rsf::order-tracker::"+ StrToLower(Symbol());
+      int counter = Max(GetWindowIntegerA(hWndTerminal, name), 1) - 1;
+      SetWindowIntegerA(hWndTerminal, name, counter);
    }
 
    QC.StopChannels();
