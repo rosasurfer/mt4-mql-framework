@@ -1725,8 +1725,8 @@ bool CalculateUnitSize() {
    mm.equity           = 0;                                                   // currently used equity value incl. extern assets
 
    // calculate lot values and unitsizes
-   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
-   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
+   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
       if (error || !Close[0] || !tickSize || !tickValue || !marginRequired) { // can happen on terminal start, on change of account or template, or in offline charts
@@ -1746,8 +1746,8 @@ bool CalculateUnitSize() {
       mm.equity = externalAssets;                                             // TODO: wrong, not updated as GetExternalAssets() caches the result
    }
 
-   mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
-   mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
+   mm.lotValue        = Close[0]/tickSize * tickValue;                        // value of 1 lot in account currency
+   mm.unleveragedLots = mm.equity/mm.lotValue;                                // unleveraged unitsize
 
    if (mm.risk && mm.pipRange) {
       double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
@@ -4125,12 +4125,12 @@ bool SetOrderEventLogged(string event, bool status) {
 /**
  * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
  *
- * @return double - ADR or NULL in case of errors
+ * @return double - ADR in absolute terms or NULL in case of errors
  */
 double iADR() {
-   static double ranges[], adr;
-
-   if (!ArraySize(ranges)) {                                // TODO: invalidate static cache on BarOpen(D1)
+   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+   if (!adr) {
+      double ranges[];
       int maPeriods = 20;
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
@@ -4138,9 +4138,6 @@ double iADR() {
          ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
-
-      if (IsError(catch("iADR(1)")))
-         return(NULL);
    }
    return(adr);
 }
