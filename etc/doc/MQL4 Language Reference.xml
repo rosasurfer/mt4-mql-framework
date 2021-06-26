@@ -3460,9 +3460,11 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMargin;
       <content>
-      Return the free margin value of the current account (in account currency). The free margin is the amount of money available to open new positions.
+      Return the account's free margin value in account currency. Free margin is the amount of money available to open new positions.
       </content>
-      example=<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());
+      <example>
+<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());      
+      </example>
     </function>
 
     <function>
@@ -3471,26 +3473,32 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMarginCheck;
       <content>
-      Returns free margin that remains after the specified position has been opened at the current price on the current account. If the free margin
-      is insufficient, an <a href="help://constants_errors">error</a> 134 (<span class="const">ERR_NOT_ENOUGH_MONEY</span>) will be generated.
+        Return the remaining free margin after opening the specified position at current market price.<br/> 
+        If free margin is insufficient to open the position error <a href="help://constants_errors"><span class="const">ERR_NOT_ENOUGH_MONEY</span></a> will be set 
+        and the return value is <span class="const">NULL</span>.
       </content>
-      example=if (AccountFreeMarginCheck(Symbol(), OP_BUY, Lots)&lt;=0 || GetLastError()==134) return;
+      <example>
+<span class="type code">double</span> lots = <span class="number code">0.5</span>;
+      
+<span class="keyword code">if</span> (<span class="function code">AccountFreeMarginCheck</span>(<span class="function code">Symbol</span>(), <span class="const code">OP_BUY</span>, lots) &lt;= <span class="function code">0</span> || <span class="function code">GetLastError</span>()==<span class="const code">ERR_NOT_ENOUGH_MONEY</span>) {
+    <span class="function code">Print</span>(<span class="string code">"not enough money to open a position of "</span>+ lots +<span class="string code">" lots"</span>);
+} 
+      </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol for trade operation.
+        description=The traded instrument.
       </parameter>
       <parameter>
         type=int
-        name=cmd
-        <description>
-Operation type. It can be either <a href="help://constants_trading">OP_BUY</a> or <a href="help://constants_trading">OP_SELL</a>.
+        name=type
+        description=Trade operation type. Must be either <a href="help://constants_trading"><span class="const">OP_BUY</span></a> or <a href="help://constants_trading"><span class="const">OP_SELL</span></a>.
         </description>
       </parameter>
       <parameter>
         type=double
-        name=volume
-        description=Number of lots.
+        name=lots
+        description=Order volume.
       </parameter>
     </function>
 
