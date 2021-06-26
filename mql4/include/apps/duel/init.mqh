@@ -1,10 +1,21 @@
 /**
- * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
- * There was an input dialog.
+ * Initialization preprocessing.
  *
  * @return int - error status
  *
  * @see  mql4/experts/Duel.mq4
+ */
+int onInit() {
+   CreateStatusBox();
+   return(catch("onInit(1)"));
+}
+
+
+/**
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
+ * There was an input dialog.
+ *
+ * @return int - error status
  */
 int onInitUser() {
    if (ValidateInputs()) {                                     // on success create a new sequence
@@ -14,7 +25,8 @@ int onInitUser() {
       sequence.status  = STATUS_WAITING;
       long.enabled     = (sequence.directions & D_LONG  && 1);
       short.enabled    = (sequence.directions & D_SHORT && 1);
-      SS.SequenceName();
+      SS.All();
+      logInfo("onInitUser(4)  sequence "+ sequence.name +" created");
 
       // prevent starting with too little free margin
       double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
@@ -30,9 +42,8 @@ int onInitUser() {
       double maxLots      = MathMax(maxLongLots, maxShortLots);               // max lots at level 15 in any direction
       if (IsError(catch("onInitUser(1)"))) return(last_error);                // reset last error
       if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-         catch("onInitUser(2) not enough money to open "+ maxLevels +" levels with a start unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          StopSequence();
-         return(last_error);
+         return(catch("onInitUser(2) not enough money to open "+ maxLevels +" levels with a start unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY));
       }
 
       // confirm dangerous live modes
@@ -47,7 +58,6 @@ int onInitUser() {
       }
 
       // all good: confirm sequence generation
-      logInfo("onInitUser(4)  sequence "+ sequence.name +" created");
       SaveStatus();
    }
    return(catch("onInitUser(5)"));
@@ -103,9 +113,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
-   CreateStatusBox();
    SS.All();
-
    if (!SetLogfile(GetLogFilename())) return(last_error);
 
    if (IsTesting()) {                                       // read test configuration
