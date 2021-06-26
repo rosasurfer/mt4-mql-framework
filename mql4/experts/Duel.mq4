@@ -351,15 +351,6 @@ bool IsSessionBreak() {
  */
 bool StartSequence() {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
-   if (!IsTesting() && !IsDemoFix()) {
-      if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {     // confirm dangerous live modes
-         PlaySoundEx("Windows Notify.wav");
-         if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check for coming news?", MB_ICONQUESTION|MB_OKCANCEL))
-            return(_false(StopSequence()));
-         RefreshRates();
-      }
-   }
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
@@ -1068,15 +1059,18 @@ double CalculateLots(int direction, int level) {
    if      (direction == D_LONG)  { if (!long.enabled)  return(NULL); }
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
    else                                                 return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   if (!level || level==-1)                             return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
-
+   if (!level)                                          return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
    double lots = 0;
 
-   if (level > 0) {
-      if (sequence.pyramidEnabled)      lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
-      else if (level == 1)              lots = sequence.unitsize;
+   if (Abs(level) == 1) {             // covers +1 and -1
+      lots = sequence.unitsize;
    }
-   else if (sequence.martingaleEnabled) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
+   else if (level > 0) {              // pyramid levels
+      if (sequence.pyramidEnabled)    lots = sequence.unitsize * MathPow(Pyramid.Multiplier, level-1);
+   }
+   else {                             // martingale levels
+      if (sequence.martingaleEnabled) lots = sequence.unitsize * MathPow(Martingale.Multiplier, -level-1);
+   }
    lots = NormalizeLots(lots); if (IsEmptyValue(lots)) return(NULL);
 
    return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
