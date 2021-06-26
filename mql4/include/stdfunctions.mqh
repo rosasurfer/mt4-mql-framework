@@ -6086,7 +6086,7 @@ bool IsSuperContext() {
  *                                                   MODE_DEFAULT - normalize according to standard rounding rules
  *                                                   MODE_CEIL    - normalize up to the next largest absolute value
  *
- * @return double - rounded lot value or EMPTY_VALUE in case of errors
+ * @return double - rounded lot value or EMPTY_VALUE (INT_MAX) in case of errors
  */
 double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    if (!StringLen(symbol)) symbol = Symbol();

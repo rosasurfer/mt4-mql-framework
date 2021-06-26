@@ -15,10 +15,42 @@ int onInitUser() {
       long.enabled     = (sequence.directions & D_LONG  && 1);
       short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.SequenceName();
-      logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
+
+      // prevent starting with too little free margin
+      double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
+      int level=0, maxLevels=15;
+
+      for (level=+1; level <=  maxLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+      for (level=-1; level >= -maxLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+      for (level=+1; level <=  maxLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+      for (level=-1; level >= -maxLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+
+      double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
+      double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
+      double maxLots      = MathMax(maxLongLots, maxShortLots);               // max lots at level 15 in any direction
+      if (IsError(catch("onInitUser(1)"))) return(last_error);                // reset last error
+      if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
+         catch("onInitUser(2) not enough money to open "+ maxLevels +" levels with a start unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+         StopSequence();
+         return(last_error);
+      }
+
+      // confirm dangerous live modes
+      if (!IsTesting() && !IsDemoFix()) {
+         if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {
+            PlaySoundEx("Windows Notify.wav");
+            if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
+               StopSequence();
+               return(catch("onInitUser(3)"));
+            }
+         }
+      }
+
+      // all good: confirm sequence generation
+      logInfo("onInitUser(4)  sequence "+ sequence.name +" created");
       SaveStatus();
    }
-   return(catch("onInitUser(2)"));
+   return(catch("onInitUser(5)"));
 }
 
 
