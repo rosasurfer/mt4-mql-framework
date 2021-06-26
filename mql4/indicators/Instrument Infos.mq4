@@ -247,17 +247,17 @@ int UpdateInstrumentInfos() {
 /**
  * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
  *
- * @return double
+ * @return double - ADR in absolute terms or NULL in case of errors
  */
 double iADR() {
-   static double ranges[], adr;
-
-   if (!ArraySize(ranges)) {
+   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+   if (!adr) {
+      double ranges[];
       int maPeriods = 20;
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);                     // TODO: convert to current timeframe for non-FXT brokers
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
    }
@@ -274,11 +274,10 @@ double iADR() {
  * @return double - performance volatility (i.e. equity change) in percent or NULL in case of errors
  */
 double CalculateVola(double leverage) {
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double pointValue = MathDiv(tickValue, tickSize/Point);              // point value of 1 lot in account currency
-   double lotValue   = MathDiv(Close[0], tickSize) * tickValue;         // value of 1 lot in account currency
-   double vola       = MathDiv(leverage, lotValue) * pointValue * iADR()/Point;
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double lotValue  = MathDiv(Close[0], tickSize) * tickValue;          // value of 1 lot in account currency
+   double vola      = MathDiv(leverage, lotValue) * tickValue * MathDiv(iADR(), tickSize);
    return(vola * 100);
 }
 
@@ -291,15 +290,12 @@ double CalculateVola(double leverage) {
  * @return double - lots or NULL in case of errors
  */
 double CalculateLots(double percent) {
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double pointValue = MathDiv(tickValue, tickSize/Point);
-   double pipValue   = PipPoints * pointValue;                          // pip value in account currency
-
-   double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double amount = percent/100 * equity;                                // equity amount in account currency
-   double adr    = iADR()/Pip;                                          // ADR in pip
-   double lots   = MathDiv(MathDiv(amount, adr), pipValue);             // lots for amount and ADR
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double equity    = AccountEquity() - AccountCredit() + GetExternalAssets();
+   double amount    = percent/100 * equity;                             // equity amount in account currency
+   double adr       = MathDiv(iADR(), tickSize);                        // ADR in ticks
+   double lots      = MathDiv(MathDiv(amount, adr), tickValue);         // lots for amount and ADR
 
    // normalize the result
    if (lots > 0) {                                                                              // max. 6.7% per step

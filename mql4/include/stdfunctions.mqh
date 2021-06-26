@@ -1968,7 +1968,7 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
  *
  * @param  double a                 - divident
  * @param  double b                 - divisor
- * @param  double onZero [optional] - value to return if the the divisor is zero (default: 0)
+ * @param  double onZero [optional] - value to return if the divisor is zero (default: 0)
  *
  * @return double
  */
