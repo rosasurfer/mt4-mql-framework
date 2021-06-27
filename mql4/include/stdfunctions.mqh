@@ -1952,7 +1952,7 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
       }
       if (boundaryOnOverflow) return(INT_MAX);
    }
-   else {                                 // operands have different sign: negative result
+   else {                                 // operands have different signs: negative result
       if (result < 0) {
          if (result/a == b) return(result);
       }
@@ -1960,6 +1960,22 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
    }
 
    return(!catch("Mul(1)  integer overflow caused by a * b", ERR_RUNTIME_ERROR));
+}
+
+
+/**
+ * Divide two integers and prevent a division by 0 (zero).
+ *
+ * @param  int a                 - divident
+ * @param  int b                 - divisor
+ * @param  int onZero [optional] - value to return if the divisor is zero (default: 0)
+ *
+ * @return int
+ */
+int Div(int a, int b, int onZero = 0) {
+   if (!b)
+      return(onZero);
+   return(a/b);
 }
 
 
@@ -1980,34 +1996,18 @@ double MathDiv(double a, double b, double onZero = 0) {
 
 
 /**
- * Gibt den Divisionsrest zweier Doubles zurück (fehlerbereinigter Ersatz für MathMod()).
+ * Return the division remainder of two double values. Replacement for the flawed builtin function MathMod().
  *
  * @param  double a
  * @param  double b
  *
- * @return double - Divisionsrest
+ * @return double - remainder
  */
 double MathModFix(double a, double b) {
    double remainder = MathMod(a, b);
-   if      (EQ(remainder, 0)) remainder = 0;                         // 0 normalisieren
+   if      (EQ(remainder, 0)) remainder = 0;    // normalize 0
    else if (EQ(remainder, b)) remainder = 0;
    return(remainder);
-}
-
-
-/**
- * Integer-Version von MathDiv(). Dividiert zwei Integers und fängt dabei eine Division durch 0 ab.
- *
- * @param  int a      - Divident
- * @param  int b      - Divisor
- * @param  int onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
- *
- * @return int
- */
-int Div(int a, int b, int onZero=0) {
-   if (!b)
-      return(onZero);
-   return(a/b);
 }
 
 
