@@ -26,7 +26,7 @@ int onInitUser() {
       long.enabled     = (sequence.directions & D_LONG  && 1);
       short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.All();
-      logInfo("onInitUser(4)  sequence "+ sequence.name +" created");
+      logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
       // prevent starting with too little free margin
       double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
@@ -40,10 +40,11 @@ int onInitUser() {
       double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
       double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
       double maxLots      = MathMax(maxLongLots, maxShortLots);               // max lots at level 15 in any direction
-      if (IsError(catch("onInitUser(1)"))) return(last_error);                // reset last error
+      if (IsError(catch("onInitUser(2)"))) return(last_error);                // reset last error
       if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
          StopSequence();
-         return(catch("onInitUser(2) not enough money to open "+ maxLevels +" levels with a start unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY));
+         logError("onInitUser(3) not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+         return(catch("onInitUser(4)"));
       }
 
       // confirm dangerous live modes
@@ -52,7 +53,7 @@ int onInitUser() {
             PlaySoundEx("Windows Notify.wav");
             if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
                StopSequence();
-               return(catch("onInitUser(3)"));
+               return(catch("onInitUser(5)"));
             }
          }
       }
@@ -60,7 +61,7 @@ int onInitUser() {
       // all good: confirm sequence generation
       SaveStatus();
    }
-   return(catch("onInitUser(5)"));
+   return(catch("onInitUser(6)"));
 }
 
 
