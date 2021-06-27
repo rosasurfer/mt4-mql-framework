@@ -168,10 +168,8 @@ datetime sessionbreak.starttime;                         // configurable via inp
 datetime sessionbreak.endtime;
 
 // cache vars to speed-up ShowStatus()
-string   sUnitSize            = "";
-string   sGridSize            = "";
-string   sPyramid             = "";
-string   sMartingale          = "";
+string   sGridParameters      = "";
+string   sGridVolatility      = "";
 string   sStopConditions      = "";
 string   sOpenLongLots        = "";
 string   sOpenShortLots       = "";
@@ -358,7 +356,7 @@ bool StartSequence() {
    else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
-   sequence.status = STATUS_PROGRESSING;
+   sequence.status      = STATUS_PROGRESSING;
 
    if (long.enabled) {
       if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);                 // open a long position for level 1
@@ -2144,6 +2142,27 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
 
 
 /**
+ * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ *
+ * @return double - ADR in absolute terms or NULL in case of errors
+ */
+double iADR() {
+   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+   if (!adr) {
+      double ranges[];
+      int maPeriods = 20;
+      ArrayResize(ranges, maPeriods);
+      ArraySetAsSeries(ranges, true);
+      for (int i=0; i < maPeriods; i++) {
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
+      }
+      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+   }
+   return(adr);
+}
+
+
+/**
  * Write the current sequence status to the status file.
  *
  * @return bool - success status
@@ -2212,20 +2231,21 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,                        NL,
-                                                                                                              NL,
-                                  "Grid:              ",  sGridSize, " x ", sUnitSize, sPyramid, sMartingale, NL,
-                                  "Stop:             ",   sStopConditions,                                    NL,
-                                                                                                              NL,
-                                  "Long:             ",   sOpenLongLots,                                      NL,
-                                  "Short:            ",   sOpenShortLots,                                     NL,
-                                  "Total:             ",  sOpenTotalLots,                                     NL,
-                                                                                                              NL,
-                                  "BE:                 ", sSequenceBePrice,                                   NL,
-                                  "TP:                 ", sSequenceTpPrice,                                   NL,
-                                  "SL:                 ", sSequenceSlPrice,                                   NL,
-                                                                                                              NL,
-                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats,                 NL
+   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,        NL,
+                                                                                              NL,
+                                  "Grid:              ",  sGridParameters,                    NL,
+                                  "Volatility:       ",   sGridVolatility,                    NL,
+                                                                                              NL,
+                                  "Long:             ",   sOpenLongLots,                      NL,
+                                  "Short:            ",   sOpenShortLots,                     NL,
+                                  "Total:             ",  sOpenTotalLots,                     NL,
+                                                                                              NL,
+                                  "Stop:              ",  sStopConditions,                    NL,
+                                  "BE:                 ", sSequenceBePrice,                   NL,
+                                  "TP:                 ", sSequenceTpPrice,                   NL,
+                                  "SL:                 ", sSequenceSlPrice,                   NL,
+                                                                                              NL,
+                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats, NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -2244,28 +2264,49 @@ int ShowStatus(int error = NO_ERROR) {
 void SS.All() {
    if (__isChart) {
       SS.SequenceName();
-      SS.GridSize();
-      SS.UnitSize();
+      SS.GridParameters();
       SS.StopConditions();
       SS.OpenLots();
       SS.ProfitTargets();
       SS.TotalPL();
       SS.MaxProfit();
       SS.MaxDrawdown();
-      sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
-      sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
    }
 }
 
 
 /**
- * ShowStatus: Update the string representation of the grid size.
+ * ShowStatus: Update the string representations of grid parameters and volatility.
  */
-void SS.GridSize() {
+void SS.GridParameters() {
    if (__isChart) {
+      string sGridSize;
       if      (!sequence.gridsize)         sGridSize = "";
       else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(sequence.gridsize/100, ",'R.2");      // 123 pip => 1.23
       else                                 sGridSize = NumberToStr(sequence.gridsize, ".+") +" pip";     // 12.3 pip
+
+      string sUnitSize   = ifString(!sequence.unitsize, "", NumberToStr(sequence.unitsize, ".+") +" lot");
+      string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      string sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
+
+      if (sequence.gridsize && sequence.unitsize) {
+         double adr        = iADR();
+         double adrLevels  = adr/Pip/sequence.gridsize + 1;
+         double adrLots    = sequence.unitsize * adrLevels;
+         double beDistance = adr/2;
+         double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
+         double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
+         double gridPL     = MathDiv(beDistance, tickSize) * tickValue * adrLots;
+         double equity     = AccountEquity() - AccountCredit() + GetExternalAssets();     // TODO: should we use sequence.startEquity??
+         double vola       = NormalizeDouble(MathDiv(gridPL, equity) * 100, 1);
+
+         sGridParameters = sGridSize +" x "+ sUnitSize + sPyramid + sMartingale;
+         sGridVolatility = NumberToStr(vola, ",'.+") +"%/ADR";
+      }
+      else {
+         sGridParameters = "";
+         sGridVolatility = "";
+      }
    }
 }
 
@@ -2429,16 +2470,6 @@ void SS.TotalPL() {
 
 
 /**
- * ShowStatus: Update the string representation of the unitsize.
- */
-void SS.UnitSize() {
-   if (__isChart) {
-      sUnitSize = NumberToStr(sequence.unitsize, ".+") +" lot";
-   }
-}
-
-
-/**
  * Create the status display box. It consists of overlapping rectangles made of char "g", font "Webdings". Called only from
  * afterInit().
  *
@@ -2447,7 +2478,7 @@ void SS.UnitSize() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 140}, y=61, fontSize=106, rectangles=ArraySize(x);
+   int x[]={2, 130}, y=61, fontSize=112, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 
