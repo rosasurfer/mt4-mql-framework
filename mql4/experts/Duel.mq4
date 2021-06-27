@@ -18,7 +18,7 @@
  *
  * @todo  rounding down mode for CalculateLots()
  * @todo  test generated sequence ids for uniqueness
- * @todo  and many more...
+ * @todo  many more...
  *
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [liner notes: I've looked at life from both sides now.]
  */
@@ -29,7 +29,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   GridDirections         = "Long | Short | Both*";
-extern double   GridSize               = 20;
+extern double   GridSize               = 20;                      // {pip} | {grid-volatility %}
 extern double   UnitSize               = 0.1;                     // lots at the first grid level
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
@@ -2478,7 +2478,7 @@ void SS.TotalPL() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 130}, y=61, fontSize=112, rectangles=ArraySize(x);
+   int x[]={2, 124}, y=61, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 
