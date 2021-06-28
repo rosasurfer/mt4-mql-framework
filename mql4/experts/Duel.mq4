@@ -47,44 +47,50 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID         105                          // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID         105                    // unique strategy id from 101-1023 (10 bit)
 
-#define STATUS_UNDEFINED      0                          // sequence status values
+#define STATUS_UNDEFINED      0                    // sequence status values
 #define STATUS_WAITING        1
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
+
+#define SIGNAL_PRICETIME      1                    // a price and/or time condition
+#define SIGNAL_TREND          2
+#define SIGNAL_TAKEPROFIT     3
+#define SIGNAL_STOPLOSS       4
+#define SIGNAL_SESSION_BREAK  5
 
 #define D_LONG                TRADE_DIRECTION_LONG
 #define D_SHORT               TRADE_DIRECTION_SHORT
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
-#define CLR_PENDING           DeepSkyBlue                // order marker colors
-#define CLR_LONG              C'0,0,254'                 // blue-ish: rgb(0,0,255) - rgb(1,1,1)
-#define CLR_SHORT             C'254,0,0'                 // red-ish:  rgb(255,0,0) - rgb(1,1,1)
+#define CLR_PENDING           DeepSkyBlue          // order marker colors
+#define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
+#define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
 #define CLR_CLOSE             Orange
 
 // sequence data
 int      sequence.id;
 datetime sequence.created;
-bool     sequence.isTest;                                // whether the sequence is a test (a finished test can be loaded into an online chart)
-string   sequence.name = "";                             // "[LS].{sequence.id}"
+bool     sequence.isTest;                          // whether the sequence is a test (a finished test can be loaded into an online chart)
+string   sequence.name = "";                       // "[LS].{sequence.id}"
 int      sequence.status;
 int      sequence.directions;
-bool     sequence.pyramidEnabled;                        // whether the sequence scales in on the winning side (pyramid)
-bool     sequence.martingaleEnabled;                     // whether the sequence scales in on the losing side (martingale)
+bool     sequence.pyramidEnabled;                  // whether the sequence scales in on the winning side (pyramid)
+bool     sequence.martingaleEnabled;               // whether the sequence scales in on the losing side (martingale)
 double   sequence.startEquity;
 double   sequence.gridvola;
 double   sequence.gridsize;
-double   sequence.unitsize;                              // lots at the first level
+double   sequence.unitsize;                        // lots at the first level
 double   sequence.gridbase;
-double   sequence.openLots;                              // total open lots: long.openLots - short.openLots
-double   sequence.hedgedPL;                              // P/L of the hedged open positions
-double   sequence.floatingPL;                            // P/L of the floating open positions
-double   sequence.openPL;                                // P/L of all open positions: hedgedPL + floatingPL
-double   sequence.closedPL;                              // P/L of all closed positions
-double   sequence.totalPL;                               // total P/L of the sequence: openPL + closedPL
-double   sequence.maxProfit;                             // max. observed total sequence profit:   0...+n
-double   sequence.maxDrawdown;                           // max. observed total sequence drawdown: -n...0
+double   sequence.openLots;                        // total open lots: long.openLots - short.openLots
+double   sequence.hedgedPL;                        // P/L of the hedged open positions
+double   sequence.floatingPL;                      // P/L of the floating open positions
+double   sequence.openPL;                          // P/L of all open positions: hedgedPL + floatingPL
+double   sequence.closedPL;                        // P/L of all closed positions
+double   sequence.totalPL;                         // total P/L of the sequence: openPL + closedPL
+double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
+double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
 double   sequence.bePrice.long;
 double   sequence.bePrice.short;
 double   sequence.tpPrice;
@@ -92,12 +98,12 @@ double   sequence.slPrice;
 
 // order management
 bool     long.enabled;
-int      long.ticket      [];                            // records are ordered ascending by grid level
-int      long.level       [];                            // grid level: -n...-1 | +1...+n
+int      long.ticket      [];                      // records are ordered ascending by grid level
+int      long.level       [];                      // grid level: -n...-1 | +1...+n
 double   long.lots        [];
 int      long.pendingType [];
 datetime long.pendingTime [];
-double   long.pendingPrice[];                            // price of the grid level
+double   long.pendingPrice[];                      // price of the grid level
 int      long.type        [];
 datetime long.openTime    [];
 double   long.openPrice   [];
@@ -106,20 +112,20 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
-double   long.slippage;                                  // overall ippage of the long side
-double   long.openLots;                                  // total open long lots: 0...+n
+double   long.slippage;                            // overall ippage of the long side
+double   long.openLots;                            // total open long lots: 0...+n
 double   long.openPL;
 double   long.closedPL;
-int      long.minLevel = INT_MAX;                        // lowest reached grid level
-int      long.maxLevel = INT_MIN;                        // highest reached grid level
+int      long.minLevel = INT_MAX;                  // lowest reached grid level
+int      long.maxLevel = INT_MIN;                  // highest reached grid level
 
 bool     short.enabled;
-int      short.ticket      [];                           // records are ordered ascending by grid level
-int      short.level       [];                           // grid level: -n...-1 | +1...+n
+int      short.ticket      [];                     // records are ordered ascending by grid level
+int      short.level       [];                     // grid level: -n...-1 | +1...+n
 double   short.lots        [];
 int      short.pendingType [];
 datetime short.pendingTime [];
-double   short.pendingPrice[];                           // price of the grid level
+double   short.pendingPrice[];                     // price of the grid level
 int      short.type        [];
 datetime short.openTime    [];
 double   short.openPrice   [];
@@ -128,35 +134,35 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
-double   short.slippage;                                 // overall slippage of the short side
-double   short.openLots;                                 // total open short lots: 0...+n
+double   short.slippage;                           // overall slippage of the short side
+double   short.openLots;                           // total open short lots: 0...+n
 double   short.openPL;
 double   short.closedPL;
 int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
 
 // takeprofit conditions
-bool     tpAbs.condition;                                // whether an absolute TP condition is active
+bool     tpAbs.condition;                          // whether an absolute TP condition is active
 double   tpAbs.value;
 string   tpAbs.description = "";
 
-bool     tpPct.condition;                                // whether a percentage TP condition is active
+bool     tpPct.condition;                          // whether a percentage TP condition is active
 double   tpPct.value;
 double   tpPct.absValue    = INT_MAX;
 string   tpPct.description = "";
 
 // stoploss conditions
-bool     slAbs.condition;                                // whether an absolute SL condition is active
+bool     slAbs.condition;                          // whether an absolute SL condition is active
 double   slAbs.value;
 string   slAbs.description = "";
 
-bool     slPct.condition;                                // whether a percentage SL condition is active
+bool     slPct.condition;                          // whether a percentage SL condition is active
 double   slPct.value;
 double   slPct.absValue    = INT_MIN;
 string   slPct.description = "";
 
 // sessionbreak management
-datetime sessionbreak.starttime;                         // configurable via inputs and framework config
+datetime sessionbreak.starttime;                   // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 
 // cache vars to speed-up ShowStatus()
@@ -174,9 +180,9 @@ string   sSequenceBePrice     = "";
 string   sSequenceTpPrice     = "";
 string   sSequenceSlPrice     = "";
 
-// debug settings                                        // configurable via framework config, see ::afterInit()
-bool     tester.onStopPause = false;                     // whether to pause a test after StopSequence()
-bool     test.reduceStatusWrites  = true;                // whether to minimize status file writing in tester
+// debug settings                                  // configurable via framework config, see ::afterInit()
+bool     tester.onStopPause      = false;          // whether to pause a test after StopSequence()
+bool     test.reduceStatusWrites = true;           // whether to minimize status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -188,16 +194,18 @@ bool     test.reduceStatusWrites  = true;                // whether to minimize 
  * @return int - error status
  */
 int onTick() {
-   if (sequence.status == STATUS_WAITING) {                    // start a new sequence
-      if (IsStartSignal()) StartSequence();
-   }
-   else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
-      bool gridChanged=false, gridError=false;                 // whether the current gridlevel changed, and/or a grid error occurred
+   int signal;
 
-      if (UpdateStatus(gridChanged, gridError)) {              // check pending orders and open positions
-         if      (gridError)      StopSequence();
-         else if (IsStopSignal()) StopSequence();
-         else if (gridChanged)    UpdatePendingOrders(true);   // saveStatus = true
+   if (sequence.status == STATUS_WAITING) {
+      if (IsStartSignal(signal)) StartSequence(signal);
+   }
+   else if (sequence.status == STATUS_PROGRESSING) {        // manage a running sequence
+      bool gridChanged=false, gridError=false;              // whether the current gridlevel changed or a grid error occurred
+
+      if (UpdateStatus(gridChanged, gridError)) {           // check pending orders and open positions
+         if      (gridError)            StopSequence(NULL);
+         else if (IsStopSignal(signal)) StopSequence(signal);
+         else if (gridChanged)          UpdatePendingOrders(true);
       }
    }
    else if (sequence.status == STATUS_STOPPED) {
@@ -213,24 +221,31 @@ int onTick() {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
+ * @param  _Out_ int &signal - variable receiving the signal identifier of the fulfilled start condition
+ *
  * @return bool
  */
-bool IsStartSignal() {
+bool IsStartSignal(int &signal) {
+   signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
    if (IsSessionBreak()) {
       return(false);
    }
-   return(true);
+   // not yet supported for this EA
+   return(false);
 }
 
 
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
+ * @param  _Out_ int &signal - variable receiving the signal identifier of the fulfilled stop condition
+ *
  * @return bool
  */
-bool IsStopSignal() {
+bool IsStopSignal(int &signal) {
+   signal = NULL;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -241,6 +256,7 @@ bool IsStopSignal() {
       if (sequence.totalPL >= tpAbs.value) {
          if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ tpAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          tpAbs.condition = false;
+         signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
    }
@@ -253,6 +269,7 @@ bool IsStopSignal() {
       if (sequence.totalPL >= tpPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ tpPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          tpPct.condition = false;
+         signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
    }
@@ -262,6 +279,7 @@ bool IsStopSignal() {
       if (sequence.totalPL <= slAbs.value) {
          if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ slAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          slAbs.condition = false;
+         signal = SIGNAL_STOPLOSS;
          return(true);
       }
    }
@@ -275,6 +293,7 @@ bool IsStopSignal() {
       if (sequence.totalPL <= slPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          slPct.condition = false;
+         signal = SIGNAL_STOPLOSS;
          return(true);
       }
    }
@@ -335,11 +354,13 @@ bool IsSessionBreak() {
 
 
 /**
- * Start a new sequence. When called all previous sequence data was reset.
+ * Start the trade sequence. When called all previous sequence data was reset.
+ *
+ * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
  *
  * @return bool - success status
  */
-bool StartSequence() {
+bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
@@ -369,9 +390,11 @@ bool StartSequence() {
 /**
  * Close open positions, delete pending orders and stop the sequence.
  *
+ * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit/manual stop)
+ *
  * @return bool - success status
  */
-bool StopSequence() {
+bool StopSequence(int signal) {
    if (IsLastError())                                                          return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 

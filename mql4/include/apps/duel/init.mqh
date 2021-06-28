@@ -18,7 +18,7 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   if (ValidateInputs()) {                                     // on success create a new sequence
+   if (ValidateInputs()) {                                           // on success create a new sequence
       sequence.id      = CreateSequenceId();
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
@@ -39,10 +39,10 @@ int onInitUser() {
 
       double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
       double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
-      double maxLots      = MathMax(maxLongLots, maxShortLots);               // max lots at level 15 in any direction
-      if (IsError(catch("onInitUser(2)"))) return(last_error);                // reset last error
+      double maxLots      = MathMax(maxLongLots, maxShortLots);      // max lots at level 15 in any direction
+      if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
       if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-         StopSequence();
+         StopSequence(NULL);
          logError("onInitUser(3) not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          return(catch("onInitUser(4)"));
       }
@@ -51,14 +51,12 @@ int onInitUser() {
       if (!IsTesting() && !IsDemoFix()) {
          if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {
             PlaySoundEx("Windows Notify.wav");
-            if (IDYES != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_YESNOCANCEL)) {
-               StopSequence();
+            if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
+               StopSequence(NULL);
                return(catch("onInitUser(5)"));
             }
          }
       }
-
-      // all good: confirm sequence generation
       SaveStatus();
    }
    return(catch("onInitUser(6)"));
