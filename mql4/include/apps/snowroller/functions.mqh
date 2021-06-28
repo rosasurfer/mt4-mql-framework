@@ -591,7 +591,7 @@ int CreateStatusBox() {
 string GetLogFilename() {
    string name = GetStatusFilename();
    if (!StringLen(name)) return("");
-   return(StrLeft(name, -3) +"log");
+   return(StrLeftTo(name, ".", -1) +".log");
 }
 
 

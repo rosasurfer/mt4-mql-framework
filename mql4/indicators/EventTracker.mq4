@@ -677,7 +677,7 @@ bool onOrderFail(int tickets[]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Order failed: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
@@ -717,7 +717,7 @@ bool onPositionOpen(int tickets[]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
       string message     = "Position opened: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
@@ -761,7 +761,7 @@ bool onPositionClose(int tickets[][]) {
       string lots        = DoubleToStr(OrderLots(), 2);
       int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
       int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+      string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
       string message     = "Position closed: "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";

@@ -13,6 +13,13 @@ int onDeinit() {
    // in allen deinit()-Szenarien Laufzeitstatus speichern
    if (!StoreRuntimeStatus()) return(last_error);
 
+   // unregister the order event listener
+   if (track.orders) {
+      string name = "rsf::order-tracker::"+ StrToLower(Symbol());
+      int counter = Max(GetWindowIntegerA(hWndTerminal, name), 1) - 1;
+      SetWindowIntegerA(hWndTerminal, name, counter);
+   }
+
    QC.StopChannels();
    ScriptRunner.StopParamSender();
    return(last_error);

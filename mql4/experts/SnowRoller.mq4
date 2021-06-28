@@ -329,7 +329,7 @@ int onTick() {
 
 
 /**
- * Start a new trade sequence.
+ * Start the trade sequence.
  *
  * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
  *
@@ -370,7 +370,7 @@ bool StartSequence(int signal) {
          start.conditions      = (start.trend.condition);
          break;
 
-      default: return(!catch("StartSequence(3)  "+ sequence.longName +" unsupported start signal = "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StartSequence(3)  "+ sequence.longName +" unsupported start signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    sessionbreak.waiting = false;
    SS.StartStopConditions();
@@ -432,7 +432,7 @@ bool StartSequence(int signal) {
  * trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled. If the
  * sequence is stopped due to a session break it is automatically resumed after the session break ends.
  *
- * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit stop)
+ * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit/manual stop)
  *
  * @return bool - success status
  */
@@ -661,7 +661,7 @@ bool StopSequence(int signal) {
       case NULL:                                            // explicit stop (manual or at end of test)
          break;
 
-      default: return(!catch("StopSequence(11)  "+ sequence.longName +" unsupported stop signal = "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(11)  "+ sequence.longName +" unsupported stop signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
    SaveStatus();
@@ -685,7 +685,7 @@ bool StopSequence(int signal) {
       }
    }
 
-   // pause/stop the tester according to the configuration
+   // pause or stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
          if      (tester.onStopPause)                                         Tester.Pause("StopSequence(12)");

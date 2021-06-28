@@ -608,20 +608,33 @@ int log2Terminal(string message, int error, int level) {
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
-   log(NULL, NULL, LOG_OFF);                             // make sure the configuration of the LogfileAppender is initialized
-   log2File(NULL, NULL, LOG_OFF);                        // as the Expander cannot yet read it
+   int loglevel     = log(NULL, NULL, LOG_OFF);         // Make sure the configuration of the LogfileAppender is initialized
+   int loglevelFile = log2File(NULL, NULL, LOG_OFF);    // as the Expander cannot yet read it.
+
+   if (StringLen(filename) > 0) {
+      if (loglevel!=LOG_OFF && loglevelFile!=LOG_OFF) {
+         string prevName = ec_LogFilename(__ExecutionContext);
+         if (filename != prevName) {
+            if (IsLogDebug()) logDebug("SetLogfile(1)  log="+ LoglevelDescription(loglevel) +", log2File="+ LoglevelDescription(loglevelFile) +": file="+ DoubleQuoteStr(filename));
+         }
+      }
+      else {
+         if (IsLogDebug()) logDebug("SetLogfile(2)  "+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=OFF: skipping custfile=om logfile");
+      }
+   }
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
 
 #import "rsfMT4Expander.dll"
-   int  ec_SetLoglevel        (int ec[], int level);
-   int  ec_SetLoglevelAlert   (int ec[], int level);
-   int  ec_SetLoglevelDebugger(int ec[], int level);
-   int  ec_SetLoglevelFile    (int ec[], int level);
-   int  ec_SetLoglevelMail    (int ec[], int level);
-   int  ec_SetLoglevelSMS     (int ec[], int level);
-   int  ec_SetLoglevelTerminal(int ec[], int level);
-   bool AppendLogMessageA     (int ec[], datetime time, string message, int error, int level);
-   bool SetLogfileA           (int ec[], string file);
+   string ec_LogFilename        (int ec[]);
+   int    ec_SetLoglevel        (int ec[], int level);
+   int    ec_SetLoglevelAlert   (int ec[], int level);
+   int    ec_SetLoglevelDebugger(int ec[], int level);
+   int    ec_SetLoglevelFile    (int ec[], int level);
+   int    ec_SetLoglevelMail    (int ec[], int level);
+   int    ec_SetLoglevelSMS     (int ec[], int level);
+   int    ec_SetLoglevelTerminal(int ec[], int level);
+   bool   AppendLogMessageA     (int ec[], datetime time, string message, int error, int level);
+   bool   SetLogfileA           (int ec[], string file);
 #import

@@ -3460,9 +3460,11 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMargin;
       <content>
-      Return the free margin value of the current account (in account currency). The free margin is the amount of money available to open new positions.
+      Return the account's free margin value in account currency. Free margin is the amount of money available to open new positions.
       </content>
-      example=<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());
+      <example>
+<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());      
+      </example>
     </function>
 
     <function>
@@ -3471,26 +3473,31 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMarginCheck;
       <content>
-      Returns free margin that remains after the specified position has been opened at the current price on the current account. If the free margin
-      is insufficient, an <a href="help://constants_errors">error</a> 134 (<span class="const">ERR_NOT_ENOUGH_MONEY</span>) will be generated.
+        Return the remaining free margin after opening the specified position at current market price. If free margin is insufficient to open the position 
+        the return value will be negative and error <a href="help://constants_errors"><span class="const">ERR_NOT_ENOUGH_MONEY</span></a> will be set. 
       </content>
-      example=if (AccountFreeMarginCheck(Symbol(), OP_BUY, Lots)&lt;=0 || GetLastError()==134) return;
+      <example>
+<span class="type code">double</span> lots = <span class="number code">0.5</span>;
+      
+<span class="keyword code">if</span> (<span class="function code">AccountFreeMarginCheck</span>(<span class="function code">Symbol</span>(), <span class="const code">OP_BUY</span>, lots) &lt;= <span class="function code">0</span> || <span class="function code">GetLastError</span>()==<span class="const code">ERR_NOT_ENOUGH_MONEY</span>) {
+    <span class="function code">Print</span>(<span class="string code">"not enough money to open a position of "</span>+ lots +<span class="string code">" lots"</span>);
+} 
+      </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol for trade operation.
+        description=The traded instrument.
       </parameter>
       <parameter>
         type=int
-        name=cmd
-        <description>
-Operation type. It can be either <a href="help://constants_trading">OP_BUY</a> or <a href="help://constants_trading">OP_SELL</a>.
+        name=type
+        description=Trade operation type. Must be either <a href="help://constants_trading"><span class="const">OP_BUY</span></a> or <a href="help://constants_trading"><span class="const">OP_SELL</span></a>.
         </description>
       </parameter>
       <parameter>
         type=double
-        name=volume
-        description=Number of lots.
+        name=lots
+        description=Order volume.
       </parameter>
     </function>
 
@@ -10679,62 +10686,56 @@ Note: For custom indicators, this value is undefined.
       caption=WindowScreenShot()
       type=bool
       <content>
-         Saves current chart screen shot as a GIF file. Returns <span class="const">FALSE</span> if it fails. To get the error code, one has to use the
-         <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.<br/>
-         The screen shot is saved in <span class="string">"{terminal-data-directory}\experts\files"</span> (<span class="string">"{terminal-data-directory}\tester\files"</span> during
-         testing) directory or its subdirectories.
+         Saves a screenshot of the current chart as a GIF file and returns the success status. The image is saved in the MQL 
+         <span class="string">"files"</span> directory or it's subdirectories.
       </content>
       <example>
-  int lasterror=0;
-  //---- tester has closed one or more trades
-  if(IsTesting() &amp;&amp; ExtTradesCounter&lt;TradesTotal())
-    {
-     //---- make WindowScreenShot for further checking
-     if(!WindowScreenShot("shots\\tester"+ExtShotsCounter+".gif",640,480))
-        lasterror=GetLastError();
-     else ExtShotsCounter++;
-     ExtTradesCounter=TradesTotal();
-    }
+<span class="keyword code">static</span> <span class="type code">int</span> counter = <span class="number code">0</span>;
+counter++;<br/>      
+
+<span class="keyword code">if</span> (!<span class="function code">WindowScreenShot</span>(<span class="string code">"shots\\tester"</span>+ counter +<span class="string code">".gif"</span>, <span class="number code">640</span>, <span class="number code">480</span>)) {
+   <span class="function code">Print</span>(<span class="string code">"error: "</span>, <span class="function code">GetLastError</span>());
+}
       </example>
       <parameter>
         type=string
         name=filename
-        description=Screen shot file name.
+        description=Screenshot file name.
       </parameter>
       <parameter>
         type=int
-        name=size_x
-        description=Screen shot width in pixels.
+        name=width
+        description=Screenshot width in pixels.
       </parameter>
       <parameter>
         type=int
-        name=size_y
-        description=Screen shot height in pixels.
+        name=height
+        description=Screenshot height in pixels.
       </parameter>
       <parameter>
         type=int
-        name=start_bar
+        name=startbar
         <description>
-Index of the first visible bar in the screen shot. If 0 value is set, the current <a href="help://windows_WindowFirstVisibleBar">first visible bar</a> will be shot.
- If no value or negative value has been set, the end-of-chart screen shot will be produced, indent being taken into consideration.
+          Index of the first visible bar in the screenshot. If 0 is specified, the current <a href="help://windows_WindowFirstVisibleBar">first visible bar</a> will be shot
+          (default: an end-of-chart screenshot will be produced, indent being taken into consideration).
         </description>
         def_value=-1
       </parameter>
       <parameter>
         type=int
-        name=chart_scale
+        name=chartScale
         <description>
-Horizontal chart scale for screen shot. Can be in the range from 0 to 5.
- If no value or negative value has been set, the current chart scale will be used.
+          Horizontal chart scale for screenshot in the range from 0 to 5 (default: the current chart scale).
         </description>
         def_value=-1
       </parameter>
       <parameter>
         type=int
-        name=chart_mode
+        name=barMode
         <description>
-Chart displaying mode. It can take the following values: <span class="const">CHART_BAR</span> (0 is a sequence of bars), <span class="const">CHART_CANDLE</span> (1 is a sequence of candlesticks), <span class="const">CHART_LINE</span> (2 is a close prices line).
- If no value or negative value has been set, the chart will be shown in its current mode.
+          Chart displaying mode. It can take the following values: <span class="const">CHART_BAR</span> (0 is a sequence of bars), <span class="const">CHART_CANDLE</span> 
+          (1 is a sequence of candlesticks), <span class="const">CHART_LINE</span> (2 is a close prices line)
+          (default: the current chart display mode).
         </description>
         def_value=-1
       </parameter>

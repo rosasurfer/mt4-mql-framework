@@ -1,7 +1,11 @@
 /**
  * MA Tunnel Monitor
  *
- * A signal monitor for an "MA Tunnel" setup.
+ * A signal monitor for trends defined by multiple moving averages. Can be used e.g. for the "XARD trend following" or the
+ * "Vegas tunnel" system.
+ *
+ * @link  https://forex-station.com/viewtopic.php?f=578267&t=8416709#                  [XARD - Simple Trend Following System]
+ * @link  https://www.forexfactory.com/thread/4365#                                                     [Vegas Tunnel Method]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -300,16 +304,8 @@ int onTick() {
       else                                                                                                   totalTrend[i] = prevTrend + Sign(prevTrend);
    }
 
-
-   //if (!ValidBars) {
-   //   debug("onTick(0.1)  ma1="+ NumberToStr(ma1[0], ".+") +"  trend="+ _int(ma1Trend[0]) +" ("+ ColorToStr(indicator_color1) +")");
-   //   debug("onTick(0.2)  ma2="+ NumberToStr(ma2[0], ".+") +"  trend="+ _int(ma2Trend[0]) +" ("+ ColorToStr(indicator_color2) +")");
-   //   debug("onTick(0.3)  ma3="+ NumberToStr(ma3[0], ".+") +"  trend="+ _int(ma3Trend[0]) +" ("+ ColorToStr(indicator_color3) +")");
-   //}
-   //if (IsBarOpen()) debug("onTick(0.4)  totalTrend="+ _int(totalTrend[1]));
-
    CheckSignals();
-   ShowStatus();
+   ShowStatus();                 // TODO: implement it (currently empty)
    return(last_error);
 }
 

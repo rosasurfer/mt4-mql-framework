@@ -122,7 +122,7 @@ int init() {
    }
 
    // log input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogInfo()) {
+   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogDebug()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
@@ -130,7 +130,7 @@ int init() {
             ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
             ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
             ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logInfo("init(14)  inputs: "+ sInputs);
+         logDebug("init(14)  inputs: "+ sInputs);
       }
    }
 
@@ -199,7 +199,7 @@ bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate("R.", PipDigits);                   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
    N_INF = MathLog(0);                                                        // negative infinity
@@ -752,7 +752,7 @@ int onInitParameters()
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  *
@@ -762,7 +762,7 @@ int onInitTimeframeChange()
 
 
 /**
- * Called after the current chart symbol has changed. There was no input dialog.
+ * Called after the chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *

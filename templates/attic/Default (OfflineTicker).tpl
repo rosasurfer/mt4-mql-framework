@@ -42,6 +42,7 @@ name=main
 <object>
 type=1
 object_name=Horizontal Line 0.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -53,6 +54,7 @@ value_0=0.50
 <object>
 type=1
 object_name=Horizontal Line 0.505
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -64,6 +66,7 @@ value_0=0.505
 <object>
 type=1
 object_name=Horizontal Line 0.51
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -75,6 +78,7 @@ value_0=0.51
 <object>
 type=1
 object_name=Horizontal Line 0.515
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -86,6 +90,7 @@ value_0=0.515
 <object>
 type=1
 object_name=Horizontal Line 0.52
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -97,6 +102,7 @@ value_0=0.52
 <object>
 type=1
 object_name=Horizontal Line 0.525
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -108,6 +114,7 @@ value_0=0.525
 <object>
 type=1
 object_name=Horizontal Line 0.53
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -119,6 +126,7 @@ value_0=0.53
 <object>
 type=1
 object_name=Horizontal Line 0.535
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -130,6 +138,7 @@ value_0=0.535
 <object>
 type=1
 object_name=Horizontal Line 0.54
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -141,6 +150,7 @@ value_0=0.54
 <object>
 type=1
 object_name=Horizontal Line 0.545
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -152,6 +162,7 @@ value_0=0.545
 <object>
 type=1
 object_name=Horizontal Line 0.55
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -163,6 +174,7 @@ value_0=0.55
 <object>
 type=1
 object_name=Horizontal Line 0.555
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -174,6 +186,7 @@ value_0=0.555
 <object>
 type=1
 object_name=Horizontal Line 0.56
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -185,6 +198,7 @@ value_0=0.56
 <object>
 type=1
 object_name=Horizontal Line 0.565
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -196,6 +210,7 @@ value_0=0.565
 <object>
 type=1
 object_name=Horizontal Line 0.57
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -207,6 +222,7 @@ value_0=0.57
 <object>
 type=1
 object_name=Horizontal Line 0.575
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -218,6 +234,7 @@ value_0=0.575
 <object>
 type=1
 object_name=Horizontal Line 0.58
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -229,6 +246,7 @@ value_0=0.58
 <object>
 type=1
 object_name=Horizontal Line 0.585
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -240,6 +258,7 @@ value_0=0.585
 <object>
 type=1
 object_name=Horizontal Line 0.59
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -251,6 +270,7 @@ value_0=0.59
 <object>
 type=1
 object_name=Horizontal Line 0.595
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -262,6 +282,7 @@ value_0=0.595
 <object>
 type=1
 object_name=Horizontal Line 0.60
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -273,6 +294,7 @@ value_0=0.60
 <object>
 type=1
 object_name=Horizontal Line 0.605
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -284,6 +306,7 @@ value_0=0.605
 <object>
 type=1
 object_name=Horizontal Line 0.61
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -295,6 +318,7 @@ value_0=0.61
 <object>
 type=1
 object_name=Horizontal Line 0.615
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -306,6 +330,7 @@ value_0=0.615
 <object>
 type=1
 object_name=Horizontal Line 0.62
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -317,6 +342,7 @@ value_0=0.62
 <object>
 type=1
 object_name=Horizontal Line 0.625
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -328,6 +354,7 @@ value_0=0.625
 <object>
 type=1
 object_name=Horizontal Line 0.63
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -339,6 +366,7 @@ value_0=0.63
 <object>
 type=1
 object_name=Horizontal Line 0.635
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -350,6 +378,7 @@ value_0=0.635
 <object>
 type=1
 object_name=Horizontal Line 0.64
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -361,6 +390,7 @@ value_0=0.64
 <object>
 type=1
 object_name=Horizontal Line 0.645
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -372,6 +402,7 @@ value_0=0.645
 <object>
 type=1
 object_name=Horizontal Line 0.65
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -383,6 +414,7 @@ value_0=0.65
 <object>
 type=1
 object_name=Horizontal Line 0.655
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -394,6 +426,7 @@ value_0=0.655
 <object>
 type=1
 object_name=Horizontal Line 0.66
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -405,6 +438,7 @@ value_0=0.66
 <object>
 type=1
 object_name=Horizontal Line 0.665
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -416,6 +450,7 @@ value_0=0.665
 <object>
 type=1
 object_name=Horizontal Line 0.67
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -427,6 +462,7 @@ value_0=0.67
 <object>
 type=1
 object_name=Horizontal Line 0.675
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -438,6 +474,7 @@ value_0=0.675
 <object>
 type=1
 object_name=Horizontal Line 0.68
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -449,6 +486,7 @@ value_0=0.68
 <object>
 type=1
 object_name=Horizontal Line 0.685
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -460,6 +498,7 @@ value_0=0.685
 <object>
 type=1
 object_name=Horizontal Line 0.69
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -471,6 +510,7 @@ value_0=0.69
 <object>
 type=1
 object_name=Horizontal Line 0.695
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -482,6 +522,7 @@ value_0=0.695
 <object>
 type=1
 object_name=Horizontal Line 0.70
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -493,6 +534,7 @@ value_0=0.70
 <object>
 type=1
 object_name=Horizontal Line 0.705
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -504,6 +546,7 @@ value_0=0.705
 <object>
 type=1
 object_name=Horizontal Line 0.71
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -515,6 +558,7 @@ value_0=0.71
 <object>
 type=1
 object_name=Horizontal Line 0.715
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -526,6 +570,7 @@ value_0=0.715
 <object>
 type=1
 object_name=Horizontal Line 0.72
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -537,6 +582,7 @@ value_0=0.72
 <object>
 type=1
 object_name=Horizontal Line 0.725
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -548,6 +594,7 @@ value_0=0.725
 <object>
 type=1
 object_name=Horizontal Line 0.73
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -559,6 +606,7 @@ value_0=0.73
 <object>
 type=1
 object_name=Horizontal Line 0.735
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -570,6 +618,7 @@ value_0=0.735
 <object>
 type=1
 object_name=Horizontal Line 0.74
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -581,6 +630,7 @@ value_0=0.74
 <object>
 type=1
 object_name=Horizontal Line 0.745
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -592,6 +642,7 @@ value_0=0.745
 <object>
 type=1
 object_name=Horizontal Line 0.75
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -603,6 +654,7 @@ value_0=0.75
 <object>
 type=1
 object_name=Horizontal Line 0.755
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -614,6 +666,7 @@ value_0=0.755
 <object>
 type=1
 object_name=Horizontal Line 0.76
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -625,6 +678,7 @@ value_0=0.76
 <object>
 type=1
 object_name=Horizontal Line 0.765
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -636,6 +690,7 @@ value_0=0.765
 <object>
 type=1
 object_name=Horizontal Line 0.77
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -647,6 +702,7 @@ value_0=0.77
 <object>
 type=1
 object_name=Horizontal Line 0.775
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -658,6 +714,7 @@ value_0=0.775
 <object>
 type=1
 object_name=Horizontal Line 0.78
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -669,6 +726,7 @@ value_0=0.78
 <object>
 type=1
 object_name=Horizontal Line 0.785
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -680,6 +738,7 @@ value_0=0.785
 <object>
 type=1
 object_name=Horizontal Line 0.79
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -691,6 +750,7 @@ value_0=0.79
 <object>
 type=1
 object_name=Horizontal Line 0.795
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -702,6 +762,7 @@ value_0=0.795
 <object>
 type=1
 object_name=Horizontal Line 0.80
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -713,6 +774,7 @@ value_0=0.80
 <object>
 type=1
 object_name=Horizontal Line 0.805
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -724,6 +786,7 @@ value_0=0.805
 <object>
 type=1
 object_name=Horizontal Line 0.81
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -735,6 +798,7 @@ value_0=0.81
 <object>
 type=1
 object_name=Horizontal Line 0.815
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -746,6 +810,7 @@ value_0=0.815
 <object>
 type=1
 object_name=Horizontal Line 0.82
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -757,6 +822,7 @@ value_0=0.82
 <object>
 type=1
 object_name=Horizontal Line 0.825
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -768,6 +834,7 @@ value_0=0.825
 <object>
 type=1
 object_name=Horizontal Line 0.83
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -779,6 +846,7 @@ value_0=0.83
 <object>
 type=1
 object_name=Horizontal Line 0.835
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -790,6 +858,7 @@ value_0=0.835
 <object>
 type=1
 object_name=Horizontal Line 0.84
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -801,6 +870,7 @@ value_0=0.84
 <object>
 type=1
 object_name=Horizontal Line 0.845
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -812,6 +882,7 @@ value_0=0.845
 <object>
 type=1
 object_name=Horizontal Line 0.85
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -823,6 +894,7 @@ value_0=0.85
 <object>
 type=1
 object_name=Horizontal Line 0.855
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -834,6 +906,7 @@ value_0=0.855
 <object>
 type=1
 object_name=Horizontal Line 0.86
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -845,6 +918,7 @@ value_0=0.86
 <object>
 type=1
 object_name=Horizontal Line 0.865
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -856,6 +930,7 @@ value_0=0.865
 <object>
 type=1
 object_name=Horizontal Line 0.87
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -867,6 +942,7 @@ value_0=0.87
 <object>
 type=1
 object_name=Horizontal Line 0.875
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -878,6 +954,7 @@ value_0=0.875
 <object>
 type=1
 object_name=Horizontal Line 0.88
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -889,6 +966,7 @@ value_0=0.88
 <object>
 type=1
 object_name=Horizontal Line 0.885
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -900,6 +978,7 @@ value_0=0.885
 <object>
 type=1
 object_name=Horizontal Line 0.89
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -911,6 +990,7 @@ value_0=0.89
 <object>
 type=1
 object_name=Horizontal Line 0.895
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -922,6 +1002,7 @@ value_0=0.895
 <object>
 type=1
 object_name=Horizontal Line 0.90
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -933,6 +1014,7 @@ value_0=0.90
 <object>
 type=1
 object_name=Horizontal Line 0.905
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -944,6 +1026,7 @@ value_0=0.905
 <object>
 type=1
 object_name=Horizontal Line 0.91
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -955,6 +1038,7 @@ value_0=0.91
 <object>
 type=1
 object_name=Horizontal Line 0.915
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -966,6 +1050,7 @@ value_0=0.915
 <object>
 type=1
 object_name=Horizontal Line 0.92
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -977,6 +1062,7 @@ value_0=0.92
 <object>
 type=1
 object_name=Horizontal Line 0.925
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -988,6 +1074,7 @@ value_0=0.925
 <object>
 type=1
 object_name=Horizontal Line 0.93
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -999,6 +1086,7 @@ value_0=0.93
 <object>
 type=1
 object_name=Horizontal Line 0.935
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1010,6 +1098,7 @@ value_0=0.935
 <object>
 type=1
 object_name=Horizontal Line 0.94
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1021,6 +1110,7 @@ value_0=0.94
 <object>
 type=1
 object_name=Horizontal Line 0.945
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1032,6 +1122,7 @@ value_0=0.945
 <object>
 type=1
 object_name=Horizontal Line 0.95
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1043,6 +1134,7 @@ value_0=0.95
 <object>
 type=1
 object_name=Horizontal Line 0.955
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1054,6 +1146,7 @@ value_0=0.955
 <object>
 type=1
 object_name=Horizontal Line 0.96
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1065,6 +1158,7 @@ value_0=0.96
 <object>
 type=1
 object_name=Horizontal Line 0.965
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1076,6 +1170,7 @@ value_0=0.965
 <object>
 type=1
 object_name=Horizontal Line 0.97
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1087,6 +1182,7 @@ value_0=0.97
 <object>
 type=1
 object_name=Horizontal Line 0.975
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1098,6 +1194,7 @@ value_0=0.975
 <object>
 type=1
 object_name=Horizontal Line 0.98
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1109,6 +1206,7 @@ value_0=0.98
 <object>
 type=1
 object_name=Horizontal Line 0.985
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1120,6 +1218,7 @@ value_0=0.985
 <object>
 type=1
 object_name=Horizontal Line 0.99
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1131,6 +1230,7 @@ value_0=0.99
 <object>
 type=1
 object_name=Horizontal Line 0.995
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1142,6 +1242,7 @@ value_0=0.995
 <object>
 type=1
 object_name=Horizontal Line 1.00
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1153,6 +1254,7 @@ value_0=1.000000
 <object>
 type=1
 object_name=Horizontal Line 1.00'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1164,6 +1266,7 @@ value_0=1.005000
 <object>
 type=1
 object_name=Horizontal Line 1.01
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1175,6 +1278,7 @@ value_0=1.010000
 <object>
 type=1
 object_name=Horizontal Line 1.01'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1186,6 +1290,7 @@ value_0=1.015000
 <object>
 type=1
 object_name=Horizontal Line 1.02
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1197,6 +1302,7 @@ value_0=1.020000
 <object>
 type=1
 object_name=Horizontal Line 1.02'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1208,6 +1314,7 @@ value_0=1.025000
 <object>
 type=1
 object_name=Horizontal Line 1.03
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1219,6 +1326,7 @@ value_0=1.030000
 <object>
 type=1
 object_name=Horizontal Line 1.03'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1230,6 +1338,7 @@ value_0=1.035000
 <object>
 type=1
 object_name=Horizontal Line 1.04
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1241,6 +1350,7 @@ value_0=1.040000
 <object>
 type=1
 object_name=Horizontal Line 1.04'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1252,6 +1362,7 @@ value_0=1.045000
 <object>
 type=1
 object_name=Horizontal Line 1.05
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1263,6 +1374,7 @@ value_0=1.050000
 <object>
 type=1
 object_name=Horizontal Line 1.05'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1274,6 +1386,7 @@ value_0=1.055000
 <object>
 type=1
 object_name=Horizontal Line 1.06
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1285,6 +1398,7 @@ value_0=1.060000
 <object>
 type=1
 object_name=Horizontal Line 1.06'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1296,6 +1410,7 @@ value_0=1.065000
 <object>
 type=1
 object_name=Horizontal Line 1.07
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1307,6 +1422,7 @@ value_0=1.070000
 <object>
 type=1
 object_name=Horizontal Line 1.07'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1318,6 +1434,7 @@ value_0=1.075000
 <object>
 type=1
 object_name=Horizontal Line 1.08
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1329,6 +1446,7 @@ value_0=1.080000
 <object>
 type=1
 object_name=Horizontal Line 1.08'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1340,6 +1458,7 @@ value_0=1.085000
 <object>
 type=1
 object_name=Horizontal Line 1.09
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1351,6 +1470,7 @@ value_0=1.090000
 <object>
 type=1
 object_name=Horizontal Line 1.09'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1362,6 +1482,7 @@ value_0=1.095000
 <object>
 type=1
 object_name=Horizontal Line 1.10
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1373,6 +1494,7 @@ value_0=1.100000
 <object>
 type=1
 object_name=Horizontal Line 1.10'5
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -1384,6 +1506,7 @@ value_0=1.105000
 <object>
 type=1
 object_name=Horizontal Line 1.11
+selectable=0
 period_flags=0
 create_time=1273069253
 color=13882323
@@ -1395,6 +1518,7 @@ value_0=1.110000
 <object>
 type=1
 object_name=Horizontal Line 1.11'5
+selectable=0
 period_flags=0
 create_time=1273069289
 color=13882323
@@ -1406,6 +1530,7 @@ value_0=1.115000
 <object>
 type=1
 object_name=Horizontal Line 1.12
+selectable=0
 period_flags=0
 create_time=1273069307
 color=13882323
@@ -1417,6 +1542,7 @@ value_0=1.120000
 <object>
 type=1
 object_name=Horizontal Line 1.12'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1428,6 +1554,7 @@ value_0=1.125000
 <object>
 type=1
 object_name=Horizontal Line 1.13
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1439,6 +1566,7 @@ value_0=1.130000
 <object>
 type=1
 object_name=Horizontal Line 1.13'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1450,6 +1578,7 @@ value_0=1.135000
 <object>
 type=1
 object_name=Horizontal Line 1.14
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1461,6 +1590,7 @@ value_0=1.140000
 <object>
 type=1
 object_name=Horizontal Line 1.14'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1472,6 +1602,7 @@ value_0=1.145000
 <object>
 type=1
 object_name=Horizontal Line 1.15
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1483,6 +1614,7 @@ value_0=1.150000
 <object>
 type=1
 object_name=Horizontal Line 1.15'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1494,6 +1626,7 @@ value_0=1.155000
 <object>
 type=1
 object_name=Horizontal Line 1.16
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1505,6 +1638,7 @@ value_0=1.160000
 <object>
 type=1
 object_name=Horizontal Line 1.16'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1516,6 +1650,7 @@ value_0=1.165000
 <object>
 type=1
 object_name=Horizontal Line 1.17
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1527,6 +1662,7 @@ value_0=1.170000
 <object>
 type=1
 object_name=Horizontal Line 1.17'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1538,6 +1674,7 @@ value_0=1.175000
 <object>
 type=1
 object_name=Horizontal Line 1.18
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1549,6 +1686,7 @@ value_0=1.180000
 <object>
 type=1
 object_name=Horizontal Line 1.18'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1560,6 +1698,7 @@ value_0=1.185000
 <object>
 type=1
 object_name=Horizontal Line 1.19
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1571,6 +1710,7 @@ value_0=1.190000
 <object>
 type=1
 object_name=Horizontal Line 1.19'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1582,6 +1722,7 @@ value_0=1.195000
 <object>
 type=1
 object_name=Horizontal Line 1.20
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1593,6 +1734,7 @@ value_0=1.200000
 <object>
 type=1
 object_name=Horizontal Line 1.20'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1604,6 +1746,7 @@ value_0=1.205000
 <object>
 type=1
 object_name=Horizontal Line 1.21
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1615,6 +1758,7 @@ value_0=1.210000
 <object>
 type=1
 object_name=Horizontal Line 1.21'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1626,6 +1770,7 @@ value_0=1.215000
 <object>
 type=1
 object_name=Horizontal Line 1.22
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1637,6 +1782,7 @@ value_0=1.220000
 <object>
 type=1
 object_name=Horizontal Line 1.22'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1648,6 +1794,7 @@ value_0=1.225000
 <object>
 type=1
 object_name=Horizontal Line 1.23
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1659,6 +1806,7 @@ value_0=1.230000
 <object>
 type=1
 object_name=Horizontal Line 1.23'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1670,6 +1818,7 @@ value_0=1.235000
 <object>
 type=1
 object_name=Horizontal Line 1.24
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1681,6 +1830,7 @@ value_0=1.240000
 <object>
 type=1
 object_name=Horizontal Line 1.24'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1692,6 +1842,7 @@ value_0=1.245000
 <object>
 type=1
 object_name=Horizontal Line 1.25
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1703,6 +1854,7 @@ value_0=1.250000
 <object>
 type=1
 object_name=Horizontal Line 1.25'5
+selectable=0
 period_flags=0
 create_time=1273178552
 color=13882323
@@ -1714,6 +1866,7 @@ value_0=1.255000
 <object>
 type=1
 object_name=Horizontal Line 1.26
+selectable=0
 period_flags=0
 create_time=1273178541
 color=13882323
@@ -1725,6 +1878,7 @@ value_0=1.260000
 <object>
 type=1
 object_name=Horizontal Line 1.26'5
+selectable=0
 period_flags=0
 create_time=1273178526
 color=13882323
@@ -1736,6 +1890,7 @@ value_0=1.265000
 <object>
 type=1
 object_name=Horizontal Line 1.27
+selectable=0
 period_flags=0
 create_time=1273178511
 color=13882323
@@ -1747,6 +1902,7 @@ value_0=1.270000
 <object>
 type=1
 object_name=Horizontal Line 1.27'5
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -1758,6 +1914,7 @@ value_0=1.275000
 <object>
 type=1
 object_name=Horizontal Line 1.28
+selectable=0
 period_flags=0
 create_time=1273067880
 color=13882323
@@ -1769,6 +1926,7 @@ value_0=1.280000
 <object>
 type=1
 object_name=Horizontal Line 1.28'5
+selectable=0
 period_flags=0
 create_time=1273067894
 color=13882323
@@ -1780,6 +1938,7 @@ value_0=1.285000
 <object>
 type=1
 object_name=Horizontal Line 1.29
+selectable=0
 period_flags=0
 create_time=1245913228
 color=13882323
@@ -1791,6 +1950,7 @@ value_0=1.290000
 <object>
 type=1
 object_name=Horizontal Line 1.29'5
+selectable=0
 period_flags=0
 create_time=1245913180
 color=13882323
@@ -1802,6 +1962,7 @@ value_0=1.295000
 <object>
 type=1
 object_name=Horizontal Line 1.30
+selectable=0
 period_flags=0
 create_time=1245913139
 color=13882323
@@ -1813,6 +1974,7 @@ value_0=1.300000
 <object>
 type=1
 object_name=Horizontal Line 1.30'5
+selectable=0
 period_flags=0
 create_time=1245913101
 color=13882323
@@ -1824,6 +1986,7 @@ value_0=1.305000
 <object>
 type=1
 object_name=Horizontal Line 1.31
+selectable=0
 period_flags=0
 create_time=1245913084
 color=13882323
@@ -1835,6 +1998,7 @@ value_0=1.310000
 <object>
 type=1
 object_name=Horizontal Line 1.31'5
+selectable=0
 period_flags=0
 create_time=1245913060
 color=13882323
@@ -1846,6 +2010,7 @@ value_0=1.315000
 <object>
 type=1
 object_name=Horizontal Line 1.32
+selectable=0
 period_flags=0
 create_time=1245913021
 color=13882323
@@ -1857,6 +2022,7 @@ value_0=1.320000
 <object>
 type=1
 object_name=Horizontal Line 1.32'5
+selectable=0
 period_flags=0
 create_time=1245912955
 color=13882323
@@ -1868,6 +2034,7 @@ value_0=1.325000
 <object>
 type=1
 object_name=Horizontal Line 1.33
+selectable=0
 period_flags=0
 create_time=1245912929
 color=13882323
@@ -1879,6 +2046,7 @@ value_0=1.330000
 <object>
 type=1
 object_name=Horizontal Line 1.33'5
+selectable=0
 period_flags=0
 create_time=1245912908
 color=13882323
@@ -1890,6 +2058,7 @@ value_0=1.335000
 <object>
 type=1
 object_name=Horizontal Line 1.34
+selectable=0
 period_flags=0
 create_time=1245912871
 color=13882323
@@ -1901,6 +2070,7 @@ value_0=1.340000
 <object>
 type=1
 object_name=Horizontal Line 1.34'5
+selectable=0
 period_flags=0
 create_time=1245912712
 color=13882323
@@ -1912,6 +2082,7 @@ value_0=1.345000
 <object>
 type=1
 object_name=Horizontal Line 1.35
+selectable=0
 period_flags=0
 create_time=1245912676
 color=13882323
@@ -1923,6 +2094,7 @@ value_0=1.350000
 <object>
 type=1
 object_name=Horizontal Line 1.35'5
+selectable=0
 period_flags=0
 create_time=1245912641
 color=13882323
@@ -1934,6 +2106,7 @@ value_0=1.355000
 <object>
 type=1
 object_name=Horizontal Line 1.36
+selectable=0
 period_flags=0
 create_time=1245912614
 color=13882323
@@ -1945,6 +2118,7 @@ value_0=1.360000
 <object>
 type=1
 object_name=Horizontal Line 1.36'5
+selectable=0
 period_flags=0
 create_time=1245912587
 color=13882323
@@ -1956,6 +2130,7 @@ value_0=1.365000
 <object>
 type=1
 object_name=Horizontal Line 1.37
+selectable=0
 period_flags=0
 create_time=1245912559
 color=13882323
@@ -1967,6 +2142,7 @@ value_0=1.370000
 <object>
 type=1
 object_name=Horizontal Line 1.37'5
+selectable=0
 period_flags=0
 create_time=1243461468
 color=13882323
@@ -1978,6 +2154,7 @@ value_0=1.375000
 <object>
 type=1
 object_name=Horizontal Line 1.38
+selectable=0
 period_flags=0
 create_time=1243461286
 color=13882323
@@ -1989,6 +2166,7 @@ value_0=1.380000
 <object>
 type=1
 object_name=Horizontal Line 1.38'5
+selectable=0
 period_flags=0
 create_time=1243461267
 color=13882323
@@ -2000,6 +2178,7 @@ value_0=1.385000
 <object>
 type=1
 object_name=Horizontal Line 1.39
+selectable=0
 period_flags=0
 create_time=1245661105
 color=13882323
@@ -2011,6 +2190,7 @@ value_0=1.390000
 <object>
 type=1
 object_name=Horizontal Line 1.39'5
+selectable=0
 period_flags=0
 create_time=1243438604
 color=13882323
@@ -2022,6 +2202,7 @@ value_0=1.395000
 <object>
 type=1
 object_name=Horizontal Line 1.40
+selectable=0
 period_flags=0
 create_time=1245660808
 color=13882323
@@ -2033,6 +2214,7 @@ value_0=1.400000
 <object>
 type=1
 object_name=Horizontal Line 1.40'5
+selectable=0
 period_flags=0
 create_time=1244283013
 color=13882323
@@ -2044,6 +2226,7 @@ value_0=1.405000
 <object>
 type=1
 object_name=Horizontal Line 1.41
+selectable=0
 period_flags=0
 create_time=1244574841
 color=13882323
@@ -2055,6 +2238,7 @@ value_0=1.410000
 <object>
 type=1
 object_name=Horizontal Line 1.41'5
+selectable=0
 period_flags=0
 create_time=1244283080
 color=13882323
@@ -2066,6 +2250,7 @@ value_0=1.415000
 <object>
 type=1
 object_name=Horizontal Line 1.42
+selectable=0
 period_flags=0
 create_time=1244283104
 color=13882323
@@ -2077,6 +2262,7 @@ value_0=1.420000
 <object>
 type=1
 object_name=Horizontal Line 1.42'5
+selectable=0
 period_flags=0
 create_time=1244283118
 color=13882323
@@ -2088,6 +2274,7 @@ value_0=1.425000
 <object>
 type=1
 object_name=Horizontal Line 1.43
+selectable=0
 period_flags=0
 create_time=1244283163
 color=13882323
@@ -2099,6 +2286,7 @@ value_0=1.430000
 <object>
 type=1
 object_name=Horizontal Line 1.43'5
+selectable=0
 period_flags=0
 create_time=1244283220
 color=13882323
@@ -2110,6 +2298,7 @@ value_0=1.435000
 <object>
 type=1
 object_name=Horizontal Line 1.44
+selectable=0
 period_flags=0
 create_time=1249309720
 color=13882323
@@ -2121,6 +2310,7 @@ value_0=1.440000
 <object>
 type=1
 object_name=Horizontal Line 1.44'5
+selectable=0
 period_flags=0
 create_time=1249316359
 color=13882323
@@ -2132,6 +2322,7 @@ value_0=1.445000
 <object>
 type=1
 object_name=Horizontal Line 1.45
+selectable=0
 period_flags=0
 create_time=1252403278
 color=13882323
@@ -2143,6 +2334,7 @@ value_0=1.450000
 <object>
 type=1
 object_name=Horizontal Line 1.45'5
+selectable=0
 period_flags=0
 create_time=1252403348
 color=13882323
@@ -2154,6 +2346,7 @@ value_0=1.455000
 <object>
 type=1
 object_name=Horizontal Line 1.46
+selectable=0
 period_flags=0
 create_time=1252403331
 color=13882323
@@ -2165,6 +2358,7 @@ value_0=1.460000
 <object>
 type=1
 object_name=Horizontal Line 1.46'5
+selectable=0
 period_flags=0
 create_time=1252660982
 color=13882323
@@ -2176,6 +2370,7 @@ value_0=1.465000
 <object>
 type=1
 object_name=Horizontal Line 1.47
+selectable=0
 period_flags=0
 create_time=1252661005
 color=13882323
@@ -2187,6 +2382,7 @@ value_0=1.470000
 <object>
 type=1
 object_name=Horizontal Line 1.47'5
+selectable=0
 period_flags=0
 create_time=1252661008
 color=13882323
@@ -2198,6 +2394,7 @@ value_0=1.475000
 <object>
 type=1
 object_name=Horizontal Line 1.48
+selectable=0
 period_flags=0
 create_time=1252661010
 color=13882323
@@ -2209,6 +2406,7 @@ value_0=1.480000
 <object>
 type=1
 object_name=Horizontal Line 1.48'5
+selectable=0
 period_flags=0
 create_time=1252661043
 color=13882323
@@ -2220,6 +2418,7 @@ value_0=1.485000
 <object>
 type=1
 object_name=Horizontal Line 1.49
+selectable=0
 period_flags=0
 create_time=1252661045
 color=13882323
@@ -2231,6 +2430,7 @@ value_0=1.490000
 <object>
 type=1
 object_name=Horizontal Line 1.49'5
+selectable=0
 period_flags=0
 create_time=1252661047
 color=13882323
@@ -2242,6 +2442,7 @@ value_0=1.495000
 <object>
 type=1
 object_name=Horizontal Line 1.50
+selectable=0
 period_flags=0
 create_time=1252661049
 color=13882323
@@ -2253,6 +2454,7 @@ value_0=1.500000
 <object>
 type=1
 object_name=Horizontal Line 1.50'5
+selectable=0
 period_flags=0
 create_time=1256153346
 color=13882323
@@ -2264,6 +2466,7 @@ value_0=1.505000
 <object>
 type=1
 object_name=Horizontal Line 1.51
+selectable=0
 period_flags=0
 create_time=1256153350
 color=13882323
@@ -2275,6 +2478,7 @@ value_0=1.510000
 <object>
 type=1
 object_name=Horizontal Line 1.51'5
+selectable=0
 period_flags=0
 create_time=1256153355
 color=13882323
@@ -2286,6 +2490,7 @@ value_0=1.515000
 <object>
 type=1
 object_name=Horizontal Line 1.52
+selectable=0
 period_flags=0
 create_time=1256153357
 color=13882323
@@ -2297,6 +2502,7 @@ value_0=1.520000
 <object>
 type=1
 object_name=Horizontal Line 1.52'5
+selectable=0
 period_flags=0
 create_time=1256153360
 color=13882323
@@ -2308,6 +2514,7 @@ value_0=1.525000
 <object>
 type=1
 object_name=Horizontal Line 1.53
+selectable=0
 period_flags=0
 create_time=1265704277
 color=13882323
@@ -2319,6 +2526,7 @@ value_0=1.530000
 <object>
 type=1
 object_name=Horizontal Line 1.53'5
+selectable=0
 period_flags=0
 create_time=1265704274
 color=13882323
@@ -2330,6 +2538,7 @@ value_0=1.535000
 <object>
 type=1
 object_name=Horizontal Line 1.54
+selectable=0
 period_flags=0
 create_time=1265704212
 color=13882323
@@ -2341,6 +2550,7 @@ value_0=1.540000
 <object>
 type=1
 object_name=Horizontal Line 1.54'5
+selectable=0
 period_flags=0
 create_time=1265704211
 color=13882323
@@ -2352,6 +2562,7 @@ value_0=1.545000
 <object>
 type=1
 object_name=Horizontal Line 1.55
+selectable=0
 period_flags=0
 create_time=1265704209
 color=13882323
@@ -2363,6 +2574,7 @@ value_0=1.550000
 <object>
 type=1
 object_name=Horizontal Line 1.55'5
+selectable=0
 period_flags=0
 create_time=1265704186
 color=13882323
@@ -2374,6 +2586,7 @@ value_0=1.555000
 <object>
 type=1
 object_name=Horizontal Line 1.56
+selectable=0
 period_flags=0
 create_time=1255357665
 color=13882323
@@ -2385,6 +2598,7 @@ value_0=1.560000
 <object>
 type=1
 object_name=Horizontal Line 1.56'5
+selectable=0
 period_flags=0
 create_time=1255357659
 color=13882323
@@ -2396,6 +2610,7 @@ value_0=1.565000
 <object>
 type=1
 object_name=Horizontal Line 1.57
+selectable=0
 period_flags=0
 create_time=1255357655
 color=13882323
@@ -2407,6 +2622,7 @@ value_0=1.570000
 <object>
 type=1
 object_name=Horizontal Line 1.57'5
+selectable=0
 period_flags=0
 create_time=1255357616
 color=13882323
@@ -2418,6 +2634,7 @@ value_0=1.575000
 <object>
 type=1
 object_name=Horizontal Line 1.58
+selectable=0
 period_flags=0
 create_time=1253881585
 color=13882323
@@ -2429,6 +2646,7 @@ value_0=1.580000
 <object>
 type=1
 object_name=Horizontal Line 1.58'5
+selectable=0
 period_flags=0
 create_time=1253881569
 color=13882323
@@ -2440,6 +2658,7 @@ value_0=1.585000
 <object>
 type=1
 object_name=Horizontal Line 1.59
+selectable=0
 period_flags=0
 create_time=1253881523
 color=13882323
@@ -2451,6 +2670,7 @@ value_0=1.590000
 <object>
 type=1
 object_name=Horizontal Line 1.59'5
+selectable=0
 period_flags=0
 create_time=1247100917
 color=13882323
@@ -2462,6 +2682,7 @@ value_0=1.595000
 <object>
 type=1
 object_name=Horizontal Line 1.60
+selectable=0
 period_flags=0
 create_time=1247100877
 color=13882323
@@ -2473,6 +2694,7 @@ value_0=1.600000
 <object>
 type=1
 object_name=Horizontal Line 1.60'5
+selectable=0
 period_flags=0
 create_time=1246953605
 color=13882323
@@ -2484,6 +2706,7 @@ value_0=1.605000
 <object>
 type=1
 object_name=Horizontal Line 1.61
+selectable=0
 period_flags=0
 create_time=1246953557
 color=13882323
@@ -2495,6 +2718,7 @@ value_0=1.610000
 <object>
 type=1
 object_name=Horizontal Line 1.61'5
+selectable=0
 period_flags=0
 create_time=1246953509
 color=13882323
@@ -2506,6 +2730,7 @@ value_0=1.615000
 <object>
 type=1
 object_name=Horizontal Line 1.62
+selectable=0
 period_flags=0
 create_time=1245745147
 color=13882323
@@ -2517,6 +2742,7 @@ value_0=1.620000
 <object>
 type=1
 object_name=Horizontal Line 1.62'5
+selectable=0
 period_flags=0
 create_time=1245742221
 color=13882323
@@ -2528,6 +2754,7 @@ value_0=1.625000
 <object>
 type=1
 object_name=Horizontal Line 1.63
+selectable=0
 period_flags=0
 create_time=1245686601
 color=13882323
@@ -2539,6 +2766,7 @@ value_0=1.630000
 <object>
 type=1
 object_name=Horizontal Line 1.63'5
+selectable=0
 period_flags=0
 create_time=1245676334
 color=13882323
@@ -2550,6 +2778,7 @@ value_0=1.635000
 <object>
 type=1
 object_name=Horizontal Line 1.64
+selectable=0
 period_flags=0
 create_time=1245673743
 color=13882323
@@ -2561,6 +2790,7 @@ value_0=1.640000
 <object>
 type=1
 object_name=Horizontal Line 1.64'5
+selectable=0
 period_flags=0
 create_time=1245662238
 color=13882323
@@ -2572,6 +2802,7 @@ value_0=1.645000
 <object>
 type=1
 object_name=Horizontal Line 1.65
+selectable=0
 period_flags=0
 create_time=1245662224
 color=13882323
@@ -2583,6 +2814,7 @@ value_0=1.650000
 <object>
 type=1
 object_name=Horizontal Line 1.65'5
+selectable=0
 period_flags=0
 create_time=1245673720
 color=13882323
@@ -2594,6 +2826,7 @@ value_0=1.655000
 <object>
 type=1
 object_name=Horizontal Line 1.66
+selectable=0
 period_flags=0
 create_time=1245843601
 color=13882323
@@ -2605,6 +2838,7 @@ value_0=1.660000
 <object>
 type=1
 object_name=Horizontal Line 1.66'5
+selectable=0
 period_flags=0
 create_time=1245843653
 color=13882323
@@ -2616,6 +2850,7 @@ value_0=1.665000
 <object>
 type=1
 object_name=Horizontal Line 1.67
+selectable=0
 period_flags=0
 create_time=1246354407
 color=13882323
@@ -2627,6 +2862,7 @@ value_0=1.670000
 <object>
 type=1
 object_name=Horizontal Line 1.67'5
+selectable=0
 period_flags=0
 create_time=1246354430
 color=13882323
@@ -2638,6 +2874,7 @@ value_0=1.675000
 <object>
 type=1
 object_name=Horizontal Line 1.68
+selectable=0
 period_flags=0
 create_time=1249248184
 color=13882323
@@ -2649,6 +2886,7 @@ value_0=1.680000
 <object>
 type=1
 object_name=Horizontal Line 1.68'5
+selectable=0
 period_flags=0
 create_time=1249288881
 color=13882323
@@ -2660,6 +2898,7 @@ value_0=1.685000
 <object>
 type=1
 object_name=Horizontal Line 1.69
+selectable=0
 period_flags=0
 create_time=1249291795
 color=13882323
@@ -2671,6 +2910,7 @@ value_0=1.690000
 <object>
 type=1
 object_name=Horizontal Line 1.69'5
+selectable=0
 period_flags=0
 create_time=1249316029
 color=13882323
@@ -2682,6 +2922,7 @@ value_0=1.695000
 <object>
 type=1
 object_name=Horizontal Line 1.70
+selectable=0
 period_flags=0
 create_time=1249316043
 color=13882323
@@ -2693,6 +2934,7 @@ value_0=1.700000
 <object>
 type=1
 object_name=Horizontal Line 1.70'5
+selectable=0
 period_flags=0
 create_time=1249316272
 color=13882323
@@ -2704,6 +2946,7 @@ value_0=1.705000
 <object>
 type=1
 object_name=Horizontal Line 1.71
+selectable=0
 period_flags=0
 create_time=1253612439
 color=13882323
@@ -2715,6 +2958,7 @@ value_0=1.710000
 <object>
 type=1
 object_name=Horizontal Line 1.71'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2726,6 +2970,7 @@ value_0=1.715000
 <object>
 type=1
 object_name=Horizontal Line 1.72
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2737,6 +2982,7 @@ value_0=1.720000
 <object>
 type=1
 object_name=Horizontal Line 1.72'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2748,6 +2994,7 @@ value_0=1.725000
 <object>
 type=1
 object_name=Horizontal Line 1.73
+selectable=0
 period_flags=0
 create_time=1253612492
 color=13882323
@@ -2759,6 +3006,7 @@ value_0=1.730000
 <object>
 type=1
 object_name=Horizontal Line 1.73'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2770,6 +3018,7 @@ value_0=1.735
 <object>
 type=1
 object_name=Horizontal Line 1.74
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2781,6 +3030,7 @@ value_0=1.740
 <object>
 type=1
 object_name=Horizontal Line 1.74'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2792,6 +3042,7 @@ value_0=1.745
 <object>
 type=1
 object_name=Horizontal Line 1.75
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2803,6 +3054,7 @@ value_0=1.750
 <object>
 type=1
 object_name=Horizontal Line 1.75'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2814,6 +3066,7 @@ value_0=1.755
 <object>
 type=1
 object_name=Horizontal Line 1.76
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2825,6 +3078,7 @@ value_0=1.760
 <object>
 type=1
 object_name=Horizontal Line 1.76'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2836,6 +3090,7 @@ value_0=1.765
 <object>
 type=1
 object_name=Horizontal Line 1.77
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2847,6 +3102,7 @@ value_0=1.770
 <object>
 type=1
 object_name=Horizontal Line 1.77'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2858,6 +3114,7 @@ value_0=1.775
 <object>
 type=1
 object_name=Horizontal Line 1.78
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2869,6 +3126,7 @@ value_0=1.780
 <object>
 type=1
 object_name=Horizontal Line 1.78'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2880,6 +3138,7 @@ value_0=1.785
 <object>
 type=1
 object_name=Horizontal Line 1.79
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -2891,6 +3150,7 @@ value_0=1.790
 <object>
 type=1
 object_name=Horizontal Line 1.79'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -2902,6 +3162,7 @@ value_0=1.795
 <object>
 type=1
 object_name=Horizontal Line 1.80
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2913,6 +3174,7 @@ value_0=1.800
 <object>
 type=1
 object_name=Horizontal Line 1.80'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2924,6 +3186,7 @@ value_0=1.805
 <object>
 type=1
 object_name=Horizontal Line 1.81
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2935,6 +3198,7 @@ value_0=1.810
 <object>
 type=1
 object_name=Horizontal Line 1.81'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2946,6 +3210,7 @@ value_0=1.815
 <object>
 type=1
 object_name=Horizontal Line 1.82
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2957,6 +3222,7 @@ value_0=1.820
 <object>
 type=1
 object_name=Horizontal Line 1.82'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2968,6 +3234,7 @@ value_0=1.825
 <object>
 type=1
 object_name=Horizontal Line 1.83
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2979,6 +3246,7 @@ value_0=1.830
 <object>
 type=1
 object_name=Horizontal Line 1.83'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -2990,6 +3258,7 @@ value_0=1.835
 <object>
 type=1
 object_name=Horizontal Line 1.84
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3001,6 +3270,7 @@ value_0=1.840
 <object>
 type=1
 object_name=Horizontal Line 1.84'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3012,6 +3282,7 @@ value_0=1.845
 <object>
 type=1
 object_name=Horizontal Line 1.85
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3023,6 +3294,7 @@ value_0=1.850
 <object>
 type=1
 object_name=Horizontal Line 1.85'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3034,6 +3306,7 @@ value_0=1.855
 <object>
 type=1
 object_name=Horizontal Line 1.86
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3045,6 +3318,7 @@ value_0=1.860
 <object>
 type=1
 object_name=Horizontal Line 1.86'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3056,6 +3330,7 @@ value_0=1.865
 <object>
 type=1
 object_name=Horizontal Line 1.87
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3067,6 +3342,7 @@ value_0=1.870
 <object>
 type=1
 object_name=Horizontal Line 1.87'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3078,6 +3354,7 @@ value_0=1.875
 <object>
 type=1
 object_name=Horizontal Line 1.88
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3089,6 +3366,7 @@ value_0=1.880
 <object>
 type=1
 object_name=Horizontal Line 1.88'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3100,6 +3378,7 @@ value_0=1.885
 <object>
 type=1
 object_name=Horizontal Line 1.89
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3111,6 +3390,7 @@ value_0=1.890
 <object>
 type=1
 object_name=Horizontal Line 1.89'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3123,6 +3403,7 @@ value_0=1.895
 <object>
 type=1
 object_name=Horizontal Line 19.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3134,6 +3415,7 @@ value_0=19.50
 <object>
 type=1
 object_name=Horizontal Line 19.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3145,6 +3427,7 @@ value_0=19.00
 <object>
 type=1
 object_name=Horizontal Line 18.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3156,6 +3439,7 @@ value_0=18.50
 <object>
 type=1
 object_name=Horizontal Line 18.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3167,6 +3451,7 @@ value_0=18.00
 <object>
 type=1
 object_name=Horizontal Line 17.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3178,6 +3463,7 @@ value_0=17.50
 <object>
 type=1
 object_name=Horizontal Line 17.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3189,6 +3475,7 @@ value_0=17.00
 <object>
 type=1
 object_name=Horizontal Line 16.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3200,6 +3487,7 @@ value_0=16.50
 <object>
 type=1
 object_name=Horizontal Line 16.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3211,6 +3499,7 @@ value_0=16.00
 <object>
 type=1
 object_name=Horizontal Line 15.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3222,6 +3511,7 @@ value_0=15.50
 <object>
 type=1
 object_name=Horizontal Line 15.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3233,6 +3523,7 @@ value_0=15.00
 <object>
 type=1
 object_name=Horizontal Line 14.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3244,6 +3535,7 @@ value_0=14.50
 <object>
 type=1
 object_name=Horizontal Line 14.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3255,6 +3547,7 @@ value_0=14.00
 <object>
 type=1
 object_name=Horizontal Line 13.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3266,6 +3559,7 @@ value_0=13.50
 <object>
 type=1
 object_name=Horizontal Line 13.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3277,6 +3571,7 @@ value_0=13.00
 <object>
 type=1
 object_name=Horizontal Line 12.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3288,6 +3583,7 @@ value_0=12.50
 <object>
 type=1
 object_name=Horizontal Line 12.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3299,6 +3595,7 @@ value_0=12.00
 <object>
 type=1
 object_name=Horizontal Line 11.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3310,6 +3607,7 @@ value_0=11.50
 <object>
 type=1
 object_name=Horizontal Line 11.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3321,6 +3619,7 @@ value_0=11.00
 <object>
 type=1
 object_name=Horizontal Line 10.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3332,6 +3631,7 @@ value_0=10.50
 <object>
 type=1
 object_name=Horizontal Line 10.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -3344,6 +3644,7 @@ value_0=10.00
 <object>
 type=1
 object_name=Horizontal Line 2.79'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3355,6 +3656,7 @@ value_0=2.795
 <object>
 type=1
 object_name=Horizontal Line 2.79
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3366,6 +3668,7 @@ value_0=2.790
 <object>
 type=1
 object_name=Horizontal Line 2.78'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3377,6 +3680,7 @@ value_0=2.785
 <object>
 type=1
 object_name=Horizontal Line 2.78
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3388,6 +3692,7 @@ value_0=2.780
 <object>
 type=1
 object_name=Horizontal Line 2.77'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3399,6 +3704,7 @@ value_0=2.775
 <object>
 type=1
 object_name=Horizontal Line 2.77
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3410,6 +3716,7 @@ value_0=2.770
 <object>
 type=1
 object_name=Horizontal Line 2.76'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3421,6 +3728,7 @@ value_0=2.765
 <object>
 type=1
 object_name=Horizontal Line 2.76
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3432,6 +3740,7 @@ value_0=2.760
 <object>
 type=1
 object_name=Horizontal Line 2.75'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3443,6 +3752,7 @@ value_0=2.755
 <object>
 type=1
 object_name=Horizontal Line 2.75
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3454,6 +3764,7 @@ value_0=2.750
 <object>
 type=1
 object_name=Horizontal Line 2.74'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3465,6 +3776,7 @@ value_0=2.745
 <object>
 type=1
 object_name=Horizontal Line 2.74
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3476,6 +3788,7 @@ value_0=2.740
 <object>
 type=1
 object_name=Horizontal Line 2.73'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3487,6 +3800,7 @@ value_0=2.735
 <object>
 type=1
 object_name=Horizontal Line 2.73
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3498,6 +3812,7 @@ value_0=2.730
 <object>
 type=1
 object_name=Horizontal Line 2.72'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3509,6 +3824,7 @@ value_0=2.725
 <object>
 type=1
 object_name=Horizontal Line 2.72
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3520,6 +3836,7 @@ value_0=2.720
 <object>
 type=1
 object_name=Horizontal Line 2.71'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3531,6 +3848,7 @@ value_0=2.715
 <object>
 type=1
 object_name=Horizontal Line 2.71
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3542,6 +3860,7 @@ value_0=2.710
 <object>
 type=1
 object_name=Horizontal Line 2.70'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3553,6 +3872,7 @@ value_0=2.705
 <object>
 type=1
 object_name=Horizontal Line 2.70
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3564,6 +3884,7 @@ value_0=2.700
 <object>
 type=1
 object_name=Horizontal Line 2.69'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3575,6 +3896,7 @@ value_0=2.695
 <object>
 type=1
 object_name=Horizontal Line 2.69
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3586,6 +3908,7 @@ value_0=2.690
 <object>
 type=1
 object_name=Horizontal Line 2.68'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3597,6 +3920,7 @@ value_0=2.685
 <object>
 type=1
 object_name=Horizontal Line 2.68
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3608,6 +3932,7 @@ value_0=2.680
 <object>
 type=1
 object_name=Horizontal Line 2.67'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3619,6 +3944,7 @@ value_0=2.675
 <object>
 type=1
 object_name=Horizontal Line 2.67
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3630,6 +3956,7 @@ value_0=2.670
 <object>
 type=1
 object_name=Horizontal Line 2.66'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3641,6 +3968,7 @@ value_0=2.665
 <object>
 type=1
 object_name=Horizontal Line 2.66
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3652,6 +3980,7 @@ value_0=2.660
 <object>
 type=1
 object_name=Horizontal Line 2.65'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3663,6 +3992,7 @@ value_0=2.655
 <object>
 type=1
 object_name=Horizontal Line 2.65
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3674,6 +4004,7 @@ value_0=2.650
 <object>
 type=1
 object_name=Horizontal Line 2.64'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3685,6 +4016,7 @@ value_0=2.645
 <object>
 type=1
 object_name=Horizontal Line 2.64
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3696,6 +4028,7 @@ value_0=2.640
 <object>
 type=1
 object_name=Horizontal Line 2.63'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3707,6 +4040,7 @@ value_0=2.635
 <object>
 type=1
 object_name=Horizontal Line 2.63
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3718,6 +4052,7 @@ value_0=2.630
 <object>
 type=1
 object_name=Horizontal Line 2.62'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3729,6 +4064,7 @@ value_0=2.625
 <object>
 type=1
 object_name=Horizontal Line 2.62
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3740,6 +4076,7 @@ value_0=2.620
 <object>
 type=1
 object_name=Horizontal Line 2.61'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3751,6 +4088,7 @@ value_0=2.615
 <object>
 type=1
 object_name=Horizontal Line 2.61
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3762,6 +4100,7 @@ value_0=2.610
 <object>
 type=1
 object_name=Horizontal Line 2.60'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3773,6 +4112,7 @@ value_0=2.605
 <object>
 type=1
 object_name=Horizontal Line 2.60
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3784,6 +4124,7 @@ value_0=2.600
 <object>
 type=1
 object_name=Horizontal Line 2.59'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3795,6 +4136,7 @@ value_0=2.595
 <object>
 type=1
 object_name=Horizontal Line 2.59
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3806,6 +4148,7 @@ value_0=2.590
 <object>
 type=1
 object_name=Horizontal Line 2.58'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3817,6 +4160,7 @@ value_0=2.585
 <object>
 type=1
 object_name=Horizontal Line 2.58
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3828,6 +4172,7 @@ value_0=2.580
 <object>
 type=1
 object_name=Horizontal Line 2.57'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3839,6 +4184,7 @@ value_0=2.575
 <object>
 type=1
 object_name=Horizontal Line 2.57
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3850,6 +4196,7 @@ value_0=2.570
 <object>
 type=1
 object_name=Horizontal Line 2.56'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3861,6 +4208,7 @@ value_0=2.565
 <object>
 type=1
 object_name=Horizontal Line 2.56
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3872,6 +4220,7 @@ value_0=2.560
 <object>
 type=1
 object_name=Horizontal Line 2.55'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3883,6 +4232,7 @@ value_0=2.555
 <object>
 type=1
 object_name=Horizontal Line 2.55
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3894,6 +4244,7 @@ value_0=2.550
 <object>
 type=1
 object_name=Horizontal Line 2.54'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -3905,6 +4256,7 @@ value_0=2.545
 <object>
 type=1
 object_name=Horizontal Line 2.54
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -3916,6 +4268,7 @@ value_0=2.540
 <object>
 type=1
 object_name=Horizontal Line 2.53'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3927,6 +4280,7 @@ value_0=2.535
 <object>
 type=1
 object_name=Horizontal Line 2.53
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3938,6 +4292,7 @@ value_0=2.530
 <object>
 type=1
 object_name=Horizontal Line 2.52'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3949,6 +4304,7 @@ value_0=2.525
 <object>
 type=1
 object_name=Horizontal Line 2.52
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3960,6 +4316,7 @@ value_0=2.520
 <object>
 type=1
 object_name=Horizontal Line 2.51'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3971,6 +4328,7 @@ value_0=2.515
 <object>
 type=1
 object_name=Horizontal Line 2.51
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3982,6 +4340,7 @@ value_0=2.510
 <object>
 type=1
 object_name=Horizontal Line 2.50'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -3993,6 +4352,7 @@ value_0=2.505
 <object>
 type=1
 object_name=Horizontal Line 2.50
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4004,6 +4364,7 @@ value_0=2.500
 <object>
 type=1
 object_name=Horizontal Line 2.49'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4015,6 +4376,7 @@ value_0=2.495
 <object>
 type=1
 object_name=Horizontal Line 2.49
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4026,6 +4388,7 @@ value_0=2.490
 <object>
 type=1
 object_name=Horizontal Line 2.48'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4037,6 +4400,7 @@ value_0=2.485
 <object>
 type=1
 object_name=Horizontal Line 2.48
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4048,6 +4412,7 @@ value_0=2.480
 <object>
 type=1
 object_name=Horizontal Line 2.47'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4059,6 +4424,7 @@ value_0=2.475
 <object>
 type=1
 object_name=Horizontal Line 2.47
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4070,6 +4436,7 @@ value_0=2.470
 <object>
 type=1
 object_name=Horizontal Line 2.46'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4081,6 +4448,7 @@ value_0=2.465
 <object>
 type=1
 object_name=Horizontal Line 2.46
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4092,6 +4460,7 @@ value_0=2.460
 <object>
 type=1
 object_name=Horizontal Line 2.45'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4103,6 +4472,7 @@ value_0=2.455
 <object>
 type=1
 object_name=Horizontal Line 2.45
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4114,6 +4484,7 @@ value_0=2.450
 <object>
 type=1
 object_name=Horizontal Line 2.44'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4125,6 +4496,7 @@ value_0=2.445
 <object>
 type=1
 object_name=Horizontal Line 2.44
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4136,6 +4508,7 @@ value_0=2.440
 <object>
 type=1
 object_name=Horizontal Line 2.43'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4147,6 +4520,7 @@ value_0=2.435
 <object>
 type=1
 object_name=Horizontal Line 2.43
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4158,6 +4532,7 @@ value_0=2.430
 <object>
 type=1
 object_name=Horizontal Line 2.42'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4169,6 +4544,7 @@ value_0=2.425
 <object>
 type=1
 object_name=Horizontal Line 2.42
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4180,6 +4556,7 @@ value_0=2.420
 <object>
 type=1
 object_name=Horizontal Line 2.41'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4191,6 +4568,7 @@ value_0=2.415
 <object>
 type=1
 object_name=Horizontal Line 2.41
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4202,6 +4580,7 @@ value_0=2.410
 <object>
 type=1
 object_name=Horizontal Line 2.40'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4213,6 +4592,7 @@ value_0=2.405
 <object>
 type=1
 object_name=Horizontal Line 2.40
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4224,6 +4604,7 @@ value_0=2.400
 <object>
 type=1
 object_name=Horizontal Line 2.39'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4235,6 +4616,7 @@ value_0=2.395
 <object>
 type=1
 object_name=Horizontal Line 2.39
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4246,6 +4628,7 @@ value_0=2.390
 <object>
 type=1
 object_name=Horizontal Line 2.38'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4257,6 +4640,7 @@ value_0=2.385
 <object>
 type=1
 object_name=Horizontal Line 2.38
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4268,6 +4652,7 @@ value_0=2.380
 <object>
 type=1
 object_name=Horizontal Line 2.37'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4279,6 +4664,7 @@ value_0=2.375
 <object>
 type=1
 object_name=Horizontal Line 2.37
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4290,6 +4676,7 @@ value_0=2.370
 <object>
 type=1
 object_name=Horizontal Line 2.36'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4301,6 +4688,7 @@ value_0=2.365
 <object>
 type=1
 object_name=Horizontal Line 2.36
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4312,6 +4700,7 @@ value_0=2.360
 <object>
 type=1
 object_name=Horizontal Line 2.35'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4323,6 +4712,7 @@ value_0=2.355
 <object>
 type=1
 object_name=Horizontal Line 2.35
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4334,6 +4724,7 @@ value_0=2.350
 <object>
 type=1
 object_name=Horizontal Line 2.34'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4345,6 +4736,7 @@ value_0=2.345
 <object>
 type=1
 object_name=Horizontal Line 2.34
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4356,6 +4748,7 @@ value_0=2.340
 <object>
 type=1
 object_name=Horizontal Line 2.33'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4367,6 +4760,7 @@ value_0=2.335
 <object>
 type=1
 object_name=Horizontal Line 2.33
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4378,6 +4772,7 @@ value_0=2.330
 <object>
 type=1
 object_name=Horizontal Line 2.32'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4389,6 +4784,7 @@ value_0=2.325
 <object>
 type=1
 object_name=Horizontal Line 2.32
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4400,6 +4796,7 @@ value_0=2.320
 <object>
 type=1
 object_name=Horizontal Line 2.31'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4411,6 +4808,7 @@ value_0=2.315
 <object>
 type=1
 object_name=Horizontal Line 2.31
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4422,6 +4820,7 @@ value_0=2.310
 <object>
 type=1
 object_name=Horizontal Line 2.30'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4433,6 +4832,7 @@ value_0=2.305
 <object>
 type=1
 object_name=Horizontal Line 2.30
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4444,6 +4844,7 @@ value_0=2.300
 <object>
 type=1
 object_name=Horizontal Line 2.29'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4455,6 +4856,7 @@ value_0=2.295
 <object>
 type=1
 object_name=Horizontal Line 2.29
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4466,6 +4868,7 @@ value_0=2.290
 <object>
 type=1
 object_name=Horizontal Line 2.28'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4477,6 +4880,7 @@ value_0=2.285
 <object>
 type=1
 object_name=Horizontal Line 2.28
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4488,6 +4892,7 @@ value_0=2.280
 <object>
 type=1
 object_name=Horizontal Line 2.27'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4499,6 +4904,7 @@ value_0=2.275
 <object>
 type=1
 object_name=Horizontal Line 2.27
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4510,6 +4916,7 @@ value_0=2.270
 <object>
 type=1
 object_name=Horizontal Line 2.26'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4521,6 +4928,7 @@ value_0=2.265
 <object>
 type=1
 object_name=Horizontal Line 2.26
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4532,6 +4940,7 @@ value_0=2.260
 <object>
 type=1
 object_name=Horizontal Line 2.25'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4543,6 +4952,7 @@ value_0=2.255
 <object>
 type=1
 object_name=Horizontal Line 2.25
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4554,6 +4964,7 @@ value_0=2.250
 <object>
 type=1
 object_name=Horizontal Line 2.24'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4565,6 +4976,7 @@ value_0=2.245
 <object>
 type=1
 object_name=Horizontal Line 2.24
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4576,6 +4988,7 @@ value_0=2.240
 <object>
 type=1
 object_name=Horizontal Line 2.23'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4587,6 +5000,7 @@ value_0=2.235
 <object>
 type=1
 object_name=Horizontal Line 2.23
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4598,6 +5012,7 @@ value_0=2.230
 <object>
 type=1
 object_name=Horizontal Line 2.22'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4609,6 +5024,7 @@ value_0=2.225
 <object>
 type=1
 object_name=Horizontal Line 2.22
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4620,6 +5036,7 @@ value_0=2.220
 <object>
 type=1
 object_name=Horizontal Line 2.21'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4631,6 +5048,7 @@ value_0=2.215
 <object>
 type=1
 object_name=Horizontal Line 2.21
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4642,6 +5060,7 @@ value_0=2.210
 <object>
 type=1
 object_name=Horizontal Line 2.20'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4653,6 +5072,7 @@ value_0=2.205
 <object>
 type=1
 object_name=Horizontal Line 2.20
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4664,6 +5084,7 @@ value_0=2.200
 <object>
 type=1
 object_name=Horizontal Line 2.19'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4675,6 +5096,7 @@ value_0=2.195
 <object>
 type=1
 object_name=Horizontal Line 2.19
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4686,6 +5108,7 @@ value_0=2.190
 <object>
 type=1
 object_name=Horizontal Line 2.18'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4697,6 +5120,7 @@ value_0=2.185
 <object>
 type=1
 object_name=Horizontal Line 2.18
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4708,6 +5132,7 @@ value_0=2.180
 <object>
 type=1
 object_name=Horizontal Line 2.17'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4719,6 +5144,7 @@ value_0=2.175
 <object>
 type=1
 object_name=Horizontal Line 2.17
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4730,6 +5156,7 @@ value_0=2.170
 <object>
 type=1
 object_name=Horizontal Line 2.16'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4741,6 +5168,7 @@ value_0=2.165
 <object>
 type=1
 object_name=Horizontal Line 2.16
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4752,6 +5180,7 @@ value_0=2.160
 <object>
 type=1
 object_name=Horizontal Line 2.15'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4763,6 +5192,7 @@ value_0=2.155
 <object>
 type=1
 object_name=Horizontal Line 2.15
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4774,6 +5204,7 @@ value_0=2.150
 <object>
 type=1
 object_name=Horizontal Line 2.14'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4785,6 +5216,7 @@ value_0=2.145
 <object>
 type=1
 object_name=Horizontal Line 2.14
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4796,6 +5228,7 @@ value_0=2.140
 <object>
 type=1
 object_name=Horizontal Line 2.13'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4807,6 +5240,7 @@ value_0=2.135
 <object>
 type=1
 object_name=Horizontal Line 2.13
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4818,6 +5252,7 @@ value_0=2.130
 <object>
 type=1
 object_name=Horizontal Line 2.12'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4829,6 +5264,7 @@ value_0=2.125
 <object>
 type=1
 object_name=Horizontal Line 2.12
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4840,6 +5276,7 @@ value_0=2.120
 <object>
 type=1
 object_name=Horizontal Line 2.11'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4851,6 +5288,7 @@ value_0=2.115
 <object>
 type=1
 object_name=Horizontal Line 2.11
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4862,6 +5300,7 @@ value_0=2.110
 <object>
 type=1
 object_name=Horizontal Line 2.10'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4873,6 +5312,7 @@ value_0=2.105
 <object>
 type=1
 object_name=Horizontal Line 2.10
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -4884,6 +5324,7 @@ value_0=2.100
 <object>
 type=1
 object_name=Horizontal Line 2.09'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4895,6 +5336,7 @@ value_0=2.095
 <object>
 type=1
 object_name=Horizontal Line 2.09
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4906,6 +5348,7 @@ value_0=2.090
 <object>
 type=1
 object_name=Horizontal Line 2.08'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4917,6 +5360,7 @@ value_0=2.085
 <object>
 type=1
 object_name=Horizontal Line 2.08
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4928,6 +5372,7 @@ value_0=2.080
 <object>
 type=1
 object_name=Horizontal Line 2.07'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4939,6 +5384,7 @@ value_0=2.075
 <object>
 type=1
 object_name=Horizontal Line 2.07
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4950,6 +5396,7 @@ value_0=2.070
 <object>
 type=1
 object_name=Horizontal Line 2.06'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4961,6 +5408,7 @@ value_0=2.065
 <object>
 type=1
 object_name=Horizontal Line 2.06
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4972,6 +5420,7 @@ value_0=2.060
 <object>
 type=1
 object_name=Horizontal Line 2.05'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -4983,6 +5432,7 @@ value_0=2.055
 <object>
 type=1
 object_name=Horizontal Line 2.05
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -4994,6 +5444,7 @@ value_0=2.050
 <object>
 type=1
 object_name=Horizontal Line 2.04'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5005,6 +5456,7 @@ value_0=2.045
 <object>
 type=1
 object_name=Horizontal Line 2.04
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5016,6 +5468,7 @@ value_0=2.040
 <object>
 type=1
 object_name=Horizontal Line 2.03'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5027,6 +5480,7 @@ value_0=2.035
 <object>
 type=1
 object_name=Horizontal Line 2.03
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5038,6 +5492,7 @@ value_0=2.030
 <object>
 type=1
 object_name=Horizontal Line 2.02'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5049,6 +5504,7 @@ value_0=2.025
 <object>
 type=1
 object_name=Horizontal Line 2.02
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5060,6 +5516,7 @@ value_0=2.020
 <object>
 type=1
 object_name=Horizontal Line 2.01'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5071,6 +5528,7 @@ value_0=2.015
 <object>
 type=1
 object_name=Horizontal Line 2.01
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5082,6 +5540,7 @@ value_0=2.010
 <object>
 type=1
 object_name=Horizontal Line 2.00'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5093,6 +5552,7 @@ value_0=2.005
 <object>
 type=1
 object_name=Horizontal Line 2.00
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5104,6 +5564,7 @@ value_0=2.000
 <object>
 type=1
 object_name=Horizontal Line 1.99'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5115,6 +5576,7 @@ value_0=1.995
 <object>
 type=1
 object_name=Horizontal Line 1.99
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5126,6 +5588,7 @@ value_0=1.990
 <object>
 type=1
 object_name=Horizontal Line 1.98'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5137,6 +5600,7 @@ value_0=1.985
 <object>
 type=1
 object_name=Horizontal Line 1.98
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5148,6 +5612,7 @@ value_0=1.980
 <object>
 type=1
 object_name=Horizontal Line 1.97'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5159,6 +5624,7 @@ value_0=1.975
 <object>
 type=1
 object_name=Horizontal Line 1.97
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5170,6 +5636,7 @@ value_0=1.970
 <object>
 type=1
 object_name=Horizontal Line 1.96'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5181,6 +5648,7 @@ value_0=1.965
 <object>
 type=1
 object_name=Horizontal Line 1.96
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5192,6 +5660,7 @@ value_0=1.960
 <object>
 type=1
 object_name=Horizontal Line 1.95'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5203,6 +5672,7 @@ value_0=1.955
 <object>
 type=1
 object_name=Horizontal Line 1.95
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5214,6 +5684,7 @@ value_0=1.950
 <object>
 type=1
 object_name=Horizontal Line 1.94'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5225,6 +5696,7 @@ value_0=1.945
 <object>
 type=1
 object_name=Horizontal Line 1.94
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5236,6 +5708,7 @@ value_0=1.940
 <object>
 type=1
 object_name=Horizontal Line 1.93'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5247,6 +5720,7 @@ value_0=1.935
 <object>
 type=1
 object_name=Horizontal Line 1.93
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5258,6 +5732,7 @@ value_0=1.930
 <object>
 type=1
 object_name=Horizontal Line 1.92'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5269,6 +5744,7 @@ value_0=1.925
 <object>
 type=1
 object_name=Horizontal Line 1.92
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5280,6 +5756,7 @@ value_0=1.920
 <object>
 type=1
 object_name=Horizontal Line 1.91'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5291,6 +5768,7 @@ value_0=1.915
 <object>
 type=1
 object_name=Horizontal Line 1.91
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5302,6 +5780,7 @@ value_0=1.910
 <object>
 type=1
 object_name=Horizontal Line 1.90'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5313,6 +5792,7 @@ value_0=1.905
 <object>
 type=1
 object_name=Horizontal Line 1.90
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5325,6 +5805,7 @@ value_0=1.900
 <object>
 type=1
 object_name=Horizontal Line 1.99'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5336,6 +5817,7 @@ value_0=1.995
 <object>
 type=1
 object_name=Horizontal Line 1.99
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5347,6 +5829,7 @@ value_0=1.990
 <object>
 type=1
 object_name=Horizontal Line 1.98'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5358,6 +5841,7 @@ value_0=1.985
 <object>
 type=1
 object_name=Horizontal Line 1.98
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5369,6 +5853,7 @@ value_0=1.980
 <object>
 type=1
 object_name=Horizontal Line 1.97'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5380,6 +5865,7 @@ value_0=1.975
 <object>
 type=1
 object_name=Horizontal Line 1.97
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5391,6 +5877,7 @@ value_0=1.970
 <object>
 type=1
 object_name=Horizontal Line 1.96'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5402,6 +5889,7 @@ value_0=1.965
 <object>
 type=1
 object_name=Horizontal Line 1.96
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5413,6 +5901,7 @@ value_0=1.960
 <object>
 type=1
 object_name=Horizontal Line 1.95'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5424,6 +5913,7 @@ value_0=1.955
 <object>
 type=1
 object_name=Horizontal Line 1.95
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5435,6 +5925,7 @@ value_0=1.950
 <object>
 type=1
 object_name=Horizontal Line 1.94'5
+selectable=0
 period_flags=0
 create_time=1253612489
 color=13882323
@@ -5446,6 +5937,7 @@ value_0=1.945
 <object>
 type=1
 object_name=Horizontal Line 1.94
+selectable=0
 period_flags=0
 create_time=1253612487
 color=13882323
@@ -5457,6 +5949,7 @@ value_0=1.940
 <object>
 type=1
 object_name=Horizontal Line 1.93'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5468,6 +5961,7 @@ value_0=1.935
 <object>
 type=1
 object_name=Horizontal Line 1.93
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5479,6 +5973,7 @@ value_0=1.930
 <object>
 type=1
 object_name=Horizontal Line 1.92'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5490,6 +5985,7 @@ value_0=1.925
 <object>
 type=1
 object_name=Horizontal Line 1.92
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5501,6 +5997,7 @@ value_0=1.920
 <object>
 type=1
 object_name=Horizontal Line 1.91'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5512,6 +6009,7 @@ value_0=1.915
 <object>
 type=1
 object_name=Horizontal Line 1.91
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5523,6 +6021,7 @@ value_0=1.910
 <object>
 type=1
 object_name=Horizontal Line 1.90'5
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5534,6 +6033,7 @@ value_0=1.905
 <object>
 type=1
 object_name=Horizontal Line 1.90
+selectable=0
 period_flags=0
 create_time=1253612485
 color=13882323
@@ -5546,6 +6046,7 @@ value_0=1.900
 <object>
 type=1
 object_name=Horizontal Line 49.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5557,6 +6058,7 @@ value_0=49.50
 <object>
 type=1
 object_name=Horizontal Line 49.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5568,6 +6070,7 @@ value_0=49.00
 <object>
 type=1
 object_name=Horizontal Line 48.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5579,6 +6082,7 @@ value_0=48.50
 <object>
 type=1
 object_name=Horizontal Line 48.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5590,6 +6094,7 @@ value_0=48.00
 <object>
 type=1
 object_name=Horizontal Line 47.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5601,6 +6106,7 @@ value_0=47.50
 <object>
 type=1
 object_name=Horizontal Line 47.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5612,6 +6118,7 @@ value_0=47.00
 <object>
 type=1
 object_name=Horizontal Line 46.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5623,6 +6130,7 @@ value_0=46.50
 <object>
 type=1
 object_name=Horizontal Line 46.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5634,6 +6142,7 @@ value_0=46.00
 <object>
 type=1
 object_name=Horizontal Line 45.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5645,6 +6154,7 @@ value_0=45.50
 <object>
 type=1
 object_name=Horizontal Line 45.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5656,6 +6166,7 @@ value_0=45.00
 <object>
 type=1
 object_name=Horizontal Line 44.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5667,6 +6178,7 @@ value_0=44.50
 <object>
 type=1
 object_name=Horizontal Line 44.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5678,6 +6190,7 @@ value_0=44.00
 <object>
 type=1
 object_name=Horizontal Line 43.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5689,6 +6202,7 @@ value_0=43.50
 <object>
 type=1
 object_name=Horizontal Line 43.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5700,6 +6214,7 @@ value_0=43.00
 <object>
 type=1
 object_name=Horizontal Line 42.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5711,6 +6226,7 @@ value_0=42.50
 <object>
 type=1
 object_name=Horizontal Line 42.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5722,6 +6238,7 @@ value_0=42.00
 <object>
 type=1
 object_name=Horizontal Line 41.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5733,6 +6250,7 @@ value_0=41.50
 <object>
 type=1
 object_name=Horizontal Line 41.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5744,6 +6262,7 @@ value_0=41.00
 <object>
 type=1
 object_name=Horizontal Line 40.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5755,6 +6274,7 @@ value_0=40.50
 <object>
 type=1
 object_name=Horizontal Line 40.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5766,6 +6286,7 @@ value_0=40.00
 <object>
 type=1
 object_name=Horizontal Line 39.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5777,6 +6298,7 @@ value_0=39.50
 <object>
 type=1
 object_name=Horizontal Line 39.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5788,6 +6310,7 @@ value_0=39.00
 <object>
 type=1
 object_name=Horizontal Line 38.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5799,6 +6322,7 @@ value_0=38.50
 <object>
 type=1
 object_name=Horizontal Line 38.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5810,6 +6334,7 @@ value_0=38.00
 <object>
 type=1
 object_name=Horizontal Line 37.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5821,6 +6346,7 @@ value_0=37.50
 <object>
 type=1
 object_name=Horizontal Line 37.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5832,6 +6358,7 @@ value_0=37.00
 <object>
 type=1
 object_name=Horizontal Line 36.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5843,6 +6370,7 @@ value_0=36.50
 <object>
 type=1
 object_name=Horizontal Line 36.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5854,6 +6382,7 @@ value_0=36.00
 <object>
 type=1
 object_name=Horizontal Line 35.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5865,6 +6394,7 @@ value_0=35.50
 <object>
 type=1
 object_name=Horizontal Line 35.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5876,6 +6406,7 @@ value_0=35.00
 <object>
 type=1
 object_name=Horizontal Line 34.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5887,6 +6418,7 @@ value_0=34.50
 <object>
 type=1
 object_name=Horizontal Line 34.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5898,6 +6430,7 @@ value_0=34.00
 <object>
 type=1
 object_name=Horizontal Line 33.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5909,6 +6442,7 @@ value_0=33.50
 <object>
 type=1
 object_name=Horizontal Line 33.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5920,6 +6454,7 @@ value_0=33.00
 <object>
 type=1
 object_name=Horizontal Line 32.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5931,6 +6466,7 @@ value_0=32.50
 <object>
 type=1
 object_name=Horizontal Line 32.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5942,6 +6478,7 @@ value_0=32.00
 <object>
 type=1
 object_name=Horizontal Line 31.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5953,6 +6490,7 @@ value_0=31.50
 <object>
 type=1
 object_name=Horizontal Line 31.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5964,6 +6502,7 @@ value_0=31.00
 <object>
 type=1
 object_name=Horizontal Line 30.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5975,6 +6514,7 @@ value_0=30.50
 <object>
 type=1
 object_name=Horizontal Line 30.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5986,6 +6526,7 @@ value_0=30.00
 <object>
 type=1
 object_name=Horizontal Line 29.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -5997,6 +6538,7 @@ value_0=29.50
 <object>
 type=1
 object_name=Horizontal Line 29.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6008,6 +6550,7 @@ value_0=29.00
 <object>
 type=1
 object_name=Horizontal Line 28.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6019,6 +6562,7 @@ value_0=28.50
 <object>
 type=1
 object_name=Horizontal Line 28.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6030,6 +6574,7 @@ value_0=28.00
 <object>
 type=1
 object_name=Horizontal Line 27.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6041,6 +6586,7 @@ value_0=27.50
 <object>
 type=1
 object_name=Horizontal Line 27.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6052,6 +6598,7 @@ value_0=27.00
 <object>
 type=1
 object_name=Horizontal Line 26.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6063,6 +6610,7 @@ value_0=26.50
 <object>
 type=1
 object_name=Horizontal Line 26.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6074,6 +6622,7 @@ value_0=26.00
 <object>
 type=1
 object_name=Horizontal Line 25.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6085,6 +6634,7 @@ value_0=25.50
 <object>
 type=1
 object_name=Horizontal Line 25.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6096,6 +6646,7 @@ value_0=25.00
 <object>
 type=1
 object_name=Horizontal Line 24.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6107,6 +6658,7 @@ value_0=24.50
 <object>
 type=1
 object_name=Horizontal Line 24.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6118,6 +6670,7 @@ value_0=24.00
 <object>
 type=1
 object_name=Horizontal Line 23.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6129,6 +6682,7 @@ value_0=23.50
 <object>
 type=1
 object_name=Horizontal Line 23.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6140,6 +6694,7 @@ value_0=23.00
 <object>
 type=1
 object_name=Horizontal Line 22.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6151,6 +6706,7 @@ value_0=22.50
 <object>
 type=1
 object_name=Horizontal Line 22.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6162,6 +6718,7 @@ value_0=22.00
 <object>
 type=1
 object_name=Horizontal Line 21.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6173,6 +6730,7 @@ value_0=21.50
 <object>
 type=1
 object_name=Horizontal Line 21.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6184,6 +6742,7 @@ value_0=21.00
 <object>
 type=1
 object_name=Horizontal Line 20.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6195,6 +6754,7 @@ value_0=20.50
 <object>
 type=1
 object_name=Horizontal Line 20.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6207,6 +6767,7 @@ value_0=20.00
 <object>
 type=1
 object_name=Horizontal Line 1450.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6218,6 +6779,7 @@ value_0=1450.00
 <object>
 type=1
 object_name=Horizontal Line 1400.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6229,6 +6791,7 @@ value_0=1400.00
 <object>
 type=1
 object_name=Horizontal Line 1350.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6240,6 +6803,7 @@ value_0=1350.00
 <object>
 type=1
 object_name=Horizontal Line 1300.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6251,6 +6815,7 @@ value_0=1300.00
 <object>
 type=1
 object_name=Horizontal Line 1250.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6262,6 +6827,7 @@ value_0=1250.00
 <object>
 type=1
 object_name=Horizontal Line 1200.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6273,6 +6839,7 @@ value_0=1200.00
 <object>
 type=1
 object_name=Horizontal Line 1150.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6284,6 +6851,7 @@ value_0=1150.00
 <object>
 type=1
 object_name=Horizontal Line 1100.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6295,6 +6863,7 @@ value_0=1100.00
 <object>
 type=1
 object_name=Horizontal Line 1050.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6306,6 +6875,7 @@ value_0=1050.00
 <object>
 type=1
 object_name=Horizontal Line 1000.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6318,6 +6888,7 @@ value_0=1000.00
 <object>
 type=1
 object_name=Horizontal Line 69.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6329,6 +6900,7 @@ value_0=69.50
 <object>
 type=1
 object_name=Horizontal Line 69.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6340,6 +6912,7 @@ value_0=69.00
 <object>
 type=1
 object_name=Horizontal Line 68.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6351,6 +6924,7 @@ value_0=68.50
 <object>
 type=1
 object_name=Horizontal Line 68.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6362,6 +6936,7 @@ value_0=68.00
 <object>
 type=1
 object_name=Horizontal Line 67.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6373,6 +6948,7 @@ value_0=67.50
 <object>
 type=1
 object_name=Horizontal Line 67.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6384,6 +6960,7 @@ value_0=67.00
 <object>
 type=1
 object_name=Horizontal Line 66.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6395,6 +6972,7 @@ value_0=66.50
 <object>
 type=1
 object_name=Horizontal Line 66.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6406,6 +6984,7 @@ value_0=66.00
 <object>
 type=1
 object_name=Horizontal Line 65.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6417,6 +6996,7 @@ value_0=65.50
 <object>
 type=1
 object_name=Horizontal Line 65.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6428,6 +7008,7 @@ value_0=65.00
 <object>
 type=1
 object_name=Horizontal Line 64.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6439,6 +7020,7 @@ value_0=64.50
 <object>
 type=1
 object_name=Horizontal Line 64.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6450,6 +7032,7 @@ value_0=64.00
 <object>
 type=1
 object_name=Horizontal Line 63.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6461,6 +7044,7 @@ value_0=63.50
 <object>
 type=1
 object_name=Horizontal Line 63.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6472,6 +7056,7 @@ value_0=63.00
 <object>
 type=1
 object_name=Horizontal Line 62.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6483,6 +7068,7 @@ value_0=62.50
 <object>
 type=1
 object_name=Horizontal Line 62.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6494,6 +7080,7 @@ value_0=62.00
 <object>
 type=1
 object_name=Horizontal Line 61.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6505,6 +7092,7 @@ value_0=61.50
 <object>
 type=1
 object_name=Horizontal Line 61.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6516,6 +7104,7 @@ value_0=61.00
 <object>
 type=1
 object_name=Horizontal Line 60.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6527,6 +7116,7 @@ value_0=60.50
 <object>
 type=1
 object_name=Horizontal Line 60.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6538,6 +7128,7 @@ value_0=60.00
 <object>
 type=1
 object_name=Horizontal Line 59.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6549,6 +7140,7 @@ value_0=59.50
 <object>
 type=1
 object_name=Horizontal Line 59.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6560,6 +7152,7 @@ value_0=59.00
 <object>
 type=1
 object_name=Horizontal Line 58.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6571,6 +7164,7 @@ value_0=58.50
 <object>
 type=1
 object_name=Horizontal Line 58.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6582,6 +7176,7 @@ value_0=58.00
 <object>
 type=1
 object_name=Horizontal Line 57.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6593,6 +7188,7 @@ value_0=57.50
 <object>
 type=1
 object_name=Horizontal Line 57.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6604,6 +7200,7 @@ value_0=57.00
 <object>
 type=1
 object_name=Horizontal Line 56.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6615,6 +7212,7 @@ value_0=56.50
 <object>
 type=1
 object_name=Horizontal Line 56.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6626,6 +7224,7 @@ value_0=56.00
 <object>
 type=1
 object_name=Horizontal Line 55.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6637,6 +7236,7 @@ value_0=55.50
 <object>
 type=1
 object_name=Horizontal Line 55.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6648,6 +7248,7 @@ value_0=55.00
 <object>
 type=1
 object_name=Horizontal Line 54.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6659,6 +7260,7 @@ value_0=54.50
 <object>
 type=1
 object_name=Horizontal Line 54.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6670,6 +7272,7 @@ value_0=54.00
 <object>
 type=1
 object_name=Horizontal Line 53.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6681,6 +7284,7 @@ value_0=53.50
 <object>
 type=1
 object_name=Horizontal Line 53.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6692,6 +7296,7 @@ value_0=53.00
 <object>
 type=1
 object_name=Horizontal Line 52.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6703,6 +7308,7 @@ value_0=52.50
 <object>
 type=1
 object_name=Horizontal Line 52.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6714,6 +7320,7 @@ value_0=52.00
 <object>
 type=1
 object_name=Horizontal Line 51.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6725,6 +7332,7 @@ value_0=51.50
 <object>
 type=1
 object_name=Horizontal Line 51.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6736,6 +7344,7 @@ value_0=51.00
 <object>
 type=1
 object_name=Horizontal Line 50.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6747,6 +7356,7 @@ value_0=50.50
 <object>
 type=1
 object_name=Horizontal Line 50.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6759,6 +7369,7 @@ value_0=50.00
 <object>
 type=1
 object_name=Horizontal Line 79.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6770,6 +7381,7 @@ value_0=79.50
 <object>
 type=1
 object_name=Horizontal Line 79.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6781,6 +7393,7 @@ value_0=79.00
 <object>
 type=1
 object_name=Horizontal Line 78.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6792,6 +7405,7 @@ value_0=78.50
 <object>
 type=1
 object_name=Horizontal Line 78.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6803,6 +7417,7 @@ value_0=78.00
 <object>
 type=1
 object_name=Horizontal Line 77.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6814,6 +7429,7 @@ value_0=77.50
 <object>
 type=1
 object_name=Horizontal Line 77.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6825,6 +7441,7 @@ value_0=77.00
 <object>
 type=1
 object_name=Horizontal Line 76.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6836,6 +7453,7 @@ value_0=76.50
 <object>
 type=1
 object_name=Horizontal Line 76.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6847,6 +7465,7 @@ value_0=76.00
 <object>
 type=1
 object_name=Horizontal Line 75.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6858,6 +7477,7 @@ value_0=75.50
 <object>
 type=1
 object_name=Horizontal Line 75.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6869,6 +7489,7 @@ value_0=75.00
 <object>
 type=1
 object_name=Horizontal Line 74.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6880,6 +7501,7 @@ value_0=74.50
 <object>
 type=1
 object_name=Horizontal Line 74.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6891,6 +7513,7 @@ value_0=74.00
 <object>
 type=1
 object_name=Horizontal Line 73.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6902,6 +7525,7 @@ value_0=73.50
 <object>
 type=1
 object_name=Horizontal Line 73.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6913,6 +7537,7 @@ value_0=73.00
 <object>
 type=1
 object_name=Horizontal Line 72.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6924,6 +7549,7 @@ value_0=72.50
 <object>
 type=1
 object_name=Horizontal Line 72.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6935,6 +7561,7 @@ value_0=72.00
 <object>
 type=1
 object_name=Horizontal Line 71.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6946,6 +7573,7 @@ value_0=71.50
 <object>
 type=1
 object_name=Horizontal Line 71.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6957,6 +7585,7 @@ value_0=71.00
 <object>
 type=1
 object_name=Horizontal Line 70.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6968,6 +7597,7 @@ value_0=70.50
 <object>
 type=1
 object_name=Horizontal Line 70.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6980,6 +7610,7 @@ value_0=70.00
 <object>
 type=1
 object_name=Horizontal Line 119.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -6991,6 +7622,7 @@ value_0=119.50
 <object>
 type=1
 object_name=Horizontal Line 119.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7002,6 +7634,7 @@ value_0=119.00
 <object>
 type=1
 object_name=Horizontal Line 118.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7013,6 +7646,7 @@ value_0=118.50
 <object>
 type=1
 object_name=Horizontal Line 118.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7024,6 +7658,7 @@ value_0=118.00
 <object>
 type=1
 object_name=Horizontal Line 117.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7035,6 +7670,7 @@ value_0=117.50
 <object>
 type=1
 object_name=Horizontal Line 117.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7046,6 +7682,7 @@ value_0=117.00
 <object>
 type=1
 object_name=Horizontal Line 116.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7057,6 +7694,7 @@ value_0=116.50
 <object>
 type=1
 object_name=Horizontal Line 116.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7068,6 +7706,7 @@ value_0=116.00
 <object>
 type=1
 object_name=Horizontal Line 115.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7079,6 +7718,7 @@ value_0=115.50
 <object>
 type=1
 object_name=Horizontal Line 115.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7090,6 +7730,7 @@ value_0=115.00
 <object>
 type=1
 object_name=Horizontal Line 114.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7101,6 +7742,7 @@ value_0=114.50
 <object>
 type=1
 object_name=Horizontal Line 114.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7112,6 +7754,7 @@ value_0=114.00
 <object>
 type=1
 object_name=Horizontal Line 113.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7123,6 +7766,7 @@ value_0=113.50
 <object>
 type=1
 object_name=Horizontal Line 113.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7134,6 +7778,7 @@ value_0=113.00
 <object>
 type=1
 object_name=Horizontal Line 112.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7145,6 +7790,7 @@ value_0=112.50
 <object>
 type=1
 object_name=Horizontal Line 112.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7156,6 +7802,7 @@ value_0=112.00
 <object>
 type=1
 object_name=Horizontal Line 111.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7167,6 +7814,7 @@ value_0=111.50
 <object>
 type=1
 object_name=Horizontal Line 111.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7178,6 +7826,7 @@ value_0=111.00
 <object>
 type=1
 object_name=Horizontal Line 110.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7189,6 +7838,7 @@ value_0=110.50
 <object>
 type=1
 object_name=Horizontal Line 110.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7200,6 +7850,7 @@ value_0=110.00
 <object>
 type=1
 object_name=Horizontal Line 109.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7211,6 +7862,7 @@ value_0=109.50
 <object>
 type=1
 object_name=Horizontal Line 109.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7222,6 +7874,7 @@ value_0=109.00
 <object>
 type=1
 object_name=Horizontal Line 108.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7233,6 +7886,7 @@ value_0=108.50
 <object>
 type=1
 object_name=Horizontal Line 108.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7244,6 +7898,7 @@ value_0=108.00
 <object>
 type=1
 object_name=Horizontal Line 107.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7255,6 +7910,7 @@ value_0=107.50
 <object>
 type=1
 object_name=Horizontal Line 107.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7266,6 +7922,7 @@ value_0=107.00
 <object>
 type=1
 object_name=Horizontal Line 106.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7277,6 +7934,7 @@ value_0=106.50
 <object>
 type=1
 object_name=Horizontal Line 106.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7288,6 +7946,7 @@ value_0=106.00
 <object>
 type=1
 object_name=Horizontal Line 105.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7299,6 +7958,7 @@ value_0=105.50
 <object>
 type=1
 object_name=Horizontal Line 105.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7310,6 +7970,7 @@ value_0=105.00
 <object>
 type=1
 object_name=Horizontal Line 104.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7321,6 +7982,7 @@ value_0=104.50
 <object>
 type=1
 object_name=Horizontal Line 104.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7332,6 +7994,7 @@ value_0=104.00
 <object>
 type=1
 object_name=Horizontal Line 103.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7343,6 +8006,7 @@ value_0=103.50
 <object>
 type=1
 object_name=Horizontal Line 103.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7354,6 +8018,7 @@ value_0=103.00
 <object>
 type=1
 object_name=Horizontal Line 102.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7365,6 +8030,7 @@ value_0=102.50
 <object>
 type=1
 object_name=Horizontal Line 102.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7376,6 +8042,7 @@ value_0=102.00
 <object>
 type=1
 object_name=Horizontal Line 101.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7387,6 +8054,7 @@ value_0=101.50
 <object>
 type=1
 object_name=Horizontal Line 101.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7398,6 +8066,7 @@ value_0=101.00
 <object>
 type=1
 object_name=Horizontal Line 100.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7409,6 +8078,7 @@ value_0=100.50
 <object>
 type=1
 object_name=Horizontal Line 100.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7420,6 +8090,7 @@ value_0=100.00
 <object>
 type=1
 object_name=Horizontal Line 99.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7431,6 +8102,7 @@ value_0=99.50
 <object>
 type=1
 object_name=Horizontal Line 99.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7442,6 +8114,7 @@ value_0=99.00
 <object>
 type=1
 object_name=Horizontal Line 98.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7453,6 +8126,7 @@ value_0=98.50
 <object>
 type=1
 object_name=Horizontal Line 98.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7464,6 +8138,7 @@ value_0=98.00
 <object>
 type=1
 object_name=Horizontal Line 97.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7475,6 +8150,7 @@ value_0=97.50
 <object>
 type=1
 object_name=Horizontal Line 97.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7486,6 +8162,7 @@ value_0=97.00
 <object>
 type=1
 object_name=Horizontal Line 96.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7497,6 +8174,7 @@ value_0=96.50
 <object>
 type=1
 object_name=Horizontal Line 96.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7508,6 +8186,7 @@ value_0=96.00
 <object>
 type=1
 object_name=Horizontal Line 95.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7519,6 +8198,7 @@ value_0=95.50
 <object>
 type=1
 object_name=Horizontal Line 95.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7530,6 +8210,7 @@ value_0=95.00
 <object>
 type=1
 object_name=Horizontal Line 94.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7541,6 +8222,7 @@ value_0=94.50
 <object>
 type=1
 object_name=Horizontal Line 94.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7552,6 +8234,7 @@ value_0=94.00
 <object>
 type=1
 object_name=Horizontal Line 93.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7563,6 +8246,7 @@ value_0=93.50
 <object>
 type=1
 object_name=Horizontal Line 93.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7574,6 +8258,7 @@ value_0=93.00
 <object>
 type=1
 object_name=Horizontal Line 92.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7585,6 +8270,7 @@ value_0=92.50
 <object>
 type=1
 object_name=Horizontal Line 92.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7596,6 +8282,7 @@ value_0=92.00
 <object>
 type=1
 object_name=Horizontal Line 91.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7607,6 +8294,7 @@ value_0=91.50
 <object>
 type=1
 object_name=Horizontal Line 91.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7618,6 +8306,7 @@ value_0=91.00
 <object>
 type=1
 object_name=Horizontal Line 90.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7629,6 +8318,7 @@ value_0=90.50
 <object>
 type=1
 object_name=Horizontal Line 90.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7640,6 +8330,7 @@ value_0=90.00
 <object>
 type=1
 object_name=Horizontal Line 89.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7651,6 +8342,7 @@ value_0=89.50
 <object>
 type=1
 object_name=Horizontal Line 89.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7662,6 +8354,7 @@ value_0=89.00
 <object>
 type=1
 object_name=Horizontal Line 88.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7673,6 +8366,7 @@ value_0=88.50
 <object>
 type=1
 object_name=Horizontal Line 88.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7684,6 +8378,7 @@ value_0=88.00
 <object>
 type=1
 object_name=Horizontal Line 87.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7695,6 +8390,7 @@ value_0=87.50
 <object>
 type=1
 object_name=Horizontal Line 87.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7706,6 +8402,7 @@ value_0=87.00
 <object>
 type=1
 object_name=Horizontal Line 86.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7717,6 +8414,7 @@ value_0=86.50
 <object>
 type=1
 object_name=Horizontal Line 86.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7728,6 +8426,7 @@ value_0=86.00
 <object>
 type=1
 object_name=Horizontal Line 85.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7739,6 +8438,7 @@ value_0=85.50
 <object>
 type=1
 object_name=Horizontal Line 85.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7750,6 +8450,7 @@ value_0=85.00
 <object>
 type=1
 object_name=Horizontal Line 84.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7761,6 +8462,7 @@ value_0=84.50
 <object>
 type=1
 object_name=Horizontal Line 84.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7772,6 +8474,7 @@ value_0=84.00
 <object>
 type=1
 object_name=Horizontal Line 83.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7783,6 +8486,7 @@ value_0=83.50
 <object>
 type=1
 object_name=Horizontal Line 83.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7794,6 +8498,7 @@ value_0=83.00
 <object>
 type=1
 object_name=Horizontal Line 82.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7805,6 +8510,7 @@ value_0=82.50
 <object>
 type=1
 object_name=Horizontal Line 82.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7816,6 +8522,7 @@ value_0=82.00
 <object>
 type=1
 object_name=Horizontal Line 81.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7827,6 +8534,7 @@ value_0=81.50
 <object>
 type=1
 object_name=Horizontal Line 81.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7838,6 +8546,7 @@ value_0=81.00
 <object>
 type=1
 object_name=Horizontal Line 80.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7849,6 +8558,7 @@ value_0=80.50
 <object>
 type=1
 object_name=Horizontal Line 80.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7861,6 +8571,7 @@ value_0=80.00
 <object>
 type=1
 object_name=Horizontal Line 159.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7872,6 +8583,7 @@ value_0=159.50
 <object>
 type=1
 object_name=Horizontal Line 159.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7883,6 +8595,7 @@ value_0=159.00
 <object>
 type=1
 object_name=Horizontal Line 158.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7894,6 +8607,7 @@ value_0=158.50
 <object>
 type=1
 object_name=Horizontal Line 158.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7905,6 +8619,7 @@ value_0=158.00
 <object>
 type=1
 object_name=Horizontal Line 157.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7916,6 +8631,7 @@ value_0=157.50
 <object>
 type=1
 object_name=Horizontal Line 157.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7927,6 +8643,7 @@ value_0=157.00
 <object>
 type=1
 object_name=Horizontal Line 156.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7938,6 +8655,7 @@ value_0=156.50
 <object>
 type=1
 object_name=Horizontal Line 156.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7949,6 +8667,7 @@ value_0=156.00
 <object>
 type=1
 object_name=Horizontal Line 155.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7960,6 +8679,7 @@ value_0=155.50
 <object>
 type=1
 object_name=Horizontal Line 155.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7971,6 +8691,7 @@ value_0=155.00
 <object>
 type=1
 object_name=Horizontal Line 154.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7982,6 +8703,7 @@ value_0=154.50
 <object>
 type=1
 object_name=Horizontal Line 154.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -7993,6 +8715,7 @@ value_0=154.00
 <object>
 type=1
 object_name=Horizontal Line 153.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8004,6 +8727,7 @@ value_0=153.50
 <object>
 type=1
 object_name=Horizontal Line 153.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8015,6 +8739,7 @@ value_0=153.00
 <object>
 type=1
 object_name=Horizontal Line 152.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8026,6 +8751,7 @@ value_0=152.50
 <object>
 type=1
 object_name=Horizontal Line 152.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8037,6 +8763,7 @@ value_0=152.00
 <object>
 type=1
 object_name=Horizontal Line 151.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8048,6 +8775,7 @@ value_0=151.50
 <object>
 type=1
 object_name=Horizontal Line 151.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8059,6 +8787,7 @@ value_0=151.00
 <object>
 type=1
 object_name=Horizontal Line 150.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8070,6 +8799,7 @@ value_0=150.50
 <object>
 type=1
 object_name=Horizontal Line 150.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8081,6 +8811,7 @@ value_0=150.00
 <object>
 type=1
 object_name=Horizontal Line 149.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8092,6 +8823,7 @@ value_0=149.50
 <object>
 type=1
 object_name=Horizontal Line 149.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8103,6 +8835,7 @@ value_0=149.00
 <object>
 type=1
 object_name=Horizontal Line 148.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8114,6 +8847,7 @@ value_0=148.50
 <object>
 type=1
 object_name=Horizontal Line 148.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8125,6 +8859,7 @@ value_0=148.00
 <object>
 type=1
 object_name=Horizontal Line 147.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8136,6 +8871,7 @@ value_0=147.50
 <object>
 type=1
 object_name=Horizontal Line 147.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8147,6 +8883,7 @@ value_0=147.00
 <object>
 type=1
 object_name=Horizontal Line 146.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8158,6 +8895,7 @@ value_0=146.50
 <object>
 type=1
 object_name=Horizontal Line 146.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8169,6 +8907,7 @@ value_0=146.00
 <object>
 type=1
 object_name=Horizontal Line 145.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8180,6 +8919,7 @@ value_0=145.50
 <object>
 type=1
 object_name=Horizontal Line 145.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8191,6 +8931,7 @@ value_0=145.00
 <object>
 type=1
 object_name=Horizontal Line 144.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8202,6 +8943,7 @@ value_0=144.50
 <object>
 type=1
 object_name=Horizontal Line 144.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8213,6 +8955,7 @@ value_0=144.00
 <object>
 type=1
 object_name=Horizontal Line 143.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8224,6 +8967,7 @@ value_0=143.50
 <object>
 type=1
 object_name=Horizontal Line 143.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8235,6 +8979,7 @@ value_0=143.00
 <object>
 type=1
 object_name=Horizontal Line 142.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8246,6 +8991,7 @@ value_0=142.50
 <object>
 type=1
 object_name=Horizontal Line 142.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8257,6 +9003,7 @@ value_0=142.00
 <object>
 type=1
 object_name=Horizontal Line 141.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8268,6 +9015,7 @@ value_0=141.50
 <object>
 type=1
 object_name=Horizontal Line 141.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8279,6 +9027,7 @@ value_0=141.00
 <object>
 type=1
 object_name=Horizontal Line 140.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8290,6 +9039,7 @@ value_0=140.50
 <object>
 type=1
 object_name=Horizontal Line 140.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8301,6 +9051,7 @@ value_0=140.00
 <object>
 type=1
 object_name=Horizontal Line 139.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8312,6 +9063,7 @@ value_0=139.50
 <object>
 type=1
 object_name=Horizontal Line 139.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8323,6 +9075,7 @@ value_0=139.00
 <object>
 type=1
 object_name=Horizontal Line 138.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8334,6 +9087,7 @@ value_0=138.50
 <object>
 type=1
 object_name=Horizontal Line 138.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8345,6 +9099,7 @@ value_0=138.00
 <object>
 type=1
 object_name=Horizontal Line 137.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8356,6 +9111,7 @@ value_0=137.50
 <object>
 type=1
 object_name=Horizontal Line 137.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8367,6 +9123,7 @@ value_0=137.00
 <object>
 type=1
 object_name=Horizontal Line 136.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8378,6 +9135,7 @@ value_0=136.50
 <object>
 type=1
 object_name=Horizontal Line 136.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8389,6 +9147,7 @@ value_0=136.00
 <object>
 type=1
 object_name=Horizontal Line 135.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8400,6 +9159,7 @@ value_0=135.50
 <object>
 type=1
 object_name=Horizontal Line 135.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8411,6 +9171,7 @@ value_0=135.00
 <object>
 type=1
 object_name=Horizontal Line 134.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8422,6 +9183,7 @@ value_0=134.50
 <object>
 type=1
 object_name=Horizontal Line 134.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8433,6 +9195,7 @@ value_0=134.00
 <object>
 type=1
 object_name=Horizontal Line 133.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8444,6 +9207,7 @@ value_0=133.50
 <object>
 type=1
 object_name=Horizontal Line 133.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8455,6 +9219,7 @@ value_0=133.00
 <object>
 type=1
 object_name=Horizontal Line 132.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8466,6 +9231,7 @@ value_0=132.50
 <object>
 type=1
 object_name=Horizontal Line 132.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8477,6 +9243,7 @@ value_0=132.00
 <object>
 type=1
 object_name=Horizontal Line 131.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8488,6 +9255,7 @@ value_0=131.50
 <object>
 type=1
 object_name=Horizontal Line 131.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8499,6 +9267,7 @@ value_0=131.00
 <object>
 type=1
 object_name=Horizontal Line 130.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8510,6 +9279,7 @@ value_0=130.50
 <object>
 type=1
 object_name=Horizontal Line 130.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8521,6 +9291,7 @@ value_0=130.00
 <object>
 type=1
 object_name=Horizontal Line 129.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8532,6 +9303,7 @@ value_0=129.50
 <object>
 type=1
 object_name=Horizontal Line 129.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8543,6 +9315,7 @@ value_0=129.00
 <object>
 type=1
 object_name=Horizontal Line 128.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8554,6 +9327,7 @@ value_0=128.50
 <object>
 type=1
 object_name=Horizontal Line 128.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8565,6 +9339,7 @@ value_0=128.00
 <object>
 type=1
 object_name=Horizontal Line 127.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8576,6 +9351,7 @@ value_0=127.50
 <object>
 type=1
 object_name=Horizontal Line 127.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8587,6 +9363,7 @@ value_0=127.00
 <object>
 type=1
 object_name=Horizontal Line 126.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8598,6 +9375,7 @@ value_0=126.50
 <object>
 type=1
 object_name=Horizontal Line 126.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8609,6 +9387,7 @@ value_0=126.00
 <object>
 type=1
 object_name=Horizontal Line 125.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8620,6 +9399,7 @@ value_0=125.50
 <object>
 type=1
 object_name=Horizontal Line 125.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8631,6 +9411,7 @@ value_0=125.00
 <object>
 type=1
 object_name=Horizontal Line 124.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8642,6 +9423,7 @@ value_0=124.50
 <object>
 type=1
 object_name=Horizontal Line 124.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8653,6 +9435,7 @@ value_0=124.00
 <object>
 type=1
 object_name=Horizontal Line 123.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8664,6 +9447,7 @@ value_0=123.50
 <object>
 type=1
 object_name=Horizontal Line 123.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8675,6 +9459,7 @@ value_0=123.00
 <object>
 type=1
 object_name=Horizontal Line 122.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8686,6 +9471,7 @@ value_0=122.50
 <object>
 type=1
 object_name=Horizontal Line 122.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8697,6 +9483,7 @@ value_0=122.00
 <object>
 type=1
 object_name=Horizontal Line 121.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8708,6 +9495,7 @@ value_0=121.50
 <object>
 type=1
 object_name=Horizontal Line 121.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8719,6 +9507,7 @@ value_0=121.00
 <object>
 type=1
 object_name=Horizontal Line 120.50
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323
@@ -8730,6 +9519,7 @@ value_0=120.50
 <object>
 type=1
 object_name=Horizontal Line 120.00
+selectable=0
 period_flags=0
 create_time=1273178494
 color=13882323

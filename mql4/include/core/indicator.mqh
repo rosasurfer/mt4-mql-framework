@@ -90,7 +90,7 @@ int init() {
    if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
       string sInput = InputsToStr();
       if (StringLen(sInput) > 0) {
-         sInput = sInput + NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
+         sInput = sInput +" __lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
          logDebug("init(13)  input: "+ sInput);
       }
    }
@@ -178,7 +178,7 @@ bool initContext() {
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate("R.", PipDigits);                   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
+   PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    Tick           = __ExecutionContext[EC.ticks       ];
    Tick.Time      = __ExecutionContext[EC.currTickTime];
@@ -638,7 +638,7 @@ int onInitParameters()
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  *
@@ -648,7 +648,7 @@ int onInitTimeframeChange()
 
 
 /**
- * Called after the current chart symbol has changed. There was no input dialog.
+ * Called after the chart symbol has changed. There was no input dialog.
  *
  * @return int - error status
  *

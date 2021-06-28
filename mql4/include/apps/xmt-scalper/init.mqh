@@ -4,7 +4,7 @@
  *
  * @return int - error status
  *
- * @see  mql4/experts/.attic/XMT-Scalper.mq4
+ * @see  mql4/experts/XMT-Scalper.mq4
  */
 int onInitUser() {
    // check for and validate a specified sequence id
@@ -38,7 +38,7 @@ int onInitParameters() {
 
 
 /**
- * Called after the current chart period has changed. There was no input dialog.
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
  * @return int - error status
  */
