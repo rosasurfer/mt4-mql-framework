@@ -4,6 +4,8 @@
  * @return int - error status
  */
 int onInit() {
+   hWndTerminal = GetTerminalMainWindow();
+
    if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()
    if (!RestoreRuntimeStatus()) return(last_error);                           // restores positions.absoluteProfits
    if (!InitTradeAccount())     return(last_error);                           // set used trade account
@@ -176,10 +178,10 @@ bool OrderTracker.Configure() {
    if (!mode.intern) return(true);
    track.orders = false;
 
-   string sValue = StrToLower(Track.Orders), values[];            // default: "on | off | auto*"
-   if (Explode(sValue, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
-      sValue = values[size-1];
+   string sValues[], sValue = StrToLower(Track.Orders);     // default: "on | off | auto*"
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
 
@@ -194,11 +196,16 @@ bool OrderTracker.Configure() {
    }
    else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
-   // Signal-Methoden einlesen
    if (track.orders) {
+      // read signaling method configuration
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
+
+      // register the indicator as order event listener
+      string name = "rsf::order-tracker::"+ StrToLower(Symbol());
+      int counter = Max(GetWindowIntegerA(hWndTerminal, name), 0) + 1;
+      SetWindowIntegerA(hWndTerminal, name, counter);
    }
    return(!catch("OrderTracker.Configure(2)"));
 }

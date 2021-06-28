@@ -35,7 +35,7 @@ int      ShiftedBars;                                       // used in offline c
 int      last_error;                                        // last error of the current core function call
 int      prev_error;                                        // last error of the previous core function call
 
-int      stack.OrderSelect[];                               // FIFO stack of selected orders (per MQL module)
+int      __orderStack[];                                    // FIFO stack of selected orders (per MQL module)
 
 
 // special constants

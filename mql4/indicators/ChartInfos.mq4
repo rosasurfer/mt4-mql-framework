@@ -45,10 +45,8 @@ extern string Signal.SMS     = "on | off | auto*";
 
 #property indicator_chart_window
 
-
 // chart infos
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
-
 
 // unitsize calculation
 bool   mm.done;                                                   // processing flag
@@ -82,7 +80,6 @@ string positions.config.comments[];                               // Kommentare 
 #define TERM_ADJUSTMENT                 7
 #define TERM_EQUITY                     8
 
-
 // internal + external position data
 bool   isPendings;                                                // ob Pending-Limite im Markt liegen (Orders oder Positions)
 bool   isPosition;                                                // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
@@ -93,7 +90,6 @@ int    positions.iData[][3];                                      // Positionsde
 double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool   positions.analyzed;
 bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
-
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
 #define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
@@ -143,7 +139,6 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 #define DC.stopLossAmount           5
 #define DC.stopLossPercent          6
 
-
 // Textlabel für die einzelnen Anzeigen
 string label.instrument     = "${__NAME__}.Instrument";
 string label.price          = "${__NAME__}.Price";
@@ -155,7 +150,6 @@ string label.orderCounter   = "${__NAME__}.OrderCounter";
 string label.tradeAccount   = "${__NAME__}.TradeAccount";
 string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 
-
 // Font-Settings der CustomPositions-Anzeige
 string positions.fontName          = "MS Sans Serif";
 int    positions.fontSize          = 8;
@@ -164,7 +158,6 @@ color  positions.fontColor.extern  = Red;
 color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
 color  positions.fontColor.history = C'128,128,0';
-
 
 // Farben für Orderanzeige
 #define CLR_PENDING_OPEN         DeepSkyBlue
@@ -176,13 +169,21 @@ color  positions.fontColor.history = C'128,128,0';
 #define CLR_CLOSED_SHORT         Red
 #define CLR_CLOSE                Orange
 
-
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
-
-// Ordertracking                                                  // entspricht dem Code im EventTracker
+// order tracking
 bool   track.orders;
+int    hWndTerminal;                                              // handle of the terminal main window (listener registration)
+
+// Order-Events
+int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
+int    orders.knownOrders.type  [];
+
+// Close-Typen für automatisch geschlossene Positionen
+#define CLOSE_TYPE_TP               1                             // TakeProfit
+#define CLOSE_TYPE_SL               2                             // StopLoss
+#define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
 
 // Konfiguration der Signalisierung
 bool   signal.sound;
@@ -194,15 +195,6 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-
-// Order-Events
-int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
-int    orders.knownOrders.type  [];
-
-// Close-Typen für automatisch geschlossene Positionen
-#define CLOSE_TYPE_TP               1                             // TakeProfit
-#define CLOSE_TYPE_SL               2                             // StopLoss
-#define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
 
 
 #include <apps/chartinfos/init.mqh>
@@ -234,8 +226,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      // ggf. Orders überwachen
-      if (mode.intern && track.orders) {
+      if (mode.intern && track.orders) {                                            // order tracking
          int failedOrders   [];    ArrayResize(failedOrders,    0);
          int openedPositions[];    ArrayResize(openedPositions, 0);
          int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
@@ -314,42 +305,48 @@ bool onCommand(string commands[]) {
  * @return bool - Erfolgsstatus
  */
 bool ToggleOpenOrders() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetOpenOrderDisplayStatus();
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
 
-   // Status ON: offene Orders anzeigen
-   if (status) {
+   // status ON: display open orders
+   if (showOrders) {
       int orders = ShowOpenOrders();
       if (orders == -1)
          return(false);
-      if (!orders) {                                                 // ohne offene Orders bleibt die Anzeige unverändert
-         status = false;
-         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
+      if (!orders) {                                  // without open orders state must be reset
+         showOrders = false;
+         PlaySoundEx("Plonk.wav");
       }
    }
 
-   // Status OFF: Chartobjekte offener Orders löschen
-   else {
+   // status OFF: hide open orders
+   if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
+
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name)==OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR    );
-               if (arrow == SYMBOL_ORDEROPEN)
-                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT)
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT) {
                      continue;
-               if (arrow == SYMBOL_ORDERCLOSE)
-                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS)
+                  }
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS) {
                      continue;
+                  }
+               }
                ObjectDelete(name);
             }
          }
       }
    }
 
-   // Anzeigestatus im Chart speichern
-   SetOpenOrderDisplayStatus(status);
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
 
    if (This.IsTesting())
       WindowRedraw();
@@ -360,7 +357,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - amount of displayed orders or EMPTY (-1) in case of an error
+ * @return int - number of displayed open orders or EMPTY (-1) in case of errors
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -388,10 +385,10 @@ int ShowOpenOrders() {
          comment    = OrderComment();
 
          if (OrderType() > OP_SELL) {
-            // pending order
+            // a pending order
             label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display order
+            // display pending order marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
@@ -401,10 +398,10 @@ int ShowOpenOrders() {
             }
          }
          else {
-            // open position
+            // an open position
             label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display TakeProfit
+            // display TakeProfit marker
             if (takeProfit != NULL) {
                sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
                label2 = StringConcatenate(label1, ",  ", sTP);
@@ -417,7 +414,7 @@ int ShowOpenOrders() {
             }
             else sTP = "";
 
-            // display StopLoss
+            // display StopLoss marker
             if (stopLoss != NULL) {
                sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
                label3 = StringConcatenate(label1, ",  ", sSL);
@@ -430,7 +427,7 @@ int ShowOpenOrders() {
             }
             else sSL = "";
 
-            // display order
+            // display open position marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
@@ -562,34 +559,38 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * @return bool - Erfolgsstatus
  */
 bool ToggleTradeHistory() {
-   // aktuellen Anzeigestatus aus Chart auslesen und umschalten: ON/OFF
-   bool status = !GetTradeHistoryDisplayStatus();
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
 
-   // neuer Status ON: Trade-History anzeigen
-   if (status) {
+   // status ON: display history
+   if (showHistory) {
       int trades = ShowTradeHistory();
       if (trades == -1)
          return(false);
-      if (!trades) {                                                 // ohne Trade-History bleiben Anzeige und Status unverändert
-         status = false;
-         PlaySoundEx("Plonk.wav");                                   // Plonk!!!
+      if (!trades) {                                  // without any history state must be reset
+         showHistory = false;
+         PlaySoundEx("Plonk.wav");
       }
    }
 
-   // neuer Status OFF: Chartobjekte der Trade-History löschen
-   else {
+   // status OFF: hide history
+   if (!showHistory) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
+
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
                color clr = ObjectGet(name, OBJPROP_COLOR    );
-               if (arrow == SYMBOL_ORDEROPEN)
-                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT)
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT) {
                      continue;
-               if (arrow == SYMBOL_ORDERCLOSE)
-                  if (clr!=CLR_CLOSE)
-                     continue;
+                  }
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSE) continue;
+               }
                ObjectDelete(name);
             }
             else if (ObjectType(name) == OBJ_TREND) {
@@ -599,8 +600,8 @@ bool ToggleTradeHistory() {
       }
    }
 
-   // neuen Anzeigestatus im Chart speichern
-   SetTradeHistoryDisplayStatus(status);
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
 
    if (This.IsTesting())
       WindowRedraw();
@@ -647,7 +648,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 /**
  * Display the currently available trade history.
  *
- * @return int - amount of displayed closed positions or EMPTY (-1) in case of an error
+ * @return int - number of displayed closed positions or EMPTY (-1) in case of errors
  */
 int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
@@ -1013,7 +1014,7 @@ bool CreateLabels() {
       ObjectDelete(label.orderCounter);
    if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 440);
+      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
       ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.orderCounter, " ", 1);
       RegisterObject(label.orderCounter);
@@ -1025,7 +1026,7 @@ bool CreateLabels() {
       ObjectDelete(label.externalAssets);
    if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 350);
+      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 330);
       ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
       ObjectSetText(label.externalAssets, " ", 1);
       RegisterObject(label.externalAssets);
@@ -1081,9 +1082,6 @@ bool CreateLabels() {
  * @return bool - Erfolgsstatus
  */
 bool UpdatePrice() {
-   static string priceFormat; if (!StringLen(priceFormat)) {
-      priceFormat = StringConcatenate(",,", PriceFormat);
-   }
    double price = Bid;
 
    if (!Bid) {                                           // fall-back to Close[0]: Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel, Offline-Chart)
@@ -1096,7 +1094,7 @@ bool UpdatePrice() {
          case PRICE_MEDIAN: price = NormalizeDouble((Bid + Ask)/2, Digits); break;
       }
    }
-   ObjectSetText(label.price, NumberToStr(price, priceFormat), 13, "Microsoft Sans Serif", Black);
+   ObjectSetText(label.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
@@ -1112,15 +1110,13 @@ bool UpdatePrice() {
  */
 bool UpdateSpread() {
    string sSpread = " ";
+   if (Bid > 0)                                          // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+      sSpread = PipToStr((Ask-Bid)/Pip);                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
 
-   if (Bid > 0) {                                                                   // handle symbol not (yet) subscribed: on start, account/template change, offline chart
-      if (Digits==2 && Bid>=500) sSpread = DoubleToStr((Ask-Bid)/Pip/100, 2);
-      else                       sSpread = DoubleToStr((Ask-Bid)/Pip, Digits & 1);  // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-   }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1139,14 +1135,14 @@ bool UpdateUnitSize() {
    string sUnitSize="", sPipRange="";
    if (mode.intern && mm.risk && mm.pipRange) {
       if (mm.pipRangeIsADR) {
-         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ DoubleToStr(MathRound(mm.pipRange/100), 2);
+         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ NumberToStr(MathRound(mm.pipRange/100), ",'.2");
          else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
       }
       else {
-         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ".2+");
-         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ".+") +" pip";
+         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ",'.2+");
+         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ",'.+") +" pip";
       }                           // R - risk / pip range                                    L - leverage                                       unitsize
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ", .+"), " lot");
+      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ",'.+"), " lot");
    }
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
@@ -1172,7 +1168,7 @@ bool UpdatePositions() {
    // (1) Gesamtpositionsanzeige unten rechts
    string sCurrentLeverage, sCurrentPosition;
    if      (!isPosition   ) sCurrentPosition = " ";
-   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ", .+"), " lot (hedged)");
+   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
       // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
       double currentLeverage;
@@ -1321,7 +1317,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                     sDistance = DoubleToStr(RoundFloor(positions.dData[i][I_PIP_DISTANCE], Digits-PipDigits), Digits-PipDigits) +" pip";
+                  else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
             }
 
@@ -1729,8 +1725,8 @@ bool CalculateUnitSize() {
    mm.equity           = 0;                                                   // currently used equity value incl. extern assets
 
    // calculate lot values and unitsizes
-   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE      );
-   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE     );
+   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
    double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
       int error = GetLastError();
       if (error || !Close[0] || !tickSize || !tickValue || !marginRequired) { // can happen on terminal start, on change of account or template, or in offline charts
@@ -1750,8 +1746,8 @@ bool CalculateUnitSize() {
       mm.equity = externalAssets;                                             // TODO: wrong, not updated as GetExternalAssets() caches the result
    }
 
-   mm.lotValue             = Close[0]/tickSize * tickValue;                   // value of 1 lot in account currency
-   mm.unleveragedLots      = mm.equity/mm.lotValue;                           // unleveraged unitsize
+   mm.lotValue        = Close[0]/tickSize * tickValue;                        // value of 1 lot in account currency
+   mm.unleveragedLots = mm.equity/mm.lotValue;                                // unleveraged unitsize
 
    if (mm.risk && mm.pipRange) {
       double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
@@ -3153,14 +3149,14 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       return(true);
 
    if (closedProfit == EMPTY_VALUE)
-      closedProfit = 0;                                                       // 0.00 ist gültiger P/L
+      closedProfit = 0;                                                    // 0.00 ist gültiger P/L
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    if (customEquity != NULL) equity  = customEquity;
    else {                    equity  = externalAssets;
-      if (mode.intern)       equity += (AccountEquity()-AccountCredit());   // TODO: tatsächlichen Wert von openEquity ermitteln
+      if (mode.intern)       equity += (AccountEquity()-AccountCredit());  // TODO: tatsächlichen Wert von openEquity ermitteln
    }
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
@@ -3952,146 +3948,196 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
 
 
 /**
- * Handler für OrderFail-Events.
+ * Handle a PositionOpen event.
  *
- * @param  int tickets[] - Tickets der fehlgeschlagenen Orders (immer Pending-Orders)
+ * @param  int tickets[] - ticket ids of the opened positions
  *
- * @return bool - Erfolgsstatus
- */
-bool onOrderFail(int tickets[]) {
-   if (!track.orders)
-      return(true);
-
-   int error = 0;
-   int positions = ArraySize(tickets);
-
-   for (int i=0; i < positions; i++) {
-      if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
-
-      string type        = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
-      string lots        = DoubleToStr(OrderLots(), 2);
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\"";
-
-      logWarn("onOrderFail(2)  "+ message);
-
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
-   }
-
-   // Sound für alle Orders gemeinsam abspielen
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.orderFailed);
-
-   return(!error);
-}
-
-
-/**
- * Handler für PositionOpen-Events.
- *
- * @param  int tickets[] - Tickets der neu geöffneten Positionen
- *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
-   if (!track.orders)
-      return(true);
+   bool isLogInfo=IsLogInfo(), eventLogged=false;
+   int size = ArraySize(tickets);
+   if (!size || !isLogInfo) return(true);
 
-   int error = 0;
-   int positions = ArraySize(tickets);
-
-   for (int i=0; i < positions; i++) {
+   OrderPush();
+   for (int i=0; i < size; i++) {
       if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
 
-      string type        = OperationTypeDescription(OrderType());
-      string lots        = DoubleToStr(OrderLots(), 2);
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: #"+ tickets[i] +" "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price;
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
-      if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
+      if (isMySymbol || !isOtherListener) {
+         string event = "rsf::PositionOpen::#"+ OrderTicket();
 
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+         if (!IsOrderEventLogged(event)) {
+            string sType       = OperationTypeDescription(OrderType());
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
+            string message     = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            logInfo("onPositionOpen(2)  "+ message);
+            eventLogged = SetOrderEventLogged(event, true);
+         }
+      }
    }
+   OrderPop();
 
-   // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionOpened);
-
-   return(!error);
+   if (eventLogged && signal.sound)
+      return(PlaySoundEx(signal.sound.positionOpened));
+   return(!catch("onPositionOpen(3)"));
 }
 
 
 /**
- * Handler für PositionClose-Events.
+ * Handle a PositionClose event.
  *
- * @param  int tickets[] - Tickets der geschlossenen Positionen
+ * @param  int tickets[] - ticket ids of the closed positions
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool onPositionClose(int tickets[][]) {
-   if (!track.orders)
-      return(true);
+   bool isLogInfo=IsLogInfo(), eventLogged=false;
+   int size = ArraySize(tickets);
+   if (!size || !isLogInfo) return(true);
 
-   string closeTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   OrderPush();
 
-   int error = 0;
-   int positions = ArrayRange(tickets, 0);
+   for (int i=0; i < size; i++) {
+      if (!SelectTicket(tickets[i][0], "onPositionClose(1)")) continue;
 
-   for (int i=0; i < positions; i++) {
-      int ticket    = tickets[i][0];
-      int closeType = tickets[i][1];
-      if (!SelectTicket(ticket, "onPositionClose(1)")) continue;
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
-      string type        = OperationTypeDescription(OrderType());
-      string lots        = DoubleToStr(OrderLots(), 2);
-      int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
-      int    pipDigits   = digits & (~1);
-      string priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
-      string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
-      string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: #"+ ticket +" "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType];
+      if (isMySymbol || !isOtherListener) {
+         string event = "rsf::PositionClose::#"+ OrderTicket();
 
-      if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
-
-      // TODO: handle signals via log mechanism
-      //if (signal.mail) error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);
-      //if (signal.sms)  error |= !SendSMS(signal.sms.receiver, message);
+         if (!IsOrderEventLogged(event)) {
+            string sType       = OperationTypeDescription(OrderType());
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
+            string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
+            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
+            string message     = "position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[tickets[i][1]];
+            logInfo("onPositionClose(2)  "+ message);
+            eventLogged = SetOrderEventLogged(event, true);
+         }
+      }
    }
+   OrderPop();
 
-   // Sound für alle Positionen gemeinsam abspielen
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.positionClosed);
+   if (eventLogged && signal.sound)
+      return(PlaySoundEx(signal.sound.positionClosed));
+   return(!catch("onPositionClose(3)"));
+}
 
-   return(!error);
+
+/**
+ * Handle an OrderFail event.
+ *
+ * @param  int tickets[] - ticket ids of the failed pending orders
+ *
+ * @return bool - success status
+ */
+bool onOrderFail(int tickets[]) {
+   int size = ArraySize(tickets);
+   if (!size) return(true);
+
+   bool eventLogged = false;
+   OrderPush();
+
+   for (int i=0; i < size; i++) {
+      if (!SelectTicket(tickets[i], "onOrderFail(1)")) return(false);
+
+      bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
+      if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
+
+      if (isMySymbol || !isOtherListener) {
+         string event = "rsf::OrderFail::#"+ OrderTicket();
+
+         if (!IsOrderEventLogged(event)) {
+            string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
+            string sLots       = NumberToStr(OrderLots(), ".+");
+            int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
+            int    pipDigits   = digits & (~1);
+            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
+            string sError      = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", " (unknown error)");
+            string message     = "order failed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + sError;
+            logWarn("onOrderFail(2)  "+ message);
+            eventLogged = SetOrderEventLogged(event, true);
+         }
+      }
+   }
+   OrderPop();
+
+   if (eventLogged && signal.sound)
+      return(PlaySoundEx(signal.sound.orderFailed));
+   return(!catch("onOrderFail(3)"));
+}
+
+
+/**
+ * Whether there is a registered order event listener for the specified symbol.
+ *
+ * @param  string symbol
+ *
+ * @return bool
+ */
+bool IsOrderEventListener(string symbol) {
+   string name = "rsf::order-tracker::"+ StrToLower(symbol);
+   return(GetWindowIntegerA(hWndTerminal, name) > 0);
+}
+
+
+/**
+ * Whether the specified order event was already logged.
+ *
+ * @param  string event - event identifier
+ *
+ * @return bool
+ */
+bool IsOrderEventLogged(string event) {
+   return(GetWindowIntegerA(hWndTerminal, event) > 0);
+}
+
+
+/**
+ * Set the logging status of the specified order event.
+ *
+ * @param  string event  - event identifier
+ * @param  bool   status - logging status
+ *
+ * @return bool - success status
+ */
+bool SetOrderEventLogged(string event, bool status) {
+   status = status!=0;
+   return(SetWindowIntegerA(hWndTerminal, event, status) != 0);
 }
 
 
 /**
  * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
  *
- * @return double - ADR or NULL in case of errors
+ * @return double - ADR in absolute terms or NULL in case of errors
  */
 double iADR() {
-   static double ranges[], adr;
-
-   if (!ArraySize(ranges)) {                                // TODO: invalidate static cache on BarOpen(D1)
+   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+   if (!adr) {
+      double ranges[];
       int maPeriods = 20;
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
-
-      if (IsError(catch("iADR(1)")))
-         return(NULL);
    }
    return(adr);
 }

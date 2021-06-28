@@ -17,7 +17,7 @@ int init() {
    PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
    Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat   = StringConcatenate(".", PipDigits);                    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");   // TODO: lost in deinit()
+   PipPriceFormat   = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");   // TODO: lost in deinit()
    PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);                                                     // TODO: lost in deinit()
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
@@ -33,7 +33,7 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
       if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
-         ArrayResize(stack.OrderSelect, 0);                          // in stdfunctions global definierte Variable
+         ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
          onLibraryInit();
       }
    }

@@ -4725,7 +4725,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    double pip            = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
    double stopDistance   = MarketInfo(symbol, MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(symbol, MODE_FREEZELEVEL)/pipPoints;
-   string priceFormat    = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string priceFormat    = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
    int error = GetLastError();
    if (IsError(error))                                         return(!Order.HandleError("OrderSendEx(3)  symbol="+ symbol, error, oeFlags, oe));
    // type
@@ -4917,7 +4917,7 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
@@ -4961,7 +4961,7 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    string sType    = OperationTypeDescription(oe.Type(oe));
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
@@ -4995,7 +4995,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    string sType    = OperationTypeDescription(oe.Type(oe));
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
@@ -5060,7 +5060,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    int    pipPoints      = MathRound(MathPow(10, digits & 1));
    double stopDistance   = MarketInfo(OrderSymbol(), MODE_STOPLEVEL  )/pipPoints;
    double freezeDistance = MarketInfo(OrderSymbol(), MODE_FREEZELEVEL)/pipPoints;
-   string priceFormat    = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat    = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    int error = GetLastError();
    if (IsError(error))                                         return(_false(Order.HandleError("OrderModifyEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderModifyEx(8)")));
    // openPrice
@@ -5203,7 +5203,7 @@ string OrderModifyEx.SuccessMsg(int oe[], double prevOpenPrice, double prevStopL
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string comment     = oe.Comment(oe);
@@ -5238,7 +5238,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots     (oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -5352,7 +5352,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits), pips=pip;
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
 
    int    time1, firstTime1 = GetTickCount(), requotes, tempErrors, remainder;
    double price, firstPrice, bid, ask;
@@ -5497,7 +5497,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
    double pip         = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -5538,7 +5538,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
@@ -6593,7 +6593,7 @@ string OrderDeleteEx.SuccessMsg(int oe[]) {
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string sComment    = oe.Comment(oe);
@@ -6619,7 +6619,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    // error while trying to delete #1 Stop Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask[, stop distance=2.1 pip]) after 0.345 s
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
-   string priceFormat = "."+ pipDigits + ifString(digits==pipDigits, "", "'");
+   string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    string sType       = OperationTypeDescription(oe.Type(oe));
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);

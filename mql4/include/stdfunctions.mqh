@@ -523,7 +523,6 @@ bool IsTicket(int ticket) {
 
    GetLastError();
    if (!OrderPop("IsTicket(2)")) return(false);
-
    return(result);
 }
 
@@ -588,7 +587,7 @@ string OrderLogMessage(int ticket) {
 
    int      digits      = MarketInfo(symbol, MODE_DIGITS);
    int      pipDigits   = digits & (~1);
-   string   priceFormat = StringConcatenate(".", pipDigits, ifString(digits==pipDigits, "", "'"));
+   string   priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
    string   message     = StringConcatenate("#", ticket, " ", OrderTypeDescription(type), " ", NumberToStr(lots, ".1+"), " ", symbol, " at ", NumberToStr(openPrice, priceFormat), " (", TimeToStr(openTime, TIME_FULL), "), sl=", ifString(stopLoss!=0, NumberToStr(stopLoss, priceFormat), "0"), ", tp=", ifString(takeProfit!=0, NumberToStr(takeProfit, priceFormat), "0"), ",", ifString(closeTime, " closed at "+ NumberToStr(closePrice, priceFormat) +" ("+ TimeToStr(closeTime, TIME_FULL) +"),", ""), " commission=", DoubleToStr(commission, 2), ", swap=", DoubleToStr(swap, 2), ", profit=", DoubleToStr(profit, 2), ", magicNumber=", magic, ", comment=", DoubleQuoteStr(comment));
 
    if (OrderPop("OrderLogMessage(2)"))
@@ -598,34 +597,33 @@ string OrderLogMessage(int ticket) {
 
 
 /**
- * Schiebt den aktuellen Orderkontext auf den Kontextstack (fügt ihn ans Ende an).
+ * Append the currently selected order ticket to the order stack.
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  string location [optional] - error identifier (default: none)
  *
  * @return bool - success status
  */
-bool OrderPush(string location) {
+bool OrderPush(string location = "") {
    int ticket = OrderTicket();
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
       return(!catch(location +"->OrderPush(1)", error));
 
-   ArrayPushInt(stack.OrderSelect, ticket);
+   ArrayPushInt(__orderStack, ticket);
    return(true);
 }
 
 
 /**
- * Entfernt den letzten Orderkontext vom Ende des Kontextstacks und restauriert ihn.
+ * Remove the last order ticket from the order stack and restore (i.e. select) it.
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  string location [optional] - error identifier (default: none)
  *
  * @return bool - success status
  */
-bool OrderPop(string location) {
-   int ticket = ArrayPopInt(stack.OrderSelect);
-
+bool OrderPop(string location = "") {
+   int ticket = ArrayPopInt(__orderStack);
    if (ticket > 0)
       return(SelectTicket(ticket, location +"->OrderPop(1)"));
 
@@ -634,7 +632,6 @@ bool OrderPop(string location) {
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
       return(!catch(location +"->OrderPop(2)", error));
-
    return(true);
 }
 
@@ -1955,7 +1952,7 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
       }
       if (boundaryOnOverflow) return(INT_MAX);
    }
-   else {                                 // operands have different sign: negative result
+   else {                                 // operands have different signs: negative result
       if (result < 0) {
          if (result/a == b) return(result);
       }
@@ -1967,11 +1964,27 @@ int Mul(int a, int b, bool boundaryOnOverflow = false) {
 
 
 /**
+ * Divide two integers and prevent a division by 0 (zero).
+ *
+ * @param  int a                 - divident
+ * @param  int b                 - divisor
+ * @param  int onZero [optional] - value to return if the divisor is zero (default: 0)
+ *
+ * @return int
+ */
+int Div(int a, int b, int onZero = 0) {
+   if (!b)
+      return(onZero);
+   return(a/b);
+}
+
+
+/**
  * Divide two doubles and prevent a division by 0 (zero).
  *
  * @param  double a                 - divident
  * @param  double b                 - divisor
- * @param  double onZero [optional] - value to return if the the divisor is zero (default: 0)
+ * @param  double onZero [optional] - value to return if the divisor is zero (default: 0)
  *
  * @return double
  */
@@ -1983,34 +1996,18 @@ double MathDiv(double a, double b, double onZero = 0) {
 
 
 /**
- * Gibt den Divisionsrest zweier Doubles zurück (fehlerbereinigter Ersatz für MathMod()).
+ * Return the division remainder of two double values. Replacement for the flawed builtin function MathMod().
  *
  * @param  double a
  * @param  double b
  *
- * @return double - Divisionsrest
+ * @return double - remainder
  */
 double MathModFix(double a, double b) {
    double remainder = MathMod(a, b);
-   if      (EQ(remainder, 0)) remainder = 0;                         // 0 normalisieren
+   if      (EQ(remainder, 0)) remainder = 0;    // normalize 0
    else if (EQ(remainder, b)) remainder = 0;
    return(remainder);
-}
-
-
-/**
- * Integer-Version von MathDiv(). Dividiert zwei Integers und fängt dabei eine Division durch 0 ab.
- *
- * @param  int a      - Divident
- * @param  int b      - Divisor
- * @param  int onZero - Ergebnis für den Fall, daß der Divisor 0 ist (default: 0)
- *
- * @return int
- */
-int Div(int a, int b, int onZero=0) {
-   if (!b)
-      return(onZero);
-   return(a/b);
 }
 
 
@@ -5101,14 +5098,14 @@ string TradeCommandToStr(int cmd) {
  *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
  *    .d'     = all left and number of right digits plus 1 additional subpip digit,
  *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d in mask: all left and minimum number of right digits,
+ *    .d+     = + anywhere right of .d: all left and minimum number of right digits,
  *              e.g. NumberToStr(123.456, ".2+") => "123.456"
- *  +n.d      = + anywhere left of n. in mask: plus sign for positive values
- *    R       = anywhere in mask: round result at the last displayed digit,
+ *  +n.d      = + anywhere left of n.: plus sign for positive values
+ *    R       = anywhere: round result at the last displayed digit,
  *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
  *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
  *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
- *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ", 6.2") => "123 456.78"
+ *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
  *
  * @param  double value
  * @param  string mask
@@ -5242,9 +5239,33 @@ string NumberToStr(double value, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   //debug("NumberToStr(double="+ DoubleToStr(value, 8) +", mask="+ mask +")    nLeft="+ nLeft +"    dLeft="+ dLeft +"    nRight="+ nRight +"    nSubpip="+ nSubpip +"    outStr=\""+ outStr +"\"");
    catch("NumberToStr(1)");
    return(outStr);
+}
+
+
+/**
+ * Format a value representing a pip range of the current symbol. Depending on the symbol and the size of the value the
+ * resulting string is in money or subpip notation.
+ *
+ * @param  double value                   - price range in pip
+ * @param  bool   appendSuffix [optional] - whether to append the suffix " pip" to the formatted value (default: no)
+ *
+ * @return string
+ */
+string PipToStr(double value, bool appendSuffix = false) {
+   string sValue = value;
+   if (StringGetChar(sValue, 3) == '#')                        // "-1.#IND0000" => NaN
+      return(sValue);                                          // "-1.#INF0000" => Infinite
+
+   if (Digits==2 && Close[0]>=500) {
+      sValue = NumberToStr(value/100, ",'R.2");                // 123 pip => 1.23
+   }
+   else {
+      sValue = NumberToStr(value, ",'R."+ (Digits & 1));       // 123 pip
+      if (appendSuffix) sValue = StringConcatenate(sValue, " pip");
+   }
+   return(sValue);
 }
 
 
@@ -6065,7 +6086,7 @@ bool IsSuperContext() {
  *                                                   MODE_DEFAULT - normalize according to standard rounding rules
  *                                                   MODE_CEIL    - normalize up to the next largest absolute value
  *
- * @return double - rounded lot value or EMPTY_VALUE in case of errors
+ * @return double - rounded lot value or EMPTY_VALUE (INT_MAX) in case of errors
  */
 double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    if (!StringLen(symbol)) symbol = Symbol();
@@ -6929,6 +6950,7 @@ void __DummyCalls() {
    PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
+   PipToStr(NULL);
    PipValue();
    PipValueEx(NULL);
    PlaySoundEx(NULL);

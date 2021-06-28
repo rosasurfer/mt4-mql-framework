@@ -7,8 +7,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Volatility.UsedLeverage =  1;     // unleveraged => 1:1
-extern int Lots.TargetPerformance  = 10;     // in percent
+extern int Volatility.UsedLeverage    =  1;     // 1: unleveraged => 1:1
+extern int Unitsize.TargetPerformance = 10;     // in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,9 +60,9 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
 int onInit() {
    // validate inputs
    // Volatility.UsedLeverage
-   if (Volatility.UsedLeverage < 1) return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
-   // Lots.TargetPerformance
-   if (Lots.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Lots.TargetPerformance: "+ Lots.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (Volatility.UsedLeverage < 1)     return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
+   // Unitsize.TargetPerformance
+   if (Unitsize.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Unitsize.TargetPerformance: "+ Unitsize.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
    SetIndexLabel(0, NULL);          // "Data" window
    CreateChartObjects();
@@ -164,30 +164,30 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", Round(adr/Pips) +" pip"),                                                                                      fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true)),                                                                                      fgFontSize, fgFontName, fgFontColor);
    double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
-   double lots            = CalculateLots(Lots.TargetPerformance);
-   double leverage        = CalculateLeverage(lots);                        ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!lots,     "(not enough money)", NumberToStr(Lots.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(lots, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
+   double unitsize        = CalculateLots(Unitsize.TargetPerformance);
+   double leverage        = CalculateLeverage(unitsize);                    ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!unitsize, "(not enough money)", NumberToStr(Unitsize.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(unitsize, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
 
-   int    lotSize         = Round(MarketInfo(symbol, MODE_LOTSIZE));        ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + ifString(!lotSize,  "", NumberToStr(lotSize, ", .+") +" unit"+ Pluralize(lotSize)), fgFontSize, fgFontName, fgFontColor);
-   double minLot          = MarketInfo(symbol, MODE_MINLOT );               ObjectSetText(labels[I_MINLOT        ], "Min lot:   "      + ifString(!minLot,   "", NumberToStr(minLot,  ", .+")),                              fgFontSize, fgFontName, fgFontColor);
-   double lotStep         = MarketInfo(symbol, MODE_LOTSTEP);               ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + ifString(!lotStep,  "", NumberToStr(lotStep, ", .+")),                              fgFontSize, fgFontName, fgFontColor);
-   double maxLot          = MarketInfo(symbol, MODE_MAXLOT );               ObjectSetText(labels[I_MAXLOT        ], "Max lot:  "       + ifString(!maxLot,   "", NumberToStr(maxLot,  ", .+")),                              fgFontSize, fgFontName, fgFontColor);
+   int    lotSize         = Round(MarketInfo(symbol, MODE_LOTSIZE));        ObjectSetText(labels[I_LOTSIZE       ], "Lot size:  "      + ifString(!lotSize,  "", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)), fgFontSize, fgFontName, fgFontColor);
+   double minLot          = MarketInfo(symbol, MODE_MINLOT );               ObjectSetText(labels[I_MINLOT        ], "Min lot:   "      + ifString(!minLot,   "", NumberToStr(minLot,  ",'.+")),                              fgFontSize, fgFontName, fgFontColor);
+   double lotStep         = MarketInfo(symbol, MODE_LOTSTEP);               ObjectSetText(labels[I_LOTSTEP       ], "Lot step: "       + ifString(!lotStep,  "", NumberToStr(lotStep, ",'.+")),                              fgFontSize, fgFontName, fgFontColor);
+   double maxLot          = MarketInfo(symbol, MODE_MAXLOT );               ObjectSetText(labels[I_MAXLOT        ], "Max lot:  "       + ifString(!maxLot,   "", NumberToStr(maxLot,  ",'.+")),                              fgFontSize, fgFontName, fgFontColor);
 
    double marginRequired  = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = NULL;
    double lotValue        = MathDiv(Close[0], tickSize) * tickValue;
-          leverage        = MathDiv(lotValue, marginRequired);              ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(!marginRequired, "", NumberToStr(marginRequired, ", .2+R") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
+          leverage        = MathDiv(lotValue, marginRequired);              ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(!marginRequired, "", NumberToStr(marginRequired, ",'.2+R") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
    double marginHedged    = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged    = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                  fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
 
-   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + DoubleToStr(spread, Digits & 1) +" pip"+ ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"), fgFontSize, fgFontName, fgFontColor);
+   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + PipToStr(spread, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"), fgFontSize, fgFontName, fgFontColor);
    double commission      = GetCommission();
    double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
-                                                                            ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
-   double totalFees       = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(IsEmpty(commission), "...", ""),                                                                                                 fgFontSize, fgFontName, fgFontColor);
+                                                                            ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ",'.1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
+   double totalFees       = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(IsEmpty(commission), "...", ""),                                                                                                   fgFontSize, fgFontName, fgFontColor);
 
    int    swapMode        = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong        = MarketInfo(symbol, MODE_SWAPLONG );
@@ -247,17 +247,17 @@ int UpdateInstrumentInfos() {
 /**
  * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
  *
- * @return double
+ * @return double - ADR in absolute terms or NULL in case of errors
  */
 double iADR() {
-   static double ranges[], adr;
-
-   if (!ArraySize(ranges)) {
+   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+   if (!adr) {
+      double ranges[];
       int maPeriods = 20;
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe and real ADR
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
       }
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
    }
@@ -266,26 +266,19 @@ double iADR() {
 
 
 /**
- * Calculate and return the performance of a position per ADR using the specified leverage. Allows to compare the effective
- * volatility of different instruments.
+ * Calculate and return the performance volatility of a position per ADR using the specified leverage. Allows to compare the
+ * effective volatility of different instruments.
  *
  * @param  double leverage - used leverage
  *
- * @return double - performance in percent of the current account size or NULL in case of errors
+ * @return double - performance volatility (i.e. equity change) in percent or NULL in case of errors
  */
 double CalculateVola(double leverage) {
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double pointValue = MathDiv(tickValue, tickSize/Point);
-   double pipValue   = PipPoints * pointValue;                          // pip value of 1 lot in account currency
-
-   double equity          = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double lotValue        = MathDiv(Close[0], tickSize) * tickValue;    // value of 1 lot in account currency
-   double unleveragedLots = MathDiv(equity, lotValue);                  // unleveraged lots for the account size
-
-   double gain = unleveragedLots * leverage * pipValue * iADR()/Pip;
-   double vola = MathDiv(gain, equity) * 100;
-   return(vola);
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double lotValue  = MathDiv(Close[0], tickSize) * tickValue;          // value of 1 lot in account currency
+   double vola      = MathDiv(leverage, lotValue) * tickValue * MathDiv(iADR(), tickSize);
+   return(vola * 100);
 }
 
 
@@ -297,15 +290,12 @@ double CalculateVola(double leverage) {
  * @return double - lots or NULL in case of errors
  */
 double CalculateLots(double percent) {
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double pointValue = MathDiv(tickValue, tickSize/Point);
-   double pipValue   = PipPoints * pointValue;                          // pip value in account currency
-
-   double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double amount = percent/100 * equity;                                // equity amount in account currency
-   double adr    = iADR()/Pip;                                          // ADR in pip
-   double lots   = MathDiv(MathDiv(amount, adr), pipValue);             // lots for amount and ADR
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   double equity    = AccountEquity() - AccountCredit() + GetExternalAssets();
+   double amount    = percent/100 * equity;                             // equity amount in account currency
+   double adr       = MathDiv(iADR(), tickSize);                        // ADR in ticks
+   double lots      = MathDiv(MathDiv(amount, adr), tickValue);         // lots for amount and ADR
 
    // normalize the result
    if (lots > 0) {                                                                              // max. 6.7% per step
