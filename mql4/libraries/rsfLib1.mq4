@@ -4636,24 +4636,24 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
       oeFlags |= F_ERS_EXECUTION_STOPPING;
 
    // filter the flagged errors and only log them
-   if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(logDebug(message, error));
-   if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(logDebug(message, error));
-   if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(logDebug(message, error));
-   if (error==ERR_INVALID_PARAMETER        && oeFlags & F_ERR_INVALID_PARAMETER       ) return(logDebug(message, error));
-   if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(logDebug(message, error));
-   if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(logDebug(message, error));
-   if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(logDebug(message, error));
-   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(logDebug(message, error));
-   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn (message, error));   // LOG_WARN
-   if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(logDebug(message, error));
-   if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(logDebug(message, error));
-   if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(logDebug(message, error));
-   if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(logDebug(message, error));
-   if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(logDebug(message, error));
-   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn (message, error));   // LOG_WARN
-   if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(logDebug(message, error));
-   if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(logDebug(message, error));
-   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn (message, error));   // LOG_WARN
+   if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
+   if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
+   if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
+   if (error==ERR_INVALID_PARAMETER        && oeFlags & F_ERR_INVALID_PARAMETER       ) return(logInfo(message, error));
+   if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(logInfo(message, error));
+   if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
+   if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
+   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(logWarn(message, error));   // LOG_WARN
+   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));   // LOG_WARN
+   if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(logInfo(message, error));
+   if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
+   if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
+   if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
+   if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
+   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));   // LOG_WARN
+   if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
+   if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(logInfo(message, error));
+   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));   // LOG_WARN
 
    // trigger a fatal error for everything else
    return(catch(message, error));
@@ -4757,7 +4757,6 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (expires && expires <= TimeCurrentEx("OrderSendEx(14)")) return(!Order.HandleError("OrderSendEx(15)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
-
 
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
@@ -6085,13 +6084,13 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
 
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!SelectTicket(tickets[i], "OrdersCloseSameSymbol(7)")) return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersCloseSameSymbol(8)")));
-      if (OrderSymbol() != symbol)                               return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
+      if (!SelectTicket(tickets[i], "OrdersCloseSameSymbol(7)"))      return(_false(oes.setError(oes, -1, ERR_INVALID_TICKET), OrderPop("OrdersCloseSameSymbol(8)")));
+      if (OrderSymbol() != symbol)                                    return(_false(Order.HandleError("OrdersCloseSameSymbol(9)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(10)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
-      if (OrderCloseTime() != 0)                                 return(_false(Order.HandleError("OrdersCloseSameSymbol(11)  ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(12)")));
-      if (OrderType() > OP_SELL)                                 return(_false(Order.HandleError("OrdersCloseSameSymbol(13)  ticket #"+ tickets[i] +" is not an open position: "+ OperationTypeDescription(OrderType()), ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(14)")));
+      if (OrderCloseTime() != 0)                                      return(_false(Order.HandleError("OrdersCloseSameSymbol(11)  ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(12)")));
+      if (OrderType() > OP_SELL)                                      return(_false(Order.HandleError("OrdersCloseSameSymbol(13)  ticket #"+ tickets[i] +" is not an open position: "+ OperationTypeDescription(OrderType()), ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseSameSymbol(14)")));
       oes.setType      (oes, i, OrderType()      );
       oes.setLots      (oes, i, OrderLots()      );
       oes.setOpenTime  (oes, i, OrderOpenTime()  );
@@ -6205,17 +6204,17 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
 int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
-   if (ArrayDimension(oes) != 2)                            return(!catch("OrdersHedge(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)       return(!catch("OrdersHedge(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(oes) != 2)                                    return(!catch("OrdersHedge(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)               return(!catch("OrdersHedge(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
    // tickets[]
-   if (!sizeOfTickets)                                      return(!Order.HandleError("OrdersHedge(3)  invalid parameter tickets (size=0)", ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (!sizeOfTickets)                                              return(!Order.HandleError("OrdersHedge(3)  invalid parameter tickets (size=0)", ERR_INVALID_PARAMETER, oeFlags, oes));
    // slippage
-   if (slippage < 0)                                        return(!Order.HandleError("OrdersHedge(4)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (slippage < 0)                                                return(!Order.HandleError("OrdersHedge(4)  illegal parameter slippage: "+ slippage, ERR_INVALID_PARAMETER, oeFlags, oes));
 
    // initialize oes[]
-   if (!SelectTicket(tickets[0], "OrdersHedge(5)", O_PUSH)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
+   if (!SelectTicket(tickets[0], "OrdersHedge(5)", O_PUSH))         return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(OrderSymbol(), MODE_DIGITS);
    double totalLots, lots[]; ArrayResize(lots, 0);
@@ -6365,17 +6364,17 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
 bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
-   if (ArrayDimension(oes) != 2)                                 return(!catch("OrdersCloseHedged(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)            return(!catch("OrdersCloseHedged(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(oes) != 2)                                          return(!catch("OrdersCloseHedged(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)                     return(!catch("OrdersCloseHedged(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
    // tickets[]
-   if (sizeOfTickets < 2)                                        return(!Order.HandleError("OrdersCloseHedged(3)  invalid parameter tickets (size="+ sizeOfTickets +")", ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (sizeOfTickets < 2)                                                 return(!Order.HandleError("OrdersCloseHedged(3)  invalid parameter tickets (size="+ sizeOfTickets +")", ERR_INVALID_PARAMETER, oeFlags, oes));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(!Order.HandleError("OrdersCloseHedged(4)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')            return(!Order.HandleError("OrdersCloseHedged(4)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oes));
 
    // initialize oes[]
-   if (!SelectTicket(tickets[0], "OrdersCloseHedged(5)", O_PUSH)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
+   if (!SelectTicket(tickets[0], "OrdersCloseHedged(5)", O_PUSH))         return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
    string symbol = OrderSymbol();
    int    digits = MarketInfo(symbol, MODE_DIGITS);
    double bid    = MarketInfo(symbol, MODE_BID);
@@ -6384,14 +6383,14 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
 
    for (int i=0; i < sizeOfTickets; i++) {
       if (!SelectTicket(tickets[i], "OrdersCloseHedged(6)", NULL, O_POP)) return(!oes.setError(oes, -1, ERR_INVALID_TICKET));
-      if (OrderSymbol() != symbol)                                       return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
+      if (OrderSymbol() != symbol)                                        return(_false(Order.HandleError("OrdersCloseHedged(7)  tickets belong to multiple symbols", ERR_MIXED_SYMBOLS, oeFlags, oes), OrderPop("OrdersCloseHedged(8)")));
       oes.setTicket    (oes, i, tickets[i]       );
       oes.setSymbol    (oes, i, symbol           );
       oes.setDigits    (oes, i, digits           );
       oes.setBid       (oes, i, bid              );
       oes.setAsk       (oes, i, ask              );
-      if (OrderCloseTime() != 0)                                         return(_false(Order.HandleError("OrdersCloseHedged(9)  ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseHedged(10)")));
-      if (OrderType() > OP_SELL)                                         return(_false(Order.HandleError("OrdersCloseHedged(11)  ticket #"+ tickets[i] +" is not an open position: "+ OperationTypeDescription(OrderType()), ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseHedged(12)")));
+      if (OrderCloseTime() != 0)                                          return(_false(Order.HandleError("OrdersCloseHedged(9)  ticket #"+ tickets[i] +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseHedged(10)")));
+      if (OrderType() > OP_SELL)                                          return(_false(Order.HandleError("OrdersCloseHedged(11)  ticket #"+ tickets[i] +" is not an open position: "+ OperationTypeDescription(OrderType()), ERR_INVALID_TRADE_PARAMETERS, oeFlags, oes), OrderPop("OrdersCloseHedged(12)")));
       oes.setType      (oes, i, OrderType()      );
       oes.setLots      (oes, i, OrderLots()      );
       lots += ifInt(OrderType()==OP_BUY, +1, -1) * OrderLots();
