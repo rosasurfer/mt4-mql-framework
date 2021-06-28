@@ -195,14 +195,15 @@ bool     test.reduceStatusWrites = true;           // whether to minimize status
  */
 int onTick() {
    int signal;
+   if (__isChart) HandleCommands();                            // process chart commands
 
    if (sequence.status == STATUS_WAITING) {
       if (IsStartSignal(signal)) StartSequence(signal);
    }
-   else if (sequence.status == STATUS_PROGRESSING) {        // manage a running sequence
-      bool gridChanged=false, gridError=false;              // whether the current gridlevel changed or a grid error occurred
+   else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
+      bool gridChanged=false, gridError=false;                 // whether the current gridlevel changed or a grid error occurred
 
-      if (UpdateStatus(gridChanged, gridError)) {           // check pending orders and open positions
+      if (UpdateStatus(gridChanged, gridError)) {              // check pending orders and open positions
          if      (gridError)            StopSequence(NULL);
          else if (IsStopSignal(signal)) StopSequence(signal);
          else if (gridChanged)          UpdatePendingOrders(true);
@@ -215,6 +216,58 @@ int onTick() {
 
    // dummy call
    MakeScreenshot();
+}
+
+
+/**
+ * Whether a chart command was sent to the EA. If the case, the command is retrieved and returned.
+ *
+ * @param  string commands[] - array to store received commands
+ *
+ * @return bool
+ */
+bool EventListener_ChartCommand(string &commands[]) {
+   if (!__isChart) return(false);
+
+   static string label, mutex; if (!StringLen(label)) {
+      label = ProgramName() +".command";
+      mutex = "mutex."+ label;
+   }
+
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
+   if (ObjectFind(label) == 0) {
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Dispatch incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
+   string cmd = commands[0];
+   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+
+   if (cmd == "start") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+            return(StartSequence(NULL));
+      }
+   }
+   else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
+
+   return(_true(logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ StatusToStr(sequence.status))));
 }
 
 
@@ -2290,6 +2343,24 @@ string StatusDescription(int status) {
 
 
 /**
+ * Return a readable version of a sequence status code.
+ *
+ * @param  int status
+ *
+ * @return string
+ */
+string StatusToStr(int status) {
+   switch (status) {
+      case STATUS_UNDEFINED  : return("STATUS_UNDEFINED"  );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
+      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
+      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
+   }
+   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Display the current runtime status.
  *
  * @param  int error [optional] - error to display (default: none)
@@ -2343,6 +2414,15 @@ int ShowStatus(int error = NO_ERROR) {
    // 4 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   // store status in the chart to enable remote access by scripts
+   string label = "Duel.status";
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      RegisterObject(label);
+   }
+   ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
    error = ifIntOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
