@@ -188,7 +188,7 @@
    int      afterDeinit();
 
    void     DummyCalls();
-   bool     EventListener_ChartCommand(string data[]);
+   bool     EventListener_ChartCommand(string &data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

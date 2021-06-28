@@ -527,7 +527,7 @@ bool CheckErrors(string location, int error = NULL) {
 /**
  * Whether a chart command was sent to the indicator. If so, the command is retrieved and stored.
  *
- * @param  string commands[] - array to store received commands in
+ * @param  _Out_ string &commands[] - array to store received commands in
  *
  * @return bool
  */

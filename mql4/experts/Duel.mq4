@@ -222,7 +222,7 @@ int onTick() {
 /**
  * Whether a chart command was sent to the EA. If the case, the command is retrieved and returned.
  *
- * @param  string commands[] - array to store received commands
+ * @param  _Out_ string &commands[] - array to store received commands
  *
  * @return bool
  */
