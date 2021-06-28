@@ -2394,21 +2394,21 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(), "               ", sSequence, sError,        NL,
-                                                                                              NL,
-                                  "Grid:              ",  sGridParameters,                    NL,
-                                  "Volatility:       ",   sGridVolatility,                    NL,
-                                                                                              NL,
-                                  "Long:             ",   sOpenLongLots,                      NL,
-                                  "Short:            ",   sOpenShortLots,                     NL,
-                                  "Total:             ",  sOpenTotalLots,                     NL,
-                                                                                              NL,
-                                  "Stop:              ",  sStopConditions,                    NL,
-                                  "BE:                 ", sSequenceBePrice,                   NL,
-                                  "TP:                 ", sSequenceTpPrice,                   NL,
-                                  "SL:                 ", sSequenceSlPrice,                   NL,
-                                                                                              NL,
-                                  "Profit/Loss:   ",      sSequenceTotalPL, sSequencePlStats, NL
+   string msg = StringConcatenate(ProgramName(), "           ", sSequence, sError,        NL,
+                                                                                          NL,
+                                  "Grid:          ",  sGridParameters,                    NL,
+                                  "Volatility:   ",   sGridVolatility,                    NL,
+                                                                                          NL,
+                                  "Long:         ",   sOpenLongLots,                      NL,
+                                  "Short:        ",   sOpenShortLots,                     NL,
+                                  "Total:         ",  sOpenTotalLots,                     NL,
+                                                                                          NL,
+                                  "Stop:          ",  sStopConditions,                    NL,
+                                  "BE:             ", sSequenceBePrice,                   NL,
+                                  "TP:             ", sSequenceTpPrice,                   NL,
+                                  "SL:             ", sSequenceSlPrice,                   NL,
+                                                                                          NL,
+                                  "Profit:        ",  sSequenceTotalPL, sSequencePlStats, NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -2650,7 +2650,7 @@ void SS.TotalPL() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 124}, y=61, fontSize=115, rectangles=ArraySize(x);
+   int x[]={2, 114}, y=61, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 
