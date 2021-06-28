@@ -16,10 +16,6 @@
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @todo  rounding down mode for CalculateLots()
- * @todo  test generated sequence ids for uniqueness
- * @todo  many more...
- *
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [liner notes: I've looked at life from both sides now.]
  */
 #include <stddefines.mqh>
@@ -29,9 +25,9 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string   GridDirections         = "Long | Short | Both*";
-extern double   GridVolatility.Pct     = 30;                      // drawdown in % on a full ADR move against the grid direction
-extern double   GridSize.Pip           = 0;                       // in pip
-extern double   UnitSize.Lot           = 0;                       // lots at the first grid level
+extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
+extern double   GridSize               = 0;                       // in pip
+extern double   UnitSize               = 0;                       // lots at the first grid level
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
@@ -51,7 +47,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-
 #define STRATEGY_ID         105                          // unique strategy id from 101-1023 (10 bit)
 
 #define STATUS_UNDEFINED      0                          // sequence status values
@@ -59,18 +54,13 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
 
-#define SIGNAL_TAKEPROFIT     1                          // start/stop signal types
-#define SIGNAL_STOPLOSS       2
-#define SIGNAL_SESSION_BREAK  3
-#define SIGNAL_MARGIN_ERROR   4
-
 #define D_LONG                TRADE_DIRECTION_LONG
 #define D_SHORT               TRADE_DIRECTION_SHORT
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
 #define CLR_PENDING           DeepSkyBlue                // order marker colors
-#define CLR_LONG              C'0,0,254'                 // Blue - rgb(1,1,1)
-#define CLR_SHORT             C'254,0,0'                 // Red - rgb(1,1,1)
+#define CLR_LONG              C'0,0,254'                 // blue-ish: rgb(0,0,255) - rgb(1,1,1)
+#define CLR_SHORT             C'254,0,0'                 // red-ish:  rgb(255,0,0) - rgb(1,1,1)
 #define CLR_CLOSE             Orange
 
 // sequence data
@@ -1677,9 +1667,9 @@ bool IsTestSequence() {
 
 // backed-up input parameters
 string   prev.GridDirections = "";
-double   prev.GridVolatility.Pct;
-double   prev.GridSize.Pip;
-double   prev.UnitSize.Lot;
+string   prev.GridVolatility;
+double   prev.GridSize;
+double   prev.UnitSize;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
 string   prev.TakeProfit = "";
@@ -1727,9 +1717,9 @@ datetime prev.sessionbreak.endtime;
 void BackupInputs() {
    // backed-up input parameters are accessed for comparison in ValidateInputs()
    prev.GridDirections         = StringConcatenate(GridDirections, "");    // string inputs are references to internal C literals...
-   prev.GridVolatility.Pct     = GridVolatility.Pct;                       // ...and must be copied to break the reference
-   prev.GridSize.Pip           = GridSize.Pip;
-   prev.UnitSize.Lot           = UnitSize.Lot;
+   prev.GridVolatility         = StringConcatenate(GridVolatility, "");    // ...and must be copied to break the reference
+   prev.GridSize               = GridSize;
+   prev.UnitSize               = UnitSize;
    prev.Pyramid.Multiplier     = Pyramid.Multiplier;
    prev.Martingale.Multiplier  = Martingale.Multiplier;
    prev.TakeProfit             = StringConcatenate(TakeProfit, "");
@@ -1777,9 +1767,9 @@ void BackupInputs() {
 void RestoreInputs() {
    // restore input parameters
    GridDirections         = prev.GridDirections;
-   GridVolatility.Pct     = prev.GridVolatility.Pct;
-   GridSize.Pip           = prev.GridSize.Pip;
-   UnitSize.Lot           = prev.UnitSize.Lot;
+   GridVolatility         = prev.GridVolatility;
+   GridSize               = prev.GridSize;
+   UnitSize               = prev.UnitSize;
    Pyramid.Multiplier     = prev.Pyramid.Multiplier;
    Martingale.Multiplier  = prev.Martingale.Multiplier;
    TakeProfit             = prev.TakeProfit;
@@ -1841,49 +1831,55 @@ bool ValidateInputs() {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                                  return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections)));
+   if (iValue == -1)                          return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections)));
    if (isManualInput && !StrCompareI(sValue, prev.GridDirections)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirections of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirections of an already started sequence"));
    }
    sequence.directions = iValue;
    GridDirections = TradeDirectionDescription(sequence.directions);
 
    // GridVolatility
-   if (isManualInput && NE(GridVolatility.Pct, prev.GridVolatility.Pct)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of an already started sequence"));
+   if (isManualInput && !StrCompareI(GridVolatility, prev.GridVolatility)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of an already started sequence"));
    }
-   if (LT(GridVolatility.Pct, 0))                     return(!onInputError("ValidateInputs(4)  invalid input parameter GridVolatility: "+ NumberToStr(GridVolatility.Pct, ".+") +" (too small)"));
-   sequence.gridvola = GridVolatility.Pct;
+   sequence.gridvola = NULL;
+   sValue = StrTrim(GridVolatility);
+   if (StringLen(sValue) && sValue!="{percent}") {
+      if (StrEndsWith(sValue, "%"))
+         sValue = StrTrim(StrLeft(sValue, -1));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(4)  invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
+      sequence.gridvola = MathAbs(StrToDouble(sValue));
+   }
 
    // GridSize
-   if (isManualInput && NE(GridSize.Pip, prev.GridSize.Pip)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(5)  cannot change input parameter GridSize of an already started sequence"));
+   if (isManualInput && NE(GridSize, prev.GridSize)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(5)  cannot change input parameter GridSize of an already started sequence"));
    }
-   if (LT(GridSize.Pip, 0))                           return(!onInputError("ValidateInputs(6)  invalid input parameter GridSize: "+ NumberToStr(GridSize.Pip, ".+") +" (too small)"));
-   if (MathModFix(GridSize.Pip*Pip, Point) != 0)      return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize.Pip, ".+") +" (not a multiple of Point)"));
-   sequence.gridsize = GridSize.Pip;
+   if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(6)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
+   if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
+   sequence.gridsize = GridSize;
 
    // UnitSize
-   if (isManualInput && NE(UnitSize.Lot, prev.UnitSize.Lot)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(8)  cannot change input parameter UnitSize of an already started sequence"));
+   if (isManualInput && NE(UnitSize, prev.UnitSize)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(8)  cannot change input parameter UnitSize of an already started sequence"));
    }
-   if (LT(UnitSize.Lot, 0))                           return(!onInputError("ValidateInputs(9)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize.Lot, ".1+") +" (too small)"));
-   if (NE(UnitSize.Lot, NormalizeLots(UnitSize.Lot))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize.Lot, ".1+") +" (not a multiple of MODE_LOTSTEP)"));
-   sequence.unitsize = UnitSize.Lot;
+   if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(9)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
+   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP)"));
+   sequence.unitsize = UnitSize;
    if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) return(false);
 
    // Pyramid.Multiplier
    if (isManualInput && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(11)  cannot change input parameter Pyramid.Multiplier of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(11)  cannot change input parameter Pyramid.Multiplier of an already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                        return(!onInputError("ValidateInputs(12)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(12)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isManualInput && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                         return(!onInputError("ValidateInputs(13)  cannot change input parameter Martingale.Multiplier of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Martingale.Multiplier of an already started sequence"));
    }
-   if (Martingale.Multiplier < 0)                     return(!onInputError("ValidateInputs(14)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(14)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -1892,7 +1888,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                      return(!onInputError("ValidateInputs(15)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit)));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(15)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          tpPct.condition   = true;
@@ -1927,7 +1923,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss)));
+      if (!StrIsNumeric(sValue)) return(!onInputError("ValidateInputs(16)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -1958,8 +1954,8 @@ bool ValidateInputs() {
 
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
-      sessionbreak.starttime = NULL;
-      sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
+      sessionbreak.starttime = NULL;                              // times are updated automatically on next use
+      sessionbreak.endtime   = NULL;
    }
    return(!catch("ValidateInputs(17)"));
 }
@@ -2602,9 +2598,9 @@ bool MakeScreenshot(string comment = "") {
  */
 string InputsToStr() {
    return(StringConcatenate("GridDirections=",         DoubleQuoteStr(GridDirections),               ";", NL,
-                            "GridVolatility.Pct=",     NumberToStr(GridVolatility.Pct, ".1+"),       ";", NL,
-                            "GridSize.Pip=",           NumberToStr(GridSize.Pip, ".1+"),             ";", NL,
-                            "UnitSize.Lot=",           NumberToStr(UnitSize.Lot, ".1+"),             ";", NL,
+                            "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
+                            "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
+                            "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
                             "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
                             "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
                             "TakeProfit=",             DoubleQuoteStr(TakeProfit),                   ";", NL,
