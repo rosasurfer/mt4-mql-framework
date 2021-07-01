@@ -2650,7 +2650,7 @@ void SS.TotalPL() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 114}, y=61, fontSize=115, rectangles=ArraySize(x);
+   int x[]={2, 114}, y=58, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
    string label;
 
