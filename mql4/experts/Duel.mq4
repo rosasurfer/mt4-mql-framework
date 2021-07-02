@@ -1551,14 +1551,19 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
  * @return bool - success status
  */
 bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
-   int nulls = LE(gridvola, 0) + LE(gridsize, 0) + LE(unitsize, 0);
-   if (nulls > 1) return(!catch("ConfigureGrid(1)  invalid parameter combination GridVolatility/GridSize/UnitSize (min. 2 values must be set)", ERR_INVALID_PARAMETER));
+   bool wasSequenceStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
+   if (wasSequenceStarted) return(false);                                           // skip reconfigurations after sequence start
 
-   double adr        = iADR();                                                  if (!adr)       return(logWarn("ConfigureGrid(2)  ADR=0"));
+   if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0))
+                    return(!catch("ConfigureGrid(1)  invalid parameters GridVolatility/GridSize/UnitSize (must be non-negative)", ERR_INVALID_PARAMETER));
+   int empties = EQ(gridvola, 0) + EQ(gridsize, 0) + EQ(unitsize, 0);
+   if (empties > 1) return(!catch("ConfigureGrid(2)  invalid parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)", ERR_INVALID_PARAMETER));
+
+   double adr        = iADR();                                                  if (!adr)       return(logWarn("ConfigureGrid(3)  ADR=0"));
    double beDistance = adr/2;
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(logWarn("ConfigureGrid(3)  MODE_TICKSIZE=0"));
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(logWarn("ConfigureGrid(4)  MODE_TICKVALUE=0"));
-   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(logWarn("ConfigureGrid(5)  equity=0"));
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(logWarn("ConfigureGrid(4)  MODE_TICKSIZE=0"));
+   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(logWarn("ConfigureGrid(5)  MODE_TICKVALUE=0"));
+   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(logWarn("ConfigureGrid(6)  equity=0"));
    double adrLevels, adrLots, pl;
 
    if (gridsize && unitsize) {
@@ -1568,7 +1573,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       pl        = beDistance/tickSize * tickValue * adrLots;
       gridvola  = pl/equity * 100;
 
-      if (!gridvola) return(logWarn("ConfigureGrid(6)  resulting gridvola: 0"));
+      if (!gridvola) return(logWarn("ConfigureGrid(7)  resulting gridvola: 0"));
    }
    else if (gridvola && unitsize) {
       // calculate the resulting gridsize and round it up (for safety)
@@ -1578,7 +1583,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       gridsize  = adr/Pip/(adrLevels-1);
       gridsize  = RoundCeil(gridsize, Digits & 1);
 
-      if (!gridsize) return(logWarn("ConfigureGrid(7)  resulting gridsize: 0"));
+      if (!gridsize) return(logWarn("ConfigureGrid(8)  resulting gridsize: 0"));
       return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding up
    }
    else /*gridvola && gridsize*/ {
@@ -1589,11 +1594,12 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       unitsize  = adrLots/adrLevels;
       unitsize  = NormalizeLots(unitsize, NULL, MODE_FLOOR);
 
-      if (!unitsize) return(logWarn("ConfigureGrid(8)  resulting unitsize: 0"));
+      if (!unitsize) return(logWarn("ConfigureGrid(9)  resulting unitsize: 0"));
       return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding down
    }
 
-   return(!catch("ConfigureGrid(9)"));
+   if (IsLogInfo()) logInfo("ConfigureGrid(10)  gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
+   return(!catch("ConfigureGrid(11)"));
 }
 
 
@@ -1954,18 +1960,21 @@ bool ValidateInputs() {
    if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    sequence.unitsize = UnitSize;
 
+   int empties = EQ(sequence.gridvola, 0) + EQ(sequence.gridsize, 0) + EQ(sequence.unitsize, 0);
+   if (empties > 1)                           return(!onInputError("ValidateInputs(11)  invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
+
    // Pyramid.Multiplier
    if (isManualInput && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(11)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(12)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(12)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(13)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isManualInput && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Martingale.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(14)  cannot change input parameter Martingale.Multiplier of already started sequence"));
    }
-   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(14)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(15)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -1974,7 +1983,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(15)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          tpPct.condition   = true;
@@ -2009,7 +2018,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(17)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -2043,11 +2052,7 @@ bool ValidateInputs() {
       sessionbreak.starttime = NULL;                              // actual times are updated automatically on next use
       sessionbreak.endtime   = NULL;
    }
-
-   // TODO: move elsewhere
-   if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) return(false);
-
-   return(!catch("ValidateInputs(17)"));
+   return(!catch("ValidateInputs(18)"));
 }
 
 

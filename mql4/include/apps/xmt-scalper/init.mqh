@@ -31,8 +31,11 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (ValidateInputs()) SaveStatus();                         // successful parameter change
-   else                  RestoreInputs();                      // failed parameter change
+   if (!ValidateInputs()) {
+      RestoreInputs();
+      return(last_error);
+   }
+   SaveStatus();
    return(last_error);
 }
 

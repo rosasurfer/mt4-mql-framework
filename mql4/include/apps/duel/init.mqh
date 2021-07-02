@@ -23,6 +23,7 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
+      ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
       SS.All();
       logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
@@ -69,10 +70,11 @@ int onInitUser() {
 int onInitParameters() {
    if (!ValidateInputs()) {
       RestoreInputs();
+      return(last_error);
    }
-   else {
-      SaveStatus();
-   }
+
+   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);    // does nothing after sequence start
+   SaveStatus();
    return(last_error);
 }
 
