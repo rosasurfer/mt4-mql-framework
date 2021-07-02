@@ -24,7 +24,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   GridDirections         = "Long | Short | Both*";
+extern string   GridDirection          = "Long | Short | Both*";
 extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
 extern double   GridSize               = 0;                       // in pip
 extern double   UnitSize               = 0;                       // lots at the first grid level
@@ -75,7 +75,7 @@ datetime sequence.created;
 bool     sequence.isTest;                          // whether the sequence is a test (a finished test can be loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence.id}"
 int      sequence.status;
-int      sequence.directions;
+int      sequence.direction;
 bool     sequence.pyramidEnabled;                  // whether the sequence scales in on the winning side (pyramid)
 bool     sequence.martingaleEnabled;               // whether the sequence scales in on the losing side (martingale)
 double   sequence.startEquity;
@@ -417,9 +417,9 @@ bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
-   if      (sequence.directions == D_LONG)  sequence.gridbase = Ask;
-   else if (sequence.directions == D_SHORT) sequence.gridbase = Bid;
-   else                                     sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
+   if      (sequence.direction == D_LONG)  sequence.gridbase = Ask;
+   else if (sequence.direction == D_SHORT) sequence.gridbase = Bid;
+   else                                    sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
 
    sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
    sequence.status      = STATUS_PROGRESSING;
@@ -1742,7 +1742,7 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
-string   prev.GridDirections = "";
+string   prev.GridDirection = "";
 string   prev.GridVolatility;
 double   prev.GridSize;
 double   prev.UnitSize;
@@ -1760,11 +1760,14 @@ datetime prev.sequence.created;
 bool     prev.sequence.isTest;
 string   prev.sequence.name = "";
 int      prev.sequence.status;
-int      prev.sequence.directions;
+int      prev.sequence.direction;
 bool     prev.sequence.pyramidEnabled;
 bool     prev.sequence.martingaleEnabled;
 double   prev.sequence.unitsize;
 double   prev.sequence.gridsize;
+
+bool     prev.long.enabled;
+bool     prev.short.enabled;
 
 bool     prev.tpAbs.condition;
 double   prev.tpAbs.value;
@@ -1791,8 +1794,8 @@ datetime prev.sessionbreak.endtime;
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backed-up input parameters are accessed for comparison in ValidateInputs()
-   prev.GridDirections         = StringConcatenate(GridDirections, "");    // string inputs are references to internal C literals...
+   // backup input parameters, also used for comparison in ValidateInputs()
+   prev.GridDirection          = StringConcatenate(GridDirection, "");     // string inputs are references to internal C literals...
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");    // ...and must be copied to break the reference
    prev.GridSize               = GridSize;
    prev.UnitSize               = UnitSize;
@@ -1810,11 +1813,14 @@ void BackupInputs() {
    prev.sequence.isTest            = sequence.isTest;
    prev.sequence.name              = sequence.name;
    prev.sequence.status            = sequence.status;
-   prev.sequence.directions        = sequence.directions;
+   prev.sequence.direction         = sequence.direction;
    prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
    prev.sequence.martingaleEnabled = sequence.martingaleEnabled;
    prev.sequence.unitsize          = sequence.unitsize;
    prev.sequence.gridsize          = sequence.gridsize;
+
+   prev.long.enabled               = long.enabled ;
+   prev.short.enabled              = short.enabled;
 
    prev.tpAbs.condition            = tpAbs.condition;
    prev.tpAbs.value                = tpAbs.value;
@@ -1842,7 +1848,7 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // restore input parameters
-   GridDirections         = prev.GridDirections;
+   GridDirection          = prev.GridDirection;
    GridVolatility         = prev.GridVolatility;
    GridSize               = prev.GridSize;
    UnitSize               = prev.UnitSize;
@@ -1860,11 +1866,14 @@ void RestoreInputs() {
    sequence.isTest            = prev.sequence.isTest;
    sequence.name              = prev.sequence.name;
    sequence.status            = prev.sequence.status;
-   sequence.directions        = prev.sequence.directions;
+   sequence.direction         = prev.sequence.direction;
    sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
    sequence.martingaleEnabled = prev.sequence.martingaleEnabled;
    sequence.unitsize          = prev.sequence.unitsize;
    sequence.gridsize          = prev.sequence.gridsize;
+
+   long.enabled               = prev.long.enabled ;
+   short.enabled              = prev.short.enabled;
 
    tpAbs.condition            = prev.tpAbs.condition;
    tpAbs.value                = prev.tpAbs.value;
@@ -1899,24 +1908,26 @@ bool ValidateInputs() {
    bool isManualInput      = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
    bool wasSequenceStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));   // whether the sequence was already started
 
-   // GridDirections
-   string sValues[], sValue = GridDirections;
+   // GridDirection
+   string sValues[], sValue = GridDirection;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                          return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirections: "+ DoubleQuoteStr(GridDirections)));
-   if (isManualInput && !StrCompareI(sValue, prev.GridDirections)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirections of an already started sequence"));
+   if (iValue == -1)                          return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
+   if (isManualInput && iValue!=prev.sequence.direction) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirection of already started sequence"));
    }
-   sequence.directions = iValue;
-   GridDirections = TradeDirectionDescription(sequence.directions);
+   sequence.direction = iValue;
+   long.enabled  = (sequence.direction & D_LONG  && 1);
+   short.enabled = (sequence.direction & D_SHORT && 1);
+   GridDirection = TradeDirectionDescription(sequence.direction);
 
    // GridVolatility
    if (isManualInput && !StrCompareI(GridVolatility, prev.GridVolatility)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of already started sequence"));
    }
    sequence.gridvola = NULL;
    sValue = StrTrim(GridVolatility);
@@ -1929,7 +1940,7 @@ bool ValidateInputs() {
 
    // GridSize
    if (isManualInput && NE(GridSize, prev.GridSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(5)  cannot change input parameter GridSize of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(5)  cannot change input parameter GridSize of already started sequence"));
    }
    if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(6)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
    if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
@@ -1937,23 +1948,22 @@ bool ValidateInputs() {
 
    // UnitSize
    if (isManualInput && NE(UnitSize, prev.UnitSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(8)  cannot change input parameter UnitSize of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(8)  cannot change input parameter UnitSize of already started sequence"));
    }
    if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(9)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
-   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP)"));
+   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    sequence.unitsize = UnitSize;
-   if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) return(false);
 
    // Pyramid.Multiplier
    if (isManualInput && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(11)  cannot change input parameter Pyramid.Multiplier of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(11)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
    }
    if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(12)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isManualInput && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Martingale.Multiplier of an already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Martingale.Multiplier of already started sequence"));
    }
    if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(14)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
@@ -1999,7 +2009,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue)) return(!onInputError("ValidateInputs(16)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          slPct.condition   = true;
@@ -2030,9 +2040,13 @@ bool ValidateInputs() {
 
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
-      sessionbreak.starttime = NULL;                              // times are updated automatically on next use
+      sessionbreak.starttime = NULL;                              // actual times are updated automatically on next use
       sessionbreak.endtime   = NULL;
    }
+
+   // TODO: move elsewhere
+   if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) return(false);
+
    return(!catch("ValidateInputs(17)"));
 }
 
@@ -2378,7 +2392,7 @@ int ShowStatus(int error = NO_ERROR) {
 
    string sSequence="", sDirection="", sError="";
 
-   switch (sequence.directions) {
+   switch (sequence.direction) {
       case D_LONG:  sDirection = "Long";       break;
       case D_SHORT: sDirection = "Short";      break;
       case D_BOTH:  sDirection = "Long+Short"; break;
@@ -2700,7 +2714,7 @@ bool MakeScreenshot(string comment = "") {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("GridDirections=",         DoubleQuoteStr(GridDirections),               ";", NL,
+   return(StringConcatenate("GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
                             "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
                             "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,

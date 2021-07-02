@@ -23,8 +23,6 @@ int onInitUser() {
       sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.isTest  = IsTesting();
       sequence.status  = STATUS_WAITING;
-      long.enabled     = (sequence.directions & D_LONG  && 1);
-      short.enabled    = (sequence.directions & D_SHORT && 1);
       SS.All();
       logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
@@ -49,7 +47,7 @@ int onInitUser() {
 
       // confirm dangerous live modes
       if (!IsTesting() && !IsDemoFix()) {
-         if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {
+         if (sequence.martingaleEnabled || sequence.direction==D_BOTH) {
             PlaySoundEx("Windows Notify.wav");
             if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
                StopSequence(NULL);
@@ -69,8 +67,12 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (ValidateInputs()) SaveStatus();
-   else                  RestoreInputs();
+   if (!ValidateInputs()) {
+      RestoreInputs();
+   }
+   else {
+      SaveStatus();
+   }
    return(last_error);
 }
 
