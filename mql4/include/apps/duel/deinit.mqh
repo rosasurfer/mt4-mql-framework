@@ -43,21 +43,33 @@ int onDeinitUndefined() {
 
 
 /**
- * Online: Called when another chart template is applied.
+ * Online: Called in terminal builds <= 509 when another chart template is applied.
  *         Called when the chart profile is changed.
  *         Called when the chart is closed.
- *         Called in terminal versions <= build 509 when the terminal shuts down.
+ *         Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: Called when the chart is closed with VisualMode="On".
- *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar
- *         variables may contain invalid values (strings are ok).
+ *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar variables
+ *          may contain invalid values (strings are ok).
  *
  * @return int - error status
  */
 int onDeinitChartClose() {
    if (!IsTesting() && IsLogInfo()) {
-      SS.TotalPL();
-      SS.PLStats();
       logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Online: Called in terminal builds > 509 when another chart template is applied.
+ * Tester: ???
+ *
+ * @return int - error status
+ */
+int onDeinitTemplate() {
+   if (!IsTesting() && IsLogInfo()) {
+      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
 }
@@ -70,8 +82,6 @@ int onDeinitChartClose() {
  */
 int onDeinitRemove() {
    if (IsLogInfo()) {
-      SS.TotalPL();
-      SS.PLStats();
       logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
@@ -79,14 +89,12 @@ int onDeinitRemove() {
 
 
 /**
- * Called in terminal versions > build 509 when the terminal shuts down.
+ * Called in terminal builds > 509 when the terminal shuts down.
  *
  * @return int - error status
  */
 int onDeinitClose() {
    if (IsLogInfo()) {
-      SS.TotalPL();
-      SS.PLStats();
       logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
