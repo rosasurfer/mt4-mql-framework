@@ -838,13 +838,13 @@ int onDeinitAccountChange()
 
 
 /**
- * Online: - Called when another chart template is applied.
- *         - Called when the chart profile is changed.
- *         - Called when the chart is closed.
- *         - Called in terminal versions up to build 509 when the terminal shuts down.
- * Tester: - Called when the chart is closed with VisualMode="On".
- *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar
- *           variables may contain invalid values (strings are ok).
+ * Online: Called when another chart template is applied.
+ *         Called when the chart profile is changed.
+ *         Called when the chart is closed.
+ *         Called in terminal versions <= build 509 when the terminal shuts down.
+ * Tester: Called when the chart is closed with VisualMode="On".
+ *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar variables
+ *          may contain invalid values (strings are ok).
  *
  * @return int - error status
  *
@@ -854,7 +854,7 @@ int onDeinitChartClose()
 
 
 /**
- * Online: Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * Online: Called when the expert is manually removed (Chart->Expert->Remove) or replaced.
  * Tester: Never called.
  *
  * @return int - error status
@@ -865,9 +865,9 @@ int onDeinitRemove()
 
 
 /**
- * Online: - Never encountered. Tracked in MT4Expander::onDeinitUndefined().
- * Tester: - Called if a test finished regularily, i.e. the test period ended.
- *         - Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
+ * Online: Never encountered. Tracked in MT4Expander::onDeinitUndefined().
+ * Tester: Called if a test finished regularily, i.e. the test period ended.
+ *         Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
  *
  * @return int - error status
  *
@@ -877,7 +877,8 @@ int onDeinitUndefined()
 
 
 /**
- * Called before an expert is reloaded after recompilation.
+ * Online: Called before the expert is reloaded after recompilation. May happen on refresh of the "Navigator" window.
+ * Tester: Never called.
  *
  * @return int - error status
  *

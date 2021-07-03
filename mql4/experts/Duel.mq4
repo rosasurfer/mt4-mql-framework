@@ -1565,15 +1565,15 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
    if (wasSequenceStarted) return(false);                                           // skip reconfigurations after sequence start
 
    if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0))
-                    return(!catch("ConfigureGrid(1)  invalid parameters GridVolatility/GridSize/UnitSize (must be non-negative)", ERR_INVALID_PARAMETER));
+                    return(!catch("ConfigureGrid(1)  "+ sequence.name +" invalid parameters GridVolatility/GridSize/UnitSize (must be non-negative)", ERR_INVALID_PARAMETER));
    int empties = EQ(gridvola, 0) + EQ(gridsize, 0) + EQ(unitsize, 0);
-   if (empties > 1) return(!catch("ConfigureGrid(2)  invalid parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)", ERR_INVALID_PARAMETER));
+   if (empties > 1) return(!catch("ConfigureGrid(2)  "+ sequence.name +" invalid parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)", ERR_INVALID_PARAMETER));
 
-   double adr        = iADR();                                                  if (!adr)       return(logWarn("ConfigureGrid(3)  ADR=0"));
+   double adr        = iADR();                                                  if (!adr)       return(logWarn("ConfigureGrid(3)  "+ sequence.name +" ADR=0"));
    double beDistance = adr/2;
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(logWarn("ConfigureGrid(4)  MODE_TICKSIZE=0"));
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(logWarn("ConfigureGrid(5)  MODE_TICKVALUE=0"));
-   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(logWarn("ConfigureGrid(6)  equity=0"));
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(logWarn("ConfigureGrid(4)  "+ sequence.name +" MODE_TICKSIZE=0"));
+   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(logWarn("ConfigureGrid(5)  "+ sequence.name +" MODE_TICKVALUE=0"));
+   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(logWarn("ConfigureGrid(6)  "+ sequence.name +" equity=0"));
    double adrLevels, adrLots, pl;
 
    if (gridsize && unitsize) {
@@ -1583,7 +1583,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       pl        = beDistance/tickSize * tickValue * adrLots;
       gridvola  = pl/equity * 100;
 
-      if (!gridvola) return(logWarn("ConfigureGrid(7)  resulting gridvola: 0"));
+      if (!gridvola) return(logWarn("ConfigureGrid(7)  "+ sequence.name +" resulting gridvola: 0"));
    }
    else if (gridvola && unitsize) {
       // calculate the resulting gridsize and round it up (for safety)
@@ -1593,7 +1593,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       gridsize  = adr/Pip/(adrLevels-1);
       gridsize  = RoundCeil(gridsize, Digits & 1);
 
-      if (!gridsize) return(logWarn("ConfigureGrid(8)  resulting gridsize: 0"));
+      if (!gridsize) return(logWarn("ConfigureGrid(8)  "+ sequence.name +" resulting gridsize: 0"));
       return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding up
    }
    else /*gridvola && gridsize*/ {
@@ -1604,11 +1604,11 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       unitsize  = adrLots/adrLevels;
       unitsize  = NormalizeLots(unitsize, NULL, MODE_FLOOR);
 
-      if (!unitsize) return(logWarn("ConfigureGrid(9)  resulting unitsize: 0"));
+      if (!unitsize) return(logWarn("ConfigureGrid(9)  "+ sequence.name +" resulting unitsize: 0"));
       return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding down
    }
 
-   if (IsLogInfo()) logInfo("ConfigureGrid(10)  gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
+   if (IsLogInfo()) logInfo("ConfigureGrid(10)  "+ sequence.name +" gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
    return(!catch("ConfigureGrid(11)"));
 }
 
