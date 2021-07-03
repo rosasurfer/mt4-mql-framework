@@ -96,7 +96,7 @@ int onInitTimeframeChange() {
  * @return int - error status
  */
 int onInitSymbolChange() {
-   return(SetLastError(ERR_ILLEGAL_STATE));
+   return(catch("onInitSymbolChange(1)", ERR_ILLEGAL_STATE));
 }
 
 
@@ -106,7 +106,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   return(SetLastError(ERR_NOT_IMPLEMENTED));
+   return(catch("onInitTemplate(1)", ERR_NOT_IMPLEMENTED));
 }
 
 

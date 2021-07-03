@@ -400,7 +400,7 @@ int deinit() {
          case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
          case UR_REMOVE     : error = onDeinitRemove();        break;      //
          case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
-         // build > 509                                                    //
+         // terminal builds > 509                                          //
          case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
          case UR_INITFAILED : error = onDeinitFailed();        break;      //
          case UR_CLOSE      : error = onDeinitClose();         break;      //
@@ -838,10 +838,10 @@ int onDeinitAccountChange()
 
 
 /**
- * Online: Called when another chart template is applied.
+ * Online: Called in terminal builds <= 509 when another chart template is applied.
  *         Called when the chart profile is changed.
  *         Called when the chart is closed.
- *         Called in terminal versions <= build 509 when the terminal shuts down.
+ *         Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: Called when the chart is closed with VisualMode="On".
  *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar variables
  *          may contain invalid values (strings are ok).
@@ -849,6 +849,17 @@ int onDeinitAccountChange()
  * @return int - error status
  *
 int onDeinitChartClose()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Online: Called in terminal builds > 509 when another chart template is applied.
+ * Tester: ???
+ *
+ * @return int - error status
+ *
+int onDeinitTemplate()
    return(NO_ERROR);
 }
 
@@ -888,7 +899,7 @@ int onDeinitRecompile()
 
 
 /**
- * Called in terminal versions > build 509 when the terminal shuts down.
+ * Called in terminal builds > 509 when the terminal shuts down.
  *
  * @return int - error status
  *
