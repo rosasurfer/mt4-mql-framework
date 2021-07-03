@@ -166,22 +166,20 @@ datetime sessionbreak.starttime;                   // configurable via inputs an
 datetime sessionbreak.endtime;
 
 // cache vars to speed-up ShowStatus()
-string   sGridParameters      = "";
-string   sGridVolatility      = "";
-string   sStopConditions      = "";
-string   sOpenLongLots        = "";
-string   sOpenShortLots       = "";
-string   sOpenTotalLots       = "";
-string   sSequenceTotalPL     = "";
-string   sSequenceMaxProfit   = "";
-string   sSequenceMaxDrawdown = "";
-string   sSequencePlStats     = "";
-string   sSequenceBePrice     = "";
-string   sSequenceTpPrice     = "";
-string   sSequenceSlPrice     = "";
+string   sGridParameters  = "";
+string   sGridVolatility  = "";
+string   sStopConditions  = "";
+string   sOpenLongLots    = "";
+string   sOpenShortLots   = "";
+string   sOpenTotalLots   = "";
+string   sSequenceTotalPL = "";
+string   sSequencePlStats = "";
+string   sSequenceBePrice = "";
+string   sSequenceTpPrice = "";
+string   sSequenceSlPrice = "";
 
 // debug settings                                  // configurable via framework config, see ::afterInit()
-bool     tester.onStopPause      = false;          // whether to pause a test after StopSequence()
+bool     test.onStopPause        = false;          // whether to pause a test after StopSequence()
 bool     test.reduceStatusWrites = true;           // whether to minimize status file writing in tester
 
 #include <apps/duel/init.mqh>
@@ -285,7 +283,14 @@ bool IsStartSignal(int &signal) {
    if (IsSessionBreak()) {
       return(false);
    }
-   // not yet supported for this EA
+
+   if (IsTesting()) {
+      // tester: auto-start
+      if (!ArraySize(long.ticket) && !ArraySize(short.ticket)) return(true);
+   }
+   else {
+      // online: not yet supported for this EA
+   }
    return(false);
 }
 
@@ -477,20 +482,22 @@ bool StopSequence(int signal) {
 
       sequence.openPL   = 0;                                         // update total PL numbers
       sequence.closedPL = long.closedPL + short.closedPL;
-      sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
-      if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
-      else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+      sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
+      if      (sequence.totalPL > sequence.maxProfit  ) sequence.maxProfit   = sequence.totalPL;
+      else if (sequence.totalPL < sequence.maxDrawdown) sequence.maxDrawdown = sequence.totalPL;
+      SS.TotalPL(true);
+      SS.PLStats(true);
    }
 
    sequence.status = STATUS_STOPPED;
-   if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped");
-
    SS.StopConditions();
+   if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
-      if (!IsVisualMode())         Tester.Stop("StopSequence(4)");
-      else if (tester.onStopPause) Tester.Pause("StopSequence(5)");
+      if (!IsVisualMode())       Tester.Stop("StopSequence(4)");
+      else if (test.onStopPause) Tester.Pause("StopSequence(5)");
    }
    return(!catch("StopSequence(6)"));
 }
@@ -1352,9 +1359,12 @@ bool ComputeProfit(bool positionChanged) {
    // summarize and process results
    sequence.openPL   = NormalizeDouble(sequence.hedgedPL + sequence.floatingPL, 2);
    sequence.closedPL = NormalizeDouble(sequence.closedPL, 2);
-   sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+   sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
+   bool statsChanged = false;
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; statsChanged = true; }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; statsChanged = true; }
+   SS.TotalPL();
+   if (statsChanged) SS.PLStats();
    SS.ProfitTargets();
 
    return(!catch("ComputeProfit(4)"));
@@ -2460,8 +2470,7 @@ void SS.All() {
       SS.OpenLots();
       SS.ProfitTargets();
       SS.TotalPL();
-      SS.MaxProfit();
-      SS.MaxDrawdown();
+      SS.PLStats();
    }
 }
 
@@ -2498,30 +2507,6 @@ void SS.GridParameters() {
          sGridParameters = "";
          sGridVolatility = "";
       }
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.maxDrawdown".
- */
-void SS.MaxDrawdown() {
-   if (__isChart) {
-      if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-      else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
-      SS.PLStats();
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.maxProfit".
- */
-void SS.MaxProfit() {
-   if (__isChart) {
-      if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-      else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
-      SS.PLStats();
    }
 }
 
@@ -2572,14 +2557,43 @@ void SS.OpenLots() {
 
 
 /**
- * ShowStatus: Update the string representaton of the P/L statistics.
+ * ShowStatus: Update the string representation of "sequence.totalPL".
+ *
+ * @param  bool enforce [optional] - whether to perform the update unconditionally (default: no)
  */
-void SS.PLStats() {
-   if (__isChart) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
-         sSequencePlStats = StringConcatenate("  (", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
+void SS.TotalPL(bool enforce = false) {
+   if (__isChart || enforce) {
+      // not before a positions was opened
+      if (!ArraySize(long.ticket) && !ArraySize(short.ticket)) sSequenceTotalPL = "-";
+      else if (ShowProfitInPercent)                            sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+      else                                                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representaton of all P/L statistics.
+ *
+ * @param  bool enforce [optional] - whether to perform the update unconditionally (default: no)
+ */
+void SS.PLStats(bool enforce = false) {
+   if (__isChart || enforce) {
+      // not before a positions was opened
+      if (!ArraySize(long.ticket) && !ArraySize(short.ticket)) {
+         sSequencePlStats = "";
       }
-      else sSequencePlStats = "";
+      else {
+         string sSequenceMaxProfit, sSequenceMaxDrawdown;
+         if (ShowProfitInPercent) {
+            sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+            sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+         }
+         else {
+            sSequenceMaxProfit   = NumberToStr(sequence.maxProfit, "+.2");
+            sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+         }
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
+      }
    }
 }
 
@@ -2642,20 +2656,6 @@ void SS.StopConditions() {
       }
       if (sValue == "") sStopConditions = "-";
       else              sStopConditions = sValue;
-   }
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.totalPL".
- */
-void SS.TotalPL() {
-   if (__isChart) {
-      if (ArraySize(long.ticket) || ArraySize(short.ticket)) {          // not before a positions was opened
-         if (ShowProfitInPercent) sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-         else                     sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
-      }
-      else sSequenceTotalPL = "-";
    }
 }
 

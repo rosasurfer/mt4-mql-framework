@@ -121,7 +121,7 @@ int afterInit() {
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
-      tester.onStopPause      = GetConfigBool(section, "OnStopPause",       false);
+      test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
       test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
    }
    return(catch("afterInit(1)"));
