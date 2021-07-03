@@ -112,15 +112,15 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // resolve the account number
-   int account = GetAccountNumber();
-   if (!account) return(_last_error(CheckErrors("init(12)")));
+   // resolve init reason and account number
+   int initReason = ProgramInitReason();
+   int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
 
-   if (IsTesting()) {            // log MarketInfo() data
+   if (IsTesting()) {                     // log MarketInfo() data
       if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
-   else {                        // log account infos (first regular logfile entry)
+   else if (initReason == IR_USER) {      // log account infos (becomes the first regular online log entry)
       if (IsLogInfo()) logInfo("init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    }
 
@@ -154,9 +154,6 @@ int init() {
    error = onInit();                                                          // preprocessing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
-      int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
-                                                                              //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
          case IR_TEMPLATE        : error = onInitTemplate();        break;    //
@@ -166,7 +163,7 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(17)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
