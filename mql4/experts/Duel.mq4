@@ -232,10 +232,9 @@ bool EventListener_ChartCommand(string &commands[]) {
       mutex = "mutex."+ label;
    }
 
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
+   // check for existing commands in a non-synchronized way (read-only) to prevent aquiring the lock on every tick
    if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
+      if (AquireLock(mutex, true)) {                                 // now aquire the lock (read-write)
          ArrayPushString(commands, ObjectDescription(label));
          ObjectDelete(label);
          return(ReleaseLock(mutex));
@@ -261,6 +260,13 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
             return(StartSequence(NULL));
+      }
+   }
+   else if (cmd == "stop") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_PROGRESSING:
+            return(StopSequence(NULL));
       }
    }
    else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
@@ -447,8 +453,9 @@ bool StartSequence(int signal) {
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
    if (!UpdatePendingOrders()) return(false);         // update pending orders
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
-   if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   ComputeProfit(true);
    return(SaveStatus());
 }
 
@@ -499,8 +506,7 @@ bool StopSequence(int signal) {
 
    sequence.status = STATUS_STOPPED;
    SS.StopConditions();
-   if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
-
+   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
