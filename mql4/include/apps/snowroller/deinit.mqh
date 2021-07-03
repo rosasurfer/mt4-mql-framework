@@ -25,7 +25,7 @@ int onDeinitChartChange() {
  * Online: - Called when another chart template is applied.
  *         - Called when the chart profile is changed.
  *         - Called when the chart is closed.
- *         - Called in terminal versions up to build 509 when the terminal shuts down.
+ *         - Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: - Called when the chart is closed (with VisualMode=On).
  *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Scalar variables
  *           may contain invalid values (strings are ok).
@@ -82,7 +82,7 @@ int onDeinitRecompile() {
 
 
 /**
- * Called in terminal versions > build 509 when the terminal shuts down.
+ * Called in terminal builds > 509 when the terminal shuts down.
  *
  * @return int - error status
  */

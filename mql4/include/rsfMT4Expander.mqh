@@ -182,7 +182,7 @@
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();
-   int      onDeinitClose();                          // builds > 509
+   int      onDeinitClose();                          // terminal builds > 509
    int      onDeinitFailed();                         // ...
    int      onDeinitTemplate();                       // ...
    int      afterDeinit();
