@@ -11,7 +11,7 @@ extern double   Tester.StartPrice = 0;                               // price to
 #include <functions/InitializeByteBuffer.mqh>
 
 
-double __rates[][6];                                                 // current price series
+double __rates[][6];                                                 // current price series (passed to the Expander on every tick)
 int    tickTimerId;                                                  // timer id for virtual ticks
 
 // test metadata
@@ -104,7 +104,7 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
-   // explicitely reset the order context after the expert was reloaded
+   // reset the order context after the expert was reloaded (to prevent the bug when the previously active context is not reset)
    int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
@@ -112,13 +112,16 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // if in tester
-   if (IsTesting()) {
-      // resolve the account number (here because if eventually called in deinit() it would deadlock the UI thread)
-      if (!GetAccountNumber()) return(_last_error(CheckErrors("init(12)")));
-      // log MarketInfo() data
+   // resolve the account number
+   int account = GetAccountNumber();
+   if (!account) return(_last_error(CheckErrors("init(12)")));
+
+   if (IsTesting()) {            // log MarketInfo() data
       if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   }
+   else {                        // log account infos (first regular logfile entry)
+      if (IsLogInfo()) logInfo("init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    }
 
    // log input parameters
@@ -126,11 +129,11 @@ int init() {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
-            ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
-            ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
-            ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
-            ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logDebug("init(14)  inputs: "+ sInputs);
+            ifString(!EA.RecordEquity,   "", NL +"EA.RecordEquity=TRUE"                                            +";"),
+            ifString(!EA.CreateReport,   "", NL +"EA.CreateReport=TRUE"                                            +";"),
+            ifString(!Tester.StartTime,  "", NL +"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
+            ifString(!Tester.StartPrice, "", NL +"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
+         logDebug("init(15)  inputs: "+ sInputs);
       }
    }
 
@@ -152,7 +155,7 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
       int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(15)")) return(last_error);       //
+      if (!initReason) if (CheckErrors("init(16)")) return(last_error);       //
                                                                               //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
@@ -163,14 +166,14 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(17)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(17)")) return(last_error);
+   if (CheckErrors("init(18)")) return(last_error);
 
    ShowStatus(last_error);
 
@@ -179,7 +182,7 @@ int init() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(18)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!tickTimerId) return(catch("init(19)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
