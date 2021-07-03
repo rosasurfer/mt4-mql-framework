@@ -426,19 +426,27 @@ bool StartSequence(int signal) {
    else if (sequence.direction == D_SHORT) sequence.gridbase = Bid;
    else                                    sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
 
-   sequence.startEquity = NormalizeDouble(AccountEquity()-AccountCredit()+GetExternalAssets(), 2);
+   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
    sequence.status      = STATUS_PROGRESSING;
+   int idxLong=-1, idxShort=-1;
 
    if (long.enabled) {
-      if (Grid.AddPosition(D_LONG, 1) < 0)  return(false);                 // open a long position for level 1
+      idxLong = Grid.AddPosition(D_LONG, 1);          // open a long position for level 1
+      if (idxLong < 0) return(false);
    }
    if (short.enabled) {
-      if (Grid.AddPosition(D_SHORT, 1) < 0) return(false);                 // open a short position for level 1
+      idxShort = Grid.AddPosition(D_SHORT, 1);        // open a short position for level 1
+      if (idxShort < 0) return(false);
    }
+
+   // update the gridbase to reflect experienced slippage
+   if      (sequence.direction == D_LONG)  sequence.gridbase = long.openPrice [idxLong ];
+   else if (sequence.direction == D_SHORT) sequence.gridbase = short.openPrice[idxShort];
+   else                                    sequence.gridbase = NormalizeDouble((long.openPrice[idxLong]+short.openPrice[idxShort])/2, Digits);
 
    sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
 
-   if (!UpdatePendingOrders()) return(false);                              // update pending orders
+   if (!UpdatePendingOrders()) return(false);         // update pending orders
 
    if (IsLogDebug()) logDebug("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
    return(SaveStatus());
