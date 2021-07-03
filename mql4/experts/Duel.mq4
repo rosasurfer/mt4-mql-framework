@@ -1608,7 +1608,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding down
    }
 
-   if (IsLogInfo()) logInfo("ConfigureGrid(10)  "+ sequence.name +" gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
+   if (IsLogInfo()) logInfo("ConfigureGrid(10)  "+ sequence.name +"  gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
    return(!catch("ConfigureGrid(11)"));
 }
 

@@ -42,7 +42,7 @@ int onInitUser() {
       if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
       if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
          StopSequence(NULL);
-         logError("onInitUser(3) not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+         logError("onInitUser(3)  "+ sequence.name +"not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          return(catch("onInitUser(4)"));
       }
 
