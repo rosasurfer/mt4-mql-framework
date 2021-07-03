@@ -4066,7 +4066,7 @@ string UninitializeReasonDescription(int reason) {
       case UR_CHARTCLOSE : return("chart closed"                       );
       case UR_PARAMETERS : return("input parameters changed"           );
       case UR_ACCOUNT    : return("account or account settings changed");
-      // ab Build > 509
+      // terminal builds > 509
       case UR_TEMPLATE   : return("template changed"                   );
       case UR_INITFAILED : return("OnInit() failed"                    );
       case UR_CLOSE      : return("terminal closed"                    );

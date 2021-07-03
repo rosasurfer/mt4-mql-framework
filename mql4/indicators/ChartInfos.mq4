@@ -2,7 +2,7 @@
  * Displays additional market and account infos on the chart.
  *
  *  - The current price and spread.
- *  - In builds <= 509 the current instrument name.
+ *  - In terminal builds <= 509 the current instrument name.
  *  - The calculated unitsize according to the configured risk profiles.
  *  - The open position and the used leverage.
  *  - The current account stopout level.
