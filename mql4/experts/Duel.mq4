@@ -1933,7 +1933,31 @@ void RestoreInputs() {
 
 
 /**
- * Validate input parameters. Parameters may have been entered through the input dialog, read from a status file or
+ * Syntactically validate and restore a specified sequence id (format: /T?1[0-9]{3}/). Called only from onInitUser().
+ *
+ * @return bool - whether the input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
+ */
+bool ValidateInputs.SID() {
+   string sValue = StrTrim(Sequence.ID);
+   if (!StringLen(sValue)) return(false);
+
+   if (StrStartsWithI(sValue, "T")) {
+      sequence.isTest = true;
+      sValue = StrTrim(StrSubstr(sValue, 1));
+   }
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
+   int iValue = StrToInteger(sValue);
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
+
+   sequence.id = iValue;
+   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
+   SS.SequenceName();
+   return(true);
+}
+
+
+/**
+ * Validate the input parameters. Parameters may have been entered through the input dialog, read from a status file or
  * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called only from onInitUser(),
  * onInitParameters() and onInitTemplate().
  *
@@ -1943,6 +1967,8 @@ bool ValidateInputs() {
    if (IsLastError()) return(false);
    bool isManualInput      = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
    bool wasSequenceStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));   // whether the sequence was already started
+
+   // Sequence.ID ???
 
    // GridDirection
    string sValues[], sValue = GridDirection;
@@ -2238,6 +2264,71 @@ bool Orders.RemoveRecord(int direction, int offset) {
 
 
 /**
+ * Reset the specified order log and statistics.
+ *
+ * @param  int direction - D_LONG:  long orders
+ *                         D_SHORT: short orders
+ *
+ * @return bool - success status
+ */
+bool ResetOrderLog(int direction) {
+   if (direction == D_LONG) {
+      long.enabled  = false;
+      long.slippage = 0;
+      long.openLots = 0;
+      long.openPL   = 0;
+      long.closedPL = 0;
+      long.minLevel = INT_MAX;
+      long.maxLevel = INT_MIN;
+
+      ArrayResize(long.ticket,       0);
+      ArrayResize(long.level,        0);
+      ArrayResize(long.lots,         0);
+      ArrayResize(long.pendingType,  0);
+      ArrayResize(long.pendingTime,  0);
+      ArrayResize(long.pendingPrice, 0);
+      ArrayResize(long.type,         0);
+      ArrayResize(long.openTime,     0);
+      ArrayResize(long.openPrice,    0);
+      ArrayResize(long.closeTime,    0);
+      ArrayResize(long.closePrice,   0);
+      ArrayResize(long.swap,         0);
+      ArrayResize(long.commission,   0);
+      ArrayResize(long.profit,       0);
+      return(true);
+   }
+
+   if (direction == D_SHORT) {
+      short.enabled  = false;
+      short.slippage = 0;
+      short.openLots = 0;
+      short.openPL   = 0;
+      short.closedPL = 0;
+      short.minLevel = INT_MAX;
+      short.maxLevel = INT_MIN;
+
+      ArrayResize(short.ticket,       0);
+      ArrayResize(short.level,        0);
+      ArrayResize(short.lots,         0);
+      ArrayResize(short.pendingType,  0);
+      ArrayResize(short.pendingTime,  0);
+      ArrayResize(short.pendingPrice, 0);
+      ArrayResize(short.type,         0);
+      ArrayResize(short.openTime,     0);
+      ArrayResize(short.openPrice,    0);
+      ArrayResize(short.closeTime,    0);
+      ArrayResize(short.closePrice,   0);
+      ArrayResize(short.swap,         0);
+      ArrayResize(short.commission,   0);
+      ArrayResize(short.profit,       0);
+      return(true);
+   }
+
+   return(!catch("ResetOrderLog(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+}
+
+
+/**
  * Open a market position at the current price.
  *
  * @param  _In_  int direction - trade direction
@@ -2384,34 +2475,33 @@ bool SaveStatus() {
    string section, file=GetStatusFilename(), separator="";
    if (!IsFileA(file)) separator = CRLF;                                   // an empty line as additional section separator
 
+   // [General]
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
 
-
+   // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",            /*string  */ Sequence.ID);
    WriteIniString(file, section, "GridDirection",          /*string  */ GridDirection);
    WriteIniString(file, section, "GridVolatility",         /*string  */ GridVolatility);
    WriteIniString(file, section, "GridSize",               /*double  */ NumberToStr(GridSize, ".+"));
    WriteIniString(file, section, "UnitSize",               /*double  */ NumberToStr(UnitSize, ".+"));
-                                                           /*        */
+
    WriteIniString(file, section, "Pyramid.Multiplier",     /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",  /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
-                                                           /*        */
+
    WriteIniString(file, section, "TakeProfit",             /*string  */ TakeProfit);
    WriteIniString(file, section, "StopLoss",               /*string  */ StopLoss);
    WriteIniString(file, section, "ShowProfitInPercent",    /*bool    */ ShowProfitInPercent);
-                                                           /*        */
+
    WriteIniString(file, section, "Sessionbreak.StartTime", /*datetime*/ Sessionbreak.StartTime);
    WriteIniString(file, section, "Sessionbreak.EndTime",   /*datetime*/ Sessionbreak.EndTime + separator);
 
-
-   section = "Runtime status";
-   // On deletion of pending orders the number of stored order records decreases. To prevent orphaned order records in the
-   // status file the section is emptied before writing to it.
-   EmptyIniSectionA(file, section);
+   // [Runtime status]
+   section = "Runtime status";      // On deletion of pending orders the number of stored order records decreases. To prevent
+   EmptyIniSectionA(file, section); // orphaned records in the status file the section is emptied before writing to it.
 
    // sequence data
    WriteIniString(file, section, "sequence.id",                /*int     */ sequence.id               );
@@ -2487,6 +2577,186 @@ bool SaveStatus() {
    WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime  );
 
    return(!catch("SaveStatus(1)"));
+}
+
+
+/**
+ * Restore the internal state of the EA from a status file. Requires 'sequence.id' and 'sequence.isTest' to be set.
+ *
+ * @return bool - success status
+ */
+bool RestoreSequence() {
+   if (IsLastError())          return(false);
+   if (!ReadStatus())          return(false);              // read and apply the status file
+   //if (!ValidateInputs())    return(false);              // validate restored input parameters
+   //if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
+   return(true);
+}
+
+
+/**
+ * Read the status file of the current sequence and restore all internal variables. Called only from RestoreSequence().
+ * Only a syntactic variables check is performed (i.e. type match). Logical validation happens in ValidateInputs().
+ *
+ * @return bool - success status
+ */
+bool ReadStatus() {
+   if (IsLastError()) return(false);
+   if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+
+   string section, file=GetStatusFilename();
+   if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+
+   // [General]
+   section = "General";
+   string sAccount = GetIniStringA(file, section, "Account", "");                               // string Account = ICMarkets:12345678
+   string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                               // string Symbol  = EURUSD
+   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+
+   // [Inputs]
+   section = "Inputs";
+   string sSequenceID            = GetIniStringA(file, section, "Sequence.ID",            "");  // string   Sequence.ID            = T1234
+   string sGridDirection         = GetIniStringA(file, section, "GridDirection",          "");  // string   GridDirection          = Long
+   string sGridVolatility        = GetIniStringA(file, section, "GridVolatility",         "");  // string   GridVolatility         = 30%
+   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");  // double   GridSize               = 2.3
+   string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");  // double   UnitSize               = 0.01
+   string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");  // double   Pyramid.Multiplier     = 1.1
+   string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");  // double   Martingale.Multiplier  = 1.1
+   string sTakeProfit            = GetIniStringA(file, section, "TakeProfit",             "");  // string   TakeProfit             = 3%
+   string sStopLoss              = GetIniStringA(file, section, "StopLoss",               "");  // string   StopLoss               = 20.00
+   string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");  // bool     ShowProfitInPercent    = 1
+   string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");  // datetime Sessionbreak.StartTime = 86160
+   string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");  // datetime Sessionbreak.EndTime   = 3730
+
+   if (!StrIsNumeric(sGridSize))             return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sUnitSize))             return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sPyramidMultiplier))    return(!catch("ReadStatus(7)  "+ sequence.name +" invalid input parameter Pyramid.Multiplier "+ DoubleQuoteStr(sPyramidMultiplier) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sMartingaleMultiplier)) return(!catch("ReadStatus(8)  "+ sequence.name +" invalid input parameter Martingale.Multiplier "+ DoubleQuoteStr(sMartingaleMultiplier) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sSessionbreakStartTime))  return(!catch("ReadStatus(9)  "+ sequence.name +" invalid input parameter Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sSessionbreakEndTime))    return(!catch("ReadStatus(10)  "+ sequence.name +" invalid input parameter Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+
+   Sequence.ID            = sSequenceID;
+   GridDirection          = sGridDirection;
+   GridVolatility         = sGridVolatility;
+   GridSize               = StrToDouble(sGridSize);
+   UnitSize               = StrToDouble(sUnitSize);
+   Pyramid.Multiplier     = StrToDouble(sPyramidMultiplier);
+   Martingale.Multiplier  = StrToDouble(sMartingaleMultiplier);
+   TakeProfit             = sTakeProfit;
+   StopLoss               = sStopLoss;
+   ShowProfitInPercent    = StrToBool(sShowProfitInPercent);
+   Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);
+   Sessionbreak.EndTime   = StrToInteger(sSessionbreakEndTime);
+
+   // [Runtime status]
+   section = "Runtime status";
+   // sequence data
+   sequence.id                = GetIniInt    (file, section, "sequence.id"               );     // int      sequence.id                = 1234
+   sequence.created           = GetIniInt    (file, section, "sequence.created"          );     // datetime sequence.created           = 1624924800
+   sequence.isTest            = GetIniBool   (file, section, "sequence.isTest"           );     // bool     sequence.isTest            = 1
+   sequence.name              = GetIniStringA(file, section, "sequence.name",          "");     // string   sequence.name              = L.1234
+   sequence.status            = GetIniInt    (file, section, "sequence.status"           );     // int      sequence.status            = 1
+   sequence.direction         = GetIniInt    (file, section, "sequence.direction"        );     // int      sequence.direction         = 2
+   sequence.pyramidEnabled    = GetIniBool   (file, section, "sequence.pyramidEnabled"   );     // bool     sequence.pyramidEnabled    = 1
+   sequence.martingaleEnabled = GetIniBool   (file, section, "sequence.martingaleEnabled");     // bool     sequence.martingaleEnabled = 0
+   sequence.startEquity       = GetIniDouble (file, section, "sequence.startEquity"      );     // double   sequence.startEquity       = 1000.00
+   sequence.gridvola          = GetIniDouble (file, section, "sequence.gridvola"         );     // double   sequence.gridvola          = 29.5
+   sequence.gridsize          = GetIniDouble (file, section, "sequence.gridsize"         );     // double   sequence.gridsize          = 3.5
+   sequence.unitsize          = GetIniDouble (file, section, "sequence.unitsize"         );     // double   sequence.unitsize          = 0.01
+   sequence.gridbase          = GetIniDouble (file, section, "sequence.gridbase"         );     // double   sequence.gridbase          = 1.17453
+   sequence.openLots          = GetIniDouble (file, section, "sequence.openLots"         );     // double   sequence.openLots          = 0.12
+   sequence.hedgedPL          = GetIniDouble (file, section, "sequence.hedgedPL"         );     // double   sequence.hedgedPL          = 34.56
+   sequence.floatingPL        = GetIniDouble (file, section, "sequence.floatingPL"       );     // double   sequence.floatingPL        = 12.34
+   sequence.openPL            = GetIniDouble (file, section, "sequence.openPL"           );     // double   sequence.openPL            = 23.45
+   sequence.closedPL          = GetIniDouble (file, section, "sequence.closedPL"         );     // double   sequence.closedPL          = 45.67
+   sequence.totalPL           = GetIniDouble (file, section, "sequence.totalPL"          );     // double   sequence.totalPL           = 123.45
+   sequence.maxProfit         = GetIniDouble (file, section, "sequence.maxProfit"        );     // double   sequence.maxProfit         = 23.45
+   sequence.maxDrawdown       = GetIniDouble (file, section, "sequence.maxDrawdown"      );     // double   sequence.maxDrawdown       = -11.23
+   sequence.bePrice.long      = GetIniDouble (file, section, "sequence.bePrice.long"     );     // double   sequence.bePrice.long      = 1.17453
+   sequence.bePrice.short     = GetIniDouble (file, section, "sequence.bePrice.short"    );     // double   sequence.bePrice.short     = 0
+   sequence.tpPrice           = GetIniDouble (file, section, "sequence.tpPrice"          );     // double   sequence.tpPrice           = 1.17692
+   sequence.slPrice           = GetIniDouble (file, section, "sequence.slPrice"          );     // double   sequence.slPrice           = 1.17051
+
+   // long order data
+   ResetOrderLog(D_LONG);
+   long.enabled               = GetIniBool   (file, section, "long.enabled" );                  // bool     long.enabled  = 1
+   long.slippage              = GetIniDouble (file, section, "long.slippage");                  // double   long.slippage = 0
+   long.openLots              = GetIniDouble (file, section, "long.openLots");                  // double   long.openLots = 0.02
+   long.openPL                = GetIniDouble (file, section, "long.openPL"  );                  // double   long.openPL   = 12.34
+   long.closedPL              = GetIniDouble (file, section, "long.closedPL");                  // double   long.closedPL = 23.34
+   long.minLevel              = GetIniInt    (file, section, "long.minLevel");                  // int      long.minLevel = -2
+   long.maxLevel              = GetIniInt    (file, section, "long.maxLevel");                  // int      long.maxLevel = 7
+   string sKeys[], sOrder;
+   int size = ReadStatus.OrderKeys(file, section, sKeys, D_LONG); if (size < 0) return(false);
+   for (int i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.order.{i} = {data}
+      if (!ReadStatus.ParseOrder(sOrder, D_LONG)) return(!catch("ReadStatus(11)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+
+   // short order data
+   ResetOrderLog(D_SHORT);
+   short.enabled              = GetIniBool   (file, section, "short.enabled" );                 // bool     short.enabled  = 1
+   short.slippage             = GetIniDouble (file, section, "short.slippage");                 // double   short.slippage = 0
+   short.openLots             = GetIniDouble (file, section, "short.openLots");                 // double   short.openLots = 0.02
+   short.openPL               = GetIniDouble (file, section, "short.openPL"  );                 // double   short.openPL   = 12.34
+   short.closedPL             = GetIniDouble (file, section, "short.closedPL");                 // double   short.closedPL = 23.34
+   short.minLevel             = GetIniInt    (file, section, "short.minLevel");                 // int      short.minLevel = -2
+   short.maxLevel             = GetIniInt    (file, section, "short.maxLevel");                 // int      short.maxLevel = 7
+   size = ReadStatus.OrderKeys(file, section, sKeys, D_SHORT); if (size < 0) return(false);
+   for (i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.order.{i} = {data}
+      if (!ReadStatus.ParseOrder(sOrder, D_SHORT)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+
+}
+
+
+/**
+ * Read and return the keys of the specified order records found in the status file, sorted in ascending order.
+ *
+ * @param  _In_  string file      - status filename
+ * @param  _In_  string section   - status section
+ * @param  _Out_ string &keys[]   - array receiving the found keys
+ * @param  _In_  int    direction - D_LONG:  return long order records  (matching "long.order.{i}={data}")
+ *                                  D_SHORT: return short order records (matching "short.order.{i}={data}")
+ *
+ * @return int - number of found keys or EMPTY (-1) in case of errors
+ */
+int ReadStatus.OrderKeys(string file, string section, string &keys[], int direction) {
+   if (direction!=D_LONG && direction!=D_SHORT) return(_EMPTY(catch("ReadStatus.OrderKeys(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+
+   int size = GetIniKeys(file, section, keys);
+   if (size < 0) return(EMPTY);
+
+   string prefix = ifString(direction==D_LONG, "long.order.", "short.order.");
+   int prefixLen = StringLen(prefix);
+
+   for (int i=size-1; i >= 0; i--) {
+      if (StrStartsWithI(keys[i], prefix)) {
+         if (StrIsDigit(StrSubstr(keys[i], prefixLen))) {
+            continue;
+         }
+      }
+      ArraySpliceStrings(keys, i, 1);                 // drop all non-matching keys
+      size--;
+   }
+   if (!SortStrings(keys)) return(EMPTY);             // TODO: implement natural sorting
+   return(size);
+}
+
+
+/**
+ * Parse and store the string representation of an order.
+ *
+ * @param  string value     - string to parse
+ * @param  int    direction - order direction type: D_LONG | D_SHORT
+ *
+ * @return bool - success status
+ */
+bool ReadStatus.ParseOrder(string value, int direction) {
+   if (IsLastError()) return(false);
 }
 
 
