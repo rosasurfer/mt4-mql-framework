@@ -3102,8 +3102,8 @@ bool RestoreSequence() {
  * @return bool - success status
  */
 bool ReadStatus() {
-   if (IsLastError())  return(false);
-   if (!sequence.id)   return(!catch("ReadStatus(1)  illegal value of sequence.id = "+ sequence.id, ERR_RUNTIME_ERROR));
+   if (IsLastError()) return(false);
+   if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFilename();
    if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));

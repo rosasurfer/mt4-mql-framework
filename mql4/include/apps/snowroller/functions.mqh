@@ -1214,21 +1214,17 @@ bool ToggleStartStopDisplayMode() {
  * @return bool - whether the input sequence id is was valid and restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
-   string sValue = StrToUpper(StrTrim(Sequence.ID));
+   string sValue = StrTrim(Sequence.ID);
+   if (!StringLen(sValue)) return(false);
 
-   if (!StringLen(sValue))
-      return(false);
-
-   if (StrLeft(sValue, 1) == "T") {
+   if (StrStartsWithI(sValue, "T") {
       sequence.isTest = true;
-      sValue = StrSubstr(sValue, 1);
+      sValue = StrTrim(StrSubstr(sValue, 1));
    }
-   if (!StrIsDigit(sValue))
-      return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
 
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX)
-      return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 
    sequence.id = iValue;
    Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
