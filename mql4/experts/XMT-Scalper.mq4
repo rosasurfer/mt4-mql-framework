@@ -225,7 +225,7 @@ string   sMinBarSize          = "-";
 string   sIndicator           = "-";
 string   sUnitSize            = "-";
 
-// debug settings                               // configurable via framework config, see ::afterInit()
+// debug settings                               // configurable via framework config, see afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
 bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
@@ -2335,11 +2335,11 @@ bool SaveStatus() {
    }
 
    string section, file=GetStatusFilename(), separator="";
-   if (!IsFileA(file)) separator = CRLF;                                                     // an empty line as section separator
+   if (!IsFileA(file)) separator = CRLF;                             // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
-   WriteIniString(file, section, "Symbol",  Symbol() + separator);                           // visually separate sections
+   WriteIniString(file, section, "Symbol",  Symbol() + separator);   // conditional section separator
 
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",              sequence.id);
@@ -2378,7 +2378,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "MetricsServerDirectory",   MetricsServerDirectory);
 
    WriteIniString(file, section, "ChannelBug",               ChannelBug);
-   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);     // visually separate sections
+   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);  // conditional section separator
 
    section = "Runtime status";
    // On deletion of pending orders the number of stored order records decreases. To prevent orphaned order records in the
@@ -2407,39 +2407,43 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.OrderToStr(int index, int mode) {
-   // ticket,linkedTicket,lots,pendingType,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,stopLoss,takeProfit,commission,profit
+   int      ticket, linkedTicket, pendingType, openType;
+   datetime openTime, closeTime;
+   double   lots, pendingPrice, openPrice, closePrice, stopLoss, takeProfit, commission, profit;
+
+   // result: ticket,linkedTicket,lots,pendingType,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,stopLoss,takeProfit,commission,profit
 
    if (mode == MODE_REAL) {
-      int      ticket       = real.ticket      [index];
-      int      linkedTicket = real.linkedTicket[index];
-      double   lots         = real.lots        [index];
-      int      pendingType  = real.pendingType [index];
-      double   pendingPrice = real.pendingPrice[index];
-      int      openType     = real.openType    [index];
-      datetime openTime     = real.openTime    [index];
-      double   openPrice    = real.openPrice   [index];
-      datetime closeTime    = real.closeTime   [index];
-      double   closePrice   = real.closePrice  [index];
-      double   stopLoss     = real.stopLoss    [index];
-      double   takeProfit   = real.takeProfit  [index];
-      double   commission   = real.commission  [index];
-      double   profit       = real.profit      [index];
+      ticket       = real.ticket      [index];
+      linkedTicket = real.linkedTicket[index];
+      lots         = real.lots        [index];
+      pendingType  = real.pendingType [index];
+      pendingPrice = real.pendingPrice[index];
+      openType     = real.openType    [index];
+      openTime     = real.openTime    [index];
+      openPrice    = real.openPrice   [index];
+      closeTime    = real.closeTime   [index];
+      closePrice   = real.closePrice  [index];
+      stopLoss     = real.stopLoss    [index];
+      takeProfit   = real.takeProfit  [index];
+      commission   = real.commission  [index];
+      profit       = real.profit      [index];
    }
    else if (mode == MODE_VIRTUAL) {
-               ticket       = virt.ticket      [index];
-               linkedTicket = virt.linkedTicket[index];
-               lots         = virt.lots        [index];
-               pendingType  = virt.pendingType [index];
-               pendingPrice = virt.pendingPrice[index];
-               openType     = virt.openType    [index];
-               openTime     = virt.openTime    [index];
-               openPrice    = virt.openPrice   [index];
-               closeTime    = virt.closeTime   [index];
-               closePrice   = virt.closePrice  [index];
-               stopLoss     = virt.stopLoss    [index];
-               takeProfit   = virt.takeProfit  [index];
-               commission   = virt.commission  [index];
-               profit       = virt.profit      [index];
+      ticket       = virt.ticket      [index];
+      linkedTicket = virt.linkedTicket[index];
+      lots         = virt.lots        [index];
+      pendingType  = virt.pendingType [index];
+      pendingPrice = virt.pendingPrice[index];
+      openType     = virt.openType    [index];
+      openTime     = virt.openTime    [index];
+      openPrice    = virt.openPrice   [index];
+      closeTime    = virt.closeTime   [index];
+      closePrice   = virt.closePrice  [index];
+      stopLoss     = virt.stopLoss    [index];
+      takeProfit   = virt.takeProfit  [index];
+      commission   = virt.commission  [index];
+      profit       = virt.profit      [index];
    }
    else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 

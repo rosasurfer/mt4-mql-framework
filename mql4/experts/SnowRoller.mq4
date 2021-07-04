@@ -226,14 +226,14 @@ string   sAutoRestart            = "";
 string   sRestartStats           = "";
 
 // --- debug settings ----------------------       // configurable via framework config, @see SnowRoller::afterInit()
-bool     tester.onStartPause        = false;       // whether to pause the tester on a fulfilled start/resume condition
-bool     tester.onStopPause         = false;       // whether to pause the tester on a fulfilled stop condition
-bool     tester.onSessionBreakPause = false;       // whether to pause the tester on a sessionbreak stop/resume
-bool     tester.onTrendChangePause  = false;       // whether to pause the tester on a fulfilled trend change condition
-bool     tester.onTakeProfitPause   = false;       // whether to pause the tester when takeprofit is reached
-bool     tester.onStopLossPause     = false;       // whether to pause the tester when stoploss is reached
-bool     tester.reduceStatusWrites  = true;        // whether to minimize status file writing in tester
-bool     tester.showBreakeven       = false;       // whether to show breakeven markers in tester
+bool     test.onStartPause        = false;         // whether to pause the tester on a fulfilled start/resume condition
+bool     test.onStopPause         = false;         // whether to pause the tester on a fulfilled stop condition
+bool     test.onSessionBreakPause = false;         // whether to pause the tester on a sessionbreak stop/resume
+bool     test.onTrendChangePause  = false;         // whether to pause the tester on a fulfilled trend change condition
+bool     test.onTakeProfitPause   = false;         // whether to pause the tester when takeprofit is reached
+bool     test.onStopLossPause     = false;         // whether to pause the tester when stoploss is reached
+bool     test.reduceStatusWrites  = true;          // whether to minimize status file writing in tester
+bool     test.showBreakeven       = false;         // whether to show breakeven markers in tester
 
 
 #include <apps/snowroller/init.mqh>
@@ -419,9 +419,9 @@ bool StartSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                        Tester.Pause("StartSequence(7)");
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(8)");
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(9)");
+      if      (test.onStartPause)                                        Tester.Pause("StartSequence(7)");
+      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(8)");
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(9)");
    }
    return(!catch("StartSequence(10)"));
 }
@@ -688,13 +688,13 @@ bool StopSequence(int signal) {
    // pause or stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (tester.onStopPause)                                         Tester.Pause("StopSequence(12)");
-         else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(13)");
-         else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StopSequence(14)");
-         else if (tester.onTakeProfitPause   && signal==SIGNAL_TAKEPROFIT)    Tester.Pause("StopSequence(15)");
-         else if (tester.onStopLossPause     && signal==SIGNAL_STOPLOSS)      Tester.Pause("StopSequence(16)");
+         if      (test.onStopPause)                                         Tester.Pause("StopSequence(12)");
+         else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(13)");
+         else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StopSequence(14)");
+         else if (test.onTakeProfitPause   && signal==SIGNAL_TAKEPROFIT)    Tester.Pause("StopSequence(15)");
+         else if (test.onStopLossPause     && signal==SIGNAL_STOPLOSS)      Tester.Pause("StopSequence(16)");
       }
-      else if (sequence.status == STATUS_STOPPED)                             Tester.Stop("StopSequence(17)");
+      else if (sequence.status == STATUS_STOPPED)                           Tester.Stop("StopSequence(17)");
    }
    return(!catch("StopSequence(18)"));
 }
@@ -964,9 +964,9 @@ bool ResumeSequence(int signal) {
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (tester.onStartPause)                                        Tester.Pause("ResumeSequence(6)");
-      else if (tester.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(7)");
-      else if (tester.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(8)");
+      if      (test.onStartPause)                                        Tester.Pause("ResumeSequence(6)");
+      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(7)");
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(8)");
    }
    return(!catch("ResumeSequence(9)"));
 }
@@ -2886,11 +2886,9 @@ bool SaveStatus() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
-   if (IsTesting() && tester.reduceStatusWrites) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
-      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) {
-         return(true);
-      }
+      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
 
@@ -4278,8 +4276,8 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
  * @return bool - success status
  */
 bool UpdateProfitTargets() {
-   if (IsLastError())                        return(false);
-   if (IsTesting() && !tester.showBreakeven) return(true);
+   if (IsLastError())                      return(false);
+   if (IsTesting() && !test.showBreakeven) return(true);
    // 7bit:
    // double loss = currentPL - PotentialProfit(gridbaseDistance);
    // double be   = gridbase + RequiredDistance(loss);
