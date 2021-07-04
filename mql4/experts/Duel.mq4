@@ -1,14 +1,14 @@
 /**
- * Duel:  A uni- or bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
+ * Duel: A bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
  *
- * Eye to eye stand winners and losers
- * Hurt by envy, cut by greed
- * Face to face with their own disillusions
- * The scars of old romances still on their cheeks
+ *  Eye to eye stand winners and losers
+ *  Hurt by envy, cut by greed
+ *  Face to face with their own disillusions
+ *  The scars of old romances still on their cheeks
  *
- * The first cut won't hurt at all
- * The second only makes you wonder
- * The third will have you on your knees
+ *  The first cut won't hurt at all
+ *  The second only makes you wonder
+ *  The third will have you on your knees
  *
  *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
@@ -16,13 +16,16 @@
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                [liner notes: I've looked at life from both sides now.]
+ * @link  https://www.youtube.com/watch?v=-ZryHMdvfJU#                                                             [The Grid]
+ * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?1[0-9]{3}/
 
 extern string   GridDirection          = "Long | Short | Both*";
 extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
@@ -67,22 +70,22 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time
 #define CLR_PENDING           DeepSkyBlue          // order marker colors
 #define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
 #define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
-#define CLR_CLOSE             Orange
-
-// sequence data
-int      sequence.id;
-datetime sequence.created;
-bool     sequence.isTest;                          // whether the sequence is a test (a finished test can be loaded into an online chart)
+#define CLR_CLOSE             Orange               //
+                                                   //
+// sequence data                                   //
+int      sequence.id;                              //
+datetime sequence.created;                         //
+bool     sequence.isTest;                          // whether the sequence is a test (e.g. loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence.id}"
-int      sequence.status;
-int      sequence.direction;
+int      sequence.status;                          //
+int      sequence.direction;                       //
 bool     sequence.pyramidEnabled;                  // whether the sequence scales in on the winning side (pyramid)
 bool     sequence.martingaleEnabled;               // whether the sequence scales in on the losing side (martingale)
-double   sequence.startEquity;
-double   sequence.gridvola;
-double   sequence.gridsize;
+double   sequence.startEquity;                     //
+double   sequence.gridvola;                        //
+double   sequence.gridsize;                        //
 double   sequence.unitsize;                        // lots at the first level
-double   sequence.gridbase;
+double   sequence.gridbase;                        //
 double   sequence.openLots;                        // total open lots: long.openLots - short.openLots
 double   sequence.hedgedPL;                        // P/L of the hedged open positions
 double   sequence.floatingPL;                      // P/L of the floating open positions
@@ -91,11 +94,11 @@ double   sequence.closedPL;                        // P/L of all closed position
 double   sequence.totalPL;                         // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
-double   sequence.bePrice.long;
-double   sequence.bePrice.short;
-double   sequence.tpPrice;
-double   sequence.slPrice;
-
+double   sequence.bePrice.long;                    //
+double   sequence.bePrice.short;                   //
+double   sequence.tpPrice;                         //
+double   sequence.slPrice;                         //
+                                                   //
 // order management
 bool     long.enabled;
 int      long.ticket      [];                      // records are ordered ascending by grid level
@@ -178,7 +181,7 @@ string   sSequenceBePrice = "";
 string   sSequenceTpPrice = "";
 string   sSequenceSlPrice = "";
 
-// debug settings                                  // configurable via framework config, see ::afterInit()
+// debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause        = false;          // whether to pause a test after StopSequence()
 bool     test.reduceStatusWrites = true;           // whether to minimize status file writing in tester
 
@@ -1772,6 +1775,7 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
+string   prev.Sequence.ID = "";
 string   prev.GridDirection = "";
 string   prev.GridVolatility;
 double   prev.GridSize;
@@ -1825,8 +1829,9 @@ datetime prev.sessionbreak.endtime;
  */
 void BackupInputs() {
    // backup input parameters, also used for comparison in ValidateInputs()
-   prev.GridDirection          = StringConcatenate(GridDirection, "");     // string inputs are references to internal C literals...
-   prev.GridVolatility         = StringConcatenate(GridVolatility, "");    // ...and must be copied to break the reference
+   prev.Sequence.ID            = StringConcatenate(Sequence.ID, "");       // string inputs are references to internal C literals...
+   prev.GridDirection          = StringConcatenate(GridDirection, "");     // ...and must be copied to break the reference
+   prev.GridVolatility         = StringConcatenate(GridVolatility, "");
    prev.GridSize               = GridSize;
    prev.UnitSize               = UnitSize;
    prev.Pyramid.Multiplier     = Pyramid.Multiplier;
@@ -1878,6 +1883,7 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // restore input parameters
+   Sequence.ID            = prev.Sequence.ID;
    GridDirection          = prev.GridDirection;
    GridVolatility         = prev.GridVolatility;
    GridSize               = prev.GridSize;
@@ -1959,13 +1965,17 @@ bool ValidateInputs() {
    if (isManualInput && !StrCompareI(GridVolatility, prev.GridVolatility)) {
       if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of already started sequence"));
    }
-   sequence.gridvola = NULL;
    sValue = StrTrim(GridVolatility);
-   if (StringLen(sValue) && sValue!="{percent}") {
+   if (!StringLen(sValue) || sValue=="{percent}") {
+      sequence.gridvola = NULL;
+      GridVolatility = "";
+   }
+   else {
       if (StrEndsWith(sValue, "%"))
          sValue = StrTrim(StrLeft(sValue, -1));
       if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(4)  invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
       sequence.gridvola = MathAbs(StrToDouble(sValue));
+      GridVolatility = NumberToStr(sequence.gridvola, ".+") +"%";
    }
 
    // GridSize
@@ -2010,20 +2020,23 @@ bool ValidateInputs() {
       if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
+         TakeProfit        = NumberToStr(dValue, ".+") +"%";
          tpPct.condition   = true;
          tpPct.value       = dValue;
          tpPct.absValue    = INT_MAX;
-         tpPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
+         tpPct.description = "profit("+ TakeProfit +")";
          unsetTpAbs        = true;
       }
       else {
+         TakeProfit        = DoubleToStr(dValue, 2);
          tpAbs.condition   = true;
          tpAbs.value       = NormalizeDouble(dValue, 2);
-         tpAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
+         tpAbs.description = "profit("+ TakeProfit +")";
          unsetTpPct        = true;
       }
    }
    else {
+      TakeProfit = "";
       unsetTpPct = true;
       unsetTpAbs = true;
    }
@@ -2045,20 +2058,23 @@ bool ValidateInputs() {
       if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(17)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
+         StopLoss          = NumberToStr(dValue, ".+") +"%";
          slPct.condition   = true;
          slPct.value       = dValue;
          slPct.absValue    = INT_MIN;
-         slPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
+         slPct.description = "loss("+ StopLoss +")";
          unsetSlAbs        = true;
       }
       else {
+         StopLoss          = DoubleToStr(dValue, 2);
          slAbs.condition   = true;
          slAbs.value       = NormalizeDouble(dValue, 2);
-         slAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
+         slAbs.description = "loss("+ StopLoss +")";
          unsetSlPct        = true;
       }
    }
    else {
+      StopLoss   = "";
       unsetSlPct = true;
       unsetSlAbs = true;
    }
@@ -2351,19 +2367,179 @@ double iADR() {
 
 
 /**
- * Write the current sequence status to the status file.
+ * Write the current sequence status to a file.
  *
  * @return bool - success status
  */
 bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
-   // In tester skip updating the status file except at the first call and at test end.
+   // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
    if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
-      if (saved && __CoreFunction!=CF_DEINIT) return(true);
+      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
+
+   string section, file=GetStatusFilename(), separator="";
+   if (!IsFileA(file)) separator = CRLF;                                   // an empty line as additional section separator
+
+   section = "General";
+   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Symbol",  Symbol());
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+
+
+   section = "Inputs";
+   WriteIniString(file, section, "Sequence.ID",            /*string  */ Sequence.ID);
+   WriteIniString(file, section, "GridDirection",          /*string  */ GridDirection);
+   WriteIniString(file, section, "GridVolatility",         /*string  */ GridVolatility);
+   WriteIniString(file, section, "GridSize",               /*double  */ NumberToStr(GridSize, ".+"));
+   WriteIniString(file, section, "UnitSize",               /*double  */ NumberToStr(UnitSize, ".+"));
+                                                           /*        */
+   WriteIniString(file, section, "Pyramid.Multiplier",     /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
+   WriteIniString(file, section, "Martingale.Multiplier",  /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
+                                                           /*        */
+   WriteIniString(file, section, "TakeProfit",             /*string  */ TakeProfit);
+   WriteIniString(file, section, "StopLoss",               /*string  */ StopLoss);
+   WriteIniString(file, section, "ShowProfitInPercent",    /*bool    */ ShowProfitInPercent);
+                                                           /*        */
+   WriteIniString(file, section, "Sessionbreak.StartTime", /*datetime*/ Sessionbreak.StartTime);
+   WriteIniString(file, section, "Sessionbreak.EndTime",   /*datetime*/ Sessionbreak.EndTime + separator);
+
+
+   section = "Runtime status";
+   // On deletion of pending orders the number of stored order records decreases. To prevent orphaned order records in the
+   // status file the section is emptied before writing to it.
+   EmptyIniSectionA(file, section);
+
+   // sequence data
+   WriteIniString(file, section, "sequence.id",                /*int     */ sequence.id               );
+   WriteIniString(file, section, "sequence.created",           /*datetime*/ sequence.created          );
+   WriteIniString(file, section, "sequence.isTest",            /*bool    */ sequence.isTest           );
+   WriteIniString(file, section, "sequence.name",              /*string  */ sequence.name             );
+   WriteIniString(file, section, "sequence.status",            /*int     */ sequence.status           );
+   WriteIniString(file, section, "sequence.direction",         /*int     */ sequence.direction        );
+   WriteIniString(file, section, "sequence.pyramidEnabled",    /*bool    */ sequence.pyramidEnabled   );
+   WriteIniString(file, section, "sequence.martingaleEnabled", /*bool    */ sequence.martingaleEnabled);
+   WriteIniString(file, section, "sequence.startEquity",       /*double  */ sequence.startEquity      );
+   WriteIniString(file, section, "sequence.gridvola",          /*double  */ sequence.gridvola         );
+   WriteIniString(file, section, "sequence.gridsize",          /*double  */ sequence.gridsize         );
+   WriteIniString(file, section, "sequence.unitsize",          /*double  */ sequence.unitsize         );
+   WriteIniString(file, section, "sequence.gridbase",          /*double  */ sequence.gridbase         );
+   WriteIniString(file, section, "sequence.openLots",          /*double  */ sequence.openLots         );
+   WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ sequence.hedgedPL         );
+   WriteIniString(file, section, "sequence.floatingPL",        /*double  */ sequence.floatingPL       );
+   WriteIniString(file, section, "sequence.openPL",            /*double  */ sequence.openPL           );
+   WriteIniString(file, section, "sequence.closedPL",          /*double  */ sequence.closedPL         );
+   WriteIniString(file, section, "sequence.totalPL",           /*double  */ sequence.totalPL          );
+   WriteIniString(file, section, "sequence.maxProfit",         /*double  */ sequence.maxProfit        );
+   WriteIniString(file, section, "sequence.maxDrawdown",       /*double  */ sequence.maxDrawdown      );
+   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ sequence.bePrice.long     );
+   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ sequence.bePrice.short    );
+   WriteIniString(file, section, "sequence.tpPrice",           /*double  */ sequence.tpPrice          );
+   WriteIniString(file, section, "sequence.slPrice",           /*double  */ sequence.slPrice + CRLF   );
+
+   // long order data
+   WriteIniString(file, section, "long.enabled",               /*bool    */ long.enabled);
+   int size = ArraySize(long.ticket);
+   for (int i=0; i < size; i++) {
+      WriteIniString(file, section, "long.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_LONG));
+   }
+   WriteIniString(file, section, "long.slippage",              /*double  */ long.slippage);
+   WriteIniString(file, section, "long.openLots",              /*double  */ long.openLots);
+   WriteIniString(file, section, "long.openPL",                /*double  */ long.openPL  );
+   WriteIniString(file, section, "long.closedPL",              /*double  */ long.closedPL);
+   WriteIniString(file, section, "long.minLevel",              /*int     */ long.minLevel);
+   WriteIniString(file, section, "long.maxLevel",              /*int     */ long.maxLevel + CRLF);
+
+   // short order data
+   WriteIniString(file, section, "short.enabled",              /*bool    */ short.enabled);
+   size = ArraySize(short.ticket);
+   for (i=0; i < size; i++) {
+      WriteIniString(file, section, "short.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_SHORT));
+   }
+   WriteIniString(file, section, "short.slippage",             /*double  */ short.slippage);
+   WriteIniString(file, section, "short.openLots",             /*double  */ short.openLots);
+   WriteIniString(file, section, "short.openPL",               /*double  */ short.openPL  );
+   WriteIniString(file, section, "short.closedPL",             /*double  */ short.closedPL);
+   WriteIniString(file, section, "short.minLevel",             /*int     */ short.minLevel);
+   WriteIniString(file, section, "short.maxLevel",             /*int     */ short.maxLevel + CRLF);
+
+   // other
+   WriteIniString(file, section, "tpAbs.condition",            /*bool    */ tpAbs.condition  );
+   WriteIniString(file, section, "tpAbs.value",                /*double  */ tpAbs.value      );
+   WriteIniString(file, section, "tpAbs.description",          /*string  */ tpAbs.description);
+   WriteIniString(file, section, "tpPct.condition",            /*bool    */ tpPct.condition  );
+   WriteIniString(file, section, "tpPct.value",                /*double  */ tpPct.value      );
+   WriteIniString(file, section, "tpPct.absValue",             /*double  */ tpPct.absValue   );
+   WriteIniString(file, section, "tpPct.description",          /*string  */ tpPct.description + CRLF);
+
+   WriteIniString(file, section, "slAbs.condition",            /*bool    */ slAbs.condition  );
+   WriteIniString(file, section, "slAbs.value",                /*double  */ slAbs.value      );
+   WriteIniString(file, section, "slAbs.description",          /*string  */ slAbs.description);
+   WriteIniString(file, section, "slPct.condition",            /*bool    */ slPct.condition  );
+   WriteIniString(file, section, "slPct.value",                /*double  */ slPct.value      );
+   WriteIniString(file, section, "slPct.absValue",             /*double  */ slPct.absValue   );
+   WriteIniString(file, section, "slPct.description",          /*string  */ slPct.description + CRLF);
+
+   WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime);
+   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime  );
+
+   return(!catch("SaveStatus(1)"));
+}
+
+
+/**
+ * Return a string representation of an order record to be stored by SaveStatus().
+ *
+ * @param  int index     - index of the order record
+ * @param  int direction - D_LONG | D_SHORT
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.OrderToStr(int index, int direction) {
+   int      ticket, level, pendingType, type;
+   datetime pendingTime, openTime, closeTime;
+   double   lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
+
+   // result: ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+
+   if (direction == D_LONG) {
+      ticket       = long.ticket      [index];
+      level        = long.level       [index];
+      lots         = long.lots        [index];
+      pendingType  = long.pendingType [index];
+      pendingTime  = long.pendingTime [index];
+      pendingPrice = long.pendingPrice[index];
+      type         = long.type        [index];
+      openTime     = long.openTime    [index];
+      openPrice    = long.openPrice   [index];
+      closeTime    = long.closeTime   [index];
+      closePrice   = long.closePrice  [index];
+      swap         = long.swap        [index];
+      commission   = long.commission  [index];
+      profit       = long.profit      [index];
+   }
+   else if (direction == D_SHORT) {
+      ticket       = short.ticket      [index];
+      level        = short.level       [index];
+      lots         = short.lots        [index];
+      pendingType  = short.pendingType [index];
+      pendingTime  = short.pendingTime [index];
+      pendingPrice = short.pendingPrice[index];
+      type         = short.type        [index];
+      openTime     = short.openTime    [index];
+      openPrice    = short.openPrice   [index];
+      closeTime    = short.closeTime   [index];
+      closePrice   = short.closePrice  [index];
+      swap         = short.swap        [index];
+      commission   = short.commission  [index];
+      profit       = short.profit      [index];
+   }
+   else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -2733,7 +2909,8 @@ bool MakeScreenshot(string comment = "") {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
+   return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
+                            "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
                             "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
                             "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,

@@ -20,8 +20,9 @@ int onInit() {
 int onInitUser() {
    if (ValidateInputs()) {                                           // on success create a new sequence
       sequence.id      = CreateSequenceId();
-      sequence.created = Max(TimeCurrentEx(), TimeServer());
+      Sequence.ID      = sequence.id;
       sequence.isTest  = IsTesting();
+      sequence.created = Max(TimeCurrentEx(), TimeServer());
       sequence.status  = STATUS_WAITING;
       ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
       SS.All();
