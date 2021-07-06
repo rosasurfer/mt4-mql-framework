@@ -56,7 +56,7 @@ int onInitUser() {
          if (!IsTesting() && !IsDemoFix()) {
             if (sequence.martingaleEnabled || sequence.direction==D_BOTH) {
                PlaySoundEx("Windows Notify.wav");
-               if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
+               if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
                   StopSequence(NULL);
                   return(catch("onInitUser(5)"));
                }

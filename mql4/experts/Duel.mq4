@@ -448,7 +448,7 @@ bool StartSequence(int signal) {
       if (idxShort < 0) return(false);
    }
 
-   // update the gridbase to reflect experienced slippage
+   // update the gridbase according to the realized price (slippage)
    if      (sequence.direction == D_LONG)  sequence.gridbase = long.openPrice [idxLong ];
    else if (sequence.direction == D_SHORT) sequence.gridbase = short.openPrice[idxShort];
    else                                    sequence.gridbase = NormalizeDouble((long.openPrice[idxLong]+short.openPrice[idxShort])/2, Digits);
@@ -2883,21 +2883,21 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(), "           ", sSequence, sError,        NL,
-                                                                                          NL,
-                                  "Grid:          ",  sGridParameters,                    NL,
-                                  "Volatility:   ",   sGridVolatility,                    NL,
-                                                                                          NL,
-                                  "Long:         ",   sOpenLongLots,                      NL,
-                                  "Short:        ",   sOpenShortLots,                     NL,
-                                  "Total:         ",  sOpenTotalLots,                     NL,
-                                                                                          NL,
-                                  "Stop:          ",  sStopConditions,                    NL,
-                                  "BE:             ", sSequenceBePrice,                   NL,
-                                  "TP:             ", sSequenceTpPrice,                   NL,
-                                  "SL:             ", sSequenceSlPrice,                   NL,
-                                                                                          NL,
-                                  "Profit:        ",  sSequenceTotalPL, sSequencePlStats, NL
+   string msg = StringConcatenate(ProgramName(), "           ", sSequence, sError,              NL,
+                                                                                                NL,
+                                  "Grid:          ",  sGridParameters,                          NL,
+                                  "Volatility:   ",   sGridVolatility,                          NL,
+                                                                                                NL,
+                                  "Long:         ",   sOpenLongLots,                            NL,
+                                  "Short:        ",   sOpenShortLots,                           NL,
+                                  "Total:         ",  sOpenTotalLots,                           NL,
+                                                                                                NL,
+                                  "Stop:          ",  sStopConditions,                          NL,
+                                  "BE:             ", sSequenceBePrice,                         NL,
+                                  "TP:             ", sSequenceTpPrice,                         NL,
+                                  "SL:             ", sSequenceSlPrice,                         NL,
+                                                                                                NL,
+                                  "Profit:        ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
    );
 
    // 4 lines margin-top for instrument and indicator legends
