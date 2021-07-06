@@ -3955,6 +3955,7 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
  * @return bool - success status
  */
 bool onPositionOpen(int tickets[]) {
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3")
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArraySize(tickets);
    if (!size || !isLogInfo) return(true);
@@ -3994,13 +3995,13 @@ bool onPositionOpen(int tickets[]) {
 /**
  * Handle a PositionClose event.
  *
- * @param  int tickets[] - ticket ids of the closed positions
+ * @param  int tickets[][] - ticket ids of the closed positions
  *
  * @return bool - success status
  */
 bool onPositionClose(int tickets[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
-   int size = ArraySize(tickets);
+   int size = ArrayRange(tickets, 0);
    if (!size || !isLogInfo) return(true);
 
    string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
