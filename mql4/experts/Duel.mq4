@@ -2483,52 +2483,52 @@ bool SaveStatus() {
 
    // [Inputs]
    section = "Inputs";
-   WriteIniString(file, section, "Sequence.ID",            /*string  */ Sequence.ID);
-   WriteIniString(file, section, "GridDirection",          /*string  */ GridDirection);
-   WriteIniString(file, section, "GridVolatility",         /*string  */ GridVolatility);
-   WriteIniString(file, section, "GridSize",               /*double  */ NumberToStr(GridSize, ".+"));
-   WriteIniString(file, section, "UnitSize",               /*double  */ NumberToStr(UnitSize, ".+"));
+   WriteIniString(file, section, "Sequence.ID",                /*string  */ Sequence.ID);
+   WriteIniString(file, section, "GridDirection",              /*string  */ GridDirection);
+   WriteIniString(file, section, "GridVolatility",             /*string  */ GridVolatility);
+   WriteIniString(file, section, "GridSize",                   /*double  */ NumberToStr(GridSize, ".+"));
+   WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(UnitSize, ".+"));
 
-   WriteIniString(file, section, "Pyramid.Multiplier",     /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
-   WriteIniString(file, section, "Martingale.Multiplier",  /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
+   WriteIniString(file, section, "Pyramid.Multiplier",         /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
+   WriteIniString(file, section, "Martingale.Multiplier",      /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
 
-   WriteIniString(file, section, "TakeProfit",             /*string  */ TakeProfit);
-   WriteIniString(file, section, "StopLoss",               /*string  */ StopLoss);
-   WriteIniString(file, section, "ShowProfitInPercent",    /*bool    */ ShowProfitInPercent);
+   WriteIniString(file, section, "TakeProfit",                 /*string  */ TakeProfit);
+   WriteIniString(file, section, "StopLoss",                   /*string  */ StopLoss);
+   WriteIniString(file, section, "ShowProfitInPercent",        /*bool    */ ShowProfitInPercent);
 
-   WriteIniString(file, section, "Sessionbreak.StartTime", /*datetime*/ Sessionbreak.StartTime);
-   WriteIniString(file, section, "Sessionbreak.EndTime",   /*datetime*/ Sessionbreak.EndTime + separator);
+   WriteIniString(file, section, "Sessionbreak.StartTime",     /*datetime*/ Sessionbreak.StartTime);
+   WriteIniString(file, section, "Sessionbreak.EndTime",       /*datetime*/ Sessionbreak.EndTime + separator);
 
    // [Runtime status]
    section = "Runtime status";      // On deletion of pending orders the number of stored order records decreases. To prevent
    EmptyIniSectionA(file, section); // orphaned records in the status file the section is emptied before writing to it.
 
    // sequence data
-   WriteIniString(file, section, "sequence.id",                /*int     */ sequence.id               );
-   WriteIniString(file, section, "sequence.created",           /*datetime*/ sequence.created          );
-   WriteIniString(file, section, "sequence.isTest",            /*bool    */ sequence.isTest           );
-   WriteIniString(file, section, "sequence.name",              /*string  */ sequence.name             );
-   WriteIniString(file, section, "sequence.status",            /*int     */ sequence.status           );
-   WriteIniString(file, section, "sequence.direction",         /*int     */ sequence.direction        );
-   WriteIniString(file, section, "sequence.pyramidEnabled",    /*bool    */ sequence.pyramidEnabled   );
+   WriteIniString(file, section, "sequence.id",                /*int     */ sequence.id);
+   WriteIniString(file, section, "sequence.created",           /*datetime*/ sequence.created);
+   WriteIniString(file, section, "sequence.isTest",            /*bool    */ sequence.isTest);
+   WriteIniString(file, section, "sequence.name",              /*string  */ sequence.name);
+   WriteIniString(file, section, "sequence.status",            /*int     */ sequence.status);
+   WriteIniString(file, section, "sequence.direction",         /*int     */ sequence.direction);
+   WriteIniString(file, section, "sequence.pyramidEnabled",    /*bool    */ sequence.pyramidEnabled);
    WriteIniString(file, section, "sequence.martingaleEnabled", /*bool    */ sequence.martingaleEnabled);
-   WriteIniString(file, section, "sequence.startEquity",       /*double  */ sequence.startEquity      );
-   WriteIniString(file, section, "sequence.gridvola",          /*double  */ sequence.gridvola         );
-   WriteIniString(file, section, "sequence.gridsize",          /*double  */ sequence.gridsize         );
-   WriteIniString(file, section, "sequence.unitsize",          /*double  */ sequence.unitsize         );
-   WriteIniString(file, section, "sequence.gridbase",          /*double  */ sequence.gridbase         );
-   WriteIniString(file, section, "sequence.openLots",          /*double  */ sequence.openLots         );
-   WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ sequence.hedgedPL         );
-   WriteIniString(file, section, "sequence.floatingPL",        /*double  */ sequence.floatingPL       );
-   WriteIniString(file, section, "sequence.openPL",            /*double  */ sequence.openPL           );
-   WriteIniString(file, section, "sequence.closedPL",          /*double  */ sequence.closedPL         );
-   WriteIniString(file, section, "sequence.totalPL",           /*double  */ sequence.totalPL          );
-   WriteIniString(file, section, "sequence.maxProfit",         /*double  */ sequence.maxProfit        );
-   WriteIniString(file, section, "sequence.maxDrawdown",       /*double  */ sequence.maxDrawdown      );
-   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ sequence.bePrice.long     );
-   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ sequence.bePrice.short    );
-   WriteIniString(file, section, "sequence.tpPrice",           /*double  */ sequence.tpPrice          );
-   WriteIniString(file, section, "sequence.slPrice",           /*double  */ sequence.slPrice + CRLF   );
+   WriteIniString(file, section, "sequence.startEquity",       /*double  */ DoubleToStr(sequence.startEquity, 2));
+   WriteIniString(file, section, "sequence.gridvola",          /*double  */ NumberToStr(sequence.gridvola, ".+"));
+   WriteIniString(file, section, "sequence.gridsize",          /*double  */ NumberToStr(sequence.gridsize, ".+"));
+   WriteIniString(file, section, "sequence.unitsize",          /*double  */ NumberToStr(sequence.unitsize, ".+"));
+   WriteIniString(file, section, "sequence.gridbase",          /*double  */ DoubleToStr(sequence.gridbase, Digits));
+   WriteIniString(file, section, "sequence.openLots",          /*double  */ NumberToStr(sequence.openLots, ".+"));
+   WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ DoubleToStr(sequence.hedgedPL, 2));
+   WriteIniString(file, section, "sequence.floatingPL",        /*double  */ DoubleToStr(sequence.floatingPL, 2));
+   WriteIniString(file, section, "sequence.openPL",            /*double  */ DoubleToStr(sequence.openPL, 2));
+   WriteIniString(file, section, "sequence.closedPL",          /*double  */ DoubleToStr(sequence.closedPL, 2));
+   WriteIniString(file, section, "sequence.totalPL",           /*double  */ DoubleToStr(sequence.totalPL, 2));
+   WriteIniString(file, section, "sequence.maxProfit",         /*double  */ DoubleToStr(sequence.maxProfit, 2));
+   WriteIniString(file, section, "sequence.maxDrawdown",       /*double  */ DoubleToStr(sequence.maxDrawdown, 2));
+   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ ifString(!sequence.bePrice.long, "0", NumberToStr(sequence.bePrice.long, "."+ Digits +"+")));
+   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ ifString(!sequence.bePrice.short, "0", NumberToStr(sequence.bePrice.short, "."+ Digits +"+")));
+   WriteIniString(file, section, "sequence.tpPrice",           /*double  */ ifString(!sequence.tpPrice, "0", NumberToStr(sequence.tpPrice, "."+ Digits +"+")));
+   WriteIniString(file, section, "sequence.slPrice",           /*double  */ ifString(!sequence.slPrice, "0", NumberToStr(sequence.slPrice, "."+ Digits +"+")) + CRLF);
 
    // long order data
    WriteIniString(file, section, "long.enabled",               /*bool    */ long.enabled);
@@ -2536,10 +2536,10 @@ bool SaveStatus() {
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "long.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_LONG));
    }
-   WriteIniString(file, section, "long.slippage",              /*double  */ long.slippage);
-   WriteIniString(file, section, "long.openLots",              /*double  */ long.openLots);
-   WriteIniString(file, section, "long.openPL",                /*double  */ long.openPL  );
-   WriteIniString(file, section, "long.closedPL",              /*double  */ long.closedPL);
+   WriteIniString(file, section, "long.slippage",              /*double  */ NumberToStr(long.slippage, ".1+"));
+   WriteIniString(file, section, "long.openLots",              /*double  */ NumberToStr(long.openLots, ".+"));
+   WriteIniString(file, section, "long.openPL",                /*double  */ DoubleToStr(long.openPL, 2));
+   WriteIniString(file, section, "long.closedPL",              /*double  */ DoubleToStr(long.closedPL, 2));
    WriteIniString(file, section, "long.minLevel",              /*int     */ long.minLevel);
    WriteIniString(file, section, "long.maxLevel",              /*int     */ long.maxLevel + CRLF);
 
@@ -2549,10 +2549,10 @@ bool SaveStatus() {
    for (i=0; i < size; i++) {
       WriteIniString(file, section, "short.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_SHORT));
    }
-   WriteIniString(file, section, "short.slippage",             /*double  */ short.slippage);
-   WriteIniString(file, section, "short.openLots",             /*double  */ short.openLots);
-   WriteIniString(file, section, "short.openPL",               /*double  */ short.openPL  );
-   WriteIniString(file, section, "short.closedPL",             /*double  */ short.closedPL);
+   WriteIniString(file, section, "short.slippage",             /*double  */ NumberToStr(short.slippage, ".1+"));
+   WriteIniString(file, section, "short.openLots",             /*double  */ NumberToStr(short.openLots, ".+"));
+   WriteIniString(file, section, "short.openPL",               /*double  */ DoubleToStr(short.openPL, 2));
+   WriteIniString(file, section, "short.closedPL",             /*double  */ DoubleToStr(short.closedPL, 2));
    WriteIniString(file, section, "short.minLevel",             /*int     */ short.minLevel);
    WriteIniString(file, section, "short.maxLevel",             /*int     */ short.maxLevel + CRLF);
 
