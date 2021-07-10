@@ -395,7 +395,7 @@ int deinit() {
          case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
          case UR_REMOVE     : error = onDeinitRemove();        break;   //
          case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
-         // build > 509                                                 //
+         // terminal builds > 509                                       //
          case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
          case UR_INITFAILED : error = onDeinitFailed();        break;   //
          case UR_CLOSE      : error = onDeinitClose();         break;   //
@@ -527,7 +527,7 @@ bool CheckErrors(string location, int error = NULL) {
 /**
  * Whether a chart command was sent to the indicator. If so, the command is retrieved and stored.
  *
- * @param  string commands[] - array to store received commands in
+ * @param  _Out_ string &commands[] - array to store received commands in
  *
  * @return bool
  */
@@ -724,7 +724,7 @@ int onDeinitAccountChange()
 
 
 /**
- * Standalone:   Called in terminals newer than build 509 when the terminal shuts down.
+ * Standalone:   Called in terminals builds > 509 when the terminal shuts down.
  * In iCustom(): Never called.
  *
  * @return int - error status

@@ -4,7 +4,7 @@
  *
  * @return int - error status
  *
- * @see  mql4/experts/XMT-Scalper.mq4
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 int onInitUser() {
    // check for and validate a specified sequence id
@@ -31,8 +31,11 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (ValidateInputs()) SaveStatus();                         // successful parameter change
-   else                  RestoreInputs();                      // failed parameter change
+   if (!ValidateInputs()) {
+      RestoreInputs();
+      return(last_error);
+   }
+   SaveStatus();
    return(last_error);
 }
 

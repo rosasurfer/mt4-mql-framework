@@ -1,12 +1,12 @@
 /**
  * Return the number of changed bars of the specified timeseries since the last tick. Equivalent to resolving the number of
- * changed bars in indicators for the current chart by computing:
+ * changed bars in indicators for the chart period by computing:
  *
  *   ValidBars   = IndicatorCounted()
  *   ChangedBars = Bars - ValidBars
  *   Bars        = ValidBars + ChangedBars
  *
- * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with a timeseries
+ * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with timeframes
  * different from the current one.
  *
  * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
@@ -79,9 +79,8 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
       else if (bars==data[i][CB.Bars] && lastBarTime==data[i][CB.LastBarTime]) { // number of bars is unchanged and last bar is still the same
          changedBars = 1;                                                        // a regular tick
       }
-      else if (bars==data[i][CB.Bars]) {                                         // number of bars is unchanged but last bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
-         if (IsLogInfo()) logInfo("iChangedBars(4)  number of bars unchanged but oldest bar differs, hit the timeseries MAX_CHART_BARS? (bars="+ bars +", lastBar="+ TimeToStr(lastBarTime, TIME_FULL) +", prevLastBar="+ TimeToStr(data[i][CB.LastBarTime], TIME_FULL) +")");
-         // find the bar stored in data[i][CB.FirstBarTime]
+      else if (bars==data[i][CB.Bars]) {                                         // number of bars is the same but the oldest bar changed: the timeseries hit MAX_CHART_BARS and bars have been shifted off the end
+         // find the bar stored in data[i][CB.FirstBarTime]                      // (e.g. in self-updating offline charts when MAX_CHART_BARS is hit on each new bar)
          int offset = iBarShift(symbol, timeframe, data[i][CB.FirstBarTime], true);
          if (offset == -1) changedBars = bars;                                   // CB.FirstBarTime not found: mark all bars as changed
          else              changedBars = offset + 1;                             // +1 to cover a simultaneous BarOpen event

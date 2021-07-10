@@ -1,5 +1,5 @@
 /**
- * WARNING: This code is unfinished work-in-progress. Don't risk real money and use it only in demo accounts.
+ * WARNING: This code is unfinished work-in-progress. Use it only in demo accounts.
  *
  *
  * XMT-Scalper revisited
@@ -225,7 +225,7 @@ string   sMinBarSize          = "-";
 string   sIndicator           = "-";
 string   sUnitSize            = "-";
 
-// debug settings                               // configurable via framework config, see ::afterInit()
+// debug settings                               // configurable via framework config, see afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
 bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
@@ -1801,7 +1801,7 @@ bool Orders.RemoveRealTicket(int ticket) {
 /**
  * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
  *
- * @param  string commands[] - array to store received commands
+ * @param  _Out_ string &commands[] - array to store received commands
  *
  * @return bool
  */
@@ -2021,19 +2021,19 @@ bool RestoreSequence() {
  * @return bool - success status
  */
 bool ReadStatus() {
-   if (IsLastError())  return(false);
-   if (!sequence.id)   return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (IsLastError()) return(false);
+   if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section, file=GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";
    string sAccount = GetIniStringA(file, section, "Account", "");                                     // string Account = ICMarkets:12345678
    string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                                     // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
-   if (sAccount != sThisAccount) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (sSymbol  != Symbol())     return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sAccount != sThisAccount) return(!catch("ReadStatus(3)  account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (sSymbol  != Symbol())     return(!catch("ReadStatus(4)  symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
@@ -2183,7 +2183,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int mode) 
 
 
 /**
- * Parse and store the string representation of an order.
+ * Parse the string representation of an order and store the parsed data.
  *
  * @param  string value - string to parse
  * @param  int    mode  - MODE_REAL:    store in the real order log
@@ -2335,11 +2335,11 @@ bool SaveStatus() {
    }
 
    string section, file=GetStatusFilename(), separator="";
-   if (!IsFileA(file)) separator = CRLF;                                                     // an empty line as section separator
+   if (!IsFileA(file)) separator = CRLF;                             // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
-   WriteIniString(file, section, "Symbol",  Symbol() + separator);                           // visually separate sections
+   WriteIniString(file, section, "Symbol",  Symbol() + separator);   // conditional section separator
 
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",              sequence.id);
@@ -2378,7 +2378,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "MetricsServerDirectory",   MetricsServerDirectory);
 
    WriteIniString(file, section, "ChannelBug",               ChannelBug);
-   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);     // visually separate sections
+   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);  // conditional section separator
 
    section = "Runtime status";
    // On deletion of pending orders the number of stored order records decreases. To prevent orphaned order records in the
@@ -2407,39 +2407,43 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.OrderToStr(int index, int mode) {
-   // ticket,linkedTicket,lots,pendingType,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,stopLoss,takeProfit,commission,profit
+   int      ticket, linkedTicket, pendingType, openType;
+   datetime openTime, closeTime;
+   double   lots, pendingPrice, openPrice, closePrice, stopLoss, takeProfit, commission, profit;
+
+   // result: ticket,linkedTicket,lots,pendingType,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,stopLoss,takeProfit,commission,profit
 
    if (mode == MODE_REAL) {
-      int      ticket       = real.ticket      [index];
-      int      linkedTicket = real.linkedTicket[index];
-      double   lots         = real.lots        [index];
-      int      pendingType  = real.pendingType [index];
-      double   pendingPrice = real.pendingPrice[index];
-      int      openType     = real.openType    [index];
-      datetime openTime     = real.openTime    [index];
-      double   openPrice    = real.openPrice   [index];
-      datetime closeTime    = real.closeTime   [index];
-      double   closePrice   = real.closePrice  [index];
-      double   stopLoss     = real.stopLoss    [index];
-      double   takeProfit   = real.takeProfit  [index];
-      double   commission   = real.commission  [index];
-      double   profit       = real.profit      [index];
+      ticket       = real.ticket      [index];
+      linkedTicket = real.linkedTicket[index];
+      lots         = real.lots        [index];
+      pendingType  = real.pendingType [index];
+      pendingPrice = real.pendingPrice[index];
+      openType     = real.openType    [index];
+      openTime     = real.openTime    [index];
+      openPrice    = real.openPrice   [index];
+      closeTime    = real.closeTime   [index];
+      closePrice   = real.closePrice  [index];
+      stopLoss     = real.stopLoss    [index];
+      takeProfit   = real.takeProfit  [index];
+      commission   = real.commission  [index];
+      profit       = real.profit      [index];
    }
    else if (mode == MODE_VIRTUAL) {
-               ticket       = virt.ticket      [index];
-               linkedTicket = virt.linkedTicket[index];
-               lots         = virt.lots        [index];
-               pendingType  = virt.pendingType [index];
-               pendingPrice = virt.pendingPrice[index];
-               openType     = virt.openType    [index];
-               openTime     = virt.openTime    [index];
-               openPrice    = virt.openPrice   [index];
-               closeTime    = virt.closeTime   [index];
-               closePrice   = virt.closePrice  [index];
-               stopLoss     = virt.stopLoss    [index];
-               takeProfit   = virt.takeProfit  [index];
-               commission   = virt.commission  [index];
-               profit       = virt.profit      [index];
+      ticket       = virt.ticket      [index];
+      linkedTicket = virt.linkedTicket[index];
+      lots         = virt.lots        [index];
+      pendingType  = virt.pendingType [index];
+      pendingPrice = virt.pendingPrice[index];
+      openType     = virt.openType    [index];
+      openTime     = virt.openTime    [index];
+      openPrice    = virt.openPrice   [index];
+      closeTime    = virt.closeTime   [index];
+      closePrice   = virt.closePrice  [index];
+      stopLoss     = virt.stopLoss    [index];
+      takeProfit   = virt.takeProfit  [index];
+      commission   = virt.commission  [index];
+      profit       = virt.profit      [index];
    }
    else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER)));
 
@@ -2746,11 +2750,10 @@ void RestoreInputs() {
  */
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
-
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
+   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
+   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 
    sequence.id = iValue;
    Sequence.ID = sequence.id;

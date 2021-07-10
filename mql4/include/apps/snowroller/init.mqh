@@ -1,21 +1,10 @@
-
-/**
- * Initialization preprocessing
- *
- * @return int - error status
- */
-int onInit() {
-   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");   // MQL4 doesn't support bool constants
-   SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
-   return(NO_ERROR);
-}
-
-
 /**
  * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/SnowRoller.mq4
  */
 int onInitUser() {
    // check for a specified sequence id
@@ -142,14 +131,14 @@ int afterInit() {
    if (IsTesting()) {
       // initialize tester configuration
       section = section +".Tester";
-      tester.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
-      tester.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
-      tester.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
-      tester.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
-      tester.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
-      tester.onStopLossPause     = GetConfigBool(section, "OnStopLossPause",     false);
-      tester.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
-      tester.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
+      test.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
+      test.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
+      test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
+      test.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
+      test.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
+      test.onStopLossPause     = GetConfigBool(section, "OnStopLossPause",     false);
+      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
+      test.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
    }
    else if (IsTestSequence()) {
       // a finished test loaded into an online chart
