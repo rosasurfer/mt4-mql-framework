@@ -1,21 +1,10 @@
-
-/**
- * Initialization preprocessing
- *
- * @return int - error status
- */
-int onInit() {
-   SNOWROLLER = StrStartsWithI(ProgramName(), "SnowRoller");   // MQL4 doesn't support bool constants
-   SISYPHUS   = StrStartsWithI(ProgramName(), "Sisyphus");
-   return(NO_ERROR);
-}
-
-
 /**
  * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
  * There was an input dialog.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/SnowRoller.mq4
  */
 int onInitUser() {
    // check for a specified sequence id

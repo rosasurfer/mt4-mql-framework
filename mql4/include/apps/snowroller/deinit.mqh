@@ -1,8 +1,9 @@
-
 /**
  * Called before input parameters are changed.
  *
  * @return int - error status
+ *
+ * @see  mql4/experts/SnowRoller.mq4
  */
 int onDeinitParameters() {
    BackupInputs();

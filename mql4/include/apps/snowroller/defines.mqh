@@ -1,5 +1,7 @@
 /**
- * Common definitions for SnowRoller and Sisyphus
+ * Common definitions for SnowRoller and the Snowroller scripts.
+ *
+ * @see  mql4/experts/SnowRoller.mq4
  */
 
 // grid direction types
