@@ -3,7 +3,7 @@
  *
  * @return int - error status
  *
- * @see  mql4/experts/XMT-Scalper.mq4
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 int onDeinit() {
    int size = ArraySize(metrics.hSet);
