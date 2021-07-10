@@ -2183,7 +2183,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int mode) 
 
 
 /**
- * Parse and store the string representation of an order.
+ * Parse the string representation of an order and store the parsed data.
  *
  * @param  string value - string to parse
  * @param  int    mode  - MODE_REAL:    store in the real order log

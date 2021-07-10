@@ -1758,8 +1758,7 @@ bool Grid.AddPendingOrder(int direction, int level) {
    double   commission   = NULL;
    double   profit       = NULL;
 
-   int index = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
-   return(!IsEmpty(index));
+   return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
 }
 
 
@@ -1775,15 +1774,15 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
-string   prev.Sequence.ID = "";
-string   prev.GridDirection = "";
-string   prev.GridVolatility;
+string   prev.Sequence.ID    = "";
+string   prev.GridDirection  = "";
+string   prev.GridVolatility = "";
 double   prev.GridSize;
 double   prev.UnitSize;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
 string   prev.TakeProfit = "";
-string   prev.StopLoss = "";
+string   prev.StopLoss   = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
@@ -1959,28 +1958,35 @@ bool ValidateInputs.SID() {
 /**
  * Validate the input parameters. Parameters may have been entered through the input dialog, read from a status file or
  * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called only from onInitUser(),
- * onInitParameters() and onInitTemplate().
+ * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isManualInput      = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
+   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
    bool wasSequenceStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));   // whether the sequence was already started
 
-   // Sequence.ID ???
+   // Sequence.ID
+   if (isParameterChange) {
+      string sValues[], sValue = StrTrim(Sequence.ID);
+      if (sValue == "") {                     // the id was deleted or not yet set, re-apply the internal id
+         Sequence.ID = prev.Sequence.ID;
+      }
+      else if (sValue != prev.Sequence.ID)    return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
+   } //else                                   // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
 
    // GridDirection
-   string sValues[], sValue = GridDirection;
+   sValue = GridDirection;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                          return(!onInputError("ValidateInputs(1)  invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
-   if (isManualInput && iValue!=prev.sequence.direction) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(2)  cannot change input parameter GridDirection of already started sequence"));
+   if (iValue == -1)                          return(!onInputError("ValidateInputs(2)  invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
+   if (isParameterChange && iValue!=prev.sequence.direction) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridDirection of already started sequence"));
    }
    sequence.direction = iValue;
    long.enabled  = (sequence.direction & D_LONG  && 1);
@@ -1988,8 +1994,8 @@ bool ValidateInputs() {
    GridDirection = TradeDirectionDescription(sequence.direction);
 
    // GridVolatility
-   if (isManualInput && !StrCompareI(GridVolatility, prev.GridVolatility)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridVolatility of already started sequence"));
+   if (isParameterChange && !StrCompareI(GridVolatility, prev.GridVolatility)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(4)  cannot change input parameter GridVolatility of already started sequence"));
    }
    sValue = StrTrim(GridVolatility);
    if (!StringLen(sValue) || sValue=="{percent}") {
@@ -1999,42 +2005,42 @@ bool ValidateInputs() {
    else {
       if (StrEndsWith(sValue, "%"))
          sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(4)  invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(5)  invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
       sequence.gridvola = MathAbs(StrToDouble(sValue));
       GridVolatility = NumberToStr(sequence.gridvola, ".+") +"%";
    }
 
    // GridSize
-   if (isManualInput && NE(GridSize, prev.GridSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(5)  cannot change input parameter GridSize of already started sequence"));
+   if (isParameterChange && NE(GridSize, prev.GridSize)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(6)  cannot change input parameter GridSize of already started sequence"));
    }
-   if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(6)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
-   if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
+   if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
+   if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(8)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
    sequence.gridsize = GridSize;
 
    // UnitSize
-   if (isManualInput && NE(UnitSize, prev.UnitSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(8)  cannot change input parameter UnitSize of already started sequence"));
+   if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(9)  cannot change input parameter UnitSize of already started sequence"));
    }
-   if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(9)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
-   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
+   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(11)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    sequence.unitsize = UnitSize;
 
    int empties = EQ(sequence.gridvola, 0) + EQ(sequence.gridsize, 0) + EQ(sequence.unitsize, 0);
-   if (empties > 1)                           return(!onInputError("ValidateInputs(11)  invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
+   if (empties > 1)                           return(!onInputError("ValidateInputs(12)  invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
 
    // Pyramid.Multiplier
-   if (isManualInput && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(12)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
+   if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(13)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(14)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
-   if (isManualInput && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(14)  cannot change input parameter Martingale.Multiplier of already started sequence"));
+   if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(15)  cannot change input parameter Martingale.Multiplier of already started sequence"));
    }
-   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(15)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(16)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -2043,7 +2049,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(16)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(17)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          TakeProfit        = NumberToStr(dValue, ".+") +"%";
@@ -2081,7 +2087,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(17)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(18)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          StopLoss          = NumberToStr(dValue, ".+") +"%";
@@ -2118,7 +2124,8 @@ bool ValidateInputs() {
       sessionbreak.starttime = NULL;                              // actual times are updated automatically on next use
       sessionbreak.endtime   = NULL;
    }
-   return(!catch("ValidateInputs(18)"));
+
+   return(!catch("ValidateInputs(19)"));
 }
 
 
@@ -2139,8 +2146,8 @@ int onInputError(string message) {
 
 
 /**
- * Add an order record to the order arrays. All records are ordered ascending by grid level and the new record is inserted at
- * the correct position. No data is overwritten.
+ * Add an order record to the order arrays. Records are ordered ascending by grid level and the new record is inserted at the
+ * correct position. No data is overwritten.
  *
  * @param  int      direction
  * @param  int      ticket
@@ -2463,7 +2470,8 @@ double iADR() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error || !sequence.id) return(false);
+   if (IsLastError())                            return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +"  sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
 
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
    if (IsTesting() && test.reduceStatusWrites) {
@@ -2525,18 +2533,18 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.totalPL",           /*double  */ DoubleToStr(sequence.totalPL, 2));
    WriteIniString(file, section, "sequence.maxProfit",         /*double  */ DoubleToStr(sequence.maxProfit, 2));
    WriteIniString(file, section, "sequence.maxDrawdown",       /*double  */ DoubleToStr(sequence.maxDrawdown, 2));
-   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ ifString(!sequence.bePrice.long, "0", NumberToStr(sequence.bePrice.long, "."+ Digits +"+")));
-   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ ifString(!sequence.bePrice.short, "0", NumberToStr(sequence.bePrice.short, "."+ Digits +"+")));
-   WriteIniString(file, section, "sequence.tpPrice",           /*double  */ ifString(!sequence.tpPrice, "0", NumberToStr(sequence.tpPrice, "."+ Digits +"+")));
-   WriteIniString(file, section, "sequence.slPrice",           /*double  */ ifString(!sequence.slPrice, "0", NumberToStr(sequence.slPrice, "."+ Digits +"+")) + CRLF);
+   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ NumberToStr(sequence.bePrice.long, ".+"));
+   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ NumberToStr(sequence.bePrice.short, ".+"));
+   WriteIniString(file, section, "sequence.tpPrice",           /*double  */ NumberToStr(sequence.tpPrice, ".+"));
+   WriteIniString(file, section, "sequence.slPrice",           /*double  */ NumberToStr(sequence.slPrice, ".+") + CRLF);
 
    // long order data
    WriteIniString(file, section, "long.enabled",               /*bool    */ long.enabled);
    int size = ArraySize(long.ticket);
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "long.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_LONG));
+      WriteIniString(file, section, "long.order."+ i, SaveStatus.OrderToStr(i, D_LONG));
    }
-   WriteIniString(file, section, "long.slippage",              /*double  */ NumberToStr(long.slippage, ".1+"));
+   WriteIniString(file, section, "long.slippage",              /*double  */ NumberToStr(long.slippage, ".+"));
    WriteIniString(file, section, "long.openLots",              /*double  */ NumberToStr(long.openLots, ".+"));
    WriteIniString(file, section, "long.openPL",                /*double  */ DoubleToStr(long.openPL, 2));
    WriteIniString(file, section, "long.closedPL",              /*double  */ DoubleToStr(long.closedPL, 2));
@@ -2547,9 +2555,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "short.enabled",              /*bool    */ short.enabled);
    size = ArraySize(short.ticket);
    for (i=0; i < size; i++) {
-      WriteIniString(file, section, "short.order."+ StrPadLeft(i, 4, "0"), SaveStatus.OrderToStr(i, D_SHORT));
+      WriteIniString(file, section, "short.order."+ i, SaveStatus.OrderToStr(i, D_SHORT));
    }
-   WriteIniString(file, section, "short.slippage",             /*double  */ NumberToStr(short.slippage, ".1+"));
+   WriteIniString(file, section, "short.slippage",             /*double  */ NumberToStr(short.slippage, ".+"));
    WriteIniString(file, section, "short.openLots",             /*double  */ NumberToStr(short.openLots, ".+"));
    WriteIniString(file, section, "short.openPL",               /*double  */ DoubleToStr(short.openPL, 2));
    WriteIniString(file, section, "short.closedPL",             /*double  */ DoubleToStr(short.closedPL, 2));
@@ -2557,26 +2565,26 @@ bool SaveStatus() {
    WriteIniString(file, section, "short.maxLevel",             /*int     */ short.maxLevel + CRLF);
 
    // other
-   WriteIniString(file, section, "tpAbs.condition",            /*bool    */ tpAbs.condition  );
-   WriteIniString(file, section, "tpAbs.value",                /*double  */ tpAbs.value      );
+   WriteIniString(file, section, "tpAbs.condition",            /*bool    */ tpAbs.condition);
+   WriteIniString(file, section, "tpAbs.value",                /*double  */ DoubleToStr(tpAbs.value, 2));
    WriteIniString(file, section, "tpAbs.description",          /*string  */ tpAbs.description);
-   WriteIniString(file, section, "tpPct.condition",            /*bool    */ tpPct.condition  );
-   WriteIniString(file, section, "tpPct.value",                /*double  */ tpPct.value      );
-   WriteIniString(file, section, "tpPct.absValue",             /*double  */ tpPct.absValue   );
+   WriteIniString(file, section, "tpPct.condition",            /*bool    */ tpPct.condition);
+   WriteIniString(file, section, "tpPct.value",                /*double  */ NumberToStr(tpPct.value, ".+"));
+   WriteIniString(file, section, "tpPct.absValue",             /*double  */ ifString(tpPct.absValue==INT_MAX, INT_MAX, DoubleToStr(tpPct.absValue, 2)));
    WriteIniString(file, section, "tpPct.description",          /*string  */ tpPct.description + CRLF);
 
    WriteIniString(file, section, "slAbs.condition",            /*bool    */ slAbs.condition  );
-   WriteIniString(file, section, "slAbs.value",                /*double  */ slAbs.value      );
+   WriteIniString(file, section, "slAbs.value",                /*double  */ DoubleToStr(slAbs.value, 2));
    WriteIniString(file, section, "slAbs.description",          /*string  */ slAbs.description);
    WriteIniString(file, section, "slPct.condition",            /*bool    */ slPct.condition  );
-   WriteIniString(file, section, "slPct.value",                /*double  */ slPct.value      );
-   WriteIniString(file, section, "slPct.absValue",             /*double  */ slPct.absValue   );
+   WriteIniString(file, section, "slPct.value",                /*double  */ NumberToStr(slPct.value, ".+"));
+   WriteIniString(file, section, "slPct.absValue",             /*double  */ ifString(slPct.absValue==INT_MIN, INT_MIN, DoubleToStr(slPct.absValue, 2)));
    WriteIniString(file, section, "slPct.description",          /*string  */ slPct.description + CRLF);
 
    WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime);
    WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime  );
 
-   return(!catch("SaveStatus(1)"));
+   return(!catch("SaveStatus(2)"));
 }
 
 
@@ -2586,10 +2594,10 @@ bool SaveStatus() {
  * @return bool - success status
  */
 bool RestoreSequence() {
-   if (IsLastError())          return(false);
-   if (!ReadStatus())          return(false);              // read and apply the status file
-   //if (!ValidateInputs())    return(false);              // validate restored input parameters
-   //if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
+   if (IsLastError())     return(false);
+   if (!ReadStatus())     return(false);                 // read and apply the status file
+   if (!ValidateInputs()) return(false);                 // validate restored input parameters
+   //if (!SynchronizeStatus()) return(false);            // synchronize restored state with the trade server
    return(true);
 }
 
@@ -2710,11 +2718,32 @@ bool ReadStatus() {
       if (!ReadStatus.ParseOrder(sOrder, D_SHORT)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
+   // other
+   tpAbs.condition            = GetIniBool   (file, section, "tpAbs.condition"      );          // bool     tpAbs.condition   = 1
+   tpAbs.value                = GetIniDouble (file, section, "tpAbs.value"          );          // double   tpAbs.value       = 10.00
+   tpAbs.description          = GetIniStringA(file, section, "tpAbs.description", "");          // string   tpAbs.description = text
+   tpPct.condition            = GetIniBool   (file, section, "tpPct.condition"      );          // bool     tpPct.condition   = 0
+   tpPct.value                = GetIniDouble (file, section, "tpPct.value"          );          // double   tpPct.value       = 0
+   tpPct.absValue             = GetIniDouble (file, section, "tpPct.absValue"       );          // double   tpPct.absValue    = 0.00
+   tpPct.description          = GetIniStringA(file, section, "tpPct.description", "");          // string   tpPct.description = text
+
+   slAbs.condition            = GetIniBool   (file, section, "slAbs.condition"      );          // bool     slAbs.condition   = 1
+   slAbs.value                = GetIniDouble (file, section, "slAbs.value"          );          // double   slAbs.value       = -20.00
+   slAbs.description          = GetIniStringA(file, section, "slAbs.description", "");          // string   slAbs.description = text
+   slPct.condition            = GetIniBool   (file, section, "slPct.condition"      );          // bool     slPct.condition   = 0
+   slPct.value                = GetIniDouble (file, section, "slPct.value"          );          // double   slPct.value       = 0
+   slPct.absValue             = GetIniDouble (file, section, "slPct.absValue"       );          // double   slPct.absValue    = 0.00
+   slPct.description          = GetIniStringA(file, section, "slPct.description", "");          // string   slPct.description = text
+
+   sessionbreak.starttime     = GetIniInt    (file, section, "sessionbreak.starttime");         // datetime sessionbreak.starttime = 1583254806
+   sessionbreak.endtime       = GetIniInt    (file, section, "sessionbreak.endtime"  );         // datetime sessionbreak.endtime   = 1583254807
+
+   return(!catch("ReadStatus(13)"));
 }
 
 
 /**
- * Read and return the keys of the specified order records found in the status file, sorted in ascending order.
+ * Read and return the keys of the specified order records found in the status file (the order doesn't matter).
  *
  * @param  _In_  string file      - status filename
  * @param  _In_  string section   - status section
@@ -2734,21 +2763,17 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
    int prefixLen = StringLen(prefix);
 
    for (int i=size-1; i >= 0; i--) {
-      if (StrStartsWithI(keys[i], prefix)) {
-         if (StrIsDigit(StrSubstr(keys[i], prefixLen))) {
-            continue;
-         }
-      }
-      ArraySpliceStrings(keys, i, 1);                 // drop all non-matching keys
+      if (StrStartsWithI(keys[i], prefix))
+         continue;
+      ArraySpliceStrings(keys, i, 1);  // drop all non-order keys
       size--;
    }
-   if (!SortStrings(keys)) return(EMPTY);             // TODO: implement natural sorting
-   return(size);
+   return(size);                       // no need to sort as Orders.AddRecord() inserts records at the right position
 }
 
 
 /**
- * Parse and store the string representation of an order.
+ * Parse the string representation of an order and store the parsed data.
  *
  * @param  string value     - string to parse
  * @param  int    direction - order direction type: D_LONG | D_SHORT
@@ -2757,6 +2782,27 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
  */
 bool ReadStatus.ParseOrder(string value, int direction) {
    if (IsLastError()) return(false);
+
+   // [long|short].order.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   string values[];
+   if (Explode(value, ",", values, NULL) != 14) return(!catch("ReadStatus.ParseOrder(1)  "+ sequence.name +" illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
+
+   int      ticket       = StrToInteger(StrTrim(values[ 0]));     // int      ticket
+   int      level        = StrToInteger(StrTrim(values[ 1]));     // int      level
+   double   lots         =  StrToDouble(StrTrim(values[ 2]));     // double   lots
+   int      pendingType  = StrToInteger(StrTrim(values[ 3]));     // int      pendingType
+   datetime pendingTime  = StrToInteger(StrTrim(values[ 4]));     // datetime pendingTime
+   double   pendingPrice =  StrToDouble(StrTrim(values[ 5]));     // double   pendingPrice
+   int      type         = StrToInteger(StrTrim(values[ 6]));     // int      type
+   datetime openTime     = StrToInteger(StrTrim(values[ 7]));     // datetime openTime
+   double   openPrice    =  StrToDouble(StrTrim(values[ 8]));     // double   openPrice
+   datetime closeTime    = StrToInteger(StrTrim(values[ 9]));     // datetime closeTime
+   double   closePrice   =  StrToDouble(StrTrim(values[10]));     // double   closePrice
+   double   swap         =  StrToDouble(StrTrim(values[11]));     // double   swap
+   double   commission   =  StrToDouble(StrTrim(values[12]));     // double   commission
+   double   profit       =  StrToDouble(StrTrim(values[13]));     // double   profit
+
+   return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, type, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
 }
 
 

@@ -3183,9 +3183,9 @@ bool ReadStatus() {
    AutoRestart     = sAutoRestart;
    StartLevel      = StrToInteger(sStartLevel);
    if (!StrIsDigit(sSessionbreakStartTime)) return(!catch("ReadStatus(12)  invalid or missing Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
+   Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);          // TODO: convert input to string and validate
    if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(13)  invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
+   Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);              // TODO: convert input to string and validate
 
    string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting",  "");     // bool    rt.sessionbreak.waiting=1
    string sStartEquity         = GetIniStringA(file, section, "rt.sequence.startEquity",  "");     // double  rt.sequence.startEquity=7801.13
@@ -3489,7 +3489,7 @@ bool ReadStatus.ParseTickets(string value, int &tickets[]) {
 
 
 /**
- * Parse and store the string representation of an order.
+ * Parse the string representation of an order and store the parsed data.
  *
  * @param  string value - string to parse
  *
@@ -3498,9 +3498,8 @@ bool ReadStatus.ParseTickets(string value, int &tickets[]) {
 bool ReadStatus.ParseOrder(string value) {
    if (IsLastError()) return(false);
    /*
-   rt.order.0=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
-   rt.order.{i}={ticket},{level},{gridbase},{pendingType},{pendingTime},{pendingPrice},{type},{openEvent},{openTime},{openPrice},{closeEvent},{closeTime},{closePrice},{stopLoss},{closedBySL},{swap},{commission},{profit}
-   ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   rt.order.i=ticket,level,gridbase,pendingType,pendingTime,pendingPrice,type,openEvent,openTime,openPrice,closeEvent,closeTime,closePrice,stopLoss,closedBySL,swap,commission,profit
+   ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
    int      ticket       = values[ 0];
    int      level        = values[ 1];
    double   gridbase     = values[ 2];
