@@ -11,7 +11,7 @@ extern double   Tester.StartPrice = 0;                               // price to
 #include <functions/InitializeByteBuffer.mqh>
 
 
-double __rates[][6];                                                 // current price series
+double __rates[][6];                                                 // current price series (passed to the Expander on every tick)
 int    tickTimerId;                                                  // timer id for virtual ticks
 
 // test metadata
@@ -104,7 +104,7 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
-   // explicitely reset the order context after the expert was reloaded
+   // reset the order context after the expert was reloaded (to prevent the bug when the previously active context is not reset)
    int reasons2[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE, UR_ACCOUNT};
    if (IntInArray(reasons2, UninitializeReason())) {
       OrderSelect(0, SELECT_BY_TICKET);
@@ -112,13 +112,16 @@ int init() {
       if (error && error!=ERR_NO_TICKET_SELECTED) return(_last_error(CheckErrors("init(11)", error)));
    }
 
-   // if in tester
-   if (IsTesting()) {
-      // resolve the account number (here because if eventually called in deinit() it would deadlock the UI thread)
-      if (!GetAccountNumber()) return(_last_error(CheckErrors("init(12)")));
-      // log MarketInfo() data
+   // resolve init reason and account number
+   int initReason = ProgramInitReason();
+   int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
+
+   if (IsTesting()) {                     // log MarketInfo() data
       if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+   }
+   else if (initReason == IR_USER) {      // log account infos (becomes the first regular online log entry)
+      if (IsLogInfo()) logInfo("init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    }
 
    // log input parameters
@@ -126,11 +129,11 @@ int init() {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
-            ifString(!EA.RecordEquity,   "", NL+"EA.RecordEquity=TRUE"                                            +";"),
-            ifString(!EA.CreateReport,   "", NL+"EA.CreateReport=TRUE"                                            +";"),
-            ifString(!Tester.StartTime,  "", NL+"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
-            ifString(!Tester.StartPrice, "", NL+"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logDebug("init(14)  inputs: "+ sInputs);
+            ifString(!EA.RecordEquity,   "", NL +"EA.RecordEquity=TRUE"                                            +";"),
+            ifString(!EA.CreateReport,   "", NL +"EA.CreateReport=TRUE"                                            +";"),
+            ifString(!Tester.StartTime,  "", NL +"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
+            ifString(!Tester.StartPrice, "", NL +"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
+         logDebug("init(15)  inputs: "+ sInputs);
       }
    }
 
@@ -151,9 +154,6 @@ int init() {
    error = onInit();                                                          // preprocessing hook
                                                                               //
    if (!error && !__STATUS_OFF) {                                             //
-      int initReason = ProgramInitReason();                                   //
-      if (!initReason) if (CheckErrors("init(15)")) return(last_error);       //
-                                                                              //
       switch (initReason) {                                                   //
          case IR_USER            : error = onInitUser();            break;    // init reasons
          case IR_TEMPLATE        : error = onInitTemplate();        break;    //
@@ -163,14 +163,14 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(16)  unsupported initReason = "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(17)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(17)")) return(last_error);
+   if (CheckErrors("init(18)")) return(last_error);
 
    ShowStatus(last_error);
 
@@ -179,7 +179,7 @@ int init() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(18)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!tickTimerId) return(catch("init(19)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
@@ -397,7 +397,7 @@ int deinit() {
          case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
          case UR_REMOVE     : error = onDeinitRemove();        break;      //
          case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
-         // build > 509                                                    //
+         // terminal builds > 509                                          //
          case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
          case UR_INITFAILED : error = onDeinitFailed();        break;      //
          case UR_CLOSE      : error = onDeinitClose();         break;      //
@@ -835,13 +835,13 @@ int onDeinitAccountChange()
 
 
 /**
- * Online: - Called when another chart template is applied.
- *         - Called when the chart profile is changed.
- *         - Called when the chart is closed.
- *         - Called in terminal versions up to build 509 when the terminal shuts down.
- * Tester: - Called when the chart is closed with VisualMode="On".
- *         - Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar
- *           variables may contain invalid values (strings are ok).
+ * Online: Called in terminal builds <= 509 when another chart template is applied.
+ *         Called when the chart profile is changed.
+ *         Called when the chart is closed.
+ *         Called in terminal builds <= 509 when the terminal shuts down.
+ * Tester: Called when the chart is closed with VisualMode="On".
+ *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar variables
+ *          may contain invalid values (strings are ok).
  *
  * @return int - error status
  *
@@ -851,7 +851,18 @@ int onDeinitChartClose()
 
 
 /**
- * Online: Called if an expert is manually removed (Chart->Expert->Remove) or replaced.
+ * Online: Called in terminal builds > 509 when another chart template is applied.
+ * Tester: ???
+ *
+ * @return int - error status
+ *
+int onDeinitTemplate()
+   return(NO_ERROR);
+}
+
+
+/**
+ * Online: Called when the expert is manually removed (Chart->Expert->Remove) or replaced.
  * Tester: Never called.
  *
  * @return int - error status
@@ -862,9 +873,9 @@ int onDeinitRemove()
 
 
 /**
- * Online: - Never encountered. Tracked in MT4Expander::onDeinitUndefined().
- * Tester: - Called if a test finished regularily, i.e. the test period ended.
- *         - Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
+ * Online: Never encountered. Tracked in MT4Expander::onDeinitUndefined().
+ * Tester: Called if a test finished regularily, i.e. the test period ended.
+ *         Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
  *
  * @return int - error status
  *
@@ -874,7 +885,8 @@ int onDeinitUndefined()
 
 
 /**
- * Called before an expert is reloaded after recompilation.
+ * Online: Called before the expert is reloaded after recompilation. May happen on refresh of the "Navigator" window.
+ * Tester: Never called.
  *
  * @return int - error status
  *
@@ -884,7 +896,7 @@ int onDeinitRecompile()
 
 
 /**
- * Called in terminal versions > build 509 when the terminal shuts down.
+ * Called in terminal builds > 509 when the terminal shuts down.
  *
  * @return int - error status
  *

@@ -4,16 +4,16 @@
  * Notes:
  * ------
  * With terminal builds > 509 the history file format changed. This is reflected by the format id in the history file headers.
- * Up to builds 509 the field HISTORY_HEADER.barFormat is 400, since builds > 509 the field HISTORY_HEADER.barFormat is 401.
+ * In terminal builds <= 509 the field HISTORY_HEADER.barFormat is 400, for builds > 509 the field HISTORY_HEADER.barFormat is 401.
  *
  *  @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  *
- * A terminal supporting only the old format (up to build 509) will delete history files in the new format on shutdown "if it
+ * A terminal supporting only the old format (builds <= 509) will delete history files in the new format on shutdown "if it
  * tries to access them". This means history for a symbol may exist in mixed formats. As long as the user doesn't switch to
  * a chart period with history in new format the terminal will keep these new format files untouched. If the user switches to
  * a period with history in new format an old terminal will delete that history on shutdown.
  *
- * A terminal supporting both formats (since builds > 509) will automatically convert files in old format to the new format
+ * A terminal supporting both formats (builds > 509) will automatically convert files in old format to the new format
  * "if it accessed them". This means as long as the user doesn't switch to a chart period with history in old format the
  * terminal will not convert those files.
  */

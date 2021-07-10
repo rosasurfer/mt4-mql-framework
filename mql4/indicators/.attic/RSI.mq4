@@ -120,7 +120,7 @@ int onInit() {
    if (Max.Bars >= 0) startDraw += Bars - Max.Bars;
    if (startDraw < 0) startDraw  = 0;
    SetIndexDrawBegin(MODE_MAIN,          startDraw);
-   SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                 // work around scaling bug in terminals <=509
+   SetIndexDrawBegin(MODE_SECTION,       INT_MAX  );                 // work around scaling bug in terminal builds <= 509
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();

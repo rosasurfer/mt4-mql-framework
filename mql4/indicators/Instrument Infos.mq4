@@ -164,7 +164,7 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true)),                                                                                      fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true)) +"     W=      MN=",                                                                  fgFontSize, fgFontName, fgFontColor);
    double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
    double unitsize        = CalculateLots(Unitsize.TargetPerformance);
    double leverage        = CalculateLeverage(unitsize);                    ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!unitsize, "(not enough money)", NumberToStr(Unitsize.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(unitsize, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
@@ -221,7 +221,7 @@ int UpdateInstrumentInfos() {
    int    accountLeverage = AccountLeverage();     ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage:      "+ ifString(!accountLeverage, "", "1:"+ accountLeverage), fgFontSize, fgFontName, ifInt(!accountLeverage, fgFontColorDisabled, fgFontColor));
    int    stopoutLevel    = AccountStopoutLevel(); ObjectSetText(labels[I_STOPOUT_LEVEL   ], "Account stopout level: "+ ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, stopoutLevel +"%", stopoutLevel +".00 "+ accountCurrency)), fgFontSize, fgFontName, ifInt(!accountLeverage, fgFontColorDisabled, fgFontColor));
 
-   string serverName      = GetAccountServer();    ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+  serverName, fgFontSize, fgFontName, ifInt(!StringLen(serverName), fgFontColorDisabled, fgFontColor));
+   string serverName      = GetAccountServer();    ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, fgFontSize, fgFontName, ifInt(!StringLen(serverName), fgFontColorDisabled, fgFontColor));
    string serverTimezone  = GetServerTimezone();
       string strOffset = "";
       if (StringLen(serverTimezone) > 0) {

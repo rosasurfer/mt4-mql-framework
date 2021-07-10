@@ -182,13 +182,13 @@
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();
-   int      onDeinitClose();                          // builds > 509
+   int      onDeinitClose();                          // terminal builds > 509
    int      onDeinitFailed();                         // ...
    int      onDeinitTemplate();                       // ...
    int      afterDeinit();
 
    void     DummyCalls();
-   bool     EventListener_ChartCommand(string data[]);
+   bool     EventListener_ChartCommand(string &data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

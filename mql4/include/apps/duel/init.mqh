@@ -18,48 +18,56 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   if (ValidateInputs()) {                                           // on success create a new sequence
-      sequence.id      = CreateSequenceId();
-      sequence.created = Max(TimeCurrentEx(), TimeServer());
-      sequence.isTest  = IsTesting();
-      sequence.status  = STATUS_WAITING;
-      long.enabled     = (sequence.directions & D_LONG  && 1);
-      short.enabled    = (sequence.directions & D_SHORT && 1);
-      SS.All();
-      logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
+   // check for and validate a specified sequence id
+   if (ValidateInputs.SID()) {
+      RestoreSequence();                                       // a valid sequence id was specified
+   }
+   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+      if (ValidateInputs()) {
+         sequence.id      = CreateSequenceId();
+         Sequence.ID      = sequence.id;
+         sequence.isTest  = IsTesting(); SS.SequenceName();
+         sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.status  = STATUS_WAITING;
+         ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
+         SS.All();
+         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
-      // prevent starting with too little free margin
-      double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
-      int level=0, maxLevels=15;
+         // prevent starting with too little free margin
+         double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
+         int level=0, maxLevels=15;
 
-      for (level=+1; level <=  maxLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
-      for (level=-1; level >= -maxLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
-      for (level=+1; level <=  maxLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
-      for (level=-1; level >= -maxLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+         for (level=+1; level <=  maxLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+         for (level=-1; level >= -maxLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+         for (level=+1; level <=  maxLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+         for (level=-1; level >= -maxLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
 
-      double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
-      double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
-      double maxLots      = MathMax(maxLongLots, maxShortLots);      // max lots at level 15 in any direction
-      if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
-      if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-         StopSequence(NULL);
-         logError("onInitUser(3) not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
-         return(catch("onInitUser(4)"));
-      }
+         double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
+         double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
+         double maxLots      = MathMax(maxLongLots, maxShortLots);      // max lots at level 15 in any direction
+         if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
+         if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
+            StopSequence(NULL);
+            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            return(catch("onInitUser(4)"));
+         }
 
-      // confirm dangerous live modes
-      if (!IsTesting() && !IsDemoFix()) {
-         if (sequence.martingaleEnabled || sequence.directions==D_BOTH) {
-            PlaySoundEx("Windows Notify.wav");
-            if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check coming news?", MB_ICONQUESTION|MB_OKCANCEL)) {
-               StopSequence(NULL);
-               return(catch("onInitUser(5)"));
+         // confirm dangerous live modes
+         if (!IsTesting() && !IsDemoFix()) {
+            if (sequence.martingaleEnabled || sequence.direction==D_BOTH) {
+               PlaySoundEx("Windows Notify.wav");
+               if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
+                  StopSequence(NULL);
+                  return(catch("onInitUser(5)"));
+               }
             }
          }
+         SaveStatus();
       }
-      SaveStatus();
    }
-   return(catch("onInitUser(6)"));
+   //else {}                                                   // an invalid sequence id was specified
+
+   return(last_error);
 }
 
 
@@ -69,8 +77,13 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (ValidateInputs()) SaveStatus();
-   else                  RestoreInputs();
+   if (!ValidateInputs()) {
+      RestoreInputs();
+      return(last_error);
+   }
+
+   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);    // does nothing after sequence start
+   SaveStatus();
    return(last_error);
 }
 
@@ -92,7 +105,7 @@ int onInitTimeframeChange() {
  * @return int - error status
  */
 int onInitSymbolChange() {
-   return(SetLastError(ERR_ILLEGAL_STATE));
+   return(catch("onInitSymbolChange(1)", ERR_ILLEGAL_STATE));
 }
 
 
@@ -102,7 +115,7 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   return(SetLastError(ERR_NOT_IMPLEMENTED));
+   return(catch("onInitTemplate(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -117,7 +130,7 @@ int afterInit() {
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
-      tester.onStopPause      = GetConfigBool(section, "OnStopPause",       false);
+      test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
       test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
    }
    return(catch("afterInit(1)"));
