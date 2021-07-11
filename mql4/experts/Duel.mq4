@@ -11,6 +11,18 @@
  *  The third will have you on your knees
  *
  *
+ * Input parameters:
+ * -----------------
+ * • Sequence.ID: To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
+ *                even on the symbol. Each sequence continuously logs its activities to a separate logfile, and writes status
+ *                changes to a separate status file. The sequence id is part of the log and status file names. A sequence can
+ *                be loaded from such a status file. This enables the user to unload the EA on one machine (e.g. a laptop),
+ *                to move the status file to another machine (e.g. a VPS or server) and to continue the sequence there by
+ *                loading EA with the moved status file. To load the EA with an existing sequence the sequence id must be
+ *                entered in the field "Sequence.ID". For new sequences the input field is empty (default).
+ *
+ *
+ *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
