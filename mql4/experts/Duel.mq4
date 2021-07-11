@@ -11,6 +11,24 @@
  *  The third will have you on your knees
  *
  *
+ * Input parameters:
+ * -----------------
+ * • Sequence.ID:  To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
+ *     even on the same symbol. Each instance logs all activities to a logfile named "{symbol}.Duel.{instance-id}.log"), and
+ *     writes status changes to a status file named "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part
+ *     of the file names. A sequence can be loaded and fully restored from an existing status file. This enables the user to
+ *     unload the EA on one machine (e.g. a laptop), move the file to another machine (e.g. a VPS or server) and to continue
+ *     the sequence there by pointing the EA to the moved status file. To do this the user enters the sequence id of the
+ *     status file in the input field "Sequence.ID". For new sequences the input field stays empty (default).
+ *
+ * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
+ *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
+ *     each other (one "long" and one "short" grid). A "long" grid consists of only Buy stop or limit orders, a "short" grid
+ *     consists of only Sell stop or limit orders.
+ *
+ * • GridVolatility:
+ *
+ *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
  * - If "Pyramid.Multiplier" is between "0" and "1" the EA trades on the winning side like a regular pyramiding system.
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
@@ -25,12 +43,13 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?1[0-9]{3}/
+extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?[1-9][0-9]{3}/
 
 extern string   GridDirection          = "Long | Short | Both*";
 extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
 extern double   GridSize               = 0;                       // in pip
 extern double   UnitSize               = 0;                       // lots at the first grid level
+extern int      MaxGridLevels          = 20;                      // max. number of open grid levels per direction
 
 extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
@@ -624,9 +643,12 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
  * Delete the pending orders of a sequence and remove them from the order arrays. If an order was already executed local
  * state is updated and the order is kept.
  *
+ * @param bool saveStatus [optional] - whether to save the sequence status before a successful return (default: no)
+ *
  * @return bool - success status
  */
-bool Grid.RemovePendingOrders() {
+bool Grid.RemovePendingOrders(bool saveStatus = false) {
+   saveStatus = saveStatus!=0;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.RemovePendingOrders(1)  "+ sequence.name +" cannot delete pending orders of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -698,6 +720,7 @@ bool Grid.RemovePendingOrders() {
       }
    }
 
+   if (saveStatus) SaveStatus();
    return(!catch("Grid.RemovePendingOrders(6)"));
 }
 
@@ -705,8 +728,8 @@ bool Grid.RemovePendingOrders() {
 /**
  * Update order and PL status with current market data and signal status changes.
  *
- * @param  _Out_ bool gridChanged - whether the current gridlevel changed
- * @param  _Out_ bool gridError   - whether an external intervention was detected (cancellation or close)
+ * @param  _Out_ bool gridChanged - whether a grid parameter changed (e.g. the current grid level)
+ * @param  _Out_ bool gridError   - whether an external intervention was detected (order cancellation or close)
  *
  * @return bool - success status
  */
@@ -727,6 +750,11 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (!ComputeProfit(positionChanged)) return(false);
 
    if (saveStatus) SaveStatus();
+
+   static int prevMaxGridLevels = 0; if (MaxGridLevels != prevMaxGridLevels) {
+      prevMaxGridLevels = MaxGridLevels;                 // detect runtime changes of MaxGridLevels
+      gridChanged       = true;
+   }
    return(!catch("UpdateStatus(2)"));
 }
 
@@ -735,14 +763,14 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  * UpdateStatus() sub-routine. Updates order and PL status of a single trade direction.
  *
  * @param  _In_  int  direction       - trade direction
- * @param  _Out_ bool levelChanged    - whether the gridlevel changed
+ * @param  _Out_ bool gridChanged     - whether a grid parameter changed (e.g. the current grid level)
  * @param  _Out_ bool positionChanged - whether the total open position changed (position open or close)
  * @param  _Out_ bool gridError       - whether an external intervention occurred (order cancellation or position close)
  * @param  ...
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionChanged, bool &gridError, double &slippage, double &openLots, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChanged, bool &gridError, double &slippage, double &openLots, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
@@ -771,7 +799,7 @@ bool UpdateStatus.Direction(int direction, bool &levelChanged, bool &positionCha
             if (isLogDebug) logDebug("UpdateStatus(4)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(direction, i));
             minLevel = MathMin(levels[i], minLevel);
             maxLevel = MathMax(levels[i], maxLevel);
-            levelChanged    = true;
+            gridChanged     = true;
             positionChanged = true;
             updateSlippage  = true;
             wasPosition     = true;                               // mark as known open position
@@ -998,7 +1026,7 @@ int UpdateStatus.OnGridError(string message, int error) {
 /**
  * Check existing pending orders and add new or missing ones.
  *
- * @param bool saveStatus [optional] - whether to save the sequence status before function return (default: no)
+ * @param bool saveStatus [optional] - whether to save the sequence status before a successful return (default: no)
  *
  * @return bool - success status
  */
@@ -1009,25 +1037,24 @@ bool UpdatePendingOrders(bool saveStatus = false) {
    bool gridChanged = false;
 
    // Scaling down
-   //  - limit orders: @todo  If market moves too fast positions for missed levels must be opened immediately at the better price.
+   //  - limit orders: TODO: If market moves too fast positions for missed levels must be opened immediately at the better price.
    // Scaling up
-   //  - stop orders:  Regular slippage is not an issue. At worst the whole grid moves by the average slippage amount which is neglectable.
-   //  - limit orders: Big slippage on price spikes affects only one (the next) level. For all other levels limit orders will be placed.
+   //  - stop orders:  Regular slippage is not an issue. At worst the whole grid moves by the average slippage amount which is tiny.
+   //  - limit orders: Slippage on price spikes affects only a signle stop order (the next one). For all skipped levels limit orders will be placed (no slippage).
+   int orders, plusLevels, minusLevels;
 
    if (long.enabled) {
-      int orders = ArraySize(long.ticket);
+      orders = ArraySize(long.ticket);
       if (!orders) return(!catch("UpdatePendingOrders(2)  "+ sequence.name +" illegal size of long orders: 0", ERR_ILLEGAL_STATE));
 
-      if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
-         if (long.level[0] == long.minLevel) {
-            if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
-            if (IsStopOrderType(long.pendingType[0])) {        // handle a missed sequence level
-               long.minLevel = long.level[0];
-               gridChanged = true;
-            }
-            orders++;
-         }
+      plusLevels  = Max(0, long.maxLevel);
+      minusLevels = -Min(0, long.minLevel);
+      if (plusLevels && minusLevels) minusLevels--;
+      if (plusLevels+minusLevels >= MaxGridLevels) {
+         log("UpdatePendingOrders(3)  max. of "+ MaxGridLevels +" long grid levels reached", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         return(Grid.RemovePendingOrders(saveStatus));
       }
+
       if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
          if (long.level[orders-1] == long.maxLevel) {
             if (!Grid.AddPendingOrder(D_LONG, Max(long.maxLevel+1, 2))) return(false);
@@ -1038,22 +1065,30 @@ bool UpdatePendingOrders(bool saveStatus = false) {
             orders++;
          }
       }
-   }
-
-   if (short.enabled) {
-      orders = ArraySize(short.ticket);
-      if (!orders) return(!catch("UpdatePendingOrders(3)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
-
       if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
-         if (short.level[0] == short.minLevel) {
-            if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
-            if (IsStopOrderType(short.pendingType[0])) {       // handle a missed sequence level
-               short.minLevel = short.level[0];
+         if (long.level[0] == long.minLevel) {
+            if (!Grid.AddPendingOrder(D_LONG, Min(long.minLevel-1, -2))) return(false);
+            if (IsStopOrderType(long.pendingType[0])) {        // handle a missed sequence level
+               long.minLevel = long.level[0];
                gridChanged = true;
             }
             orders++;
          }
       }
+   }
+
+   if (short.enabled) {
+      orders = ArraySize(short.ticket);
+      if (!orders) return(!catch("UpdatePendingOrders(4)  "+ sequence.name +" illegal size of short orders: 0", ERR_ILLEGAL_STATE));
+
+      plusLevels  = Max(0, short.maxLevel);
+      minusLevels = -Min(0, short.minLevel);
+      if (plusLevels && minusLevels) minusLevels--;
+      if (plusLevels+minusLevels >= MaxGridLevels) {
+         log("UpdatePendingOrders(5)  max. of "+ MaxGridLevels +" short grid levels reached", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         return(Grid.RemovePendingOrders(saveStatus));
+      }
+
       if (sequence.pyramidEnabled) {                           // on Pyramid ensure the next stop order for scaling up exists
          if (short.level[orders-1] == short.maxLevel) {
             if (!Grid.AddPendingOrder(D_SHORT, Max(short.maxLevel+1, 2))) return(false);
@@ -1064,12 +1099,22 @@ bool UpdatePendingOrders(bool saveStatus = false) {
             orders++;
          }
       }
+      if (sequence.martingaleEnabled) {                        // on Martingale ensure the next limit order for scaling down exists
+         if (short.level[0] == short.minLevel) {
+            if (!Grid.AddPendingOrder(D_SHORT, Min(short.minLevel-1, -2))) return(false);
+            if (IsStopOrderType(short.pendingType[0])) {       // handle a missed sequence level
+               short.minLevel = short.level[0];
+               gridChanged = true;
+            }
+            orders++;
+         }
+      }
    }
 
-   if (gridChanged) UpdatePendingOrders(false);                // call the function again if sequence levels have been missed
+   if (gridChanged) UpdatePendingOrders(false);                // call the function again if some levels have been missed
    if (saveStatus)  SaveStatus();
 
-   return(!catch("UpdatePendingOrders(4)"));
+   return(!catch("UpdatePendingOrders(6)"));
 }
 
 
@@ -1779,6 +1824,7 @@ string   prev.GridDirection  = "";
 string   prev.GridVolatility = "";
 double   prev.GridSize;
 double   prev.UnitSize;
+int      prev.MaxGridLevels;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
 string   prev.TakeProfit = "";
@@ -1796,8 +1842,9 @@ int      prev.sequence.status;
 int      prev.sequence.direction;
 bool     prev.sequence.pyramidEnabled;
 bool     prev.sequence.martingaleEnabled;
-double   prev.sequence.unitsize;
 double   prev.sequence.gridsize;
+double   prev.sequence.unitsize;
+int      prev.sequence.maxLevels;
 
 bool     prev.long.enabled;
 bool     prev.short.enabled;
@@ -1833,6 +1880,7 @@ void BackupInputs() {
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");
    prev.GridSize               = GridSize;
    prev.UnitSize               = UnitSize;
+   prev.MaxGridLevels          = MaxGridLevels;
    prev.Pyramid.Multiplier     = Pyramid.Multiplier;
    prev.Martingale.Multiplier  = Martingale.Multiplier;
    prev.TakeProfit             = StringConcatenate(TakeProfit, "");
@@ -1850,8 +1898,8 @@ void BackupInputs() {
    prev.sequence.direction         = sequence.direction;
    prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
    prev.sequence.martingaleEnabled = sequence.martingaleEnabled;
-   prev.sequence.unitsize          = sequence.unitsize;
    prev.sequence.gridsize          = sequence.gridsize;
+   prev.sequence.unitsize          = sequence.unitsize;
 
    prev.long.enabled               = long.enabled ;
    prev.short.enabled              = short.enabled;
@@ -1887,6 +1935,7 @@ void RestoreInputs() {
    GridVolatility         = prev.GridVolatility;
    GridSize               = prev.GridSize;
    UnitSize               = prev.UnitSize;
+   MaxGridLevels          = prev.MaxGridLevels;
    Pyramid.Multiplier     = prev.Pyramid.Multiplier;
    Martingale.Multiplier  = prev.Martingale.Multiplier;
    TakeProfit             = prev.TakeProfit;
@@ -1904,8 +1953,8 @@ void RestoreInputs() {
    sequence.direction         = prev.sequence.direction;
    sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
    sequence.martingaleEnabled = prev.sequence.martingaleEnabled;
-   sequence.unitsize          = prev.sequence.unitsize;
    sequence.gridsize          = prev.sequence.gridsize;
+   sequence.unitsize          = prev.sequence.unitsize;
 
    long.enabled               = prev.long.enabled ;
    short.enabled              = prev.short.enabled;
@@ -1932,9 +1981,9 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?1[0-9]{3}/). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[1-9][0-9]{3}/). Called only from onInitUser().
  *
- * @return bool - whether the input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
+ * @return bool - whether input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
@@ -2029,18 +2078,21 @@ bool ValidateInputs() {
    int empties = EQ(sequence.gridvola, 0) + EQ(sequence.gridsize, 0) + EQ(sequence.unitsize, 0);
    if (empties > 1)                           return(!onInputError("ValidateInputs(12)  invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
 
+   // MaxGridLevels
+   if (MaxGridLevels < 1)                     return(!onInputError("ValidateInputs(13)  invalid input parameter MaxGridLevels: "+ MaxGridLevels));
+
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(13)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(14)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(14)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(15)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(15)  cannot change input parameter Martingale.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(16)  cannot change input parameter Martingale.Multiplier of already started sequence"));
    }
-   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(16)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(17)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -2049,7 +2101,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(17)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(18)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          TakeProfit        = NumberToStr(dValue, ".+") +"%";
@@ -2087,7 +2139,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(18)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(19)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          StopLoss          = NumberToStr(dValue, ".+") +"%";
@@ -2125,7 +2177,7 @@ bool ValidateInputs() {
       sessionbreak.endtime   = NULL;
    }
 
-   return(!catch("ValidateInputs(19)"));
+   return(!catch("ValidateInputs(20)"));
 }
 
 
@@ -3022,37 +3074,35 @@ void SS.GridParameters() {
  */
 void SS.OpenLots() {
    if (__isChart) {
-      string sLevels="", sMinLevel="", sMaxLevel="", sSlippage="";
-      int minusLevels;
+      string sOpenLevels="", sSlippage="";
+      int plusLevels, minusLevels, openLevels;
 
       if (!long.openLots) sOpenLongLots = "-";
       else {
-         sMinLevel   = ifString(long.minLevel==INT_MAX, "", long.minLevel);
-         sMaxLevel   = ifString(long.maxLevel==INT_MIN, "", long.maxLevel);
-         minusLevels = ifInt(long.minLevel < 0, long.minLevel+1, 0);
-
-         if (sequence.pyramidEnabled && sequence.martingaleEnabled) sLevels = "levels: "+ (ifInt(long.maxLevel==INT_MIN, 0, long.maxLevel) - minusLevels) + ifString(minusLevels, " ("+ minusLevels +")", "");
-         else                                                       sLevels = "level: "+ ifString(sequence.pyramidEnabled, sMaxLevel, sMinLevel);
+         plusLevels  = Max(0, long.maxLevel);
+         minusLevels = -Min(0, long.minLevel);
+         if (plusLevels && minusLevels) minusLevels--;
+         openLevels  = plusLevels + minusLevels;
+         sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
          sSlippage = PipToStr(long.slippage/Pip, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
 
-         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot    "+ sLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
+         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
       }
 
       if (!short.openLots) sOpenShortLots = "-";
       else {
-         sMinLevel   = ifString(short.minLevel==INT_MAX, "", short.minLevel);
-         sMaxLevel   = ifString(short.maxLevel==INT_MIN, "", short.maxLevel);
-         minusLevels = ifInt(short.minLevel < 0, short.minLevel+1, 0);
-
-         if (sequence.pyramidEnabled && sequence.martingaleEnabled) sLevels = "levels: "+ (ifInt(short.maxLevel==INT_MIN, 0, short.maxLevel) - minusLevels) + ifString(minusLevels, " ("+ minusLevels +")", "");
-         else                                                       sLevels = "level: "+ ifString(sequence.pyramidEnabled, sMaxLevel, sMinLevel);
+         plusLevels  = Max(0, short.maxLevel);
+         minusLevels = -Min(0, short.minLevel);
+         if (plusLevels && minusLevels) minusLevels--;
+         openLevels  = plusLevels + minusLevels;
+         sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
          sSlippage = PipToStr(short.slippage/Pip, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
 
-         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot    "+ sLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);
+         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);
       }
 
       if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
@@ -3230,6 +3280,7 @@ string InputsToStr() {
                             "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
                             "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
+                            "MaxGridLevels=",          MaxGridLevels,                                ";", NL,
                             "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
                             "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
                             "TakeProfit=",             DoubleQuoteStr(TakeProfit),                   ";", NL,
