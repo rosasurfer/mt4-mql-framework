@@ -13,13 +13,15 @@
  *
  * Input parameters:
  * -----------------
- * • Sequence.ID:  To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
- *     even on the same symbol. Each instance logs all activities to a logfile named "{symbol}.Duel.{instance-id}.log"), and
- *     writes status changes to a status file named "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part
- *     of the file names. A sequence can be loaded and fully restored from an existing status file. This enables the user to
- *     unload the EA on one machine (e.g. a laptop), move the file to another machine (e.g. a VPS or server) and to continue
- *     the sequence there by pointing the EA to the moved status file. To do this the user enters the sequence id of the
- *     status file in the input field "Sequence.ID". For new sequences the input field stays empty (default).
+ * • Sequence.ID:  To each sequence a unique instance id is assigned. Beneath others the sequence id affects the generated
+ *     magic order number of a sequence. This way multiple grids (instances) can run in parallel even on the same symbol.
+ *     Each instance logs all activities to a logfile named "{symbol}.Duel.{instance-id}.log"), and writes status changes to
+ *     a status file named "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file names.
+ *     A sequence can be loaded and fully restored from an existing status file. This enables the user to unload the EA on
+ *     one machine (e.g. a laptop), move the file to another machine (e.g. a VPS or server) and to continue the sequence there
+ *     by pointing the EA to the moved status file. To do this the user enters the sequence id of the status file in the input
+ *     field "Sequence.ID". For new sequences the input field is empty and sequence id and magic numbers are auto-generated
+ *     (default).
  *
  * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
  *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
