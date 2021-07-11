@@ -13,14 +13,20 @@
  *
  * Input parameters:
  * -----------------
- * • Sequence.ID: To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
- *                even on the symbol. Each sequence continuously logs its activities to a separate logfile, and writes status
- *                changes to a separate status file. The sequence id is part of the log and status file names. A sequence can
- *                be loaded from such a status file. This enables the user to unload the EA on one machine (e.g. a laptop),
- *                to move the status file to another machine (e.g. a VPS or server) and to continue the sequence there by
- *                loading EA with the moved status file. To load the EA with an existing sequence the sequence id must be
- *                entered in the field "Sequence.ID". For new sequences the input field is empty (default).
+ * • Sequence.ID:  To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
+ *     even on the symbol. Each sequence continuously logs its activities to a separate logfile, and writes status changes to
+ *     a separate status file. The sequence id is part of the log and status file names. A sequence can be loaded from such a
+ *     status file. This enables the user to unload the EA on one machine (e.g. a laptop), to move the status file to another
+ *     machine (e.g. a VPS or server) and to continue the sequence there by loading EA with the moved status file. To load
+ *     an existing sequence into the EA the sequence id must be entered in the input "Sequence.ID". For new sequences the
+ *     input field stays empty (default).
  *
+ * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
+ *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
+ *     each other (one "long" and one "short" grid). A "long" grid consists of only Buy stop or limit orders, a "short" grid
+ *     consists of only Sell stop or limit orders.
+ *
+ * • GridVolatility:
  *
  *
  * - If both multipliers are "0" the EA trades like a single-position system (no grid).
