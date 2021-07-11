@@ -25,7 +25,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?1[0-9]{3}/
+extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?[1-9][0-9]{3}/
 
 extern string   GridDirection          = "Long | Short | Both*";
 extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
@@ -1963,9 +1963,9 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?1[0-9]{3}/). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[1-9][0-9]{3}/). Called only from onInitUser().
  *
- * @return bool - whether the input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
+ * @return bool - whether input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
