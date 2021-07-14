@@ -13,13 +13,14 @@
  *
  * Input parameters:
  * -----------------
- * • Sequence.ID:  To each sequence a unique instance id is assigned. This way multiple grids (instances) can run in parallel
- *     even on the same symbol. Each instance logs all activities to a logfile named "{symbol}.Duel.{instance-id}.log"), and
- *     writes status changes to a status file named "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part
- *     of the file names. A sequence can be loaded and fully restored from an existing status file. This enables the user to
- *     unload the EA on one machine (e.g. a laptop), move the file to another machine (e.g. a VPS or server) and to continue
- *     the sequence there by pointing the EA to the moved status file. To do this the user enters the sequence id of the
- *     status file in the input field "Sequence.ID". For new sequences the input field stays empty (default).
+ * • Sequence.ID:  To each sequence a unique instance id is assigned which affects magic order number generation (beneath
+ *     others). This way multiple grids (EA instances) can run in parallel even on the same symbol. Each instance logs its
+ *     activities to a logfile named "{symbol}.Duel.{instance-id}.log") and writes status changes to a status file named
+ *     "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file names. A sequence can be loaded
+ *     and fully restored from an existing status file. This enables the user to unload the EA on one machine (e.g. a laptop),
+ *     move the file to another machine (e.g. a VPS or server) and to continue the sequence there by pointing the EA to the
+ *     moved status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For
+ *     new sequences the input field stays empty and sequence id and magic numbers are auto-generated.
  *
  * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
  *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
@@ -1051,7 +1052,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       minusLevels = -Min(0, long.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
       if (plusLevels+minusLevels >= MaxGridLevels) {
-         log("UpdatePendingOrders(3)  max. of "+ MaxGridLevels +" long grid levels reached", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         log("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long grid levels reached ("+ MaxGridLevels +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
@@ -1085,7 +1086,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       minusLevels = -Min(0, short.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
       if (plusLevels+minusLevels >= MaxGridLevels) {
-         log("UpdatePendingOrders(5)  max. of "+ MaxGridLevels +" short grid levels reached", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         log("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short grid levels reached ("+ MaxGridLevels +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
@@ -2033,9 +2034,9 @@ bool ValidateInputs() {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                          return(!onInputError("ValidateInputs(2)  invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
+   if (iValue == -1)                          return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
    if (isParameterChange && iValue!=prev.sequence.direction) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  cannot change input parameter GridDirection of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change input parameter GridDirection of already started sequence"));
    }
    sequence.direction = iValue;
    long.enabled  = (sequence.direction & D_LONG  && 1);
@@ -2044,7 +2045,7 @@ bool ValidateInputs() {
 
    // GridVolatility
    if (isParameterChange && !StrCompareI(GridVolatility, prev.GridVolatility)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(4)  cannot change input parameter GridVolatility of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change input parameter GridVolatility of already started sequence"));
    }
    sValue = StrTrim(GridVolatility);
    if (!StringLen(sValue) || sValue=="{percent}") {
@@ -2054,45 +2055,45 @@ bool ValidateInputs() {
    else {
       if (StrEndsWith(sValue, "%"))
          sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(5)  invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
       sequence.gridvola = MathAbs(StrToDouble(sValue));
       GridVolatility = NumberToStr(sequence.gridvola, ".+") +"%";
    }
 
    // GridSize
    if (isParameterChange && NE(GridSize, prev.GridSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(6)  cannot change input parameter GridSize of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change input parameter GridSize of already started sequence"));
    }
-   if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(7)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
-   if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(8)  invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
+   if (LT(GridSize, 0))                       return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (too small)"));
+   if (MathModFix(GridSize*Pip, Point) != 0)  return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter GridSize: "+ NumberToStr(GridSize, ".+") +" (not a multiple of Point)"));
    sequence.gridsize = GridSize;
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(9)  cannot change input parameter UnitSize of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(9)  "+ sequence.name +" cannot change input parameter UnitSize of already started sequence"));
    }
-   if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(10)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
-   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(11)  invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
+   if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    sequence.unitsize = UnitSize;
 
    int empties = EQ(sequence.gridvola, 0) + EQ(sequence.gridsize, 0) + EQ(sequence.unitsize, 0);
-   if (empties > 1)                           return(!onInputError("ValidateInputs(12)  invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
+   if (empties > 1)                           return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
 
    // MaxGridLevels
-   if (MaxGridLevels < 1)                     return(!onInputError("ValidateInputs(13)  invalid input parameter MaxGridLevels: "+ MaxGridLevels));
+   if (MaxGridLevels < 1)                     return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter MaxGridLevels: "+ MaxGridLevels));
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(14)  cannot change input parameter Pyramid.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(14)  "+ sequence.name +" cannot change input parameter Pyramid.Multiplier of already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(15)  invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(16)  cannot change input parameter Martingale.Multiplier of already started sequence"));
+      if (wasSequenceStarted)                 return(!onInputError("ValidateInputs(16)  "+ sequence.name +" cannot change input parameter Martingale.Multiplier of already started sequence"));
    }
-   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(17)  invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)             return(!onInputError("ValidateInputs(17)  "+ sequence.name +" invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
    // TakeProfit
@@ -2101,7 +2102,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       bool isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(18)  invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
       double dValue = StrToDouble(sValue);
       if (isPercent) {
          TakeProfit        = NumberToStr(dValue, ".+") +"%";
@@ -2139,7 +2140,7 @@ bool ValidateInputs() {
    if (StringLen(sValue) && sValue!="{number}[%]") {
       isPercent = StrEndsWith(sValue, "%");
       if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(19)  invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))              return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
       dValue = StrToDouble(sValue);
       if (isPercent) {
          StopLoss          = NumberToStr(dValue, ".+") +"%";
