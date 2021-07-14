@@ -194,20 +194,6 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td> </td>
-</tr>
-
-<tr>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1280/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            Terminal build 1280
-        </a>
-    </td>
-    <td nowrap>
-        <a href="http://www.rosasurfer.com/.mt4/1280/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor
-        </a>
-    </td>
     <td nowrap> oldest build supported by MetaQuotes </td>
 </tr>
 
@@ -271,6 +257,9 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 -----
 
 ### MetaTrader 4 News
+
+###### July 2021:
+- MetaQuotes stops supporting terminals older than build 1310.
 
 ###### March 2021:
 - MetaQuotes stops supporting terminals older than build 1280.
