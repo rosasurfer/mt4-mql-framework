@@ -44,23 +44,24 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                      // instance to load from a file, format /T?[1-9][0-9]{3}/
+extern string   Sequence.ID            = "";                               // instance to load from a file, format /T?[1-9][0-9]{3}/
 
-extern string   GridDirection          = "Long | Short | Both*";
-extern string   GridVolatility         = "{percent}";             // drawdown on a full ADR move to the losing side
-extern double   GridSize               = 0;                       // in pip
-extern double   UnitSize               = 0;                       // lots at the first grid level
-extern int      MaxGridLevels          = 20;                      // max. number of open grid levels per direction
+extern string   GridDirection          = "Long | Short | Both*";           //
+extern string   GridVolatility         = "{percent}";                      // drawdown on a price move of 'VolatilityRange' to the losing side
+extern string   VolatilityRange        = "{pip} | {number}[ADR*|AWR|AMR]"; // pip range or average range identifier (default: [1]ADR)
+extern double   GridSize               = 0;                                // in pip
+extern double   UnitSize               = 0;                                // lots at the first grid level
+extern int      MaxGridLevels          = 15;                               // max. number of grid levels per direction
 
-extern double   Pyramid.Multiplier     = 1;                       // unitsize multiplier per grid level on the winning side
-extern double   Martingale.Multiplier  = 0;                       // unitsize multiplier per grid level on the losing side
+extern double   Pyramid.Multiplier     = 1;                                // unitsize multiplier per grid level on the winning side
+extern double   Martingale.Multiplier  = 0;                                // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{number}[%]";           // TP as absolute or percentage equity value
-extern string   StopLoss               = "{number}[%]";           // SL as absolute or percentage equity value
-extern bool     ShowProfitInPercent    = false;                   // whether PL is displayed as absolute or percentage value
+extern string   TakeProfit             = "{number}[%]";                    // TP as absolute or percentage equity value
+extern string   StopLoss               = "{number}[%]";                    // SL as absolute or percentage equity value
+extern bool     ShowProfitInPercent    = false;                            // whether PL is displayed as absolute or percentage value
 
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';  // server time, the date part is ignored
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';  // server time, the date part is ignored
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';           // server time, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';           // server time, the date part is ignored
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -3044,32 +3045,16 @@ void SS.All() {
 void SS.GridParameters() {
    if (__isChart) {
       string sGridSize;
-      if      (!sequence.gridsize)         sGridSize = "";
+      if      (!sequence.gridsize)         sGridSize = "?";
       else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(sequence.gridsize/100, ",'R.2");      // 123 pip => 1.23
       else                                 sGridSize = NumberToStr(sequence.gridsize, ".+") +" pip";     // 12.3 pip
 
-      string sUnitSize   = ifString(!sequence.unitsize, "", NumberToStr(sequence.unitsize, ".+") +" lot");
+      string sUnitSize   = ifString(!sequence.unitsize, "?", NumberToStr(sequence.unitsize, ".+") +" lot");
       string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
       string sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
 
-      if (sequence.gridsize && sequence.unitsize) {
-         double adr        = iADR();
-         double adrLevels  = adr/Pip/sequence.gridsize + 1;
-         double adrLots    = sequence.unitsize * adrLevels;
-         double beDistance = adr/2;
-         double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);
-         double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);
-         double gridPL     = MathDiv(beDistance, tickSize) * tickValue * adrLots;
-         double equity     = AccountEquity() - AccountCredit() + GetExternalAssets();     // TODO: should we use sequence.startEquity??
-         double vola       = NormalizeDouble(MathDiv(gridPL, equity) * 100, 1);
-
-         sGridParameters = sGridSize +" x "+ sUnitSize + sPyramid + sMartingale;
-         sGridVolatility = NumberToStr(vola, ",'.+") +"%/ADR";
-      }
-      else {
-         sGridParameters = "";
-         sGridVolatility = "";
-      }
+      sGridParameters = sGridSize +" x "+ sUnitSize + sPyramid + sMartingale;
+      sGridVolatility = ifString(!sequence.gridvola, "?", NumberToStr(sequence.gridvola, ",'.+") +"%/ADR");
    }
 }
 
@@ -3283,6 +3268,7 @@ string InputsToStr() {
    return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
                             "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
                             "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
+                            "VolatilityRange=",        DoubleQuoteStr(VolatilityRange),              ";", NL,
                             "GridSize=",               NumberToStr(GridSize, ".1+"),                 ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
                             "MaxGridLevels=",          MaxGridLevels,                                ";", NL,

@@ -35,20 +35,20 @@ int onInitUser() {
 
          // prevent starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
-         int level=0, maxLevels=15;
+         int level = 0;
 
-         for (level=+1; level <=  maxLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
-         for (level=-1; level >= -maxLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
-         for (level=+1; level <=  maxLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
-         for (level=-1; level >= -maxLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+         for (level=+1; level <=  MaxGridLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+         for (level=-1; level >= -MaxGridLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+         for (level=+1; level <=  MaxGridLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+         for (level=-1; level >= -MaxGridLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
 
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
-         double maxLots      = MathMax(maxLongLots, maxShortLots);      // max lots at level 15 in any direction
+         double maxLots      = MathMax(maxLongLots, maxShortLots);      // max. lots at maxGridLevel in any direction
          if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
             StopSequence(NULL);
-            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
             return(catch("onInitUser(4)"));
          }
 
