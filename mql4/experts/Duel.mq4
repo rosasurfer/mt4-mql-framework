@@ -1165,6 +1165,8 @@ double CalculateGridLevel(int direction, int level) {
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
    else                                                 return(!catch("CalculateGridLevel(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!level || level==-1)                             return(!catch("CalculateGridLevel(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (LE(sequence.gridbase, 0))                        return(!catch("CalculateGridLevel(3)  "+ sequence.name +" illegal value of sequence.gridbase: "+ NumberToStr(sequence.gridbase, ".1+"), ERR_ILLEGAL_STATE));
+   if (LE(sequence.gridsize, 0))                        return(!catch("CalculateGridLevel(4)  "+ sequence.name +" illegal value of sequence.gridsize: "+ NumberToStr(sequence.gridsize, ".+"), ERR_ILLEGAL_STATE));
 
    double price = 0;
 
@@ -1178,7 +1180,7 @@ double CalculateGridLevel(int direction, int level) {
    }
    price = NormalizeDouble(price, Digits);
 
-   return(ifDouble(catch("CalculateGridLevel(3)"), NULL, price));
+   return(ifDouble(catch("CalculateGridLevel(5)"), NULL, price));
 }
 
 
@@ -1196,6 +1198,8 @@ double CalculateLots(int direction, int level) {
    else if (direction == D_SHORT) { if (!short.enabled) return(NULL); }
    else                                                 return(!catch("CalculateLots(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (!level)                                          return(!catch("CalculateLots(2)  "+ sequence.name +" invalid parameter level: "+ level, ERR_INVALID_PARAMETER));
+   if (LE(sequence.unitsize, 0))                        return(!catch("CalculateLots(3)  "+ sequence.name +" illegal value of sequence.unitsize: "+ NumberToStr(sequence.unitsize, ".1+"), ERR_ILLEGAL_STATE));
+
    double lots = 0;
 
    if (Abs(level) == 1) {             // covers +1 and -1
@@ -1209,7 +1213,7 @@ double CalculateLots(int direction, int level) {
    }
    lots = NormalizeLots(lots); if (IsEmptyValue(lots)) return(NULL);
 
-   return(ifDouble(catch("CalculateLots(3)"), NULL, lots));
+   return(ifDouble(catch("CalculateLots(4)"), NULL, lots));
 }
 
 
