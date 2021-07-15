@@ -33,8 +33,10 @@
  *  @link  https://www.forexfactory.com/showthread.php?t=226059#                              ["Snowballs and the anti-grid"]
  *  @link  https://www.forexfactory.com/showthread.php?t=239717#               ["Trading the anti-grid with the Snowball EA"]
  *
+ *  @see  "mql4/etc/SnowRoller process flow.png"
  *
- * Risk warning: The market can range longer without reaching the profit target than a trading account may be able to survive.
+ *
+ * RISK WARNING: The market can range longer without reaching the profit target than a trading account may be able to survive.
  */
 #include <stddefines.mqh>
 #include <apps/snowroller/defines.mqh>
