@@ -9,11 +9,11 @@ double __rates[][6];
 /**
  * Globale init()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - always NULL (0)
  */
 int init() {
    if (__STATUS_OFF)
-      return(__STATUS_OFF.reason);
+      return(NULL);
 
    if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
       __CoreFunction = CF_INIT;
@@ -23,14 +23,14 @@ int init() {
       last_error          = ERR_DLL_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
-      return(last_error);
+      return(NULL);
    }
    if (!IsLibrariesAllowed()) {
       ForceAlert("Please enable MQL library calls for this script.");
       last_error          = ERR_EX4_CALLS_NOT_ALLOWED;
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = last_error;
-      return(last_error);
+      return(NULL);
    }
 
    int error = SyncMainContext_init(__ExecutionContext, MT_SCRIPT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, WindowHandle(Symbol(), NULL), WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
@@ -40,28 +40,28 @@ int init() {
       last_error          = error;
       __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
       __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
-      return(last_error);
+      return(NULL);
    }
 
 
    // (1) finish initialization
-   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
+   if (!initContext()) if (CheckErrors("init(2)")) return(NULL);
 
 
    // (2) user-spezifische Init-Tasks ausführen
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
+      if (!StringLen(GetServerTimezone())) return(_NULL(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return( last_error);
-      if (!TickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(NULL);
+      if (!TickSize)                                             return(_NULL(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return( last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(NULL);
+      if (!tickValue)                                            return(_NULL(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -73,7 +73,7 @@ int init() {
    }                                                                 // nicht mit -1 zurückkehrt.
 
    CheckErrors("init(10)");
-   return(last_error);
+   return(NULL);
 }
 
 
@@ -101,7 +101,7 @@ bool initContext() {
 /**
  * Globale start()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - always NULL (0)
  */
 int start() {
    if (__STATUS_OFF) {                                                        // init()-Fehler abfangen
@@ -110,7 +110,7 @@ int start() {
          Comment(NL, NL, NL, msg);                                            // 3 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
          debug("start(1)  "+ msg);
       }
-      return(__STATUS_OFF.reason);
+      return(NULL);
    }
    __CoreFunction = CF_START;
 
@@ -124,19 +124,19 @@ int start() {
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(2)")) return(last_error);
+      if (CheckErrors("start(2)")) return(NULL);
    }
 
    if (!Tick.Time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrors("start(3)", error)) return(last_error);              // nicht sicher detektiert werden kann
+         if (CheckErrors("start(3)", error)) return(NULL);                    // nicht sicher detektiert werden kann
    }
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
       if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
-         return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+         return(_NULL(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
    }
 
    // call the userland main function
@@ -146,23 +146,23 @@ int start() {
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(5)", error);
-   return(last_error);
+   return(NULL);
 }
 
 
 /**
  * Globale deinit()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - always NULL (0)
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
 
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
-      return(last_error);
+      return(NULL);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (IsError(error)) return(_NULL(LeaveContext(__ExecutionContext)));
 
    error = catch("deinit(1)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
@@ -171,7 +171,8 @@ int deinit() {
    if (!This.IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(2)");
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   LeaveContext(__ExecutionContext);
+   return(NULL);
 }
 
 
