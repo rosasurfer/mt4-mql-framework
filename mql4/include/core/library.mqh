@@ -5,11 +5,11 @@ int __lpSuperContext = NULL;
 /**
  * Initialization
  *
- * @return int - error status
+ * @return int - always NULL (0)
  */
 int init() {
    int error = SyncLibContext_init(__ExecutionContext, UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), WindowExpertName(), Symbol(), Period(), Digits, Point, IsTesting(), IsOptimization());
-   if (IsError(error)) return(error);
+   if (IsError(error)) return(NULL);
 
    // globale Variablen initialisieren
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
@@ -30,7 +30,7 @@ int init() {
    if (IsExpert()) {
       OrderSelect(0, SELECT_BY_TICKET);                              // Orderkontext der Library wegen Bug ausdrücklich zurücksetzen (siehe MQL.doc)
       error = GetLastError();
-      if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
+      if (error && error!=ERR_NO_TICKET_SELECTED) return(!catch("init(1)", error));
 
       if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
@@ -39,7 +39,9 @@ int init() {
    }
 
    onInit();
-   return(catch("init(2)"));
+
+   catch("init(2)");
+   return(NULL);
 }
 
 
@@ -47,17 +49,17 @@ int init() {
  * Dummy-Startfunktion für Libraries. Für den Compiler build 224 muß ab einer unbestimmten Komplexität der Library eine start()-
  * Funktion existieren, damit die init()-Funktion aufgerufen wird.
  *
- * @return int - Fehlerstatus
+ * @return int - always NULL (0)
  */
 int start() {
-   return(catch("start(1)", ERR_WRONG_JUMP));
+   return(!catch("start(1)", ERR_WRONG_JUMP));
 }
 
 
 /**
  * Deinitialisierung der Library.
  *
- * @return int - Fehlerstatus
+ * @return int - always NULL (0)
  *
  *
  * TODO: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere Expert::deinit()
@@ -71,7 +73,8 @@ int deinit() {
       onDeinit();
       catch("deinit(1)");
    }
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   LeaveContext(__ExecutionContext);
+   return(NULL);
 }
 
 
