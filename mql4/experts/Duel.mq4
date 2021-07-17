@@ -1674,10 +1674,16 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       if (!unitsize) return(false);
    }
    else /*gridvola*/{
-      double estGridsize = adr/Pip/30;                               // calculate estimated gridsize
-      ConfigureGrid(gridvola, estGridsize, unitsize);                // calculate unitsize from estimated gridsize
+      gridsize = adr/Pip/30;                                         // calculate estimated gridsize
+      gridsize = RoundCeil(gridsize, Digits & 1);                    // round gridsize up
+
+      if (ConfigureGrid(gridvola, gridsize, unitsize))               // calculate unitsize from estimated gridsize
+         return(true);
       if (IsLastError()) return(false);
-      if (!unitsize) unitsize = MarketInfo(Symbol(), MODE_MINLOT);   // set unitsize to the minimum
+      if (!unitsize) {
+         gridsize = 0;
+         unitsize = MarketInfo(Symbol(), MODE_MINLOT);               // set unitsize to the minimum
+      }
    }
 
    return(ConfigureGrid(gridvola, gridsize, unitsize));              // recalculate missings after adjusted or rounded up/down values
