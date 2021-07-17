@@ -29,9 +29,9 @@ int onInitUser() {
          sequence.isTest  = IsTesting(); SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
+         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
          SS.All();
-         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
          // prevent starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
@@ -44,8 +44,8 @@ int onInitUser() {
 
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
-         double maxLots      = MathMax(maxLongLots, maxShortLots);      // max. lots at maxGridLevel in any direction
-         if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
+         double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
+         if (IsError(catch("onInitUser(2)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
             StopSequence(NULL);
             logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
@@ -65,7 +65,7 @@ int onInitUser() {
          SaveStatus();
       }
    }
-   //else {}                                                   // an invalid sequence id was specified
+   //else {}                                                         // an invalid sequence id was specified
 
    return(last_error);
 }
@@ -82,7 +82,7 @@ int onInitParameters() {
       return(last_error);
    }
 
-   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);    // does nothing after sequence start
+   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
    SaveStatus();
    return(last_error);
 }

@@ -44,24 +44,24 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                               // instance to load from a file, format /T?[1-9][0-9]{3}/
+extern string   Sequence.ID            = "";                                  // instance to load from a file, format /T?[1-9][0-9]{3}/
 
-extern string   GridDirection          = "Long | Short | Both*";           //
-extern string   GridVolatility         = "{percent}";                      // drawdown on a price move of 'VolatilityRange' to the losing side
-extern string   VolatilityRange        = "{pip} | {number}[ADR*|AWR|AMR]"; // pip range or average range identifier (default: [1]ADR)
-extern double   GridSize               = 0;                                // in pip
-extern double   UnitSize               = 0;                                // lots at the first grid level
-extern int      MaxGridLevels          = 15;                               // max. number of grid levels per direction
+extern string   GridDirection          = "Long | Short | Both*";              //
+extern string   GridVolatility         = "{percent}";                         // drawdown on a price move of 'VolatilityRange' to the losing side
+extern string   VolatilityRange        = "[{number}] [ADR* | AWR | AMR]";     // pip range or multiple of range identifier for 'GridVolatility' (default: [1]ADR)
+extern double   GridSize               = 0;                                   // grid spacing in pip
+extern double   UnitSize               = 0;                                   // lots at the first grid level
+extern int      MaxGridLevels          = 15;                                  // max. number of grid levels per direction
 
-extern double   Pyramid.Multiplier     = 1;                                // unitsize multiplier per grid level on the winning side
-extern double   Martingale.Multiplier  = 0;                                // unitsize multiplier per grid level on the losing side
+extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
+extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{number}[%]";                    // TP as absolute or percentage equity value
-extern string   StopLoss               = "{number}[%]";                    // SL as absolute or percentage equity value
-extern bool     ShowProfitInPercent    = false;                            // whether PL is displayed as absolute or percentage value
+extern string   TakeProfit             = "{number}[%]";                       // TP as absolute or percentage equity value
+extern string   StopLoss               = "{number}[%]";                       // SL as absolute or percentage equity value
+extern bool     ShowProfitInPercent    = false;                               // whether PL is displayed as absolute or percentage value
 
-extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';           // server time, the date part is ignored
-extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';           // server time, the date part is ignored
+extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';              // server time, the date part is ignored
+extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              // server time, the date part is ignored
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1619,8 +1619,8 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
 
 
 /**
- * Auto-configure and return missing grid parameters. At least 2 of the 3 parameters must have a value. If all 3 parameters
- * are set gridsize and unitsize override the specified volatility.
+ * Auto-configure and set missing grid parameters. If all 3 parameters are set gridsize and unitsize override the specified
+ * volatility.
  *
  * @param  _InOut_ double &gridvola - the specified/resulting grid volatility
  * @param  _InOut_ double &gridsize - the specified/resulting gridsize
@@ -1629,20 +1629,18 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
  * @return bool - success status
  */
 bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
-   bool wasSequenceStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
-   if (wasSequenceStarted) return(false);                                           // skip reconfigurations after sequence start
+   if (IsLastError())      return(false);
+   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
+   if (sequenceWasStarted) return(true);                             // skip reconfiguration after sequence start
 
-   if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0))
-                    return(!catch("ConfigureGrid(1)  "+ sequence.name +" invalid parameters GridVolatility/GridSize/UnitSize (must be non-negative)", ERR_INVALID_PARAMETER));
-   int empties = EQ(gridvola, 0) + EQ(gridsize, 0) + EQ(unitsize, 0);
-   if (empties > 1) return(!catch("ConfigureGrid(2)  "+ sequence.name +" invalid parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)", ERR_INVALID_PARAMETER));
+   if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0)) return(!catch("ConfigureGrid(1)  "+ sequence.name +" invalid parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+") +" (all must be non-negative)", ERR_INVALID_PARAMETER));
+   if (!gridvola && (!gridsize || !unitsize))                 return(!catch("ConfigureGrid(2)  "+ sequence.name +" insufficient parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+"), ERR_INVALID_PARAMETER));
 
-   double adr        = iADR();                                                  if (!adr)       return(logWarn("ConfigureGrid(3)  "+ sequence.name +" ADR=0"));
-   double beDistance = adr/2;
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(logWarn("ConfigureGrid(4)  "+ sequence.name +" MODE_TICKSIZE=0"));
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(logWarn("ConfigureGrid(5)  "+ sequence.name +" MODE_TICKVALUE=0"));
-   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(logWarn("ConfigureGrid(6)  "+ sequence.name +" equity=0"));
-   double adrLevels, adrLots, pl;
+   double adr        = iADR();                                                  if (!adr)       return(!catch("ConfigureGrid(3)  "+ sequence.name +" ADR=0", ERR_RUNTIME_ERROR));
+   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(!catch("ConfigureGrid(4)  "+ sequence.name +" MODE_TICKSIZE=0", ERR_RUNTIME_ERROR));
+   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(!catch("ConfigureGrid(5)  "+ sequence.name +" MODE_TICKVALUE=0", ERR_RUNTIME_ERROR));
+   double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(!catch("ConfigureGrid(6)  "+ sequence.name +" equity=0", ERR_RUNTIME_ERROR));
+   double beDistance = adr/2, adrLevels, adrLots, pl;
 
    if (gridsize && unitsize) {
       // calculate the resulting volatility
@@ -1651,33 +1649,38 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       pl        = beDistance/tickSize * tickValue * adrLots;
       gridvola  = pl/equity * 100;
 
-      if (!gridvola) return(logWarn("ConfigureGrid(7)  "+ sequence.name +" resulting gridvola: 0"));
+      if (!gridvola) return(!catch("ConfigureGrid(7)  "+ sequence.name +" gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridvola: 0", ERR_RUNTIME_ERROR));
+
+      logInfo("ConfigureGrid(8)  "+ sequence.name +"  adr="+ PipToStr(adr/Pip) +"  gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
+      return(!catch("ConfigureGrid(9)"));
    }
    else if (gridvola && unitsize) {
-      // calculate the resulting gridsize and round it up (for safety)
+      // calculate the resulting gridsize
       pl        = gridvola/100 * equity;
       adrLots   = pl/beDistance/tickValue * tickSize;
       adrLevels = adrLots/unitsize;
       gridsize  = adr/Pip/(adrLevels-1);
-      gridsize  = RoundCeil(gridsize, Digits & 1);
+      gridsize  = RoundCeil(gridsize, Digits & 1);                   // round gridsize up
 
-      if (!gridsize) return(logWarn("ConfigureGrid(8)  "+ sequence.name +" resulting gridsize: 0"));
-      return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding up
+      if (!gridsize) return(!catch("ConfigureGrid(10)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
    }
-   else /*gridvola && gridsize*/ {
-      // calculate the resulting unitsize and round it down (for safety)
+   else if (gridvola && gridsize) {
+      // calculate the resulting unitsize
       pl        = gridvola/100 * equity;
       adrLevels = adr/Pip/gridsize + 1;
       adrLots   = pl/beDistance/tickValue * tickSize;
       unitsize  = adrLots/adrLevels;
-      unitsize  = NormalizeLots(unitsize, NULL, MODE_FLOOR);
-
-      if (!unitsize) return(logWarn("ConfigureGrid(9)  "+ sequence.name +" resulting unitsize: 0"));
-      return(ConfigureGrid(gridvola, gridsize, unitsize));                 // recalculate vola after rounding down
+      unitsize  = NormalizeLots(unitsize, NULL, MODE_FLOOR);         // round unitsize down
+      if (!unitsize) return(false);
+   }
+   else /*gridvola*/{
+      double estGridsize = adr/Pip/30;                               // calculate estimated gridsize
+      ConfigureGrid(gridvola, estGridsize, unitsize);                // calculate unitsize from estimated gridsize
+      if (IsLastError()) return(false);
+      if (!unitsize) unitsize = MarketInfo(Symbol(), MODE_MINLOT);   // set unitsize to the minimum
    }
 
-   if (IsLogInfo()) logInfo("ConfigureGrid(10)  "+ sequence.name +"  gridsize="+ DoubleToStr(gridsize, Digits & 1) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
-   return(!catch("ConfigureGrid(11)"));
+   return(ConfigureGrid(gridvola, gridsize, unitsize));              // recalculate missings after adjusted or rounded up/down values
 }
 
 
@@ -1825,9 +1828,10 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
-string   prev.Sequence.ID    = "";
-string   prev.GridDirection  = "";
-string   prev.GridVolatility = "";
+string   prev.Sequence.ID     = "";
+string   prev.GridDirection   = "";
+string   prev.GridVolatility  = "";
+string   prev.VolatilityRange = "";
 double   prev.GridSize;
 double   prev.UnitSize;
 int      prev.MaxGridLevels;
@@ -1884,6 +1888,7 @@ void BackupInputs() {
    prev.Sequence.ID            = StringConcatenate(Sequence.ID, "");       // string inputs are references to internal C literals...
    prev.GridDirection          = StringConcatenate(GridDirection, "");     // ...and must be copied to break the reference
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");
+   prev.VolatilityRange        = StringConcatenate(VolatilityRange, "");
    prev.GridSize               = GridSize;
    prev.UnitSize               = UnitSize;
    prev.MaxGridLevels          = MaxGridLevels;
@@ -1939,6 +1944,7 @@ void RestoreInputs() {
    Sequence.ID            = prev.Sequence.ID;
    GridDirection          = prev.GridDirection;
    GridVolatility         = prev.GridVolatility;
+   VolatilityRange        = prev.VolatilityRange;
    GridSize               = prev.GridSize;
    UnitSize               = prev.UnitSize;
    MaxGridLevels          = prev.MaxGridLevels;
@@ -2055,7 +2061,7 @@ bool ValidateInputs() {
    sValue = StrTrim(GridVolatility);
    if (!StringLen(sValue) || sValue=="{percent}") {
       GridVolatility = "";
-      if (!sequenceWasStarted) sequence.gridvola = NULL;
+      if (!sequenceWasStarted) sequence.gridvola = 0;
    }
    else {
       if (StrEndsWith(sValue, "%"))
@@ -2081,10 +2087,8 @@ bool ValidateInputs() {
    if (LT(UnitSize, 0))                       return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
    if (NE(UnitSize, NormalizeLots(UnitSize))) return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    if (!sequenceWasStarted) sequence.unitsize = UnitSize;
-
-   int empties = EQ(sequence.gridvola, 0) + EQ(sequence.gridsize, 0) + EQ(sequence.unitsize, 0);
-   if (empties > 1)                           return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameters GridVolatility/GridSize/UnitSize (min. 2 values must be set)"));
-
+   if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize))
+                                              return(!onInputError("ValidateInputs(12)  "+ sequence.name +" insufficient input parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
    // MaxGridLevels
    if (MaxGridLevels < 1)                     return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter MaxGridLevels: "+ MaxGridLevels));
 
