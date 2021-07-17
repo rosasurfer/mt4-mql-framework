@@ -56,7 +56,7 @@ int init() {
    }
 
    // finish initialization
-   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
+   if (!InitGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -151,13 +151,11 @@ int init() {
 
 
 /**
- * Update global variables and the indicator's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
+ * Update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
- *
- * Note: The memory location of an indicator's EXECUTION_CONTEXT changes on every init cycle.
  */
-bool initContext() {
+bool InitGlobals() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -172,7 +170,7 @@ bool initContext() {
    //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
    //             properties via the framework configuration.
    //
-   // TODO: implement workaround in Expander
+   // TODO: implement workaround in MT4Expander
    //
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -187,7 +185,7 @@ bool initContext() {
    P_INF = -N_INF;                                          // positive infinity
    NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   return(!catch("initContext(1)"));
+   return(!catch("InitGlobals(1)"));
 }
 
 
