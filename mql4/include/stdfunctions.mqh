@@ -3728,6 +3728,8 @@ bool Tester.IsPaused() {
 bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
+   // TODO: because of i18n we can't rely on the control's text
+
    if (IsScript()) {
       int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       int hWndStartStopBtn   = GetDlgItem(hWndTesterSettings, IDC_TESTER_SETTINGS_STARTSTOP);
