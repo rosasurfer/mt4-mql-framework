@@ -2316,8 +2316,7 @@ bool StrIsNumeric(string value) {
    }
 
    int len = StringLen(value);
-   if (!len)
-      return(false);
+   if (!len) return(false);
 
    bool period = false;
 
