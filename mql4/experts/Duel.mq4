@@ -1650,9 +1650,9 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       gridvola  = pl/equity * 100;
 
       if (!gridvola) return(!catch("ConfigureGrid(7)  "+ sequence.name +" gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridvola: 0", ERR_RUNTIME_ERROR));
-
-      logInfo("ConfigureGrid(8)  "+ sequence.name +"  adr="+ PipToStr(adr/Pip) +"  gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
-      return(!catch("ConfigureGrid(9)"));
+                           logInfo("ConfigureGrid(8)  "+ sequence.name +"  adr="+ PipToStr(adr/Pip) +"  gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
+      if (gridvola > 50)   logWarn("ConfigureGrid(9)  "+ sequence.name +"  The resulting grid volatility is larger than 50%: "+ DoubleToStr(gridvola, 1) +"%");
+      return(!catch("ConfigureGrid(10)"));
    }
    else if (gridvola && unitsize) {
       // calculate the resulting gridsize
@@ -1662,7 +1662,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       gridsize  = adr/Pip/(adrLevels-1);
       gridsize  = RoundCeil(gridsize, Digits & 1);                   // round gridsize up
 
-      if (!gridsize) return(!catch("ConfigureGrid(10)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
+      if (!gridsize) return(!catch("ConfigureGrid(11)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
    }
    else if (gridvola && gridsize) {
       // calculate the resulting unitsize
