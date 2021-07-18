@@ -451,6 +451,7 @@ bool IsSessionBreak() {
 bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
+   SetLogfile(GetLogFilename());                      // create the logfile (and flush the logbuffer)
 
    if      (sequence.direction == D_LONG)  sequence.gridbase = Ask;
    else if (sequence.direction == D_SHORT) sequence.gridbase = Bid;

@@ -126,7 +126,9 @@ int onInitTemplate() {
  */
 int afterInit() {
    SS.All();
-   if (!SetLogfile(GetLogFilename())) return(last_error);
+
+   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
+   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
