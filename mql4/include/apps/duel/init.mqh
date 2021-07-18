@@ -20,17 +20,18 @@ int onInit() {
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
-      RestoreSequence();                                       // a valid sequence id was specified
+      RestoreSequence();                                             // a valid sequence id was specified
    }
-   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+   else if (StrTrim(Sequence.ID) == "") {                            // no sequence id was specified
       if (ValidateInputs()) {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = sequence.id;
          sequence.isTest  = IsTesting(); SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
-         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
-         ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
+         if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+            return(onInputError("onInitUser(1)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+         }
          SS.All();
 
          // prevent starting with too little free margin
@@ -77,14 +78,18 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (!ValidateInputs()) {
-      RestoreInputs();
-      return(last_error);
+   int error;
+
+   if (ValidateInputs()) {
+      if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+         SaveStatus();
+         return(last_error);
+      }
+      error = logError("onInitParameters(1)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+"), ERR_INVALID_INPUT_PARAMETER);
    }
 
-   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
-   SaveStatus();
-   return(last_error);
+   RestoreInputs();
+   return(error);
 }
 
 
