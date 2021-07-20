@@ -1,8 +1,8 @@
 <chart>
-symbol=XAUI
+symbol=JPYLFX
 period=60
 leftpos=0
-digits=2
+digits=5
 scale=1
 graph=1
 fore=0
@@ -17,11 +17,11 @@ days=0
 descriptions=1
 shift_size=50
 fixed_pos=620
-window_left=886
-window_top=293
-window_right=1362
-window_bottom=630
-window_type=3
+window_left=0
+window_top=0
+window_right=1292
+window_bottom=780
+window_type=1
 background_color=16316664
 foreground_color=0
 barup_color=30720
