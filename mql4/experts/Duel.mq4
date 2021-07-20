@@ -1675,7 +1675,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       if (!unitsize) return(false);
    }
    else /*gridvola*/{
-      gridsize = adr/Pip/30;                                         // calculate estimated gridsize
+      gridsize = adr/Pip/20;                                         // calculate estimated gridsize
       gridsize = RoundCeil(gridsize, Digits & 1);                    // round gridsize up
 
       if (ConfigureGrid(gridvola, gridsize, unitsize))               // calculate unitsize from estimated gridsize
@@ -2571,9 +2571,10 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",                /*string  */ Sequence.ID);
    WriteIniString(file, section, "GridDirection",              /*string  */ GridDirection);
-   WriteIniString(file, section, "GridVolatility",             /*string  */ GridVolatility);
-   WriteIniString(file, section, "GridSize",                   /*double  */ NumberToStr(GridSize, ".+"));
-   WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(UnitSize, ".+"));
+   WriteIniString(file, section, "GridVolatility",             /*string  */ NumberToStr(sequence.gridvola, ".+") +"%");
+   WriteIniString(file, section, "VolatilityRange",            /*string  */ VolatilityRange);
+   WriteIniString(file, section, "GridSize",                   /*string  */ PipToStr(sequence.gridsize));
+   WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(sequence.unitsize, ".+"));
 
    WriteIniString(file, section, "Pyramid.Multiplier",         /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",      /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
@@ -2706,7 +2707,8 @@ bool ReadStatus() {
    string sSequenceID            = GetIniStringA(file, section, "Sequence.ID",            "");  // string   Sequence.ID            = T1234
    string sGridDirection         = GetIniStringA(file, section, "GridDirection",          "");  // string   GridDirection          = Long
    string sGridVolatility        = GetIniStringA(file, section, "GridVolatility",         "");  // string   GridVolatility         = 30%
-   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");  // double   GridSize               = 2.3
+   string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");  // string   VolatilityRange        = ADR
+   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");  // string   GridSize               = 12.00
    string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");  // double   UnitSize               = 0.01
    string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");  // double   Pyramid.Multiplier     = 1.1
    string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");  // double   Martingale.Multiplier  = 1.1
@@ -2726,7 +2728,8 @@ bool ReadStatus() {
    Sequence.ID            = sSequenceID;
    GridDirection          = sGridDirection;
    GridVolatility         = sGridVolatility;
-   GridSize               = StrToDouble(sGridSize);
+   VolatilityRange        = sVolatilityRange;
+   GridSize               = sGridSize;
    UnitSize               = StrToDouble(sUnitSize);
    Pyramid.Multiplier     = StrToDouble(sPyramidMultiplier);
    Martingale.Multiplier  = StrToDouble(sMartingaleMultiplier);
@@ -3095,7 +3098,7 @@ void SS.OpenLots() {
          openLevels  = plusLevels + minusLevels;
          sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
-         sSlippage = PipToStr(long.slippage/Pip, true);
+         sSlippage = PipToStr(long.slippage/Pip, true, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
 
          sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
@@ -3109,7 +3112,7 @@ void SS.OpenLots() {
          openLevels  = plusLevels + minusLevels;
          sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
-         sSlippage = PipToStr(short.slippage/Pip, true);
+         sSlippage = PipToStr(short.slippage/Pip, true, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
 
          sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);

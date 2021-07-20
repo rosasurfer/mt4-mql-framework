@@ -1071,7 +1071,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'I': break;
 
-      case 'J': if      (StrStartsWith(_symbol, "JPYLFX"))     result = "JPYLFX";
+      case 'J': if      (              _symbol=="JPN225" )     result = "JP225";
+                else if (StrStartsWith(_symbol, "JPYLFX"))     result = "JPYLFX";
                 break;
 
       case 'K': break;
@@ -5249,21 +5250,26 @@ string NumberToStr(double value, string mask) {
  * Format a value representing a pip range of the current symbol. Depending on the symbol and the size of the value the
  * resulting string is in money or subpip notation.
  *
- * @param  double value                   - price range in pip
- * @param  bool   appendSuffix [optional] - whether to append the suffix " pip" to the formatted value (default: no)
+ * @param  double value                         - price range in pip
+ * @param  bool   thousandsSeparator [optional] - whether to use the thousands separator "'" (default: no)
+ * @param  bool   appendSuffix       [optional] - whether to append the suffix " pip" to the formatted value (default: no)
  *
  * @return string
  */
-string PipToStr(double value, bool appendSuffix = false) {
-   string sValue = value;
-   if (StringGetChar(sValue, 3) == '#')                        // "-1.#IND0000" => NaN
-      return(sValue);                                          // "-1.#INF0000" => Infinite
+string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=false) {
+   thousandsSeparator = thousandsSeparator!=0;
+   appendSuffix       = appendSuffix!=0;
+   string sSeparator="", sValue=value;
+   if (thousandsSeparator) sSeparator = ",'";
+
+   if (StringGetChar(sValue, 3) == '#')                              // "-1.#IND0000" => NaN
+      return(sValue);                                                // "-1.#INF0000" => Infinite
 
    if (Digits==2 && Close[0]>=500) {
-      sValue = NumberToStr(value/100, ",'R.2");                // 123 pip => 1.23
+      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23
    }
    else {
-      sValue = NumberToStr(value, ",'R."+ (Digits & 1));       // 123 pip
+      sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip
       if (appendSuffix) sValue = StringConcatenate(sValue, " pip");
    }
    return(sValue);
