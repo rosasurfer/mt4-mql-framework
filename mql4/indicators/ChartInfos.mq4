@@ -1317,7 +1317,7 @@ bool UpdatePositions() {
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true);
+                  else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true, true);
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
             }
 
