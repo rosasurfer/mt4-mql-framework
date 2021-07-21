@@ -92,8 +92,8 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
 #define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
 #define CLR_CLOSE             Orange               //
-                                                   //
-// sequence data                                   //
+
+// sequence data
 int      sequence.id;                              //
 datetime sequence.created;                         //
 bool     sequence.isTest;                          // whether the sequence is a test (e.g. loaded into an online chart)
@@ -115,11 +115,9 @@ double   sequence.closedPL;                        // P/L of all closed position
 double   sequence.totalPL;                         // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
-double   sequence.bePrice.long;                    //
-double   sequence.bePrice.short;                   //
 double   sequence.tpPrice;                         //
 double   sequence.slPrice;                         //
-                                                   //
+
 // order management
 bool     long.enabled;
 int      long.ticket      [];                      // records are ordered ascending by grid level
@@ -140,6 +138,7 @@ double   long.slippage;                            // overall ippage of the long
 double   long.openLots;                            // total open long lots: 0...+n
 double   long.openPL;
 double   long.closedPL;
+double   long.bePrice;
 int      long.minLevel = INT_MAX;                  // lowest reached grid level
 int      long.maxLevel = INT_MIN;                  // highest reached grid level
 
@@ -162,6 +161,7 @@ double   short.slippage;                           // overall slippage of the sh
 double   short.openLots;                           // total open short lots: 0...+n
 double   short.openPL;
 double   short.closedPL;
+double   short.bePrice;
 int      short.minLevel = INT_MAX;
 int      short.maxLevel = INT_MIN;
 
@@ -203,8 +203,8 @@ string   sSequenceTpPrice = "";
 string   sSequenceSlPrice = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause        = false;          // whether to pause a test after StopSequence()
-bool     test.reduceStatusWrites = true;           // whether to minimize status file writing in tester
+bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
+bool     test.optimizeDiskIO = true;               // whether to minimize file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -293,9 +293,15 @@ bool onCommand(string commands[]) {
             return(StopSequence(NULL));
       }
    }
-   else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
+   else if (cmd == "resume") {
+      switch (sequence.status) {
+         case STATUS_STOPPED:
+            return(ResumeSequence(NULL));
+      }
+   }
+   else return(!logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(_true(logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ StatusToStr(sequence.status))));
+   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ StatusToStr(sequence.status)));
 }
 
 
@@ -442,7 +448,7 @@ bool IsSessionBreak() {
 
 
 /**
- * Start the trade sequence. When called all previous sequence data was reset.
+ * Start a waiting sequence.
  *
  * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
  *
@@ -486,7 +492,37 @@ bool StartSequence(int signal) {
 
 
 /**
- * Close open positions, delete pending orders and stop the sequence.
+ * Resume a stopped sequence.
+ *
+ * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (manual resume)
+ *
+ * @return bool - success status
+ */
+bool ResumeSequence(int signal) {
+   if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
+
+   // im SnowRoller tracke ich: start/stop time, price, totalPl
+
+   // im Duel brauche ich: all previous orders, totalPl, maxProfit, maxDrawdown, gridbase?
+
+
+   // store old state and initialize new state (update TP/SL conditions)
+   // set new gridbase
+   // set new sequence status
+   // open a single market position for all active levels
+   // update the realized new gridbase (slippage)
+   // update open lots
+   // update pending orders
+   // compute overall profit
+
+   //SaveStatus();
+   return(!catch("ResumeSequence(3)"));
+}
+
+
+/**
+ * Stop a waiting or progressing sequence. Closes open positions, deletes pending orders and stops the sequence.
  *
  * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit/manual stop)
  *
@@ -1460,7 +1496,7 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
 
       if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // short: interpolate position to the next long or hedged position
       if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next long position
-      sequence.bePrice.long = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+      long.bePrice = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
    if (short.enabled) {
@@ -1474,12 +1510,12 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
 
       if (_lots >  0)  Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // long: interpolate position to the next short or hedged position
       if (_lots == 0) Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next short position
-      sequence.bePrice.short = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+      short.bePrice = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
-   if (IsVisualMode()) {                                                                           // for breakeven indicator: store results also in the chart window
-      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  sequence.bePrice.long);
-      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", sequence.bePrice.short);
+   if (IsVisualMode()) {                                                                           // store results also in the chart window (for breakeven indicator)
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  long.bePrice);
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", short.bePrice);
    }
    return(!catch("ComputeProfitTargets(1)"));
 }
@@ -2551,8 +2587,8 @@ bool SaveStatus() {
    if (IsLastError())                            return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +"  sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
 
-   // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
-   if (IsTesting() && test.reduceStatusWrites) {
+   // in tester skip updating the status file on most calls (except at creation, after sequence stop and at test end)
+   if (IsTesting() && test.optimizeDiskIO) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2612,8 +2648,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.totalPL",           /*double  */ DoubleToStr(sequence.totalPL, 2));
    WriteIniString(file, section, "sequence.maxProfit",         /*double  */ DoubleToStr(sequence.maxProfit, 2));
    WriteIniString(file, section, "sequence.maxDrawdown",       /*double  */ DoubleToStr(sequence.maxDrawdown, 2));
-   WriteIniString(file, section, "sequence.bePrice.long",      /*double  */ NumberToStr(sequence.bePrice.long, ".+"));
-   WriteIniString(file, section, "sequence.bePrice.short",     /*double  */ NumberToStr(sequence.bePrice.short, ".+"));
    WriteIniString(file, section, "sequence.tpPrice",           /*double  */ NumberToStr(sequence.tpPrice, ".+"));
    WriteIniString(file, section, "sequence.slPrice",           /*double  */ NumberToStr(sequence.slPrice, ".+") + CRLF);
 
@@ -2627,6 +2661,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "long.openLots",              /*double  */ NumberToStr(long.openLots, ".+"));
    WriteIniString(file, section, "long.openPL",                /*double  */ DoubleToStr(long.openPL, 2));
    WriteIniString(file, section, "long.closedPL",              /*double  */ DoubleToStr(long.closedPL, 2));
+   WriteIniString(file, section, "long.bePrice",               /*double  */ NumberToStr(long.bePrice, ".+"));
    WriteIniString(file, section, "long.minLevel",              /*int     */ long.minLevel);
    WriteIniString(file, section, "long.maxLevel",              /*int     */ long.maxLevel + CRLF);
 
@@ -2640,6 +2675,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "short.openLots",             /*double  */ NumberToStr(short.openLots, ".+"));
    WriteIniString(file, section, "short.openPL",               /*double  */ DoubleToStr(short.openPL, 2));
    WriteIniString(file, section, "short.closedPL",             /*double  */ DoubleToStr(short.closedPL, 2));
+   WriteIniString(file, section, "short.bePrice",              /*double  */ NumberToStr(short.bePrice, ".+"));
    WriteIniString(file, section, "short.minLevel",             /*int     */ short.minLevel);
    WriteIniString(file, section, "short.maxLevel",             /*int     */ short.maxLevel + CRLF);
 
@@ -2763,8 +2799,6 @@ bool ReadStatus() {
    sequence.totalPL           = GetIniDouble (file, section, "sequence.totalPL"          );     // double   sequence.totalPL           = 123.45
    sequence.maxProfit         = GetIniDouble (file, section, "sequence.maxProfit"        );     // double   sequence.maxProfit         = 23.45
    sequence.maxDrawdown       = GetIniDouble (file, section, "sequence.maxDrawdown"      );     // double   sequence.maxDrawdown       = -11.23
-   sequence.bePrice.long      = GetIniDouble (file, section, "sequence.bePrice.long"     );     // double   sequence.bePrice.long      = 1.17453
-   sequence.bePrice.short     = GetIniDouble (file, section, "sequence.bePrice.short"    );     // double   sequence.bePrice.short     = 0
    sequence.tpPrice           = GetIniDouble (file, section, "sequence.tpPrice"          );     // double   sequence.tpPrice           = 1.17692
    sequence.slPrice           = GetIniDouble (file, section, "sequence.slPrice"          );     // double   sequence.slPrice           = 1.17051
 
@@ -2775,6 +2809,7 @@ bool ReadStatus() {
    long.openLots              = GetIniDouble (file, section, "long.openLots");                  // double   long.openLots = 0.02
    long.openPL                = GetIniDouble (file, section, "long.openPL"  );                  // double   long.openPL   = 12.34
    long.closedPL              = GetIniDouble (file, section, "long.closedPL");                  // double   long.closedPL = 23.34
+   long.bePrice               = GetIniDouble (file, section, "long.bePrice" );                  // double   long.bePrice  = 1.17453
    long.minLevel              = GetIniInt    (file, section, "long.minLevel");                  // int      long.minLevel = -2
    long.maxLevel              = GetIniInt    (file, section, "long.maxLevel");                  // int      long.maxLevel = 7
    string sKeys[], sOrder;
@@ -2791,6 +2826,7 @@ bool ReadStatus() {
    short.openLots             = GetIniDouble (file, section, "short.openLots");                 // double   short.openLots = 0.02
    short.openPL               = GetIniDouble (file, section, "short.openPL"  );                 // double   short.openPL   = 12.34
    short.closedPL             = GetIniDouble (file, section, "short.closedPL");                 // double   short.closedPL = 23.34
+   short.bePrice              = GetIniDouble (file, section, "short.bePrice" );                 // double   short.bePrice  = 1.17453
    short.minLevel             = GetIniInt    (file, section, "short.minLevel");                 // int      short.minLevel = -2
    short.maxLevel             = GetIniInt    (file, section, "short.maxLevel");                 // int      short.maxLevel = 7
    size = ReadStatus.OrderKeys(file, section, sKeys, D_SHORT); if (size < 0) return(false);
@@ -3168,19 +3204,19 @@ void SS.PLStats(bool enforce = false) {
 
 
 /**
- * ShowStatus: Update the string representation of "sequence.bePrice", "sequence.tpPrice" and "sequence.slPrice".
+ * ShowStatus: Update the string representation of "long/short.bePrice", "sequence.tpPrice" and "sequence.slPrice".
  */
 void SS.ProfitTargets() {
    if (__isChart) {
       sSequenceBePrice = "";
       if (long.enabled) {
-         if (!sequence.bePrice.long)     sSequenceBePrice = sSequenceBePrice +"-";
-         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(sequence.bePrice.long, Digits), PriceFormat);
+         if (!long.bePrice)              sSequenceBePrice = sSequenceBePrice +"-";
+         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundCeil(long.bePrice, Digits), PriceFormat);
       }
       if (long.enabled && short.enabled) sSequenceBePrice = sSequenceBePrice +" / ";
       if (short.enabled) {
-         if (!sequence.bePrice.short)    sSequenceBePrice = sSequenceBePrice +"-";
-         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(sequence.bePrice.short, Digits), PriceFormat);
+         if (!short.bePrice)             sSequenceBePrice = sSequenceBePrice +"-";
+         else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(short.bePrice, Digits), PriceFormat);
       }
 
       if      (!sequence.tpPrice)     sSequenceTpPrice = "";
