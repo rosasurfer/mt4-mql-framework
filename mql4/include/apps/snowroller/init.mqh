@@ -137,7 +137,7 @@ int afterInit() {
       test.onTrendChangePause  = GetConfigBool(section, "OnTrendChangePause",  false);
       test.onTakeProfitPause   = GetConfigBool(section, "OnTakeProfitPause",   false);
       test.onStopLossPause     = GetConfigBool(section, "OnStopLossPause",     false);
-      test.optimizeDiskIO      = GetConfigBool(section, "OptimizeDiskIO",       true);
+      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus",       true);
       test.showBreakeven       = GetConfigBool(section, "ShowBreakeven",       false);
    }
    else if (IsTestSequence()) {

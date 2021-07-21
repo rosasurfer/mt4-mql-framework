@@ -88,6 +88,25 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define D_SHORT               TRADE_DIRECTION_SHORT
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
+#define HIX_CYCLE             0                    // order history indexes
+#define HIX_TICKET            1
+#define HIX_LEVEL             2
+#define HIX_LOTS              3
+#define HIX_PENDINGTYPE       4
+#define HIX_PENDINGTIME       5
+#define HIX_PENDINGPRICE      6
+#define HIX_TYPE              7
+#define HIX_OPENTIME          8
+#define HIX_OPENPRICE         9
+#define HIX_CLOSETIME        10
+#define HIX_CLOSEPRICE       11
+#define HIX_SWAP             12
+#define HIX_COMMISSION       13
+#define HIX_PROFIT           14
+#define HIX_TOTALPROFIT      15
+#define HIX_MAXPROFIT        16
+#define HIX_MAXDRAWDOWN      17
+
 #define CLR_PENDING           DeepSkyBlue          // order marker colors
 #define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
 #define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
@@ -107,10 +126,10 @@ double   sequence.gridvola;                        //
 double   sequence.gridsize;                        //
 double   sequence.unitsize;                        // lots at the first level
 double   sequence.gridbase;                        //
-double   sequence.openLots;                        // total open lots: long.openLots - short.openLots
-double   sequence.hedgedPL;                        // P/L of the hedged open positions
-double   sequence.floatingPL;                      // P/L of the floating open positions
-double   sequence.openPL;                          // P/L of all open positions: hedgedPL + floatingPL
+double   sequence.totalLots;                       // total lots: long.totalLots - short.totalLots
+double   sequence.floatingPL;                      // P/L of a floating open position
+double   sequence.hedgedPL;                        // P/L of a hedged open position
+double   sequence.openPL;                          // P/L of all open positions: floatingPL + hedgedPL
 double   sequence.closedPL;                        // P/L of all closed positions
 double   sequence.totalPL;                         // total P/L of the sequence: openPL + closedPL
 double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
@@ -134,8 +153,9 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
-double   long.slippage;                            // overall ippage of the long side
-double   long.openLots;                            // total open long lots: 0...+n
+double   long.history     [][18];                  // history of closed long orders
+double   long.totalLots;                           // total long lots: 0...+n
+double   long.slippage;                            // overall slippage of the long side
 double   long.openPL;
 double   long.closedPL;
 double   long.bePrice;
@@ -157,8 +177,9 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
+double   short.history     [][18];                 // history of closed short orders
+double   short.totalLots;                          // total short lots: 0...+n
 double   short.slippage;                           // overall slippage of the short side
-double   short.openLots;                           // total open short lots: 0...+n
 double   short.openPL;
 double   short.closedPL;
 double   short.bePrice;
@@ -193,9 +214,9 @@ datetime sessionbreak.endtime;
 string   sGridParameters  = "";
 string   sGridVolatility  = "";
 string   sStopConditions  = "";
-string   sOpenLongLots    = "";
-string   sOpenShortLots   = "";
-string   sOpenTotalLots   = "";
+string   sTotalLots       = "";
+string   sTotalLongLots   = "";
+string   sTotalShortLots  = "";
 string   sSequenceTotalPL = "";
 string   sSequencePlStats = "";
 string   sSequenceBePrice = "";
@@ -204,7 +225,7 @@ string   sSequenceSlPrice = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeDiskIO = true;               // whether to minimize file writing in tester
+bool     test.optimizeStatus = true;               // whether to minimize status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -459,12 +480,8 @@ bool StartSequence(int signal) {
    if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
    SetLogfile(GetLogFilename());                      // create the logfile (and flush the logbuffer)
 
-   if      (sequence.direction == D_LONG)  sequence.gridbase = Ask;
-   else if (sequence.direction == D_SHORT) sequence.gridbase = Bid;
-   else                                    sequence.gridbase = NormalizeDouble((Bid+Ask)/2, Digits);
-
-   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
    sequence.status      = STATUS_PROGRESSING;
+   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
    int idxLong=-1, idxShort=-1;
 
    if (long.enabled) {
@@ -476,12 +493,11 @@ bool StartSequence(int signal) {
       if (idxShort < 0) return(false);
    }
 
-   // update the gridbase according to the realized price (slippage)
    if      (sequence.direction == D_LONG)  sequence.gridbase = long.openPrice [idxLong ];
    else if (sequence.direction == D_SHORT) sequence.gridbase = short.openPrice[idxShort];
    else                                    sequence.gridbase = NormalizeDouble((long.openPrice[idxLong]+short.openPrice[idxShort])/2, Digits);
 
-   sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2); SS.OpenLots();
+   sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.Lots();
 
    if (!UpdatePendingOrders()) return(false);         // update pending orders
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
@@ -502,16 +518,19 @@ bool ResumeSequence(int signal) {
    if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
-   // SnowRoller: start/stop time, price, totalPl
+   if (long.enabled)  logDebug("ResumeSequence(0.1)  long.totalLots="+  NumberToStr(long.totalLots, ".1+")  +"  long.openPL="+  DoubleToStr(long.openPL, 2)  +"  long.closedPL="+  DoubleToStr(long.closedPL, 2)  +"  long.minLevel="+  long.minLevel  +"  long.maxLevel="+  long.maxLevel);
+   if (short.enabled) logDebug("ResumeSequence(0.2)  short.totalLots="+ NumberToStr(short.totalLots, ".1+") +"  short.openPL="+ DoubleToStr(short.openPL, 2) +"  short.closedPL="+ DoubleToStr(short.closedPL, 2) +"  short.minLevel="+ short.minLevel +"  short.maxLevel="+ short.maxLevel);
+                      logDebug("ResumeSequence(0.3)  sequence.totalLots="+ NumberToStr(sequence.totalLots, ".1+") +"  sequence.floatingPL="+ DoubleToStr(sequence.floatingPL, 2) +"  sequence.hedgedPL="+ DoubleToStr(sequence.hedgedPL, 2) +"  sequence.openPL="+ DoubleToStr(sequence.openPL, 2) +"  sequence.closedPL="+ DoubleToStr(sequence.closedPL, 2));
 
-   // Duel: all previous orders, totalPl, maxProfit, maxDrawdown, gridbase?
+   if (false) ArchiveStoppedSequence();                        // TODO: startTime, stopTime, gridbase?, stopPrice?
+   if (false) sequence.status = STATUS_PROGRESSING;            // TODO: update TP/SL conditions
 
-
-   // store old state and initialize new state (update TP/SL conditions)
-   // set new gridbase
-   // set new sequence status
    // open a single market position for all active levels
-   // update the realized new gridbase (slippage)
+   // - how big?
+
+
+
+   // set new gridbase
    // update open lots
    // update pending orders
    // compute overall profit
@@ -536,9 +555,9 @@ bool StopSequence(int signal) {
       if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
       int hedgeTicket, oe[];
 
-      if (NE(sequence.openLots, 0)) {                                // hedge the total open position: execution price = sequence close price
-         int      type        = ifInt(GT(sequence.openLots, 0), OP_SELL, OP_BUY);
-         double   lots        = MathAbs(sequence.openLots);
+      if (NE(sequence.totalLots, 0)) {                               // hedge the total open position: execution price = sequence close price
+         int      type        = ifInt(GT(sequence.totalLots, 0), OP_SELL, OP_BUY);
+         double   lots        = MathAbs(sequence.totalLots);
          double   price       = NULL;
          int      slippage    = 10;                                  // point
          double   stopLoss    = NULL;
@@ -553,12 +572,13 @@ bool StopSequence(int signal) {
       }
 
       if (!Grid.RemovePendingOrders()) return(false);                // cancel and remove all pending orders
-
       if (!StopSequence.ClosePositions(hedgeTicket)) return(false);  // close all open and the hedging position
 
-      sequence.openPL   = 0;                                         // update total PL numbers
-      sequence.closedPL = long.closedPL + short.closedPL;
-      sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
+      sequence.floatingPL = 0;
+      sequence.hedgedPL   = 0;
+      sequence.openPL     = 0;                                       // update total PL numbers
+      sequence.closedPL   = long.closedPL + short.closedPL;
+      sequence.totalPL    = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
       if      (sequence.totalPL > sequence.maxProfit  ) sequence.maxProfit   = sequence.totalPL;
       else if (sequence.totalPL < sequence.maxDrawdown) sequence.maxDrawdown = sequence.totalPL;
       SS.TotalPL(true);
@@ -610,9 +630,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
       }
       lastShortPosition = orders - 1;
    }
-   if (hedgeTicket != NULL) {
-      ArrayPushInt(positions, hedgeTicket);
-   }
+   if (hedgeTicket != NULL) ArrayPushInt(positions, hedgeTicket);
 
    // close open positions and update local order state
    if (ArraySize(positions) > 0) {
@@ -717,10 +735,10 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
             long.profit    [i] = OrderProfit();
             if (IsLogDebug()) logDebug("Grid.RemovePendingOrders(3)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_LONG, i));
 
-            long.minLevel  = MathMin(long.level[i], long.minLevel);
-            long.maxLevel  = MathMax(long.level[i], long.maxLevel);
-            long.openLots += long.lots[i];
-            long.slippage += oe.Slippage(oe)*Point;
+            long.minLevel   = MathMin(long.level[i], long.minLevel);
+            long.maxLevel   = MathMax(long.level[i], long.maxLevel);
+            long.totalLots += long.lots[i];
+            long.slippage  += oe.Slippage(oe)*Point;
          }
       }
    }
@@ -751,10 +769,10 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
             short.profit    [i] = OrderProfit();
             if (IsLogDebug()) logDebug("Grid.RemovePendingOrders(5)  "+ sequence.name +" "+ UpdateStatus.OrderFillMsg(D_SHORT, i));
 
-            short.minLevel  = MathMin(short.level[i], short.minLevel);
-            short.maxLevel  = MathMax(short.level[i], short.maxLevel);
-            short.openLots += short.lots[i];
-            short.slippage += oe.Slippage(oe)*Point;
+            short.minLevel   = MathMin(short.level[i], short.minLevel);
+            short.maxLevel   = MathMax(short.level[i], short.maxLevel);
+            short.totalLots += short.lots[i];
+            short.slippage  += oe.Slippage(oe)*Point;
          }
       }
    }
@@ -778,12 +796,12 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
 
    bool positionChanged=false, saveStatus=false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.slippage,  long.openLots,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.slippage, short.openLots, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.totalLots,  long.slippage,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.totalLots, short.slippage, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged || positionChanged) {
-      sequence.openLots = NormalizeDouble(long.openLots - short.openLots, 2);
-      SS.OpenLots();
+      sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2);
+      SS.Lots();
       saveStatus = true;
    }
    if (!ComputeProfit(positionChanged)) return(false);
@@ -809,14 +827,14 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
  *
  * @return bool - success status
  */
-bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChanged, bool &gridError, double &slippage, double &openLots, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
+bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChanged, bool &gridError, double &totalLots, double &slippage, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
 
    int error, orders = ArraySize(tickets);
    bool updateSlippage=false, isLogDebug=IsLogDebug();
-   openLots = 0;
-   openPL   = 0;
+   totalLots = 0;
+   openPL    = 0;
 
    // update ticket status
    for (int i=0; i < orders; i++) {
@@ -856,8 +874,8 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
          profits    [i] = OrderProfit();
 
          if (isOpen) {                                            // update floating PL
-            openPL   += swaps[i] + commissions[i] + profits[i];
-            openLots += lots[i];
+            totalLots += lots[i];
+            openPL    += swaps[i] + commissions[i] + profits[i];
          }
          else {                                                   // the position was unexpectedly closed
             closeTimes [i] = OrderCloseTime();
@@ -884,9 +902,9 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
    }
 
    // normalize results
-   openPL   = NormalizeDouble(openPL, 2);
-   closedPL = NormalizeDouble(closedPL, 2);
-   openLots = NormalizeDouble(openLots, 2);
+   totalLots = NormalizeDouble(totalLots, 2);
+   openPL    = NormalizeDouble(openPL, 2);
+   closedPL  = NormalizeDouble(closedPL, 2);
 
    return(!catch("UpdateStatus(7)"));
 }
@@ -1266,8 +1284,8 @@ bool ComputeProfit(bool positionChanged) {
    positionChanged = positionChanged!=0;
 
    sequence.closedPL   = long.closedPL + short.closedPL;
-   sequence.hedgedPL   = 0;
    sequence.floatingPL = 0;
+   sequence.hedgedPL   = 0;
 
    int longOrders=ArraySize(long.ticket), shortOrders=ArraySize(short.ticket), orders=longOrders + shortOrders;
 
@@ -1315,12 +1333,12 @@ bool ComputeProfit(bool positionChanged) {
       orders = n;
    }
 
-   // compute openPL = hedgedPL + floatingPL
+   // compute openPL = floatingPL + hedgedPL
    double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingPL, pipValue, pipDistance;
 
    // compute PL of a hedged part
-   if (long.openLots && short.openLots) {
-      hedgedLots     = MathMin(long.openLots, short.openLots);
+   if (long.totalLots && short.totalLots) {
+      hedgedLots     = MathMin(long.totalLots, short.totalLots);
       remainingLong  = hedgedLots;
       remainingShort = hedgedLots;
 
@@ -1381,8 +1399,8 @@ bool ComputeProfit(bool positionChanged) {
    }
 
    // compute PL of a floating long position
-   if (sequence.openLots > 0) {
-      remainingLong = sequence.openLots;
+   if (sequence.totalLots > 0) {
+      remainingLong = sequence.totalLots;
       sumOpenPrice  = 0;
       sumCommission = 0;
       sumSwap       = 0;
@@ -1413,14 +1431,14 @@ bool ComputeProfit(bool positionChanged) {
             }
          }
       }
-      if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.totalLots, ".+"), ERR_RUNTIME_ERROR));
 
       sequence.floatingPL = floatingPL + sumCommission + sumSwap;
    }
 
    // compute PL of a floating short position
-   if (sequence.openLots < 0) {
-      remainingShort = -sequence.openLots;
+   if (sequence.totalLots < 0) {
+      remainingShort = -sequence.totalLots;
       sumOpenPrice   = 0;
       sumCommission  = 0;
       sumSwap        = 0;
@@ -1451,18 +1469,18 @@ bool ComputeProfit(bool positionChanged) {
             }
          }
       }
-      if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.openLots, ".+"), ERR_RUNTIME_ERROR));
+      if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.totalLots, ".+"), ERR_RUNTIME_ERROR));
 
       sequence.floatingPL = floatingPL + sumCommission + sumSwap;
    }
 
    // calculate stop and profit targets
    if (positionChanged) {
-      if (!ComputeProfitTargets(sequence.openLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
+      if (!ComputeProfitTargets(sequence.totalLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
    }
 
    // summarize and process results
-   sequence.openPL   = NormalizeDouble(sequence.hedgedPL + sequence.floatingPL, 2);
+   sequence.openPL   = NormalizeDouble(sequence.floatingPL + sequence.hedgedPL, 2);
    sequence.closedPL = NormalizeDouble(sequence.closedPL, 2);
    sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
    bool statsChanged = false;
@@ -1796,14 +1814,14 @@ int Grid.AddPosition(int direction, int level) {
    int i = Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit);
    if (i >= 0) {
       if (direction == D_LONG) {
-         long.minLevel  = MathMin(level, long.minLevel);
-         long.maxLevel  = MathMax(level, long.maxLevel);
-         long.openLots += lots;
+         long.totalLots += lots;
+         long.minLevel   = MathMin(level, long.minLevel);
+         long.maxLevel   = MathMax(level, long.maxLevel);
       }
       else {
-         short.minLevel  = MathMin(level, short.minLevel);
-         short.maxLevel  = MathMax(level, short.maxLevel);
-         short.openLots += lots;
+         short.totalLots += lots;
+         short.minLevel   = MathMin(level, short.minLevel);
+         short.maxLevel   = MathMax(level, short.maxLevel);
       }
    }
    return(i);
@@ -2385,22 +2403,21 @@ bool Orders.RemoveRecord(int direction, int offset) {
 
 
 /**
- * Reset the specified order log and statistics.
+ * Reset all order data of the specified trade direction (order log, history and statistics).
  *
- * @param  int direction - D_LONG:  long orders
- *                         D_SHORT: short orders
- *
+ * @param  int direction - D_LONG:  long order data
+ *                         D_SHORT: short order data
  * @return bool - success status
  */
 bool ResetOrderLog(int direction) {
    if (direction == D_LONG) {
-      long.enabled  = false;
-      long.slippage = 0;
-      long.openLots = 0;
-      long.openPL   = 0;
-      long.closedPL = 0;
-      long.minLevel = INT_MAX;
-      long.maxLevel = INT_MIN;
+      long.enabled   = false;
+      long.totalLots = 0;
+      long.slippage  = 0;
+      long.openPL    = 0;
+      long.closedPL  = 0;
+      long.minLevel  = INT_MAX;
+      long.maxLevel  = INT_MIN;
 
       ArrayResize(long.ticket,       0);
       ArrayResize(long.level,        0);
@@ -2416,17 +2433,18 @@ bool ResetOrderLog(int direction) {
       ArrayResize(long.swap,         0);
       ArrayResize(long.commission,   0);
       ArrayResize(long.profit,       0);
+      ArrayResize(long.history,      0);
       return(true);
    }
 
    if (direction == D_SHORT) {
-      short.enabled  = false;
-      short.slippage = 0;
-      short.openLots = 0;
-      short.openPL   = 0;
-      short.closedPL = 0;
-      short.minLevel = INT_MAX;
-      short.maxLevel = INT_MIN;
+      short.enabled   = false;
+      short.totalLots = 0;
+      short.slippage  = 0;
+      short.openPL    = 0;
+      short.closedPL  = 0;
+      short.minLevel  = INT_MAX;
+      short.maxLevel  = INT_MIN;
 
       ArrayResize(short.ticket,       0);
       ArrayResize(short.level,        0);
@@ -2442,10 +2460,111 @@ bool ResetOrderLog(int direction) {
       ArrayResize(short.swap,         0);
       ArrayResize(short.commission,   0);
       ArrayResize(short.profit,       0);
+      ArrayResize(short.history,      0);
       return(true);
    }
 
    return(!catch("ResetOrderLog(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Move existing sequence data to the archive. Called from ResumeSequence() to prepare continuation of a stopped sequence.
+ *
+ * @return bool - success status
+ */
+bool ArchiveStoppedSequence() {
+   if (IsLastError())                     return(false);
+   if (sequence.status != STATUS_STOPPED) return(!catch("ArchiveStoppedSequence(1)  "+ sequence.name +" cannot archive data of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   // long
+   if (long.enabled) {
+      int historySize = ArrayRange(long.history, 0);
+      int ordersSize  = ArraySize(long.ticket);
+      ArrayResize(long.history, historySize + ordersSize);
+      int cycleId = 1;
+      if (historySize > 0) cycleId = MathRound(long.history[historySize-1][HIX_CYCLE] + 1);
+
+      for (int i=0; i < ordersSize; i++) {
+         long.history[historySize+i][HIX_CYCLE       ] = cycleId;
+         long.history[historySize+i][HIX_TICKET      ] = long.ticket      [i];
+         long.history[historySize+i][HIX_LEVEL       ] = long.level       [i];
+         long.history[historySize+i][HIX_LOTS        ] = long.lots        [i];
+         long.history[historySize+i][HIX_PENDINGTYPE ] = long.pendingType [i];
+         long.history[historySize+i][HIX_PENDINGTIME ] = long.pendingTime [i];
+         long.history[historySize+i][HIX_PENDINGPRICE] = long.pendingPrice[i];
+         long.history[historySize+i][HIX_TYPE        ] = long.type        [i];
+         long.history[historySize+i][HIX_OPENTIME    ] = long.openTime    [i];
+         long.history[historySize+i][HIX_OPENPRICE   ] = long.openPrice   [i];
+         long.history[historySize+i][HIX_CLOSETIME   ] = long.closeTime   [i];
+         long.history[historySize+i][HIX_CLOSEPRICE  ] = long.closePrice  [i];
+         long.history[historySize+i][HIX_SWAP        ] = long.swap        [i];
+         long.history[historySize+i][HIX_COMMISSION  ] = long.commission  [i];
+         long.history[historySize+i][HIX_PROFIT      ] = long.profit      [i];
+         long.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
+         long.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
+      }
+      ArrayResize(long.ticket,       0);
+      ArrayResize(long.level,        0);
+      ArrayResize(long.lots,         0);
+      ArrayResize(long.pendingType,  0);
+      ArrayResize(long.pendingTime,  0);
+      ArrayResize(long.pendingPrice, 0);
+      ArrayResize(long.type,         0);
+      ArrayResize(long.openTime,     0);
+      ArrayResize(long.openPrice,    0);
+      ArrayResize(long.closeTime,    0);
+      ArrayResize(long.closePrice,   0);
+      ArrayResize(long.swap,         0);
+      ArrayResize(long.commission,   0);
+      ArrayResize(long.profit,       0);
+   }
+
+   // short
+   if (short.enabled) {
+      historySize = ArrayRange(short.history, 0);
+      ordersSize  = ArraySize(short.ticket);
+      ArrayResize(short.history, historySize + ordersSize);
+      cycleId = 1;
+      if (historySize > 0) cycleId = MathRound(short.history[historySize-1][HIX_CYCLE] + 1);
+
+      for (i=0; i < ordersSize; i++) {
+         short.history[historySize+i][HIX_CYCLE       ] = cycleId;
+         short.history[historySize+i][HIX_TICKET      ] = short.ticket      [i];
+         short.history[historySize+i][HIX_LEVEL       ] = short.level       [i];
+         short.history[historySize+i][HIX_LOTS        ] = short.lots        [i];
+         short.history[historySize+i][HIX_PENDINGTYPE ] = short.pendingType [i];
+         short.history[historySize+i][HIX_PENDINGTIME ] = short.pendingTime [i];
+         short.history[historySize+i][HIX_PENDINGPRICE] = short.pendingPrice[i];
+         short.history[historySize+i][HIX_TYPE        ] = short.type        [i];
+         short.history[historySize+i][HIX_OPENTIME    ] = short.openTime    [i];
+         short.history[historySize+i][HIX_OPENPRICE   ] = short.openPrice   [i];
+         short.history[historySize+i][HIX_CLOSETIME   ] = short.closeTime   [i];
+         short.history[historySize+i][HIX_CLOSEPRICE  ] = short.closePrice  [i];
+         short.history[historySize+i][HIX_SWAP        ] = short.swap        [i];
+         short.history[historySize+i][HIX_COMMISSION  ] = short.commission  [i];
+         short.history[historySize+i][HIX_PROFIT      ] = short.profit      [i];
+         short.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
+         short.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
+      }
+      ArrayResize(short.ticket,       0);
+      ArrayResize(short.level,        0);
+      ArrayResize(short.lots,         0);
+      ArrayResize(short.pendingType,  0);
+      ArrayResize(short.pendingTime,  0);
+      ArrayResize(short.pendingPrice, 0);
+      ArrayResize(short.type,         0);
+      ArrayResize(short.openTime,     0);
+      ArrayResize(short.openPrice,    0);
+      ArrayResize(short.closeTime,    0);
+      ArrayResize(short.closePrice,   0);
+      ArrayResize(short.swap,         0);
+      ArrayResize(short.commission,   0);
+      ArrayResize(short.profit,       0);
+   }
+   return(!catch("ArchiveStoppedSequence(2)"));
 }
 
 
@@ -2588,7 +2707,7 @@ bool SaveStatus() {
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +"  sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
 
    // in tester skip updating the status file on most calls (except at creation, after sequence stop and at test end)
-   if (IsTesting() && test.optimizeDiskIO) {
+   if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2640,9 +2759,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.gridsize",          /*double  */ NumberToStr(sequence.gridsize, ".+"));
    WriteIniString(file, section, "sequence.unitsize",          /*double  */ NumberToStr(sequence.unitsize, ".+"));
    WriteIniString(file, section, "sequence.gridbase",          /*double  */ DoubleToStr(sequence.gridbase, Digits));
-   WriteIniString(file, section, "sequence.openLots",          /*double  */ NumberToStr(sequence.openLots, ".+"));
-   WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ DoubleToStr(sequence.hedgedPL, 2));
+   WriteIniString(file, section, "sequence.totalLots",         /*double  */ NumberToStr(sequence.totalLots, ".+"));
    WriteIniString(file, section, "sequence.floatingPL",        /*double  */ DoubleToStr(sequence.floatingPL, 2));
+   WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ DoubleToStr(sequence.hedgedPL, 2));
    WriteIniString(file, section, "sequence.openPL",            /*double  */ DoubleToStr(sequence.openPL, 2));
    WriteIniString(file, section, "sequence.closedPL",          /*double  */ DoubleToStr(sequence.closedPL, 2));
    WriteIniString(file, section, "sequence.totalPL",           /*double  */ DoubleToStr(sequence.totalPL, 2));
@@ -2657,8 +2776,8 @@ bool SaveStatus() {
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "long.order."+ i, SaveStatus.OrderToStr(i, D_LONG));
    }
+   WriteIniString(file, section, "long.totalLots",             /*double  */ NumberToStr(long.totalLots, ".+"));
    WriteIniString(file, section, "long.slippage",              /*double  */ NumberToStr(long.slippage, ".+"));
-   WriteIniString(file, section, "long.openLots",              /*double  */ NumberToStr(long.openLots, ".+"));
    WriteIniString(file, section, "long.openPL",                /*double  */ DoubleToStr(long.openPL, 2));
    WriteIniString(file, section, "long.closedPL",              /*double  */ DoubleToStr(long.closedPL, 2));
    WriteIniString(file, section, "long.bePrice",               /*double  */ NumberToStr(long.bePrice, ".+"));
@@ -2671,8 +2790,8 @@ bool SaveStatus() {
    for (i=0; i < size; i++) {
       WriteIniString(file, section, "short.order."+ i, SaveStatus.OrderToStr(i, D_SHORT));
    }
+   WriteIniString(file, section, "short.totalLots",            /*double  */ NumberToStr(short.totalLots, ".+"));
    WriteIniString(file, section, "short.slippage",             /*double  */ NumberToStr(short.slippage, ".+"));
-   WriteIniString(file, section, "short.openLots",             /*double  */ NumberToStr(short.openLots, ".+"));
    WriteIniString(file, section, "short.openPL",               /*double  */ DoubleToStr(short.openPL, 2));
    WriteIniString(file, section, "short.closedPL",             /*double  */ DoubleToStr(short.closedPL, 2));
    WriteIniString(file, section, "short.bePrice",              /*double  */ NumberToStr(short.bePrice, ".+"));
@@ -2791,9 +2910,9 @@ bool ReadStatus() {
    sequence.gridsize          = GetIniDouble (file, section, "sequence.gridsize"         );     // double   sequence.gridsize          = 3.5
    sequence.unitsize          = GetIniDouble (file, section, "sequence.unitsize"         );     // double   sequence.unitsize          = 0.01
    sequence.gridbase          = GetIniDouble (file, section, "sequence.gridbase"         );     // double   sequence.gridbase          = 1.17453
-   sequence.openLots          = GetIniDouble (file, section, "sequence.openLots"         );     // double   sequence.openLots          = 0.12
-   sequence.hedgedPL          = GetIniDouble (file, section, "sequence.hedgedPL"         );     // double   sequence.hedgedPL          = 34.56
+   sequence.totalLots         = GetIniDouble (file, section, "sequence.totalLots"        );     // double   sequence.totalLots         = 0.12
    sequence.floatingPL        = GetIniDouble (file, section, "sequence.floatingPL"       );     // double   sequence.floatingPL        = 12.34
+   sequence.hedgedPL          = GetIniDouble (file, section, "sequence.hedgedPL"         );     // double   sequence.hedgedPL          = 34.56
    sequence.openPL            = GetIniDouble (file, section, "sequence.openPL"           );     // double   sequence.openPL            = 23.45
    sequence.closedPL          = GetIniDouble (file, section, "sequence.closedPL"         );     // double   sequence.closedPL          = 45.67
    sequence.totalPL           = GetIniDouble (file, section, "sequence.totalPL"          );     // double   sequence.totalPL           = 123.45
@@ -2804,14 +2923,14 @@ bool ReadStatus() {
 
    // long order data
    ResetOrderLog(D_LONG);
-   long.enabled               = GetIniBool   (file, section, "long.enabled" );                  // bool     long.enabled  = 1
-   long.slippage              = GetIniDouble (file, section, "long.slippage");                  // double   long.slippage = 0
-   long.openLots              = GetIniDouble (file, section, "long.openLots");                  // double   long.openLots = 0.02
-   long.openPL                = GetIniDouble (file, section, "long.openPL"  );                  // double   long.openPL   = 12.34
-   long.closedPL              = GetIniDouble (file, section, "long.closedPL");                  // double   long.closedPL = 23.34
-   long.bePrice               = GetIniDouble (file, section, "long.bePrice" );                  // double   long.bePrice  = 1.17453
-   long.minLevel              = GetIniInt    (file, section, "long.minLevel");                  // int      long.minLevel = -2
-   long.maxLevel              = GetIniInt    (file, section, "long.maxLevel");                  // int      long.maxLevel = 7
+   long.enabled               = GetIniBool   (file, section, "long.enabled"  );                 // bool     long.enabled   = 1
+   long.totalLots             = GetIniDouble (file, section, "long.totalLots");                 // double   long.totalLots = 0.02
+   long.slippage              = GetIniDouble (file, section, "long.slippage" );                 // double   long.slippage  = 0
+   long.openPL                = GetIniDouble (file, section, "long.openPL"   );                 // double   long.openPL    = 12.34
+   long.closedPL              = GetIniDouble (file, section, "long.closedPL" );                 // double   long.closedPL  = 23.34
+   long.bePrice               = GetIniDouble (file, section, "long.bePrice"  );                 // double   long.bePrice   = 1.17453
+   long.minLevel              = GetIniInt    (file, section, "long.minLevel" );                 // int      long.minLevel  = -2
+   long.maxLevel              = GetIniInt    (file, section, "long.maxLevel" );                 // int      long.maxLevel  = 7
    string sKeys[], sOrder;
    int size = ReadStatus.OrderKeys(file, section, sKeys, D_LONG); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
@@ -2821,14 +2940,14 @@ bool ReadStatus() {
 
    // short order data
    ResetOrderLog(D_SHORT);
-   short.enabled              = GetIniBool   (file, section, "short.enabled" );                 // bool     short.enabled  = 1
-   short.slippage             = GetIniDouble (file, section, "short.slippage");                 // double   short.slippage = 0
-   short.openLots             = GetIniDouble (file, section, "short.openLots");                 // double   short.openLots = 0.02
-   short.openPL               = GetIniDouble (file, section, "short.openPL"  );                 // double   short.openPL   = 12.34
-   short.closedPL             = GetIniDouble (file, section, "short.closedPL");                 // double   short.closedPL = 23.34
-   short.bePrice              = GetIniDouble (file, section, "short.bePrice" );                 // double   short.bePrice  = 1.17453
-   short.minLevel             = GetIniInt    (file, section, "short.minLevel");                 // int      short.minLevel = -2
-   short.maxLevel             = GetIniInt    (file, section, "short.maxLevel");                 // int      short.maxLevel = 7
+   short.enabled              = GetIniBool   (file, section, "short.enabled"  );                // bool     short.enabled   = 1
+   short.totalLots            = GetIniDouble (file, section, "short.totalLots");                // double   short.totalLots = 0.02
+   short.slippage             = GetIniDouble (file, section, "short.slippage" );                // double   short.slippage  = 0
+   short.openPL               = GetIniDouble (file, section, "short.openPL"   );                // double   short.openPL    = 12.34
+   short.closedPL             = GetIniDouble (file, section, "short.closedPL" );                // double   short.closedPL  = 23.34
+   short.bePrice              = GetIniDouble (file, section, "short.bePrice"  );                // double   short.bePrice   = 1.17453
+   short.minLevel             = GetIniInt    (file, section, "short.minLevel" );                // int      short.minLevel  = -2
+   short.maxLevel             = GetIniInt    (file, section, "short.maxLevel" );                // int      short.maxLevel  = 7
    size = ReadStatus.OrderKeys(file, section, sKeys, D_SHORT); if (size < 0) return(false);
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.order.{i} = {data}
@@ -3051,9 +3170,9 @@ int ShowStatus(int error = NO_ERROR) {
                                   "Grid:          ",  sGridParameters,                          NL,
                                   "Volatility:   ",   sGridVolatility,                          NL,
                                                                                                 NL,
-                                  "Long:         ",   sOpenLongLots,                            NL,
-                                  "Short:        ",   sOpenShortLots,                           NL,
-                                  "Total:         ",  sOpenTotalLots,                           NL,
+                                  "Long:         ",   sTotalLongLots,                           NL,
+                                  "Short:        ",   sTotalShortLots,                          NL,
+                                  "Total:         ",  sTotalLots,                               NL,
                                                                                                 NL,
                                   "Stop:          ",  sStopConditions,                          NL,
                                   "BE:             ", sSequenceBePrice,                         NL,
@@ -3089,8 +3208,8 @@ void SS.All() {
    if (__isChart) {
       SS.SequenceName();
       SS.GridParameters();
+      SS.Lots();
       SS.StopConditions();
-      SS.OpenLots();
       SS.ProfitTargets();
       SS.TotalPL();
       SS.PLStats();
@@ -3119,14 +3238,14 @@ void SS.GridParameters() {
 
 
 /**
- * ShowStatus: Update the string representation of "long.openLots", "short.openLots" and "sequence.openLots".
+ * ShowStatus: Update the string representation of "long.totalLots", "short.totalLots" and "sequence.totalLots".
  */
-void SS.OpenLots() {
+void SS.Lots() {
    if (__isChart) {
       string sOpenLevels="", sSlippage="";
       int plusLevels, minusLevels, openLevels;
 
-      if (!long.openLots) sOpenLongLots = "-";
+      if (!long.totalLots) sTotalLongLots = "-";
       else {
          plusLevels  = Max(0, long.maxLevel);
          minusLevels = -Min(0, long.minLevel);
@@ -3137,10 +3256,10 @@ void SS.OpenLots() {
          sSlippage = PipToStr(long.slippage/Pip, true, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
 
-         sOpenLongLots = NumberToStr(long.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
+         sTotalLongLots = NumberToStr(long.totalLots, "+.+") +" lot    "+ sOpenLevels + ifString(!long.slippage, "", "    slippage: "+ sSlippage);
       }
 
-      if (!short.openLots) sOpenShortLots = "-";
+      if (!short.totalLots) sTotalShortLots = "-";
       else {
          plusLevels  = Max(0, short.maxLevel);
          minusLevels = -Min(0, short.minLevel);
@@ -3151,12 +3270,12 @@ void SS.OpenLots() {
          sSlippage = PipToStr(short.slippage/Pip, true, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
 
-         sOpenShortLots = NumberToStr(-short.openLots, "+.+") +" lot    "+ sOpenLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);
+         sTotalShortLots = NumberToStr(-short.totalLots, "+.+") +" lot    "+ sOpenLevels + ifString(!short.slippage, "", "    slippage: "+ sSlippage);
       }
 
-      if (!long.openLots && !short.openLots) sOpenTotalLots = "-";
-      else if (!sequence.openLots)           sOpenTotalLots = "±0 (hedged)";
-      else                                   sOpenTotalLots = NumberToStr(sequence.openLots, "+.+") +" lot";
+      if (!long.totalLots && !short.totalLots) sTotalLots = "-";
+      else if (!sequence.totalLots)            sTotalLots = "±0 (hedged)";
+      else                                     sTotalLots = NumberToStr(sequence.totalLots, "+.+") +" lot";
    }
 }
 
@@ -3219,13 +3338,13 @@ void SS.ProfitTargets() {
          else                            sSequenceBePrice = sSequenceBePrice + NumberToStr(RoundFloor(short.bePrice, Digits), PriceFormat);
       }
 
-      if      (!sequence.tpPrice)     sSequenceTpPrice = "";
-      else if (sequence.openLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
-      else                            sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
+      if      (!sequence.tpPrice)      sSequenceTpPrice = "";
+      else if (sequence.totalLots > 0) sSequenceTpPrice = NumberToStr(RoundCeil(sequence.tpPrice, Digits), PriceFormat);
+      else                             sSequenceTpPrice = NumberToStr(RoundFloor(sequence.tpPrice, Digits), PriceFormat);
 
-      if      (!sequence.slPrice)     sSequenceSlPrice = "";
-      else if (sequence.openLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
-      else                            sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
+      if      (!sequence.slPrice)      sSequenceSlPrice = "";
+      else if (sequence.totalLots > 0) sSequenceSlPrice = NumberToStr(RoundFloor(sequence.slPrice, Digits), PriceFormat);
+      else                             sSequenceSlPrice = NumberToStr(RoundCeil(sequence.slPrice, Digits), PriceFormat);
    }
 }
 

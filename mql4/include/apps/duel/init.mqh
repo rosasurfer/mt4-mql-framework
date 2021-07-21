@@ -138,7 +138,7 @@ int afterInit() {
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
       test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
-      test.optimizeDiskIO = GetConfigBool(section, "OptimizeDiskIO", true);
+      test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
    return(catch("afterInit(1)"));
 }
