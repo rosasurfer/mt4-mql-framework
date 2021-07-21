@@ -502,9 +502,9 @@ bool ResumeSequence(int signal) {
    if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
-   // im SnowRoller tracke ich: start/stop time, price, totalPl
+   // SnowRoller: start/stop time, price, totalPl
 
-   // im Duel brauche ich: all previous orders, totalPl, maxProfit, maxDrawdown, gridbase?
+   // Duel: all previous orders, totalPl, maxProfit, maxDrawdown, gridbase?
 
 
    // store old state and initialize new state (update TP/SL conditions)
