@@ -1,7 +1,7 @@
 /**
  * Duel.Stop
  *
- * Send a command to a running Duel instance to stop the current sequence.
+ * Send a command to an active Duel instance to stop the current sequence.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // running Duel instances maintain a chart object holding the instance id and the current instance status
+   // active Duel instances maintain a chart object holding the instance id and the current instance status
    string sid="", status="", label="Duel.status";
    bool isStoppable = false;
 
