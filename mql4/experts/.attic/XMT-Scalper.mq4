@@ -227,7 +227,7 @@ string   sUnitSize            = "-";
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
-bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
+bool     test.optimizeDiskIO      = true;       // whether to minimize file writing in tester
 
 #include <apps/xmt-scalper/metrics.mqh>
 #include <apps/xmt-scalper/init.mqh>
@@ -2328,7 +2328,7 @@ bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
    // In tester skip updating the status file except at the first call and at test end.
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (IsTesting() && test.optimizeDiskIO) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
