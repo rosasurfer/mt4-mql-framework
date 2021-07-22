@@ -32,7 +32,7 @@
 #define ERR_NOT_ENOUGH_MONEY                                        134
 #define ERR_PRICE_CHANGED                                           135    // price has changed and a retry can be made immediately
 #define ERR_OFF_QUOTES                                              136    // broker cannot provide prices (backend or liquidity issue)
-#define ERR_BROKER_BUSY                                             137    // automated trading is disabled (manual trading is not affected)
+#define ERR_BROKER_BUSY                                             137    // broker's request queue is allegedly full and automated trading is disabled (manual trading is not affected)
 #define ERR_REQUOTE                                                 138    // price has become stale and expired
 #define ERR_ORDER_LOCKED                                            139    // order has been locked and is under processing
 #define ERR_LONG_POSITIONS_ONLY_ALLOWED                             140

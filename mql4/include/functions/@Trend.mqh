@@ -1,22 +1,22 @@
 /**
  * Update a trendline's indicator buffers for trend direction and coloring.
  *
- * @param  _In_  double values[]                   - Trendline values (a timeseries).
- * @param  _In_  int    offset                     - Bar offset to update.
- * @param  _Out_ double &trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
- * @param  _Out_ double &uptrend[]                 - Buffer for rising trendline values.
- * @param  _Out_ double &downtrend[]               - Buffer for falling trendline values.
- * @param  _Out_ double &uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
- *                                                   downtrend[] to be visible.
- * @param  _In_  bool    enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring.
- *                                                   (default: no)
- * @param  _In_  bool    enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On).
- *                                                   (default: no)
- * @param  _In_  int     lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
- *                                                   at the start of a trend. Otherwise MetaTrader needs at least two data
- *                                                   points to draw a line. (default: draw data points only)
- * @param  _In_  int     digits         [optional] - If set, trendline values are normalized to the specified number of digits.
- *                                                   (default: no normalization)
+ * @param  _In_  double values[]                  - Trendline values (a timeseries).
+ * @param  _In_  int    offset                    - Bar offset to update.
+ * @param  _Out_ double trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
+ * @param  _Out_ double uptrend[]                 - Buffer for rising trendline values.
+ * @param  _Out_ double downtrend[]               - Buffer for falling trendline values.
+ * @param  _Out_ double uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
+ *                                                  downtrend[] to be visible.
+ * @param  _In_  bool   enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring.
+ *                                                  (default: no)
+ * @param  _In_  bool   enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On).
+ *                                                  (default: no)
+ * @param  _In_  int    lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
+ *                                                  at the start of a trend. Otherwise MetaTrader needs at least two data
+ *                                                  points to draw a line. (default: draw data points only)
+ * @param  _In_  int    digits         [optional] - If set, trendline values are normalized to the specified number of digits.
+ *                                                  (default: no normalization)
  *
  * @return bool - success status
  */

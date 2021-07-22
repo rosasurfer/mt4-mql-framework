@@ -73,7 +73,7 @@ int init() {
    }
 
    // finish initialization of global vars
-   if (!initContext()) if (CheckErrors("init(3)")) return(last_error);
+   if (!InitGlobals()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -190,11 +190,11 @@ int init() {
 
 
 /**
- * Update global variables and the expert's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
+ * Update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool initContext() {
+bool InitGlobals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -206,7 +206,7 @@ bool initContext() {
    P_INF = -N_INF;                                                            // positive infinity
    NaN   =  N_INF - N_INF;                                                    // not-a-number
 
-   return(!catch("initContext(1)"));
+   return(!catch("InitGlobals(1)"));
 }
 
 
