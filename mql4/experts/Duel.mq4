@@ -13,14 +13,14 @@
  *
  * Input parameters:
  * -----------------
- * • Sequence.ID:  To each sequence a unique instance id is assigned which affects magic order number generation (beneath
- *     others). This way multiple grids (EA instances) can run in parallel even on the same symbol. Each instance logs its
+ * • Sequence.ID:  Every new sequence gets a unique instance id assigned which - beneath others - affects magic order number
+ *     generation. This way multiple grids (EA instances) can run in parallel even on the same symbol. Each instance logs its
  *     activities to a logfile named "{symbol}.Duel.{instance-id}.log") and writes status changes to a status file named
- *     "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file names. A sequence can be loaded
- *     and fully restored from an existing status file. This enables the user to unload the EA on one machine (e.g. a laptop),
- *     move the file to another machine (e.g. a VPS or server) and to continue the sequence there by pointing the EA to the
- *     moved status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For
- *     new sequences the input field stays empty and sequence id and magic numbers are auto-generated.
+ *     "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file name. A sequence can be reloaded
+ *     and fully restored from a status file. This enables the user to unload the EA on one machine (e.g. a laptop), move the
+ *     file to another machine (e.g. a VPS or server) and to continue the sequence there by pointing the EA to the moved
+ *     status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For new
+ *     sequences the input field stays empty and sequence id and magic numbers are auto-generated.
  *
  * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
  *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
@@ -2510,6 +2510,7 @@ bool ResetOrderLog(int direction) {
       long.slippage  = 0;
       long.openPL    = 0;
       long.closedPL  = 0;
+      long.bePrice   = 0;
       long.minLevel  = INT_MAX;
       long.maxLevel  = INT_MIN;
 
@@ -2537,6 +2538,7 @@ bool ResetOrderLog(int direction) {
       short.slippage  = 0;
       short.openPL    = 0;
       short.closedPL  = 0;
+      short.bePrice   = 0;
       short.minLevel  = INT_MAX;
       short.maxLevel  = INT_MIN;
 
@@ -3092,7 +3094,7 @@ bool ReadStatus() {
 
 
 /**
- * Read and return the keys of the specified order records found in the status file (the order doesn't matter).
+ * Read and return the keys of the specified order records found in the status file (sorting order doesn't matter).
  *
  * @param  _In_  string file      - status filename
  * @param  _In_  string section   - status section
@@ -3117,7 +3119,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
       ArraySpliceStrings(keys, i, 1);  // drop all non-order keys
       size--;
    }
-   return(size);                       // no need to sort as Orders.AddRecord() inserts records at the right position
+   return(size);                       // no need to sort as Orders.AddRecord() inserts records at the correct position
 }
 
 
