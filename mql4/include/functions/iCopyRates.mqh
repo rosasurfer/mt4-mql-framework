@@ -14,9 +14,9 @@
  *   4 - close price
  *   5 - volume (tick count)
  *
- * @param  double target[][6]          - array to assign rates to (read-only)
- * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
- * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
+ * @param  _Out_ double target[][6]          - array to assign rates to (read-only)
+ * @param  _In_  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
+ * @param  _In_  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
  *
  * @return int - number of bars changed since the last tick or EMPTY (-1) in case of errors
  *

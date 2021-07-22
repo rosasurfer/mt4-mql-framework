@@ -164,7 +164,7 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true)) +"     W=      MN=",                                                                  fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",                                                            fgFontSize, fgFontName, fgFontColor);
    double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
    double unitsize        = CalculateLots(Unitsize.TargetPerformance);
    double leverage        = CalculateLeverage(unitsize);                    ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!unitsize, "(not enough money)", NumberToStr(Unitsize.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(unitsize, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
@@ -183,7 +183,7 @@ int UpdateInstrumentInfos() {
    double marginHedged    = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged    = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                  fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
 
-   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + PipToStr(spread, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"), fgFontSize, fgFontName, fgFontColor);
+   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + PipToStr(spread, true, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"),      fgFontSize, fgFontName, fgFontColor);
    double commission      = GetCommission();
    double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ",'.1+") +" pip"), fgFontSize, fgFontName, fgFontColor);

@@ -47,7 +47,7 @@ int init() {
  * Dummy-Startfunktion für Libraries. Für den Compiler build 224 muß ab einer unbestimmten Komplexität der Library eine start()-
  * Funktion existieren, damit die init()-Funktion aufgerufen wird.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int start() {
    return(catch("start(1)", ERR_WRONG_JUMP));
@@ -57,7 +57,7 @@ int start() {
 /**
  * Deinitialisierung der Library.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  *
  * TODO: Bei VisualMode=Off und regulärem Testende (Testperiode zu Ende) bricht das Terminal komplexere Expert::deinit()

@@ -220,9 +220,9 @@ int iPivotLevel() {
 /**
  * Berechnet die Pivotlevel des aktuellen Instruments zum angegebenen Zeitpunkt.
  *
- * @param  datetime time      - Zeitpunkt der zu berechnenden Werte
- * @param  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
- * @param  double   results[] - Ergebnis-Array
+ * @param  _In_  datetime time      - Zeitpunkt der zu berechnenden Werte
+ * @param  _In_  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
+ * @param  _Out_ double   results[] - Ergebnis-Array
  *
  * @return int - Fehlerstatus
  */

@@ -56,7 +56,7 @@ int init() {
    }
 
    // finish initialization
-   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
+   if (!InitGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -77,7 +77,7 @@ int init() {
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
-         if (CheckErrors("init(9)", error)) return( last_error);
+         if (CheckErrors("init(9)", error)) return(last_error);
       if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_AUTOCONFIG && 1) {                           // initialize auto configuration
@@ -151,13 +151,11 @@ int init() {
 
 
 /**
- * Update global variables and the indicator's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
+ * Update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
- *
- * Note: The memory location of an indicator's EXECUTION_CONTEXT changes on every init cycle.
  */
-bool initContext() {
+bool InitGlobals() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -172,7 +170,7 @@ bool initContext() {
    //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
    //             properties via the framework configuration.
    //
-   // TODO: implement workaround in Expander
+   // TODO: implement workaround in MT4Expander
    //
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
@@ -187,7 +185,7 @@ bool initContext() {
    P_INF = -N_INF;                                          // positive infinity
    NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   return(!catch("initContext(1)"));
+   return(!catch("InitGlobals(1)"));
 }
 
 
@@ -200,7 +198,7 @@ bool initContext() {
  *
  * - Der letzte Errorcode 'last_error' wird in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int start() {
    if (__STATUS_OFF) {
@@ -367,7 +365,7 @@ int start() {
 /**
  * Globale deinit()-Funktion für Indikatoren.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
@@ -556,18 +554,18 @@ bool EventListener_ChartCommand(string &commands[]) {
 
 
 #import "rsfLib1.ex4"
-   bool   AquireLock(string mutexName, bool wait);
-   bool   ReleaseLock(string mutexName);
+   bool AquireLock(string mutexName, bool wait);
+   bool ReleaseLock(string mutexName);
 
 #import "rsfMT4Expander.dll"
-   int    ec_SetDllError           (int ec[], int error   );
-   int    ec_SetProgramCoreFunction(int ec[], int function);
+   int  ec_SetDllError           (int ec[], int error   );
+   int  ec_SetProgramCoreFunction(int ec[], int function);
 
-   bool   ShiftIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
+   bool ShiftIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
-   int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
-   int    SyncMainContext_deinit(int ec[], int unintReason);
+   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
+   int  SyncMainContext_deinit(int ec[], int unintReason);
 #import
 
 

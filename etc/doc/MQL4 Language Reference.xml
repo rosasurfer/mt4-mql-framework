@@ -4025,23 +4025,21 @@ Print(&quot;Min value = &quot;, num_array[minValueIdx]);
       caption=ArrayRange()
       type=int
       <content>
-        Returns the number of elements in the given dimension of the array.
-        Since indexes are zero-based, the size of dimension is 1 greater than the largest index.
+        Returns the size of an array dimension. The index of the first dimension is <span class="number">0</span> (zero).
       </content>
       <example>
-int    dim_size;
-double num_array[10,10,10];
-dim_size=ArrayRange(num_array, 1);
+<span class="code type">double</span> array[][<span class="code number">10.0</span>, <span class="code number">10.0</span>, <span class="code number">10.0</span>];
+<span class="code type">int</span> size = <span class="code function">ArrayRange</span>(array, <span class="code number">1</span>);    // returns 3
       </example>
       <parameter>
         type=object
         name=<nobr>array[]</nobr>
-        description=Array to check
+        description=array to check
       </parameter>
       <parameter>
         type=int
-        name=range_index
-        description=Dimension index.
+        name=index
+        description=dimension index
       </parameter>
     </function>
 

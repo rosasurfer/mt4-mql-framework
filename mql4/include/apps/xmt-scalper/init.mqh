@@ -93,7 +93,7 @@ int afterInit() {
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
-      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
+      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus", true);
    }
    return(catch("afterInit(1)"));
 }

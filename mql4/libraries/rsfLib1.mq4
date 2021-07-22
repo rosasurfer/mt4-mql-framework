@@ -149,9 +149,9 @@ bool EditFiles(string &filenames[]) {
 /**
  * Ermittelt Zeitpunkt und Offset des vorherigen und nächsten DST-Wechsels der angebenen Serverzeit.
  *
- * @param  datetime serverTime           - Serverzeit
- * @param  datetime previousTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
- * @param  datetime nextTransition    [] - Array zur Aufnahme der nächsten Transitionsdaten
+ * @param  _In_  datetime serverTime           - Serverzeit
+ * @param  _Out_ datetime previousTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
+ * @param  _Out_ datetime nextTransition    [] - Array zur Aufnahme der nächsten Transitionsdaten
  *
  * @return bool - Erfolgsstatus
  *
@@ -753,7 +753,7 @@ bool SortStrings(string &values[]) {
 /**
  * Sortiert die übergebenen Tickets in chronologischer Reihenfolge (nach OpenTime und Ticket#).
  *
- * @param  int tickets[] - zu sortierende Tickets
+ * @param  _InOut_ int tickets[] - zu sortierende Tickets
  *
  * @return int - Fehlerstatus
  */
@@ -927,8 +927,8 @@ int ArraySetInts(int array[][], int offset, int values[]) {
 /**
  * Fügt ein Element am Ende eines Boolean-Arrays an.
  *
- * @param  bool array[] - Boolean-Array
- * @param  bool value   - hinzuzufügendes Element
+ * @param  _InOut_ bool array[] - Boolean-Array
+ * @param  _In_    bool value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
@@ -948,8 +948,8 @@ int ArrayPushBool(bool &array[], bool value) {
 /**
  * Fügt ein Element am Ende eines Integer-Arrays an.
  *
- * @param  int array[] - Integer-Array
- * @param  int value   - hinzuzufügendes Element
+ * @param  _InOut_ int array[] - Integer-Array
+ * @param  _In_    int value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
@@ -990,8 +990,8 @@ int ArrayPushInts(int array[][], int value[]) {
 /**
  * Fügt ein Element am Ende eines Double-Arrays an.
  *
- * @param  double array[] - Double-Array
- * @param  double value   - hinzuzufügendes Element
+ * @param  _InOut_ double array[] - Double-Array
+ * @param  _In_    double value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
@@ -1514,9 +1514,9 @@ int ArraySpliceStrings(string array[], int offset, int length) {
 /**
  * Fügt ein Element an der angegebenen Position eines Bool-Arrays ein.
  *
- * @param  bool array[] - Bool-Array
- * @param  int  offset  - Position, an dem das Element eingefügt werden soll
- * @param  bool value   - einzufügendes Element
+ * @param  _InOut_ bool array[] - Bool-Array
+ * @param  _In_    int  offset  - Position, an dem das Element eingefügt werden soll
+ * @param  _In_    bool value   - einzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
@@ -1547,9 +1547,9 @@ int ArrayInsertBool(bool &array[], int offset, bool value) {
 /**
  * Fügt ein Element an der angegebenen Position eines Integer-Arrays ein.
  *
- * @param  int array[] - Integer-Array
- * @param  int offset  - Position, an dem das Element eingefügt werden soll
- * @param  int value   - einzufügendes Element
+ * @param  _InOut_ int array[] - Integer-Array
+ * @param  _In_    int offset  - Position, an dem das Element eingefügt werden soll
+ * @param  _In_    int value   - einzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */
@@ -1578,9 +1578,9 @@ int ArrayInsertInt(int &array[], int offset, int value) {
 /**
  * Fügt ein Element an der angegebenen Position eines Double-Arrays ein.
  *
- * @param  double array[] - Double-Array
- * @param  int    offset  - Position, an dem das Element eingefügt werden soll
- * @param  double value   - einzufügendes Element
+ * @param  _InOut_ double array[] - Double-Array
+ * @param  _In_    int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  _In_    double value   - einzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  */

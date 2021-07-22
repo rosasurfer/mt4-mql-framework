@@ -33,8 +33,10 @@
  *  @link  https://www.forexfactory.com/showthread.php?t=226059#                              ["Snowballs and the anti-grid"]
  *  @link  https://www.forexfactory.com/showthread.php?t=239717#               ["Trading the anti-grid with the Snowball EA"]
  *
+ *  @see  "mql4/etc/SnowRoller process flow.png"
  *
- * Risk warning: The market can range longer without reaching the profit target than a trading account may be able to survive.
+ *
+ * RISK WARNING: The market can range longer without reaching the profit target than a trading account may be able to survive.
  */
 #include <stddefines.mqh>
 #include <apps/snowroller/defines.mqh>
@@ -228,7 +230,7 @@ bool     test.onSessionBreakPause = false;         // whether to pause the teste
 bool     test.onTrendChangePause  = false;         // whether to pause the tester on a fulfilled trend change condition
 bool     test.onTakeProfitPause   = false;         // whether to pause the tester when takeprofit is reached
 bool     test.onStopLossPause     = false;         // whether to pause the tester when stoploss is reached
-bool     test.reduceStatusWrites  = true;          // whether to minimize status file writing in tester
+bool     test.optimizeStatus      = true;          // whether to minimize status file writing in tester
 bool     test.showBreakeven       = false;         // whether to show breakeven markers in tester
 
 #include <apps/snowroller/init.mqh>
@@ -4068,7 +4070,7 @@ bool SaveStatus() {
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
    // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;

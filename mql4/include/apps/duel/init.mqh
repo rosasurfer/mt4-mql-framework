@@ -20,35 +20,36 @@ int onInit() {
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
-      RestoreSequence();                                       // a valid sequence id was specified
+      RestoreSequence();                                             // a valid sequence id was specified
    }
-   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+   else if (StrTrim(Sequence.ID) == "") {                            // no sequence id was specified
       if (ValidateInputs()) {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = sequence.id;
          sequence.isTest  = IsTesting(); SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
-         ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);
+         if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+            return(onInputError("onInitUser(1)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+         }
          SS.All();
-         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
 
          // prevent starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
-         int level=0, maxLevels=15;
+         int level = 0;
 
-         for (level=+1; level <=  maxLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
-         for (level=-1; level >= -maxLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
-         for (level=+1; level <=  maxLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
-         for (level=-1; level >= -maxLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+         for (level=+1; level <=  MaxGridLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+         for (level=-1; level >= -MaxGridLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+         for (level=+1; level <=  MaxGridLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+         for (level=-1; level >= -MaxGridLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
 
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
-         double maxLots      = MathMax(maxLongLots, maxShortLots);      // max lots at level 15 in any direction
-         if (IsError(catch("onInitUser(2)"))) return(last_error);       // reset last error
+         double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
+         if (IsError(catch("onInitUser(2)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
             StopSequence(NULL);
-            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ maxLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
             return(catch("onInitUser(4)"));
          }
 
@@ -65,7 +66,7 @@ int onInitUser() {
          SaveStatus();
       }
    }
-   //else {}                                                   // an invalid sequence id was specified
+   //else {}                                                         // an invalid sequence id was specified
 
    return(last_error);
 }
@@ -77,14 +78,18 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   if (!ValidateInputs()) {
-      RestoreInputs();
-      return(last_error);
+   int error;
+
+   if (ValidateInputs()) {
+      if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+         SaveStatus();
+         return(last_error);
+      }
+      error = logError("onInitParameters(1)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+"), ERR_INVALID_INPUT_PARAMETER);
    }
 
-   ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize);    // does nothing after sequence start
-   SaveStatus();
-   return(last_error);
+   RestoreInputs();
+   return(error);
 }
 
 
@@ -126,12 +131,14 @@ int onInitTemplate() {
  */
 int afterInit() {
    SS.All();
-   if (!SetLogfile(GetLogFilename())) return(last_error);
+
+   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
+   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
-      test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
-      test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
+      test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
+      test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
    return(catch("afterInit(1)"));
 }

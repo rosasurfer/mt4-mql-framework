@@ -9,7 +9,7 @@ double __rates[][6];
 /**
  * Globale init()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int init() {
    if (__STATUS_OFF)
@@ -45,7 +45,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!initContext()) if (CheckErrors("init(2)")) return(last_error);
+   if (!InitGlobals()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -56,11 +56,11 @@ int init() {
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return( last_error);
+      if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
       if (!TickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return( last_error);
+      if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(last_error);
       if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
@@ -78,11 +78,11 @@ int init() {
 
 
 /**
- * Update global variables and the script's EXECUTION_CONTEXT. Called immediately after SyncMainContext_init().
+ * Update global variables. Called immediately after SyncMainContext_init().
  *
  * @return bool - success status
  */
-bool initContext() {
+bool InitGlobals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -94,14 +94,14 @@ bool initContext() {
    P_INF = -N_INF;                                          // positive infinity
    NaN   =  N_INF - N_INF;                                  // not-a-number
 
-   return(!catch("initContext(1)"));
+   return(!catch("InitGlobals(1)"));
 }
 
 
 /**
  * Globale start()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int start() {
    if (__STATUS_OFF) {                                                        // init()-Fehler abfangen
@@ -153,7 +153,7 @@ int start() {
 /**
  * Globale deinit()-Funktion für Scripte.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
