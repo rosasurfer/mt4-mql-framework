@@ -78,9 +78,9 @@ bool ManageIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
  * Adjust the size of a managed timeseries buffer. If size increases new elements are appended at index 0. If size decreases
  * existing elements are removed from the end (the oldest elements).
  *
- * @param  double &buffer[]             - buffer
- * @param  int    newSize               - new buffer size
- * @param  double emptyValue [optional] - new buffer elements will be initialized with this value (default: NULL)
+ * @param  _InOut_ double buffer[]              - buffer
+ * @param  _In_    int    newSize               - new buffer size
+ * @param  _In_    double emptyValue [optional] - new buffer elements will be initialized with this value (default: NULL)
  *
  * @return bool - success status
  */

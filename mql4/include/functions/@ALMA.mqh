@@ -1,10 +1,10 @@
 /**
  * Berechnet die Gewichtungen eines ALMAs.
  *
- * @param  double weights[]         - Array zur Aufnahme der Gewichtungen
- * @param  int    periods           - Anzahl der Perioden des ALMA
- * @param  double offset [optional] - Offset der Gauﬂ'schen Normalverteilung (default: 0.85)
- * @param  double sigma  [optional] - Steilheit der Gauﬂ'schen Normalverteilung (default: 6.0)
+ * @param  _Out_ double weights[]         - Array zur Aufnahme der Gewichtungen
+ * @param  _In_  int    periods           - Anzahl der Perioden des ALMA
+ * @param  _In_  double offset [optional] - Offset der Gauﬂ'schen Normalverteilung (default: 0.85)
+ * @param  _In_  double sigma  [optional] - Steilheit der Gauﬂ'schen Normalverteilung (default: 6.0)
  *
  * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
