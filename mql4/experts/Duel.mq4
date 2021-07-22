@@ -90,24 +90,26 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 
 #define HIX_CYCLE             0                    // order history indexes
 #define HIX_STARTTIME         1
-#define HIX_STOPTIME          2
-#define HIX_TICKET            3
-#define HIX_LEVEL             4
-#define HIX_LOTS              5
-#define HIX_PENDINGTYPE       6
-#define HIX_PENDINGTIME       7
-#define HIX_PENDINGPRICE      8
-#define HIX_TYPE              9
-#define HIX_OPENTIME         10
-#define HIX_OPENPRICE        11
-#define HIX_CLOSETIME        12
-#define HIX_CLOSEPRICE       13
-#define HIX_SWAP             14
-#define HIX_COMMISSION       15
-#define HIX_PROFIT           16
-#define HIX_TOTALPROFIT      17
-#define HIX_MAXPROFIT        18
-#define HIX_MAXDRAWDOWN      19
+#define HIX_GRIDBASE          2
+#define HIX_STOPTIME          3
+#define HIX_STOPPRICE         4
+#define HIX_TOTALPROFIT       5
+#define HIX_MAXPROFIT         6
+#define HIX_MAXDRAWDOWN       7
+#define HIX_TICKET            8
+#define HIX_LEVEL             9
+#define HIX_LOTS             10
+#define HIX_PENDINGTYPE      11
+#define HIX_PENDINGTIME      12
+#define HIX_PENDINGPRICE     13
+#define HIX_TYPE             14
+#define HIX_OPENTIME         15
+#define HIX_OPENPRICE        16
+#define HIX_CLOSETIME        17
+#define HIX_CLOSEPRICE       18
+#define HIX_SWAP             19
+#define HIX_COMMISSION       20
+#define HIX_PROFIT           21
 
 #define CLR_PENDING           DeepSkyBlue          // order marker colors
 #define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
@@ -128,8 +130,9 @@ double   sequence.gridsize;                        //
 double   sequence.unitsize;                        // lots at the first level
 double   sequence.startEquity;                     //
 datetime sequence.startTime;                       //
-datetime sequence.stopTime;                        //
 double   sequence.gridbase;                        //
+datetime sequence.stopTime;                        //
+double   sequence.stopPrice;                       //
 double   sequence.totalLots;                       // total lots: long.totalLots - short.totalLots
 double   sequence.floatingPL;                      // P/L of a floating open position
 double   sequence.hedgedPL;                        // P/L of a hedged open position
@@ -157,7 +160,7 @@ double   long.closePrice  [];
 double   long.swap        [];
 double   long.commission  [];
 double   long.profit      [];
-double   long.history     [][20];                  // history of closed long orders
+double   long.history     [][22];                  // history of closed long orders
 double   long.totalLots;                           // total long lots: 0...+n
 double   long.slippage;                            // overall slippage of the long side
 double   long.openPL;
@@ -181,7 +184,7 @@ double   short.closePrice  [];
 double   short.swap        [];
 double   short.commission  [];
 double   short.profit      [];
-double   short.history     [][20];                 // history of closed short orders
+double   short.history     [][22];                 // history of closed short orders
 double   short.totalLots;                          // total short lots: 0...+n
 double   short.slippage;                           // overall slippage of the short side
 double   short.openPL;
@@ -487,6 +490,8 @@ bool StartSequence(int signal) {
    sequence.status      = STATUS_PROGRESSING;
    sequence.startTime   = Max(TimeCurrentEx(), TimeServer());
    sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   sequence.stopTime    = 0;
+   sequence.stopPrice   = 0;
 
    double longOpenPrice, shortOpenPrice;
    if (long.enabled) {                                   // open a long position for level 1
@@ -526,12 +531,15 @@ bool ResumeSequence(int signal) {
                       logDebug("ResumeSequence(0.3)  sequence.totalLots="+ NumberToStr(sequence.totalLots, ".1+") +"  sequence.totalPL="+ DoubleToStr(sequence.totalPL, 2));
 
    // archive the last sequence cycle
-   int cycleId = ArchiveStoppedSequence();                     // TODO: gridbase?, stopPrice?
+   int cycleId = ArchiveStoppedSequence();
    if (!cycleId) return(false);
 
    // re-initialize sequence data
    sequence.status    = STATUS_PROGRESSING;                    // TODO: update TP/SL conditions
    sequence.startTime = Max(TimeCurrentEx(), TimeServer());
+   sequence.gridbase  = 0;
+   sequence.stopTime  = 0;
+   sequence.stopPrice = 0;
    sequence.totalLots = 0;
    sequence.tpPrice   = 0;
    sequence.slPrice   = 0;
@@ -636,6 +644,7 @@ bool RestorePositions(int direction, double history[][], int cycleId, double &op
 bool StopSequence(int signal) {
    if (IsLastError())                                                          return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   double hedgeOpenPrice = 0;
 
    if (sequence.status == STATUS_PROGRESSING) {                      // a progressing sequence has open orders to close (a waiting sequence has none)
       if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
@@ -654,7 +663,8 @@ bool StopSequence(int signal) {
          color    markerColor = CLR_NONE;
          int      oeFlags     = NULL;
          if (!OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-         hedgeTicket = oe.Ticket(oe);
+         hedgeTicket    = oe.Ticket(oe);
+         hedgeOpenPrice = oe.OpenPrice(oe);
       }
 
       if (!Grid.RemovePendingOrders()) return(false);                // cancel and remove all pending orders
@@ -671,8 +681,9 @@ bool StopSequence(int signal) {
       SS.PLStats(true);
    }
 
-   sequence.status   = STATUS_STOPPED;
-   sequence.stopTime = Max(TimeCurrentEx(), TimeServer());
+   sequence.status    = STATUS_STOPPED;
+   sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
+   sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    SS.StopConditions();
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
@@ -2582,7 +2593,12 @@ bool ArchiveStoppedSequence() {
       for (int i=0; i < ordersSize; i++) {
          long.history[historySize+i][HIX_CYCLE       ] = cycleId;
          long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          long.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
+         long.history[historySize+i][HIX_STOPPRICE   ] = sequence.stopPrice;     //
+         long.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       //
+         long.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
+         long.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
          long.history[historySize+i][HIX_TICKET      ] = long.ticket      [i];
          long.history[historySize+i][HIX_LEVEL       ] = long.level       [i];
          long.history[historySize+i][HIX_LOTS        ] = long.lots        [i];
@@ -2597,9 +2613,6 @@ bool ArchiveStoppedSequence() {
          long.history[historySize+i][HIX_SWAP        ] = long.swap        [i];
          long.history[historySize+i][HIX_COMMISSION  ] = long.commission  [i];
          long.history[historySize+i][HIX_PROFIT      ] = long.profit      [i];
-         long.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       // for simplicity sequence data is duplicated
-         long.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
-         long.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
       }
       ArrayResize(long.ticket,       0);
       ArrayResize(long.level,        0);
@@ -2626,7 +2639,12 @@ bool ArchiveStoppedSequence() {
       for (i=0; i < ordersSize; i++) {
          short.history[historySize+i][HIX_CYCLE       ] = cycleId;
          short.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          short.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
+         short.history[historySize+i][HIX_STOPPRICE   ] = sequence.stopPrice;     //
+         short.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       //
+         short.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
+         short.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
          short.history[historySize+i][HIX_TICKET      ] = short.ticket      [i];
          short.history[historySize+i][HIX_LEVEL       ] = short.level       [i];
          short.history[historySize+i][HIX_LOTS        ] = short.lots        [i];
@@ -2641,9 +2659,6 @@ bool ArchiveStoppedSequence() {
          short.history[historySize+i][HIX_SWAP        ] = short.swap        [i];
          short.history[historySize+i][HIX_COMMISSION  ] = short.commission  [i];
          short.history[historySize+i][HIX_PROFIT      ] = short.profit      [i];
-         short.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       // for simplicity sequence data is duplicated
-         short.history[historySize+i][HIX_MAXPROFIT   ] = sequence.maxProfit;     //
-         short.history[historySize+i][HIX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
       }
       ArrayResize(short.ticket,       0);
       ArrayResize(short.level,        0);
@@ -2857,9 +2872,10 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.gridsize",          /*double  */ NumberToStr(sequence.gridsize, ".+"));
    WriteIniString(file, section, "sequence.unitsize",          /*double  */ NumberToStr(sequence.unitsize, ".+"));
    WriteIniString(file, section, "sequence.startEquity",       /*double  */ DoubleToStr(sequence.startEquity, 2));
-   WriteIniString(file, section, "sequence.startTime",         /*datetime*/ sequence.startTime + GmtTimeFormat(sequence.startTime, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "sequence.stopTime",          /*datetime*/ sequence.stopTime + GmtTimeFormat(sequence.stopTime, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "sequence.startTime",         /*datetime*/ sequence.startTime + ifString(sequence.startTime, GmtTimeFormat(sequence.startTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "sequence.gridbase",          /*double  */ DoubleToStr(sequence.gridbase, Digits));
+   WriteIniString(file, section, "sequence.stopTime",          /*datetime*/ sequence.stopTime + ifString(sequence.stopTime, GmtTimeFormat(sequence.stopTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "sequence.stopPrice",         /*double  */ NumberToStr(sequence.stopPrice, ".+"));
    WriteIniString(file, section, "sequence.totalLots",         /*double  */ NumberToStr(sequence.totalLots, ".+"));
    WriteIniString(file, section, "sequence.floatingPL",        /*double  */ DoubleToStr(sequence.floatingPL, 2));
    WriteIniString(file, section, "sequence.hedgedPL",          /*double  */ DoubleToStr(sequence.hedgedPL, 2));
@@ -3011,8 +3027,9 @@ bool ReadStatus() {
    sequence.unitsize          = GetIniDouble (file, section, "sequence.unitsize"         );     // double   sequence.unitsize          = 0.01
    sequence.startEquity       = GetIniDouble (file, section, "sequence.startEquity"      );     // double   sequence.startEquity       = 1000.00
    sequence.startTime         = GetIniInt    (file, section, "sequence.startTime"        );     // datetime sequence.startTime         = 1624924801
-   sequence.stopTime          = GetIniInt    (file, section, "sequence.stopTime"         );     // datetime sequence.stopTime          = 1624924802
    sequence.gridbase          = GetIniDouble (file, section, "sequence.gridbase"         );     // double   sequence.gridbase          = 1.17453
+   sequence.stopTime          = GetIniInt    (file, section, "sequence.stopTime"         );     // datetime sequence.stopTime          = 1624924802
+   sequence.stopPrice         = GetIniDouble (file, section, "sequence.stopPrice"        );     // double   sequence.stopPrice         = 1.17453
    sequence.totalLots         = GetIniDouble (file, section, "sequence.totalLots"        );     // double   sequence.totalLots         = 0.12
    sequence.floatingPL        = GetIniDouble (file, section, "sequence.floatingPL"       );     // double   sequence.floatingPL        = 12.34
    sequence.hedgedPL          = GetIniDouble (file, section, "sequence.hedgedPL"         );     // double   sequence.hedgedPL          = 34.56
