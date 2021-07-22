@@ -3494,7 +3494,7 @@ bool Chart.StoreString(string key, string value) {
  * Restore the value of a boolean variable from the chart. If no stored value is found the function does nothing.
  *
  * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
- * @param  _Out_ bool  &var - variable to restore
+ * @param  _Out_ bool   var - variable to restore
  *
  * @return bool - success status
  */
@@ -3521,7 +3521,7 @@ bool Chart.RestoreBool(string key, bool &var) {
  * Restore the value of an integer variale from the chart. If no stored value is found the function does nothing.
  *
  * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
- * @param  _Out_ int   &var - variable to restore
+ * @param  _Out_ int    var - variable to restore
  *
  * @return bool - success status
  */
@@ -3573,8 +3573,8 @@ bool Chart.RestoreColor(string key, color &var) {
 /**
  * Restore the value of a double variable from the chart. If no stored value is found the function does nothing.
  *
- * @param  _In_  string  key - unique variable identifier with a maximum length of 63 characters
- * @param  _Out_ double &var - variable to restore
+ * @param  _In_  string key - unique variable identifier with a maximum length of 63 characters
+ * @param  _Out_ double var - variable to restore
  *
  * @return bool - success status
  */

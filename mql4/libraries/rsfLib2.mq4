@@ -869,8 +869,8 @@ bool SortOpenTickets(int tickets[][/*{OpenTime, Ticket}*/]) {
  * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen sind gleich
  * und müssen nicht umsortiert werden.
  *
- * @param  int ticketData[] - zu sortierendes Datenarray
- * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
+ * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
  * @return bool - Erfolgsstatus
  *
@@ -988,8 +988,8 @@ bool SortClosedTickets(int tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
  * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach {OpenTime, Ticket}. Die CloseTime-Felder dieser Zeilen
  * sind gleich und müssen nicht umsortiert werden.
  *
- * @param  int ticketData[] - zu sortierendes Datenarray
- * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
+ * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
  * @return bool - Erfolgsstatus
  *
@@ -1020,8 +1020,8 @@ bool __SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], 
  * Sortiert die in rowsToSort[] angegebene Zeilen des Datenarrays ticketData[] nach {Ticket}. Die Open- und CloseTime-Felder dieser Zeilen
  * sind gleich und müssen nicht umsortiert werden.
  *
- * @param  int ticketData[] - zu sortierendes Datenarray
- * @param  int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
+ * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
  * @return bool - Erfolgsstatus
  *

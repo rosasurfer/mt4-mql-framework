@@ -2745,16 +2745,16 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * {customVars} hinzu.
  *
  *                                                                     -+    struct POSITION_CONFIG_TERM {
- * @param  _In_    int     type           - zu extrahierender Typ      |       double type;
- * @param  _In_    double  value1         - zu extrahierende Lotsize   |       double confValue1;
- * @param  _In_    double  value2         - Preis/Betrag/Equity        +->     double confValue2;
- * @param  _InOut_ double &cache1         - Zwischenspeicher 1         |       double cacheValue1;
- * @param  _InOut_ double &cache2         - Zwischenspeicher 2         |       double cacheValue2;
+ * @param  _In_    int    type           - zu extrahierender Typ      |       double type;
+ * @param  _In_    double value1         - zu extrahierende Lotsize   |       double confValue1;
+ * @param  _In_    double value2         - Preis/Betrag/Equity        +->     double confValue2;
+ * @param  _InOut_ double cache1         - Zwischenspeicher 1         |       double cacheValue1;
+ * @param  _InOut_ double cache2         - Zwischenspeicher 2         |       double cacheValue2;
  *                                                                     -+    };
  *
- * @param  _InOut_ mixed &fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
- * @param  _InOut_ mixed &customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
- * @param  _InOut_ bool  &isCustomVirtual - ob die resultierende CustomPosition virtuell ist
+ * @param  _InOut_ mixed fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _InOut_ mixed customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
+ * @param  _InOut_ bool  isCustomVirtual - ob die resultierende CustomPosition virtuell ist
  *
  * @return bool - Erfolgsstatus
  */
