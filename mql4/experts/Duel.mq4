@@ -526,9 +526,7 @@ bool ResumeSequence(int signal) {
    if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
-   if (long.enabled)  logDebug("ResumeSequence(0.1)  long.totalLots="+  NumberToStr(long.totalLots, ".1+")  +"  long.closedPL="+  DoubleToStr(long.closedPL, 2));
-   if (short.enabled) logDebug("ResumeSequence(0.2)  short.totalLots="+ NumberToStr(short.totalLots, ".1+") +"  short.closedPL="+ DoubleToStr(short.closedPL, 2));
-                      logDebug("ResumeSequence(0.3)  sequence.totalLots="+ NumberToStr(sequence.totalLots, ".1+") +"  sequence.totalPL="+ DoubleToStr(sequence.totalPL, 2));
+   double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, openPrice, longOpenPrice, shortOpenPrice;
 
    // archive the last sequence cycle
    int cycleId = ArchiveStoppedSequence();
@@ -545,7 +543,6 @@ bool ResumeSequence(int signal) {
    sequence.slPrice   = 0;
 
    // restore positions
-   double longOpenPrice, shortOpenPrice;
    if (long.enabled) {
       long.totalLots = 0;
       long.slippage  = 0;
@@ -566,15 +563,11 @@ bool ResumeSequence(int signal) {
    }
 
    // set the new gridbase and update total lots
-   if      (sequence.direction == D_LONG)  sequence.gridbase = longOpenPrice;
-   else if (sequence.direction == D_SHORT) sequence.gridbase = shortOpenPrice;
-   else                                    sequence.gridbase = (longOpenPrice + shortOpenPrice)/2;
-   sequence.gridbase  = NormalizeDouble(sequence.gridbase, Digits);
+   if      (sequence.direction == D_LONG)  openPrice = longOpenPrice;
+   else if (sequence.direction == D_SHORT) openPrice = shortOpenPrice;
+   else                                    openPrice = (longOpenPrice + shortOpenPrice)/2;
+   sequence.gridbase  = NormalizeDouble(oldGridbase + openPrice - oldStopPrice, Digits);
    sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.Lots();
-
-   if (long.enabled)  logDebug("ResumeSequence(0.4)  long.totalLots="+  NumberToStr(long.totalLots, ".1+")  +"  long.closedPL="+  DoubleToStr(long.closedPL, 2));
-   if (short.enabled) logDebug("ResumeSequence(0.5)  short.totalLots="+ NumberToStr(short.totalLots, ".1+") +"  short.closedPL="+ DoubleToStr(short.closedPL, 2));
-                      logDebug("ResumeSequence(0.6)  sequence.totalLots="+ NumberToStr(sequence.totalLots, ".1+") +"  sequence.totalPL="+ DoubleToStr(sequence.totalPL, 2));
 
    // update pending orders
    if (!UpdatePendingOrders()) return(false);
