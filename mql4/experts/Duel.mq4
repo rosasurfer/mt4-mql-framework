@@ -2830,7 +2830,7 @@ bool SaveStatus() {
    }
 
    string section, file=GetStatusFilename(), separator="";
-   if (!IsFileA(file)) separator = CRLF;                                   // an empty line as additional section separator
+   if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -2858,8 +2858,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Sessionbreak.EndTime",       /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)") + separator);
 
    // [Runtime status]
-   section = "Runtime status";      // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section); // orphaned records in the status file the section is emptied before writing to it.
+   section = "Runtime status";            // On deletion of pending orders the number of stored order records decreases. To prevent
+   EmptyIniSectionA(file, section);       // orphaned records in the status file the section is emptied before writing to it.
 
    // sequence data
    WriteIniString(file, section, "sequence.id",                /*int     */ sequence.id);
@@ -2894,7 +2894,11 @@ bool SaveStatus() {
    WriteIniString(file, section, "long.enabled",               /*bool     */ long.enabled);
    int size = ArraySize(long.ticket);
    for (int i=0; i < size; i++) {
-      WriteIniString(file, section, "long.order."+ i, SaveStatus.OrderToStr(i, D_LONG));
+      WriteIniString(file, section, "long.orders."+ i, SaveStatus.OrderToStr(D_LONG, i));
+   }
+   size = ArrayRange(long.history, 0);
+   for (i=0; i < size; i++) {
+      WriteIniString(file, section, "long.history."+ i, SaveStatus.HistoryToStr(D_LONG, i));
    }
    WriteIniString(file, section, "long.totalLots",             /*double  */ NumberToStr(long.totalLots, ".+"));
    WriteIniString(file, section, "long.slippage",              /*double  */ NumberToStr(long.slippage, ".+"));
@@ -2908,7 +2912,11 @@ bool SaveStatus() {
    WriteIniString(file, section, "short.enabled",              /*bool    */ short.enabled);
    size = ArraySize(short.ticket);
    for (i=0; i < size; i++) {
-      WriteIniString(file, section, "short.order."+ i, SaveStatus.OrderToStr(i, D_SHORT));
+      WriteIniString(file, section, "short.orders."+ i, SaveStatus.OrderToStr(D_SHORT, i));
+   }
+   size = ArrayRange(short.history, 0);
+   for (i=0; i < size; i++) {
+      WriteIniString(file, section, "short.history."+ i, SaveStatus.HistoryToStr(D_SHORT, i));
    }
    WriteIniString(file, section, "short.totalLots",            /*double  */ NumberToStr(short.totalLots, ".+"));
    WriteIniString(file, section, "short.slippage",             /*double  */ NumberToStr(short.slippage, ".+"));
@@ -2935,10 +2943,134 @@ bool SaveStatus() {
    WriteIniString(file, section, "slPct.absValue",             /*double  */ ifString(slPct.absValue==INT_MIN, INT_MIN, DoubleToStr(slPct.absValue, 2)));
    WriteIniString(file, section, "slPct.description",          /*string  */ slPct.description + CRLF);
 
-   WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime);
-   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime  );
+   WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
 
    return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of an order record to be stored by SaveStatus().
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ * @param  int index     - index of the order record
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.OrderToStr(int direction, int index) {
+   int      ticket, level, pendingType, type;
+   datetime pendingTime, openTime, closeTime;
+   double   lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
+
+   // result: ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+
+   if (direction == D_LONG) {
+      ticket       = long.ticket      [index];
+      level        = long.level       [index];
+      lots         = long.lots        [index];
+      pendingType  = long.pendingType [index];
+      pendingTime  = long.pendingTime [index];
+      pendingPrice = long.pendingPrice[index];
+      type         = long.type        [index];
+      openTime     = long.openTime    [index];
+      openPrice    = long.openPrice   [index];
+      closeTime    = long.closeTime   [index];
+      closePrice   = long.closePrice  [index];
+      swap         = long.swap        [index];
+      commission   = long.commission  [index];
+      profit       = long.profit      [index];
+   }
+   else if (direction == D_SHORT) {
+      ticket       = short.ticket      [index];
+      level        = short.level       [index];
+      lots         = short.lots        [index];
+      pendingType  = short.pendingType [index];
+      pendingTime  = short.pendingTime [index];
+      pendingPrice = short.pendingPrice[index];
+      type         = short.type        [index];
+      openTime     = short.openTime    [index];
+      openPrice    = short.openPrice   [index];
+      closeTime    = short.closeTime   [index];
+      closePrice   = short.closePrice  [index];
+      swap         = short.swap        [index];
+      commission   = short.commission  [index];
+      profit       = short.profit      [index];
+   }
+   else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+}
+
+
+/**
+ * Return a string representation of a history record to be stored by SaveStatus().
+ *
+ * @param  int direction - D_LONG | D_SHORT
+ * @param  int index     - index of the history record
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.HistoryToStr(int direction, int index) {
+   int      cycle, ticket, level, pendingType, type;
+   datetime startTime, stopTime, pendingTime, openTime, closeTime;
+   double   startPrice, gridbase, stopPrice, totalProfit, maxProfit, maxDrawdown, lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
+
+   // result: cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+
+   if (direction == D_LONG) {
+      cycle        = long.history[index][HIX_CYCLE       ];
+      startTime    = long.history[index][HIX_STARTTIME   ];
+      startPrice   = long.history[index][HIX_STARTPRICE  ];
+      gridbase     = long.history[index][HIX_GRIDBASE    ];
+      stopTime     = long.history[index][HIX_STOPTIME    ];
+      stopPrice    = long.history[index][HIX_STOPPRICE   ];
+      totalProfit  = long.history[index][HIX_TOTALPROFIT ];
+      maxProfit    = long.history[index][HIX_MAXPROFIT   ];
+      maxDrawdown  = long.history[index][HIX_MAXDRAWDOWN ];
+      ticket       = long.history[index][HIX_TICKET      ];
+      level        = long.history[index][HIX_LEVEL       ];
+      lots         = long.history[index][HIX_LOTS        ];
+      pendingType  = long.history[index][HIX_PENDINGTYPE ];
+      pendingTime  = long.history[index][HIX_PENDINGTIME ];
+      pendingPrice = long.history[index][HIX_PENDINGPRICE];
+      type         = long.history[index][HIX_TYPE        ];
+      openTime     = long.history[index][HIX_OPENTIME    ];
+      openPrice    = long.history[index][HIX_OPENPRICE   ];
+      closeTime    = long.history[index][HIX_CLOSETIME   ];
+      closePrice   = long.history[index][HIX_CLOSEPRICE  ];
+      swap         = long.history[index][HIX_SWAP        ];
+      commission   = long.history[index][HIX_COMMISSION  ];
+      profit       = long.history[index][HIX_PROFIT      ];
+   }
+   else if (direction == D_SHORT) {
+      cycle        = short.history[index][HIX_CYCLE       ];
+      startTime    = short.history[index][HIX_STARTTIME   ];
+      startPrice   = short.history[index][HIX_STARTPRICE  ];
+      gridbase     = short.history[index][HIX_GRIDBASE    ];
+      stopTime     = short.history[index][HIX_STOPTIME    ];
+      stopPrice    = short.history[index][HIX_STOPPRICE   ];
+      totalProfit  = short.history[index][HIX_TOTALPROFIT ];
+      maxProfit    = short.history[index][HIX_MAXPROFIT   ];
+      maxDrawdown  = short.history[index][HIX_MAXDRAWDOWN ];
+      ticket       = short.history[index][HIX_TICKET      ];
+      level        = short.history[index][HIX_LEVEL       ];
+      lots         = short.history[index][HIX_LOTS        ];
+      pendingType  = short.history[index][HIX_PENDINGTYPE ];
+      pendingTime  = short.history[index][HIX_PENDINGTIME ];
+      pendingPrice = short.history[index][HIX_PENDINGPRICE];
+      type         = short.history[index][HIX_TYPE        ];
+      openTime     = short.history[index][HIX_OPENTIME    ];
+      openPrice    = short.history[index][HIX_OPENPRICE   ];
+      closeTime    = short.history[index][HIX_CLOSETIME   ];
+      closePrice   = short.history[index][HIX_CLOSEPRICE  ];
+      swap         = short.history[index][HIX_SWAP        ];
+      commission   = short.history[index][HIX_COMMISSION  ];
+      profit       = short.history[index][HIX_PROFIT      ];
+   }
+   else return(_EMPTY_STR(catch("SaveStatus.HistoryToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+
+   return(StringConcatenate(cycle, ",", startTime, ",", DoubleToStr(startPrice, Digits), ",", DoubleToStr(gridbase, Digits), ",", stopTime, ",", DoubleToStr(stopPrice, Digits), ",", DoubleToStr(totalProfit, 2), ",", DoubleToStr(maxProfit, 2), ",", DoubleToStr(maxDrawdown, 2), ",", ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -2990,15 +3122,13 @@ bool ReadStatus() {
    string sTakeProfit            = GetIniStringA(file, section, "TakeProfit",             "");  // string   TakeProfit             = 3%
    string sStopLoss              = GetIniStringA(file, section, "StopLoss",               "");  // string   StopLoss               = 20.00
    string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");  // bool     ShowProfitInPercent    = 1
-   string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");  // datetime Sessionbreak.StartTime = 86160
-   string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");  // datetime Sessionbreak.EndTime   = 3730
+   int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );  // datetime Sessionbreak.StartTime = 86160 (23:56:30)
+   int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );  // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
 
    if (!StrIsNumeric(sGridSize))             return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sUnitSize))             return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sPyramidMultiplier))    return(!catch("ReadStatus(7)  "+ sequence.name +" invalid input parameter Pyramid.Multiplier "+ DoubleQuoteStr(sPyramidMultiplier) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sMartingaleMultiplier)) return(!catch("ReadStatus(8)  "+ sequence.name +" invalid input parameter Martingale.Multiplier "+ DoubleQuoteStr(sMartingaleMultiplier) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsDigit(sSessionbreakStartTime))  return(!catch("ReadStatus(9)  "+ sequence.name +" invalid input parameter Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsDigit(sSessionbreakEndTime))    return(!catch("ReadStatus(10)  "+ sequence.name +" invalid input parameter Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    Sequence.ID            = sSequenceID;
    GridDirection          = sGridDirection;
@@ -3011,14 +3141,14 @@ bool ReadStatus() {
    TakeProfit             = sTakeProfit;
    StopLoss               = sStopLoss;
    ShowProfitInPercent    = StrToBool(sShowProfitInPercent);
-   Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);
-   Sessionbreak.EndTime   = StrToInteger(sSessionbreakEndTime);
+   Sessionbreak.StartTime = iSessionbreakStartTime;
+   Sessionbreak.EndTime   = iSessionbreakEndTime;
 
    // [Runtime status]
    section = "Runtime status";
    // sequence data
    sequence.id                = GetIniInt    (file, section, "sequence.id"               );     // int      sequence.id                = 1234
-   sequence.created           = GetIniInt    (file, section, "sequence.created"          );     // datetime sequence.created           = 1624924800
+   sequence.created           = GetIniInt    (file, section, "sequence.created"          );     // datetime sequence.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    sequence.isTest            = GetIniBool   (file, section, "sequence.isTest"           );     // bool     sequence.isTest            = 1
    sequence.name              = GetIniStringA(file, section, "sequence.name",          "");     // string   sequence.name              = L.1234
    sequence.status            = GetIniInt    (file, section, "sequence.status"           );     // int      sequence.status            = 1
@@ -3028,11 +3158,11 @@ bool ReadStatus() {
    sequence.gridvola          = GetIniDouble (file, section, "sequence.gridvola"         );     // double   sequence.gridvola          = 29.5
    sequence.gridsize          = GetIniDouble (file, section, "sequence.gridsize"         );     // double   sequence.gridsize          = 3.5
    sequence.unitsize          = GetIniDouble (file, section, "sequence.unitsize"         );     // double   sequence.unitsize          = 0.01
-   sequence.startTime         = GetIniInt    (file, section, "sequence.startTime"        );     // datetime sequence.startTime         = 1624924801
+   sequence.startTime         = GetIniInt    (file, section, "sequence.startTime"        );     // datetime sequence.startTime         = 1624924801 (Mon, 2021.05.12 13:25:12)
    sequence.startPrice        = GetIniDouble (file, section, "sequence.startPrice"       );     // double   sequence.startPrice        = 1.17453
    sequence.startEquity       = GetIniDouble (file, section, "sequence.startEquity"      );     // double   sequence.startEquity       = 1000.00
    sequence.gridbase          = GetIniDouble (file, section, "sequence.gridbase"         );     // double   sequence.gridbase          = 1.17453
-   sequence.stopTime          = GetIniInt    (file, section, "sequence.stopTime"         );     // datetime sequence.stopTime          = 1624924802
+   sequence.stopTime          = GetIniInt    (file, section, "sequence.stopTime"         );     // datetime sequence.stopTime          = 1624924802 (Mon, 2021.05.12 17:01:27)
    sequence.stopPrice         = GetIniDouble (file, section, "sequence.stopPrice"        );     // double   sequence.stopPrice         = 1.17453
    sequence.totalLots         = GetIniDouble (file, section, "sequence.totalLots"        );     // double   sequence.totalLots         = 0.12
    sequence.floatingPL        = GetIniDouble (file, section, "sequence.floatingPL"       );     // double   sequence.floatingPL        = 12.34
@@ -3058,8 +3188,8 @@ bool ReadStatus() {
    string sKeys[], sOrder;
    int size = ReadStatus.OrderKeys(file, section, sKeys, D_LONG); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.order.{i} = {data}
-      if (!ReadStatus.ParseOrder(sOrder, D_LONG)) return(!catch("ReadStatus(11)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.orders.{i} = {data}
+      if (!ReadStatus.ParseOrder(sOrder, D_LONG)) return(!catch("ReadStatus(9)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // short order data
@@ -3074,8 +3204,8 @@ bool ReadStatus() {
    short.maxLevel             = GetIniInt    (file, section, "short.maxLevel" );                // int      short.maxLevel  = 7
    size = ReadStatus.OrderKeys(file, section, sKeys, D_SHORT); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.order.{i} = {data}
-      if (!ReadStatus.ParseOrder(sOrder, D_SHORT)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.orders.{i} = {data}
+      if (!ReadStatus.ParseOrder(sOrder, D_SHORT)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // other
@@ -3095,10 +3225,10 @@ bool ReadStatus() {
    slPct.absValue             = GetIniDouble (file, section, "slPct.absValue"       );          // double   slPct.absValue    = 0.00
    slPct.description          = GetIniStringA(file, section, "slPct.description", "");          // string   slPct.description = text
 
-   sessionbreak.starttime     = GetIniInt    (file, section, "sessionbreak.starttime");         // datetime sessionbreak.starttime = 1583254806
-   sessionbreak.endtime       = GetIniInt    (file, section, "sessionbreak.endtime"  );         // datetime sessionbreak.endtime   = 1583254807
+   sessionbreak.starttime     = GetIniInt    (file, section, "sessionbreak.starttime");         // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
+   sessionbreak.endtime       = GetIniInt    (file, section, "sessionbreak.endtime"  );         // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
 
-   return(!catch("ReadStatus(13)"));
+   return(!catch("ReadStatus(11)"));
 }
 
 
@@ -3108,8 +3238,8 @@ bool ReadStatus() {
  * @param  _In_  string file      - status filename
  * @param  _In_  string section   - status section
  * @param  _Out_ string &keys[]   - array receiving the found keys
- * @param  _In_  int    direction - D_LONG:  return long order records  (matching "long.order.{i}={data}")
- *                                  D_SHORT: return short order records (matching "short.order.{i}={data}")
+ * @param  _In_  int    direction - D_LONG:  return long order records  (matching "long.orders.{i}={data}")
+ *                                  D_SHORT: return short order records (matching "short.orders.{i}={data}")
  *
  * @return int - number of found keys or EMPTY (-1) in case of errors
  */
@@ -3119,7 +3249,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
    int size = GetIniKeys(file, section, keys);
    if (size < 0) return(EMPTY);
 
-   string prefix = ifString(direction==D_LONG, "long.order.", "short.order.");
+   string prefix = ifString(direction==D_LONG, "long.orders.", "short.orders.");
    int prefixLen = StringLen(prefix);
 
    for (int i=size-1; i >= 0; i--) {
@@ -3143,7 +3273,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
 bool ReadStatus.ParseOrder(string value, int direction) {
    if (IsLastError()) return(false);
 
-   // [long|short].order.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   // [long|short].orders.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
    string values[];
    if (Explode(value, ",", values, NULL) != 14) return(!catch("ReadStatus.ParseOrder(1)  "+ sequence.name +" illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
 
@@ -3163,59 +3293,6 @@ bool ReadStatus.ParseOrder(string value, int direction) {
    double   profit       =  StrToDouble(StrTrim(values[13]));     // double   profit
 
    return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, type, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
-}
-
-
-/**
- * Return a string representation of an order record to be stored by SaveStatus().
- *
- * @param  int index     - index of the order record
- * @param  int direction - D_LONG | D_SHORT
- *
- * @return string - string representation or an empty string in case of errors
- */
-string SaveStatus.OrderToStr(int index, int direction) {
-   int      ticket, level, pendingType, type;
-   datetime pendingTime, openTime, closeTime;
-   double   lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
-
-   // result: ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
-
-   if (direction == D_LONG) {
-      ticket       = long.ticket      [index];
-      level        = long.level       [index];
-      lots         = long.lots        [index];
-      pendingType  = long.pendingType [index];
-      pendingTime  = long.pendingTime [index];
-      pendingPrice = long.pendingPrice[index];
-      type         = long.type        [index];
-      openTime     = long.openTime    [index];
-      openPrice    = long.openPrice   [index];
-      closeTime    = long.closeTime   [index];
-      closePrice   = long.closePrice  [index];
-      swap         = long.swap        [index];
-      commission   = long.commission  [index];
-      profit       = long.profit      [index];
-   }
-   else if (direction == D_SHORT) {
-      ticket       = short.ticket      [index];
-      level        = short.level       [index];
-      lots         = short.lots        [index];
-      pendingType  = short.pendingType [index];
-      pendingTime  = short.pendingTime [index];
-      pendingPrice = short.pendingPrice[index];
-      type         = short.type        [index];
-      openTime     = short.openTime    [index];
-      openPrice    = short.openPrice   [index];
-      closeTime    = short.closeTime   [index];
-      closePrice   = short.closePrice  [index];
-      swap         = short.swap        [index];
-      commission   = short.commission  [index];
-      profit       = short.profit      [index];
-   }
-   else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
-
-   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
