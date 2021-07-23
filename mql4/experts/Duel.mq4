@@ -2480,20 +2480,20 @@ bool Orders.RemoveRecord(int direction, int offset) {
    }
    else if (direction == D_SHORT) {
       if (offset < 0 || offset >= ArraySize(short.ticket)) return(!catch("Orders.RemoveRecord(2)  "+ sequence.name +" invalid parameter offset: "+ offset +" (short order array size: "+ ArraySize(short.ticket) +")", ERR_INVALID_PARAMETER));
-      ArraySpliceInts   (short.ticket,       offset, 1); catch("RemoveRecord(0.2)");
-      ArraySpliceInts   (short.level,        offset, 1); catch("RemoveRecord(0.3)");
-      ArraySpliceDoubles(short.lots,         offset, 1); catch("RemoveRecord(0.4)");
-      ArraySpliceInts   (short.pendingType,  offset, 1); catch("RemoveRecord(0.5)");
-      ArraySpliceInts   (short.pendingTime,  offset, 1); catch("RemoveRecord(0.6)");
-      ArraySpliceDoubles(short.pendingPrice, offset, 1); catch("RemoveRecord(0.7)");
-      ArraySpliceInts   (short.type,         offset, 1); catch("RemoveRecord(0.8)");
-      ArraySpliceInts   (short.openTime,     offset, 1); catch("RemoveRecord(0.9)");
-      ArraySpliceDoubles(short.openPrice,    offset, 1); catch("RemoveRecord(0.10)");
-      ArraySpliceInts   (short.closeTime,    offset, 1); catch("RemoveRecord(0.11)");
-      ArraySpliceDoubles(short.closePrice,   offset, 1); catch("RemoveRecord(0.12)");
-      ArraySpliceDoubles(short.swap,         offset, 1); catch("RemoveRecord(0.13)");
-      ArraySpliceDoubles(short.commission,   offset, 1); catch("RemoveRecord(0.14)");
-      ArraySpliceDoubles(short.profit,       offset, 1); catch("RemoveRecord(0.15)");
+      ArraySpliceInts   (short.ticket,       offset, 1);
+      ArraySpliceInts   (short.level,        offset, 1);
+      ArraySpliceDoubles(short.lots,         offset, 1);
+      ArraySpliceInts   (short.pendingType,  offset, 1);
+      ArraySpliceInts   (short.pendingTime,  offset, 1);
+      ArraySpliceDoubles(short.pendingPrice, offset, 1);
+      ArraySpliceInts   (short.type,         offset, 1);
+      ArraySpliceInts   (short.openTime,     offset, 1);
+      ArraySpliceDoubles(short.openPrice,    offset, 1);
+      ArraySpliceInts   (short.closeTime,    offset, 1);
+      ArraySpliceDoubles(short.closePrice,   offset, 1);
+      ArraySpliceDoubles(short.swap,         offset, 1);
+      ArraySpliceDoubles(short.commission,   offset, 1);
+      ArraySpliceDoubles(short.profit,       offset, 1);
    }
    else return(!catch("Orders.RemoveRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
