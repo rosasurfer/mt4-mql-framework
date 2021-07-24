@@ -1849,12 +1849,15 @@ string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
-   string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
+   static string filename; if (!StringLen(filename)) {
+      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
+      filename = directory + baseName;
+   }
 
    if (relative)
-      return(directory + baseName);
-   return(GetMqlFilesPath() +"\\"+ directory + baseName);
+      return(filename);
+   return(GetMqlFilesPath() +"\\"+ filename);
 }
 
 
@@ -2812,7 +2815,7 @@ bool SaveStatus() {
       saved = true;
    }
 
-   string section, file=GetStatusFilename(), separator="";
+   string section, separator="", file=GetStatusFilename();
    if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
 
    // [General]
@@ -3157,6 +3160,7 @@ bool ReadStatus() {
    sequence.maxDrawdown       = GetIniDouble (file, section, "sequence.maxDrawdown"      );     // double   sequence.maxDrawdown       = -11.23
    sequence.tpPrice           = GetIniDouble (file, section, "sequence.tpPrice"          );     // double   sequence.tpPrice           = 1.17692
    sequence.slPrice           = GetIniDouble (file, section, "sequence.slPrice"          );     // double   sequence.slPrice           = 1.17051
+   SS.SequenceName();
 
    // long order data
    ResetOrderLog(D_LONG);
@@ -3538,8 +3542,8 @@ void SS.ProfitTargets() {
  */
 void SS.SequenceName() {
    sequence.name = "";
-   if (long.enabled)  sequence.name = sequence.name +"L";
-   if (short.enabled) sequence.name = sequence.name +"S";
+   if (sequence.direction & D_LONG  && 1) sequence.name = sequence.name +"L";   // don't query 'long/short.enabled' as it gets assigned way later
+   if (sequence.direction & D_SHORT && 1) sequence.name = sequence.name +"S";
    sequence.name = sequence.name +"."+ sequence.id;
 }
 

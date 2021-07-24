@@ -20,7 +20,9 @@ int onInit() {
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
-      RestoreSequence();                                             // a valid sequence id was specified
+      if (RestoreSequence()) {                                       // a valid sequence id was specified
+         logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
    }
    else if (StrTrim(Sequence.ID) == "") {                            // no sequence id was specified
       if (ValidateInputs()) {
@@ -30,7 +32,7 @@ int onInitUser() {
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
-            return(onInputError("onInitUser(1)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+            return(onInputError("onInitUser(2)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
          }
          SS.All();
 
@@ -46,11 +48,11 @@ int onInitUser() {
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
          double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
-         if (IsError(catch("onInitUser(2)"))) return(last_error);    // reset last error
+         if (IsError(catch("onInitUser(3)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
             StopSequence(NULL);
-            logError("onInitUser(3)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
-            return(catch("onInitUser(4)"));
+            logError("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            return(catch("onInitUser(5)"));
          }
 
          // confirm dangerous live modes
@@ -59,7 +61,7 @@ int onInitUser() {
                PlaySoundEx("Windows Notify.wav");
                if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
                   StopSequence(NULL);
-                  return(catch("onInitUser(5)"));
+                  return(catch("onInitUser(6)"));
                }
             }
          }
@@ -78,7 +80,7 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitParameters() {
-   int error;
+   int error = NO_ERROR;
 
    if (ValidateInputs()) {
       if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
