@@ -28,8 +28,9 @@ int onInitUser() {
       if (ValidateInputs()) {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = sequence.id;
-         sequence.isTest  = IsTesting(); SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.isTest  = IsTesting(); SS.SequenceName();
+         sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
             return(onInputError("onInitUser(2)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
