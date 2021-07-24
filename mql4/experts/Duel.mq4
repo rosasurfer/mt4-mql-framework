@@ -122,6 +122,7 @@ int      sequence.id;                              //
 datetime sequence.created;                         //
 bool     sequence.isTest;                          // whether the sequence is a test (e.g. loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence.id}"
+int      sequence.cycle;                           // start/stop cycle: 1...+n
 int      sequence.status;                          //
 int      sequence.direction;                       //
 bool     sequence.pyramidEnabled;                  // whether the sequence scales in on the winning side (pyramid)
@@ -531,11 +532,11 @@ bool ResumeSequence(int signal) {
 
    double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, longOpenPrice, shortOpenPrice;
 
-   // archive the last sequence cycle
-   int cycleId = ArchiveStoppedSequence();
-   if (!cycleId) return(false);
+   // archive the stopped sequence cycle
+   if (!ArchiveStoppedSequence()) return(false);
 
    // re-initialize sequence data
+   sequence.cycle++;
    sequence.status     = STATUS_PROGRESSING;                   // TODO: update TP/SL conditions
    sequence.startTime  = Max(TimeCurrentEx(), TimeServer());
    sequence.startPrice = 0;
@@ -554,7 +555,7 @@ bool ResumeSequence(int signal) {
       long.bePrice   = 0;
       long.minLevel  = INT_MAX;
       long.maxLevel  = INT_MIN;
-      if (!RestorePositions(long.history, cycleId, longOpenPrice)) return(false);
+      if (!RestorePositions(long.history, longOpenPrice)) return(false);
    }
    if (short.enabled) {
       short.totalLots = 0;
@@ -563,7 +564,7 @@ bool ResumeSequence(int signal) {
       short.bePrice   = 0;
       short.minLevel  = INT_MAX;
       short.maxLevel  = INT_MIN;
-      if (!RestorePositions(short.history, cycleId, shortOpenPrice)) return(false);
+      if (!RestorePositions(short.history, shortOpenPrice)) return(false);
    }
 
    // set the new gridbase and update total lots
@@ -584,24 +585,25 @@ bool ResumeSequence(int signal) {
 
 
 /**
- * Restore open positions of a stopped sequence. Called from ResumeSequence().
+ * Restore the open positions of the last sequence cycle. Called only from ResumeSequence().
  *
  * @param  _In_  double history[][] - order history
- * @param  _In_  int    cycleId     - id of the history cycle to restore
  * @param  _Out_ double openPrice   - variable receiving the average open price of the opened positions
  *
  * @return bool - success status
  */
-bool RestorePositions(double history[][], int cycleId, double &openPrice) {
+bool RestorePositions(double history[][], double &openPrice) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("RestorePositions(1)  "+ sequence.name +" cannot restore positions of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (cycleId < 0)                           return(!catch("RestorePositions(2)  "+ sequence.name +" invalid parameter cycleId: "+ cycleId, ERR_INVALID_PARAMETER));
 
-   double price=0, lots=0, sumPrice=0, sumLots=0;
    int size = ArrayRange(history, 0);
+   if (!size) return(!catch("RestorePositions(2)  "+ sequence.name +" cannot restore last cycle (empty history)", ERR_ILLEGAL_STATE));
+
+   int lastCycle = history[size-1][HIX_CYCLE];
+   double price=0, lots=0, sumPrice=0, sumLots=0;
 
    for (int i=0; i < size; i++) {
-      if (history[i][HIX_CYCLE] == cycleId) {
+      if (history[i][HIX_CYCLE] == lastCycle) {
          int direction = ifInt(history[i][HIX_OPENTYPE]==OP_BUY, D_LONG, D_SHORT);
 
          if (!Grid.AddPosition(direction, history[i][HIX_LEVEL], price, lots)) return(false);
@@ -610,6 +612,7 @@ bool RestorePositions(double history[][], int cycleId, double &openPrice) {
       }
    }
    openPrice = MathDiv(sumPrice, sumLots);
+
    return(!catch("RestorePositions(3)"));
 }
 
@@ -1989,11 +1992,12 @@ bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-// backed-up status variables
+// backed-up global var which may be affected by input parameter changes
 int      prev.sequence.id;
 datetime prev.sequence.created;
 bool     prev.sequence.isTest;
 string   prev.sequence.name = "";
+int      prev.sequence.cycle;
 int      prev.sequence.status;
 int      prev.sequence.direction;
 bool     prev.sequence.pyramidEnabled;
@@ -2046,11 +2050,12 @@ void BackupInputs() {
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
 
-   // backup status variables which may change by modifying input parameters
+   // backup global vars which may be affected by input parameter changes
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
    prev.sequence.isTest            = sequence.isTest;
    prev.sequence.name              = sequence.name;
+   prev.sequence.cycle             = sequence.cycle;
    prev.sequence.status            = sequence.status;
    prev.sequence.direction         = sequence.direction;
    prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
@@ -2083,7 +2088,7 @@ void BackupInputs() {
 
 
 /**
- * Restore backed-up input parameters and status variables. Called from onInitParameters() and onInitTimeframeChange().
+ * Restore backed-up input parameters and global vars. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
    // restore input parameters
@@ -2102,11 +2107,12 @@ void RestoreInputs() {
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
 
-   // restore status variables
+   // restore global vars
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
    sequence.isTest            = prev.sequence.isTest;
    sequence.name              = prev.sequence.name;
+   sequence.cycle             = prev.sequence.cycle;
    sequence.status            = prev.sequence.status;
    sequence.direction         = prev.sequence.direction;
    sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
@@ -2622,27 +2628,21 @@ bool ResetOrderLog(int direction) {
 /**
  * Move existing sequence data to the archive. Called from ResumeSequence() to prepare continuation of a stopped sequence.
  *
- * @return int - cycle id of the archived data or NULL (0) in case of errors
+ * @return bool - success status
  */
 bool ArchiveStoppedSequence() {
-   if (IsLastError())                     return(NULL);
+   if (IsLastError())                     return(false);
    if (sequence.status != STATUS_STOPPED) return(!catch("ArchiveStoppedSequence(1)  "+ sequence.name +" cannot archive data of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
-   // resolve the next cycle id
-   int longHistorySize=ArrayRange(long.history, 0), shortHistorySize=ArrayRange(short.history, 0), cycleId=0;
-   if (longHistorySize  > 0) cycleId = Max(cycleId, long.history [longHistorySize -1][HIX_CYCLE]);
-   if (shortHistorySize > 0) cycleId = Max(cycleId, short.history[shortHistorySize-1][HIX_CYCLE]);
-   cycleId++;
 
    // long
    if (long.enabled) {
-      int historySize = longHistorySize;
+      int historySize = ArrayRange(long.history, 0);
       int ordersSize  = ArraySize(long.ticket);
       ArrayResize(long.history, historySize + ordersSize);
 
       for (int i=0; i < ordersSize; i++) {
-         long.history[historySize+i][HIX_CYCLE       ] = cycleId;
-         long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     //
          long.history[historySize+i][HIX_STARTPRICE  ] = sequence.startPrice;    //
          long.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          long.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
@@ -2683,13 +2683,13 @@ bool ArchiveStoppedSequence() {
 
    // short
    if (short.enabled) {
-      historySize = shortHistorySize;
+      historySize = ArrayRange(short.history, 0);
       ordersSize  = ArraySize(short.ticket);
       ArrayResize(short.history, historySize + ordersSize);
 
       for (i=0; i < ordersSize; i++) {
-         short.history[historySize+i][HIX_CYCLE       ] = cycleId;
-         short.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     //
          short.history[historySize+i][HIX_STARTPRICE  ] = sequence.startPrice;    //
          short.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          short.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
@@ -2728,9 +2728,7 @@ bool ArchiveStoppedSequence() {
       ArrayResize(short.profit,       0);
    }
 
-   if (!catch("ArchiveStoppedSequence(2)"))
-      return(cycleId);
-   return(NULL);
+   return(!catch("ArchiveStoppedSequence(2)"));
 }
 
 
@@ -2917,6 +2915,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.created",           /*datetime*/ sequence.created + GmtTimeFormat(sequence.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "sequence.isTest",            /*bool    */ sequence.isTest);
    WriteIniString(file, section, "sequence.name",              /*string  */ sequence.name);
+   WriteIniString(file, section, "sequence.cycle",             /*int     */ sequence.cycle);
    WriteIniString(file, section, "sequence.status",            /*int     */ sequence.status);
    WriteIniString(file, section, "sequence.direction",         /*int     */ sequence.direction);
    WriteIniString(file, section, "sequence.pyramidEnabled",    /*bool    */ sequence.pyramidEnabled);
@@ -3204,6 +3203,7 @@ bool ReadStatus() {
    sequence.created           = GetIniInt    (file, section, "sequence.created"          );     // datetime sequence.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    sequence.isTest            = GetIniBool   (file, section, "sequence.isTest"           );     // bool     sequence.isTest            = 1
    sequence.name              = GetIniStringA(file, section, "sequence.name",          "");     // string   sequence.name              = L.1234
+   sequence.cycle             = GetIniInt    (file, section, "sequence.cycle"            );     // int      sequence.cycle             = 2
    sequence.status            = GetIniInt    (file, section, "sequence.status"           );     // int      sequence.status            = 1
    sequence.direction         = GetIniInt    (file, section, "sequence.direction"        );     // int      sequence.direction         = 2
    sequence.pyramidEnabled    = GetIniBool   (file, section, "sequence.pyramidEnabled"   );     // bool     sequence.pyramidEnabled    = 1
