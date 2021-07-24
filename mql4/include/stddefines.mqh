@@ -225,7 +225,12 @@ double  N_INF;                                              // -1.#INF: negative
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
 
 
-// OrderSelect-IDs zur Steuerung des Stacks der Orderkontexte, siehe OrderPush(), OrderPop()
+// modes to specify the pool to select an order from; see OrderSelect()
+#define MODE_TRADES                       0
+#define MODE_HISTORY                      1
+
+
+// ids to control the order selection stack; see OrderPush(), OrderPop()
 #define O_PUSH                            1
 #define O_POP                             2
 
