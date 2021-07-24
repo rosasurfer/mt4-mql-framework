@@ -2366,23 +2366,10 @@ int onInputError(string message) {
  * Add an order record to the order arrays. Records are ordered ascending by grid level and the new record is inserted at the
  * correct position. No data is overwritten.
  *
- * @param  int      direction
- * @param  int      ticket
- * @param  int      level
- * @param  double   lots
- * @param  int      pendingType
- * @param  datetime pendingTime
- * @param  double   pendingPrice
- * @param  int      openType
- * @param  datetime openTime
- * @param  double   openPrice
- * @param  datetime closeTime
- * @param  double   closePrice
- * @param  double   swap
- * @param  double   commission
- * @param  double   profit
+ * @param  int direction - trade direction of the record
+ * @param  ...
  *
- * @return int - index the record was inserted at or EMPTY (-1) in case of errors
+ * @return int - index the record was inserted or EMPTY (-1) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    int i = EMPTY;
@@ -2488,7 +2475,84 @@ bool Orders.RemoveRecord(int direction, int offset) {
 
 
 /**
- * Reset all order data of the specified trade direction (order log, history and statistics).
+ * Add a history record to the history arrays. Prevents existing data to be overwritten.
+ *
+ * @param  int direction - trade direction of the record
+ * @param  int index     - array index to insert the record
+ * @param  int cycle     - trade cycle the record belongs to
+ * @param  ...
+ *
+ * @return bool - success status
+ */
+int History.AddRecord(int direction, int index, int cycle, datetime startTime, double startPrice, double gridbase, datetime stopTime, double stopPrice, double totalProfit, double maxProfit, double maxDrawdown, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
+   if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
+
+   if (direction == D_LONG) {
+      int size = ArrayRange(long.history, 0);
+      if (index >= size) ArrayResize(long.history, index+1);
+      if (long.history[index][HIX_CYCLE] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite long.history[] record, cycle="+ long.history[index][HIX_CYCLE] +", ticket #"+ long.history[index][HIX_TICKET] +")", ERR_INVALID_PARAMETER));
+
+      long.history[index][HIX_CYCLE       ] = cycle;
+      long.history[index][HIX_STARTTIME   ] = startTime;
+      long.history[index][HIX_STARTPRICE  ] = startPrice;
+      long.history[index][HIX_GRIDBASE    ] = gridbase;
+      long.history[index][HIX_STOPTIME    ] = stopTime;
+      long.history[index][HIX_STOPPRICE   ] = stopPrice;
+      long.history[index][HIX_TOTALPROFIT ] = totalProfit;
+      long.history[index][HIX_MAXPROFIT   ] = maxProfit;
+      long.history[index][HIX_MAXDRAWDOWN ] = maxDrawdown;
+      long.history[index][HIX_TICKET      ] = ticket;
+      long.history[index][HIX_LEVEL       ] = level;
+      long.history[index][HIX_LOTS        ] = lots;
+      long.history[index][HIX_PENDINGTYPE ] = pendingType;
+      long.history[index][HIX_PENDINGTIME ] = pendingTime;
+      long.history[index][HIX_PENDINGPRICE] = pendingPrice;
+      long.history[index][HIX_OPENTYPE    ] = openType;
+      long.history[index][HIX_OPENTIME    ] = openTime;
+      long.history[index][HIX_OPENPRICE   ] = openPrice;
+      long.history[index][HIX_CLOSETIME   ] = closeTime;
+      long.history[index][HIX_CLOSEPRICE  ] = closePrice;
+      long.history[index][HIX_SWAP        ] = swap;
+      long.history[index][HIX_COMMISSION  ] = commission;
+      long.history[index][HIX_PROFIT      ] = profit;
+   }
+   else if (direction == D_SHORT) {
+      size = ArrayRange(short.history, 0);
+      if (index >= size) ArrayResize(short.history, index+1);
+      if (short.history[index][HIX_CYCLE] != 0) return(!catch("History.AddRecord(3)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite short.history[] record, cycle="+ short.history[index][HIX_CYCLE] +", ticket #"+ short.history[index][HIX_TICKET] +")", ERR_INVALID_PARAMETER));
+
+      short.history[index][HIX_CYCLE       ] = cycle;
+      short.history[index][HIX_STARTTIME   ] = startTime;
+      short.history[index][HIX_STARTPRICE  ] = startPrice;
+      short.history[index][HIX_GRIDBASE    ] = gridbase;
+      short.history[index][HIX_STOPTIME    ] = stopTime;
+      short.history[index][HIX_STOPPRICE   ] = stopPrice;
+      short.history[index][HIX_TOTALPROFIT ] = totalProfit;
+      short.history[index][HIX_MAXPROFIT   ] = maxProfit;
+      short.history[index][HIX_MAXDRAWDOWN ] = maxDrawdown;
+      short.history[index][HIX_TICKET      ] = ticket;
+      short.history[index][HIX_LEVEL       ] = level;
+      short.history[index][HIX_LOTS        ] = lots;
+      short.history[index][HIX_PENDINGTYPE ] = pendingType;
+      short.history[index][HIX_PENDINGTIME ] = pendingTime;
+      short.history[index][HIX_PENDINGPRICE] = pendingPrice;
+      short.history[index][HIX_OPENTYPE    ] = openType;
+      short.history[index][HIX_OPENTIME    ] = openTime;
+      short.history[index][HIX_OPENPRICE   ] = openPrice;
+      short.history[index][HIX_CLOSETIME   ] = closeTime;
+      short.history[index][HIX_CLOSEPRICE  ] = closePrice;
+      short.history[index][HIX_SWAP        ] = swap;
+      short.history[index][HIX_COMMISSION  ] = commission;
+      short.history[index][HIX_PROFIT      ] = profit;
+   }
+   else return(!catch("History.AddRecord(4)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   return(!catch("Orders.AddRecord(5)"));
+}
+
+
+/**
+ * Reset all order and history data of the specified trade direction (order log, history and statistics).
  *
  * @param  int direction - D_LONG:  long order data
  *                         D_SHORT: short order data
@@ -2832,6 +2896,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "VolatilityRange",            /*string  */ VolatilityRange);
    WriteIniString(file, section, "GridSize",                   /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(sequence.unitsize, ".+"));
+   WriteIniString(file, section, "MaxGridLevels",              /*int     */ MaxGridLevels);
 
    WriteIniString(file, section, "Pyramid.Multiplier",         /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",      /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
@@ -3103,6 +3168,7 @@ bool ReadStatus() {
    string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");  // string   VolatilityRange        = ADR
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");  // string   GridSize               = 12.00
    string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");  // double   UnitSize               = 0.01
+   int    iMaxGridLevels         = GetIniInt    (file, section, "MaxGridLevels"             );  // int      MaxGridLevels          = 15
    string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");  // double   Pyramid.Multiplier     = 1.1
    string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");  // double   Martingale.Multiplier  = 1.1
    string sTakeProfit            = GetIniStringA(file, section, "TakeProfit",             "");  // string   TakeProfit             = 3%
@@ -3122,6 +3188,7 @@ bool ReadStatus() {
    VolatilityRange        = sVolatilityRange;
    GridSize               = sGridSize;
    UnitSize               = StrToDouble(sUnitSize);
+   MaxGridLevels          = iMaxGridLevels;
    Pyramid.Multiplier     = StrToDouble(sPyramidMultiplier);
    Martingale.Multiplier  = StrToDouble(sMartingaleMultiplier);
    TakeProfit             = sTakeProfit;
@@ -3173,10 +3240,15 @@ bool ReadStatus() {
    long.minLevel              = GetIniInt    (file, section, "long.minLevel" );                 // int      long.minLevel  = -2
    long.maxLevel              = GetIniInt    (file, section, "long.maxLevel" );                 // int      long.maxLevel  = 7
    string sKeys[], sOrder;
-   int size = ReadStatus.OrderKeys(file, section, sKeys, D_LONG); if (size < 0) return(false);
+   int size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_LONG, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.orders.{i} = {data}
-      if (!ReadStatus.ParseOrder(sOrder, D_LONG)) return(!catch("ReadStatus(9)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(9)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+   size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_LONG, sKeys); if (size < 0) return(false);
+   for (i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.history.{i} = {data}
+      if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // short order data
@@ -3189,10 +3261,15 @@ bool ReadStatus() {
    short.bePrice              = GetIniDouble (file, section, "short.bePrice"  );                // double   short.bePrice   = 1.17453
    short.minLevel             = GetIniInt    (file, section, "short.minLevel" );                // int      short.minLevel  = -2
    short.maxLevel             = GetIniInt    (file, section, "short.maxLevel" );                // int      short.maxLevel  = 7
-   size = ReadStatus.OrderKeys(file, section, sKeys, D_SHORT); if (size < 0) return(false);
+   size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_SHORT, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.orders.{i} = {data}
-      if (!ReadStatus.ParseOrder(sOrder, D_SHORT)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(11)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+   }
+   size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_SHORT, sKeys); if (size < 0) return(false);
+   for (i=0; i < size; i++) {
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.history.{i} = {data}
+      if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // other
@@ -3215,7 +3292,7 @@ bool ReadStatus() {
    sessionbreak.starttime     = GetIniInt    (file, section, "sessionbreak.starttime");         // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
    sessionbreak.endtime       = GetIniInt    (file, section, "sessionbreak.endtime"  );         // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
 
-   return(!catch("ReadStatus(11)"));
+   return(!catch("ReadStatus(13)"));
 }
 
 
@@ -3224,62 +3301,103 @@ bool ReadStatus() {
  *
  * @param  _In_  string file      - status filename
  * @param  _In_  string section   - status section
+ * @param  _In_  int    type      - record type to read: MODE_TRADES | MODE_HISTORY
+ * @param  _In_  int    direction - order direction to read: D_LONG | D_SHORT
  * @param  _Out_ string &keys[]   - array receiving the found keys
- * @param  _In_  int    direction - D_LONG:  return long order records  (matching "long.orders.{i}={data}")
- *                                  D_SHORT: return short order records (matching "short.orders.{i}={data}")
  *
  * @return int - number of found keys or EMPTY (-1) in case of errors
  */
-int ReadStatus.OrderKeys(string file, string section, string &keys[], int direction) {
-   if (direction!=D_LONG && direction!=D_SHORT) return(_EMPTY(catch("ReadStatus.OrderKeys(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
+int ReadStatus.OrderKeys(string file, string section, int type, int direction, string &keys[]) {
+   if (type!=MODE_TRADES && type!=MODE_HISTORY) return(_EMPTY(catch("ReadStatus.OrderKeys(1)  "+ sequence.name +" invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+   if (direction!=D_LONG && direction!=D_SHORT) return(_EMPTY(catch("ReadStatus.OrderKeys(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
    int size = GetIniKeys(file, section, keys);
    if (size < 0) return(EMPTY);
 
-   string prefix = ifString(direction==D_LONG, "long.orders.", "short.orders.");
-   int prefixLen = StringLen(prefix);
+   string prefix = ifString(direction==D_LONG, "long.", "short.") + ifString(type==MODE_TRADES, "orders.", "history.");
 
    for (int i=size-1; i >= 0; i--) {
       if (StrStartsWithI(keys[i], prefix))
          continue;
-      ArraySpliceStrings(keys, i, 1);  // drop all non-order keys
+      ArraySpliceStrings(keys, i, 1);     // drop all non-order keys
       size--;
    }
-   return(size);                       // no need to sort as Orders.AddRecord() inserts records at the correct position
+   return(size);                          // no need to sort as records are inserted at the correct position
 }
 
 
 /**
- * Parse the string representation of an order and store the parsed data.
+ * Parse the string representation of an order/history record and store the parsed data.
  *
- * @param  string value     - string to parse
- * @param  int    direction - order direction type: D_LONG | D_SHORT
+ * @param  string key   - order key
+ * @param  string value - order string to parse
  *
  * @return bool - success status
  */
-bool ReadStatus.ParseOrder(string value, int direction) {
+bool ReadStatus.ParseOrder(string key, string value) {
    if (IsLastError()) return(false);
 
-   // [long|short].orders.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   if      (StrContainsI(key, ".orders.")) int pool = MODE_TRADES;
+   else if (StrContainsI(key, ".history."))    pool = MODE_HISTORY;
+   else return(!catch("ReadStatus.ParseOrder(1)  "+ sequence.name +" illegal order record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+
+   if      (StrStartsWithI(key, "long.")) int direction = D_LONG;
+   else if (StrStartsWithI(key, "short."))    direction = D_SHORT;
+   else return(!catch("ReadStatus.ParseOrder(2)  "+ sequence.name +" illegal order record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+
    string values[];
-   if (Explode(value, ",", values, NULL) != 14) return(!catch("ReadStatus.ParseOrder(1)  "+ sequence.name +" illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
 
-   int      ticket       = StrToInteger(StrTrim(values[ 0]));     // int      ticket
-   int      level        = StrToInteger(StrTrim(values[ 1]));     // int      level
-   double   lots         =  StrToDouble(StrTrim(values[ 2]));     // double   lots
-   int      pendingType  = StrToInteger(StrTrim(values[ 3]));     // int      pendingType
-   datetime pendingTime  = StrToInteger(StrTrim(values[ 4]));     // datetime pendingTime
-   double   pendingPrice =  StrToDouble(StrTrim(values[ 5]));     // double   pendingPrice
-   int      openType     = StrToInteger(StrTrim(values[ 6]));     // int      openType
-   datetime openTime     = StrToInteger(StrTrim(values[ 7]));     // datetime openTime
-   double   openPrice    =  StrToDouble(StrTrim(values[ 8]));     // double   openPrice
-   datetime closeTime    = StrToInteger(StrTrim(values[ 9]));     // datetime closeTime
-   double   closePrice   =  StrToDouble(StrTrim(values[10]));     // double   closePrice
-   double   swap         =  StrToDouble(StrTrim(values[11]));     // double   swap
-   double   commission   =  StrToDouble(StrTrim(values[12]));     // double   commission
-   double   profit       =  StrToDouble(StrTrim(values[13]));     // double   profit
+   if (pool == MODE_TRADES) {
+      // [long|short].orders.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+      if (Explode(value, ",", values, NULL) != 14) return(!catch("ReadStatus.ParseOrder(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
+      int      ticket       = StrToInteger(StrTrim(values[ 0]));     // int      ticket
+      int      level        = StrToInteger(StrTrim(values[ 1]));     // int      level
+      double   lots         =  StrToDouble(StrTrim(values[ 2]));     // double   lots
+      int      pendingType  = StrToInteger(StrTrim(values[ 3]));     // int      pendingType
+      datetime pendingTime  = StrToInteger(StrTrim(values[ 4]));     // datetime pendingTime
+      double   pendingPrice =  StrToDouble(StrTrim(values[ 5]));     // double   pendingPrice
+      int      openType     = StrToInteger(StrTrim(values[ 6]));     // int      openType
+      datetime openTime     = StrToInteger(StrTrim(values[ 7]));     // datetime openTime
+      double   openPrice    =  StrToDouble(StrTrim(values[ 8]));     // double   openPrice
+      datetime closeTime    = StrToInteger(StrTrim(values[ 9]));     // datetime closeTime
+      double   closePrice   =  StrToDouble(StrTrim(values[10]));     // double   closePrice
+      double   swap         =  StrToDouble(StrTrim(values[11]));     // double   swap
+      double   commission   =  StrToDouble(StrTrim(values[12]));     // double   commission
+      double   profit       =  StrToDouble(StrTrim(values[13]));     // double   profit
+      return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
+   }
 
-   return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
+   if (pool == MODE_HISTORY) {
+      // [long|short].history.i=cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+      string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))        return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+      int index = StrToInteger(sId);
+
+      if (Explode(value, ",", values, NULL) != ArrayRange(long.history, 1)) return(!catch("ReadStatus.ParseOrder(5)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
+      int      cycle        = StrToInteger(values[HIX_CYCLE       ]);
+      datetime startTime    = StrToInteger(values[HIX_STARTTIME   ]);
+      double   startPrice   =  StrToDouble(values[HIX_STARTPRICE  ]);
+      double   gridbase     =  StrToDouble(values[HIX_GRIDBASE    ]);
+      datetime stopTime     = StrToInteger(values[HIX_STOPTIME    ]);
+      double   stopPrice    =  StrToDouble(values[HIX_STOPPRICE   ]);
+      double   totalProfit  =  StrToDouble(values[HIX_TOTALPROFIT ]);
+      double   maxProfit    =  StrToDouble(values[HIX_MAXPROFIT   ]);
+      double   maxDrawdown  =  StrToDouble(values[HIX_MAXDRAWDOWN ]);
+               ticket       = StrToInteger(values[HIX_TICKET      ]);
+               level        = StrToInteger(values[HIX_LEVEL       ]);
+               lots         =  StrToDouble(values[HIX_LOTS        ]);
+               pendingType  = StrToInteger(values[HIX_PENDINGTYPE ]);
+               pendingTime  = StrToInteger(values[HIX_PENDINGTIME ]);
+               pendingPrice =  StrToDouble(values[HIX_PENDINGPRICE]);
+               openType     = StrToInteger(values[HIX_OPENTYPE    ]);
+               openTime     = StrToInteger(values[HIX_OPENTIME    ]);
+               openPrice    =  StrToDouble(values[HIX_OPENPRICE   ]);
+               closeTime    = StrToInteger(values[HIX_CLOSETIME   ]);
+               closePrice   =  StrToDouble(values[HIX_CLOSEPRICE  ]);
+               swap         =  StrToDouble(values[HIX_SWAP        ]);
+               commission   =  StrToDouble(values[HIX_COMMISSION  ]);
+               profit       =  StrToDouble(values[HIX_PROFIT      ]);
+      return(History.AddRecord(direction, index, cycle, startTime, startPrice, gridbase, stopTime, stopPrice, totalProfit, maxProfit, maxDrawdown, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
+   }
 }
 
 
@@ -3439,7 +3557,7 @@ void SS.Lots() {
          minusLevels = -Min(0, long.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
          sSlippage = PipToStr(long.slippage/Pip, true, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
@@ -3453,7 +3571,7 @@ void SS.Lots() {
          minusLevels = -Min(0, short.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels>=MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
 
          sSlippage = PipToStr(short.slippage/Pip, true, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
