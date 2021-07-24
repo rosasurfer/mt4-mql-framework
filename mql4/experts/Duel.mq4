@@ -227,11 +227,12 @@ string   sStopConditions  = "";
 string   sTotalLots       = "";
 string   sTotalLongLots   = "";
 string   sTotalShortLots  = "";
-string   sSequenceTotalPL = "";
-string   sSequencePlStats = "";
 string   sSequenceBePrice = "";
 string   sSequenceTpPrice = "";
 string   sSequenceSlPrice = "";
+string   sSequenceTotalPL = "";
+string   sSequencePlStats = "";
+string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
@@ -534,6 +535,7 @@ bool ResumeSequence(int signal) {
 
    // archive the stopped sequence cycle
    if (!ArchiveStoppedSequence()) return(false);
+   SS.CycleStats();
 
    // re-initialize sequence data
    sequence.cycle++;
@@ -3485,7 +3487,8 @@ int ShowStatus(int error = NO_ERROR) {
                                   "TP:             ", sSequenceTpPrice,                         NL,
                                   "SL:             ", sSequenceSlPrice,                         NL,
                                                                                                 NL,
-                                  "Profit:        ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
+                                  "Profit:        ",  sSequenceTotalPL, "  ", sSequencePlStats, NL,
+                                   sCycleStats
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -3519,6 +3522,7 @@ void SS.All() {
       SS.ProfitTargets();
       SS.TotalPL();
       SS.PLStats();
+      SS.CycleStats();
    }
 }
 
@@ -3602,7 +3606,7 @@ void SS.TotalPL(bool enforce = false) {
 
 
 /**
- * ShowStatus: Update the string representaton of all P/L statistics.
+ * ShowStatus: Update the string representaton of the P/L statistics.
  *
  * @param  bool enforce [optional] - whether to perform the update unconditionally (default: no)
  */
@@ -3625,6 +3629,50 @@ void SS.PLStats(bool enforce = false) {
          sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
       }
    }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of P/L stats of finished sequence cycles.
+ */
+void SS.CycleStats() {
+   if (!__isChart) return;
+
+   sCycleStats = "";
+
+   double history[][23];
+   if      (long.enabled  && ArraySize(long.history))  ArrayCopy(history, long.history);
+   else if (short.enabled && ArraySize(short.history)) ArrayCopy(history, short.history);
+   else return;
+
+   string sTotalPL, sMaxProfit, sMaxDrawdown, sResult;
+   int size=ArrayRange(history, 0), lastCycle=0;
+
+   for (int i=0; i < size; i++) {
+      int cycle = history[i][HIX_CYCLE];
+
+      if (cycle != lastCycle) {
+         double totalPL     = history[i][HIX_TOTALPROFIT];
+         double maxProfit   = history[i][HIX_MAXPROFIT  ];
+         double maxDrawdown = history[i][HIX_MAXDRAWDOWN];
+
+         if (ShowProfitInPercent) {
+            sTotalPL     = NumberToStr(MathDiv(totalPL,     sequence.startEquity) * 100, "+.2") +"%";
+            sMaxProfit   = NumberToStr(MathDiv(maxProfit,   sequence.startEquity) * 100, "+.2") +"%";
+            sMaxDrawdown = NumberToStr(MathDiv(maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+         }
+         else {
+            sTotalPL     = NumberToStr(sequence.totalPL, "+.2");
+            sMaxProfit   = NumberToStr(maxProfit,        "+.2");
+            sMaxDrawdown = NumberToStr(maxDrawdown,      "+.2");
+         }
+         sResult = StringConcatenate(cycle, ":  ", sTotalPL, "  (", sMaxProfit, " / ", sMaxDrawdown, ")", NL, sResult);
+         lastCycle = cycle;
+      }
+   }
+   if (lastCycle > 0) sCycleStats = StringConcatenate("----------------------------------------------------", NL, sResult);
+
+   ArrayResize(history, 0);
 }
 
 
