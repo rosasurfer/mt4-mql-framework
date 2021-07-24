@@ -35,7 +35,7 @@
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @link  https://www.youtube.com/watch?v=-ZryHMdvfJU#                                                             [The Grid]
+ * @link  http://www.rosasurfer.com/.mt4/The%20Grid.mp4#                                                           [The Grid]
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
  */
 #include <stddefines.mqh>
