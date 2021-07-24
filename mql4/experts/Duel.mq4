@@ -3640,7 +3640,7 @@ void SS.CycleStats() {
 
    sCycleStats = "";
 
-   double history[][23];
+   double history[][23];               // must match global vars long/short.history[][]
    if      (long.enabled  && ArraySize(long.history))  ArrayCopy(history, long.history);
    else if (short.enabled && ArraySize(short.history)) ArrayCopy(history, short.history);
    else return;
