@@ -2996,7 +2996,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "slPct.description",          /*string  */ slPct.description + CRLF);
 
    WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
+   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -3141,7 +3141,7 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of the current sequence and restore all internal variables. Called only from RestoreSequence().
+ * Read the status file of a sequence and restore all internal variables. Called only from RestoreSequence().
  * Only a syntactic variables check is performed (i.e. type match). Logical validation happens in ValidateInputs().
  *
  * @return bool - success status
