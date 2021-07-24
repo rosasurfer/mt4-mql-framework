@@ -1,5 +1,5 @@
 /**
- * Duel: A bi-directional grid with optional pyramiding, martingale or reverse-martingale position sizing.
+ * Duel: A bi-directional grid with adjustable pyramiding, martingale or reverse-martingale position sizing.
  *
  *  Eye to eye stand winners and losers
  *  Hurt by envy, cut by greed
@@ -103,7 +103,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define HIX_PENDINGTYPE      12
 #define HIX_PENDINGTIME      13
 #define HIX_PENDINGPRICE     14
-#define HIX_TYPE             15
+#define HIX_OPENTYPE         15
 #define HIX_OPENTIME         16
 #define HIX_OPENPRICE        17
 #define HIX_CLOSETIME        18
@@ -154,7 +154,7 @@ double   long.lots        [];
 int      long.pendingType [];
 datetime long.pendingTime [];
 double   long.pendingPrice[];                      // price of the grid level
-int      long.type        [];
+int      long.openType    [];
 datetime long.openTime    [];
 double   long.openPrice   [];
 datetime long.closeTime   [];
@@ -178,7 +178,7 @@ double   short.lots        [];
 int      short.pendingType [];
 datetime short.pendingTime [];
 double   short.pendingPrice[];                     // price of the grid level
-int      short.type        [];
+int      short.openType    [];
 datetime short.openTime    [];
 double   short.openPrice   [];
 datetime short.closeTime   [];
@@ -495,12 +495,12 @@ bool StartSequence(int signal) {
    sequence.stopTime    = 0;
    sequence.stopPrice   = 0;
 
-   double longOpenPrice, shortOpenPrice;
+   double longOpenPrice, shortOpenPrice, dNull;
    if (long.enabled) {                                   // open a long position for level 1
-      if (!Grid.AddPosition(D_LONG, 1, longOpenPrice)) return(false);
+      if (!Grid.AddPosition(D_LONG, 1, longOpenPrice, dNull)) return(false);
    }
    if (short.enabled) {                                  // open a short position for level 1
-      if (!Grid.AddPosition(D_SHORT, 1, shortOpenPrice)) return(false);
+      if (!Grid.AddPosition(D_SHORT, 1, shortOpenPrice, dNull)) return(false);
    }
 
    if      (sequence.direction == D_LONG)  sequence.startPrice = longOpenPrice;
@@ -554,7 +554,7 @@ bool ResumeSequence(int signal) {
       long.bePrice   = 0;
       long.minLevel  = INT_MAX;
       long.maxLevel  = INT_MIN;
-      if (!RestorePositions(D_LONG, long.history, cycleId, longOpenPrice)) return(false);
+      if (!RestorePositions(long.history, cycleId, longOpenPrice)) return(false);
    }
    if (short.enabled) {
       short.totalLots = 0;
@@ -563,7 +563,7 @@ bool ResumeSequence(int signal) {
       short.bePrice   = 0;
       short.minLevel  = INT_MAX;
       short.maxLevel  = INT_MIN;
-      if (!RestorePositions(D_SHORT, short.history, cycleId, shortOpenPrice)) return(false);
+      if (!RestorePositions(short.history, cycleId, shortOpenPrice)) return(false);
    }
 
    // set the new gridbase and update total lots
@@ -586,49 +586,31 @@ bool ResumeSequence(int signal) {
 /**
  * Restore open positions of a stopped sequence. Called from ResumeSequence().
  *
- * @param  _In_  int    direction   - trade direction
  * @param  _In_  double history[][] - order history
  * @param  _In_  int    cycleId     - id of the history cycle to restore
  * @param  _Out_ double openPrice   - variable receiving the average open price of the opened positions
  *
  * @return bool - success status
  */
-bool RestorePositions(int direction, double history[][], int cycleId, double &openPrice) {
+bool RestorePositions(double history[][], int cycleId, double &openPrice) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("RestorePositions(1)  "+ sequence.name +" cannot restore positions of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (cycleId < 0)                           return(!catch("RestorePositions(2)  "+ sequence.name +" invalid parameter cycleId: "+ cycleId, ERR_INVALID_PARAMETER));
 
-   double price=0, sumPrice=0, sumLots=0;
+   double price=0, lots=0, sumPrice=0, sumLots=0;
+   int size = ArrayRange(history, 0);
 
-   // long
-   if (direction == D_LONG) {
-      int historySize = ArrayRange(long.history, 0);
-      for (int i=0; i < historySize; i++) {
-         if (history[i][HIX_CYCLE] == cycleId) {
-            if (!Grid.AddPosition(D_LONG, history[i][HIX_LEVEL], price)) return(false);
-            sumPrice += history[i][HIX_LOTS] * price;
-            sumLots  += history[i][HIX_LOTS];
-         }
+   for (int i=0; i < size; i++) {
+      if (history[i][HIX_CYCLE] == cycleId) {
+         int direction = ifInt(history[i][HIX_OPENTYPE]==OP_BUY, D_LONG, D_SHORT);
+
+         if (!Grid.AddPosition(direction, history[i][HIX_LEVEL], price, lots)) return(false);
+         sumPrice += lots * price;
+         sumLots  += lots;
       }
-      openPrice = MathDiv(sumPrice, sumLots);
-      return(!catch("RestorePositions(3)"));
    }
-
-   // short
-   if (direction == D_SHORT) {
-      historySize = ArrayRange(short.history, 0);
-      for (i=0; i < historySize; i++) {
-         if (history[i][HIX_CYCLE] == cycleId) {
-            if (!Grid.AddPosition(D_SHORT, history[i][HIX_LEVEL], price)) return(false);
-            sumPrice += history[i][HIX_LOTS] * price;
-            sumLots  += history[i][HIX_LOTS];
-         }
-      }
-      openPrice = MathDiv(sumPrice, sumLots);
-      return(!catch("RestorePositions(4)"));
-   }
-
-   return(!catch("RestorePositions(5)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   openPrice = MathDiv(sumPrice, sumLots);
+   return(!catch("RestorePositions(3)"));
 }
 
 
@@ -711,7 +693,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
    if (long.enabled) {
       int orders = ArraySize(long.ticket);
       for (int i=0; i < orders; i++) {
-         if (!long.closeTime[i] && long.type[i]!=OP_UNDEFINED) {
+         if (!long.closeTime[i] && long.openType[i]!=OP_UNDEFINED) {
             ArrayPushInt(positions, long.ticket[i]);
          }
       }
@@ -720,7 +702,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
    if (short.enabled) {
       orders = ArraySize(short.ticket);
       for (i=0; i < orders; i++) {
-         if (!short.closeTime[i] && short.type[i]!=OP_UNDEFINED) {
+         if (!short.closeTime[i] && short.openType[i]!=OP_UNDEFINED) {
             ArrayPushInt(positions, short.ticket[i]);
          }
       }
@@ -812,7 +794,7 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
 
       for (int i=0; i < orders; i++) {
          if (long.closeTime[i] > 0) continue;                           // skip tickets already known as closed
-         if (long.type[i] == OP_UNDEFINED) {                            // an order locally known as pending
+         if (long.openType[i] == OP_UNDEFINED) {                        // an order locally known as pending
             oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;                   // accept the order already being executed
 
             if (OrderDeleteEx(long.ticket[i], CLR_NONE, oeFlags, oe)) {
@@ -825,7 +807,7 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
 
             // the order was already executed: update local state
             if (!SelectTicket(long.ticket[i], "Grid.RemovePendingOrders(2)")) return(false);
-            long.type      [i] = OrderType();
+            long.openType  [i] = OrderType();
             long.openTime  [i] = OrderOpenTime();
             long.openPrice [i] = OrderOpenPrice();
             long.swap      [i] = OrderSwap();
@@ -846,7 +828,7 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
 
       for (i=0; i < orders; i++) {
          if (short.closeTime[i] > 0) continue;                          // skip tickets already known as closed
-         if (short.type[i] == OP_UNDEFINED) {                           // an order locally known as pending
+         if (short.openType[i] == OP_UNDEFINED) {                       // an order locally known as pending
             oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;                   // accept the order already being executed
 
             if (OrderDeleteEx(short.ticket[i], CLR_NONE, oeFlags, oe)) {
@@ -859,7 +841,7 @@ bool Grid.RemovePendingOrders(bool saveStatus = false) {
 
             // the order was already executed: update local state
             if (!SelectTicket(short.ticket[i], "Grid.RemovePendingOrders(4)")) return(false);
-            short.type      [i] = OrderType();
+            short.openType  [i] = OrderType();
             short.openTime  [i] = OrderOpenTime();
             short.openPrice [i] = OrderOpenPrice();
             short.swap      [i] = OrderSwap();
@@ -894,8 +876,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
 
    bool positionChanged=false, saveStatus=false;
 
-   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.totalLots,  long.slippage,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.type,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
-   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.totalLots, short.slippage, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.type, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
+   if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.totalLots,  long.slippage,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.openType,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
+   if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.totalLots, short.slippage, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.openType, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
    if (gridChanged || positionChanged) {
       sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2);
@@ -1126,7 +1108,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
    if (direction == D_LONG) {
       ticket       = long.ticket    [i];
       level        = long.level     [i];
-      type         = long.type      [i];
+      type         = long.openType  [i];
       lots         = long.lots      [i];
       openPrice    = long.openPrice [i];
       closePrice   = long.closePrice[i];
@@ -1134,7 +1116,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
    else if (direction == D_SHORT) {
       ticket       = short.ticket    [i];
       level        = short.level     [i];
-      type         = short.type      [i];
+      type         = short.openType  [i];
       lots         = short.lots      [i];
       openPrice    = short.openPrice [i];
       closePrice   = short.closePrice[i];
@@ -1397,9 +1379,9 @@ bool ComputeProfit(bool positionChanged) {
 
    // copy open positions to temp. arrays (are modified in the process)
    for (int n, i=0; i < longOrders; i++) {
-      if (long.type[i]!=OP_UNDEFINED && !long.closeTime[i]) {
+      if (long.openType[i]!=OP_UNDEFINED && !long.closeTime[i]) {
          tickets    [n] = long.ticket    [i];
-         types      [n] = long.type      [i];
+         types      [n] = long.openType  [i];
          lots       [n] = long.lots      [i];
          openPrices [n] = long.openPrice [i];
          commissions[n] = long.commission[i];
@@ -1409,9 +1391,9 @@ bool ComputeProfit(bool positionChanged) {
       }
    }
    for (i=0; i < shortOrders; i++) {
-      if (short.type[i]!=OP_UNDEFINED && !short.closeTime[i]) {
+      if (short.openType[i]!=OP_UNDEFINED && !short.closeTime[i]) {
          tickets    [n] = short.ticket    [i];
-         types      [n] = short.type      [i];
+         types      [n] = short.openType  [i];
          lots       [n] = short.lots      [i];
          openPrices [n] = short.openPrice [i];
          commissions[n] = short.commission[i];
@@ -1882,11 +1864,12 @@ string GetStatusFilename(bool relative = false) {
  *
  * @param  _In_  int    direction - trade direction: D_LONG | D_SHORT
  * @param  _In_  int    level     - grid level of the position to open: -n...-1 | +1...+n
- * @param  _Out_ double openPrice - variable receiving the resulting open price of the position
+ * @param  _Out_ double openPrice - variable receiving the open price of the position
+ * @param  _Out_ double lots      - variable receiving the opened lotsize
  *
  * @return bool - success status
  */
-int Grid.AddPosition(int direction, int level, double &openPrice) {
+int Grid.AddPosition(int direction, int level, double &openPrice, double &lots) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("Grid.AddPosition(1)  "+ sequence.name +" cannot add position to "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -1897,7 +1880,7 @@ int Grid.AddPosition(int direction, int level, double &openPrice) {
    // prepare dataset
    //int    ticket       = ...                                                   // use as is
    //int    level        = ...                                                   // ...
-   double   lots         = oe.Lots(oe);
+            lots         = oe.Lots(oe);
    int      pendingType  = OP_UNDEFINED;
    datetime pendingTime  = NULL;
    double   pendingPrice = ifDouble(direction==D_LONG, oe.Ask(oe), oe.Bid(oe));  // for tracking of slippage
@@ -2387,7 +2370,7 @@ int onInputError(string message) {
  * @param  int      pendingType
  * @param  datetime pendingTime
  * @param  double   pendingPrice
- * @param  int      type
+ * @param  int      openType
  * @param  datetime openTime
  * @param  double   openPrice
  * @param  datetime closeTime
@@ -2398,7 +2381,7 @@ int onInputError(string message) {
  *
  * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int type, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
+int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
    int i = EMPTY;
 
    if (direction == D_LONG) {
@@ -2414,7 +2397,7 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
       ArrayInsertInt   (long.pendingType,  i, pendingType                          );
       ArrayInsertInt   (long.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(long.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
-      ArrayInsertInt   (long.type,         i, type                                 );
+      ArrayInsertInt   (long.openType,     i, openType                             );
       ArrayInsertInt   (long.openTime,     i, openTime                             );
       ArrayInsertDouble(long.openPrice,    i, openPrice                            );
       ArrayInsertInt   (long.closeTime,    i, closeTime                            );
@@ -2437,7 +2420,7 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
       ArrayInsertInt   (short.pendingType,  i, pendingType                          );
       ArrayInsertInt   (short.pendingTime,  i, pendingTime                          );
       ArrayInsertDouble(short.pendingPrice, i, NormalizeDouble(pendingPrice, Digits));
-      ArrayInsertInt   (short.type,         i, type                                 );
+      ArrayInsertInt   (short.openType,     i, openType                             );
       ArrayInsertInt   (short.openTime,     i, openTime                             );
       ArrayInsertDouble(short.openPrice,    i, openPrice                            );
       ArrayInsertInt   (short.closeTime,    i, closeTime                            );
@@ -2469,7 +2452,7 @@ bool Orders.RemoveRecord(int direction, int offset) {
       ArraySpliceInts   (long.pendingType,  offset, 1);
       ArraySpliceInts   (long.pendingTime,  offset, 1);
       ArraySpliceDoubles(long.pendingPrice, offset, 1);
-      ArraySpliceInts   (long.type,         offset, 1);
+      ArraySpliceInts   (long.openType,     offset, 1);
       ArraySpliceInts   (long.openTime,     offset, 1);
       ArraySpliceDoubles(long.openPrice,    offset, 1);
       ArraySpliceInts   (long.closeTime,    offset, 1);
@@ -2486,7 +2469,7 @@ bool Orders.RemoveRecord(int direction, int offset) {
       ArraySpliceInts   (short.pendingType,  offset, 1);
       ArraySpliceInts   (short.pendingTime,  offset, 1);
       ArraySpliceDoubles(short.pendingPrice, offset, 1);
-      ArraySpliceInts   (short.type,         offset, 1);
+      ArraySpliceInts   (short.openType,     offset, 1);
       ArraySpliceInts   (short.openTime,     offset, 1);
       ArraySpliceDoubles(short.openPrice,    offset, 1);
       ArraySpliceInts   (short.closeTime,    offset, 1);
@@ -2525,7 +2508,7 @@ bool ResetOrderLog(int direction) {
       ArrayResize(long.pendingType,  0);
       ArrayResize(long.pendingTime,  0);
       ArrayResize(long.pendingPrice, 0);
-      ArrayResize(long.type,         0);
+      ArrayResize(long.openType,     0);
       ArrayResize(long.openTime,     0);
       ArrayResize(long.openPrice,    0);
       ArrayResize(long.closeTime,    0);
@@ -2553,7 +2536,7 @@ bool ResetOrderLog(int direction) {
       ArrayResize(short.pendingType,  0);
       ArrayResize(short.pendingTime,  0);
       ArrayResize(short.pendingPrice, 0);
-      ArrayResize(short.type,         0);
+      ArrayResize(short.openType,     0);
       ArrayResize(short.openTime,     0);
       ArrayResize(short.openPrice,    0);
       ArrayResize(short.closeTime,    0);
@@ -2606,7 +2589,7 @@ bool ArchiveStoppedSequence() {
          long.history[historySize+i][HIX_PENDINGTYPE ] = long.pendingType [i];
          long.history[historySize+i][HIX_PENDINGTIME ] = long.pendingTime [i];
          long.history[historySize+i][HIX_PENDINGPRICE] = long.pendingPrice[i];
-         long.history[historySize+i][HIX_TYPE        ] = long.type        [i];
+         long.history[historySize+i][HIX_OPENTYPE    ] = long.openType    [i];
          long.history[historySize+i][HIX_OPENTIME    ] = long.openTime    [i];
          long.history[historySize+i][HIX_OPENPRICE   ] = long.openPrice   [i];
          long.history[historySize+i][HIX_CLOSETIME   ] = long.closeTime   [i];
@@ -2621,7 +2604,7 @@ bool ArchiveStoppedSequence() {
       ArrayResize(long.pendingType,  0);
       ArrayResize(long.pendingTime,  0);
       ArrayResize(long.pendingPrice, 0);
-      ArrayResize(long.type,         0);
+      ArrayResize(long.openType,     0);
       ArrayResize(long.openTime,     0);
       ArrayResize(long.openPrice,    0);
       ArrayResize(long.closeTime,    0);
@@ -2653,7 +2636,7 @@ bool ArchiveStoppedSequence() {
          short.history[historySize+i][HIX_PENDINGTYPE ] = short.pendingType [i];
          short.history[historySize+i][HIX_PENDINGTIME ] = short.pendingTime [i];
          short.history[historySize+i][HIX_PENDINGPRICE] = short.pendingPrice[i];
-         short.history[historySize+i][HIX_TYPE        ] = short.type        [i];
+         short.history[historySize+i][HIX_OPENTYPE    ] = short.openType    [i];
          short.history[historySize+i][HIX_OPENTIME    ] = short.openTime    [i];
          short.history[historySize+i][HIX_OPENPRICE   ] = short.openPrice   [i];
          short.history[historySize+i][HIX_CLOSETIME   ] = short.closeTime   [i];
@@ -2668,7 +2651,7 @@ bool ArchiveStoppedSequence() {
       ArrayResize(short.pendingType,  0);
       ArrayResize(short.pendingTime,  0);
       ArrayResize(short.pendingPrice, 0);
-      ArrayResize(short.type,         0);
+      ArrayResize(short.openType,     0);
       ArrayResize(short.openTime,     0);
       ArrayResize(short.openPrice,    0);
       ArrayResize(short.closeTime,    0);
@@ -2959,11 +2942,11 @@ bool SaveStatus() {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.OrderToStr(int direction, int index) {
-   int      ticket, level, pendingType, type;
+   int      ticket, level, pendingType, openType;
    datetime pendingTime, openTime, closeTime;
    double   lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
 
-   // result: ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   // result: ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
 
    if (direction == D_LONG) {
       ticket       = long.ticket      [index];
@@ -2972,7 +2955,7 @@ string SaveStatus.OrderToStr(int direction, int index) {
       pendingType  = long.pendingType [index];
       pendingTime  = long.pendingTime [index];
       pendingPrice = long.pendingPrice[index];
-      type         = long.type        [index];
+      openType     = long.openType    [index];
       openTime     = long.openTime    [index];
       openPrice    = long.openPrice   [index];
       closeTime    = long.closeTime   [index];
@@ -2988,7 +2971,7 @@ string SaveStatus.OrderToStr(int direction, int index) {
       pendingType  = short.pendingType [index];
       pendingTime  = short.pendingTime [index];
       pendingPrice = short.pendingPrice[index];
-      type         = short.type        [index];
+      openType     = short.openType    [index];
       openTime     = short.openTime    [index];
       openPrice    = short.openPrice   [index];
       closeTime    = short.closeTime   [index];
@@ -2999,7 +2982,7 @@ string SaveStatus.OrderToStr(int direction, int index) {
    }
    else return(_EMPTY_STR(catch("SaveStatus.OrderToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+   return(StringConcatenate(ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -3012,11 +2995,11 @@ string SaveStatus.OrderToStr(int direction, int index) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int direction, int index) {
-   int      cycle, ticket, level, pendingType, type;
+   int      cycle, ticket, level, pendingType, openType;
    datetime startTime, stopTime, pendingTime, openTime, closeTime;
    double   startPrice, gridbase, stopPrice, totalProfit, maxProfit, maxDrawdown, lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
 
-   // result: cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   // result: cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
 
    if (direction == D_LONG) {
       cycle        = long.history[index][HIX_CYCLE       ];
@@ -3034,7 +3017,7 @@ string SaveStatus.HistoryToStr(int direction, int index) {
       pendingType  = long.history[index][HIX_PENDINGTYPE ];
       pendingTime  = long.history[index][HIX_PENDINGTIME ];
       pendingPrice = long.history[index][HIX_PENDINGPRICE];
-      type         = long.history[index][HIX_TYPE        ];
+      openType     = long.history[index][HIX_OPENTYPE    ];
       openTime     = long.history[index][HIX_OPENTIME    ];
       openPrice    = long.history[index][HIX_OPENPRICE   ];
       closeTime    = long.history[index][HIX_CLOSETIME   ];
@@ -3059,7 +3042,7 @@ string SaveStatus.HistoryToStr(int direction, int index) {
       pendingType  = short.history[index][HIX_PENDINGTYPE ];
       pendingTime  = short.history[index][HIX_PENDINGTIME ];
       pendingPrice = short.history[index][HIX_PENDINGPRICE];
-      type         = short.history[index][HIX_TYPE        ];
+      openType     = short.history[index][HIX_OPENTYPE    ];
       openTime     = short.history[index][HIX_OPENTIME    ];
       openPrice    = short.history[index][HIX_OPENPRICE   ];
       closeTime    = short.history[index][HIX_CLOSETIME   ];
@@ -3070,7 +3053,7 @@ string SaveStatus.HistoryToStr(int direction, int index) {
    }
    else return(_EMPTY_STR(catch("SaveStatus.HistoryToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(StringConcatenate(cycle, ",", startTime, ",", DoubleToStr(startPrice, Digits), ",", DoubleToStr(gridbase, Digits), ",", stopTime, ",", DoubleToStr(stopPrice, Digits), ",", DoubleToStr(totalProfit, 2), ",", DoubleToStr(maxProfit, 2), ",", DoubleToStr(maxDrawdown, 2), ",", ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", type, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+   return(StringConcatenate(cycle, ",", startTime, ",", DoubleToStr(startPrice, Digits), ",", DoubleToStr(gridbase, Digits), ",", stopTime, ",", DoubleToStr(stopPrice, Digits), ",", DoubleToStr(totalProfit, 2), ",", DoubleToStr(maxProfit, 2), ",", DoubleToStr(maxDrawdown, 2), ",", ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -3273,7 +3256,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int direct
 bool ReadStatus.ParseOrder(string value, int direction) {
    if (IsLastError()) return(false);
 
-   // [long|short].orders.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,type,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   // [long|short].orders.i=ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
    string values[];
    if (Explode(value, ",", values, NULL) != 14) return(!catch("ReadStatus.ParseOrder(1)  "+ sequence.name +" illegal number of order details ("+ ArraySize(values) +") in order record", ERR_INVALID_FILE_FORMAT));
 
@@ -3283,7 +3266,7 @@ bool ReadStatus.ParseOrder(string value, int direction) {
    int      pendingType  = StrToInteger(StrTrim(values[ 3]));     // int      pendingType
    datetime pendingTime  = StrToInteger(StrTrim(values[ 4]));     // datetime pendingTime
    double   pendingPrice =  StrToDouble(StrTrim(values[ 5]));     // double   pendingPrice
-   int      type         = StrToInteger(StrTrim(values[ 6]));     // int      type
+   int      openType     = StrToInteger(StrTrim(values[ 6]));     // int      openType
    datetime openTime     = StrToInteger(StrTrim(values[ 7]));     // datetime openTime
    double   openPrice    =  StrToDouble(StrTrim(values[ 8]));     // double   openPrice
    datetime closeTime    = StrToInteger(StrTrim(values[ 9]));     // datetime closeTime
@@ -3292,7 +3275,7 @@ bool ReadStatus.ParseOrder(string value, int direction) {
    double   commission   =  StrToDouble(StrTrim(values[12]));     // double   commission
    double   profit       =  StrToDouble(StrTrim(values[13]));     // double   profit
 
-   return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, type, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
+   return(!IsEmpty(Orders.AddRecord(direction, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit)));
 }
 
 
