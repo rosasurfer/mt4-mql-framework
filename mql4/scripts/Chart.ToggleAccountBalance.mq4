@@ -1,5 +1,7 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die AccountBalance-Anzeige umzuschalten.
+ * Chart.ToggleAccountBalance
+ *
+ * Send a command to the ChartInfos indicator to toggle the display of the account balance.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -9,9 +11,9 @@ int __DeinitFlags[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    SendChartCommand("ChartInfos.command", "cmd=ToggleAccountBalance");

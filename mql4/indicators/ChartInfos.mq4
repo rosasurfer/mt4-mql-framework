@@ -300,9 +300,9 @@ bool onCommand(string commands[]) {
 
 
 /**
- * Schaltet die Anzeige der offenen Orders ein/aus.
+ * Toggle the display of open orders.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ToggleOpenOrders() {
    // read current status and toggle it
@@ -554,9 +554,9 @@ bool SetOpenOrderDisplayStatus(bool status) {
 
 
 /**
- * Schaltet die Anzeige der Trade-History ein/aus.
+ * Toggle the display of the trade history.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ToggleTradeHistory() {
    // read current status and toggle it
