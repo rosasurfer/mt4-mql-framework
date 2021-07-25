@@ -312,28 +312,62 @@ bool onCommand(string commands[]) {
    string cmd = commands[0];
    if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
 
-   if (cmd == "start") {
+   if (StrCompareI(cmd, "start")) {
       switch (sequence.status) {
          case STATUS_WAITING:
             return(StartSequence(NULL));
       }
    }
-   else if (cmd == "stop") {
+   else if (StrCompareI(cmd, "stop")) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
             return(StopSequence(NULL));
       }
    }
-   else if (cmd == "resume") {
+   else if (StrCompareI(cmd, "resume")) {
       switch (sequence.status) {
          case STATUS_STOPPED:
             return(ResumeSequence(NULL));
       }
    }
+   else if (StrCompareI(cmd, "ToggleOpenOrders")) {
+      return(ToggleOpenOrders());
+   }
+   else if (StrCompareI(cmd, "ToggleTradeHistory")) {
+      return(ToggleTradeHistory());
+   }
    else return(!logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ DoubleQuoteStr(StatusToStr(sequence.status))));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   PlaySoundEx("Plonk.wav");
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Toggle the display of the trade history.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   PlaySoundEx("Plonk.wav");
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
 }
 
 
