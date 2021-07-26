@@ -159,16 +159,6 @@ color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
 color  positions.fontColor.history = C'128,128,0';
 
-// Farben für Orderanzeige
-#define CLR_PENDING_OPEN         DeepSkyBlue
-#define CLR_OPEN_LONG            C'0,0,254'                       // Blue - rgb(1,1,1)
-#define CLR_OPEN_SHORT           C'254,0,0'                       // Red  - rgb(1,1,1)
-#define CLR_OPEN_TAKEPROFIT      LimeGreen
-#define CLR_OPEN_STOPLOSS        Red
-#define CLR_CLOSED_LONG          Blue
-#define CLR_CLOSED_SHORT         Red
-#define CLR_CLOSE                Orange
-
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
@@ -308,18 +298,17 @@ bool ToggleOpenOrders() {
    // read current status and toggle it
    bool showOrders = !GetOpenOrderDisplayStatus();
 
-   // status ON: display open orders
+   // ON: display open orders
    if (showOrders) {
       int orders = ShowOpenOrders();
-      if (orders == -1)
-         return(false);
-      if (!orders) {                                  // without open orders state must be reset
-         showOrders = false;
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
          PlaySoundEx("Plonk.wav");
       }
    }
 
-   // status OFF: hide open orders
+   // OFF: remove open order markers
    if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -330,12 +319,12 @@ bool ToggleOpenOrders() {
                color clr = ObjectGet(name, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT) {
+                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
                      continue;
                   }
                }
                else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
                      continue;
                   }
                }
@@ -393,7 +382,7 @@ int ShowOpenOrders() {
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
                ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet    (label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+               ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
                ObjectSetText(label1, comment);
             }
          }
@@ -467,7 +456,7 @@ int ShowOpenOrders() {
             ObjectDelete(label1);
          if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
             ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+            ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
          }
       }
       else {
@@ -589,7 +578,7 @@ bool ToggleTradeHistory() {
                   }
                }
                else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_CLOSE) continue;
+                  if (clr!=CLR_CLOSED) continue;
                }
                ObjectDelete(name);
             }
@@ -791,7 +780,7 @@ int ShowTradeHistory() {
             ObjectDelete(closeLabel);
          if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i])) {
             ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+            ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
             ObjectSetText(closeLabel, comment);
          }
          n++;
@@ -851,7 +840,7 @@ int ShowTradeHistory() {
          ObjectDelete(closeLabel);
       if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+         ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
          ObjectSetText(closeLabel, text);
       }
       n++;

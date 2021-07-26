@@ -727,7 +727,7 @@ bool Chart.MarkOrderFilled(int i) {
    color  markerColor = CLR_NONE;
 
    if (orderDisplayMode >= ODM_PYRAMID)
-      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_LONG, CLR_SHORT);
+      markerColor = ifInt(orders.type[i]==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    return(ChartMarker.OrderFilled_B(orders.ticket[i], orders.pendingType[i], orders.pendingPrice[i], Digits, markerColor, sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], comment));
 }
@@ -757,8 +757,8 @@ bool Chart.MarkOrderSent(int i) {
    color    markerColor = CLR_NONE;
 
    if (orderDisplayMode != ODM_NONE) {
-      if      (pending)                         markerColor = CLR_PENDING;
-      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_LONG, CLR_SHORT);
+      if      (pending)                         markerColor = CLR_OPEN_PENDING;
+      else if (orderDisplayMode >= ODM_PYRAMID) markerColor = ifInt(IsLongOrderType(type), CLR_OPEN_LONG, CLR_OPEN_SHORT);
    }
    return(ChartMarker.OrderSent_B(orders.ticket[i], Digits, markerColor, type, sequence.unitsize, Symbol(), openTime, openPrice, orders.stopLoss[i], 0, comment));
 }
@@ -782,8 +782,8 @@ bool Chart.MarkPositionClosed(int i) {
    color markerColor = CLR_NONE;
 
    if (orderDisplayMode != ODM_NONE) {
-      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSE;
-      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSE;
+      if ( orders.closedBySL[i]) /*&&*/ if (orderDisplayMode != ODM_PYRAMID) markerColor = CLR_CLOSED;
+      if (!orders.closedBySL[i]) /*&&*/ if (orderDisplayMode >= ODM_PYRAMID) markerColor = CLR_CLOSED;
    }
    return(ChartMarker.PositionClosed_B(orders.ticket[i], Digits, markerColor, orders.type[i], sequence.unitsize, Symbol(), orders.openTime[i], orders.openPrice[i], orders.closeTime[i], orders.closePrice[i]));
 }
@@ -1462,7 +1462,7 @@ bool StopSequence(int signal) {
          oeFlags |= F_ERR_TRADE_DISABLED;
          oeFlags |= F_ERR_MARKET_CLOSED;
 
-         if (!OrdersClose(openPositions, slippage, CLR_CLOSE, oeFlags, oes)) {
+         if (!OrdersClose(openPositions, slippage, CLR_CLOSED, oeFlags, oes)) {
             error = oes.Error(oes, 0);
             switch (error) {
                case ERR_NO_CONNECTION:
@@ -3383,7 +3383,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = ifInt(level > 0, CLR_LONG, CLR_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
+   color    markerColor = ifInt(level > 0, CLR_OPEN_LONG, CLR_OPEN_SHORT); if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = NULL;
             oeFlags    |= F_ERR_NO_CONNECTION;     // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
@@ -3446,7 +3446,7 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
+   color    markerColor = CLR_OPEN_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
@@ -3504,7 +3504,7 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
    string   comment     = "SR."+ sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
+   color    markerColor = CLR_OPEN_PENDING; if (!orderDisplayMode) markerColor = CLR_NONE;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP
             oeFlags    |= F_ERR_NO_CONNECTION;        // custom handling of recoverable network errors
             oeFlags    |= F_ERR_TRADESERVER_GONE;
@@ -3558,7 +3558,7 @@ int ModifyStopOrder(int ticket, double price, double stopLoss, int &oe[]) {
        oeFlags |= F_ERR_TRADE_DISABLED;
        oeFlags |= F_ERR_MARKET_CLOSED;
 
-   bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_PENDING, oeFlags, oe);
+   bool success = OrderModifyEx(ticket, price, stopLoss, NULL, NULL, CLR_OPEN_PENDING, oeFlags, oe);
    if (success) {
       SetLastNetworkError(oe);
       return(NO_ERROR);

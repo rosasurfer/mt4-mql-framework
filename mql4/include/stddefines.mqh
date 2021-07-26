@@ -226,13 +226,25 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // modes to specify the pool to select an order from; see OrderSelect()
-#define MODE_TRADES                       0
-#define MODE_HISTORY                      1
+#define MODE_TRADES            0
+#define MODE_HISTORY           1
 
 
 // ids to control the order selection stack; see OrderPush(), OrderPop()
-#define O_PUSH                            1
-#define O_POP                             2
+#define O_PUSH                 1
+#define O_POP                  2
+
+
+// default order display colors
+#define CLR_OPEN_PENDING       DeepSkyBlue
+#define CLR_OPEN_LONG          C'0,0,254'       // blue-ish: rgb(0,0,255) - rgb(1,1,1)
+#define CLR_OPEN_SHORT         C'254,0,0'       // red-ish:  rgb(255,0,0) - rgb(1,1,1)
+#define CLR_OPEN_TAKEPROFIT    LimeGreen
+#define CLR_OPEN_STOPLOSS      Red
+
+#define CLR_CLOSED_LONG        Blue             // entry marker      As "open" and "closed" entry markers use the same symbol
+#define CLR_CLOSED_SHORT       Red              // entry marker      they must be slightly different to be able to distinguish them.
+#define CLR_CLOSED             Orange           // exit marker
 
 
 // timeseries identifiers, see ArrayCopySeries(), iLowest(), iHighest()
@@ -603,9 +615,9 @@ double  N_INF;                                              // -1.#INF: negative
 #define IDCONTINUE                          11
 
 
-// Arrow-Codes, siehe ObjectSet(label, OBJPROP_ARROWCODE, value)
-#define SYMBOL_ORDEROPEN                     1  // right pointing arrow (default open order marker)               // docs MetaQuotes: right pointing up arrow
-//                                           2  // same as SYMBOL_ORDEROPEN                                       // docs MetaQuotes: right pointing down arrow
+// arrow codes, see ObjectSet(label, OBJPROP_ARROWCODE, value)
+#define SYMBOL_ORDEROPEN                     1  // right pointing arrow (default open order marker)
+//                                           2  // same as SYMBOL_ORDEROPEN
 #define SYMBOL_ORDERCLOSE                    3  // left pointing arrow  (default closed order marker)
 #define SYMBOL_DASH                          4  // dash symbol          (default takeprofit and stoploss marker)
 #define SYMBOL_LEFTPRICE                     5  // left-side price label

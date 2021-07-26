@@ -60,10 +60,3 @@ int     startStopDisplayModes[] = {SDM_NONE, SDM_PRICE};
 #define ODM_PYRAMID                 2           // pendings, open,             closed
 #define ODM_ALL                     3           // pendings, open, closedBySL, closed
 int     orderDisplayModes[] = {ODM_NONE, ODM_STOPS, ODM_PYRAMID, ODM_ALL};
-
-
-// order marker colors
-#define CLR_PENDING     DeepSkyBlue
-#define CLR_LONG        Blue
-#define CLR_SHORT       Red
-#define CLR_CLOSE       Orange
