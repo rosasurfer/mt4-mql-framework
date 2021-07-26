@@ -112,11 +112,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define HIX_COMMISSION       21
 #define HIX_PROFIT           22
 
-#define CLR_PENDING           DeepSkyBlue          // order marker colors
-#define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
-#define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
-#define CLR_CLOSE             Orange               //
-
 // sequence data
 int      sequence.id;                              //
 datetime sequence.created;                         //
@@ -349,11 +344,173 @@ bool onCommand(string commands[]) {
  * @return bool - success status
  */
 bool ToggleOpenOrders() {
-   PlaySoundEx("Plonk.wav");
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
 
    if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+
+   // look-up a status stored in the window
+   int hWnd = __ExecutionContext[EC.hChart];
+   int iValue = RemoveWindowIntegerA(hWnd, label);
+
+   // on error look-up a status stored in the chart
+   if (!iValue) {
+      if (ObjectFind(label) == 0) {
+         string sValue = ObjectDescription(label);
+         if (StrIsInteger(sValue))
+            iValue = StrToInteger(sValue);
+         ObjectDelete(label);
+      }
+   }
+   return(iValue == 1);
+}
+
+
+/**
+ * Store the given 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+
+   // store status in the window (for init cycles and new chart templates)
+   int hWnd = __ExecutionContext[EC.hChart];
+   int iValue = ifInt(status, 1, -1);
+   SetWindowIntegerA(hWnd, label, iValue);
+
+   // store status in the chart (for terminal restarts)
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ iValue);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"}, instanceName=ProgramName() +"."+ sequence.name, label="";
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+
+   // long
+   int orders = ArraySize(long.ticket), openOrders=0;
+   for (int i=0; i < orders; i++) {
+      if (long.closeTime[i] != 0) continue;        // skip closed orders
+
+      if (long.openType[i] == OP_UNDEFINED) {
+         // pending orders
+         label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.pendingType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.pendingPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), long.pendingPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
+         }
+      }
+      else {
+         // open positions
+         label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.openType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.openPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     colors[long.openType[i]]);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
+         }
+      }
+      openOrders++;
+   }
+
+   // short
+   orders = ArraySize(short.ticket);
+   for (i=0; i < orders; i++) {
+      if (short.closeTime[i] != 0) continue;       // skip closed orders
+
+      if (short.openType[i] == OP_UNDEFINED) {
+         // pending orders
+         label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.pendingType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.pendingPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), short.pendingPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
+         }
+      }
+      else {
+         // open positions
+         label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.openType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.openPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     colors[short.openType[i]]);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
+         }
+      }
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
 }
 
 
@@ -753,7 +910,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
    if (ArraySize(positions) > 0) {
       int slippage = 10;    // point
       int oeFlags, oes[][ORDER_EXECUTION.intSize], pos;
-      if (!OrdersClose(positions, slippage, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
+      if (!OrdersClose(positions, slippage, CLR_CLOSED, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       double remainingSwap, remainingCommission, remainingProfit;
       orders = ArrayRange(oes, 0);
@@ -2792,7 +2949,7 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = ifInt(direction==D_LONG, CLR_LONG, CLR_SHORT);
+   color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL;
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2825,8 +2982,8 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
-   string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING;
+   string   comment     = ProgramName() +"."+ sequence.name +"."+ sequence.id +"."+ NumberToStr(level, "+.");
+   color    markerColor = CLR_OPEN_PENDING;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2863,7 +3020,7 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING;
+   color    markerColor = CLR_OPEN_PENDING;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);

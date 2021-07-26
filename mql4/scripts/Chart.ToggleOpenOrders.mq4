@@ -19,7 +19,7 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
-   if (false && ObjectFind("Duel.status")==0) {
+   if (ObjectFind("Duel.status") == 0) {
       // chart status object of an active Duel instance found
       SendChartCommand("Duel.command", "ToggleOpenOrders");
    }

@@ -346,7 +346,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - number of displayed open orders or EMPTY (-1) in case of errors
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -507,36 +507,51 @@ int ShowOpenOrders() {
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen OpenOrder-Anzeigestatus aus.
+ * Resolve the current 'ShowOpenOrders' display status.
  *
- * @return bool - Status: ON/OFF
+ * @return bool - ON/OFF
  */
 bool GetOpenOrderDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".OpenOrderDisplay.status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+
+   // look-up a status stored in the window
+   int hWnd = __ExecutionContext[EC.hChart];
+   int iValue = RemoveWindowIntegerA(hWnd, label);
+
+   // on error look-up a status stored in the chart
+   if (!iValue) {
+      if (ObjectFind(label) == 0) {
+         string sValue = ObjectDescription(label);
+         if (StrIsInteger(sValue))
+            iValue = StrToInteger(sValue);
+         ObjectDelete(label);
+      }
+   }
+   return(iValue == 1);
 }
 
 
 /**
- * Speichert den angegebenen OpenOrder-Anzeigestatus im Chart.
+ * Store the given 'ShowOpenOrders' display status.
  *
- * @param  bool status - Status
+ * @param  bool status - display status
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
 
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".OpenOrderDisplay.status";
+   // store status in the window (for init cycles and new chart templates)
+   int hWnd = __ExecutionContext[EC.hChart];
+   int iValue = ifInt(status, 1, -1);
+   SetWindowIntegerA(hWnd, label, iValue);
+
+   // store status in the chart (for terminal restarts)
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ iValue);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
