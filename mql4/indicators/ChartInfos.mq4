@@ -512,22 +512,17 @@ int ShowOpenOrders() {
  * @return bool - ON/OFF
  */
 bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
    string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-
-   // look-up a status stored in the window
-   int hWnd = __ExecutionContext[EC.hChart];
-   int iValue = RemoveWindowIntegerA(hWnd, label);
-
-   // on error look-up a status stored in the chart
-   if (!iValue) {
-      if (ObjectFind(label) == 0) {
-         string sValue = ObjectDescription(label);
-         if (StrIsInteger(sValue))
-            iValue = StrToInteger(sValue);
-         ObjectDelete(label);
-      }
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
    }
-   return(iValue == 1);
+   return(status);
 }
 
 
@@ -540,25 +535,20 @@ bool GetOpenOrderDisplayStatus() {
  */
 bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
+
+   // store status in the chart
    string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-
-   // store status in the window (for init cycles and new chart templates)
-   int hWnd = __ExecutionContext[EC.hChart];
-   int iValue = ifInt(status, 1, -1);
-   SetWindowIntegerA(hWnd, label, iValue);
-
-   // store status in the chart (for terminal restarts)
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ iValue);
+   ObjectSetText(label, ""+ status);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
 
 
 /**
- * Toggle the display of the trade history.
+ * Toggle the display of closed trades.
  *
  * @return bool - success status
  */
@@ -566,18 +556,17 @@ bool ToggleTradeHistory() {
    // read current status and toggle it
    bool showHistory = !GetTradeHistoryDisplayStatus();
 
-   // status ON: display history
+   // ON: display closed trades
    if (showHistory) {
       int trades = ShowTradeHistory();
-      if (trades == -1)
-         return(false);
-      if (!trades) {                                  // without any history state must be reset
-         showHistory = false;
+      if (trades == -1) return(false);
+      if (!trades) {                                  // Without closed trades status must be reset to have the "off" section
+         showHistory = false;                         // remove any existing closed trade markers.
          PlaySoundEx("Plonk.wav");
       }
    }
 
-   // status OFF: hide history
+   // OFF: remove closed trade markers
    if (!showHistory) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -585,21 +574,17 @@ bool ToggleTradeHistory() {
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR    );
+               color clr = ObjectGet(name, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT) {
-                     continue;
-                  }
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
                }
                else if (arrow == SYMBOL_ORDERCLOSE) {
                   if (clr!=CLR_CLOSED) continue;
                }
-               ObjectDelete(name);
             }
-            else if (ObjectType(name) == OBJ_TREND) {
-               ObjectDelete(name);
-            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
          }
       }
    }
@@ -614,36 +599,41 @@ bool ToggleTradeHistory() {
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen TradeHistory-Anzeigestatus aus.
+ * Resolve the current 'ShowTradeHistory' display status.
  *
- * @return bool - Status: ON/OFF
+ * @return bool - ON/OFF
  */
 bool GetTradeHistoryDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".TradeHistoryDisplay.status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
+   bool status = false;
+
+   // on error look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
 }
 
 
 /**
- * Speichert den angegebenen TradeHistory-Anzeigestatus im Chart.
+ * Store the given 'ShowTradeHistory' display status.
  *
- * @param  bool status - Status
+ * @param  bool status - display status
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".TradeHistoryDisplay.status";
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
 
    return(!catch("SetTradeHistoryDisplayStatus(1)"));
 }
@@ -946,7 +936,7 @@ bool SetAuMDisplayStatus(bool status) {
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status, 0);
 
    return(!catch("SetAuMDisplayStatus(1)"));

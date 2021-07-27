@@ -394,22 +394,17 @@ bool ToggleOpenOrders() {
  * @return bool - ON/OFF
  */
 bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
    string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-
-   // look-up a status stored in the window
-   int hWnd = __ExecutionContext[EC.hChart];
-   int iValue = RemoveWindowIntegerA(hWnd, label);
-
-   // on error look-up a status stored in the chart
-   if (!iValue) {
-      if (ObjectFind(label) == 0) {
-         string sValue = ObjectDescription(label);
-         if (StrIsInteger(sValue))
-            iValue = StrToInteger(sValue);
-         ObjectDelete(label);
-      }
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
    }
-   return(iValue == 1);
+   return(status);
 }
 
 
@@ -422,18 +417,13 @@ bool GetOpenOrderDisplayStatus() {
  */
 bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
-
-   // store status in the window (for init cycles and new chart templates)
-   int hWnd = __ExecutionContext[EC.hChart];
-   int iValue = ifInt(status, 1, -1);
-   SetWindowIntegerA(hWnd, label, iValue);
 
    // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(label, ""+ iValue);
+   ObjectSetText(label, ""+ status);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
@@ -515,16 +505,284 @@ int ShowOpenOrders() {
 
 
 /**
- * Toggle the display of the trade history.
+ * Toggle the display of closed trades.
  *
  * @return bool - success status
  */
 bool ToggleTradeHistory() {
-   PlaySoundEx("Plonk.wav");
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                  // Without closed trades status must be reset to have the "off" section
+         showHistory = false;                         // remove any existing closed trade markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove closed trade markers
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
 
    if (This.IsTesting())
       WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowTradeHistory' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the given 'ShowTradeHistory' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel, closeLabel, lineLabel, sOpenPrice, sClosePrice, text;
+   int closedTrades = 0;
+
+   // process closed trades of the current cycle
+   if (sequence.status == STATUS_STOPPED) {
+      // long
+      int orders = ArraySize(long.ticket);
+      for (int i=0; i < orders; i++) {
+         if (!long.closeTime[i])               continue;    // skip open tickets
+         if (long.openType[i] == OP_UNDEFINED) continue;    // skip cancelled orders
+
+         sOpenPrice  = NumberToStr(long.openPrice [i], PriceFormat);
+         sClosePrice = NumberToStr(long.closePrice[i], PriceFormat);
+         text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.level[i], "+.");
+
+         // open marker
+         openLabel = StringConcatenate("#", long.ticket[i], " buy ", NumberToStr(long.lots[i], ".1+"), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+            ObjectSetText(openLabel, text);
+         }
+
+         // trend line
+         lineLabel = StringConcatenate("#", long.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
+         if (ObjectFind(lineLabel) == 0)
+            ObjectDelete(lineLabel);
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.openTime[i], long.openPrice[i], long.closeTime[i], long.closePrice[i])) {
+            ObjectSet(lineLabel, OBJPROP_RAY,   false);
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+            ObjectSet(lineLabel, OBJPROP_BACK,  true);
+         }
+
+         // close marker
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.closeTime[i], long.closePrice[i])) {
+            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
+         }
+         closedTrades++;
+      }
+
+      // short
+      orders = ArraySize(short.ticket);
+      for (i=0; i < orders; i++) {
+         if (!short.closeTime[i])               continue;   // skip open tickets
+         if (short.openType[i] == OP_UNDEFINED) continue;   // skip cancelled orders
+
+         sOpenPrice  = NumberToStr(short.openPrice [i], PriceFormat);
+         sClosePrice = NumberToStr(short.closePrice[i], PriceFormat);
+         text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.level[i], "+.");
+
+         // open marker
+         openLabel = StringConcatenate("#", short.ticket[i], " sell ", NumberToStr(short.lots[i], ".1+"), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+            ObjectSetText(openLabel, text);
+         }
+
+         // trend line
+         lineLabel = StringConcatenate("#", short.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
+         if (ObjectFind(lineLabel) == 0)
+            ObjectDelete(lineLabel);
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.openTime[i], short.openPrice[i], short.closeTime[i], short.closePrice[i])) {
+            ObjectSet(lineLabel, OBJPROP_RAY,   false);
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+            ObjectSet(lineLabel, OBJPROP_BACK,  true);
+         }
+
+         // close marker
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.closeTime[i], short.closePrice[i])) {
+            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
+         }
+         closedTrades++;
+      }
+   }
+
+   // process long trades of archived cycles
+   orders = ArrayRange(long.history, 0);
+   for (i=0; i < orders; i++) {
+      if (!long.history[i][HIX_CLOSETIME])               continue;   // skip open tickets     (should never happen)
+      if (long.history[i][HIX_OPENTYPE] == OP_UNDEFINED) continue;   // skip cancelled orders (should never happen)
+
+      sOpenPrice  = NumberToStr(long.history[i][HIX_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(long.history[i][HIX_CLOSEPRICE], PriceFormat);
+      text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.history[i][HIX_LEVEL], "+.");
+
+      // open marker
+      openLabel = StringConcatenate("#", _int(long.history[i][HIX_TICKET]), " buy ", NumberToStr(long.history[i][HIX_LOTS], ".1+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][HIX_OPENTIME], long.history[i][HIX_OPENPRICE])) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+         ObjectSetText(openLabel, text);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", _int(long.history[i][HIX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][HIX_OPENTIME], long.history[i][HIX_OPENPRICE], long.history[i][HIX_CLOSETIME], long.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][HIX_CLOSETIME], long.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
+      }
+      closedTrades++;
+   }
+
+   // process short trades of archived cycles
+   orders = ArrayRange(short.history, 0);
+   for (i=0; i < orders; i++) {
+      if (!short.history[i][HIX_CLOSETIME])               continue;  // skip open tickets     (should never happen)
+      if (short.history[i][HIX_OPENTYPE] == OP_UNDEFINED) continue;  // skip cancelled orders (should never happen)
+
+      sOpenPrice  = NumberToStr(short.history[i][HIX_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(short.history[i][HIX_CLOSEPRICE], PriceFormat);
+      text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.history[i][HIX_LEVEL], "+.");
+
+      // open marker
+      openLabel = StringConcatenate("#", _int(short.history[i][HIX_TICKET]), " buy ", NumberToStr(short.history[i][HIX_LOTS], ".1+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][HIX_OPENTIME], short.history[i][HIX_OPENPRICE])) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+         ObjectSetText(openLabel, text);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", _int(short.history[i][HIX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][HIX_OPENTIME], short.history[i][HIX_OPENPRICE], short.history[i][HIX_CLOSETIME], short.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][HIX_CLOSETIME], short.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
+      }
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
@@ -2982,7 +3240,7 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber();
    datetime expires     = NULL;
-   string   comment     = ProgramName() +"."+ sequence.name +"."+ sequence.id +"."+ NumberToStr(level, "+.");
+   string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_OPEN_PENDING;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
