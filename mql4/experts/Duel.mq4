@@ -962,7 +962,7 @@ bool StartSequence(int signal) {
    sequence.totalLots  = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.Lots();
 
    if (!UpdatePendingOrders()) return(false);            // update pending orders
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (startprice/gridbase: "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started at "+ NumberToStr(sequence.startPrice, PriceFormat) +" (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
    ComputeProfit(true);
    return(SaveStatus());
@@ -1028,7 +1028,7 @@ bool ResumeSequence(int signal) {
 
    // update pending orders
    if (!UpdatePendingOrders()) return(false);
-   if (IsLogInfo()) logInfo("ResumeSequence(3)  "+ sequence.name +" sequence resumed (startprice "+ NumberToStr(sequence.startPrice, PriceFormat) +", new gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLogInfo()) logInfo("ResumeSequence(3)  "+ sequence.name +" sequence resumed at "+ NumberToStr(sequence.startPrice, PriceFormat) +" (new gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
    ComputeProfit(true);
    return(SaveStatus());
@@ -1119,7 +1119,7 @@ bool StopSequence(int signal) {
    sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
    sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    SS.StopConditions();
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
