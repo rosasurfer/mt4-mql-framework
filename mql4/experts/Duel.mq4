@@ -4002,7 +4002,7 @@ void SS.GridParameters() {
  */
 void SS.Lots() {
    if (__isChart) {
-      string sOpenLevels="", sSlippage="";
+      string sOpenLevels="", sMinusLevels, sMax="", sSlippage="";
       int plusLevels, minusLevels, openLevels;
 
       if (!long.totalLots) sTotalLongLots = "-";
@@ -4011,7 +4011,13 @@ void SS.Lots() {
          minusLevels = -Min(0, long.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ openLevels;
+
+         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+            if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
+            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
+         }
 
          sSlippage = PipToStr(long.slippage/Pip, true, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
@@ -4025,7 +4031,13 @@ void SS.Lots() {
          minusLevels = -Min(0, short.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ openLevels;
+
+         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+            if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
+            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
+         }
 
          sSlippage = PipToStr(short.slippage/Pip, true, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
