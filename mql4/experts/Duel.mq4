@@ -305,11 +305,11 @@ bool EventListener_ChartCommand(string &commands[]) {
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
    string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
 
    if (StrCompareI(cmd, "start")) {
       switch (sequence.status) {
          case STATUS_WAITING:
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StartSequence(NULL));
       }
    }
@@ -317,12 +317,14 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StopSequence(NULL));
       }
    }
    else if (StrCompareI(cmd, "resume")) {
       switch (sequence.status) {
          case STATUS_STOPPED:
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(ResumeSequence(NULL));
       }
    }
@@ -332,9 +334,9 @@ bool onCommand(string commands[]) {
    else if (StrCompareI(cmd, "ToggleTradeHistory")) {
       return(ToggleTradeHistory());
    }
-   else return(!logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+   else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ DoubleQuoteStr(StatusToStr(sequence.status))));
+   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ DoubleQuoteStr(StatusToStr(sequence.status))));
 }
 
 
