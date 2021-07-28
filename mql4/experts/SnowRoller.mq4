@@ -4040,7 +4040,7 @@ bool IsMyOrder(int sequenceId = NULL) {
    if (OrderSymbol() == Symbol()) {
       int strategy = OrderMagicNumber() >> 22;
       if (strategy == STRATEGY_ID) {
-         int sequence = OrderMagicNumber() >> 8 & 0x3FFF;         // 14 bit starting at bit 8 = sequence id
+         int sequence = OrderMagicNumber() >> 8 & 0x3FFF;         // 14 bit starting at bit 8: sequence id
          return(!sequenceId || sequenceId==sequence);
       }
    }

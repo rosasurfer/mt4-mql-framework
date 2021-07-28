@@ -371,7 +371,7 @@ int ShowOpenOrders() {
          openPrice  = OrderOpenPrice();
          takeProfit = OrderTakeProfit();
          stopLoss   = OrderStopLoss();
-         comment    = OrderComment();
+         comment    = OrderMarkerText(ticket, type, OrderMagicNumber(), OrderComment());
 
          if (OrderType() > OP_SELL) {
             // a pending order
@@ -648,13 +648,13 @@ int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
+   string   sOpenPrice, sClosePrice, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
    string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
-   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
+   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // prefer trade account configuration
 
    // mode.intern
    if (mode.intern) {
@@ -681,32 +681,34 @@ int ShowTradeHistory() {
       SortClosedTickets(sortKeys);
 
       // Tickets sortiert einlesen
-      int      tickets    []; ArrayResize(tickets    , 0);
-      int      types      []; ArrayResize(types      , 0);
-      double   lotSizes   []; ArrayResize(lotSizes   , 0);
-      datetime openTimes  []; ArrayResize(openTimes  , 0);
-      datetime closeTimes []; ArrayResize(closeTimes , 0);
-      double   openPrices []; ArrayResize(openPrices , 0);
+      int      tickets    []; ArrayResize(tickets,     0);
+      int      types      []; ArrayResize(types,       0);
+      double   lotSizes   []; ArrayResize(lotSizes,    0);
+      datetime openTimes  []; ArrayResize(openTimes,   0);
+      datetime closeTimes []; ArrayResize(closeTimes,  0);
+      double   openPrices []; ArrayResize(openPrices,  0);
       double   closePrices[]; ArrayResize(closePrices, 0);
       double   commissions[]; ArrayResize(commissions, 0);
-      double   swaps      []; ArrayResize(swaps      , 0);
-      double   profits    []; ArrayResize(profits    , 0);
-      string   comments   []; ArrayResize(comments   , 0);
+      double   swaps      []; ArrayResize(swaps,       0);
+      double   profits    []; ArrayResize(profits,     0);
+      string   comments   []; ArrayResize(comments,    0);
+      int      magics     []; ArrayResize(magics,      0);
 
       for (i=0; i < orders; i++) {
          if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(1)"))
             return(-1);
-         ArrayPushInt   (tickets    , OrderTicket()    );
-         ArrayPushInt   (types      , OrderType()      );
-         ArrayPushDouble(lotSizes   , OrderLots()      );
-         ArrayPushInt   (openTimes  , OrderOpenTime()  );
-         ArrayPushInt   (closeTimes , OrderCloseTime() );
-         ArrayPushDouble(openPrices , OrderOpenPrice() );
-         ArrayPushDouble(closePrices, OrderClosePrice());
-         ArrayPushDouble(commissions, OrderCommission());
-         ArrayPushDouble(swaps      , OrderSwap()      );
-         ArrayPushDouble(profits    , OrderProfit()    );
-         ArrayPushString(comments   , OrderComment()   );
+         ArrayPushInt   (tickets,     OrderTicket()     );
+         ArrayPushInt   (types,       OrderType()       );
+         ArrayPushDouble(lotSizes,    OrderLots()       );
+         ArrayPushInt   (openTimes,   OrderOpenTime()   );
+         ArrayPushInt   (closeTimes,  OrderCloseTime()  );
+         ArrayPushDouble(openPrices,  OrderOpenPrice()  );
+         ArrayPushDouble(closePrices, OrderClosePrice() );
+         ArrayPushDouble(commissions, OrderCommission() );
+         ArrayPushDouble(swaps,       OrderSwap()       );
+         ArrayPushDouble(profits,     OrderProfit()     );
+         ArrayPushString(comments,    OrderComment()    );
+         ArrayPushInt   (magics,      OrderMagicNumber());
       }
 
       // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
@@ -748,22 +750,16 @@ int ShowTradeHistory() {
             continue;
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
-
-         comment = comments[i];
-         if      (comment == "partial close")                 comment = "";
-         else if (StrStartsWith(comment, "from #"))           comment = "";
-         else if (StrStartsWith(comment, "close hedge by #")) comment = "";
-         else if (StrEndsWith  (comment, "[tp]"))             comment = StrLeft(comment, -4);
-         else if (StrEndsWith  (comment, "[sl]"))             comment = StrLeft(comment, -4);
+         text        = OrderMarkerText(tickets[i], types[i], magics[i], comments[i]);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
          if (ObjectFind(openLabel) == 0)
             ObjectDelete(openLabel);
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i])) {
-            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
-            ObjectSet    (openLabel, OBJPROP_COLOR    , markerColors[types[i]]);
-            ObjectSetText(openLabel, comment);
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR, markerColors[types[i]]);
+            ObjectSetText(openLabel, text);
          }
 
          // Trendlinie anzeigen
@@ -785,8 +781,8 @@ int ShowTradeHistory() {
             ObjectDelete(closeLabel);
          if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i])) {
             ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
-            ObjectSetText(closeLabel, comment);
+            ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
          }
          n++;
       }
@@ -809,7 +805,6 @@ int ShowTradeHistory() {
       closeTime   = FxtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
       closePrice  =                     los.ClosePrice(lfxOrders, i);
       profit      =                     los.Profit    (lfxOrders, i);
-      comment     =                     los.Comment   (lfxOrders, i);
 
       sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
       sClosePrice = NumberToStr(closePrice, PriceFormat);
@@ -851,6 +846,46 @@ int ShowTradeHistory() {
       n++;
    }
    return(n);
+}
+
+
+/**
+ * Create an order armer text for the specified order and magic number.
+ *
+ * @param  int    ticket  - order ticket
+ * @param  int    type    - order type
+ * @param  int    magic   - magic number
+ * @param  string comment - order comment
+ *
+ * @return string - order marker text or an empty string if the strategy is unknown
+ */
+string OrderMarkerText(int ticket, int type, int magic, string comment) {
+   string text = "";
+   int sid = magic >> 22;                                   // strategy id: 10 bit starting at bit 22
+
+   switch (sid) {
+      // Duel
+      case 105:
+         if (StrStartsWith(comment, "Duel")) {
+            text = comment;
+         }
+         else {
+            int sequenceId = magic >> 8 & 0x3FFF;           // sequence id: 14 bit starting at bit 8
+            int level      = magic >> 0 & 0xFF;             // level:        8 bit starting at bit 0
+            text = "Duel."+ ifString(IsLongOrderType(type), "L", "S") +"."+ sequenceId +"."+ NumberToStr(level, "+.");
+         }
+         break;
+
+      default:
+         if      (comment == "partial close")                 text = "";
+         else if (StrStartsWith(comment, "from #"))           text = "";
+         else if (StrStartsWith(comment, "close hedge by #")) text = "";
+         else if (StrEndsWith  (comment, "[tp]"))             text = StrLeft(comment, -4);
+         else if (StrEndsWith  (comment, "[sl]"))             text = StrLeft(comment, -4);
+         else                                                 text = comment;
+   }
+
+   return(text);
 }
 
 
