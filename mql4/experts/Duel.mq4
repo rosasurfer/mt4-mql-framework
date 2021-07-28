@@ -1092,7 +1092,7 @@ bool StopSequence(int signal) {
          double   stopLoss    = NULL;
          double   takeProfit  = NULL;
          string   comment     = "";
-         int      magicNumber = CreateMagicNumber();
+         int      magicNumber = CreateMagicNumber(NULL);
          datetime expires     = NULL;
          color    markerColor = CLR_NONE;
          int      oeFlags     = NULL;
@@ -1727,17 +1727,18 @@ int CreateSequenceId() {
 /**
  * Generate a unique magic order number for the sequence.
  *
+ * @param  int level - gridlevel
+ *
  * @return int - magic number or NULL in case of errors
  */
-int CreateMagicNumber() {
+int CreateMagicNumber(int level) {
    if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)  return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    if (sequence.id < 1000 || sequence.id > 9999) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
    int sequence = sequence.id;                                 // 1000-9999 (14 bit)
-   int level    = 0;                                           //         0 (not used in this strategy)
-
-   return((strategy<<22) + (sequence<<8) + (level<<0));
+   int _level   = level;                                       //     0-255 (8 bit)
+   return((strategy<<22) + (sequence<<8) + (_level<<0));
 }
 
 
@@ -3204,7 +3205,7 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    int      slippage    = 1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
@@ -3238,7 +3239,7 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_OPEN_PENDING;
@@ -3275,7 +3276,7 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
    color    markerColor = CLR_OPEN_PENDING;
