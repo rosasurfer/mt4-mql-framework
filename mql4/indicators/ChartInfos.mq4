@@ -371,7 +371,7 @@ int ShowOpenOrders() {
          openPrice  = OrderOpenPrice();
          takeProfit = OrderTakeProfit();
          stopLoss   = OrderStopLoss();
-         comment    = OrderMarkerText(ticket, type, OrderMagicNumber(), OrderComment());
+         comment    = OrderMarkerText(type, OrderMagicNumber(), OrderComment());
 
          if (OrderType() > OP_SELL) {
             // a pending order
@@ -750,7 +750,7 @@ int ShowTradeHistory() {
             continue;
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
-         text        = OrderMarkerText(tickets[i], types[i], magics[i], comments[i]);
+         text        = OrderMarkerText(types[i], magics[i], comments[i]);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
@@ -850,16 +850,15 @@ int ShowTradeHistory() {
 
 
 /**
- * Create an order armer text for the specified order and magic number.
+ * Create an order marker text for the specified order details.
  *
- * @param  int    ticket  - order ticket
  * @param  int    type    - order type
  * @param  int    magic   - magic number
  * @param  string comment - order comment
  *
  * @return string - order marker text or an empty string if the strategy is unknown
  */
-string OrderMarkerText(int ticket, int type, int magic, string comment) {
+string OrderMarkerText(int type, int magic, string comment) {
    string text = "";
    int sid = magic >> 22;                                   // strategy id: 10 bit starting at bit 22
 
@@ -872,6 +871,7 @@ string OrderMarkerText(int ticket, int type, int magic, string comment) {
          else {
             int sequenceId = magic >> 8 & 0x3FFF;           // sequence id: 14 bit starting at bit 8
             int level      = magic >> 0 & 0xFF;             // level:        8 bit starting at bit 0
+            if (level > 127) level -= 256;                  //               0..255 => -128..127      (convert uint to int)
             text = "Duel."+ ifString(IsLongOrderType(type), "L", "S") +"."+ sequenceId +"."+ NumberToStr(level, "+.");
          }
          break;
