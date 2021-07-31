@@ -88,6 +88,7 @@ int    slowMA.appliedPrice;
 double slowALMA.weights[];                                  // slow ALMA weights
 
 int    maxValues;
+bool   isCentUnit = false;                                  // display unit: cent or pip
 string indicatorName;                                       // "Data" window and signal notification name
 
 bool   signals;
@@ -107,10 +108,6 @@ string signal.sms.receiver = "";
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // FastMA.Periods
    if (FastMA.Periods < 1)              return(catch("onInit(1)  invalid input parameter FastMA.Periods: "+ FastMA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -127,7 +124,7 @@ int onInit() {
    }
    fastMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (fastMA.method == -1)             return(catch("onInit(2)  invalid input parameter FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  Unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (fastMA.method == MODE_SMMA)      return(catch("onInit(3)  unsupported FastMA.Method: "+ DoubleQuoteStr(FastMA.Method), ERR_INVALID_INPUT_PARAMETER));
    FastMA.Method = MaMethodDescription(fastMA.method);
 
    // FastMA.AppliedPrice
@@ -146,11 +143,11 @@ int onInit() {
    // SlowMA.Periods
    if (SlowMA.Periods < 1)              return(catch("onInit(5)  invalid input parameter SlowMA.Periods: "+ SlowMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    slowMA.periods = SlowMA.Periods;
-   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  Parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
+   if (FastMA.Periods > SlowMA.Periods) return(catch("onInit(6)  parameter mis-match of FastMA.Periods/SlowMA.Periods: "+ FastMA.Periods +"/"+ SlowMA.Periods +" (fast value must be smaller than slow one)", ERR_INVALID_INPUT_PARAMETER));
    if (fastMA.periods == slowMA.periods) {
       if (fastMA.method == slowMA.method) {
          if (fastMA.appliedPrice == slowMA.appliedPrice) {
-            return(catch("onInit(7)  Parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
+            return(catch("onInit(7)  parameter mis-match (fast MA must differ from slow MA)", ERR_INVALID_INPUT_PARAMETER));
          }
       }
    }
@@ -165,7 +162,7 @@ int onInit() {
    }
    slowMA.method = StrToMaMethod(sValue, F_ERR_INVALID_PARAMETER);
    if (slowMA.method == -1)             return(catch("onInit(8)  invalid input parameter SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
-   if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  Unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
+   if (slowMA.method == MODE_SMMA)      return(catch("onInit(9)  unsuported SlowMA.Method: "+ DoubleQuoteStr(SlowMA.Method), ERR_INVALID_INPUT_PARAMETER));
    SlowMA.Method = MaMethodDescription(slowMA.method);
 
    // SlowMA.AppliedPrice
@@ -231,7 +228,8 @@ int onInit() {
    SetIndexLabel(MODE_SECTION,       NULL);
    SetIndexLabel(MODE_UPPER_SECTION, NULL);
    SetIndexLabel(MODE_LOWER_SECTION, NULL);
-   IndicatorDigits(2);
+   isCentUnit = (Digits==2 && Close[0]>=500);                           // unit is either 'cent' with fractions for big values (indexes): 123.4 pip => 1.23'4
+   IndicatorDigits(ifInt(isCentUnit, 3, 2));                            // or pip with 2 decimal digit otherwise:                         123.4 pip => 123.04
    SetIndicatorOptions();
 
    // precalculate ALMA bar weights
@@ -239,17 +237,6 @@ int onInit() {
    if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
 
    return(catch("onInit(16)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(NO_ERROR);
 }
 
 
@@ -312,6 +299,7 @@ int onTick() {
 
       // final MACD
       bufferMACD[bar] = (fastMA - slowMA)/Pips;
+      if (isCentUnit) bufferMACD[bar] /= 100;
 
       if (bufferMACD[bar] > 0) {
          bufferUpper[bar] = bufferMACD[bar];
@@ -333,7 +321,7 @@ int onTick() {
       if (signals) /*&&*/ if (IsBarOpen()) {
          static int lastSide; if (!lastSide) lastSide = bufferSection[2];
          int side = bufferSection[1];
-         if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // also detects crosses on bars without ticks (M1)
+         if      (lastSide<=0 && side > 0) onCross(MODE_UPPER_SECTION);    // this also detects crosses on bars without ticks (e.g. on slow M1)
          else if (lastSide>=0 && side < 0) onCross(MODE_LOWER_SECTION);
          lastSide = side;
       }
@@ -393,60 +381,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
-   Chart.StoreString(name +".input.FastMA.Method",         FastMA.Method        );
-   Chart.StoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
-   Chart.StoreInt   (name +".input.SlowMA.Periods",        SlowMA.Periods       );
-   Chart.StoreString(name +".input.SlowMA.Method",         SlowMA.Method        );
-   Chart.StoreString(name +".input.SlowMA.AppliedPrice",   SlowMA.AppliedPrice  );
-   Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   Chart.StoreString(name +".input.Signal.onCross",        Signal.onCross       );
-   Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail",           Signal.Mail          );
-   Chart.StoreString(name +".input.Signal.SMS",            Signal.SMS           );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.FastMA.Periods",        FastMA.Periods       );
-   Chart.RestoreString(name +".input.FastMA.Method",         FastMA.Method        );
-   Chart.RestoreString(name +".input.FastMA.AppliedPrice",   FastMA.AppliedPrice  );
-   Chart.RestoreInt   (name +".input.SlowMA.Periods",        SlowMA.Periods       );
-   Chart.RestoreString(name +".input.SlowMA.Method",         SlowMA.Method        );
-   Chart.RestoreString(name +".input.SlowMA.AppliedPrice",   SlowMA.AppliedPrice  );
-   Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   Chart.RestoreString(name +".input.Signal.onCross",        Signal.onCross       );
-   Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail",           Signal.Mail          );
-   Chart.RestoreString(name +".input.Signal.SMS",            Signal.SMS           );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

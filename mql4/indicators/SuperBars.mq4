@@ -687,11 +687,11 @@ bool RestoreRuntimeStatus() {
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // look-up a stored timeframe in the window
-   int hWnd   = __ExecutionContext[EC.hChart];
+   int hWnd = __ExecutionContext[EC.hChart];
    int result = RemoveWindowIntegerA(hWnd, label);
 
+   // on error look-up a stored timeframe in the chart
    if (!result) {
-      // on error look-up a stored timeframe in the chart
       if (ObjectFind(label) == 0) {
          string value = ObjectDescription(label);
          if (StrIsInteger(value))

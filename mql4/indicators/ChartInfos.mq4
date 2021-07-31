@@ -159,16 +159,6 @@ color  positions.fontColor.remote  = Blue;
 color  positions.fontColor.virtual = Green;
 color  positions.fontColor.history = C'128,128,0';
 
-// Farben für Orderanzeige
-#define CLR_PENDING_OPEN         DeepSkyBlue
-#define CLR_OPEN_LONG            C'0,0,254'                       // Blue - rgb(1,1,1)
-#define CLR_OPEN_SHORT           C'254,0,0'                       // Red  - rgb(1,1,1)
-#define CLR_OPEN_TAKEPROFIT      LimeGreen
-#define CLR_OPEN_STOPLOSS        Red
-#define CLR_CLOSED_LONG          Blue
-#define CLR_CLOSED_SHORT         Red
-#define CLR_CLOSE                Orange
-
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
 
@@ -300,26 +290,25 @@ bool onCommand(string commands[]) {
 
 
 /**
- * Schaltet die Anzeige der offenen Orders ein/aus.
+ * Toggle the display of open orders.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ToggleOpenOrders() {
    // read current status and toggle it
    bool showOrders = !GetOpenOrderDisplayStatus();
 
-   // status ON: display open orders
+   // ON: display open orders
    if (showOrders) {
       int orders = ShowOpenOrders();
-      if (orders == -1)
-         return(false);
-      if (!orders) {                                  // without open orders state must be reset
-         showOrders = false;
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
          PlaySoundEx("Plonk.wav");
       }
    }
 
-   // status OFF: hide open orders
+   // OFF: remove open order markers
    if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -330,12 +319,12 @@ bool ToggleOpenOrders() {
                color clr = ObjectGet(name, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_PENDING_OPEN) /*&&*/ if (clr!=CLR_OPEN_LONG) /*&&*/ if (clr!=CLR_OPEN_SHORT) {
+                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) {
                      continue;
                   }
                }
                else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_OPEN_TAKEPROFIT) /*&&*/ if (clr!=CLR_OPEN_STOPLOSS) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) {
                      continue;
                   }
                }
@@ -357,7 +346,7 @@ bool ToggleOpenOrders() {
 /**
  * Display the currently open orders.
  *
- * @return int - number of displayed open orders or EMPTY (-1) in case of errors
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
 int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
@@ -382,7 +371,7 @@ int ShowOpenOrders() {
          openPrice  = OrderOpenPrice();
          takeProfit = OrderTakeProfit();
          stopLoss   = OrderStopLoss();
-         comment    = OrderComment();
+         comment    = OrderMarkerText(type, OrderMagicNumber(), OrderComment());
 
          if (OrderType() > OP_SELL) {
             // a pending order
@@ -393,7 +382,7 @@ int ShowOpenOrders() {
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
                ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet    (label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+               ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
                ObjectSetText(label1, comment);
             }
          }
@@ -467,7 +456,7 @@ int ShowOpenOrders() {
             ObjectDelete(label1);
          if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
             ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label1, OBJPROP_COLOR,     CLR_PENDING_OPEN);
+            ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
          }
       }
       else {
@@ -518,62 +507,66 @@ int ShowOpenOrders() {
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen OpenOrder-Anzeigestatus aus.
+ * Resolve the current 'ShowOpenOrders' display status.
  *
- * @return bool - Status: ON/OFF
+ * @return bool - ON/OFF
  */
 bool GetOpenOrderDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".OpenOrderDisplay.status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
 }
 
 
 /**
- * Speichert den angegebenen OpenOrder-Anzeigestatus im Chart.
+ * Store the given 'ShowOpenOrders' display status.
  *
- * @param  bool status - Status
+ * @param  bool status - display status
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".OpenOrderDisplay.status";
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
 }
 
 
 /**
- * Schaltet die Anzeige der Trade-History ein/aus.
+ * Toggle the display of closed trades.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ToggleTradeHistory() {
    // read current status and toggle it
    bool showHistory = !GetTradeHistoryDisplayStatus();
 
-   // status ON: display history
+   // ON: display closed trades
    if (showHistory) {
       int trades = ShowTradeHistory();
-      if (trades == -1)
-         return(false);
-      if (!trades) {                                  // without any history state must be reset
-         showHistory = false;
+      if (trades == -1) return(false);
+      if (!trades) {                                  // Without closed trades status must be reset to have the "off" section
+         showHistory = false;                         // remove any existing closed trade markers.
          PlaySoundEx("Plonk.wav");
       }
    }
 
-   // status OFF: hide history
+   // OFF: remove closed trade markers
    if (!showHistory) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -581,21 +574,17 @@ bool ToggleTradeHistory() {
          if (StringGetChar(name, 0) == '#') {
             if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
-               color clr = ObjectGet(name, OBJPROP_COLOR    );
+               color clr = ObjectGet(name, OBJPROP_COLOR);
 
                if (arrow == SYMBOL_ORDEROPEN) {
-                  if (clr!=CLR_CLOSED_LONG) /*&&*/ if (clr!=CLR_CLOSED_SHORT) {
-                     continue;
-                  }
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
                }
                else if (arrow == SYMBOL_ORDERCLOSE) {
-                  if (clr!=CLR_CLOSE) continue;
+                  if (clr!=CLR_CLOSED) continue;
                }
-               ObjectDelete(name);
             }
-            else if (ObjectType(name) == OBJ_TREND) {
-               ObjectDelete(name);
-            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
          }
       }
    }
@@ -610,36 +599,41 @@ bool ToggleTradeHistory() {
 
 
 /**
- * Liest den im Chart gespeicherten aktuellen TradeHistory-Anzeigestatus aus.
+ * Resolve the current 'ShowTradeHistory' display status.
  *
- * @return bool - Status: ON/OFF
+ * @return bool - ON/OFF
  */
 bool GetTradeHistoryDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".TradeHistoryDisplay.status";
-   if (ObjectFind(label) != -1)
-      return(StrToInteger(ObjectDescription(label)) != 0);
-   return(false);
+   bool status = false;
+
+   // on error look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
 }
 
 
 /**
- * Speichert den angegebenen TradeHistory-Anzeigestatus im Chart.
+ * Store the given 'ShowTradeHistory' display status.
  *
- * @param  bool status - Status
+ * @param  bool status - display status
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".TradeHistoryDisplay.status";
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
-   ObjectSetText(label, ""+ status, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
 
    return(!catch("SetTradeHistoryDisplayStatus(1)"));
 }
@@ -654,13 +648,13 @@ int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice, sClosePrice, comment, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
+   string   sOpenPrice, sClosePrice, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
    string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
-   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // Account- überschreibt Terminal-Konfiguration (default = true)
+   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // prefer trade account configuration
 
    // mode.intern
    if (mode.intern) {
@@ -687,32 +681,34 @@ int ShowTradeHistory() {
       SortClosedTickets(sortKeys);
 
       // Tickets sortiert einlesen
-      int      tickets    []; ArrayResize(tickets    , 0);
-      int      types      []; ArrayResize(types      , 0);
-      double   lotSizes   []; ArrayResize(lotSizes   , 0);
-      datetime openTimes  []; ArrayResize(openTimes  , 0);
-      datetime closeTimes []; ArrayResize(closeTimes , 0);
-      double   openPrices []; ArrayResize(openPrices , 0);
+      int      tickets    []; ArrayResize(tickets,     0);
+      int      types      []; ArrayResize(types,       0);
+      double   lotSizes   []; ArrayResize(lotSizes,    0);
+      datetime openTimes  []; ArrayResize(openTimes,   0);
+      datetime closeTimes []; ArrayResize(closeTimes,  0);
+      double   openPrices []; ArrayResize(openPrices,  0);
       double   closePrices[]; ArrayResize(closePrices, 0);
       double   commissions[]; ArrayResize(commissions, 0);
-      double   swaps      []; ArrayResize(swaps      , 0);
-      double   profits    []; ArrayResize(profits    , 0);
-      string   comments   []; ArrayResize(comments   , 0);
+      double   swaps      []; ArrayResize(swaps,       0);
+      double   profits    []; ArrayResize(profits,     0);
+      string   comments   []; ArrayResize(comments,    0);
+      int      magics     []; ArrayResize(magics,      0);
 
       for (i=0; i < orders; i++) {
          if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(1)"))
             return(-1);
-         ArrayPushInt   (tickets    , OrderTicket()    );
-         ArrayPushInt   (types      , OrderType()      );
-         ArrayPushDouble(lotSizes   , OrderLots()      );
-         ArrayPushInt   (openTimes  , OrderOpenTime()  );
-         ArrayPushInt   (closeTimes , OrderCloseTime() );
-         ArrayPushDouble(openPrices , OrderOpenPrice() );
-         ArrayPushDouble(closePrices, OrderClosePrice());
-         ArrayPushDouble(commissions, OrderCommission());
-         ArrayPushDouble(swaps      , OrderSwap()      );
-         ArrayPushDouble(profits    , OrderProfit()    );
-         ArrayPushString(comments   , OrderComment()   );
+         ArrayPushInt   (tickets,     OrderTicket()     );
+         ArrayPushInt   (types,       OrderType()       );
+         ArrayPushDouble(lotSizes,    OrderLots()       );
+         ArrayPushInt   (openTimes,   OrderOpenTime()   );
+         ArrayPushInt   (closeTimes,  OrderCloseTime()  );
+         ArrayPushDouble(openPrices,  OrderOpenPrice()  );
+         ArrayPushDouble(closePrices, OrderClosePrice() );
+         ArrayPushDouble(commissions, OrderCommission() );
+         ArrayPushDouble(swaps,       OrderSwap()       );
+         ArrayPushDouble(profits,     OrderProfit()     );
+         ArrayPushString(comments,    OrderComment()    );
+         ArrayPushInt   (magics,      OrderMagicNumber());
       }
 
       // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
@@ -754,22 +750,16 @@ int ShowTradeHistory() {
             continue;
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
-
-         comment = comments[i];
-         if      (comment == "partial close")                 comment = "";
-         else if (StrStartsWith(comment, "from #"))           comment = "";
-         else if (StrStartsWith(comment, "close hedge by #")) comment = "";
-         else if (StrEndsWith  (comment, "[tp]"))             comment = StrLeft(comment, -4);
-         else if (StrEndsWith  (comment, "[sl]"))             comment = StrLeft(comment, -4);
+         text        = OrderMarkerText(types[i], magics[i], comments[i]);
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
          if (ObjectFind(openLabel) == 0)
             ObjectDelete(openLabel);
          if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i])) {
-            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN      );
-            ObjectSet    (openLabel, OBJPROP_COLOR    , markerColors[types[i]]);
-            ObjectSetText(openLabel, comment);
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR, markerColors[types[i]]);
+            ObjectSetText(openLabel, text);
          }
 
          // Trendlinie anzeigen
@@ -791,8 +781,8 @@ int ShowTradeHistory() {
             ObjectDelete(closeLabel);
          if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i])) {
             ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
-            ObjectSetText(closeLabel, comment);
+            ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
          }
          n++;
       }
@@ -815,7 +805,6 @@ int ShowTradeHistory() {
       closeTime   = FxtToServerTime(Abs(los.CloseTime (lfxOrders, i)));
       closePrice  =                     los.ClosePrice(lfxOrders, i);
       profit      =                     los.Profit    (lfxOrders, i);
-      comment     =                     los.Comment   (lfxOrders, i);
 
       sOpenPrice  = NumberToStr(openPrice,  PriceFormat);
       sClosePrice = NumberToStr(closePrice, PriceFormat);
@@ -851,12 +840,52 @@ int ShowTradeHistory() {
          ObjectDelete(closeLabel);
       if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSE        );
+         ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
          ObjectSetText(closeLabel, text);
       }
       n++;
    }
    return(n);
+}
+
+
+/**
+ * Create an order marker text for the specified order details.
+ *
+ * @param  int    type    - order type
+ * @param  int    magic   - magic number
+ * @param  string comment - order comment
+ *
+ * @return string - order marker text or an empty string if the strategy is unknown
+ */
+string OrderMarkerText(int type, int magic, string comment) {
+   string text = "";
+   int sid = magic >> 22;                                   // strategy id: 10 bit starting at bit 22
+
+   switch (sid) {
+      // Duel
+      case 105:
+         if (StrStartsWith(comment, "Duel")) {
+            text = comment;
+         }
+         else {
+            int sequenceId = magic >> 8 & 0x3FFF;           // sequence id: 14 bit starting at bit 8
+            int level      = magic >> 0 & 0xFF;             // level:        8 bit starting at bit 0
+            if (level > 127) level -= 256;                  //               0..255 => -128..127      (convert uint to int)
+            text = "Duel."+ ifString(IsLongOrderType(type), "L", "S") +"."+ sequenceId +"."+ NumberToStr(level, "+.");
+         }
+         break;
+
+      default:
+         if      (comment == "partial close")                 text = "";
+         else if (StrStartsWith(comment, "from #"))           text = "";
+         else if (StrStartsWith(comment, "close hedge by #")) text = "";
+         else if (StrEndsWith  (comment, "[tp]"))             text = StrLeft(comment, -4);
+         else if (StrEndsWith  (comment, "[sl]"))             text = StrLeft(comment, -4);
+         else                                                 text = comment;
+   }
+
+   return(text);
 }
 
 
@@ -942,7 +971,7 @@ bool SetAuMDisplayStatus(bool status) {
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
 
-   ObjectSet    (label, OBJPROP_XDISTANCE, -1000);                   // Label in unsichtbaren Bereich setzen
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status, 0);
 
    return(!catch("SetAuMDisplayStatus(1)"));

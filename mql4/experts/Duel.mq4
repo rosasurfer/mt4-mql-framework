@@ -35,7 +35,7 @@
  * - If "Pyramid.Multiplier" is greater than "1" the EA trades on the winning side like a reverse-martingale system.
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
- * @link  https://www.youtube.com/watch?v=-ZryHMdvfJU#                                                             [The Grid]
+ * @link  http://www.rosasurfer.com/.mt4/The%20Grid.mp4#                                                           [The Grid]
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
  */
 #include <stddefines.mqh>
@@ -112,16 +112,12 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define HIX_COMMISSION       21
 #define HIX_PROFIT           22
 
-#define CLR_PENDING           DeepSkyBlue          // order marker colors
-#define CLR_LONG              C'0,0,254'           // blue-ish: rgb(0,0,255) - rgb(1,1,1)
-#define CLR_SHORT             C'254,0,0'           // red-ish:  rgb(255,0,0) - rgb(1,1,1)
-#define CLR_CLOSE             Orange               //
-
 // sequence data
 int      sequence.id;                              //
 datetime sequence.created;                         //
 bool     sequence.isTest;                          // whether the sequence is a test (e.g. loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence.id}"
+int      sequence.cycle;                           // start/stop cycle: 1...+n
 int      sequence.status;                          //
 int      sequence.direction;                       //
 bool     sequence.pyramidEnabled;                  // whether the sequence scales in on the winning side (pyramid)
@@ -226,11 +222,12 @@ string   sStopConditions  = "";
 string   sTotalLots       = "";
 string   sTotalLongLots   = "";
 string   sTotalShortLots  = "";
-string   sSequenceTotalPL = "";
-string   sSequencePlStats = "";
 string   sSequenceBePrice = "";
 string   sSequenceTpPrice = "";
 string   sSequenceSlPrice = "";
+string   sSequenceTotalPL = "";
+string   sSequencePlStats = "";
+string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
@@ -308,30 +305,486 @@ bool EventListener_ChartCommand(string &commands[]) {
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
    string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
 
-   if (cmd == "start") {
+   if (StrCompareI(cmd, "start")) {
       switch (sequence.status) {
          case STATUS_WAITING:
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StartSequence(NULL));
       }
    }
-   else if (cmd == "stop") {
+   else if (StrCompareI(cmd, "stop")) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StopSequence(NULL));
       }
    }
-   else if (cmd == "resume") {
+   else if (StrCompareI(cmd, "resume")) {
       switch (sequence.status) {
          case STATUS_STOPPED:
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(ResumeSequence(NULL));
       }
    }
-   else return(!logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+   else if (StrCompareI(cmd, "ToggleOpenOrders")) {
+      return(ToggleOpenOrders());
+   }
+   else if (StrCompareI(cmd, "ToggleTradeHistory")) {
+      return(ToggleTradeHistory());
+   }
+   else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ DoubleQuoteStr(StatusToStr(sequence.status))));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_PENDING && clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the given 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"}, instanceName=ProgramName() +"."+ sequence.name, label="";
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+
+   // long
+   int orders = ArraySize(long.ticket), openOrders=0;
+   for (int i=0; i < orders; i++) {
+      if (long.closeTime[i] != 0) continue;        // skip closed orders
+
+      if (long.openType[i] == OP_UNDEFINED) {
+         // pending orders
+         label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.pendingType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.pendingPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), long.pendingPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
+         }
+      }
+      else {
+         // open positions
+         label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.openType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.openPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     colors[long.openType[i]]);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
+         }
+      }
+      openOrders++;
+   }
+
+   // short
+   orders = ArraySize(short.ticket);
+   for (i=0; i < orders; i++) {
+      if (short.closeTime[i] != 0) continue;       // skip closed orders
+
+      if (short.openType[i] == OP_UNDEFINED) {
+         // pending orders
+         label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.pendingType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.pendingPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), short.pendingPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
+         }
+      }
+      else {
+         // open positions
+         label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.openType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.openPrice[i], PriceFormat));
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
+            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label, OBJPROP_COLOR,     colors[short.openType[i]]);
+            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
+         }
+      }
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
+}
+
+
+/**
+ * Toggle the display of closed trades.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                  // Without closed trades status must be reset to have the "off" section
+         showHistory = false;                         // remove any existing closed trade markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove closed trade markers
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowTradeHistory' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the given 'ShowTradeHistory' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel, closeLabel, lineLabel, sOpenPrice, sClosePrice, text;
+   int closedTrades = 0;
+
+   // process closed trades of the current cycle
+   if (sequence.status == STATUS_STOPPED) {
+      // long
+      int orders = ArraySize(long.ticket);
+      for (int i=0; i < orders; i++) {
+         if (!long.closeTime[i])               continue;    // skip open tickets
+         if (long.openType[i] == OP_UNDEFINED) continue;    // skip cancelled orders
+
+         sOpenPrice  = NumberToStr(long.openPrice [i], PriceFormat);
+         sClosePrice = NumberToStr(long.closePrice[i], PriceFormat);
+         text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.level[i], "+.");
+
+         // open marker
+         openLabel = StringConcatenate("#", long.ticket[i], " buy ", NumberToStr(long.lots[i], ".1+"), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+            ObjectSetText(openLabel, text);
+         }
+
+         // trend line
+         lineLabel = StringConcatenate("#", long.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
+         if (ObjectFind(lineLabel) == 0)
+            ObjectDelete(lineLabel);
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.openTime[i], long.openPrice[i], long.closeTime[i], long.closePrice[i])) {
+            ObjectSet(lineLabel, OBJPROP_RAY,   false);
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+            ObjectSet(lineLabel, OBJPROP_BACK,  true);
+         }
+
+         // close marker
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.closeTime[i], long.closePrice[i])) {
+            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
+         }
+         closedTrades++;
+      }
+
+      // short
+      orders = ArraySize(short.ticket);
+      for (i=0; i < orders; i++) {
+         if (!short.closeTime[i])               continue;   // skip open tickets
+         if (short.openType[i] == OP_UNDEFINED) continue;   // skip cancelled orders
+
+         sOpenPrice  = NumberToStr(short.openPrice [i], PriceFormat);
+         sClosePrice = NumberToStr(short.closePrice[i], PriceFormat);
+         text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.level[i], "+.");
+
+         // open marker
+         openLabel = StringConcatenate("#", short.ticket[i], " sell ", NumberToStr(short.lots[i], ".1+"), " at ", sOpenPrice);
+         if (ObjectFind(openLabel) == 0)
+            ObjectDelete(openLabel);
+         if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
+            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+            ObjectSetText(openLabel, text);
+         }
+
+         // trend line
+         lineLabel = StringConcatenate("#", short.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
+         if (ObjectFind(lineLabel) == 0)
+            ObjectDelete(lineLabel);
+         if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.openTime[i], short.openPrice[i], short.closeTime[i], short.closePrice[i])) {
+            ObjectSet(lineLabel, OBJPROP_RAY,   false);
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+            ObjectSet(lineLabel, OBJPROP_BACK,  true);
+         }
+
+         // close marker
+         closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+         if (ObjectFind(closeLabel) == 0)
+            ObjectDelete(closeLabel);
+         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.closeTime[i], short.closePrice[i])) {
+            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+            ObjectSetText(closeLabel, text);
+         }
+         closedTrades++;
+      }
+   }
+
+   // process long trades of archived cycles
+   orders = ArrayRange(long.history, 0);
+   for (i=0; i < orders; i++) {
+      if (!long.history[i][HIX_CLOSETIME])               continue;   // skip open tickets     (should never happen)
+      if (long.history[i][HIX_OPENTYPE] == OP_UNDEFINED) continue;   // skip cancelled orders (should never happen)
+
+      sOpenPrice  = NumberToStr(long.history[i][HIX_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(long.history[i][HIX_CLOSEPRICE], PriceFormat);
+      text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.history[i][HIX_LEVEL], "+.");
+
+      // open marker
+      openLabel = StringConcatenate("#", _int(long.history[i][HIX_TICKET]), " buy ", NumberToStr(long.history[i][HIX_LOTS], ".1+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][HIX_OPENTIME], long.history[i][HIX_OPENPRICE])) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+         ObjectSetText(openLabel, text);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", _int(long.history[i][HIX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][HIX_OPENTIME], long.history[i][HIX_OPENPRICE], long.history[i][HIX_CLOSETIME], long.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][HIX_CLOSETIME], long.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
+      }
+      closedTrades++;
+   }
+
+   // process short trades of archived cycles
+   orders = ArrayRange(short.history, 0);
+   for (i=0; i < orders; i++) {
+      if (!short.history[i][HIX_CLOSETIME])               continue;  // skip open tickets     (should never happen)
+      if (short.history[i][HIX_OPENTYPE] == OP_UNDEFINED) continue;  // skip cancelled orders (should never happen)
+
+      sOpenPrice  = NumberToStr(short.history[i][HIX_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(short.history[i][HIX_CLOSEPRICE], PriceFormat);
+      text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.history[i][HIX_LEVEL], "+.");
+
+      // open marker
+      openLabel = StringConcatenate("#", _int(short.history[i][HIX_TICKET]), " buy ", NumberToStr(short.history[i][HIX_LOTS], ".1+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][HIX_OPENTIME], short.history[i][HIX_OPENPRICE])) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+         ObjectSetText(openLabel, text);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", _int(short.history[i][HIX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][HIX_OPENTIME], short.history[i][HIX_OPENPRICE], short.history[i][HIX_CLOSETIME], short.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][HIX_CLOSETIME], short.history[i][HIX_CLOSEPRICE])) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
+      }
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
@@ -511,7 +964,7 @@ bool StartSequence(int signal) {
    sequence.totalLots  = NormalizeDouble(long.totalLots - short.totalLots, 2); SS.Lots();
 
    if (!UpdatePendingOrders()) return(false);            // update pending orders
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started (startprice/gridbase: "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started at "+ NumberToStr(sequence.startPrice, PriceFormat) +" (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
    ComputeProfit(true);
    return(SaveStatus());
@@ -531,11 +984,12 @@ bool ResumeSequence(int signal) {
 
    double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, longOpenPrice, shortOpenPrice;
 
-   // archive the last sequence cycle
-   int cycleId = ArchiveStoppedSequence();
-   if (!cycleId) return(false);
+   // archive the stopped sequence cycle
+   if (!ArchiveStoppedSequence()) return(false);
+   SS.CycleStats();
 
    // re-initialize sequence data
+   sequence.cycle++;
    sequence.status     = STATUS_PROGRESSING;                   // TODO: update TP/SL conditions
    sequence.startTime  = Max(TimeCurrentEx(), TimeServer());
    sequence.startPrice = 0;
@@ -554,7 +1008,7 @@ bool ResumeSequence(int signal) {
       long.bePrice   = 0;
       long.minLevel  = INT_MAX;
       long.maxLevel  = INT_MIN;
-      if (!RestorePositions(long.history, cycleId, longOpenPrice)) return(false);
+      if (!RestorePositions(long.history, longOpenPrice)) return(false);
    }
    if (short.enabled) {
       short.totalLots = 0;
@@ -563,7 +1017,7 @@ bool ResumeSequence(int signal) {
       short.bePrice   = 0;
       short.minLevel  = INT_MAX;
       short.maxLevel  = INT_MIN;
-      if (!RestorePositions(short.history, cycleId, shortOpenPrice)) return(false);
+      if (!RestorePositions(short.history, shortOpenPrice)) return(false);
    }
 
    // set the new gridbase and update total lots
@@ -576,7 +1030,7 @@ bool ResumeSequence(int signal) {
 
    // update pending orders
    if (!UpdatePendingOrders()) return(false);
-   if (IsLogInfo()) logInfo("ResumeSequence(3)  "+ sequence.name +" sequence resumed (startprice "+ NumberToStr(sequence.startPrice, PriceFormat) +", new gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
+   if (IsLogInfo()) logInfo("ResumeSequence(3)  "+ sequence.name +" sequence resumed at "+ NumberToStr(sequence.startPrice, PriceFormat) +" (new gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
    ComputeProfit(true);
    return(SaveStatus());
@@ -584,24 +1038,25 @@ bool ResumeSequence(int signal) {
 
 
 /**
- * Restore open positions of a stopped sequence. Called from ResumeSequence().
+ * Restore the open positions of the last sequence cycle. Called only from ResumeSequence().
  *
  * @param  _In_  double history[][] - order history
- * @param  _In_  int    cycleId     - id of the history cycle to restore
  * @param  _Out_ double openPrice   - variable receiving the average open price of the opened positions
  *
  * @return bool - success status
  */
-bool RestorePositions(double history[][], int cycleId, double &openPrice) {
+bool RestorePositions(double history[][], double &openPrice) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("RestorePositions(1)  "+ sequence.name +" cannot restore positions of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (cycleId < 0)                           return(!catch("RestorePositions(2)  "+ sequence.name +" invalid parameter cycleId: "+ cycleId, ERR_INVALID_PARAMETER));
 
-   double price=0, lots=0, sumPrice=0, sumLots=0;
    int size = ArrayRange(history, 0);
+   if (!size) return(!catch("RestorePositions(2)  "+ sequence.name +" cannot restore last cycle (empty history)", ERR_ILLEGAL_STATE));
+
+   int lastCycle = history[size-1][HIX_CYCLE];
+   double price=0, lots=0, sumPrice=0, sumLots=0;
 
    for (int i=0; i < size; i++) {
-      if (history[i][HIX_CYCLE] == cycleId) {
+      if (history[i][HIX_CYCLE] == lastCycle) {
          int direction = ifInt(history[i][HIX_OPENTYPE]==OP_BUY, D_LONG, D_SHORT);
 
          if (!Grid.AddPosition(direction, history[i][HIX_LEVEL], price, lots)) return(false);
@@ -610,6 +1065,7 @@ bool RestorePositions(double history[][], int cycleId, double &openPrice) {
       }
    }
    openPrice = MathDiv(sumPrice, sumLots);
+
    return(!catch("RestorePositions(3)"));
 }
 
@@ -638,7 +1094,7 @@ bool StopSequence(int signal) {
          double   stopLoss    = NULL;
          double   takeProfit  = NULL;
          string   comment     = "";
-         int      magicNumber = CreateMagicNumber();
+         int      magicNumber = CreateMagicNumber(NULL);
          datetime expires     = NULL;
          color    markerColor = CLR_NONE;
          int      oeFlags     = NULL;
@@ -665,7 +1121,7 @@ bool StopSequence(int signal) {
    sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
    sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    SS.StopConditions();
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
@@ -714,7 +1170,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
    if (ArraySize(positions) > 0) {
       int slippage = 10;    // point
       int oeFlags, oes[][ORDER_EXECUTION.intSize], pos;
-      if (!OrdersClose(positions, slippage, CLR_CLOSE, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
+      if (!OrdersClose(positions, slippage, CLR_CLOSED, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       double remainingSwap, remainingCommission, remainingProfit;
       orders = ArrayRange(oes, 0);
@@ -1273,17 +1729,18 @@ int CreateSequenceId() {
 /**
  * Generate a unique magic order number for the sequence.
  *
+ * @param  int level - gridlevel
+ *
  * @return int - magic number or NULL in case of errors
  */
-int CreateMagicNumber() {
+int CreateMagicNumber(int level) {
    if (STRATEGY_ID < 101 || STRATEGY_ID > 1023)  return(!catch("CreateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    if (sequence.id < 1000 || sequence.id > 9999) return(!catch("CreateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
    int sequence = sequence.id;                                 // 1000-9999 (14 bit)
-   int level    = 0;                                           //         0 (not used in this strategy)
-
-   return((strategy<<22) + (sequence<<8) + (level<<0));
+   int _level   = level;                                       //     0-255 (8 bit)
+   return((strategy<<22) + (sequence<<8) + (_level<<0));
 }
 
 
@@ -1989,11 +2446,12 @@ bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-// backed-up status variables
+// backed-up global var which may be affected by input parameter changes
 int      prev.sequence.id;
 datetime prev.sequence.created;
 bool     prev.sequence.isTest;
 string   prev.sequence.name = "";
+int      prev.sequence.cycle;
 int      prev.sequence.status;
 int      prev.sequence.direction;
 bool     prev.sequence.pyramidEnabled;
@@ -2046,11 +2504,12 @@ void BackupInputs() {
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
 
-   // backup status variables which may change by modifying input parameters
+   // backup global vars which may be affected by input parameter changes
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
    prev.sequence.isTest            = sequence.isTest;
    prev.sequence.name              = sequence.name;
+   prev.sequence.cycle             = sequence.cycle;
    prev.sequence.status            = sequence.status;
    prev.sequence.direction         = sequence.direction;
    prev.sequence.pyramidEnabled    = sequence.pyramidEnabled;
@@ -2083,7 +2542,7 @@ void BackupInputs() {
 
 
 /**
- * Restore backed-up input parameters and status variables. Called from onInitParameters() and onInitTimeframeChange().
+ * Restore backed-up input parameters and global vars. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
    // restore input parameters
@@ -2102,11 +2561,12 @@ void RestoreInputs() {
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
 
-   // restore status variables
+   // restore global vars
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
    sequence.isTest            = prev.sequence.isTest;
    sequence.name              = prev.sequence.name;
+   sequence.cycle             = prev.sequence.cycle;
    sequence.status            = prev.sequence.status;
    sequence.direction         = prev.sequence.direction;
    sequence.pyramidEnabled    = prev.sequence.pyramidEnabled;
@@ -2622,27 +3082,21 @@ bool ResetOrderLog(int direction) {
 /**
  * Move existing sequence data to the archive. Called from ResumeSequence() to prepare continuation of a stopped sequence.
  *
- * @return int - cycle id of the archived data or NULL (0) in case of errors
+ * @return bool - success status
  */
 bool ArchiveStoppedSequence() {
-   if (IsLastError())                     return(NULL);
+   if (IsLastError())                     return(false);
    if (sequence.status != STATUS_STOPPED) return(!catch("ArchiveStoppedSequence(1)  "+ sequence.name +" cannot archive data of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
-   // resolve the next cycle id
-   int longHistorySize=ArrayRange(long.history, 0), shortHistorySize=ArrayRange(short.history, 0), cycleId=0;
-   if (longHistorySize  > 0) cycleId = Max(cycleId, long.history [longHistorySize -1][HIX_CYCLE]);
-   if (shortHistorySize > 0) cycleId = Max(cycleId, short.history[shortHistorySize-1][HIX_CYCLE]);
-   cycleId++;
 
    // long
    if (long.enabled) {
-      int historySize = longHistorySize;
+      int historySize = ArrayRange(long.history, 0);
       int ordersSize  = ArraySize(long.ticket);
       ArrayResize(long.history, historySize + ordersSize);
 
       for (int i=0; i < ordersSize; i++) {
-         long.history[historySize+i][HIX_CYCLE       ] = cycleId;
-         long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     //
          long.history[historySize+i][HIX_STARTPRICE  ] = sequence.startPrice;    //
          long.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          long.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
@@ -2683,13 +3137,13 @@ bool ArchiveStoppedSequence() {
 
    // short
    if (short.enabled) {
-      historySize = shortHistorySize;
+      historySize = ArrayRange(short.history, 0);
       ordersSize  = ArraySize(short.ticket);
       ArrayResize(short.history, historySize + ordersSize);
 
       for (i=0; i < ordersSize; i++) {
-         short.history[historySize+i][HIX_CYCLE       ] = cycleId;
-         short.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         short.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     //
          short.history[historySize+i][HIX_STARTPRICE  ] = sequence.startPrice;    //
          short.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          short.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
@@ -2728,9 +3182,7 @@ bool ArchiveStoppedSequence() {
       ArrayResize(short.profit,       0);
    }
 
-   if (!catch("ArchiveStoppedSequence(2)"))
-      return(cycleId);
-   return(NULL);
+   return(!catch("ArchiveStoppedSequence(2)"));
 }
 
 
@@ -2755,10 +3207,10 @@ int SubmitMarketOrder(int direction, int level, int oe[]) {
    int      slippage    = 1;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = ifInt(direction==D_LONG, CLR_LONG, CLR_SHORT);
+   color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL;
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2789,10 +3241,10 @@ int SubmitLimitOrder(int direction, int level, int &oe[]) {
    int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING;
+   color    markerColor = CLR_OPEN_PENDING;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2826,10 +3278,10 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
    int      slippage    = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
-   int      magicNumber = CreateMagicNumber();
+   int      magicNumber = CreateMagicNumber(level);
    datetime expires     = NULL;
    string   comment     = "Duel."+ ifString(direction==D_LONG, "L.", "S.") + sequence.id +"."+ NumberToStr(level, "+.");
-   color    markerColor = CLR_PENDING;
+   color    markerColor = CLR_OPEN_PENDING;
    int      oeFlags     = F_ERR_INVALID_STOP;         // custom handling of ERR_INVALID_STOP (market violated)
 
    int ticket = OrderSendEx(Symbol(), type, lots, price, slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
@@ -2917,6 +3369,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.created",           /*datetime*/ sequence.created + GmtTimeFormat(sequence.created, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "sequence.isTest",            /*bool    */ sequence.isTest);
    WriteIniString(file, section, "sequence.name",              /*string  */ sequence.name);
+   WriteIniString(file, section, "sequence.cycle",             /*int     */ sequence.cycle);
    WriteIniString(file, section, "sequence.status",            /*int     */ sequence.status);
    WriteIniString(file, section, "sequence.direction",         /*int     */ sequence.direction);
    WriteIniString(file, section, "sequence.pyramidEnabled",    /*bool    */ sequence.pyramidEnabled);
@@ -2995,7 +3448,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "slPct.description",          /*string  */ slPct.description + CRLF);
 
    WriteIniString(file, section, "sessionbreak.starttime",     /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
+   WriteIniString(file, section, "sessionbreak.endtime",       /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -3140,7 +3593,7 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of the current sequence and restore all internal variables. Called only from RestoreSequence().
+ * Read the status file of a sequence and restore all internal variables. Called only from RestoreSequence().
  * Only a syntactic variables check is performed (i.e. type match). Logical validation happens in ValidateInputs().
  *
  * @return bool - success status
@@ -3204,6 +3657,7 @@ bool ReadStatus() {
    sequence.created           = GetIniInt    (file, section, "sequence.created"          );     // datetime sequence.created           = 1624924800 (Mon, 2021.05.12 13:22:34)
    sequence.isTest            = GetIniBool   (file, section, "sequence.isTest"           );     // bool     sequence.isTest            = 1
    sequence.name              = GetIniStringA(file, section, "sequence.name",          "");     // string   sequence.name              = L.1234
+   sequence.cycle             = GetIniInt    (file, section, "sequence.cycle"            );     // int      sequence.cycle             = 2
    sequence.status            = GetIniInt    (file, section, "sequence.status"           );     // int      sequence.status            = 1
    sequence.direction         = GetIniInt    (file, section, "sequence.direction"        );     // int      sequence.direction         = 2
    sequence.pyramidEnabled    = GetIniBool   (file, section, "sequence.pyramidEnabled"   );     // bool     sequence.pyramidEnabled    = 1
@@ -3485,7 +3939,8 @@ int ShowStatus(int error = NO_ERROR) {
                                   "TP:             ", sSequenceTpPrice,                         NL,
                                   "SL:             ", sSequenceSlPrice,                         NL,
                                                                                                 NL,
-                                  "Profit:        ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
+                                  "Profit:        ",  sSequenceTotalPL, "  ", sSequencePlStats, NL,
+                                   sCycleStats
    );
 
    // 4 lines margin-top for instrument and indicator legends
@@ -3519,6 +3974,7 @@ void SS.All() {
       SS.ProfitTargets();
       SS.TotalPL();
       SS.PLStats();
+      SS.CycleStats();
    }
 }
 
@@ -3548,7 +4004,7 @@ void SS.GridParameters() {
  */
 void SS.Lots() {
    if (__isChart) {
-      string sOpenLevels="", sSlippage="";
+      string sOpenLevels="", sMinusLevels, sMax="", sSlippage="";
       int plusLevels, minusLevels, openLevels;
 
       if (!long.totalLots) sTotalLongLots = "-";
@@ -3557,7 +4013,13 @@ void SS.Lots() {
          minusLevels = -Min(0, long.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ openLevels;
+
+         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+            if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
+            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
+         }
 
          sSlippage = PipToStr(long.slippage/Pip, true, true);
          if (GT(long.slippage, 0)) sSlippage = "+"+ sSlippage;
@@ -3571,7 +4033,13 @@ void SS.Lots() {
          minusLevels = -Min(0, short.minLevel);
          if (plusLevels && minusLevels) minusLevels--;
          openLevels  = plusLevels + minusLevels;
-         sOpenLevels = "levels: "+ ifString(openLevels >= MaxGridLevels, "max. of ", "") + openLevels + ifString(plusLevels && minusLevels, " (-"+ minusLevels +")", "");
+         sOpenLevels = "levels: "+ openLevels;
+
+         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+            if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
+            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
+         }
 
          sSlippage = PipToStr(short.slippage/Pip, true, true);
          if (GT(short.slippage, 0)) sSlippage = "+"+ sSlippage;
@@ -3602,7 +4070,7 @@ void SS.TotalPL(bool enforce = false) {
 
 
 /**
- * ShowStatus: Update the string representaton of all P/L statistics.
+ * ShowStatus: Update the string representaton of the P/L statistics.
  *
  * @param  bool enforce [optional] - whether to perform the update unconditionally (default: no)
  */
@@ -3625,6 +4093,50 @@ void SS.PLStats(bool enforce = false) {
          sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
       }
    }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of P/L stats of finished sequence cycles.
+ */
+void SS.CycleStats() {
+   if (!__isChart) return;
+
+   sCycleStats = "";
+
+   double history[][23];               // must match global vars long/short.history[][]
+   if      (long.enabled  && ArraySize(long.history))  ArrayCopy(history, long.history);
+   else if (short.enabled && ArraySize(short.history)) ArrayCopy(history, short.history);
+   else return;
+
+   string sTotalPL, sMaxProfit, sMaxDrawdown, sResult;
+   int size=ArrayRange(history, 0), lastCycle=0;
+
+   for (int i=0; i < size; i++) {
+      int cycle = history[i][HIX_CYCLE];
+
+      if (cycle != lastCycle) {
+         double totalPL     = history[i][HIX_TOTALPROFIT];
+         double maxProfit   = history[i][HIX_MAXPROFIT  ];
+         double maxDrawdown = history[i][HIX_MAXDRAWDOWN];
+
+         if (ShowProfitInPercent) {
+            sTotalPL     = NumberToStr(MathDiv(totalPL,     sequence.startEquity) * 100, "+.2") +"%";
+            sMaxProfit   = NumberToStr(MathDiv(maxProfit,   sequence.startEquity) * 100, "+.2") +"%";
+            sMaxDrawdown = NumberToStr(MathDiv(maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+         }
+         else {
+            sTotalPL     = NumberToStr(sequence.totalPL, "+.2");
+            sMaxProfit   = NumberToStr(maxProfit,        "+.2");
+            sMaxDrawdown = NumberToStr(maxDrawdown,      "+.2");
+         }
+         sResult = StringConcatenate(cycle, ":  ", sTotalPL, "  (", sMaxProfit, " / ", sMaxDrawdown, ")", NL, sResult);
+         lastCycle = cycle;
+      }
+   }
+   if (lastCycle > 0) sCycleStats = StringConcatenate("----------------------------------------------------", NL, sResult);
+
+   ArrayResize(history, 0);
 }
 
 

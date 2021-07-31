@@ -199,18 +199,23 @@ bool IsLogFatal() {
 int log(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
-      string key, value;
-      if (This.IsTesting()) {
-         key = "Tester";
-         value = GetConfigString("Log", key, "off");                                               // tester default: off
+      if (IsExpert() && !IsTesting()) {
+         configLevel = LOG_ALL;                                                                    // in online EAs: all
       }
       else {
-         key = ProgramName();
-         if (!IsConfigKey("Log", key)) key = "Online";
-         value = GetConfigString("Log", key, "all");                                               // online default: all
+         string key, value;
+         if (This.IsTesting()) {
+            key = "Tester";
+            value = GetConfigString("Log", key, "off");                                            // tester default: off
+         }
+         else {
+            key = ProgramName();
+            if (!IsConfigKey("Log", key)) key = "Online";
+            value = GetConfigString("Log", key, "all");                                            // online default: all
+         }
+         configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
       }
-      configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevel(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF)
@@ -324,26 +329,26 @@ int logFatal(string message, int error) {
 int log2Alert(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelAlert]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Alert", "notice");                                     // default: notice
+      string sValue = GetConfigString("Log", "Log2Alert", "notice");                // default: notice
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Alert(2)  invalid loglevel configuration [Log]->Log2Alert = "+ sValue, ERR_INVALID_CONFIG_VALUE));
-      configLevel = Min(configLevel, LOG_FATAL);                                                         // the alert appender cannot be fully switched off
+      configLevel = Min(configLevel, LOG_FATAL);                                    // the alert appender cannot be fully switched off
       ec_SetLoglevelAlert(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Alert(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));    // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2Alert(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelAlert(__ExecutionContext, LOG_OFF);                                                  // prevent recursive calls
+      ec_SetLoglevelAlert(__ExecutionContext, LOG_OFF);                             // prevent recursive calls
 
-      if (IsTesting()) {                                                                                 // neither Alert() nor MessageBox() can be used
+      if (IsTesting()) {                                                            // neither Alert() nor MessageBox() can be used
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
-         int pos = StringFind(message, ") ");                                                            // insert a line-wrap after the first closing function brace
+         int pos = StringFind(message, ") ");                                       // insert a line-wrap after the first closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
          message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
          PlaySoundEx("alert.wav");
@@ -353,7 +358,7 @@ int log2Alert(string message, int error, int level) {
          Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", FullModuleName(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
       }
 
-      ec_SetLoglevelAlert(__ExecutionContext, configLevel);                                              // restore the configuration
+      ec_SetLoglevelAlert(__ExecutionContext, configLevel);                         // restore the configuration
       isRecursion = false;
    }
    return(error);
@@ -372,7 +377,7 @@ int log2Alert(string message, int error, int level) {
 int log2Debugger(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebugger]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Debugger", "all");                                     // default: off
+      string sValue = GetConfigString("Log", "Log2Debugger", "all");                // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelDebugger(__ExecutionContext, configLevel);
@@ -381,16 +386,16 @@ int log2Debugger(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Debugger(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level)); // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2Debugger(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelDebugger(__ExecutionContext, LOG_OFF);                                               // prevent recursive calls
+      ec_SetLoglevelDebugger(__ExecutionContext, LOG_OFF);                          // prevent recursive calls
 
       debug(message, error, level);
 
-      ec_SetLoglevelDebugger(__ExecutionContext, configLevel);                                           // restore the configuration
+      ec_SetLoglevelDebugger(__ExecutionContext, configLevel);                      // restore the configuration
       isRecursion = false;
    }
    return(error);
@@ -409,25 +414,30 @@ int log2Debugger(string message, int error, int level) {
 int log2File(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelFile]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2File", "off");                                         // default: off
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(2)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      if (IsExpert() && !IsTesting()) {
+         configLevel = LOG_ALL;                                                     // in online EAs: all
+      }
+      else {
+         string sValue = GetConfigString("Log", "Log2File", "off");                 // default: off
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(2)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       ec_SetLoglevelFile(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2File(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));     // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2File(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);                                                   // prevent recursive calls
+      ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
       AppendLogMessageA(__ExecutionContext, TimeCurrent(), message, error, level);
 
-      ec_SetLoglevelFile(__ExecutionContext, configLevel);                                               // restore the configuration
+      ec_SetLoglevelFile(__ExecutionContext, configLevel);                          // restore the configuration
       isRecursion = false;
    }
    return(error);
@@ -446,7 +456,7 @@ int log2File(string message, int error, int level) {
 int log2Mail(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Mail", "off");                                         // default: off
+      string sValue = GetConfigString("Log", "Log2Mail", "off");                    // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelMail(__ExecutionContext, configLevel);
@@ -455,12 +465,12 @@ int log2Mail(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));     // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);                                                   // prevent recursive calls
+      ec_SetLoglevelMail(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
       static string sender = ""; if (!StringLen(sender)) {
          sValue = GetConfigString("Mail", "Sender", "mt4@"+ GetHostName() +".localdomain");
@@ -477,7 +487,7 @@ int log2Mail(string message, int error, int level) {
       string body    = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendEmail(sender, receiver, subject, body)) {
-         ec_SetLoglevelMail(__ExecutionContext, configLevel);                                            // restore the configuration or leave it disabled
+         ec_SetLoglevelMail(__ExecutionContext, configLevel);                       // restore the configuration or leave it disabled
       }
       isRecursion = false;
    }
@@ -497,7 +507,7 @@ int log2Mail(string message, int error, int level) {
 int log2SMS(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelSMS]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2SMS", "off");                                          // default: off
+      string sValue = GetConfigString("Log", "Log2SMS", "off");                     // default: off
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2SMS(1)  invalid loglevel configuration [Log]->Log2SMS = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       ec_SetLoglevelSMS(__ExecutionContext, configLevel);
@@ -506,12 +516,12 @@ int log2SMS(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2SMS(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));      // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2SMS(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelSMS(__ExecutionContext, LOG_OFF);                                                    // prevent recursive calls
+      ec_SetLoglevelSMS(__ExecutionContext, LOG_OFF);                               // prevent recursive calls
 
       static string receiver = ""; if (!StringLen(receiver)) {
          sValue = GetConfigString("SMS", "Receiver");
@@ -522,7 +532,7 @@ int log2SMS(string message, int error, int level) {
                   +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendSMS(receiver, text)) {
-         ec_SetLoglevelSMS(__ExecutionContext, configLevel);                                             // restore the configuration or leave it disabled
+         ec_SetLoglevelSMS(__ExecutionContext, configLevel);                        // restore the configuration or leave it disabled
       }
       isRecursion = false;
    }
@@ -542,29 +552,29 @@ int log2SMS(string message, int error, int level) {
 int log2Terminal(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelTerminal]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Terminal", "all");                                     // default: all
+      string sValue = GetConfigString("Log", "Log2Terminal", "all");                // default: all
       configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
       if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Terminal(2)  invalid loglevel configuration [Log]->Log2Terminal = "+ sValue, ERR_INVALID_CONFIG_VALUE));
-      configLevel = Min(configLevel, LOG_FATAL);                                                         // the terminal appender cannot be fully switched off
+      configLevel = Min(configLevel, LOG_FATAL);                                    // the terminal appender cannot be fully switched off
       ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {
-         Alert("log2Terminal(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level)); // should never happen
+      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+         Alert("log2Terminal(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
-      ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);                                               // prevent recursive calls
+      ec_SetLoglevelTerminal(__ExecutionContext, LOG_OFF);                          // prevent recursive calls
 
       string sLoglevel = ""; if (level != LOG_DEBUG) sLoglevel = LoglevelDescription(level) +"  ";
       string sError    = ""; if (error != NO_ERROR)  sError    = " ["+ ErrorToStr(error) +"]";
 
       Print(sLoglevel, StrReplace(message, NL, " "), sError);
 
-      ec_SetLoglevelTerminal(__ExecutionContext, configLevel);                                           // restore the configuration
+      ec_SetLoglevelTerminal(__ExecutionContext, configLevel);                      // restore the configuration
       isRecursion = false;
    }
    return(error);
