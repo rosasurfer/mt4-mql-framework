@@ -7,7 +7,6 @@
 #import "rsfMT4Expander.dll"
 
    // terminal status, terminal interaction
-   int      FindInputDialog(int programType, string programName);
    string   GetExpanderFileNameA();
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
@@ -151,9 +150,10 @@
    string   GetWindowStringA   (int hWnd, string name);
    string   RemoveWindowStringA(int hWnd, string name);
 
-   // Win32 helpers
+   // other helpers
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
+   bool     IsProgramType(int type);
 
    // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.
    bool     onBarOpen();
