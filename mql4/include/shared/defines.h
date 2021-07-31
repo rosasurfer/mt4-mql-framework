@@ -21,8 +21,8 @@
 
 
 // log levels
-#define LOG_DEBUG                               1        // a message is logged if its loglevel matches or exceeds the program's configured loglevel
-#define LOG_ALL                         LOG_DEBUG        // alias: the lowest loglevel effectively enables all loglevels
+#define LOG_DEBUG                               1        // a message is logged if its loglevel matches or exceeds a program's configured loglevel
+#define LOG_ALL                         LOG_DEBUG        // alias to enable all loglevels
 #define LOG_INFO                                2
 #define LOG_NOTICE                              4
 #define LOG_WARN                                8

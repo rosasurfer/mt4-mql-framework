@@ -1,5 +1,8 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der offenen Orders umzuschaltem.
+ * Chart.ToggleOpenOrders
+ *
+ * Send a command to active listeners (Duel or ChartInfos) to toggle the display of open orders. An active Duel instance is
+ * preferred.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -9,11 +12,20 @@ int __DeinitFlags[];
 
 
 /**
- * Main-Funktion
+ * Main function
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders");
+   if (This.IsTesting()) Tester.Pause();
+
+   if (ObjectFind("Duel.status") == 0) {
+      // chart status object of an active Duel instance found
+      SendChartCommand("Duel.command", "ToggleOpenOrders");
+   }
+   else {
+      // no active Duel instance found
+      SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders");
+   }
    return(catch("onStart(1)"));
 }
