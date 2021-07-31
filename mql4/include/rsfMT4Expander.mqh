@@ -7,7 +7,6 @@
 #import "rsfMT4Expander.dll"
 
    // terminal status, terminal interaction
-   int      FindInputDialog(int programType, string programName);
    string   GetExpanderFileNameA();
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
@@ -96,7 +95,6 @@
    //bool   ShiftIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
-   //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
    //bool   SortMqlStringsA(string values[], int size);
@@ -151,9 +149,10 @@
    string   GetWindowStringA   (int hWnd, string name);
    string   RemoveWindowStringA(int hWnd, string name);
 
-   // Win32 helpers
+   // other helpers
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
+   bool     IsProgramType(int type);
 
    // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.
    bool     onBarOpen();
