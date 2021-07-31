@@ -95,7 +95,6 @@
    //bool   ShiftIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
-   //int    AnsiToWCharStr(string source, int dest[], int destSize);
    //string MD5Hash(int buffer[], int size);
    string   MD5HashA(string str);
    //bool   SortMqlStringsA(string values[], int size);
