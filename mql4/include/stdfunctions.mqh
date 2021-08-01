@@ -1115,7 +1115,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
-                if      (              _symbol=="US2000" )     result = "RUS2000";
+                if      (              _symbol=="UKOIL"  )     result = "BRENT";
+                else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
@@ -1160,6 +1161,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "XAUEUR"))     result = "XAUEUR";
                 else if (StrStartsWith(_symbol, "XAUJPY"))     result = "XAUJPY";
                 else if (StrStartsWith(_symbol, "XAUUSD"))     result = "XAUUSD";
+                else if (              _symbol=="XBRUSD")      result = "BRENT";
+                else if (              _symbol=="XTIUSD")      result = "WTI";
                 break;
 
       case 'Y': break;
