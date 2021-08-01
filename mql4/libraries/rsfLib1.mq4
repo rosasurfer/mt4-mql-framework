@@ -4714,7 +4714,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
       ArrayResize(oe, ORDER_EXECUTION.intSize);
    ArrayInitialize(oe, 0);
    // symbol
-   if (symbol == "0") symbol = Symbol();     // (string) NULL
+   if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
@@ -4749,7 +4749,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (LT(takeProfit, 0))                                      return(!Order.HandleError("OrderSendEx(12)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
-   if (comment == "0") comment = "";         // (string) NULL
+   if (comment == "0") comment = "";                           // (string) NULL
    else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!Order.HandleError("OrderSendEx(13)  illegal parameter comment: "+ DoubleQuoteStr(comment) +" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER, oeFlags, oe));
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
@@ -4836,8 +4836,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
-            if (type <= OP_SELL) {
-               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+            if (type<=OP_SELL && __ExecutionContext[EC.extReporting]) {
+               Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5464,10 +5464,10 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             requotes++;
             oe.setRequotes(oe, requotes);
             if (IsTesting() || requotes > 5) break;
-            continue;                                    // immediately repeat the request
+            continue;                                                               // immediately repeat the request
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                        // unknown ticket or not an open position anymore (client-side)      ! not yet encountered
+         case ERR_INVALID_TICKET:                                                   // unknown ticket or not an open position anymore (client-side)   !!! not yet encountered
             if (IsLogDebug()) logDebug("OrderCloseEx(41)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;

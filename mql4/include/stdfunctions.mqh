@@ -864,6 +864,9 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 /**
  * Calculate the current symbol's commission value for the specified lotsize.
  *
+ * - For tests the broker's commission rate as stored in the testers FXT files is used (always correct).
+ * - Online the commission rate as configured by the user in the framework configuration is used (subject to errors).
+ *
  * @param  double lots [optional] - lotsize (default: 1 lot)
  * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
  *                                  MODE_MARKUP: as price markup in quote currency (independant of lotsize)
@@ -2640,11 +2643,11 @@ void CopyMemory(int destination, int source, int bytes) {
 
 
 /**
- * Addiert die Werte eines Integer-Arrays.
+ * Add all values of an integer array.
  *
- * @param  int values[] - Array mit Ausgangswerten
+ * @param  int values[] - array
  *
- * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
+ * @return int - sum or NULL (0) in case of errors
  */
 int SumInts(int values[]) {
    if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
