@@ -60,8 +60,11 @@ int init() {
    // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
-
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
+   if (EA.CreateReport && initFlags & INIT_NO_EXTERNAL_REPORTING) {
+      EA.CreateReport = false;                                       // the input must be reset before SyncMainContext_init()
+   }
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -76,7 +79,7 @@ int init() {
    if (!InitGlobals()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
-   int initFlags = __ExecutionContext[EC.programInitFlags];
+   initFlags = __ExecutionContext[EC.programInitFlags];
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
@@ -691,7 +694,7 @@ bool Tester.RecordEquity() {
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   Test_StartReporting (int ec[], datetime from, int bars, int reportId, string reportSymbol);
-   bool   Test_StopReporting  (int ec[], datetime to,   int bars);
+   bool   Test_StopReporting  (int ec[], datetime to, int bars);
    bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
 

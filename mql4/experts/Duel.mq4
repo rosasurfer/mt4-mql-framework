@@ -39,7 +39,7 @@
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -2251,10 +2251,10 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       pl        = gridvola/100 * equity;
       adrLots   = pl/beDistance/tickValue * tickSize;
       adrLevels = adrLots/unitsize;
-      gridsize  = adr/Pip/(adrLevels-1);
+      gridsize  = MathDiv(adr/Pip, adrLevels-1);
       gridsize  = RoundCeil(gridsize, Digits & 1);                   // round gridsize up
-
-      if (!gridsize) return(!catch("ConfigureGrid(11)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
+      if (gridsize < 0) logError("ConfigureGrid(11)  illegal result: pl="+ DoubleToStr(pl, 2) +"  adr="+ NumberToStr(adr, ".+") +"  adrLots="+ NumberToStr(adrLots, ".+") +"  adrLevels="+ NumberToStr(adrLevels, ".+") +" => resulting gridsize: "+ NumberToStr(gridsize, ".+"), ERR_RUNTIME_ERROR);
+      if (!gridsize) return(!catch("ConfigureGrid(12)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
    }
    else if (gridvola && gridsize) {
       // calculate the resulting unitsize
@@ -2277,7 +2277,6 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
          unitsize = MarketInfo(Symbol(), MODE_MINLOT);               // set unitsize to the minimum
       }
    }
-
    return(ConfigureGrid(gridvola, gridsize, unitsize));              // recalculate missings after adjusted or rounded up/down values
 }
 
