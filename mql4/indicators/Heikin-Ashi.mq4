@@ -83,8 +83,8 @@ int outputInitPeriods;
 
 int maxValues;
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 
 /**

@@ -450,7 +450,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       int centerBar = (openBar+closeBar)/2;                                         // TODO: draw close marker for the youngest bar after market-close (weekend)
 
       if (centerBar > closeBar) {
-         string labelWithPrice, labelWithoutPrice=label +" Close";
+         string labelWithPrice="", labelWithoutPrice=label +" Close";
 
          if (ObjectFind(labelWithoutPrice) == 0) {                                  // Every marker consists of two objects: an invisible label (1st object) with a fixed name
             labelWithPrice = ObjectDescription(labelWithoutPrice);                  // holding in the description the dynamic and variable name of the visible marker (2nd object).
@@ -532,7 +532,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          int ethCenterBar = (ethOpenBar+ethCloseBar)/2;
 
          if (ethCenterBar > ethCloseBar) {
-            string ethLabelWithPrice, ethLabelWithoutPrice=ethLabel +" Close";
+            string ethLabelWithPrice="", ethLabelWithoutPrice=ethLabel +" Close";
 
             if (ObjectFind(ethLabelWithoutPrice) == 0) {                            // Every marker consists of two objects: an invisible label (1st object) with a fixed name
                ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);         // holding in the description the dynamic and variable name of the visible marker (2nd object).

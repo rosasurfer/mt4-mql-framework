@@ -393,11 +393,11 @@ bool onCommand(string commands[]) {
 string   prev.Sequence.ID = "";
 string   prev.GridDirection = "";
 int      prev.GridSize;
-string   prev.UnitSize;
+string   prev.UnitSize = "";
 int      prev.StartLevel;
 string   prev.StartConditions = "";
 string   prev.StopConditions = "";
-string   prev.AutoRestart;
+string   prev.AutoRestart = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
@@ -654,7 +654,7 @@ double CalculateUnitSize(double equity) {
       return(!catch("CalculateUnitSize(4)  "+ sequence.longName +" market data not (yet) available: "+ StrLeft(sDetail, -2), ERS_TERMINAL_NOT_YET_READY));
    }
 
-   string sValue;
+   string sValue = "";
    bool   calculated = false;
    double result;
 
@@ -875,7 +875,7 @@ int CreateStatusBox() {
 
    int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
    color  bgColor = C'248,248,248';                            // that's chart background color
-   string label;
+   string label = "";
 
    for (int i=0; i < rectangles; i++) {
       label = ProgramName() +".statusbox."+ (i+1);
@@ -1009,7 +1009,7 @@ void RedrawOrders() {
 void RedrawStartStop() {
    if (!__isChart) return;
 
-   string   label, sCycle = StrPadLeft(sequence.cycle, 3, "0");
+   string   label="", sCycle=StrPadLeft(sequence.cycle, 3, "0");
    datetime time;
    double   price;
    double   profit;
@@ -1099,7 +1099,7 @@ bool RestoreChartStatus() {
  * @return int - error status
  */
 int DeleteChartStatus() {
-   string label, prefix=ProgramName() +".runtime.";
+   string label="", prefix=ProgramName() +".runtime.";
 
    for (int i=ObjectsTotal()-1; i>=0; i--) {
       label = ObjectName(i);
@@ -2142,7 +2142,7 @@ string UpdateStatus.OrderFillMsg(int i) {
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
-      string sSlippage;
+      string sSlippage = "";
       if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
@@ -2196,7 +2196,7 @@ string UpdateStatus.StopLossMsg(int i) {
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
          if (orders.type[i] == OP_SELL)
             slippage = -slippage;
-      string sSlippage;
+      string sSlippage = "";
       if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
       else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
       message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
@@ -2217,7 +2217,7 @@ string UpdateStatus.StopLossMsg(int i) {
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
-   static string label, mutex; if (!StringLen(label)) {
+   static string label="", mutex=""; if (!StringLen(label)) {
       label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
@@ -2276,7 +2276,7 @@ bool IsOrderClosedBySL() {
 bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
-   string message;
+   string message = "";
    bool triggered, resuming = (sequence.maxLevel != 0);
 
    if (IsSessionBreak()) {
@@ -2391,7 +2391,7 @@ bool IsStopSignal(int &signal) {
    signal = NULL;
    if (last_error || (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING)) return(false);
    if (!ArraySize(sequence.start.event))                                                       return(false);
-   string message;
+   string message = "";
 
    // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
    if (stop.trend.condition) {
@@ -3703,7 +3703,7 @@ int ShowStatus(int error = NO_ERROR) {
       isRecursion = true;
    }
 
-   string msg, sError;
+   string msg="", sError="";
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    switch (sequence.status) {
@@ -3962,7 +3962,7 @@ void SS.StartStopStats() {
    sStartStopStats = "";
 
    int size = ArraySize(sequence.start.event);
-   string sStartPL, sStopPL;
+   string sStartPL="", sStopPL="";
 
    for (int i=0; i < size-1; i++) {
       if (ShowProfitInPercent) {
@@ -4084,7 +4084,7 @@ bool SaveStatus() {
    string sActiveStartConditions="", sActiveStopConditions="";
    SaveStatus.ConditionsToStr(sActiveStartConditions, sActiveStopConditions);
 
-   string section, file=GetStatusFilename();
+   string section="", file=GetStatusFilename();
 
    section = "Common";
    WriteIniString(file, section, "Account",                  GetAccountCompany() +":"+ GetAccountNumber());
@@ -4422,7 +4422,7 @@ bool ReadStatus() {
    success = ReadStatus.ParseTickets(sClosedPositions, ignoreClosedPositions);
    if (!success)                            return(!catch("ReadStatus(29)  invalid ignored closed positions "+ DoubleQuoteStr(sClosedPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   string orderKeys[], sOrder;
+   string orderKeys[], sOrder="";
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
    Orders.ResizeArrays(0);
    for (i=0; i < size; i++) {
@@ -4509,7 +4509,7 @@ bool ReadStatus.ParseStartStop(string value, int &events[], datetime &times[], d
    double   price;  ArrayResize(prices,  0);     // rt.sequence.starts: 1|1328701713|1.32677|1000.00,  3|1329999999|1.33215|1200.00
    double   profit; ArrayResize(profits, 0);     // rt.sequence.stops:  2|1328701999|1.32734|1200.00,  0|0|0.00000|0.00
 
-   string records[], record, data[], sValue;
+   string records[], record="", data[], sValue="";
    int sizeOfRecords = Explode(value, ",", records, NULL);
 
    for (int i=0; i < sizeOfRecords; i++) {
@@ -4568,7 +4568,7 @@ bool ReadStatus.ParseGridBase(string value) {
    datetime time;
    double   price;                                    // rt.gridbase=1|1331710960|1.56743, 2|1331711010|1.56714
 
-   string records[], record, data[], sValue;
+   string records[], record="", data[], sValue="";
    int lastEvent, sizeOfRecords=Explode(value, ",", records, NULL);
 
    for (int i=0; i < sizeOfRecords; i++) {
@@ -4623,7 +4623,7 @@ bool ReadStatus.ParseMissedLevels(string value) {
    ArrayResize(sequence.missedLevels, 0);             // rt.sequence.missedLevels=-6,-7,-8,-14
 
    if (StringLen(value) > 0) {
-      string values[], sValue;
+      string values[], sValue="";
       int sizeOfValues=Explode(value, ",", values, NULL), level, lastLevel, sign, lastSign;
 
       for (int i=0; i < sizeOfValues; i++) {
@@ -4657,7 +4657,7 @@ bool ReadStatus.ParseTickets(string value, int &tickets[]) {
    ArrayResize(tickets, 0);                           // rt.ignorePendingOrders=66064890,66064891,66064892
                                                       // rt.ignoreOpenPositions=66064890,66064891,66064892
    if (StringLen(value) > 0) {                        // rt.ignoreClosedPositions=66064890,66064891,66064892
-      string values[], sValue;
+      string values[], sValue="";
       int ticket, sizeOfValues=Explode(value, ",", values, NULL);
 
       for (int i=0; i < sizeOfValues; i++) {
@@ -5352,7 +5352,7 @@ bool ReadTradeSessions(datetime time, datetime &config[][2]) {
    string symbol   = Symbol();
    string sDate    = TimeToStr(time, TIME_DATE);
    string sWeekday = GmtTimeFormat(time, "%A");
-   string value;
+   string value    = "";
 
    if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
    else if (IsConfigKey(section, sDate))                 value = GetConfigString(section, sDate);
@@ -5369,7 +5369,7 @@ bool ReadTradeSessions(datetime time, datetime &config[][2]) {
    if (value == "")
       return(true);
 
-   string values[], sTimes[], sSession, sSessionStart, sSessionEnd;
+   string values[], sTimes[], sSession="", sSessionStart="", sSessionEnd="";
    int sizeOfValues = Explode(value, ",", values, NULL);
    for (int i=0; i < sizeOfValues; i++) {
       sSession = StrTrim(values[i]);
@@ -5397,7 +5397,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
    string symbol   = Symbol();
    string sDate    = TimeToStr(time, TIME_DATE);
    string sWeekday = GmtTimeFormat(time, "%A");
-   string value;
+   string value    = "";
 
    if      (IsConfigKey(section, symbol +"."+ sDate))    value = GetConfigString(section, symbol +"."+ sDate);
    else if (IsConfigKey(section, symbol +"."+ sWeekday)) value = GetConfigString(section, symbol +"."+ sWeekday);
@@ -5413,7 +5413,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
    if (value == "")
       return(true);                                // TODO: fall-back to auto-adjusted trade sessions
 
-   string   values[], sTimes[], sTime, sHours, sMinutes, sSession, sStartTime, sEndTime;
+   string   values[], sTimes[], sTime="", sHours="", sMinutes="", sSession="", sStartTime="", sEndTime="";
    datetime dStartTime, dEndTime, dSessionStart, dSessionEnd;
    int      sizeOfValues = Explode(value, ",", values, NULL), iHours, iMinutes;
 
@@ -5613,7 +5613,7 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetALMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    maPeriods;
-   static string maAppliedPrice;
+   static string maAppliedPrice = "";
    static double distributionOffset;
    static double distributionSigma;
    static string lastParams = "";
@@ -5624,7 +5624,7 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
       distributionSigma  = 6.0;
 
       // "<periods>,<price>,<offset>,<sigma>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (!size)                    return(!catch("GetALMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5677,14 +5677,14 @@ double GetEMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetEMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    periods;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<periods>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetEMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5747,7 +5747,7 @@ double GetJMA(int timeframe, string params, int iBuffer, int iBar) {
 
    static int    periods;
    static int    phase;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
@@ -5755,7 +5755,7 @@ double GetJMA(int timeframe, string params, int iBuffer, int iBar) {
       appliedPrice = "Close";
 
       // "<periods>,<phase>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (!size)                    return(!catch("GetJMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5801,14 +5801,14 @@ double GetLWMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetLWMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    periods;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<periods>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetLWMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5845,14 +5845,14 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetNonLagMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    cycleLength;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<cycleLength>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetNonLagMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5906,14 +5906,14 @@ double GetSMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetSMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    periods;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<periods>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetSMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5950,14 +5950,14 @@ double GetSuperSmoother(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetSuperSmoother(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    periods;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<periods>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetSuperSmoother(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -5999,7 +5999,7 @@ double GetSuperTrend(int timeframe, string params, int iBuffer, int iBar) {
 
    if (params != lastParams) {
       // "<atrPeriods>,<smaPeriods>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size != 2)           return(!catch("GetSuperTrend(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -6033,14 +6033,14 @@ double GetTriEMA(int timeframe, string params, int iBuffer, int iBar) {
    if (!StringLen(params)) return(!catch("GetTriEMA(1)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
    static int    periods;
-   static string appliedPrice;
+   static string appliedPrice = "";
    static string lastParams = "";
 
    if (params != lastParams) {
       appliedPrice = "Close";
 
       // "<periods>,<price>"
-      string sValue, elems[];
+      string sValue="", elems[];
       int size = Explode(params, ",", elems, NULL);
       if (size < 1)              return(!catch("GetTriEMA(2)  "+ sequence.longName +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
 
@@ -6242,7 +6242,7 @@ bool ValidateInputs() {
       start.time.condition  = false;
 
       // split StartConditions
-      string exprs[], expr, key;
+      string exprs[], expr="", key="";
       int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&&", exprs, NULL);
 
       // parse and validate each expression

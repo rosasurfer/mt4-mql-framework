@@ -80,8 +80,8 @@ double almaWeights[];                                    // ALMA bar weights
 int    maxValues;
 int    drawType;
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 bool   signals;
 bool   signal.sound;

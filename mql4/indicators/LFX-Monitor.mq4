@@ -102,9 +102,9 @@ int   XAUI.orders[][LFX_ORDER.intSize];
 
 // text labels for various display elements
 string labels[];
-string labelTradeAccount;
-string labelAnimation;                                  // animated ticker
-string animationChars[] = {"|", "/", "—", "\\"};
+string labelTradeAccount = "";
+string labelAnimation    = "";                           // animated ticker
+string animationChars[]  = {"|", "/", "—", "\\"};
 
 color  bgColor                = C'212,208,200';
 color  fontColor.recordingOn  = Blue;
@@ -750,7 +750,7 @@ bool UpdateIndexDisplay() {
 
    // calculated values
    int    size = ArraySize(symbols);
-   string sIndex, sSpread;
+   string sIndex="", sSpread="";
 
    for (int i=0; i < size; i++) {
       if (isEnabled[i]) {

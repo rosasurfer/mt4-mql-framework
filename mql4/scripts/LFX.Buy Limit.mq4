@@ -45,7 +45,7 @@ int onInit() {
 
    // (2) Parametervalidierung
    // Type
-   string sValue;
+   string sValue = "";
    if (StrContains(Type, "*")) sValue = StrRightFrom(StrLeftTo(Type, "*"), "|", -1);
    else                        sValue = Type;
    sValue = StrReplace(StrToLower(sValue), " ", "");

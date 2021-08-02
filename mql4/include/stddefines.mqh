@@ -1,41 +1,41 @@
 /**
  * Global constants and variables
  */
-#property stacksize 32768                                   // According to different MetaQuotes sources the default stacksize per MQL module in 2019 is
-                                                            // at least 256KB (some even claim 1-8MB). In build 225 the default stacksize was 16KB which
-#include <mqldefines.mqh>                                   // at some point had to be increased. Using 32KB never caused any issues.
-#include <win32defines.mqh>                                 //
-#include <structs/sizes.mqh>                                //  @see  https://docs.mql4.com/basis/variables/local#stack
-                                                            //  @see  https://docs.mql4.com/basis/preprosessor/compilation
+#property stacksize 32768                                         // According to different MetaQuotes sources the default stacksize per MQL module in 2019 is
+                                                                  // at least 256KB (some even claim 1-8MB). In build 225 the default stacksize was 16KB which
+#include <mqldefines.mqh>                                         // at some point had to be increased. Using 32KB never caused any issues.
+#include <win32defines.mqh>                                       //
+#include <structs/sizes.mqh>                                      //  @see  https://docs.mql4.com/basis/variables/local#stack
+                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
-int      __ExecutionContext[EXECUTION_CONTEXT.intSize];     // aktueller ExecutionContext
-//int    __lpSuperContext;                                  // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
-//int    __lpTestedExpertContext;                           // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-//int    __CoreFunction;                                    // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
-bool     __isChart;                                         // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
-bool     __isAutoConfig;                                    // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
+int      __ExecutionContext[EXECUTION_CONTEXT.intSize];           // aktueller ExecutionContext
+//int    __lpSuperContext;                                        // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
+//int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
+//int    __CoreFunction;                                          // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
+bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
+bool     __isAutoConfig;                                          // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
 
-bool     __STATUS_HISTORY_UPDATE;                           // History-Update wurde getriggert
-bool     __STATUS_OFF;                                      // Programm komplett abgebrochen (switched off)
-int      __STATUS_OFF.reason;                               // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
+bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
+bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)
+int      __STATUS_OFF.reason;                                     // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
 
-double   Pip, Pips;                                         // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
-int      PipDigits, SubPipDigits;                           // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
-int      PipPoint, PipPoints;                               // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
-double   TickSize;                                          // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
-string   PriceFormat, PipPriceFormat, SubPipPriceFormat;    // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick;                                              // number of times MQL::start() was called (value survives timeframe changes)
-datetime Tick.Time;                                         // server time of the last received tick
+double   Pip, Pips;                                               // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
+int      PipDigits, SubPipDigits;                                 // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
+int      PipPoint, PipPoints;                                     // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
+double   TickSize;                                                // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
+string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
+int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
+datetime Tick.Time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ValidBars;                                         // it holds: Bars = ValidBars + ChangedBars
-int      ChangedBars;                                       // used in indicators only, otherwise IndicatorCounted() is not supported
-int      ShiftedBars;                                       // used in offline charts only
+int      ValidBars;                                               // it holds: Bars = ValidBars + ChangedBars
+int      ChangedBars;                                             // used in indicators only, otherwise IndicatorCounted() is not supported
+int      ShiftedBars;                                             // used in offline charts only
 
-int      last_error;                                        // last error of the current core function call
-int      prev_error;                                        // last error of the previous core function call
+int      last_error;                                              // last error of the current core function call
+int      prev_error;                                              // last error of the previous core function call
 
-int      __orderStack[];                                    // FIFO stack of selected orders (per MQL module)
+int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
 
 
 // special constants
@@ -43,44 +43,44 @@ int      __orderStack[];                                    // FIFO stack of sel
 #define EMPTY_STR                   ""
 #define MAX_STRING_LITERAL          "..............................................................................................................................................................................................................................................................."
 
-#define HTML_TAB                    "&Tab;"                 // tab                        \t
-#define HTML_BRVBAR                 "&brvbar;"              // broken vertical bar        |
-#define HTML_PIPE                   HTML_BRVBAR             // pipe (alias)               |
-#define HTML_LCUB                   "&lcub;"                // left curly brace           {
-#define HTML_RCUB                   "&rcub;"                // right curly brace          }
-#define HTML_APOS                   "&apos;"                // apostrophe                 '
-#define HTML_DQUOTE                 "&quot;"                // double quote               "
-#define HTML_SQUOTE                 HTML_APOS               // single quote (alias)       '
-#define HTML_COMMA                  "&comma;"               // comma                      ,
+#define HTML_TAB                    "&Tab;"                       // tab                        \t
+#define HTML_BRVBAR                 "&brvbar;"                    // broken vertical bar        |
+#define HTML_PIPE                   HTML_BRVBAR                   // pipe (alias)               |
+#define HTML_LCUB                   "&lcub;"                      // left curly brace           {
+#define HTML_RCUB                   "&rcub;"                      // right curly brace          }
+#define HTML_APOS                   "&apos;"                      // apostrophe                 '
+#define HTML_DQUOTE                 "&quot;"                      // double quote               "
+#define HTML_SQUOTE                 HTML_APOS                     // single quote (alias)       '
+#define HTML_COMMA                  "&comma;"                     // comma                      ,
 
 
 // Special variables: werden in init() definiert, da in MQL nicht constant deklarierbar
-double  NaN;                                                // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
-double  P_INF;                                              //  1.#INF: positive infinity
-double  N_INF;                                              // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
+double  NaN;                                                      // -1.#IND: indefinite quiet Not-a-Number (auf x86 CPUs immer negativ)
+double  P_INF;                                                    //  1.#INF: positive infinity
+double  N_INF;                                                    // -1.#INF: negative infinity, @see  http://blogs.msdn.com/b/oldnewthing/archive/2013/02/21/10395734.aspx
 
 
 // Magic characters zur visuellen Darstellung von nicht darstellbaren Zeichen in binären Strings, siehe BufferToStr()
-#define PLACEHOLDER_NUL_CHAR        '…'                     // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings
-#define PLACEHOLDER_CTRL_CHAR       '•'                     // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
+#define PLACEHOLDER_NUL_CHAR        '…'                           // 0x85 (133) - Ersatzzeichen für NUL-Bytes in Strings
+#define PLACEHOLDER_CTRL_CHAR       '•'                           // 0x95 (149) - Ersatzzeichen für Control-Characters in Strings
 
 
 // Mathematische Konstanten (internally 15 correct decimal digits)
-#define Math.E                      2.7182818284590452354   // base of natural logarythm
+#define Math.E                      2.7182818284590452354         // base of natural logarythm
 #define Math.PI                     3.1415926535897932384
 
 
 // MQL program types
-#define PT_INDICATOR                PROGRAMTYPE_INDICATOR   // 1
-#define PT_EXPERT                   PROGRAMTYPE_EXPERT      // 2
-#define PT_SCRIPT                   PROGRAMTYPE_SCRIPT      // 4
+#define PT_INDICATOR                PROGRAMTYPE_INDICATOR         // 1
+#define PT_EXPERT                   PROGRAMTYPE_EXPERT            // 2
+#define PT_SCRIPT                   PROGRAMTYPE_SCRIPT            // 4
 
 
 // MQL module types (flags)
-#define MT_INDICATOR                MODULETYPE_INDICATOR    // 1
-#define MT_EXPERT                   MODULETYPE_EXPERT       // 2
-#define MT_SCRIPT                   MODULETYPE_SCRIPT       // 4
-#define MT_LIBRARY                  MODULETYPE_LIBRARY      // 8
+#define MT_INDICATOR                MODULETYPE_INDICATOR          // 1
+#define MT_EXPERT                   MODULETYPE_EXPERT             // 2
+#define MT_SCRIPT                   MODULETYPE_SCRIPT             // 4
+#define MT_LIBRARY                  MODULETYPE_LIBRARY            // 8
 
 
 // MQL program core function ids
@@ -90,9 +90,9 @@ double  N_INF;                                              // -1.#INF: negative
 
 
 // MQL program launch types
-#define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE     // via template
-#define LT_PROGRAM                  LAUNCHTYPE_PROGRAM      // via iCustom()
-#define LT_MANUAL                   LAUNCHTYPE_MANUAL       // by hand
+#define LT_TEMPLATE                 LAUNCHTYPE_TEMPLATE           // via template
+#define LT_PROGRAM                  LAUNCHTYPE_PROGRAM            // via iCustom()
+#define LT_MANUAL                   LAUNCHTYPE_MANUAL             // by hand
 
 
 // framework InitializeReason codes                               // +-- init reason --------------------------------+-- ui -----------+-- applies --+

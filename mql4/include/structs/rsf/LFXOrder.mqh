@@ -236,7 +236,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    if (ArrayRange(lo, dimensions-1) != LFX_ORDER.intSize) return(_EMPTY_STR(catch("LFX_ORDER.toStr(2)  invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;
-   string priceFormat, line, lines[]; ArrayResize(lines, 0);
+   string priceFormat="", line="", lines[]; ArrayResize(lines, 0);
 
 
    if (dimensions == 1) {

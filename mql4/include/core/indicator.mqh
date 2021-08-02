@@ -532,7 +532,7 @@ bool CheckErrors(string location, int error = NULL) {
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
-   static string label, mutex; if (!StringLen(label)) {
+   static string label="", mutex=""; if (!StringLen(label)) {
       label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }

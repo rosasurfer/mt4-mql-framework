@@ -67,8 +67,8 @@ int    atrTimeframe;
 int    atrPeriods;
 double atrMultiplier;
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 int    maxValues;
 
 
