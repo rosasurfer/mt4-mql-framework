@@ -332,12 +332,12 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  */
 bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
-   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
+   string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
    if (!IsFileA(fullName)) {
-      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
+      fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
       if (!IsFileA(fullName)) {
-         if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
@@ -398,19 +398,18 @@ void ForceAlert(string message) {
  * @return int - the pressed button's key code
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription());
+   string prefix = Symbol() +","+ PeriodDescription();
 
    if (!StrContains(caption, prefix))
-      caption = StringConcatenate(prefix, " - ", caption);
+      caption = prefix +" - "+ caption;
 
    bool win32 = false;
    if      (IsTesting())                                                                                   win32 = true;
    else if (IsIndicator())                                                                                 win32 = true;
    else if (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
-   int button;
-   if (!win32) button = MessageBox(message, caption, flags);
-   else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
+   if (!win32) int button = MessageBox(message, caption, flags);
+   else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) {
       logDebug("MessageBoxEx(1)  "+ message);
@@ -5125,6 +5124,8 @@ string NumberToStr(double value, string mask) {
    if (StringGetChar(sNumber, 3) == '#')                    // "-1.#IND0000" => NaN
       return(sNumber);                                      // "-1.#INF0000" => Infinite
 
+   int error = GetLastError();
+   if (error != NO_ERROR) catch("NumberToStr(1)  unhandled error (value="+ value +", mask=\""+ mask +"\")", error);
 
    // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
@@ -5247,7 +5248,8 @@ string NumberToStr(double value, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   catch("NumberToStr(1)");
+   error = GetLastError();
+   if (error != NO_ERROR) catch("NumberToStr(2)  value="+ value +", mask=\""+ mask +"\"", error);
    return(outStr);
 }
 
