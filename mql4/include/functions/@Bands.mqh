@@ -20,7 +20,7 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
 
    // update if values or bar changed
    if (upperValue!=lastUpperValue || lowerValue!=lastLowerValue || barOpenTime!=lastBarOpenTime) {
-      string sUpperValue, sLowerValue;
+      string sUpperValue="", sLowerValue="";
 
       if (digits == PipDigits) {
          sUpperValue = NumberToStr(upperValue, PipPriceFormat);

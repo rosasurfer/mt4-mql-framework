@@ -2194,7 +2194,7 @@ string TicketsToStr(int tickets[], string separator = ", ") {
    if (separator == "0")                           // (string) NULL
       separator = ", ";
 
-   string result, sValue;
+   string result="", sValue="";
 
    for (int i=0; i < size; i++) {
       if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
@@ -2293,7 +2293,7 @@ string BufferToHexStr(int buffer[]) {
    if (dimensions != 1)
       return(__BuffersToHexStr(buffer));
 
-   string hex, byte1, byte2, byte3, byte4, result="";
+   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
    int size = ArraySize(buffer);
 
    // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
@@ -2329,7 +2329,7 @@ string __BuffersToHexStr(int buffer[][]) {
 
    int dim1=ArrayRange(buffer, 0), dim2=ArrayRange(buffer, 1);
 
-   string hex, byte1, byte2, byte3, byte4, result="";
+   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
 
    // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < dim1; i++) {
@@ -2393,7 +2393,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
    string result = "";
 
    for (int i=from; i < to; i++) {
-      string sChar;
+      string sChar = "";
       int word, shift=0, integer=buffer[i];
 
       for (int n=0; n < 2; n++) {
@@ -2706,7 +2706,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line, value, lines[]; ArrayResize(lines, 0);                     // cache for read lines
+   string line="", value="", lines[]; ArrayResize(lines, 0);               // cache for read lines
    int i, len, fPointer;                                                   // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
@@ -3700,7 +3700,7 @@ string CharToHexStr(int chr) {
  *   WordToHexStr(2595) => "0A23"
  */
 string WordToHexStr(int word) {
-   string str, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   string str="", chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
 
    str = StringConcatenate(str, chars[word >> 12 & 0x0F]);
    str = StringConcatenate(str, chars[word >>  8 & 0x0F]);
@@ -3724,7 +3724,7 @@ string IntegerToHexStr(int integer) {
    if (integer == 0)
       return("0");
 
-   string hexStr, chr, chrs[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   string hexStr="", chr="", chrs[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
    int    value = integer;
 
    while (value != 0) {
@@ -3749,7 +3749,7 @@ string IntegerToBinaryStr(int integer) {
    if (!integer)
       return("0");
 
-   string result;
+   string result = "";
 
    while (integer != 0) {
       result = StringConcatenate(integer & 0x01, result);
@@ -4299,7 +4299,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
 
    ArrayResize(lpResults, 0);
 
-   string name;
+   string name = "";
    /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
    int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
 
@@ -5399,7 +5399,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
-            string sValue1, sValue2;
+            string sValue1="", sValue2="";
             if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
@@ -5930,7 +5930,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
    OrderPop("OrdersClose(13)");
 
    // read the passed ticket symbols and map ticket and symbol indexes
-   string symbol, symbols[];    ArrayResize(symbols, 0);                      // all symbols
+   string symbol="", symbols[];    ArrayResize(symbols, 0);                   // all symbols
    int symbols.lastTicketIdx[]; ArrayResize(symbols.lastTicketIdx, 0);
    int si, tickets.symbolIdx[]; ArrayResize(tickets.symbolIdx, sizeOfTickets);
 
@@ -7386,7 +7386,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  */
 bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertRawSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
-   string name, newName=symbol_Name(symbol);
+   string name="", newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name: "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
    if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
@@ -7492,7 +7492,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  */
 bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Parameter validieren und Template-Datei bestimmen
-   string fileName;
+   string fileName = "";
    switch (type) {
       case SYMBOL_TYPE_FOREX  : fileName = "templates/SYMBOL_TYPE_FOREX.raw";   break;
       case SYMBOL_TYPE_CFD    : fileName = "templates/SYMBOL_TYPE_CFD.raw";     break;

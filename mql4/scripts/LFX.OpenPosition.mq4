@@ -124,7 +124,7 @@ int onStart() {
    double equity = visibleEquity + externalAssets;
 
    int    button;
-   string errorMsg, overLeverageMsg;
+   string errorMsg="", overLeverageMsg="";
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (2.1) notwendige Daten ermitteln

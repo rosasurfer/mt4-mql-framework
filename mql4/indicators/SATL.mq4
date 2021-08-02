@@ -70,8 +70,8 @@ double filterWeights[];                                  // filter coefficients
 int    maxValues;
 int    drawType;
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;

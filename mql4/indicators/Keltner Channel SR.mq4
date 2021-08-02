@@ -93,8 +93,8 @@ double atrMultiplier;
 int    atrSmoothingMethod;
 int    atrSmoothingPeriods;
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 
 /**

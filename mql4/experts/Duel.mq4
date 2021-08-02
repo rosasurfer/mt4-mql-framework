@@ -252,11 +252,15 @@ int onTick() {
    else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
       bool gridChanged=false, gridError=false;                 // whether the current gridlevel changed or a grid error occurred
 
+      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("onTick(0.1)", last_error);
+
       if (UpdateStatus(gridChanged, gridError)) {              // check pending orders and open positions
          if      (gridError)            StopSequence(NULL);
          else if (IsStopSignal(signal)) StopSequence(signal);
          else if (gridChanged)          UpdatePendingOrders(true);
       }
+
+      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("onTick(0.2)", last_error);
    }
    else if (sequence.status == STATUS_STOPPED) {
    }
@@ -278,7 +282,7 @@ int onTick() {
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
-   static string label, mutex; if (!StringLen(label)) {
+   static string label="", mutex=""; if (!StringLen(label)) {
       label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
@@ -604,7 +608,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
 int ShowTradeHistory() {
-   string openLabel, closeLabel, lineLabel, sOpenPrice, sClosePrice, text;
+   string openLabel="", closeLabel="", lineLabel="", sOpenPrice="", sClosePrice="", text="";
    int closedTrades = 0;
 
    // process closed trades of the current cycle
@@ -1335,14 +1339,20 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.totalLots,  long.slippage,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.openType,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
    if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.totalLots, short.slippage, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.openType, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.1)", last_error);
+
    if (gridChanged || positionChanged) {
       sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2);
       SS.Lots();
       saveStatus = true;
    }
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.2)", last_error);
+
    if (!ComputeProfit(positionChanged)) return(false);
 
    if (saveStatus) SaveStatus();
+
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.3)", last_error);
 
    static int prevMaxGridLevels = 0; if (MaxGridLevels != prevMaxGridLevels) {
       prevMaxGridLevels = MaxGridLevels;                 // detect runtime changes of MaxGridLevels
@@ -1366,6 +1376,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
 bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChanged, bool &gridError, double &totalLots, double &slippage, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
+
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.1)", last_error);
 
    int error, orders = ArraySize(tickets);
    bool updateSlippage=false, isLogDebug=IsLogDebug();
@@ -1424,6 +1436,8 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
       }
    }
 
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.2)", last_error);
+
    // update overall slippage
    if (updateSlippage) {
       double allLots, sumSlippage;
@@ -1442,6 +1456,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
    openPL    = NormalizeDouble(openPL, 2);
    closedPL  = NormalizeDouble(closedPL, 2);
 
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.3)", last_error);
    return(!catch("UpdateStatus(7)"));
 }
 
@@ -2305,7 +2320,7 @@ string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   static string filename; if (!StringLen(filename)) {
+   static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
       string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
       filename = directory + baseName;
@@ -2434,7 +2449,7 @@ string   prev.Sequence.ID     = "";
 string   prev.GridDirection   = "";
 string   prev.GridVolatility  = "";
 string   prev.VolatilityRange = "";
-string   prev.GridSize;
+string   prev.GridSize        = "";
 double   prev.UnitSize;
 int      prev.MaxGridLevels;
 double   prev.Pyramid.Multiplier;
@@ -3330,7 +3345,7 @@ bool SaveStatus() {
       saved = true;
    }
 
-   string section, separator="", file=GetStatusFilename();
+   string section="", separator="", file=GetStatusFilename();
    if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
 
    // [General]
@@ -3343,7 +3358,7 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",                /*string  */ Sequence.ID);
    WriteIniString(file, section, "GridDirection",              /*string  */ GridDirection);
-   WriteIniString(file, section, "GridVolatility",             /*string  */ NumberToStr(sequence.gridvola, ".+") +"%");
+   WriteIniString(file, section, "GridVolatility",             /*string  */ NumberToStr(NormalizeDouble(sequence.gridvola, 1), ".+") +"%");
    WriteIniString(file, section, "VolatilityRange",            /*string  */ VolatilityRange);
    WriteIniString(file, section, "GridSize",                   /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(sequence.unitsize, ".+"));
@@ -3601,7 +3616,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   string section, file=GetStatusFilename();
+   string section="", file=GetStatusFilename();
    if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
@@ -3692,7 +3707,7 @@ bool ReadStatus() {
    long.bePrice               = GetIniDouble (file, section, "long.bePrice"  );                 // double   long.bePrice   = 1.17453
    long.minLevel              = GetIniInt    (file, section, "long.minLevel" );                 // int      long.minLevel  = -2
    long.maxLevel              = GetIniInt    (file, section, "long.maxLevel" );                 // int      long.maxLevel  = 7
-   string sKeys[], sOrder;
+   string sKeys[], sOrder="";
    int size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_LONG, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.orders.{i} = {data}
@@ -3906,6 +3921,8 @@ int ShowStatus(int error = NO_ERROR) {
       isRecursion = true;
    }
 
+   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("ShowStatus(0.1)  error="+ error +"  last_error="+ last_error, error+last_error);
+
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.direction) {
@@ -3955,6 +3972,8 @@ int ShowStatus(int error = NO_ERROR) {
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
+   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("ShowStatus(0.2)  error="+ error +"  last_error="+ last_error, error+last_error);
+
    error = ifIntOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
@@ -3983,13 +4002,13 @@ void SS.All() {
  */
 void SS.GridParameters() {
    if (__isChart) {
-      string sGridSize;
+      string sGridSize = "";
       if      (!sequence.gridsize)         sGridSize = "?";
       else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(sequence.gridsize/100, ",'R.2");      // 123 pip => 1.23
       else                                 sGridSize = NumberToStr(sequence.gridsize, ".+") +" pip";     // 12.3 pip
 
       string sUnitSize   = ifString(!sequence.unitsize, "?", NumberToStr(sequence.unitsize, ".+") +" lot");
-      string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier,    ".+"), "");
       string sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
 
       sGridParameters = sGridSize +" x "+ sUnitSize + sPyramid + sMartingale;
@@ -4080,7 +4099,7 @@ void SS.PLStats(bool enforce = false) {
          sSequencePlStats = "";
       }
       else {
-         string sSequenceMaxProfit, sSequenceMaxDrawdown;
+         string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
          if (ShowProfitInPercent) {
             sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
             sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
@@ -4108,7 +4127,7 @@ void SS.CycleStats() {
    else if (short.enabled && ArraySize(short.history)) ArrayCopy(history, short.history);
    else return;
 
-   string sTotalPL, sMaxProfit, sMaxDrawdown, sResult;
+   string sTotalPL="", sMaxProfit="", sMaxDrawdown="", sResult="";
    int size=ArrayRange(history, 0), lastCycle=0;
 
    for (int i=0; i < size; i++) {
@@ -4212,7 +4231,7 @@ int CreateStatusBox() {
 
    int x[]={2, 114}, y=58, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
-   string label;
+   string label = "";
 
    for (int i=0; i < rectangles; i++) {
       label = ProgramName() +".statusbox."+ (i+1);

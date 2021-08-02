@@ -65,7 +65,7 @@ int onTick() {
 int DrawGrid() {
    datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
    int      dow, dd, mm, yyyy, bar, sepColor, sepStyle;
-   string   label, lastLabel;
+   string   label="", lastLabel="";
 
 
    // (1) Zeitpunkte des ältesten und jüngsten Separators berechen

@@ -184,7 +184,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
+   string result = "";
 
 
    // 1-dimensionales Array
@@ -271,7 +271,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
+   string result = "";
 
 
    // 1-dimensionales Array
@@ -455,7 +455,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
       separator = ", ";
 
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
-   string result;
+   string result = "";
 
 
    // 1-dimensionales Array
@@ -533,7 +533,7 @@ string TicketsToStr.Lots(int tickets[], string separator=", ") {
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
-   string result, sValue;
+   string result="", sValue="";
 
    OrderPush("TicketsToStr.Lots(2)");
 
@@ -577,7 +577,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
    if (separator == "0")      // (string) NULL
       separator = ", ";
 
-   string result, sValue;
+   string result="", sValue="";
 
    OrderPush("TicketsToStr.LotsSymbols(2)");
 
@@ -639,7 +639,7 @@ string TicketsToStr.Position(int tickets[]) {
    hedged = MathMin(long, short);
    bool isPosition = long || short;
 
-   string result;
+   string result = "";
    if (!isPosition) result = "(none)";
    else if (!total) result = "±"+ NumberToStr(long,  ".+")                                                          +" lots (hedged)";
    else             result =      NumberToStr(total, ".+") + ifString(!hedged, "", " ±"+ NumberToStr(hedged, ".+")) +" lots";

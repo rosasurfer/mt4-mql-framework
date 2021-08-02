@@ -88,8 +88,8 @@ int    slowMA.appliedPrice;
 double slowALMA.weights[];                                  // slow ALMA weights
 
 int    maxValues;
-bool   isCentUnit = false;                                  // display unit: cent or pip
-string indicatorName;                                       // "Data" window and signal notification name
+bool   isCentUnit    = false;                               // display unit: cent or pip
+string indicatorName = "";                                  // "Data" window and signal notification name
 
 bool   signals;
 bool   signal.sound;
@@ -114,7 +114,7 @@ int onInit() {
    fastMA.periods = FastMA.Periods;
 
    // FastMA.Method
-   string sValue, values[];
+   string sValue="", values[];
    if (Explode(FastMA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -210,7 +210,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
    // display options, names and labels
-   string dataName, sAppliedPrice="";
+   string dataName="", sAppliedPrice="";
    if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
    string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
    sAppliedPrice = "";

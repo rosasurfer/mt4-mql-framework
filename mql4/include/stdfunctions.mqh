@@ -2978,7 +2978,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    else if (hWnd < 0)        return(!catch("EnumChildWindows(1)  invalid parameter hWnd: "+ hWnd , ERR_INVALID_PARAMETER));
    else if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd: "+ IntToHexStr(hWnd), ERR_INVALID_PARAMETER));
 
-   string padding, wndTitle, wndClass;
+   string padding="", wndTitle="", wndClass="";
    int ctrlId;
 
    static int sublevel;
@@ -3178,7 +3178,7 @@ string StrTrimRight(string value) {
  * @return string - URL-kodierter String
  */
 string UrlEncode(string value) {
-   string strChar, result="";
+   string strChar="", result="";
    int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
@@ -3238,7 +3238,7 @@ bool MQL.IsFile(string filename) {
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
 string GetMqlFilesPath() {
-   static string filesDir; if (!StringLen(filesDir)) {
+   static string filesDir=""; if (!StringLen(filesDir)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
@@ -4250,7 +4250,7 @@ int GetAccountNumberFromAlias(string company, string alias) {
 
    string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
    string section = "Accounts";
-   string keys[], value, sAccount;
+   string keys[], value="", sAccount="";
    int keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
@@ -5230,7 +5230,7 @@ string NumberToStr(double value, string mask) {
 
    // 1000er-Separatoren einfügen
    if (separators) {
-      string out1;
+      string out1 = "";
       i = nLeft;
       while (i > 3) {
          out1 = StrSubstr(outStr, 0, i-3);

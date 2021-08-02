@@ -273,7 +273,7 @@ int start() {
    // tester: wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
-         static string startTime; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
+         static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
          if (Tick.Time < Tester.StartTime) {
             Comment(NL, NL, NL, "Tester: starting at ", startTime);
             return(last_error);
@@ -281,7 +281,7 @@ int start() {
          Tester.StartTime = 0;
       }
       if (Tester.StartPrice != 0) {
-         static string startPrice; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
+         static string startPrice=""; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
          static double tester.lastPrice; if (!tester.lastPrice) {
             tester.lastPrice = Bid;
             Comment(NL, NL, NL, "Tester: starting at ", startPrice);
@@ -331,6 +331,8 @@ int start() {
    // call the userland main function
    onTick();
 
+   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("start(0.1)", last_error);
+
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
       if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(8)")));
@@ -341,7 +343,12 @@ int start() {
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(9)", error)));
 
-   return(ShowStatus(NO_ERROR));
+   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("start(0.2)  error="+ error +"  last_error="+ last_error, last_error+error);
+
+   error = ShowStatus(NO_ERROR);
+
+   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("start(0.3)  error="+ error +"  last_error="+ last_error, last_error+error);
+   return(error);
 }
 
 
@@ -517,6 +524,9 @@ bool CheckErrors(string location, int error = NULL) {
    // update the variable last_error
    if (__STATUS_OFF) {
       if (!last_error) last_error = __STATUS_OFF.reason;
+
+      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("CheckErrors(0.1)", last_error);
+
       ShowStatus(last_error);                                        // show status once again if an error occurred
    }
    return(__STATUS_OFF);
@@ -566,7 +576,7 @@ bool Tester.InitReporting() {
       FileClose(hFile);
 
       // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+      string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);

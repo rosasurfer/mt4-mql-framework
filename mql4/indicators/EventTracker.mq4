@@ -78,7 +78,7 @@ extern string Signal.SMS    = "on | off | auto*";
 bool   track.orders;
 int    orders.knownOrders.ticket[];                                  // vom letzten Aufruf bekannte offene Orders
 int    orders.knownOrders.type  [];
-string orders.accountAlias;                                          // Verwendung in ausgehenden Messages
+string orders.accountAlias = "";                                     // Verwendung in ausgehenden Messages
 
 #define CLOSE_TYPE_TP               1                                // TakeProfit
 #define CLOSE_TYPE_SL               2                                // StopLoss
@@ -145,7 +145,7 @@ bool Configure() {
    if (!account) return(false);
    bool signal.enabled;
    double dValue, dValue1, dValue2, dValue3;
-   string keys[], subKeys[], section, key, subKey, sDigits, sParam, iniValue, accountConfig = GetAccountConfigPath();
+   string keys[], subKeys[], section="", key="", subKey="", sDigits="", sParam="", iniValue="", accountConfig=GetAccountConfigPath();
    if (!StringLen(accountConfig)) return(false);
 
    // Track.Orders
@@ -1223,7 +1223,7 @@ int ShowStatus(int error=NULL) {
    if (__STATUS_OFF)
       error = __STATUS_OFF.reason;
 
-   string sSettings, sError;
+   string sSettings="", sError="";
 
    if (track.orders || track.signals) sSettings = "    Sound="+ ifString(signal.sound, "On", "Off") + ifString(signal.sms, "    SMS="+ signal.sms.receiver, "") + ifString(signal.mail, "    Mail="+ signal.mail.receiver, "");
    else                               sSettings = ":  Off";

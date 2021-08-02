@@ -14,6 +14,7 @@ int scriptrunner.hQC.receiver;
  * @return bool - Ob die Startanweisung erfolgreich übermittelt wurde. Nicht, ob das Script erfolgreich gestartet oder
  *                ausgeführt wurde.
  */
+
 bool RunScript(string name, string parameters="") {
    if (IsScript())       return(!catch("RunScript(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
    if (!StringLen(name)) return(!catch("RunScript(2)  invalid parameter name="+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER));
@@ -64,7 +65,7 @@ bool RunScript(string name, string parameters="") {
  * @return string - Name oder Leerstring, falls ein Fehler auftrat
  */
 string ScriptRunner.GetChannelName() {
-   static string name; if (!StringLen(name)) {
+   static string name=""; if (!StringLen(name)) {
       int hWnd = __ExecutionContext[EC.hChart];
       name = "ScriptParameters."+ IntToHexStr(hWnd);
    }
