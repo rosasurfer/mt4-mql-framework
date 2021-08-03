@@ -173,8 +173,8 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(18)")) return(last_error);
 
+   if (CheckErrors("init(18)")) return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks to continue operation on a stalled data feed
@@ -331,8 +331,6 @@ int start() {
    // call the userland main function
    onTick();
 
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("start(0.1)", last_error);
-
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
       if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(8)")));
@@ -342,13 +340,7 @@ int start() {
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(9)", error)));
-
-   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("start(0.2)  error="+ error +"  last_error="+ last_error, last_error+error);
-
-   error = ShowStatus(NO_ERROR);
-
-   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("start(0.3)  error="+ error +"  last_error="+ last_error, last_error+error);
-   return(error);
+   return(ShowStatus(NO_ERROR));
 }
 
 
@@ -524,9 +516,6 @@ bool CheckErrors(string location, int error = NULL) {
    // update the variable last_error
    if (__STATUS_OFF) {
       if (!last_error) last_error = __STATUS_OFF.reason;
-
-      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("CheckErrors(0.1)", last_error);
-
       ShowStatus(last_error);                                        // show status once again if an error occurred
    }
    return(__STATUS_OFF);
