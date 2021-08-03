@@ -365,55 +365,57 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (!error) {
+      error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
-   error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+      if (IsTesting()) {
+         if (tester.hEquitySet != 0) {
+            int tmp = tester.hEquitySet;
+            tester.hEquitySet = NULL;
+            if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
+         }
+         if (EA.CreateReport) {
+            datetime time = MarketInfo(Symbol(), MODE_TIME);
+            Test_StopReporting(__ExecutionContext, time, Bars);
+         }
+      }
 
-   if (IsTesting()) {
-      if (tester.hEquitySet != 0) {
-         int tmp=tester.hEquitySet; tester.hEquitySet=NULL;
-         if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
+      // reset the virtual tick timer
+      if (tickTimerId != NULL) {
+         tmp = tickTimerId;
+         tickTimerId = NULL;
+         if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
       }
-      if (EA.CreateReport) {
-         datetime time = MarketInfo(Symbol(), MODE_TIME);
-         Test_StopReporting(__ExecutionContext, time, Bars);
-      }
+
+      // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+      //
+      if (!error) error = onDeinit();                                         // preprocessing hook
+      if (!error) {                                                           //
+         switch (UninitializeReason()) {                                      //
+            case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
+            case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
+            case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
+            case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
+            case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
+            case UR_REMOVE     : error = onDeinitRemove();        break;      //
+            case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
+            // terminal builds > 509                                          //
+            case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
+            case UR_INITFAILED : error = onDeinitFailed();        break;      //
+            case UR_CLOSE      : error = onDeinitClose();         break;      //
+                                                                              //
+            default:                                                          //
+               error = ERR_ILLEGAL_STATE;                                     //
+               catch("deinit(4)  unknown UninitializeReason: "+ UninitializeReason(), error);
+         }                                                                    //
+      }                                                                       //
+      if (!error) error = afterDeinit();                                      // postprocessing hook
    }
 
-   // reset the virtual tick timer
-   if (tickTimerId != NULL) {
-      int id = tickTimerId;
-      tickTimerId = NULL;
-      if (!RemoveTickTimer(id)) return(catch("deinit(3)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
-   }
-
-   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
-   //
-   if (!error) error = onDeinit();                                         // preprocessing hook
-   if (!error) {                                                           //
-      switch (UninitializeReason()) {                                      //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
-         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
-         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
-         case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
-         case UR_REMOVE     : error = onDeinitRemove();        break;      //
-         case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
-         // terminal builds > 509                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
-         case UR_INITFAILED : error = onDeinitFailed();        break;      //
-         case UR_CLOSE      : error = onDeinitClose();         break;      //
-                                                                           //
-         default:                                                          //
-            CheckErrors("deinit(4)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(last_error|LeaveContext(__ExecutionContext));           //
-      }                                                                    //
-   }                                                                       //
-   if (!error) error = afterDeinit();                                      // postprocessing hook
    if (!IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(5)");
-   return(last_error|LeaveContext(__ExecutionContext));
+   return(error|last_error|LeaveContext(__ExecutionContext));
 }
 
 
