@@ -252,15 +252,11 @@ int onTick() {
    else if (sequence.status == STATUS_PROGRESSING) {           // manage a running sequence
       bool gridChanged=false, gridError=false;                 // whether the current gridlevel changed or a grid error occurred
 
-      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("onTick(0.1)", last_error);
-
       if (UpdateStatus(gridChanged, gridError)) {              // check pending orders and open positions
          if      (gridError)            StopSequence(NULL);
          else if (IsStopSignal(signal)) StopSequence(signal);
          else if (gridChanged)          UpdatePendingOrders(true);
       }
-
-      if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("onTick(0.2)", last_error);
    }
    else if (sequence.status == STATUS_STOPPED) {
    }
@@ -1339,20 +1335,14 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (!UpdateStatus.Direction(D_LONG,  gridChanged, positionChanged, gridError, long.totalLots,  long.slippage,  long.openPL,  long.closedPL,  long.minLevel,  long.maxLevel,  long.ticket,  long.level,  long.lots,  long.pendingType,  long.pendingPrice,  long.openType,  long.openTime,  long.openPrice,  long.closeTime,  long.closePrice,  long.swap,  long.commission,  long.profit))  return(false);
    if (!UpdateStatus.Direction(D_SHORT, gridChanged, positionChanged, gridError, short.totalLots, short.slippage, short.openPL, short.closedPL, short.minLevel, short.maxLevel, short.ticket, short.level, short.lots, short.pendingType, short.pendingPrice, short.openType, short.openTime, short.openPrice, short.closeTime, short.closePrice, short.swap, short.commission, short.profit)) return(false);
 
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.1)", last_error);
-
    if (gridChanged || positionChanged) {
       sequence.totalLots = NormalizeDouble(long.totalLots - short.totalLots, 2);
       SS.Lots();
       saveStatus = true;
    }
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.2)", last_error);
 
    if (!ComputeProfit(positionChanged)) return(false);
-
    if (saveStatus) SaveStatus();
-
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus(0.3)", last_error);
 
    static int prevMaxGridLevels = 0; if (MaxGridLevels != prevMaxGridLevels) {
       prevMaxGridLevels = MaxGridLevels;                 // detect runtime changes of MaxGridLevels
@@ -1376,8 +1366,6 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
 bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChanged, bool &gridError, double &totalLots, double &slippage, double &openPL, double &closedPL, int &minLevel, int &maxLevel, int tickets[], int levels[], double lots[], int pendingTypes[], double pendingPrices[], int &types[], datetime &openTimes[], double &openPrices[], datetime &closeTimes[], double &closePrices[], double &swaps[], double &commissions[], double &profits[]) {
    if (direction==D_LONG  && !long.enabled)  return(true);
    if (direction==D_SHORT && !short.enabled) return(true);
-
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.1)", last_error);
 
    int error, orders = ArraySize(tickets);
    bool updateSlippage=false, isLogDebug=IsLogDebug();
@@ -1436,8 +1424,6 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
       }
    }
 
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.2)", last_error);
-
    // update overall slippage
    if (updateSlippage) {
       double allLots, sumSlippage;
@@ -1455,8 +1441,6 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
    totalLots = NormalizeDouble(totalLots, 2);
    openPL    = NormalizeDouble(openPL, 2);
    closedPL  = NormalizeDouble(closedPL, 2);
-
-   if (last_error == ERR_NOT_INITIALIZED_STRING) logDebug("UpdateStatus.Direction(0.3)", last_error);
    return(!catch("UpdateStatus(7)"));
 }
 
@@ -3920,9 +3904,6 @@ int ShowStatus(int error = NO_ERROR) {
       if (isRecursion) return(error);
       isRecursion = true;
    }
-
-   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("ShowStatus(0.1)  error="+ error +"  last_error="+ last_error, error+last_error);
-
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.direction) {
@@ -3972,8 +3953,6 @@ int ShowStatus(int error = NO_ERROR) {
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
-   if (error==ERR_NOT_INITIALIZED_STRING || last_error==ERR_NOT_INITIALIZED_STRING) logDebug("ShowStatus(0.2)  error="+ error +"  last_error="+ last_error, error+last_error);
-
    error = ifIntOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
@@ -4022,7 +4001,7 @@ void SS.GridParameters() {
  */
 void SS.Lots() {
    if (__isChart) {
-      string sOpenLevels="", sMinusLevels, sMax="", sSlippage="";
+      string sOpenLevels="", sMinusLevels="", sMax="", sSlippage="";
       int plusLevels, minusLevels, openLevels;
 
       if (!long.totalLots) sTotalLongLots = "-";
