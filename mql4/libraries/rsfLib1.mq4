@@ -1,9 +1,9 @@
 /**
- * Data types and sizes in C, Win32 and MQL4.0
- * ===========================================
+ * Data types and sizes in C, Win32 and MQL4
+ * =========================================
  *
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |        Win32        |     MQL4.0     |
+ * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |        Win32        |      MQL4      |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
@@ -5972,7 +5972,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
       }
       int newTicket = OrdersHedge(group, slippage, oeFlags, oes2);               // newTicket = -1: no new ticket (one of the tickets was fully closed)
       if (!newTicket && oes.Error(oes2, 0))                                      // newTicket =  0: error or total position was already flat
-         return(!oes.setError(oes, -1, oes.Error(oes2, 0)));                     // newTicket >  0: new ticket of offsetting transaction (new position or partial remainder)
+         return(!oes.setError(oes, -1, oes.Error(oes2, 0)));                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
 
       // copy execution details back to the respective passed ticket
       sizeOfGroup = ArraySize(group);
@@ -6122,9 +6122,9 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    int sizeOfCopy = ArrayCopy(ticketsCopy, tickets);
 
    // hedge the total position
-   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = >0: new ticket or remaining position of a partial close
+   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = -1: no new ticket (one of the tickets was fully closed)
    int newTicket = OrdersHedge(ticketsCopy, slippage, oeFlags, oes2);   // newTicket =  0: error or total position was already flat
-   if (IsError(oes.Error(oes2, 0)))                                     // newTicket = -1: no new ticket (one was completely closed)
+   if (IsError(oes.Error(oes2, 0)))                                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
       return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
 
    for (i=0; i < sizeOfTickets; i++) {
@@ -6185,18 +6185,18 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
  *               -1 if one of the positions was fully closed or
  *                0 if the total position was already flat or in case of errors (check oe.Error)
  *
- * Notes: (1) If one of the tickets was fully closed to offset the total position the return value (-1) is stored in
- *            oe.RemainingTicket of the fully closed ticket and oe.RemainingLots of the ticket is set to zero. oe.Swap,
+ * Notes: (1) If one of the tickets was fully closed to offset the total position the return value -1 is stored in
+ *            oe.RemainingTicket of the fully closed ticket and oe.RemainingLots of the ticket is set to zero (0). oe.Swap,
  *            oe.Commission und oe.Profit of the ticket are updated accordingly.
  *
- *        (2) If one of the tickets was partially closed to offset the total position the return value (new ticket id of the
+ *        (2) If one of the tickets was partially closed to offset the total position the return value (new ticket of the
  *            remaining position) is stored in oe.RemainingTicket of the partially closed ticket and oe.RemainingLots of the
  *            ticket is set to the lotsize of the remaining position. oe.Swap, oe.Commission und oe.Profit of the ticket are
  *            updated accordingly.
  *
- *        (3) Time and price of the last (the offsetting) transaction is stored as oe.CloseTime/oe.ClosePrice of all tickets.
+ *        (3) Time and price of the last (the offsetting) transaction are stored as oe.CloseTime/oe.ClosePrice of all tickets.
  *
- *        (4) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *        (4) In case of errors the error is stored in oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
