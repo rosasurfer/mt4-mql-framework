@@ -188,8 +188,8 @@ double   short.slippage;                           // overall slippage of the sh
 double   short.openPL;
 double   short.closedPL;
 double   short.bePrice;
-int      short.minLevel = INT_MAX;
-int      short.maxLevel = INT_MIN;
+int      short.minLevel = INT_MAX;                 // lowest reached grid level
+int      short.maxLevel = INT_MIN;                 // highest reached grid level
 
 // takeprofit conditions
 bool     tpAbs.condition;                          // whether an absolute TP condition is active
@@ -1833,7 +1833,7 @@ bool ComputeProfit(bool positionChanged) {
    double swaps      []; ArrayResize(swaps,       orders);
    double profits    []; ArrayResize(profits,     orders);
 
-   // copy open positions to temp. arrays (are modified in the process)
+   // copy open positions to temp. arrays (ararys are modified in the process)
    for (int n, i=0; i < longOrders; i++) {
       if (long.openType[i]!=OP_UNDEFINED && !long.closeTime[i]) {
          tickets    [n] = long.ticket    [i];
@@ -2010,32 +2010,30 @@ bool ComputeProfit(bool positionChanged) {
       sequence.floatingPL = floatingPL + sumCommission + sumSwap;
    }
 
-   // calculate stop and profit targets
+   // calculate breakeven, stop and profit targets
    if (positionChanged) {
-      if (!ComputeProfitTargets(sequence.totalLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
+      if (!ComputeTargets(sequence.totalLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
    }
 
    // summarize and process results
    sequence.openPL   = NormalizeDouble(sequence.floatingPL + sequence.hedgedPL, 2);
    sequence.closedPL = NormalizeDouble(sequence.closedPL, 2);
    sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
-   bool statsChanged = false;
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; statsChanged = true; }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; statsChanged = true; }
    SS.TotalPL();
-   if (statsChanged) SS.PLStats();
-   SS.ProfitTargets();
+
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.PLStats(); }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.PLStats(); }
 
    return(!catch("ComputeProfit(4)"));
 }
 
 
 /**
- * Compute and update the profit targets of the sequence.
+ * Compute and update the PL targets of the sequence.
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+bool ComputeTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
    double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL;
    int _level;
 
@@ -2048,8 +2046,8 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
       _hedgedPL     = hedgedPL;
       _closedPL     = closedPL;
 
-      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // short: interpolate position to the next long or hedged position
-      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next long position
+      if (_lots <  0) Short2HedgedOrLong(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // extrapolate net short position to hedged or net long
+      if (_lots == 0)        Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // extrapolate hedged position to net long
       long.bePrice = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
@@ -2062,23 +2060,27 @@ bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, d
       _hedgedPL     = hedgedPL;
       _closedPL     = closedPL;
 
-      if (_lots >  0)  Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // long: interpolate position to the next short or hedged position
-      if (_lots == 0) Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next short position
+      if (_lots >  0) Long2HedgedOrShort(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // extrapolate net long position to hedged or net short
+      if (_lots == 0)       Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // extrapolate hedged position to net short
       short.bePrice = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
    }
 
-   if (IsVisualMode()) {                                                                           // store results also in the chart window (for breakeven indicator)
-      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  long.bePrice);
+   if (IsVisualMode()) {
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  long.bePrice);       // also store results in the chart window (for Breakeven indicator)
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", short.bePrice);
    }
-   return(!catch("ComputeProfitTargets(1)"));
+   SS.Targets();
+
+   return(!catch("ComputeTargets(1)"));
 }
 
 
 /**
+ * Extrapolate the given net short position to hedged or net long.
+ *
  * @return bool - success status
  */
-bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+bool Short2HedgedOrLong(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
    double avgPrice=-sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
 
    while (lots < 0) {
@@ -2099,9 +2101,11 @@ bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commis
 
 
 /**
+ * Extrapolate the given net long position to hedged or net short.
+ *
  * @return bool - success status
  */
-bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
+bool Long2HedgedOrShort(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
    double avgPrice=sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
 
    while (lots > 0) {
@@ -2163,7 +2167,7 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
 
    // long
    if (direction == D_LONG) {
-      if (lots <= 0) return(!catch("ComputeBreakeven(1)  not a long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+      if (lots <= 0) return(!catch("ComputeBreakeven(1)  not a net long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
 
       pipValue  = lots * pipValuePerLot;                             // BE at the current level
       bePrice   = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
@@ -2185,7 +2189,7 @@ double ComputeBreakeven(int direction, int level, double lots, double sumOpenPri
 
    // short
    if (direction == D_SHORT) {
-      if (lots >= 0) return(!catch("ComputeBreakeven(2)  not a short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+      if (lots >= 0) return(!catch("ComputeBreakeven(2)  not a net short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
 
       pipValue  = -lots * pipValuePerLot;                            // BE at the current level
       bePrice   = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
@@ -3968,7 +3972,7 @@ void SS.All() {
       SS.GridParameters();
       SS.Lots();
       SS.StopConditions();
-      SS.ProfitTargets();
+      SS.Targets();
       SS.TotalPL();
       SS.PLStats();
       SS.CycleStats();
@@ -4140,7 +4144,7 @@ void SS.CycleStats() {
 /**
  * ShowStatus: Update the string representation of "long/short.bePrice", "sequence.tpPrice" and "sequence.slPrice".
  */
-void SS.ProfitTargets() {
+void SS.Targets() {
    if (__isChart) {
       sSequenceBePrice = "";
       if (long.enabled) {
