@@ -39,7 +39,7 @@
  * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG};
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -188,8 +188,8 @@ double   short.slippage;                           // overall slippage of the sh
 double   short.openPL;
 double   short.closedPL;
 double   short.bePrice;
-int      short.minLevel = INT_MAX;
-int      short.maxLevel = INT_MIN;
+int      short.minLevel = INT_MAX;                 // lowest reached grid level
+int      short.maxLevel = INT_MIN;                 // highest reached grid level
 
 // takeprofit conditions
 bool     tpAbs.condition;                          // whether an absolute TP condition is active
@@ -278,7 +278,7 @@ int onTick() {
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
-   static string label, mutex; if (!StringLen(label)) {
+   static string label="", mutex=""; if (!StringLen(label)) {
       label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
@@ -604,7 +604,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
  * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
 int ShowTradeHistory() {
-   string openLabel, closeLabel, lineLabel, sOpenPrice, sClosePrice, text;
+   string openLabel="", closeLabel="", lineLabel="", sOpenPrice="", sClosePrice="", text="";
    int closedTrades = 0;
 
    // process closed trades of the current cycle
@@ -1340,8 +1340,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
       SS.Lots();
       saveStatus = true;
    }
-   if (!ComputeProfit(positionChanged)) return(false);
 
+   if (!ComputeProfit(positionChanged)) return(false);
    if (saveStatus) SaveStatus();
 
    static int prevMaxGridLevels = 0; if (MaxGridLevels != prevMaxGridLevels) {
@@ -1441,7 +1441,6 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &positionChan
    totalLots = NormalizeDouble(totalLots, 2);
    openPL    = NormalizeDouble(openPL, 2);
    closedPL  = NormalizeDouble(closedPL, 2);
-
    return(!catch("UpdateStatus(7)"));
 }
 
@@ -1834,7 +1833,7 @@ bool ComputeProfit(bool positionChanged) {
    double swaps      []; ArrayResize(swaps,       orders);
    double profits    []; ArrayResize(profits,     orders);
 
-   // copy open positions to temp. arrays (are modified in the process)
+   // copy open positions to temp. arrays (ararys are modified in the process)
    for (int n, i=0; i < longOrders; i++) {
       if (long.openType[i]!=OP_UNDEFINED && !long.closeTime[i]) {
          tickets    [n] = long.ticket    [i];
@@ -1871,7 +1870,7 @@ bool ComputeProfit(bool positionChanged) {
    }
 
    // compute openPL = floatingPL + hedgedPL
-   double hedgedLots, remainingLong, remainingShort, factor, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingPL, pipValue, pipDistance;
+   double hedgedLots, remainingLong, remainingShort, factor, avgOpenPrice, sumOpenPrice, sumClosePrice, sumCommission, sumSwap, floatingPL, pipValue, pipDistance;
 
    // compute PL of a hedged part
    if (long.totalLots && short.totalLots) {
@@ -1970,6 +1969,7 @@ bool ComputeProfit(bool positionChanged) {
       }
       if (remainingLong != 0) return(!catch("ComputeProfit(2)  illegal remaining long position "+ NumberToStr(remainingLong, ".+") +" of total position = "+ NumberToStr(sequence.totalLots, ".+"), ERR_RUNTIME_ERROR));
 
+      avgOpenPrice        = sumOpenPrice/sequence.totalLots;
       sequence.floatingPL = floatingPL + sumCommission + sumSwap;
    }
 
@@ -2008,79 +2008,118 @@ bool ComputeProfit(bool positionChanged) {
       }
       if (remainingShort != 0) return(!catch("ComputeProfit(3)  illegal remaining short position "+ NumberToStr(remainingShort, ".+") +" of total position = "+ NumberToStr(sequence.totalLots, ".+"), ERR_RUNTIME_ERROR));
 
+      avgOpenPrice        = -sumOpenPrice/sequence.totalLots;
       sequence.floatingPL = floatingPL + sumCommission + sumSwap;
    }
 
-   // calculate stop and profit targets
+   // calculate breakeven, stop and profit targets
    if (positionChanged) {
-      if (!ComputeProfitTargets(sequence.totalLots, sumOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
+      if (!ComputeTargets(sequence.totalLots, avgOpenPrice, sumCommission, sumSwap, sequence.hedgedPL, sequence.closedPL)) return(false);
    }
 
    // summarize and process results
    sequence.openPL   = NormalizeDouble(sequence.floatingPL + sequence.hedgedPL, 2);
    sequence.closedPL = NormalizeDouble(sequence.closedPL, 2);
    sequence.totalPL  = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
-   bool statsChanged = false;
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; statsChanged = true; }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; statsChanged = true; }
    SS.TotalPL();
-   if (statsChanged) SS.PLStats();
-   SS.ProfitTargets();
+
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.PLStats(); }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.PLStats(); }
 
    return(!catch("ComputeProfit(4)"));
 }
 
 
 /**
- * Compute and update the profit targets of the sequence.
+ * Compute and update the PL targets of the sequence.
+ *
+ * @param  double openLots    - open net position of the sequence: -n...+n
+ * @param  double avgPrice    - average price of the open position
+ * @param  double commissions - floating open commissions (without hedged positions)
+ * @param  double swaps       - floating open swaps (without hedged positions)
+ * @param  double hedgedPL    - PL of hedged positions
+ * @param  double closedPL    - PL of closed positions
  *
  * @return bool - success status
  */
-bool ComputeProfitTargets(double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
-   double _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL;
-   int _level;
+bool ComputeTargets(double openLots, double avgPrice, double commissions, double swaps, double hedgedPL, double closedPL) {
+   double lots, sumPrices, commission, swap, hedgePL, closePL, tpPL;
+   int level;
 
    if (long.enabled) {
-      _level        = long.maxLevel;
-      _lots         = lots;
-      _sumOpenPrice = sumOpenPrice;
-      _commission   = commission;
-      _swap         = swap;
-      _hedgedPL     = hedgedPL;
-      _closedPL     = closedPL;
+      level      = long.maxLevel;
+      lots       = openLots;
+      sumPrices  = MathAbs(openLots * avgPrice);
+      commission = commissions;
+      swap       = swaps;
+      hedgePL    = hedgedPL;
+      closePL    = closedPL;
 
-      if (_lots <  0) Short2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // short: interpolate position to the next long or hedged position
-      if (_lots == 0)  Hedged2Long(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next long position
-      long.bePrice = ComputeBreakeven(D_LONG, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+      if (lots <  0) ExtrapolateShort2HedgedOrLong(level, lots, sumPrices, commission, swap, hedgePL);   // extrapolate net short position to hedged or net long
+      if (lots == 0)        ExtrapolateHedged2Long(level, lots, sumPrices, commission);                  // extrapolate hedged position to net long
+      avgPrice = MathAbs(sumPrices/lots);
+
+      // breakeven
+      long.bePrice = ComputeTarget(0, D_LONG, lots, avgPrice, level, commission, swap, hedgePL, closePL);
+      if (!long.bePrice) return(false);
+
+      // takeprofit
+      if (tpAbs.condition)                                 tpPL = tpAbs.value;
+      else if (tpPct.condition && tpPct.absValue!=INT_MAX) tpPL = tpPct.absValue;
+      else                                                 tpPL = 0;
+      if (tpPL != 0) {
+         sequence.tpPrice = ComputeTarget(tpPL, D_LONG, lots, avgPrice, level, commission, swap, hedgePL, closePL);
+         if (!sequence.tpPrice) return(false);
+      }
    }
 
    if (short.enabled) {
-      _level        = short.maxLevel;
-      _lots         = lots;
-      _sumOpenPrice = sumOpenPrice;
-      _commission   = commission;
-      _swap         = swap;
-      _hedgedPL     = hedgedPL;
-      _closedPL     = closedPL;
+      level      = short.maxLevel;
+      lots       = openLots;
+      sumPrices  = MathAbs(openLots * avgPrice);
+      commission = commissions;
+      swap       = swaps;
+      hedgePL    = hedgedPL;
+      closePL    = closedPL;
 
-      if (_lots >  0)  Long2Hedged(_level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL);   // long: interpolate position to the next short or hedged position
-      if (_lots == 0) Hedged2Short(_level, _lots, _sumOpenPrice, _commission);                     // hedged: interpolate position to the next short position
-      short.bePrice = ComputeBreakeven(D_SHORT, _level, _lots, _sumOpenPrice, _commission, _swap, _hedgedPL, _closedPL);
+      if (lots >  0) ExtrapolateLong2HedgedOrShort(level, lots, sumPrices, commission, swap, hedgePL);   // extrapolate net long position to hedged or net short
+      if (lots == 0)       ExtrapolateHedged2Short(level, lots, sumPrices, commission);                  // extrapolate hedged position to net short
+      avgPrice = MathAbs(sumPrices/lots);
+
+      // breakeven
+      short.bePrice = ComputeTarget(0, D_SHORT, lots, avgPrice, level, commission, swap, hedgePL, closePL);
+      if (!short.bePrice) return(false);
+
+      // takeprofit
+      if (tpAbs.condition)                                 tpPL = tpAbs.value;
+      else if (tpPct.condition && tpPct.absValue!=INT_MAX) tpPL = tpPct.absValue;
+      else                                                 tpPL = 0;
+      if (tpPL != 0) {
+         sequence.tpPrice = ComputeTarget(tpPL, D_SHORT, lots, avgPrice, level, commission, swap, hedgePL, closePL);
+         if (!sequence.tpPrice) return(false);
+      }
    }
 
-   if (IsVisualMode()) {                                                                           // store results also in the chart window (for breakeven indicator)
-      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",  long.bePrice);
+   if (IsVisualMode()) {
+      // also store results in the chart window (for targets indicator)
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",   long.bePrice);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", short.bePrice);
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.takeprofit",   sequence.tpPrice);
+      SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.stoploss",     sequence.slPrice);
    }
-   return(!catch("ComputeProfitTargets(1)"));
+   SS.Targets();
+
+   return(!catch("ComputeTargets(1)"));
 }
 
 
 /**
+ * Extrapolate the given net short position to hedged or net long.
+ *
  * @return bool - success status
  */
-bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
-   double avgPrice=-sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+bool ExtrapolateShort2HedgedOrLong(int &level, double &lots, double &sumPrices, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=-sumPrices/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
 
    while (lots < 0) {
       level++;
@@ -2090,20 +2129,21 @@ bool Short2Hedged(int &level, double &lots, double &sumOpenPrice, double &commis
       hedgedPL += (avgPrice-nextPrice)/Pip * (nextLots-MathMax(0, lots)) * pipValuePerLot;
    }
 
-   hedgedPL    += commission + swap;
-   sumOpenPrice = lots * nextPrice;
-   commission   = -RoundCeil(GetCommission(lots), 2);
-   swap         = 0;
-
+   hedgedPL  += commission + swap;
+   sumPrices  = lots * nextPrice;
+   commission = -RoundCeil(GetCommission(lots), 2);
+   swap       = 0;
    return(true);
 }
 
 
 /**
+ * Extrapolate the given net long position to hedged or net short.
+ *
  * @return bool - success status
  */
-bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commission, double &swap, double &hedgedPL) {
-   double avgPrice=sumOpenPrice/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
+bool ExtrapolateLong2HedgedOrShort(int &level, double &lots, double &sumPrices, double &commission, double &swap, double &hedgedPL) {
+   double avgPrice=sumPrices/lots, nextPrice, nextLots, pipValuePerLot=PipValue();
 
    while (lots > 0) {
       level++;
@@ -2113,11 +2153,10 @@ bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commiss
       hedgedPL += (nextPrice-avgPrice)/Pip * (nextLots+MathMin(0, lots)) * pipValuePerLot;
    }
 
-   hedgedPL    += commission + swap;
-   sumOpenPrice = -lots * nextPrice;
-   commission   = RoundCeil(GetCommission(lots), 2);
-   swap         = 0;
-
+   hedgedPL  += commission + swap;
+   sumPrices  = -lots * nextPrice;
+   commission = RoundCeil(GetCommission(lots), 2);
+   swap       = 0;
    return(true);
 }
 
@@ -2125,14 +2164,13 @@ bool Long2Hedged(int &level, double &lots, double &sumOpenPrice, double &commiss
 /**
  * @return bool - success status
  */
-bool Hedged2Long(int &level, double &lots, double &sumOpenPrice, double &commission) {
-   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Long(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+bool ExtrapolateHedged2Long(int &level, double &lots, double &sumPrices, double &commission) {
+   if (lots || sumPrices || commission) return(!catch("ExtrapolateHedged2Long(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumPrices="+ NumberToStr(sumPrices, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
 
    level++;
-   lots         = CalculateLots(D_LONG, level);
-   sumOpenPrice = lots * CalculateGridLevel(D_LONG, level);
-   commission   = -RoundCeil(GetCommission(lots), 2);
-
+   lots       = CalculateLots(D_LONG, level);
+   sumPrices  = lots * CalculateGridLevel(D_LONG, level);
+   commission = -RoundCeil(GetCommission(lots), 2);
    return(true);
 }
 
@@ -2140,73 +2178,84 @@ bool Hedged2Long(int &level, double &lots, double &sumOpenPrice, double &commiss
 /**
  * @return bool - success status
  */
-bool Hedged2Short(int &level, double &lots, double &sumOpenPrice, double &commission) {
-   if (lots || sumOpenPrice || commission) return(!catch("Hedged2Short(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumOpenPrice="+ NumberToStr(sumOpenPrice, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
+bool ExtrapolateHedged2Short(int &level, double &lots, double &sumPrices, double &commission) {
+   if (lots || sumPrices || commission) return(!catch("ExtrapolateHedged2Short(1)  invalid parameters: lots="+ NumberToStr(lots, ".+") +"  sumPrices="+ NumberToStr(sumPrices, ".+") +"  commission="+ NumberToStr(commission, ".+"), ERR_INVALID_PARAMETER));
 
    level++;
-   lots         = -CalculateLots(D_SHORT, level);
-   sumOpenPrice = -lots * CalculateGridLevel(D_SHORT, level);
-   commission   = RoundCeil(GetCommission(lots), 2);
-
+   lots       = -CalculateLots(D_SHORT, level);
+   sumPrices  = -lots * CalculateGridLevel(D_SHORT, level);
+   commission = RoundCeil(GetCommission(lots), 2);
    return(true);
 }
 
 
 /**
- * Compute the breakeven price of the given position considering future grid positions.
+ * Compute the price the specified synthetic position reaches the defined profit target. Considers future grid position.
  *
- * @return double - breakeven price or NULL in case of errors
+ * @param  double targetPL   - profit target in account currency to reach
+ * @param  int    direction  - trade direction: D_LONG | D_SHORT
+ * @param  double lots       - open net position:                                    -n...+n
+ * @param  double avgPrice   - average price of the position
+ * @param  int    level      - gridlevel of the position
+ * @param  double commission - floating open commissions (without hedged positions): -n...0
+ * @param  double swap       - floating open swaps (without hedged positions):       -n...0
+ * @param  double hedgedPL   - PL of hedged positions:                               -n...+n
+ * @param  double closedPL   - PL of already closed positions:                       -n...+n
+ *
+ * @return double - price level to reach the defined target or NULL in case of errors
  */
-double ComputeBreakeven(int direction, int level, double lots, double sumOpenPrice, double commission, double swap, double hedgedPL, double closedPL) {
+double ComputeTarget(double targetPL, int direction, double lots, double avgPrice, int level, double commission, double swap, double hedgedPL, double closedPL) {
    int nextLevel;
-   double nextLots, nextPrice, bePrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
+   double nextLots, nextPrice, sumPrices, targetPrice, pipValue, pipValuePerLot=PipValue(), commissionPerLot=GetCommission();
    if (!pipValuePerLot || IsEmpty(commissionPerLot)) return(NULL);
 
    // long
    if (direction == D_LONG) {
-      if (lots <= 0) return(!catch("ComputeBreakeven(1)  not a long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+      if (lots <= 0) return(!catch("ComputeTarget(1)  not a net long position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
 
-      pipValue  = lots * pipValuePerLot;                             // BE at the current level
-      bePrice   = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
-      nextLevel = level + 1;
-      nextPrice = CalculateGridLevel(D_LONG, nextLevel);             // grid at the next level
+      pipValue    = lots * pipValuePerLot;                           // target price using the current gridlevel
+      targetPrice = avgPrice - (closedPL + hedgedPL + commission + swap - targetPL)/pipValue*Pip;
+      nextLevel   = level + 1;
+      nextPrice   = CalculateGridLevel(D_LONG, nextLevel);           // price of the next gridlevel
+      sumPrices   = lots * avgPrice;
 
-      while (nextPrice < bePrice) {
-         nextLots      = CalculateLots(D_LONG, nextLevel);
-         lots         += nextLots;
-         sumOpenPrice += nextLots * nextPrice;
-         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue      = lots * pipValuePerLot;                      // BE at the next level
-         bePrice       = sumOpenPrice/lots - (closedPL + hedgedPL + commission + swap)/pipValue*Pip;
+      while (nextPrice < targetPrice) {
+         nextLots    = CalculateLots(D_LONG, nextLevel);
+         lots       += nextLots;
+         sumPrices  += nextLots * nextPrice;
+         commission -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue    = lots * pipValuePerLot;                        // target price using the next gridlevel
+         targetPrice = sumPrices/lots - (closedPL + hedgedPL + commission + swap - targetPL)/pipValue*Pip;
          nextLevel++;
-         nextPrice     = CalculateGridLevel(D_LONG, nextLevel);      // grid at the next level
+         nextPrice = CalculateGridLevel(D_LONG, nextLevel);          // price of the next gridlevel
       }
-      return(bePrice);
+      return(targetPrice);
    }
 
    // short
    if (direction == D_SHORT) {
-      if (lots >= 0) return(!catch("ComputeBreakeven(2)  not a short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
+      if (lots >= 0) return(!catch("ComputeTarget(2)  not a net short position: lots="+ NumberToStr(lots, ".1+"), ERR_RUNTIME_ERROR));
 
-      pipValue  = -lots * pipValuePerLot;                            // BE at the current level
-      bePrice   = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
-      nextLevel = level + 1;
-      nextPrice = CalculateGridLevel(D_SHORT, nextLevel);            // grid at the next level
+      pipValue    = -lots * pipValuePerLot;                          // target price using the current gridlevel
+      targetPrice = avgPrice + (closedPL + hedgedPL + commission + swap - targetPL)/pipValue*Pip;
+      nextLevel   = level + 1;
+      nextPrice   = CalculateGridLevel(D_SHORT, nextLevel);          // price of the next gridlevel
+      sumPrices   = -lots * avgPrice;
 
-      while (nextPrice > bePrice) {
-         nextLots      = CalculateLots(D_SHORT, nextLevel);
-         lots         -= nextLots;
-         sumOpenPrice += nextLots * nextPrice;
-         commission   -= RoundCeil(nextLots * commissionPerLot, 2);
-         pipValue      = -lots * pipValuePerLot;                     // BE at the next level
-         bePrice       = (closedPL + hedgedPL + commission + swap)/pipValue*Pip - sumOpenPrice/lots;
+      while (nextPrice > targetPrice) {
+         nextLots    = CalculateLots(D_SHORT, nextLevel);
+         lots       -= nextLots;
+         sumPrices  += nextLots * nextPrice;
+         commission -= RoundCeil(nextLots * commissionPerLot, 2);
+         pipValue    = -lots * pipValuePerLot;                       // target price using the next gridlevel
+         targetPrice = (closedPL + hedgedPL + commission + swap - targetPL)/pipValue*Pip - sumPrices/lots;
          nextLevel++;
-         nextPrice     = CalculateGridLevel(D_SHORT, nextLevel);     // grid at the next level
+         nextPrice = CalculateGridLevel(D_SHORT, nextLevel);         // price of the next gridlevel
       }
-      return(bePrice);
+      return(targetPrice);
    }
 
-   return(!catch("ComputeBreakeven(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   return(!catch("ComputeTarget(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 
@@ -2251,10 +2300,10 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
       pl        = gridvola/100 * equity;
       adrLots   = pl/beDistance/tickValue * tickSize;
       adrLevels = adrLots/unitsize;
-      gridsize  = adr/Pip/(adrLevels-1);
+      gridsize  = MathDiv(adr/Pip, adrLevels-1);
       gridsize  = RoundCeil(gridsize, Digits & 1);                   // round gridsize up
-
-      if (!gridsize) return(!catch("ConfigureGrid(11)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
+      if (gridsize < 0) logError("ConfigureGrid(11)  illegal result: pl="+ DoubleToStr(pl, 2) +"  adr="+ NumberToStr(adr, ".+") +"  adrLots="+ NumberToStr(adrLots, ".+") +"  adrLevels="+ NumberToStr(adrLevels, ".+") +" => resulting gridsize: "+ NumberToStr(gridsize, ".+"), ERR_RUNTIME_ERROR);
+      if (!gridsize) return(!catch("ConfigureGrid(12)  "+ sequence.name +" gridvola="+ NumberToStr(gridvola, ".+") +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridsize: 0", ERR_RUNTIME_ERROR));
    }
    else if (gridvola && gridsize) {
       // calculate the resulting unitsize
@@ -2277,7 +2326,6 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
          unitsize = MarketInfo(Symbol(), MODE_MINLOT);               // set unitsize to the minimum
       }
    }
-
    return(ConfigureGrid(gridvola, gridsize, unitsize));              // recalculate missings after adjusted or rounded up/down values
 }
 
@@ -2306,7 +2354,7 @@ string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   static string filename; if (!StringLen(filename)) {
+   static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
       string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
       filename = directory + baseName;
@@ -2435,7 +2483,7 @@ string   prev.Sequence.ID     = "";
 string   prev.GridDirection   = "";
 string   prev.GridVolatility  = "";
 string   prev.VolatilityRange = "";
-string   prev.GridSize;
+string   prev.GridSize        = "";
 double   prev.UnitSize;
 int      prev.MaxGridLevels;
 double   prev.Pyramid.Multiplier;
@@ -3331,7 +3379,7 @@ bool SaveStatus() {
       saved = true;
    }
 
-   string section, separator="", file=GetStatusFilename();
+   string section="", separator="", file=GetStatusFilename();
    if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
 
    // [General]
@@ -3344,7 +3392,7 @@ bool SaveStatus() {
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",                /*string  */ Sequence.ID);
    WriteIniString(file, section, "GridDirection",              /*string  */ GridDirection);
-   WriteIniString(file, section, "GridVolatility",             /*string  */ NumberToStr(sequence.gridvola, ".+") +"%");
+   WriteIniString(file, section, "GridVolatility",             /*string  */ NumberToStr(NormalizeDouble(sequence.gridvola, 1), ".+") +"%");
    WriteIniString(file, section, "VolatilityRange",            /*string  */ VolatilityRange);
    WriteIniString(file, section, "GridSize",                   /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                   /*double  */ NumberToStr(sequence.unitsize, ".+"));
@@ -3602,7 +3650,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   string section, file=GetStatusFilename();
+   string section="", file=GetStatusFilename();
    if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
@@ -3693,7 +3741,7 @@ bool ReadStatus() {
    long.bePrice               = GetIniDouble (file, section, "long.bePrice"  );                 // double   long.bePrice   = 1.17453
    long.minLevel              = GetIniInt    (file, section, "long.minLevel" );                 // int      long.minLevel  = -2
    long.maxLevel              = GetIniInt    (file, section, "long.maxLevel" );                 // int      long.maxLevel  = 7
-   string sKeys[], sOrder;
+   string sKeys[], sOrder="";
    int size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_LONG, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.orders.{i} = {data}
@@ -3906,7 +3954,6 @@ int ShowStatus(int error = NO_ERROR) {
       if (isRecursion) return(error);
       isRecursion = true;
    }
-
    string sSequence="", sDirection="", sError="";
 
    switch (sequence.direction) {
@@ -3971,7 +4018,7 @@ void SS.All() {
       SS.GridParameters();
       SS.Lots();
       SS.StopConditions();
-      SS.ProfitTargets();
+      SS.Targets();
       SS.TotalPL();
       SS.PLStats();
       SS.CycleStats();
@@ -3984,13 +4031,13 @@ void SS.All() {
  */
 void SS.GridParameters() {
    if (__isChart) {
-      string sGridSize;
+      string sGridSize = "";
       if      (!sequence.gridsize)         sGridSize = "?";
       else if (Digits==2 && Close[0]>=500) sGridSize = NumberToStr(sequence.gridsize/100, ",'R.2");      // 123 pip => 1.23
       else                                 sGridSize = NumberToStr(sequence.gridsize, ".+") +" pip";     // 12.3 pip
 
       string sUnitSize   = ifString(!sequence.unitsize, "?", NumberToStr(sequence.unitsize, ".+") +" lot");
-      string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier, ".+"), "");
+      string sPyramid    = ifString(sequence.pyramidEnabled,    "    Pyramid="+    NumberToStr(Pyramid.Multiplier,    ".+"), "");
       string sMartingale = ifString(sequence.martingaleEnabled, "    Martingale="+ NumberToStr(Martingale.Multiplier, ".+"), "");
 
       sGridParameters = sGridSize +" x "+ sUnitSize + sPyramid + sMartingale;
@@ -4004,7 +4051,7 @@ void SS.GridParameters() {
  */
 void SS.Lots() {
    if (__isChart) {
-      string sOpenLevels="", sMinusLevels, sMax="", sSlippage="";
+      string sOpenLevels="", sMinusLevels="", sMax="", sSlippage="";
       int plusLevels, minusLevels, openLevels;
 
       if (!long.totalLots) sTotalLongLots = "-";
@@ -4081,7 +4128,7 @@ void SS.PLStats(bool enforce = false) {
          sSequencePlStats = "";
       }
       else {
-         string sSequenceMaxProfit, sSequenceMaxDrawdown;
+         string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
          if (ShowProfitInPercent) {
             sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
             sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
@@ -4109,7 +4156,7 @@ void SS.CycleStats() {
    else if (short.enabled && ArraySize(short.history)) ArrayCopy(history, short.history);
    else return;
 
-   string sTotalPL, sMaxProfit, sMaxDrawdown, sResult;
+   string sTotalPL="", sMaxProfit="", sMaxDrawdown="", sResult="";
    int size=ArrayRange(history, 0), lastCycle=0;
 
    for (int i=0; i < size; i++) {
@@ -4143,7 +4190,7 @@ void SS.CycleStats() {
 /**
  * ShowStatus: Update the string representation of "long/short.bePrice", "sequence.tpPrice" and "sequence.slPrice".
  */
-void SS.ProfitTargets() {
+void SS.Targets() {
    if (__isChart) {
       sSequenceBePrice = "";
       if (long.enabled) {
@@ -4213,7 +4260,7 @@ int CreateStatusBox() {
 
    int x[]={2, 114}, y=58, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
-   string label;
+   string label = "";
 
    for (int i=0; i < rectangles; i++) {
       label = ProgramName() +".statusbox."+ (i+1);

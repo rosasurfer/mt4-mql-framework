@@ -2,7 +2,6 @@
  * Constants shared by MQL4 and MT4Expander (C++).
  */
 
-
 // special constants
 #define EMPTY                          0xFFFFFFFF        // -1
 #define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)           min(datetime) = '1970-01-01 00:00:00'
@@ -330,6 +329,7 @@
 #define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
 #define INIT_AUTOCONFIG                        32        // setup auto-configuration
+#define INIT_NO_EXTERNAL_REPORTING             64        // always disable external test reporting (experts only)
 
 
 // MT4 internal messages

@@ -82,8 +82,8 @@ int    maAppliedPrice;
 int    maxValues;
 double tmaWindow[];
 
-string indicatorName;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool   test.onSignalPause = false;                 // whether to pause a test on a signal

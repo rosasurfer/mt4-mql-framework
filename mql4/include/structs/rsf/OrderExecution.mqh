@@ -216,7 +216,7 @@ string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;
-   string priceFormat, line, lines[]; ArrayResize(lines, 0);
+   string priceFormat="", line="", lines[]; ArrayResize(lines, 0);
 
 
    if (dimensions == 1) {

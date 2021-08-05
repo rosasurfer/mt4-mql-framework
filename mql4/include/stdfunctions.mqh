@@ -332,12 +332,12 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  */
 bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
-   string fullName = StringConcatenate(TerminalPath(), "\\sounds\\", filename);
+   string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
    if (!IsFileA(fullName)) {
-      fullName = StringConcatenate(GetTerminalDataPathA(), "\\sounds\\", filename);
+      fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
       if (!IsFileA(fullName)) {
-         if (IsLogWarn()) logWarn("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
@@ -398,19 +398,18 @@ void ForceAlert(string message) {
  * @return int - the pressed button's key code
  */
 int MessageBoxEx(string caption, string message, int flags = MB_OK) {
-   string prefix = StringConcatenate(Symbol(), ",", PeriodDescription());
+   string prefix = Symbol() +","+ PeriodDescription();
 
    if (!StrContains(caption, prefix))
-      caption = StringConcatenate(prefix, " - ", caption);
+      caption = prefix +" - "+ caption;
 
    bool win32 = false;
    if      (IsTesting())                                                                                   win32 = true;
    else if (IsIndicator())                                                                                 win32 = true;
    else if (__ExecutionContext[EC.programCoreFunction]==CF_INIT && UninitializeReason()==REASON_RECOMPILE) win32 = true;
 
-   int button;
-   if (!win32) button = MessageBox(message, caption, flags);
-   else        button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
+   if (!win32) int button = MessageBox(message, caption, flags);
+   else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) {
       logDebug("MessageBoxEx(1)  "+ message);
@@ -864,6 +863,9 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 /**
  * Calculate the current symbol's commission value for the specified lotsize.
  *
+ * - For tests the broker's commission rate as stored in the testers FXT files is used (always correct).
+ * - Online the commission rate as configured by the user in the framework configuration is used (subject to errors).
+ *
  * @param  double lots [optional] - lotsize (default: 1 lot)
  * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
  *                                  MODE_MARKUP: as price markup in quote currency (independant of lotsize)
@@ -1115,7 +1117,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
-                if      (              _symbol=="US2000" )     result = "RUS2000";
+                if      (              _symbol=="UKOIL"  )     result = "BRENT";
+                else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
@@ -1160,6 +1163,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "XAUEUR"))     result = "XAUEUR";
                 else if (StrStartsWith(_symbol, "XAUJPY"))     result = "XAUJPY";
                 else if (StrStartsWith(_symbol, "XAUUSD"))     result = "XAUUSD";
+                else if (              _symbol=="XBRUSD")      result = "BRENT";
+                else if (              _symbol=="XTIUSD")      result = "WTI";
                 break;
 
       case 'Y': break;
@@ -2637,11 +2642,11 @@ void CopyMemory(int destination, int source, int bytes) {
 
 
 /**
- * Addiert die Werte eines Integer-Arrays.
+ * Add all values of an integer array.
  *
- * @param  int values[] - Array mit Ausgangswerten
+ * @param  int values[] - array
  *
- * @return int - Summe der Werte oder 0, falls ein Fehler auftrat
+ * @return int - sum or NULL (0) in case of errors
  */
 int SumInts(int values[]) {
    if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
@@ -2973,7 +2978,7 @@ bool EnumChildWindows(int hWnd, bool recursive = false) {
    else if (hWnd < 0)        return(!catch("EnumChildWindows(1)  invalid parameter hWnd: "+ hWnd , ERR_INVALID_PARAMETER));
    else if (!IsWindow(hWnd)) return(!catch("EnumChildWindows(2)  not an existing window hWnd: "+ IntToHexStr(hWnd), ERR_INVALID_PARAMETER));
 
-   string padding, wndTitle, wndClass;
+   string padding="", wndTitle="", wndClass="";
    int ctrlId;
 
    static int sublevel;
@@ -3173,7 +3178,7 @@ string StrTrimRight(string value) {
  * @return string - URL-kodierter String
  */
 string UrlEncode(string value) {
-   string strChar, result="";
+   string strChar="", result="";
    int chr, len=StringLen(value);
 
    for (int i=0; i < len; i++) {
@@ -3233,7 +3238,7 @@ bool MQL.IsFile(string filename) {
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
 string GetMqlFilesPath() {
-   static string filesDir; if (!StringLen(filesDir)) {
+   static string filesDir=""; if (!StringLen(filesDir)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
@@ -4245,7 +4250,7 @@ int GetAccountNumberFromAlias(string company, string alias) {
 
    string file = GetGlobalConfigPathA(); if (!StringLen(file)) return(NULL);
    string section = "Accounts";
-   string keys[], value, sAccount;
+   string keys[], value="", sAccount="";
    int keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {
@@ -5119,6 +5124,8 @@ string NumberToStr(double value, string mask) {
    if (StringGetChar(sNumber, 3) == '#')                    // "-1.#IND0000" => NaN
       return(sNumber);                                      // "-1.#INF0000" => Infinite
 
+   int error = GetLastError();
+   if (error != NO_ERROR) catch("NumberToStr(1)  unhandled error (value="+ value +", mask=\""+ mask +"\")", error);
 
    // --- Beginn Maske parsen -------------------------
    int maskLen = StringLen(mask);
@@ -5223,7 +5230,7 @@ string NumberToStr(double value, string mask) {
 
    // 1000er-Separatoren einfügen
    if (separators) {
-      string out1;
+      string out1 = "";
       i = nLeft;
       while (i > 3) {
          out1 = StrSubstr(outStr, 0, i-3);
@@ -5241,7 +5248,8 @@ string NumberToStr(double value, string mask) {
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
 
-   catch("NumberToStr(1)");
+   error = GetLastError();
+   if (error != NO_ERROR) catch("NumberToStr(2)  value="+ value +", mask=\""+ mask +"\"", error);
    return(outStr);
 }
 

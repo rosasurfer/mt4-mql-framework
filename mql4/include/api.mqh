@@ -936,7 +936,7 @@ bool     Test_onPositionOpen(int &ec[], int ticket, int type, double lots, strin
 bool     Test_onPositionClose(int &ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);;
 double   Test_GetCommission(int &ec[], double lots);;
 bool     Test_StartReporting(int &ec[], datetime from, int bars, int reportId, string reportSymbol);;
-bool     Test_StopReporting (int &ec[], datetime to,   int bars);;
+bool     Test_StopReporting (int &ec[], datetime to, int bars);;
 int      Tester_GetBarModel();;
 datetime Tester_GetStartDate();;
 datetime Tester_GetEndDate();;

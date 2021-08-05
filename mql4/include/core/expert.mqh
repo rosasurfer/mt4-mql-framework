@@ -60,8 +60,11 @@ int init() {
    // initialize the execution context
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
-
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
+   if (EA.CreateReport && initFlags & INIT_NO_EXTERNAL_REPORTING) {
+      EA.CreateReport = false;                                       // the input must be reset before SyncMainContext_init()
+   }
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.CreateReport, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -76,7 +79,7 @@ int init() {
    if (!InitGlobals()) if (CheckErrors("init(3)")) return(last_error);
 
    // execute custom init tasks
-   int initFlags = __ExecutionContext[EC.programInitFlags];
+   initFlags = __ExecutionContext[EC.programInitFlags];
    if (initFlags & INIT_TIMEZONE && 1) {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
@@ -170,8 +173,8 @@ int init() {
                                                                               //
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
-   if (CheckErrors("init(18)")) return(last_error);
 
+   if (CheckErrors("init(18)")) return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks to continue operation on a stalled data feed
@@ -270,7 +273,7 @@ int start() {
    // tester: wait until the configured start time/price is reached
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
-         static string startTime; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
+         static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
          if (Tick.Time < Tester.StartTime) {
             Comment(NL, NL, NL, "Tester: starting at ", startTime);
             return(last_error);
@@ -278,7 +281,7 @@ int start() {
          Tester.StartTime = 0;
       }
       if (Tester.StartPrice != 0) {
-         static string startPrice; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
+         static string startPrice=""; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
          static double tester.lastPrice; if (!tester.lastPrice) {
             tester.lastPrice = Bid;
             Comment(NL, NL, NL, "Tester: starting at ", startPrice);
@@ -337,7 +340,6 @@ int start() {
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       return(_last_error(CheckErrors("start(9)", error)));
-
    return(ShowStatus(NO_ERROR));
 }
 
@@ -363,55 +365,57 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (!error) {
+      error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
-   error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+      if (IsTesting()) {
+         if (tester.hEquitySet != 0) {
+            int tmp = tester.hEquitySet;
+            tester.hEquitySet = NULL;
+            if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
+         }
+         if (EA.CreateReport) {
+            datetime time = MarketInfo(Symbol(), MODE_TIME);
+            Test_StopReporting(__ExecutionContext, time, Bars);
+         }
+      }
 
-   if (IsTesting()) {
-      if (tester.hEquitySet != 0) {
-         int tmp=tester.hEquitySet; tester.hEquitySet=NULL;
-         if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
+      // reset the virtual tick timer
+      if (tickTimerId != NULL) {
+         tmp = tickTimerId;
+         tickTimerId = NULL;
+         if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
       }
-      if (EA.CreateReport) {
-         datetime time = MarketInfo(Symbol(), MODE_TIME);
-         Test_StopReporting(__ExecutionContext, time, Bars);
-      }
+
+      // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+      //
+      if (!error) error = onDeinit();                                         // preprocessing hook
+      if (!error) {                                                           //
+         switch (UninitializeReason()) {                                      //
+            case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
+            case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
+            case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
+            case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
+            case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
+            case UR_REMOVE     : error = onDeinitRemove();        break;      //
+            case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
+            // terminal builds > 509                                          //
+            case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
+            case UR_INITFAILED : error = onDeinitFailed();        break;      //
+            case UR_CLOSE      : error = onDeinitClose();         break;      //
+                                                                              //
+            default:                                                          //
+               error = ERR_ILLEGAL_STATE;                                     //
+               catch("deinit(4)  unknown UninitializeReason: "+ UninitializeReason(), error);
+         }                                                                    //
+      }                                                                       //
+      if (!error) error = afterDeinit();                                      // postprocessing hook
    }
 
-   // reset the virtual tick timer
-   if (tickTimerId != NULL) {
-      int id = tickTimerId;
-      tickTimerId = NULL;
-      if (!RemoveTickTimer(id)) return(catch("deinit(3)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
-   }
-
-   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
-   //
-   if (!error) error = onDeinit();                                         // preprocessing hook
-   if (!error) {                                                           //
-      switch (UninitializeReason()) {                                      //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
-         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
-         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
-         case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
-         case UR_REMOVE     : error = onDeinitRemove();        break;      //
-         case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
-         // terminal builds > 509                                          //
-         case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
-         case UR_INITFAILED : error = onDeinitFailed();        break;      //
-         case UR_CLOSE      : error = onDeinitClose();         break;      //
-                                                                           //
-         default:                                                          //
-            CheckErrors("deinit(4)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
-            return(last_error|LeaveContext(__ExecutionContext));           //
-      }                                                                    //
-   }                                                                       //
-   if (!error) error = afterDeinit();                                      // postprocessing hook
    if (!IsTesting()) DeleteRegisteredObjects();
 
    CheckErrors("deinit(5)");
-   return(last_error|LeaveContext(__ExecutionContext));
+   return(error|last_error|LeaveContext(__ExecutionContext));
 }
 
 
@@ -563,7 +567,7 @@ bool Tester.InitReporting() {
       FileClose(hFile);
 
       // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix, name = StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+      string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
       for (int i, maxId=0; i < symbolsSize; i++) {
          symbol = symbols_Name(symbols, i);
@@ -691,7 +695,7 @@ bool Tester.RecordEquity() {
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
    bool   Test_StartReporting (int ec[], datetime from, int bars, int reportId, string reportSymbol);
-   bool   Test_StopReporting  (int ec[], datetime to,   int bars);
+   bool   Test_StopReporting  (int ec[], datetime to, int bars);
    bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
 

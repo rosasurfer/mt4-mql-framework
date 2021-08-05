@@ -155,7 +155,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
 
    if (!StrEndsWith(sCommand, "}"))                                         return(!catch("GetTradeCommand(3)  invalid trade command = "+ DoubleQuoteStr(sCommand) +" (no closing curly brace)", ERR_INVALID_COMMAND));
    string sProperties = StrTrim(StrLeft(StrRightFrom(sCommand, "{"), -1));
-   string properties[], propParts[], name, sValue;
+   string properties[], propParts[], name="", sValue="";
    int size = Explode(sProperties, ",", properties, NULL);
 
    for (int i=0; i < size; i++) {
@@ -304,7 +304,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
       if (AccountBalance() > 0) visibleEquity = MathMin(AccountBalance(), visibleEquity);
    double equity = visibleEquity + externalAssets;
 
-   string errorMsg, overLeverageMsg;
+   string errorMsg="", overLeverageMsg="";
 
    for (int retry, i=0; i < symbolsSize; i++) {
       // (4.1) notwendige Daten ermitteln

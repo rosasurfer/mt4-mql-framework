@@ -352,7 +352,7 @@ int ShowOpenOrders() {
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
-   string   comment, label1, label2, label3, sTP, sSL, types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
+   string   comment="", label1="", label2="", label3="", sTP="", sSL="", types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
 
    // mode.intern
    if (mode.intern) {
@@ -648,7 +648,7 @@ int ShowTradeHistory() {
    int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
    datetime openTime, closeTime;
    double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice, sClosePrice, text, openLabel, lineLabel, closeLabel, sTypes[]={"buy", "sell"};
+   string   sOpenPrice="", sClosePrice="", text="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
 
    // Anzeigekonfiguration auslesen
    string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
@@ -1195,7 +1195,7 @@ bool UpdatePositions() {
    }
 
    // (1) Gesamtpositionsanzeige unten rechts
-   string sCurrentLeverage, sCurrentPosition;
+   string sCurrentLeverage="", sCurrentPosition="";
    if      (!isPosition   ) sCurrentPosition = " ";
    else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
@@ -1303,7 +1303,7 @@ bool UpdatePositions() {
    }
 
    // (3.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
-   string sLotSize, sDistance, sBreakeven, sAdjustedProfit, sProfitPct, sComment;
+   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
    color  fontColor;
    int    line;
 
@@ -1889,7 +1889,7 @@ bool CustomPositions.ReadConfig() {
       ArrayResize(positions.config.comments, 0);
    }
 
-   string   keys[], values[], iniValue, comment, confComment, openComment, hstComment, strSize, strTicket, strPrice, sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], iniValue="", comment="", confComment="", openComment="", hstComment="", strSize="", strTicket="", strPrice="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termCache1, termCache2, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
    datetime from, to;
@@ -3655,7 +3655,7 @@ bool RestoreLfxOrders(bool fromCache) {
  * @return bool - Erfolgsstatus
  */
 bool SaveLfxOrderCache() {
-   string varName;
+   string varName = "";
    int size = ArrayRange(lfxOrders.iCache, 0);
 
    for (int i=0; i < size; i++) {
