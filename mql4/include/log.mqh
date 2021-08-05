@@ -203,7 +203,7 @@ int log(string message, int error, int level) {
          configLevel = LOG_ALL;                                                                    // in online EAs: all
       }
       else {
-         string key, value;
+         string key="", value="";
          if (This.IsTesting()) {
             key = "Tester";
             value = GetConfigString("Log", key, "off");                                            // tester default: off

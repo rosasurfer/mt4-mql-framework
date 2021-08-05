@@ -9,7 +9,7 @@
  * @return int - number of converted string elements (at least one) or NULL in case of errors
  */
 int ExplodeStrings(int buffer[], string &results[]) {
-   string sValue;
+   string sValue = "";
    int resultsSize = ArrayResize(results, 0);
    int length;
    int fromAddr = GetIntsAddress(buffer);                // memory start address

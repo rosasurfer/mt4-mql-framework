@@ -46,10 +46,10 @@ double firstEma [];                                      // first EMA:       inv
 double secondEma[];                                      // second EMA(EMA): invisible
 
 int    ma.appliedPrice;
-string ma.name;                                          // name for chart legend, "Data" window and context menues
+string ma.name = "";                                     // name for chart legend, "Data" window and context menues
 
 int    drawType;
-string legendLabel;
+string legendLabel = "";
 
 
 /**

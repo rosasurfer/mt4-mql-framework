@@ -91,8 +91,8 @@ bool     prevReversal;                                      // trend reversal st
 bool     currentReversal;                                   // trend reversal state of the current bar
 bool     reversalInitialized;                               // whether the reversal states are initialized
 
-string   indicatorName;
-string   legendLabel;
+string   indicatorName = "";
+string   legendLabel   = "";
 
 bool     signals;
 bool     signal.sound;

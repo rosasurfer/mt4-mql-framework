@@ -1,9 +1,9 @@
 /**
- * Data types and sizes in C, Win32 and MQL4.0
- * ===========================================
+ * Data types and sizes in C, Win32 and MQL4
+ * =========================================
  *
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
- * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |        Win32        |     MQL4.0     |
+ * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |        Win32        |      MQL4      |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
  * |         |         |        |        |  1 bit |                 |               0x01 |                    0 ... 1 |                    0 ... 1 |                |                     |                |
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+---------------------+----------------+
@@ -2194,7 +2194,7 @@ string TicketsToStr(int tickets[], string separator = ", ") {
    if (separator == "0")                           // (string) NULL
       separator = ", ";
 
-   string result, sValue;
+   string result="", sValue="";
 
    for (int i=0; i < size; i++) {
       if   (tickets[i] > 0) sValue = StringConcatenate("#", tickets[i]);
@@ -2293,7 +2293,7 @@ string BufferToHexStr(int buffer[]) {
    if (dimensions != 1)
       return(__BuffersToHexStr(buffer));
 
-   string hex, byte1, byte2, byte3, byte4, result="";
+   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
    int size = ArraySize(buffer);
 
    // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
@@ -2329,7 +2329,7 @@ string __BuffersToHexStr(int buffer[][]) {
 
    int dim1=ArrayRange(buffer, 0), dim2=ArrayRange(buffer, 1);
 
-   string hex, byte1, byte2, byte3, byte4, result="";
+   string hex="", byte1="", byte2="", byte3="", byte4="", result="";
 
    // Integers werden binär als {LOBYTE, HIBYTE, LOWORD, HIWORD} gespeichert.
    for (int i=0; i < dim1; i++) {
@@ -2393,7 +2393,7 @@ string BufferWCharsToStr(int buffer[], int from, int length) {
    string result = "";
 
    for (int i=from; i < to; i++) {
-      string sChar;
+      string sChar = "";
       int word, shift=0, integer=buffer[i];
 
       for (int n=0; n < 2; n++) {
@@ -2706,7 +2706,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // read file line by line
    bool newLine=true, blankLine=false, lineEnd=true, wasSeparator;
-   string line, value, lines[]; ArrayResize(lines, 0);                     // cache for read lines
+   string line="", value="", lines[]; ArrayResize(lines, 0);               // cache for read lines
    int i, len, fPointer;                                                   // line counter and length of the read string
 
    while (!FileIsEnding(hFile)) {
@@ -3700,7 +3700,7 @@ string CharToHexStr(int chr) {
  *   WordToHexStr(2595) => "0A23"
  */
 string WordToHexStr(int word) {
-   string str, chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   string str="", chars[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
 
    str = StringConcatenate(str, chars[word >> 12 & 0x0F]);
    str = StringConcatenate(str, chars[word >>  8 & 0x0F]);
@@ -3724,7 +3724,7 @@ string IntegerToHexStr(int integer) {
    if (integer == 0)
       return("0");
 
-   string hexStr, chr, chrs[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
+   string hexStr="", chr="", chrs[] = {"0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"};
    int    value = integer;
 
    while (value != 0) {
@@ -3749,7 +3749,7 @@ string IntegerToBinaryStr(int integer) {
    if (!integer)
       return("0");
 
-   string result;
+   string result = "";
 
    while (integer != 0) {
       result = StringConcatenate(integer & 0x01, result);
@@ -4299,7 +4299,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
 
    ArrayResize(lpResults, 0);
 
-   string name;
+   string name = "";
    /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
    int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
 
@@ -4714,7 +4714,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
       ArrayResize(oe, ORDER_EXECUTION.intSize);
    ArrayInitialize(oe, 0);
    // symbol
-   if (symbol == "0") symbol = Symbol();     // (string) NULL
+   if (symbol == "0") symbol = Symbol();                       // (string) NULL
    if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
@@ -4749,7 +4749,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (LT(takeProfit, 0))                                      return(!Order.HandleError("OrderSendEx(12)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe));
    takeProfit = NormalizeDouble(takeProfit, digits);
    // comment
-   if (comment == "0") comment = "";         // (string) NULL
+   if (comment == "0") comment = "";                           // (string) NULL
    else if (StringLen(comment) > MAX_ORDER_COMMENT_LENGTH)     return(!Order.HandleError("OrderSendEx(13)  illegal parameter comment: "+ DoubleQuoteStr(comment) +" (max. "+ MAX_ORDER_COMMENT_LENGTH +" chars)", ERR_INVALID_PARAMETER, oeFlags, oe));
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
@@ -4836,8 +4836,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
-            if (type <= OP_SELL) {
-               if (__ExecutionContext[EC.extReporting] != 0) Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
+            if (type<=OP_SELL && __ExecutionContext[EC.extReporting]) {
+               Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
@@ -5399,7 +5399,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
-            string sValue1, sValue2;
+            string sValue1="", sValue2="";
             if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
@@ -5464,10 +5464,10 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             requotes++;
             oe.setRequotes(oe, requotes);
             if (IsTesting() || requotes > 5) break;
-            continue;                                    // immediately repeat the request
+            continue;                                                               // immediately repeat the request
 
          // map terminal generated errors
-         case ERR_INVALID_TICKET:                        // unknown ticket or not an open position anymore (client-side)      ! not yet encountered
+         case ERR_INVALID_TICKET:                                                   // unknown ticket or not an open position anymore (client-side)   !!! not yet encountered
             if (IsLogDebug()) logDebug("OrderCloseEx(41)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = ERR_INVALID_TRADE_PARAMETERS;
             break;
@@ -5930,7 +5930,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
    OrderPop("OrdersClose(13)");
 
    // read the passed ticket symbols and map ticket and symbol indexes
-   string symbol, symbols[];    ArrayResize(symbols, 0);                      // all symbols
+   string symbol="", symbols[];    ArrayResize(symbols, 0);                   // all symbols
    int symbols.lastTicketIdx[]; ArrayResize(symbols.lastTicketIdx, 0);
    int si, tickets.symbolIdx[]; ArrayResize(tickets.symbolIdx, sizeOfTickets);
 
@@ -5972,7 +5972,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
       }
       int newTicket = OrdersHedge(group, slippage, oeFlags, oes2);               // newTicket = -1: no new ticket (one of the tickets was fully closed)
       if (!newTicket && oes.Error(oes2, 0))                                      // newTicket =  0: error or total position was already flat
-         return(!oes.setError(oes, -1, oes.Error(oes2, 0)));                     // newTicket >  0: new ticket of offsetting transaction (new position or partial remainder)
+         return(!oes.setError(oes, -1, oes.Error(oes2, 0)));                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
 
       // copy execution details back to the respective passed ticket
       sizeOfGroup = ArraySize(group);
@@ -6122,9 +6122,9 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    int sizeOfCopy = ArrayCopy(ticketsCopy, tickets);
 
    // hedge the total position
-   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = >0: new ticket or remaining position of a partial close
+   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = -1: no new ticket (one of the tickets was fully closed)
    int newTicket = OrdersHedge(ticketsCopy, slippage, oeFlags, oes2);   // newTicket =  0: error or total position was already flat
-   if (IsError(oes.Error(oes2, 0)))                                     // newTicket = -1: no new ticket (one was completely closed)
+   if (IsError(oes.Error(oes2, 0)))                                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
       return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
 
    for (i=0; i < sizeOfTickets; i++) {
@@ -6185,18 +6185,18 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
  *               -1 if one of the positions was fully closed or
  *                0 if the total position was already flat or in case of errors (check oe.Error)
  *
- * Notes: (1) If one of the tickets was fully closed to offset the total position the return value (-1) is stored in
- *            oe.RemainingTicket of the fully closed ticket and oe.RemainingLots of the ticket is set to zero. oe.Swap,
+ * Notes: (1) If one of the tickets was fully closed to offset the total position the return value -1 is stored in
+ *            oe.RemainingTicket of the fully closed ticket and oe.RemainingLots of the ticket is set to zero (0). oe.Swap,
  *            oe.Commission und oe.Profit of the ticket are updated accordingly.
  *
- *        (2) If one of the tickets was partially closed to offset the total position the return value (new ticket id of the
+ *        (2) If one of the tickets was partially closed to offset the total position the return value (new ticket of the
  *            remaining position) is stored in oe.RemainingTicket of the partially closed ticket and oe.RemainingLots of the
  *            ticket is set to the lotsize of the remaining position. oe.Swap, oe.Commission und oe.Profit of the ticket are
  *            updated accordingly.
  *
- *        (3) Time and price of the last (the offsetting) transaction is stored as oe.CloseTime/oe.ClosePrice of all tickets.
+ *        (3) Time and price of the last (the offsetting) transaction are stored as oe.CloseTime/oe.ClosePrice of all tickets.
  *
- *        (4) If an error occures it is stored in the field oe.Error of all tickets. Typical trade operation errors are:
+ *        (4) In case of errors the error is stored in oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
  *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
@@ -7386,7 +7386,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  */
 bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertRawSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
-   string name, newName=symbol_Name(symbol);
+   string name="", newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name: "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
    if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
@@ -7492,7 +7492,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  */
 bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Parameter validieren und Template-Datei bestimmen
-   string fileName;
+   string fileName = "";
    switch (type) {
       case SYMBOL_TYPE_FOREX  : fileName = "templates/SYMBOL_TYPE_FOREX.raw";   break;
       case SYMBOL_TYPE_CFD    : fileName = "templates/SYMBOL_TYPE_CFD.raw";     break;

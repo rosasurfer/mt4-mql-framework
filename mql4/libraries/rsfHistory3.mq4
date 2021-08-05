@@ -178,7 +178,7 @@ int HistorySet3.Create(string symbol, string copyright, int digits, int format, 
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
    string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
    string fullHstDir = GetMqlFilesPath()+"\\"+ mqlHstDir;               // Verzeichnisname für Win32-Dateifunktionen
-   string baseName, mqlFileName, fullFileName;
+   string baseName="", mqlFileName="", fullFileName="";
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
@@ -284,7 +284,7 @@ int HistorySet3.Get(string symbol, string server = "") {
    string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
    string fullHstDir = GetMqlFilesPath() +"\\"+ mqlHstDir;              // Verzeichnisname für Win32-Dateifunktionen
 
-   string baseName, mqlFileName, fullFileName;
+   string baseName="", mqlFileName="", fullFileName="";
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
 
    for (i=0; i < sizeOfPeriods; i++) {

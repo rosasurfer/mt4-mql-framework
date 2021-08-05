@@ -65,8 +65,8 @@ int    maMethod;
 int    maAppliedPrice;
 double almaWeights[];
 
-string indicatorName;                                 // name for chart legend
-string legendLabel;
+string indicatorName = "";                            // name for chart legend
+string legendLabel   = "";
 
 bool   signals;
 string signal.info = "";                              // info text in chart legend

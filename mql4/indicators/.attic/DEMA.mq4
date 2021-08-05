@@ -44,10 +44,10 @@ double dema    [];                                       // MA values: visible, 
 double firstEma[];                                       // first EMA: invisible
 
 int    ma.appliedPrice;
-string ma.name;                                          // name for chart legend, "Data" window and context menues
+string ma.name = "";                                     // name for chart legend, "Data" window and context menues
 
 int    drawType;
-string legendLabel;
+string legendLabel = "";
 
 
 /**

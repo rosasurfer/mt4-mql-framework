@@ -37,7 +37,7 @@ int orderType = OP_UNDEFINED;
 int onInit() {
    // Parametervalidierung
    // Close.Symbols
-   string values[], sValue;
+   string values[], sValue="";
    int size = Explode(StrToUpper(Close.Symbols), ",", values, NULL);
    for (int i=0; i < size; i++) {
       sValue = StrTrim(values[i]);

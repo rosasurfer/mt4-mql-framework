@@ -65,9 +65,9 @@ double bufferSignal[];                                         // direction and 
 double bufferLong  [];                                         // long values:          visible
 double bufferShort [];                                         // short values:         visible
 
-string indicatorName;                                          // "Data" window and signal notification name
-string bfxName = ".attic/BFX Core Volume v1.20.0";             // BFX indicator name
-string bfxLicense;                                             // BFX indicator license
+string indicatorName = "";                                     // "Data" window and signal notification name
+string bfxName    = ".attic/BFX Core Volume v1.20.0";          // BFX indicator name
+string bfxLicense = "";                                        // BFX indicator license
 
 bool   signals;
 bool   signal.sound;

@@ -193,7 +193,7 @@ int UpdateInstrumentInfos() {
    double swapLong        = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort       = MarketInfo(symbol, MODE_SWAPSHORT);
       double swapLongDaily, swapShortDaily, swapLongYearly, swapShortYearly;
-      string sSwapLong, sSwapShort;
+      string sSwapLong="", sSwapShort="";
 
       if (swapMode == SCM_POINTS) {                                  // in points of quote currency
          swapLongDaily  = swapLong *Point/Pip; swapLongYearly  = MathDiv(swapLongDaily *Pip*365, Close[0]) * 100;

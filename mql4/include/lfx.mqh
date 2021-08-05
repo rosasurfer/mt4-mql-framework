@@ -30,11 +30,11 @@ int    lfxOrders[][LFX_ORDER.intSize];                         // Array von LFX_
 // Trade-Terminal -> LFX-Terminal: P/L-Messages
 string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Währung bzw. LFX-Chart
 int    hQC.TradeToLfxSenders [9];                              // jeweils ein Sender
-string  qc.TradeToLfxChannel;                                  // Channel des aktuellen LFX-Charts (einer)
+string  qc.TradeToLfxChannel = "";                             // Channel des aktuellen LFX-Charts (einer)
 int    hQC.TradeToLfxReceiver;                                 // Receiver des aktuellen LFX-Charts (einer)
 
 // LFX-Terminal -> Trade-Terminal: TradeCommands
-string  qc.TradeCmdChannel;
+string  qc.TradeCmdChannel = "";
 int    hQC.TradeCmdSender;
 int    hQC.TradeCmdReceiver;
 
@@ -53,11 +53,11 @@ bool InitTradeAccount(string accountId = "") {
    string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
    int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
 
-   string _accountCompany;                                     // global vars are modified on success only
+   string _accountCompany = "";                                // global vars are modified on success only
    int    _accountNumber;
-   string _accountCurrency;
+   string _accountCurrency = "";
    int    _accountType;
-   string _accountName;
+   string _accountName = "";
 
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
@@ -397,7 +397,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrSubstr(los.Comment(orders, i), 1));
-   string   logMsg, trigger, limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat=",'R.4'";
+   string   logMsg="", trigger="", limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat=",'R.4'";
    int      /*LFX_ORDER*/order[];
    datetime triggerTime, now=TimeFXT(); if (!now) return(false);
 
@@ -548,7 +548,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // (2) Orderdaten validieren
    //Ticket = Symbol, Comment, OrderType, Units, OpenEquity, OpenTriggerTime, (-)OpenTime, OpenPrice, TakeProfitPrice, TakeProfitValue, TakeProfitPercent, TakeProfitTriggered, StopLossPrice, StopLossValue, StopLossPercent, StopLossTriggered, CloseTriggerTime, (-)CloseTime, ClosePrice, Profit, ModificationTime, Version
-   string sValue, values[];
+   string sValue="", values[];
    if (Explode(value, ",", values, NULL) != 22)       return(!catch("LFX.GetOrder(3)  invalid order entry ("+ ArraySize(values) +" substrings) ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int digits = 5;
 
@@ -1031,7 +1031,7 @@ bool QC.StartTradeCmdSender() {
    // aktiven Channel ermitteln
    string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
    string section = tradeAccount.number;
-   string keys[], value;
+   string keys[], value="";
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
 
    for (int i=0; i < keysSize; i++) {

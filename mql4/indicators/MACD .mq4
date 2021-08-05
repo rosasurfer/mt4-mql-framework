@@ -88,8 +88,8 @@ int    slowMA.appliedPrice;
 double slowALMA.weights[];                                  // slow ALMA weights
 
 int    maxValues;
-bool   isCentUnit = false;                                  // display unit: cent or pip
-string indicatorName;                                       // "Data" window and signal notification name
+bool   isCentUnit    = false;                               // display unit: cent or pip
+string indicatorName = "";                                  // "Data" window and signal notification name
 
 bool   signals;
 bool   signal.sound;
@@ -114,7 +114,7 @@ int onInit() {
    fastMA.periods = FastMA.Periods;
 
    // FastMA.Method
-   string sValue, values[];
+   string sValue="", values[];
    if (Explode(FastMA.Method, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
       sValue = values[size-1];
@@ -210,7 +210,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_SECTION, bufferLower  );                   // negative values:         visible
 
    // display options, names and labels
-   string dataName, sAppliedPrice="";
+   string dataName="", sAppliedPrice="";
    if (fastMA.appliedPrice!=slowMA.appliedPrice || fastMA.appliedPrice!=PRICE_CLOSE) sAppliedPrice = ","+ PriceTypeDescription(fastMA.appliedPrice);
    string fastMA.name = FastMA.Method +"("+ fastMA.periods + sAppliedPrice +")";
    sAppliedPrice = "";
@@ -343,7 +343,7 @@ bool onCross(int section) {
 
    if (section == MODE_UPPER_SECTION) {
       message = indicatorName +" turned positive at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-      if (IsLogInfo()) logInfo("onCross(1)  "+ message);
+      if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));                   // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
@@ -354,11 +354,11 @@ bool onCross(int section) {
 
    if (section == MODE_LOWER_SECTION) {
       message = indicatorName +" turned negative at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
-      if (IsLogInfo()) logInfo("onCross(2)  "+ message);
+      if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
+      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);
    }

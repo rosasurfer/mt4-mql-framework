@@ -1808,7 +1808,7 @@ bool Orders.RemoveRealTicket(int ticket) {
 bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
-   static string label, mutex; if (!StringLen(label)) {
+   static string label="", mutex=""; if (!StringLen(label)) {
       label = ProgramName() +".command";
       mutex = "mutex."+ label;
    }
@@ -2024,7 +2024,7 @@ bool ReadStatus() {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   string section, file=GetStatusFilename();
+   string section="", file=GetStatusFilename();
    if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
@@ -2131,7 +2131,7 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
-   string sKeys[], sOrder;
+   string sKeys[], sOrder="";
    int size = ReadStatus.OrderKeys(file, section, sKeys, MODE_REAL); if (size < 0) return(false);
    ResetOrderLog(MODE_REAL);
    for (int i=0; i < size; i++) {
@@ -2334,7 +2334,7 @@ bool SaveStatus() {
       saved = true;
    }
 
-   string section, file=GetStatusFilename(), separator="";
+   string section="", file=GetStatusFilename(), separator="";
    if (!IsFileA(file)) separator = CRLF;                             // an additional empty line as section separator
 
    section = "General";
@@ -2467,7 +2467,7 @@ int ShowStatus(int error = NO_ERROR) {
       isRecursion = true;
    }
 
-   string realStats, virtStats, sError;
+   string realStats="", virtStats="", sError="";
    if (__STATUS_OFF) sError = StringConcatenate(" [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
    string sSpreadInfo = "";
@@ -2647,7 +2647,7 @@ datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
 bool     prev.RecordPerformanceMetrics;
-string   prev.MetricsServerDirectory;
+string   prev.MetricsServerDirectory = "";
 
 bool     prev.ChannelBug;
 bool     prev.TakeProfitBug;
