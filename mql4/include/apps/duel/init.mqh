@@ -35,6 +35,7 @@ int onInitUser() {
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
             return(onInputError("onInitUser(2)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
          }
+         ComputeTargets();
          SS.All();
 
          // prevent starting with too little free margin
@@ -85,6 +86,7 @@ int onInitParameters() {
 
    if (ValidateInputs()) {
       if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+         ComputeTargets();
          SaveStatus();
          return(last_error);
       }
