@@ -35,7 +35,7 @@
  *  - replaced trade management
  *  - replaced status display
  *  - added monitoring of PositionOpen and PositionClose events
- *  - added total P/L targets
+ *  - added total PL targets
  *  - added virtual trading mode with optional trade copier or trade mirror
  *  - added recording of performance metrics for real and virtual trading
  *  - open orders are closed during configurable session breaks

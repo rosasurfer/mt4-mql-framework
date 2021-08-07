@@ -86,10 +86,10 @@ int      sequence.maxLevel;                        // max. reached gridlevel: -n
 int      sequence.missedLevels[];                  // missed gridlevels, e.g. in a fast moving market
 double   sequence.startEquity;
 int      sequence.stops;                           // number of stopped-out positions: 0...+n
-double   sequence.stopsPL;                         // accumulated P/L of all stopped-out positions
-double   sequence.closedPL;                        // accumulated P/L of all positions closed at sequence stop
-double   sequence.floatingPL;                      // accumulated P/L of all open positions
-double   sequence.totalPL;                         // current total P/L of the sequence: totalPL = stopsPL + closedPL + floatingPL
+double   sequence.stopsPL;                         // accumulated PL of all stopped-out positions
+double   sequence.closedPL;                        // accumulated PL of all positions closed at sequence stop
+double   sequence.floatingPL;                      // accumulated PL of all open positions
+double   sequence.totalPL;                         // current total PL of the sequence: totalPL = stopsPL + closedPL + floatingPL
 double   sequence.maxProfit;                       // max. observed total sequence profit:   0...+n
 double   sequence.maxDrawdown;                     // max. observed total sequence drawdown: -n...0
 double   sequence.profitPerLevel;                  // current profit amount per gridlevel
@@ -3844,7 +3844,7 @@ void SS.MissedLevels() {
 
 
 /**
- * ShowStatus: Update the string representaton of the P/L statistics.
+ * ShowStatus: Update the string representaton of the PL statistics.
  */
 void SS.PLStats() {
    if (!__isChart) return;
