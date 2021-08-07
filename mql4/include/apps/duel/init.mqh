@@ -38,7 +38,7 @@ int onInitUser() {
          ComputeTargets();
          SS.All();
 
-         // prevent starting with too little free margin
+         // warn if starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
          int level = 0;
 
@@ -52,9 +52,7 @@ int onInitUser() {
          double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
          if (IsError(catch("onInitUser(3)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-            StopSequence(NULL);
-            logError("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
-            return(catch("onInitUser(5)"));
+            logWarn("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          }
 
          // confirm dangerous live modes
@@ -63,7 +61,7 @@ int onInitUser() {
                PlaySoundEx("Windows Notify.wav");
                if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
                   StopSequence(NULL);
-                  return(catch("onInitUser(6)"));
+                  return(catch("onInitUser(5)"));
                }
             }
          }
