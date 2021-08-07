@@ -89,9 +89,9 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
 #define HIX_CYCLE             0                    // order history indexes
-#define HIX_GRIDBASE          1
-#define HIX_STARTTIME         2
-#define HIX_STARTPRICE        3
+#define HIX_STARTTIME         1
+#define HIX_STARTPRICE        2
+#define HIX_GRIDBASE          3                    // TODO: reposition gridbase the next time history gets extended
 #define HIX_STOPTIME          4
 #define HIX_STOPPRICE         5
 #define HIX_TOTALPROFIT       6
@@ -3220,9 +3220,9 @@ bool ArchiveStoppedSequence() {
 
       for (int i=0; i < ordersSize; i++) {
          long.history[historySize+i][HIX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
-         long.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          long.history[historySize+i][HIX_STARTTIME   ] = sequence.startTime;     //
          long.history[historySize+i][HIX_STARTPRICE  ] = sequence.startPrice;    //
+         long.history[historySize+i][HIX_GRIDBASE    ] = sequence.gridbase;      //
          long.history[historySize+i][HIX_STOPTIME    ] = sequence.stopTime;      //
          long.history[historySize+i][HIX_STOPPRICE   ] = sequence.stopPrice;     //
          long.history[historySize+i][HIX_TOTALPROFIT ] = sequence.totalPL;       //
@@ -3647,13 +3647,13 @@ string SaveStatus.HistoryToStr(int direction, int index) {
    datetime startTime, stopTime, pendingTime, openTime, closeTime;
    double   startPrice, gridbase, stopPrice, totalProfit, maxProfit, maxDrawdown, lots, pendingPrice, openPrice, closePrice, swap, commission, profit;
 
-   // result: cycle,gridbase,startTime,startPrice,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+   // result: cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
 
    if (direction == D_LONG) {
       cycle        = long.history[index][HIX_CYCLE       ];
-      gridbase     = long.history[index][HIX_GRIDBASE    ];
       startTime    = long.history[index][HIX_STARTTIME   ];
       startPrice   = long.history[index][HIX_STARTPRICE  ];
+      gridbase     = long.history[index][HIX_GRIDBASE    ];
       stopTime     = long.history[index][HIX_STOPTIME    ];
       stopPrice    = long.history[index][HIX_STOPPRICE   ];
       totalProfit  = long.history[index][HIX_TOTALPROFIT ];
@@ -3676,9 +3676,9 @@ string SaveStatus.HistoryToStr(int direction, int index) {
    }
    else if (direction == D_SHORT) {
       cycle        = short.history[index][HIX_CYCLE       ];
-      gridbase     = short.history[index][HIX_GRIDBASE    ];
       startTime    = short.history[index][HIX_STARTTIME   ];
       startPrice   = short.history[index][HIX_STARTPRICE  ];
+      gridbase     = short.history[index][HIX_GRIDBASE    ];
       stopTime     = short.history[index][HIX_STOPTIME    ];
       stopPrice    = short.history[index][HIX_STOPPRICE   ];
       totalProfit  = short.history[index][HIX_TOTALPROFIT ];
@@ -3701,7 +3701,7 @@ string SaveStatus.HistoryToStr(int direction, int index) {
    }
    else return(_EMPTY_STR(catch("SaveStatus.HistoryToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(StringConcatenate(cycle, ",", DoubleToStr(gridbase, Digits), ",", startTime, ",", DoubleToStr(startPrice, Digits), ",", stopTime, ",", DoubleToStr(stopPrice, Digits), ",", DoubleToStr(totalProfit, 2), ",", DoubleToStr(maxProfit, 2), ",", DoubleToStr(maxDrawdown, 2), ",", ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
+   return(StringConcatenate(cycle, ",", startTime, ",", DoubleToStr(startPrice, Digits), ",", DoubleToStr(gridbase, Digits), ",", stopTime, ",", DoubleToStr(stopPrice, Digits), ",", DoubleToStr(totalProfit, 2), ",", DoubleToStr(maxProfit, 2), ",", DoubleToStr(maxDrawdown, 2), ",", ticket, ",", level, ",", DoubleToStr(lots, 2), ",", pendingType, ",", pendingTime, ",", DoubleToStr(pendingPrice, Digits), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2)));
 }
 
 
@@ -3952,15 +3952,15 @@ bool ReadStatus.ParseOrder(string key, string value) {
    }
 
    if (pool == MODE_HISTORY) {
-      // [long|short].history.i=cycle,gridbase,startTime,startPrice,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
+      // [long|short].history.i=cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
       string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))        return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
       int index = StrToInteger(sId);
 
       if (Explode(value, ",", values, NULL) != ArrayRange(long.history, 1)) return(!catch("ReadStatus.ParseOrder(5)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
       int      cycle        = StrToInteger(values[HIX_CYCLE       ]);
-      double   gridbase     =  StrToDouble(values[HIX_GRIDBASE    ]);
       datetime startTime    = StrToInteger(values[HIX_STARTTIME   ]);
       double   startPrice   =  StrToDouble(values[HIX_STARTPRICE  ]);
+      double   gridbase     =  StrToDouble(values[HIX_GRIDBASE    ]);
       datetime stopTime     = StrToInteger(values[HIX_STOPTIME    ]);
       double   stopPrice    =  StrToDouble(values[HIX_STOPPRICE   ]);
       double   totalProfit  =  StrToDouble(values[HIX_TOTALPROFIT ]);
