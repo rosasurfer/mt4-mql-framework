@@ -861,10 +861,10 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Calculate the current symbol's commission value for the specified lotsize.
+ * Calculate the current symbol's commission for the specified lotsize.
  *
- * - For tests the broker's commission rate as stored in the testers FXT files is used (always correct).
- * - Online the commission rate as configured by the user in the framework configuration is used (subject to errors).
+ * - For tests the commission rate stored in the tester's FXT files is used (always correct).
+ * - Online the commission rate configured by the user is used (subject to configuration errors).
  *
  * @param  double lots [optional] - lotsize (default: 1 lot)
  * @param  int    mode [optional] - MODE_MONEY:  in account currency (default)
@@ -875,28 +875,44 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
 double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
    static double baseCommission;
    static bool resolved; if (!resolved) {
-      double value;
+      bool isCFD = false;
+      double value = 0;
 
       if (This.IsTesting()) {
          value = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
-         // TODO: if (is_CFD) rate = 0;
-         string company  = GetAccountCompany(); if (!StringLen(company)) return(EMPTY);
-         string currency = AccountCurrency();
-         int    account  = GetAccountNumber(); if (!account) return(EMPTY);
+         string section="Commissions", key=Symbol();
 
-         string section="Commissions", key="";
-         if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
-         else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
-         else if (IsGlobalConfigKeyA(section, company))                              key = company;
-
-         if (StringLen(key) > 0) {
-            value = GetGlobalConfigDouble(section, key);
-            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid configuration value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+         if (IsAccountConfigKey(section, key)) {                  // use account config of symbol
+            value = GetAccountConfigDouble(section, key);
+            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid account config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
          else {
-            if (IsLogInfo()) logInfo("GetCommission(2)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+            key = StdSymbol();
+            if (IsAccountConfigKey(section, key)) {               // use account config of standard symbol
+               value = GetAccountConfigDouble(section, key);
+               if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid account config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+            }
+            else if (isCFD) {
+               value = 0;                                         // TODO: implement isCFD
+            }
+            else {
+               // query global config
+               string company  = GetAccountCompany(); if (!StringLen(company)) return(EMPTY);
+               int    account  = GetAccountNumber();  if (!account)            return(EMPTY);
+               string currency = AccountCurrency();
+
+               if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
+               else if (IsGlobalConfigKeyA(section, company +"."+ currency))               key = company +"."+ currency;
+               else if (IsGlobalConfigKeyA(section, company))                              key = company;
+
+               if (StringLen(key) > 0) {
+                  value = GetGlobalConfigDouble(section, key);    // use global config
+                  if (value < 0) return(_EMPTY(catch("GetCommission(3)  invalid global config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+               }
+               else if (IsLogInfo()) logInfo("GetCommission(4)  commission configuration for account \""+ company +"."+ currency +"."+ account +"\" not found, using default 0.00");
+            }
          }
       }
       baseCommission = value;
