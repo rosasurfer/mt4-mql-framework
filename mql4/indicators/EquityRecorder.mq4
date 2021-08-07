@@ -156,7 +156,7 @@ bool CollectAccountData() {
  * @param  double swaps      []
  * @param  double profits    []
  *
- * @return double - P/L-Value oder EMPTY_VALUE, falls ein Fehler auftrat
+ * @return double - PL-Value oder EMPTY_VALUE, falls ein Fehler auftrat
  */
 double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[]) {
    double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, vtmProfit, pipValue, pipDistance;
