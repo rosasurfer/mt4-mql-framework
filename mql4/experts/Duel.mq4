@@ -2150,20 +2150,16 @@ bool ComputeTargets() {
       if (stop.profitAbs.condition)      targetPL = stop.profitAbs.value;
       else if (stop.profitPct.condition) targetPL = stop.profitPct.AbsValue();
       else                               targetPL = INT_MAX;
-      if (targetPL != INT_MAX) {
-         sequence.tpPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
-         if (!sequence.tpPrice) return(false);
-      }
+      if (targetPL != INT_MAX) { sequence.tpPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase); if (!sequence.tpPrice) return(false); }
+      else                     { sequence.tpPrice = NULL; }
 
-      // calculate stoploss
-      if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
-      else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
-      else                             targetPL = INT_MIN;
-      if (targetPL != INT_MIN) {
-         // TODO: calculation is wrong
-         //sequence.slPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
-         //if (!sequence.slPrice) return(false);
-      }
+      // calculate stoploss                                                      // TODO: calculation is wrong
+      //if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
+      //else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
+      //else                             targetPL = INT_MIN;
+      //if (targetPL != INT_MIN) { sequence.slPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase); if (!sequence.slPrice) return(false); }
+      //else                     { sequence.slPrice = NULL; }
+
    }
 
    if (short.enabled) {
@@ -2192,20 +2188,15 @@ bool ComputeTargets() {
       if (stop.profitAbs.condition)      targetPL = stop.profitAbs.value;
       else if (stop.profitPct.condition) targetPL = stop.profitPct.AbsValue();
       else                               targetPL = INT_MAX;
-      if (targetPL != INT_MAX) {
-         sequence.tpPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
-         if (!sequence.tpPrice) return(false);
-      }
+      if (targetPL != INT_MAX) { sequence.tpPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase); if (!sequence.tpPrice) return(false); }
+      else                     { sequence.tpPrice = NULL; }
 
-      // calculate stoploss
-      if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
-      else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
-      else                             targetPL = INT_MIN;
-      if (targetPL != INT_MIN) {
-         // TODO: calculation is wrong
-         //sequence.slPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
-         //if (!sequence.slPrice) return(false);
-      }
+      // calculate stoploss                                                      // TODO: calculation is wrong
+      //if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
+      //else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
+      //else                             targetPL = INT_MIN;
+      //if (targetPL != INT_MIN) { sequence.slPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase); if (!sequence.slPrice) return(false); }
+      //else                     { sequence.slPrice = NULL; }
    }
 
    if (IsVisualMode()) {
