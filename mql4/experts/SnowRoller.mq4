@@ -1235,7 +1235,7 @@ bool ToggleStartStopDisplayMode() {
 /**
  * Start the trade sequence.
  *
- * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
+ * @param  int signal - signal which triggered a start condition or NULL on explicit (i.e. manual) start
  *
  * @return bool - success status
  */
@@ -1336,7 +1336,7 @@ bool StartSequence(int signal) {
  * trend condition is enabled the sequence is automatically resumed the next time the trend condition is fulfilled. If the
  * sequence is stopped due to a session break it is automatically resumed after the session break ends.
  *
- * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit/manual stop)
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
  *
  * @return bool - success status
  */
@@ -1562,7 +1562,7 @@ bool StopSequence(int signal) {
          stop.lossPct.condition = (AutoRestart!="Off" && start.trend.description!="" && stop.lossPct.description!="");
          break;
 
-      case NULL:                                            // explicit stop (manual or at end of test)
+      case NULL:                                            // explicit (manual) stop or end of test
          break;
 
       default: return(!catch("StopSequence(11)  "+ sequence.longName +" unsupported stop signal: "+ signal, ERR_INVALID_PARAMETER));
@@ -1766,7 +1766,7 @@ bool ResetSequence(double gridbase, int level) {
 /**
  * Resume a waiting or stopped trade sequence.
  *
- * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (manual resume)
+ * @param  int signal - signal which triggered a resume condition or NULL on explicit (i.e. manual) resume.
  *
  * @return bool - success status
  */
