@@ -21,6 +21,7 @@ int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
       if (RestoreSequence()) {                                       // a valid sequence id was specified
+         ComputeTargets();
          logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
       }
    }
@@ -33,10 +34,8 @@ int onInitUser() {
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
-            return(onInputError("onInitUser(2)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+            return(onInputError("onInitUser(2)  "+ sequence.name +" invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
          }
-         ComputeTargets();
-         SS.All();
 
          // warn if starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
@@ -65,6 +64,7 @@ int onInitUser() {
                }
             }
          }
+         ComputeTargets();
          SaveStatus();
       }
    }
