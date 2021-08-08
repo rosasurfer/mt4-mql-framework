@@ -2896,40 +2896,39 @@ bool ValidateInputs() {
       // split conditions and parse/validate each expression
       for (int i=0; i < sizeOfExprs; i++) {
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) {
-            if (sizeOfExprs > 1)                                         return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            break;
-         }
-         if (StringGetChar(expr, 0) != '@')                              return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (Explode(expr, "(", sValues, NULL) != 2)                     return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                              return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(expr)) continue;
+
+         if (StringGetChar(expr, 0) != '@')                              return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)                     return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                              return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                         return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                                         return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
          if (key=="@bid" || key=="@ask" || key=="@price") {
-            if (stop.price.condition)                                    return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
+            if (stop.price.condition)                                    return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                             return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            if (dValue <= 0)                                             return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
             if      (key == "@bid") stop.price.type = PRICE_BID;
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
             exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";      // cut "'0" for improved readability
+            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
+            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
             stop.price.description = exprs[i];
             stop.price.condition   = true;
          }
 
          else if (key == "@profit") {
-            if (stop.profitAbs.condition || stop.profitPct.condition)    return(!onInputError("ValidateInputs(27)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
+            if (stop.profitAbs.condition || stop.profitPct.condition)    return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
             int sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(28)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(27)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(29)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(28)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -2947,11 +2946,11 @@ bool ValidateInputs() {
          }
 
          else if (key == "@loss") {
-            if (stop.lossAbs.condition || stop.lossPct.condition)        return(!onInputError("ValidateInputs(30)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
+            if (stop.lossAbs.condition || stop.lossPct.condition)        return(!onInputError("ValidateInputs(29)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(30)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
@@ -2967,8 +2966,7 @@ bool ValidateInputs() {
                stop.lossPct.condition   = true;
             }
          }
-
-         else                                                            return(!onInputError("ValidateInputs(33)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (unknown condition key)"));
+         else                                                            return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (unknown condition key)"));
       }
    }
 
@@ -2978,7 +2976,7 @@ bool ValidateInputs() {
       sessionbreak.endtime   = NULL;
    }
 
-   return(!catch("ValidateInputs(34)"));
+   return(!catch("ValidateInputs(33)"));
 }
 
 
@@ -4372,17 +4370,22 @@ void SS.SequenceName() {
 void SS.StopConditions() {
    if (__isChart) {
       string sValue = "";
+
+      // order: profit, loss, price
       if (stop.profitAbs.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
       }
       if (stop.profitPct.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
       }
       if (stop.lossAbs.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
       }
       if (stop.lossPct.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
+      }
+      if (stop.price.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.price.condition, "@", "!") + stop.price.description;
       }
       if (sValue == "") sStopConditions = "-";
       else              sStopConditions = sValue;
