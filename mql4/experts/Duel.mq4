@@ -56,8 +56,7 @@ extern int      MaxGridLevels          = 15;                                  //
 extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
 
-extern string   TakeProfit             = "{number}[%]";                       // TP as absolute or percentage equity value
-extern string   StopLoss               = "{number}[%]";                       // SL as absolute or percentage equity value
+extern string   StopConditions         = "";                                  // @[bid|ask|price](double) | @[profit|loss](double[%])
 extern bool     ShowProfitInPercent    = false;                               // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';              // server time, the date part is ignored
@@ -196,25 +195,30 @@ double   short.bePrice;
 int      short.minLevel = INT_MAX;                 // lowest reached grid level
 int      short.maxLevel = INT_MIN;                 // highest reached grid level
 
-// takeprofit conditions
-bool     tpAbs.condition;                          // whether an absolute TP condition is active
-double   tpAbs.value;
-string   tpAbs.description = "";
+// stop conditions ("OR" combined)
+bool     stop.price.condition;                     // whether a stop price condition is active
+int      stop.price.type;                          // PRICE_BID | PRICE_ASK | PRICE_MEDIAN
+double   stop.price.value;
+double   stop.price.lastValue;
+string   stop.price.description = "";
 
-bool     tpPct.condition;                          // whether a percentage TP condition is active
-double   tpPct.value;
-double   tpPct.absValue    = INT_MAX;
-string   tpPct.description = "";
+bool     stop.profitAbs.condition;                 // whether an absolute takeprofit condition is active
+double   stop.profitAbs.value;
+string   stop.profitAbs.description = "";
 
-// stoploss conditions
-bool     slAbs.condition;                          // whether an absolute SL condition is active
-double   slAbs.value;
-string   slAbs.description = "";
+bool     stop.profitPct.condition;                 // whether a percentage takeprofit condition is active
+double   stop.profitPct.value;
+double   stop.profitPct.absValue    = INT_MAX;
+string   stop.profitPct.description = "";
 
-bool     slPct.condition;                          // whether a percentage SL condition is active
-double   slPct.value;
-double   slPct.absValue    = INT_MIN;
-string   slPct.description = "";
+bool     stop.lossAbs.condition;                   // whether an absolute stoploss condition is active
+double   stop.lossAbs.value;
+string   stop.lossAbs.description = "";
+
+bool     stop.lossPct.condition;                   // whether a percentage stoploss condition is active
+double   stop.lossPct.value;
+double   stop.lossPct.absValue    = INT_MIN;
+string   stop.lossPct.description = "";
 
 // sessionbreak management
 datetime sessionbreak.starttime;                   // configurable via inputs and framework config
@@ -822,7 +826,7 @@ bool IsStartSignal(int &signal) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of the fulfilled stop condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a fulfilled stop condition
  *
  * @return bool
  */
@@ -830,48 +834,70 @@ bool IsStopSignal(int &signal) {
    signal = NULL;
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-
    string message = "";
 
-   // -- absolute TP --------------------------------------------------------------------------------------------------------
-   if (tpAbs.condition) {
-      if (sequence.totalPL >= tpAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ tpAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         tpAbs.condition = false;
+   // stop.price: fulfilled when current price touches or crossses the limit-------------------------------------------------
+   if (stop.price.condition) {
+      bool triggered = false;
+      double price;
+      switch (stop.price.type) {
+         case PRICE_BID:    price =  Bid;        break;
+         case PRICE_ASK:    price =  Ask;        break;
+         case PRICE_MEDIAN: price = (Bid+Ask)/2; break;
+      }
+      if (stop.price.lastValue != 0) {
+         if (stop.price.lastValue < stop.price.value) triggered = (price >= stop.price.value);  // price crossed upwards
+         else                                         triggered = (price <= stop.price.value);  // price crossed downwards
+      }
+      stop.price.lastValue = price;
+
+      if (triggered) {
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         stop.price.condition = false;
+         signal = SIGNAL_PRICETIME;
+         return(true);
+      }
+   }
+
+   // stop.profitAbs: -------------------------------------------------------------------------------------------------------
+   if (stop.profitAbs.condition) {
+      if (sequence.totalPL >= stop.profitAbs.value) {
+         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         stop.profitAbs.condition = false;
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
    }
 
-   // -- percentage TP ------------------------------------------------------------------------------------------------------
-   if (tpPct.condition) {
-      if (tpPct.absValue == INT_MAX) tpPct.absValue = tpPct.AbsValue();
+   // stop.profitPct: -------------------------------------------------------------------------------------------------------
+   if (stop.profitPct.condition) {
+      if (stop.profitPct.absValue == INT_MAX) stop.profitPct.absValue = stop.profitPct.AbsValue();
 
-      if (sequence.totalPL >= tpPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ tpPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         tpPct.condition = false;
+      if (sequence.totalPL >= stop.profitPct.absValue) {
+         if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         stop.profitPct.condition = false;
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
    }
 
-   // -- absolute SL --------------------------------------------------------------------------------------------------------
-   if (slAbs.condition) {
-      if (sequence.totalPL <= slAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ slAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         slAbs.condition = false;
+   // stop.lossAbs: ---------------------------------------------------------------------------------------------------------
+   if (stop.lossAbs.condition) {
+      if (sequence.totalPL <= stop.lossAbs.value) {
+         if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         stop.lossAbs.condition = false;
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
    }
 
-   // -- percentage SL ------------------------------------------------------------------------------------------------------
-   if (slPct.condition) {
-      if (slPct.absValue == INT_MIN) slPct.absValue = slPct.AbsValue();
+   // stop.lossPct: ---------------------------------------------------------------------------------------------------------
+   if (stop.lossPct.condition) {
+      if (stop.lossPct.absValue == INT_MIN) stop.lossPct.absValue = stop.lossPct.AbsValue();
 
-      if (sequence.totalPL <= slPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ slPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         slPct.condition = false;
+      if (sequence.totalPL <= stop.lossPct.absValue) {
+         if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         stop.lossPct.condition = false;
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -886,17 +912,17 @@ bool IsStopSignal(int &signal) {
  *
  * @return double - absolute value or INT_MAX if a percentage TakeProfit was not configured
  */
-double tpPct.AbsValue() {
-   if (tpPct.condition) {
-      if (tpPct.absValue == INT_MAX) {
+double stop.profitPct.AbsValue() {
+   if (stop.profitPct.condition) {
+      if (stop.profitPct.absValue == INT_MAX) {
          if (!sequence.startEquity) {
             double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(tpPct.value/100 * equity);
+            return(stop.profitPct.value/100 * equity);
          }
-         return(tpPct.value/100 * sequence.startEquity);
+         return(stop.profitPct.value/100 * sequence.startEquity);
       }
    }
-   return(tpPct.absValue);
+   return(stop.profitPct.absValue);
 }
 
 
@@ -905,17 +931,17 @@ double tpPct.AbsValue() {
  *
  * @return double - absolute value or INT_MIN if a percentage StopLoss was not configured
  */
-double slPct.AbsValue() {
-   if (slPct.condition) {
-      if (slPct.absValue == INT_MIN) {
+double stop.lossPct.AbsValue() {
+   if (stop.lossPct.condition) {
+      if (stop.lossPct.absValue == INT_MIN) {
          if (!sequence.startEquity) {
             double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(slPct.value/100 * equity);
+            return(stop.lossPct.value/100 * equity);
          }
-         return(slPct.value/100 * sequence.startEquity);
+         return(stop.lossPct.value/100 * sequence.startEquity);
       }
    }
-   return(slPct.absValue);
+   return(stop.lossPct.absValue);
 }
 
 
@@ -2104,9 +2130,9 @@ bool ComputeTargets() {
       if (!long.bePrice) return(false);
 
       // calculate takeprofit
-      if (tpAbs.condition)      targetPL = tpAbs.value;
-      else if (tpPct.condition) targetPL = tpPct.AbsValue();
-      else                      targetPL = INT_MAX;
+      if (stop.profitAbs.condition)      targetPL = stop.profitAbs.value;
+      else if (stop.profitPct.condition) targetPL = stop.profitPct.AbsValue();
+      else                               targetPL = INT_MAX;
       if (targetPL != INT_MAX) {
          sequence.tpPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
          if (!sequence.tpPrice) return(false);
@@ -2136,9 +2162,9 @@ bool ComputeTargets() {
       if (!short.bePrice) return(false);
 
       // calculate takeprofit
-      if (tpAbs.condition)      targetPL = tpAbs.value;
-      else if (tpPct.condition) targetPL = tpPct.AbsValue();
-      else                      targetPL = INT_MAX;
+      if (stop.profitAbs.condition)      targetPL = stop.profitAbs.value;
+      else if (stop.profitPct.condition) targetPL = stop.profitPct.AbsValue();
+      else                               targetPL = INT_MAX;
       if (targetPL != INT_MAX) {
          sequence.tpPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
          if (!sequence.tpPrice) return(false);
@@ -2564,8 +2590,7 @@ double   prev.UnitSize;
 int      prev.MaxGridLevels;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
-string   prev.TakeProfit = "";
-string   prev.StopLoss   = "";
+string   prev.StopConditions = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
@@ -2582,26 +2607,30 @@ bool     prev.sequence.pyramidEnabled;
 bool     prev.sequence.martingaleEnabled;
 double   prev.sequence.gridsize;
 double   prev.sequence.unitsize;
-int      prev.sequence.maxLevels;
+double   prev.sequence.gridvola;
 
 bool     prev.long.enabled;
 bool     prev.short.enabled;
 
-bool     prev.tpAbs.condition;
-double   prev.tpAbs.value;
-string   prev.tpAbs.description = "";
-bool     prev.tpPct.condition;
-double   prev.tpPct.value;
-double   prev.tpPct.absValue;
-string   prev.tpPct.description = "";
-
-bool     prev.slAbs.condition;
-double   prev.slAbs.value;
-string   prev.slAbs.description = "";
-bool     prev.slPct.condition;
-double   prev.slPct.value;
-double   prev.slPct.absValue;
-string   prev.slPct.description = "";
+bool     prev.stop.price.condition;
+int      prev.stop.price.type;
+double   prev.stop.price.value;
+double   prev.stop.price.lastValue;
+string   prev.stop.price.description = "";
+bool     prev.stop.profitAbs.condition;
+double   prev.stop.profitAbs.value;
+string   prev.stop.profitAbs.description = "";
+bool     prev.stop.profitPct.condition;
+double   prev.stop.profitPct.value;
+double   prev.stop.profitPct.absValue;
+string   prev.stop.profitPct.description = "";
+bool     prev.stop.lossAbs.condition;
+double   prev.stop.lossAbs.value;
+string   prev.stop.lossAbs.description = "";
+bool     prev.stop.lossPct.condition;
+double   prev.stop.lossPct.value;
+double   prev.stop.lossPct.absValue;
+string   prev.stop.lossPct.description = "";
 
 datetime prev.sessionbreak.starttime;
 datetime prev.sessionbreak.endtime;
@@ -2622,8 +2651,7 @@ void BackupInputs() {
    prev.MaxGridLevels          = MaxGridLevels;
    prev.Pyramid.Multiplier     = Pyramid.Multiplier;
    prev.Martingale.Multiplier  = Martingale.Multiplier;
-   prev.TakeProfit             = StringConcatenate(TakeProfit, "");
-   prev.StopLoss               = StringConcatenate(StopLoss, "");
+   prev.StopConditions         = StringConcatenate(StopConditions, "");
    prev.ShowProfitInPercent    = ShowProfitInPercent;
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
@@ -2640,25 +2668,30 @@ void BackupInputs() {
    prev.sequence.martingaleEnabled = sequence.martingaleEnabled;
    prev.sequence.gridsize          = sequence.gridsize;
    prev.sequence.unitsize          = sequence.unitsize;
+   prev.sequence.gridvola          = sequence.gridvola;
 
    prev.long.enabled               = long.enabled ;
    prev.short.enabled              = short.enabled;
 
-   prev.tpAbs.condition            = tpAbs.condition;
-   prev.tpAbs.value                = tpAbs.value;
-   prev.tpAbs.description          = tpAbs.description;
-   prev.tpPct.condition            = tpPct.condition;
-   prev.tpPct.value                = tpPct.value;
-   prev.tpPct.absValue             = tpPct.absValue;
-   prev.tpPct.description          = tpPct.description;
-
-   prev.slAbs.condition            = slAbs.condition;
-   prev.slAbs.value                = slAbs.value;
-   prev.slAbs.description          = slAbs.description;
-   prev.slPct.condition            = slPct.condition;
-   prev.slPct.value                = slPct.value;
-   prev.slPct.absValue             = slPct.absValue;
-   prev.slPct.description          = slPct.description;
+   prev.stop.price.condition       = stop.price.condition;
+   prev.stop.price.type            = stop.price.type;
+   prev.stop.price.value           = stop.price.value;
+   prev.stop.price.lastValue       = stop.price.lastValue;
+   prev.stop.price.description     = stop.price.description;
+   prev.stop.profitAbs.condition   = stop.profitAbs.condition;
+   prev.stop.profitAbs.value       = stop.profitAbs.value;
+   prev.stop.profitAbs.description = stop.profitAbs.description;
+   prev.stop.profitPct.condition   = stop.profitPct.condition;
+   prev.stop.profitPct.value       = stop.profitPct.value;
+   prev.stop.profitPct.absValue    = stop.profitPct.absValue;
+   prev.stop.profitPct.description = stop.profitPct.description;
+   prev.stop.lossAbs.condition     = stop.lossAbs.condition;
+   prev.stop.lossAbs.value         = stop.lossAbs.value;
+   prev.stop.lossAbs.description   = stop.lossAbs.description;
+   prev.stop.lossPct.condition     = stop.lossPct.condition;
+   prev.stop.lossPct.value         = stop.lossPct.value;
+   prev.stop.lossPct.absValue      = stop.lossPct.absValue;
+   prev.stop.lossPct.description   = stop.lossPct.description;
 
    prev.sessionbreak.starttime     = sessionbreak.starttime;
    prev.sessionbreak.endtime       = sessionbreak.endtime;
@@ -2679,8 +2712,7 @@ void RestoreInputs() {
    MaxGridLevels          = prev.MaxGridLevels;
    Pyramid.Multiplier     = prev.Pyramid.Multiplier;
    Martingale.Multiplier  = prev.Martingale.Multiplier;
-   TakeProfit             = prev.TakeProfit;
-   StopLoss               = prev.StopLoss;
+   StopConditions         = prev.StopConditions;
    ShowProfitInPercent    = prev.ShowProfitInPercent;
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
@@ -2697,25 +2729,30 @@ void RestoreInputs() {
    sequence.martingaleEnabled = prev.sequence.martingaleEnabled;
    sequence.gridsize          = prev.sequence.gridsize;
    sequence.unitsize          = prev.sequence.unitsize;
+   sequence.gridvola          = prev.sequence.gridvola;
 
    long.enabled               = prev.long.enabled ;
    short.enabled              = prev.short.enabled;
 
-   tpAbs.condition            = prev.tpAbs.condition;
-   tpAbs.value                = prev.tpAbs.value;
-   tpAbs.description          = prev.tpAbs.description;
-   tpPct.condition            = prev.tpPct.condition;
-   tpPct.value                = prev.tpPct.value;
-   tpPct.absValue             = prev.tpPct.absValue;
-   tpPct.description          = prev.tpPct.description;
-
-   slAbs.condition            = prev.slAbs.condition;
-   slAbs.value                = prev.slAbs.value;
-   slAbs.description          = prev.slAbs.description;
-   slPct.condition            = prev.slPct.condition;
-   slPct.value                = prev.slPct.value;
-   slPct.absValue             = prev.slPct.absValue;
-   slPct.description          = prev.slPct.description;
+   stop.price.condition       = prev.stop.price.condition;
+   stop.price.type            = prev.stop.price.type;
+   stop.price.value           = prev.stop.price.value;
+   stop.price.lastValue       = prev.stop.price.lastValue;
+   stop.price.description     = prev.stop.price.description;
+   stop.profitAbs.condition   = prev.stop.profitAbs.condition;
+   stop.profitAbs.value       = prev.stop.profitAbs.value;
+   stop.profitAbs.description = prev.stop.profitAbs.description;
+   stop.profitPct.condition   = prev.stop.profitPct.condition;
+   stop.profitPct.value       = prev.stop.profitPct.value;
+   stop.profitPct.absValue    = prev.stop.profitPct.absValue;
+   stop.profitPct.description = prev.stop.profitPct.description;
+   stop.lossAbs.condition     = prev.stop.lossAbs.condition;
+   stop.lossAbs.value         = prev.stop.lossAbs.value;
+   stop.lossAbs.description   = prev.stop.lossAbs.description;
+   stop.lossPct.condition     = prev.stop.lossPct.condition;
+   stop.lossPct.value         = prev.stop.lossPct.value;
+   stop.lossPct.absValue      = prev.stop.lossPct.absValue;
+   stop.lossPct.description   = prev.stop.lossPct.description;
 
    sessionbreak.starttime     = prev.sessionbreak.starttime;
    sessionbreak.endtime       = prev.sessionbreak.endtime;
@@ -2761,11 +2798,11 @@ bool ValidateInputs() {
    // Sequence.ID
    if (isParameterChange) {
       string sValues[], sValue = StrTrim(Sequence.ID);
-      if (sValue == "") {                          // the id was deleted or not yet set, re-apply the internal id
+      if (sValue == "") {                                                // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
       }
-      else if (sValue != prev.Sequence.ID)         return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   } //else                                        // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
+      else if (sValue != prev.Sequence.ID)                               return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
+   } //else                                                              // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
 
    // GridDirection
    sValue = GridDirection;
@@ -2775,9 +2812,9 @@ bool ValidateInputs() {
    }
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (iValue == -1)                               return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid input parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
+   if (iValue == -1)                                                     return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
    if (isParameterChange && iValue!=prev.sequence.direction) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change input parameter GridDirection of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change parameter GridDirection of already started sequence"));
    }
    sequence.direction = iValue;
    long.enabled  = (sequence.direction & D_LONG  && 1);
@@ -2786,7 +2823,7 @@ bool ValidateInputs() {
 
    // GridVolatility
    if (isParameterChange && !StrCompareI(GridVolatility, prev.GridVolatility)) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change input parameter GridVolatility of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change parameter GridVolatility of already started sequence"));
    }
    sValue = StrTrim(GridVolatility);
    if (!StringLen(sValue) || sValue=="{percent}") {
@@ -2796,7 +2833,7 @@ bool ValidateInputs() {
    else {
       if (StrEndsWith(sValue, "%"))
          sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                   return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))                                         return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid parameter GridVolatility: "+ DoubleQuoteStr(GridVolatility) +" (not numeric)"));
       double dValue = MathAbs(StrToDouble(sValue));
       GridVolatility = NumberToStr(dValue, ".+") +"%";
       if (!sequenceWasStarted) sequence.gridvola = dValue;
@@ -2804,129 +2841,144 @@ bool ValidateInputs() {
 
    // GridSize
    if (isParameterChange && !StrCompare(GridSize, prev.GridSize)) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change input parameter GridSize of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change parameter GridSize of already started sequence"));
    }
    sValue = StrTrim(GridSize);
    dValue = 0;
    if (sValue != "") {
-      if (!StrIsNumeric(sValue))                   return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (not numeric)"));
+      if (!StrIsNumeric(sValue))                                         return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (not numeric)"));
       dValue = StrToDouble(sValue);
-      if (LT(dValue, 0))                           return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (too small)"));
-      int digits = StringLen(StrRightFrom(sValue, "."));    // interpret input as a currency amount or a pip value
+      if (LT(dValue, 0))                                                 return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (too small)"));
+      int digits = StringLen(StrRightFrom(sValue, "."));                 // interpret input as a currency amount or a pip value
       if (Close[0]>=500 && Digits==2 && digits==2) dValue = NormalizeDouble(dValue * 100, 0);
-      else if (MathModFix(dValue*Pip, Point) != 0) return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (not a multiple of Point)"));
+      else if (MathModFix(dValue*Pip, Point) != 0)                       return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid parameter GridSize: "+ DoubleQuoteStr(GridSize) +" (not a multiple of Point)"));
    }
    if (!sequenceWasStarted) sequence.gridsize = dValue;
 
    // UnitSize
    if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(10)  "+ sequence.name +" cannot change input parameter UnitSize of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" cannot change parameter UnitSize of already started sequence"));
    }
-   if (LT(UnitSize, 0))                            return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
-   if (NE(UnitSize, NormalizeLots(UnitSize)))      return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(UnitSize, 0))                                                  return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
+   if (NE(UnitSize, NormalizeLots(UnitSize)))                            return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    if (!sequenceWasStarted) sequence.unitsize = UnitSize;
-   if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize))
-                                                   return(!onInputError("ValidateInputs(13)  "+ sequence.name +" insufficient input parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
+   if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize)) return(!onInputError("ValidateInputs(13)  "+ sequence.name +" insufficient parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
    // MaxGridLevels
-   if (MaxGridLevels < 1)                          return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid input parameter MaxGridLevels: "+ MaxGridLevels));
+   if (MaxGridLevels < 1)                                                return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxGridLevels: "+ MaxGridLevels));
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(15)  "+ sequence.name +" cannot change input parameter Pyramid.Multiplier of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(15)  "+ sequence.name +" cannot change parameter Pyramid.Multiplier of already started sequence"));
    }
-   if (Pyramid.Multiplier < 0)                     return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid input parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
+   if (Pyramid.Multiplier < 0)                                           return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
    if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
-      if (sequenceWasStarted)                      return(!onInputError("ValidateInputs(17)  "+ sequence.name +" cannot change input parameter Martingale.Multiplier of already started sequence"));
+      if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(17)  "+ sequence.name +" cannot change parameter Martingale.Multiplier of already started sequence"));
    }
-   if (Martingale.Multiplier < 0)                  return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid input parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
+   if (Martingale.Multiplier < 0)                                        return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
    sequence.martingaleEnabled = (Martingale.Multiplier > 0);
 
-   // TakeProfit
-   bool unsetTpPct = false, unsetTpAbs = false;
-   sValue = StrTrim(TakeProfit);
-   if (StringLen(sValue) && sValue!="{number}[%]") {
-      bool isPercent = StrEndsWith(sValue, "%");
-      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                   return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid input parameter TakeProfit: "+ DoubleQuoteStr(TakeProfit) +" (not numeric)"));
-      dValue = StrToDouble(sValue);
-      if (isPercent) {
-         TakeProfit        = NumberToStr(dValue, ".+") +"%";
-         tpPct.condition   = true;
-         tpPct.value       = dValue;
-         tpPct.absValue    = INT_MAX;
-         tpPct.description = "profit("+ TakeProfit +")";
-         unsetTpAbs        = true;
-      }
-      else {
-         TakeProfit        = DoubleToStr(dValue, 2);
-         tpAbs.condition   = true;
-         tpAbs.value       = NormalizeDouble(dValue, 2);
-         tpAbs.description = "profit("+ TakeProfit +")";
-         unsetTpPct        = true;
-      }
-   }
-   else {
-      TakeProfit = "";
-      unsetTpPct = true;
-      unsetTpAbs = true;
-   }
-   if (tpPct.condition && unsetTpPct) {
-      tpPct.condition   = false;
-      tpPct.description = "";
-   }
-   if (tpAbs.condition && unsetTpAbs) {
-      tpAbs.condition   = false;
-      tpAbs.description = "";
-   }
+   // StopConditions, "OR" combined: @[bid|ask|price](double) | @[profit|loss](double[%])
+   // -----------------------------------------------------------------------------------
+   // conditions are applied and re-enabled on change only
+   if (!isParameterChange || StopConditions!=prev.StopConditions) {
+      stop.price.condition     = false;
+      stop.profitAbs.condition = false;
+      stop.profitPct.condition = false;
+      stop.lossAbs.condition   = false;
+      stop.lossPct.condition   = false;
 
-   // StopLoss
-   bool unsetSlPct = false, unsetSlAbs = false;
-   sValue = StrTrim(StopLoss);
-   if (StringLen(sValue) && sValue!="{number}[%]") {
-      isPercent = StrEndsWith(sValue, "%");
-      if (isPercent) sValue = StrTrim(StrLeft(sValue, -1));
-      if (!StrIsNumeric(sValue))                   return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid input parameter StopLoss: "+ DoubleQuoteStr(StopLoss) +" (not numeric)"));
-      dValue = StrToDouble(sValue);
-      if (isPercent) {
-         StopLoss          = NumberToStr(dValue, ".+") +"%";
-         slPct.condition   = true;
-         slPct.value       = dValue;
-         slPct.absValue    = INT_MIN;
-         slPct.description = "loss("+ StopLoss +")";
-         unsetSlAbs        = true;
+      string exprs[], expr="", key="";
+      int sizeOfExprs = Explode(StrTrim(StopConditions), "|", exprs, NULL);
+
+      // split conditions and parse/validate each expression
+      for (int i=0; i < sizeOfExprs; i++) {
+         expr = StrTrim(exprs[i]);
+         if (!StringLen(expr)) {
+            if (sizeOfExprs > 1)                                         return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            break;
+         }
+         if (StringGetChar(expr, 0) != '@')                              return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)                     return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                              return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         key = StrTrim(sValues[0]);
+         sValue = StrTrim(StrLeft(sValues[1], -1));
+         if (!StringLen(sValue))                                         return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+
+         if (key=="@bid" || key=="@ask" || key=="@price") {
+            if (stop.price.condition)                                    return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
+            sValue = StrReplace(sValue, "'", "");
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            dValue = StrToDouble(sValue);
+            if (dValue <= 0)                                             return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            stop.price.value     = NormalizeDouble(dValue, Digits);
+            stop.price.lastValue = NULL;
+            if      (key == "@bid") stop.price.type = PRICE_BID;
+            else if (key == "@ask") stop.price.type = PRICE_ASK;
+            else                    stop.price.type = PRICE_MEDIAN;
+            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
+            exprs[i] = StrSubstr(key, 1) +"("+ StrLeftTo(exprs[i], "'0") +")";      // cut "'0" for improved readability
+            stop.price.description = exprs[i];
+            stop.price.condition   = true;
+         }
+
+         else if (key == "@profit") {
+            if (stop.profitAbs.condition || stop.profitPct.condition)    return(!onInputError("ValidateInputs(27)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
+            int sizeOfElems = Explode(sValue, "%", sValues, NULL);
+            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(28)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            sValue = StrTrim(sValues[0]);
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(29)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            dValue = StrToDouble(sValue);
+            if (sizeOfElems == 1) {
+               stop.profitAbs.value       = NormalizeDouble(dValue, 2);
+               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
+               stop.profitAbs.description = exprs[i];
+               stop.profitAbs.condition   = true;
+            }
+            else {
+               stop.profitPct.value       = dValue;
+               stop.profitPct.absValue    = INT_MAX;
+               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
+               stop.profitPct.description = exprs[i];
+               stop.profitPct.condition   = true;
+            }
+         }
+
+         else if (key == "@loss") {
+            if (stop.lossAbs.condition || stop.lossPct.condition)        return(!onInputError("ValidateInputs(30)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
+            sizeOfElems = Explode(sValue, "%", sValues, NULL);
+            if (sizeOfElems > 2)                                         return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            sValue = StrTrim(sValues[0]);
+            if (!StrIsNumeric(sValue))                                   return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            dValue = StrToDouble(sValue);
+            if (sizeOfElems == 1) {
+               stop.lossAbs.value       = NormalizeDouble(dValue, 2);
+               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
+               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.condition   = true;
+            }
+            else {
+               stop.lossPct.value       = dValue;
+               stop.lossPct.absValue    = INT_MIN;
+               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
+               stop.lossPct.description = exprs[i];
+               stop.lossPct.condition   = true;
+            }
+         }
+
+         else                                                            return(!onInputError("ValidateInputs(33)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (unknown condition key)"));
       }
-      else {
-         StopLoss          = DoubleToStr(dValue, 2);
-         slAbs.condition   = true;
-         slAbs.value       = NormalizeDouble(dValue, 2);
-         slAbs.description = "loss("+ StopLoss +")";
-         unsetSlPct        = true;
-      }
-   }
-   else {
-      StopLoss   = "";
-      unsetSlPct = true;
-      unsetSlAbs = true;
-   }
-   if (slPct.condition && unsetSlPct) {
-      slPct.condition   = false;
-      slPct.description = "";
-   }
-   if (slAbs.condition && unsetSlAbs) {
-      slAbs.condition   = false;
-      slAbs.description = "";
    }
 
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
-      sessionbreak.starttime = NULL;                              // actual times are updated automatically on next use
+      sessionbreak.starttime = NULL;                                     // actual times are updated automatically on next use
       sessionbreak.endtime   = NULL;
    }
 
-   return(!catch("ValidateInputs(21)"));
+   return(!catch("ValidateInputs(34)"));
 }
 
 
@@ -3473,12 +3525,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "GridSize",                    /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                    /*double  */ NumberToStr(sequence.unitsize, ".+"));
    WriteIniString(file, section, "MaxGridLevels",               /*int     */ MaxGridLevels);
-
    WriteIniString(file, section, "Pyramid.Multiplier",          /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
-
-   WriteIniString(file, section, "TakeProfit",                  /*string  */ TakeProfit);
-   WriteIniString(file, section, "StopLoss",                    /*string  */ StopLoss);
+   WriteIniString(file, section, "StopConditions",              /*string  */ StopConditions);
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
 
    WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
@@ -3558,21 +3607,27 @@ bool SaveStatus() {
    WriteIniString(file, section, "short.maxLevel",              /*int     */ short.maxLevel + CRLF);
 
    // other
-   WriteIniString(file, section, "tpAbs.condition",             /*bool    */ tpAbs.condition);
-   WriteIniString(file, section, "tpAbs.value",                 /*double  */ DoubleToStr(tpAbs.value, 2));
-   WriteIniString(file, section, "tpAbs.description",           /*string  */ tpAbs.description);
-   WriteIniString(file, section, "tpPct.condition",             /*bool    */ tpPct.condition);
-   WriteIniString(file, section, "tpPct.value",                 /*double  */ NumberToStr(tpPct.value, ".+"));
-   WriteIniString(file, section, "tpPct.absValue",              /*double  */ ifString(tpPct.absValue==INT_MAX, INT_MAX, DoubleToStr(tpPct.absValue, 2)));
-   WriteIniString(file, section, "tpPct.description",           /*string  */ tpPct.description + CRLF);
+   WriteIniString(file, section, "stop.price.condition",        /*bool    */ stop.price.condition);
+   WriteIniString(file, section, "stop.price.type",             /*int     */ stop.price.type);
+   WriteIniString(file, section, "stop.price.value",            /*double  */ NumberToStr(stop.price.value, ".+"));
+   WriteIniString(file, section, "stop.price.lastValue",        /*double  */ NumberToStr(stop.price.lastValue, ".+"));
+   WriteIniString(file, section, "stop.price.description",      /*string  */ stop.price.description + CRLF);
 
-   WriteIniString(file, section, "slAbs.condition",             /*bool    */ slAbs.condition  );
-   WriteIniString(file, section, "slAbs.value",                 /*double  */ DoubleToStr(slAbs.value, 2));
-   WriteIniString(file, section, "slAbs.description",           /*string  */ slAbs.description);
-   WriteIniString(file, section, "slPct.condition",             /*bool    */ slPct.condition  );
-   WriteIniString(file, section, "slPct.value",                 /*double  */ NumberToStr(slPct.value, ".+"));
-   WriteIniString(file, section, "slPct.absValue",              /*double  */ ifString(slPct.absValue==INT_MIN, INT_MIN, DoubleToStr(slPct.absValue, 2)));
-   WriteIniString(file, section, "slPct.description",           /*string  */ slPct.description + CRLF);
+   WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
+   WriteIniString(file, section, "stop.profitAbs.value",        /*double  */ DoubleToStr(stop.profitAbs.value, 2));
+   WriteIniString(file, section, "stop.profitAbs.description",  /*string  */ stop.profitAbs.description);
+   WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
+   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".+"));
+   WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
+   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description + CRLF);
+
+   WriteIniString(file, section, "stop.lossAbs.condition",      /*bool    */ stop.lossAbs.condition  );
+   WriteIniString(file, section, "stop.lossAbs.value",          /*double  */ DoubleToStr(stop.lossAbs.value, 2));
+   WriteIniString(file, section, "stop.lossAbs.description",    /*string  */ stop.lossAbs.description);
+   WriteIniString(file, section, "stop.lossPct.condition",      /*bool    */ stop.lossPct.condition  );
+   WriteIniString(file, section, "stop.lossPct.value",          /*double  */ NumberToStr(stop.lossPct.value, ".+"));
+   WriteIniString(file, section, "stop.lossPct.absValue",       /*double  */ ifString(stop.lossPct.absValue==INT_MIN, INT_MIN, DoubleToStr(stop.lossPct.absValue, 2)));
+   WriteIniString(file, section, "stop.lossPct.description",    /*string  */ stop.lossPct.description + CRLF);
 
    WriteIniString(file, section, "sessionbreak.starttime",      /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
    WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
@@ -3751,8 +3806,7 @@ bool ReadStatus() {
    int    iMaxGridLevels         = GetIniInt    (file, section, "MaxGridLevels"             );  // int      MaxGridLevels          = 15
    string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");  // double   Pyramid.Multiplier     = 1.1
    string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");  // double   Martingale.Multiplier  = 1.1
-   string sTakeProfit            = GetIniStringA(file, section, "TakeProfit",             "");  // string   TakeProfit             = 3%
-   string sStopLoss              = GetIniStringA(file, section, "StopLoss",               "");  // string   StopLoss               = 20.00
+   string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");  // string   StopConditions         = @profit(1%)
    string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");  // bool     ShowProfitInPercent    = 1
    int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );  // datetime Sessionbreak.StartTime = 86160 (23:56:30)
    int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );  // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
@@ -3771,8 +3825,7 @@ bool ReadStatus() {
    MaxGridLevels          = iMaxGridLevels;
    Pyramid.Multiplier     = StrToDouble(sPyramidMultiplier);
    Martingale.Multiplier  = StrToDouble(sMartingaleMultiplier);
-   TakeProfit             = sTakeProfit;
-   StopLoss               = sStopLoss;
+   StopConditions         = sStopConditions;
    ShowProfitInPercent    = StrToBool(sShowProfitInPercent);
    Sessionbreak.StartTime = iSessionbreakStartTime;
    Sessionbreak.EndTime   = iSessionbreakEndTime;
@@ -3780,101 +3833,107 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    // sequence data
-   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );   // int      sequence.id                 = 1234
-   sequence.created            = GetIniInt    (file, section, "sequence.created"           );   // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
-   sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );   // bool     sequence.isTest             = 1
-   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");   // string   sequence.name               = L.1234
-   sequence.cycle              = GetIniInt    (file, section, "sequence.cycle"             );   // int      sequence.cycle              = 2
-   sequence.status             = GetIniInt    (file, section, "sequence.status"            );   // int      sequence.status             = 1
-   sequence.direction          = GetIniInt    (file, section, "sequence.direction"         );   // int      sequence.direction          = 2
-   sequence.pyramidEnabled     = GetIniBool   (file, section, "sequence.pyramidEnabled"    );   // bool     sequence.pyramidEnabled     = 1
-   sequence.martingaleEnabled  = GetIniBool   (file, section, "sequence.martingaleEnabled" );   // bool     sequence.martingaleEnabled  = 0
-   sequence.gridsize           = GetIniDouble (file, section, "sequence.gridsize"          );   // double   sequence.gridsize           = 3.5
-   sequence.unitsize           = GetIniDouble (file, section, "sequence.unitsize"          );   // double   sequence.unitsize           = 0.01
-   sequence.gridvola           = GetIniDouble (file, section, "sequence.gridvola"          );   // double   sequence.gridvola           = 29.5
-   sequence.gridbase           = GetIniDouble (file, section, "sequence.gridbase"          );   // double   sequence.gridbase           = 1.17453
-   sequence.startTime          = GetIniInt    (file, section, "sequence.startTime"         );   // datetime sequence.startTime          = 1624924801 (Mon, 2021.05.12 13:25:12)
-   sequence.startPrice         = GetIniDouble (file, section, "sequence.startPrice"        );   // double   sequence.startPrice         = 1.17453
-   sequence.startEquity        = GetIniDouble (file, section, "sequence.startEquity"       );   // double   sequence.startEquity        = 1000.00
-   sequence.stopTime           = GetIniInt    (file, section, "sequence.stopTime"          );   // datetime sequence.stopTime           = 1624924802 (Mon, 2021.05.12 17:01:27)
-   sequence.stopPrice          = GetIniDouble (file, section, "sequence.stopPrice"         );   // double   sequence.stopPrice          = 1.17453
-   sequence.openLots           = GetIniDouble (file, section, "sequence.openLots"          );   // double   sequence.openLots           = 0.12
-   sequence.avgOpenPrice       = GetIniDouble (file, section, "sequence.avgOpenPrice"      );   // double   sequence.avgOpenPrice       = 1.17453
-   sequence.floatingCommission = GetIniDouble (file, section, "sequence.floatingCommission");   // double   sequence.floatingCommission = 12.34
-   sequence.floatingSwap       = GetIniDouble (file, section, "sequence.floatingSwap"      );   // double   sequence.floatingSwap       = 23.45
-   sequence.floatingPL         = GetIniDouble (file, section, "sequence.floatingPL"        );   // double   sequence.floatingPL         = 12.34
-   sequence.hedgedPL           = GetIniDouble (file, section, "sequence.hedgedPL"          );   // double   sequence.hedgedPL           = 34.56
-   sequence.openPL             = GetIniDouble (file, section, "sequence.openPL"            );   // double   sequence.openPL             = 23.45
-   sequence.closedPL           = GetIniDouble (file, section, "sequence.closedPL"          );   // double   sequence.closedPL           = 45.67
-   sequence.totalPL            = GetIniDouble (file, section, "sequence.totalPL"           );   // double   sequence.totalPL            = 123.45
-   sequence.maxProfit          = GetIniDouble (file, section, "sequence.maxProfit"         );   // double   sequence.maxProfit          = 23.45
-   sequence.maxDrawdown        = GetIniDouble (file, section, "sequence.maxDrawdown"       );   // double   sequence.maxDrawdown        = -11.23
-   sequence.tpPrice            = GetIniDouble (file, section, "sequence.tpPrice"           );   // double   sequence.tpPrice            = 1.17692
-   sequence.slPrice            = GetIniDouble (file, section, "sequence.slPrice"           );   // double   sequence.slPrice            = 1.17051
+   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );      // int      sequence.id                 = 1234
+   sequence.created            = GetIniInt    (file, section, "sequence.created"           );      // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
+   sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );      // bool     sequence.isTest             = 1
+   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");      // string   sequence.name               = L.1234
+   sequence.cycle              = GetIniInt    (file, section, "sequence.cycle"             );      // int      sequence.cycle              = 2
+   sequence.status             = GetIniInt    (file, section, "sequence.status"            );      // int      sequence.status             = 1
+   sequence.direction          = GetIniInt    (file, section, "sequence.direction"         );      // int      sequence.direction          = 2
+   sequence.pyramidEnabled     = GetIniBool   (file, section, "sequence.pyramidEnabled"    );      // bool     sequence.pyramidEnabled     = 1
+   sequence.martingaleEnabled  = GetIniBool   (file, section, "sequence.martingaleEnabled" );      // bool     sequence.martingaleEnabled  = 0
+   sequence.gridsize           = GetIniDouble (file, section, "sequence.gridsize"          );      // double   sequence.gridsize           = 3.5
+   sequence.unitsize           = GetIniDouble (file, section, "sequence.unitsize"          );      // double   sequence.unitsize           = 0.01
+   sequence.gridvola           = GetIniDouble (file, section, "sequence.gridvola"          );      // double   sequence.gridvola           = 29.5
+   sequence.gridbase           = GetIniDouble (file, section, "sequence.gridbase"          );      // double   sequence.gridbase           = 1.17453
+   sequence.startTime          = GetIniInt    (file, section, "sequence.startTime"         );      // datetime sequence.startTime          = 1624924801 (Mon, 2021.05.12 13:25:12)
+   sequence.startPrice         = GetIniDouble (file, section, "sequence.startPrice"        );      // double   sequence.startPrice         = 1.17453
+   sequence.startEquity        = GetIniDouble (file, section, "sequence.startEquity"       );      // double   sequence.startEquity        = 1000.00
+   sequence.stopTime           = GetIniInt    (file, section, "sequence.stopTime"          );      // datetime sequence.stopTime           = 1624924802 (Mon, 2021.05.12 17:01:27)
+   sequence.stopPrice          = GetIniDouble (file, section, "sequence.stopPrice"         );      // double   sequence.stopPrice          = 1.17453
+   sequence.openLots           = GetIniDouble (file, section, "sequence.openLots"          );      // double   sequence.openLots           = 0.12
+   sequence.avgOpenPrice       = GetIniDouble (file, section, "sequence.avgOpenPrice"      );      // double   sequence.avgOpenPrice       = 1.17453
+   sequence.floatingCommission = GetIniDouble (file, section, "sequence.floatingCommission");      // double   sequence.floatingCommission = 12.34
+   sequence.floatingSwap       = GetIniDouble (file, section, "sequence.floatingSwap"      );      // double   sequence.floatingSwap       = 23.45
+   sequence.floatingPL         = GetIniDouble (file, section, "sequence.floatingPL"        );      // double   sequence.floatingPL         = 12.34
+   sequence.hedgedPL           = GetIniDouble (file, section, "sequence.hedgedPL"          );      // double   sequence.hedgedPL           = 34.56
+   sequence.openPL             = GetIniDouble (file, section, "sequence.openPL"            );      // double   sequence.openPL             = 23.45
+   sequence.closedPL           = GetIniDouble (file, section, "sequence.closedPL"          );      // double   sequence.closedPL           = 45.67
+   sequence.totalPL            = GetIniDouble (file, section, "sequence.totalPL"           );      // double   sequence.totalPL            = 123.45
+   sequence.maxProfit          = GetIniDouble (file, section, "sequence.maxProfit"         );      // double   sequence.maxProfit          = 23.45
+   sequence.maxDrawdown        = GetIniDouble (file, section, "sequence.maxDrawdown"       );      // double   sequence.maxDrawdown        = -11.23
+   sequence.tpPrice            = GetIniDouble (file, section, "sequence.tpPrice"           );      // double   sequence.tpPrice            = 1.17692
+   sequence.slPrice            = GetIniDouble (file, section, "sequence.slPrice"           );      // double   sequence.slPrice            = 1.17051
    SS.SequenceName();
 
    // long order data
    ResetOrderLog(D_LONG);
-   long.enabled                = GetIniBool   (file, section, "long.enabled" );                 // bool     long.enabled  = 1
-   long.openLots               = GetIniDouble (file, section, "long.openLots");                 // double   long.openLots = 0.02
-   long.slippage               = GetIniDouble (file, section, "long.slippage");                 // double   long.slippage = 0
-   long.openPL                 = GetIniDouble (file, section, "long.openPL"  );                 // double   long.openPL   = 12.34
-   long.closedPL               = GetIniDouble (file, section, "long.closedPL");                 // double   long.closedPL = 23.34
-   long.bePrice                = GetIniDouble (file, section, "long.bePrice" );                 // double   long.bePrice  = 1.17453
-   long.minLevel               = GetIniInt    (file, section, "long.minLevel");                 // int      long.minLevel = -2
-   long.maxLevel               = GetIniInt    (file, section, "long.maxLevel");                 // int      long.maxLevel = 7
+   long.enabled                = GetIniBool   (file, section, "long.enabled" );                    // bool     long.enabled  = 1
+   long.openLots               = GetIniDouble (file, section, "long.openLots");                    // double   long.openLots = 0.02
+   long.slippage               = GetIniDouble (file, section, "long.slippage");                    // double   long.slippage = 0
+   long.openPL                 = GetIniDouble (file, section, "long.openPL"  );                    // double   long.openPL   = 12.34
+   long.closedPL               = GetIniDouble (file, section, "long.closedPL");                    // double   long.closedPL = 23.34
+   long.bePrice                = GetIniDouble (file, section, "long.bePrice" );                    // double   long.bePrice  = 1.17453
+   long.minLevel               = GetIniInt    (file, section, "long.minLevel");                    // int      long.minLevel = -2
+   long.maxLevel               = GetIniInt    (file, section, "long.maxLevel");                    // int      long.maxLevel = 7
    string sKeys[], sOrder="";
    int size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_LONG, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.orders.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // long.orders.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(9)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_LONG, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // long.history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // long.history.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // short order data
    ResetOrderLog(D_SHORT);
-   short.enabled               = GetIniBool   (file, section, "short.enabled" );                // bool     short.enabled  = 1
-   short.openLots              = GetIniDouble (file, section, "short.openLots");                // double   short.openLots = 0.02
-   short.slippage              = GetIniDouble (file, section, "short.slippage");                // double   short.slippage = 0
-   short.openPL                = GetIniDouble (file, section, "short.openPL"  );                // double   short.openPL   = 12.34
-   short.closedPL              = GetIniDouble (file, section, "short.closedPL");                // double   short.closedPL = 23.34
-   short.bePrice               = GetIniDouble (file, section, "short.bePrice" );                // double   short.bePrice  = 1.17453
-   short.minLevel              = GetIniInt    (file, section, "short.minLevel");                // int      short.minLevel = -2
-   short.maxLevel              = GetIniInt    (file, section, "short.maxLevel");                // int      short.maxLevel = 7
+   short.enabled               = GetIniBool   (file, section, "short.enabled" );                   // bool     short.enabled  = 1
+   short.openLots              = GetIniDouble (file, section, "short.openLots");                   // double   short.openLots = 0.02
+   short.slippage              = GetIniDouble (file, section, "short.slippage");                   // double   short.slippage = 0
+   short.openPL                = GetIniDouble (file, section, "short.openPL"  );                   // double   short.openPL   = 12.34
+   short.closedPL              = GetIniDouble (file, section, "short.closedPL");                   // double   short.closedPL = 23.34
+   short.bePrice               = GetIniDouble (file, section, "short.bePrice" );                   // double   short.bePrice  = 1.17453
+   short.minLevel              = GetIniInt    (file, section, "short.minLevel");                   // int      short.minLevel = -2
+   short.maxLevel              = GetIniInt    (file, section, "short.maxLevel");                   // int      short.maxLevel = 7
    size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_SHORT, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.orders.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // short.orders.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(11)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_SHORT, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                      // short.history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // short.history.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // other
-   tpAbs.condition             = GetIniBool   (file, section, "tpAbs.condition"      );         // bool     tpAbs.condition   = 1
-   tpAbs.value                 = GetIniDouble (file, section, "tpAbs.value"          );         // double   tpAbs.value       = 10.00
-   tpAbs.description           = GetIniStringA(file, section, "tpAbs.description", "");         // string   tpAbs.description = text
-   tpPct.condition             = GetIniBool   (file, section, "tpPct.condition"      );         // bool     tpPct.condition   = 0
-   tpPct.value                 = GetIniDouble (file, section, "tpPct.value"          );         // double   tpPct.value       = 0
-   tpPct.absValue              = GetIniDouble (file, section, "tpPct.absValue"       );         // double   tpPct.absValue    = 0.00
-   tpPct.description           = GetIniStringA(file, section, "tpPct.description", "");         // string   tpPct.description = text
+   stop.price.condition        = GetIniBool   (file, section, "stop.price.condition"      );       // bool     stop.price.condition       = 1
+   stop.price.type             = GetIniInt    (file, section, "stop.price.type"           );       // int      stop.price.type            = 4
+   stop.price.value            = GetIniDouble (file, section, "stop.price.value"          );       // double   stop.price.value           = 1.17453
+   stop.price.lastValue        = GetIniDouble (file, section, "stop.price.lastValue"      );       // double   stop.price.lastValue       = 0
+   stop.price.description      = GetIniStringA(file, section, "stop.price.description", "");       // string   stop.price.description     = text
 
-   slAbs.condition             = GetIniBool   (file, section, "slAbs.condition"      );         // bool     slAbs.condition   = 1
-   slAbs.value                 = GetIniDouble (file, section, "slAbs.value"          );         // double   slAbs.value       = -20.00
-   slAbs.description           = GetIniStringA(file, section, "slAbs.description", "");         // string   slAbs.description = text
-   slPct.condition             = GetIniBool   (file, section, "slPct.condition"      );         // bool     slPct.condition   = 0
-   slPct.value                 = GetIniDouble (file, section, "slPct.value"          );         // double   slPct.value       = 0
-   slPct.absValue              = GetIniDouble (file, section, "slPct.absValue"       );         // double   slPct.absValue    = 0.00
-   slPct.description           = GetIniStringA(file, section, "slPct.description", "");         // string   slPct.description = text
+   stop.profitAbs.condition    = GetIniBool   (file, section, "stop.profitAbs.condition"      );   // bool     stop.profitAbs.condition   = 1
+   stop.profitAbs.value        = GetIniDouble (file, section, "stop.profitAbs.value"          );   // double   stop.profitAbs.value       = 10.00
+   stop.profitAbs.description  = GetIniStringA(file, section, "stop.profitAbs.description", "");   // string   stop.profitAbs.description = text
+   stop.profitPct.condition    = GetIniBool   (file, section, "stop.profitPct.condition"      );   // bool     stop.profitPct.condition   = 0
+   stop.profitPct.value        = GetIniDouble (file, section, "stop.profitPct.value"          );   // double   stop.profitPct.value       = 0
+   stop.profitPct.absValue     = GetIniDouble (file, section, "stop.profitPct.absValue"       );   // double   stop.profitPct.absValue    = 0.00
+   stop.profitPct.description  = GetIniStringA(file, section, "stop.profitPct.description", "");   // string   stop.profitPct.description = text
 
-   sessionbreak.starttime      = GetIniInt    (file, section, "sessionbreak.starttime");        // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
-   sessionbreak.endtime        = GetIniInt    (file, section, "sessionbreak.endtime"  );        // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
+   stop.lossAbs.condition      = GetIniBool   (file, section, "stop.lossAbs.condition"      );     // bool     stop.lossAbs.condition     = 1
+   stop.lossAbs.value          = GetIniDouble (file, section, "stop.lossAbs.value"          );     // double   stop.lossAbs.value         = -20.00
+   stop.lossAbs.description    = GetIniStringA(file, section, "stop.lossAbs.description", "");     // string   stop.lossAbs.description   = text
+   stop.lossPct.condition      = GetIniBool   (file, section, "stop.lossPct.condition"      );     // bool     stop.lossPct.condition     = 0
+   stop.lossPct.value          = GetIniDouble (file, section, "stop.lossPct.value"          );     // double   stop.lossPct.value         = 0
+   stop.lossPct.absValue       = GetIniDouble (file, section, "stop.lossPct.absValue"       );     // double   stop.lossPct.absValue      = 0.00
+   stop.lossPct.description    = GetIniStringA(file, section, "stop.lossPct.description", "");     // string   stop.lossPct.description   = text
+
+   sessionbreak.starttime      = GetIniInt    (file, section, "sessionbreak.starttime");           // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
+   sessionbreak.endtime        = GetIniInt    (file, section, "sessionbreak.endtime"  );           // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
 
    return(!catch("ReadStatus(13)"));
 }
@@ -4313,17 +4372,17 @@ void SS.SequenceName() {
 void SS.StopConditions() {
    if (__isChart) {
       string sValue = "";
-      if (tpAbs.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpAbs.condition, "@", "!") + tpAbs.description;
+      if (stop.profitAbs.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
       }
-      if (tpPct.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(tpPct.condition, "@", "!") + tpPct.description;
+      if (stop.profitPct.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
       }
-      if (slAbs.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(slAbs.condition, "@", "!") + slAbs.description;
+      if (stop.lossAbs.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossAbs.condition, "@", "!") + stop.lossAbs.description;
       }
-      if (slPct.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(slPct.condition, "@", "!") + slPct.description;
+      if (stop.lossPct.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " || ") + ifString(stop.lossPct.condition, "@", "!") + stop.lossPct.description;
       }
       if (sValue == "") sStopConditions = "-";
       else              sStopConditions = sValue;
@@ -4399,8 +4458,7 @@ string InputsToStr() {
                             "MaxGridLevels=",          MaxGridLevels,                                ";", NL,
                             "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
                             "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
-                            "TakeProfit=",             DoubleQuoteStr(TakeProfit),                   ";", NL,
-                            "StopLoss=",               DoubleQuoteStr(StopLoss),                     ";", NL,
+                            "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
                             "ShowProfitInPercent=",    BoolToStr(ShowProfitInPercent),               ";", NL,
                             "Sessionbreak.StartTime=", TimeToStr(Sessionbreak.StartTime, TIME_FULL), ";", NL,
                             "Sessionbreak.EndTime=",   TimeToStr(Sessionbreak.EndTime, TIME_FULL),   ";")
