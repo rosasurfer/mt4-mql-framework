@@ -2154,6 +2154,16 @@ bool ComputeTargets() {
          sequence.tpPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
          if (!sequence.tpPrice) return(false);
       }
+
+      // calculate stoploss
+      if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
+      else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
+      else                             targetPL = INT_MIN;
+      if (targetPL != INT_MIN) {
+         // TODO: calculation is wrong
+         //sequence.slPrice = ComputeTarget(D_LONG, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
+         //if (!sequence.slPrice) return(false);
+      }
    }
 
    if (short.enabled) {
@@ -2185,6 +2195,16 @@ bool ComputeTargets() {
       if (targetPL != INT_MAX) {
          sequence.tpPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
          if (!sequence.tpPrice) return(false);
+      }
+
+      // calculate stoploss
+      if (stop.lossAbs.condition)      targetPL = stop.lossAbs.value;
+      else if (stop.lossPct.condition) targetPL = stop.lossPct.AbsValue();
+      else                             targetPL = INT_MIN;
+      if (targetPL != INT_MIN) {
+         // TODO: calculation is wrong
+         //sequence.slPrice = ComputeTarget(D_SHORT, targetPL, lots, avgPrice, commission, swap, hedgedPL, closedPL, gridlevel, gridbase);
+         //if (!sequence.slPrice) return(false);
       }
    }
 
@@ -2411,7 +2431,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
 
       if (!gridvola) return(!catch("ConfigureGrid(7)  "+ sequence.name +" gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  => resulting gridvola: 0", ERR_RUNTIME_ERROR));
                           logDebug("ConfigureGrid(8)  "+ sequence.name +" adr="+ PipToStr(adr/Pip) +"  gridsize="+ PipToStr(gridsize) +"  unitsize="+ NumberToStr(unitsize, ".+") +"  gridvola="+ DoubleToStr(gridvola, 1) +"%");
-      if (gridvola > 50) logNotice("ConfigureGrid(9)  "+ sequence.name +" The resulting grid volatility is larger than 50%: "+ DoubleToStr(gridvola, 1) +"%");
+      if (gridvola > 150) logNotice("ConfigureGrid(9)  "+ sequence.name +" The resulting grid volatility is larger than 150%: "+ DoubleToStr(gridvola, 1) +"%");
       return(!catch("ConfigureGrid(10)"));
    }
    else if (gridvola && unitsize) {
@@ -2901,11 +2921,11 @@ bool ValidateInputs() {
    // -----------------------------------------------------------------------------------
    // conditions are applied and re-enabled on change only
    if (!isParameterChange || StopConditions!=prev.StopConditions) {
-      stop.price.condition     = false;
-      stop.profitAbs.condition = false;
-      stop.profitPct.condition = false;
-      stop.lossAbs.condition   = false;
-      stop.lossPct.condition   = false;
+      stop.price.condition     = false; stop.price.description     = "";
+      stop.profitAbs.condition = false; stop.profitAbs.description = "";
+      stop.profitPct.condition = false; stop.profitPct.description = "";
+      stop.lossAbs.condition   = false; stop.lossAbs.description   = "";
+      stop.lossPct.condition   = false; stop.lossPct.description   = "";
 
       string exprs[], expr="", key="";
       int sizeOfExprs = Explode(StrTrim(StopConditions), "|", exprs, NULL);
