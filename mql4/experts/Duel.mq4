@@ -2912,11 +2912,11 @@ bool ValidateInputs() {
    // -----------------------------------------------------------------------------------
    // conditions are applied and re-enabled on change only
    if (!isParameterChange || StopConditions!=prev.StopConditions) {
-      stop.price.condition     = false; stop.price.description     = "";
-      stop.profitAbs.condition = false; stop.profitAbs.description = "";
-      stop.profitPct.condition = false; stop.profitPct.description = "";
-      stop.lossAbs.condition   = false; stop.lossAbs.description   = "";
-      stop.lossPct.condition   = false; stop.lossPct.description   = "";
+      stop.price.condition     = false;
+      stop.profitAbs.condition = false;
+      stop.profitPct.condition = false;
+      stop.lossAbs.condition   = false;
+      stop.lossPct.condition   = false;
 
       string exprs[], expr="", key="";
       int sizeOfExprs = Explode(StrTrim(StopConditions), "|", exprs, NULL);
@@ -2961,6 +2961,7 @@ bool ValidateInputs() {
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
                exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
+               stop.profitPct.description = "";
                stop.profitAbs.description = exprs[i];
                stop.profitAbs.condition   = true;
             }
@@ -2968,6 +2969,7 @@ bool ValidateInputs() {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
                exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
+               stop.profitAbs.description = "";
                stop.profitPct.description = exprs[i];
                stop.profitPct.condition   = true;
             }
@@ -2983,6 +2985,7 @@ bool ValidateInputs() {
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
                exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
+               stop.lossPct.description = "";
                stop.lossAbs.description = exprs[i];
                stop.lossAbs.condition   = true;
             }
@@ -2990,6 +2993,7 @@ bool ValidateInputs() {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
                exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
+               stop.lossAbs.description = "";
                stop.lossPct.description = exprs[i];
                stop.lossPct.condition   = true;
             }
