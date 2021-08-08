@@ -3804,27 +3804,27 @@ bool ReadStatus() {
 
    // [General]
    section = "General";
-   string sAccount = GetIniStringA(file, section, "Account", "");                               // string Account = ICMarkets:12345678
-   string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                               // string Symbol  = EURUSD
+   string sAccount = GetIniStringA(file, section, "Account", "");                                     // string Account = ICMarkets:12345678
+   string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                                     // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceID            = GetIniStringA(file, section, "Sequence.ID",            "");  // string   Sequence.ID            = T1234
-   string sGridDirection         = GetIniStringA(file, section, "GridDirection",          "");  // string   GridDirection          = Long
-   string sGridVolatility        = GetIniStringA(file, section, "GridVolatility",         "");  // string   GridVolatility         = 30%
-   string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");  // string   VolatilityRange        = ADR
-   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");  // string   GridSize               = 12.00
-   string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");  // double   UnitSize               = 0.01
-   int    iMaxGridLevels         = GetIniInt    (file, section, "MaxGridLevels"             );  // int      MaxGridLevels          = 15
-   string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");  // double   Pyramid.Multiplier     = 1.1
-   string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");  // double   Martingale.Multiplier  = 1.1
-   string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");  // string   StopConditions         = @profit(1%)
-   string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");  // bool     ShowProfitInPercent    = 1
-   int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );  // datetime Sessionbreak.StartTime = 86160 (23:56:30)
-   int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );  // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
+   string sSequenceID            = GetIniStringA(file, section, "Sequence.ID",            "");        // string   Sequence.ID            = T1234
+   string sGridDirection         = GetIniStringA(file, section, "GridDirection",          "");        // string   GridDirection          = Long
+   string sGridVolatility        = GetIniStringA(file, section, "GridVolatility",         "");        // string   GridVolatility         = 30%
+   string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");        // string   VolatilityRange        = ADR
+   string sGridSize              = GetIniStringA(file, section, "GridSize",               "");        // string   GridSize               = 12.00
+   string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");        // double   UnitSize               = 0.01
+   int    iMaxGridLevels         = GetIniInt    (file, section, "MaxGridLevels"             );        // int      MaxGridLevels          = 15
+   string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");        // double   Pyramid.Multiplier     = 1.1
+   string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");        // double   Martingale.Multiplier  = 1.1
+   string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");        // string   StopConditions         = @profit(1%)
+   string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");        // bool     ShowProfitInPercent    = 1
+   int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );        // datetime Sessionbreak.StartTime = 86160 (23:56:30)
+   int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );        // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
 
    if (!StrIsNumeric(sGridSize))             return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sUnitSize))             return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3848,107 +3848,107 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    // sequence data
-   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );      // int      sequence.id                 = 1234
-   sequence.created            = GetIniInt    (file, section, "sequence.created"           );      // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
-   sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );      // bool     sequence.isTest             = 1
-   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");      // string   sequence.name               = L.1234
-   sequence.cycle              = GetIniInt    (file, section, "sequence.cycle"             );      // int      sequence.cycle              = 2
-   sequence.status             = GetIniInt    (file, section, "sequence.status"            );      // int      sequence.status             = 1
-   sequence.direction          = GetIniInt    (file, section, "sequence.direction"         );      // int      sequence.direction          = 2
-   sequence.pyramidEnabled     = GetIniBool   (file, section, "sequence.pyramidEnabled"    );      // bool     sequence.pyramidEnabled     = 1
-   sequence.martingaleEnabled  = GetIniBool   (file, section, "sequence.martingaleEnabled" );      // bool     sequence.martingaleEnabled  = 0
-   sequence.gridsize           = GetIniDouble (file, section, "sequence.gridsize"          );      // double   sequence.gridsize           = 3.5
-   sequence.unitsize           = GetIniDouble (file, section, "sequence.unitsize"          );      // double   sequence.unitsize           = 0.01
-   sequence.gridvola           = GetIniDouble (file, section, "sequence.gridvola"          );      // double   sequence.gridvola           = 29.5
-   sequence.gridbase           = GetIniDouble (file, section, "sequence.gridbase"          );      // double   sequence.gridbase           = 1.17453
-   sequence.startTime          = GetIniInt    (file, section, "sequence.startTime"         );      // datetime sequence.startTime          = 1624924801 (Mon, 2021.05.12 13:25:12)
-   sequence.startPrice         = GetIniDouble (file, section, "sequence.startPrice"        );      // double   sequence.startPrice         = 1.17453
-   sequence.startEquity        = GetIniDouble (file, section, "sequence.startEquity"       );      // double   sequence.startEquity        = 1000.00
-   sequence.stopTime           = GetIniInt    (file, section, "sequence.stopTime"          );      // datetime sequence.stopTime           = 1624924802 (Mon, 2021.05.12 17:01:27)
-   sequence.stopPrice          = GetIniDouble (file, section, "sequence.stopPrice"         );      // double   sequence.stopPrice          = 1.17453
-   sequence.openLots           = GetIniDouble (file, section, "sequence.openLots"          );      // double   sequence.openLots           = 0.12
-   sequence.avgOpenPrice       = GetIniDouble (file, section, "sequence.avgOpenPrice"      );      // double   sequence.avgOpenPrice       = 1.17453
-   sequence.floatingCommission = GetIniDouble (file, section, "sequence.floatingCommission");      // double   sequence.floatingCommission = 12.34
-   sequence.floatingSwap       = GetIniDouble (file, section, "sequence.floatingSwap"      );      // double   sequence.floatingSwap       = 23.45
-   sequence.floatingPL         = GetIniDouble (file, section, "sequence.floatingPL"        );      // double   sequence.floatingPL         = 12.34
-   sequence.hedgedPL           = GetIniDouble (file, section, "sequence.hedgedPL"          );      // double   sequence.hedgedPL           = 34.56
-   sequence.openPL             = GetIniDouble (file, section, "sequence.openPL"            );      // double   sequence.openPL             = 23.45
-   sequence.closedPL           = GetIniDouble (file, section, "sequence.closedPL"          );      // double   sequence.closedPL           = 45.67
-   sequence.totalPL            = GetIniDouble (file, section, "sequence.totalPL"           );      // double   sequence.totalPL            = 123.45
-   sequence.maxProfit          = GetIniDouble (file, section, "sequence.maxProfit"         );      // double   sequence.maxProfit          = 23.45
-   sequence.maxDrawdown        = GetIniDouble (file, section, "sequence.maxDrawdown"       );      // double   sequence.maxDrawdown        = -11.23
-   sequence.tpPrice            = GetIniDouble (file, section, "sequence.tpPrice"           );      // double   sequence.tpPrice            = 1.17692
-   sequence.slPrice            = GetIniDouble (file, section, "sequence.slPrice"           );      // double   sequence.slPrice            = 1.17051
+   sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 1234
+   sequence.created            = GetIniInt    (file, section, "sequence.created"           );         // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
+   sequence.isTest             = GetIniBool   (file, section, "sequence.isTest"            );         // bool     sequence.isTest             = 1
+   sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = L.1234
+   sequence.cycle              = GetIniInt    (file, section, "sequence.cycle"             );         // int      sequence.cycle              = 2
+   sequence.status             = GetIniInt    (file, section, "sequence.status"            );         // int      sequence.status             = 1
+   sequence.direction          = GetIniInt    (file, section, "sequence.direction"         );         // int      sequence.direction          = 2
+   sequence.pyramidEnabled     = GetIniBool   (file, section, "sequence.pyramidEnabled"    );         // bool     sequence.pyramidEnabled     = 1
+   sequence.martingaleEnabled  = GetIniBool   (file, section, "sequence.martingaleEnabled" );         // bool     sequence.martingaleEnabled  = 0
+   sequence.gridsize           = GetIniDouble (file, section, "sequence.gridsize"          );         // double   sequence.gridsize           = 3.5
+   sequence.unitsize           = GetIniDouble (file, section, "sequence.unitsize"          );         // double   sequence.unitsize           = 0.01
+   sequence.gridvola           = GetIniDouble (file, section, "sequence.gridvola"          );         // double   sequence.gridvola           = 29.5
+   sequence.gridbase           = GetIniDouble (file, section, "sequence.gridbase"          );         // double   sequence.gridbase           = 1.17453
+   sequence.startTime          = GetIniInt    (file, section, "sequence.startTime"         );         // datetime sequence.startTime          = 1624924801 (Mon, 2021.05.12 13:25:12)
+   sequence.startPrice         = GetIniDouble (file, section, "sequence.startPrice"        );         // double   sequence.startPrice         = 1.17453
+   sequence.startEquity        = GetIniDouble (file, section, "sequence.startEquity"       );         // double   sequence.startEquity        = 1000.00
+   sequence.stopTime           = GetIniInt    (file, section, "sequence.stopTime"          );         // datetime sequence.stopTime           = 1624924802 (Mon, 2021.05.12 17:01:27)
+   sequence.stopPrice          = GetIniDouble (file, section, "sequence.stopPrice"         );         // double   sequence.stopPrice          = 1.17453
+   sequence.openLots           = GetIniDouble (file, section, "sequence.openLots"          );         // double   sequence.openLots           = 0.12
+   sequence.avgOpenPrice       = GetIniDouble (file, section, "sequence.avgOpenPrice"      );         // double   sequence.avgOpenPrice       = 1.17453
+   sequence.floatingCommission = GetIniDouble (file, section, "sequence.floatingCommission");         // double   sequence.floatingCommission = 12.34
+   sequence.floatingSwap       = GetIniDouble (file, section, "sequence.floatingSwap"      );         // double   sequence.floatingSwap       = 23.45
+   sequence.floatingPL         = GetIniDouble (file, section, "sequence.floatingPL"        );         // double   sequence.floatingPL         = 12.34
+   sequence.hedgedPL           = GetIniDouble (file, section, "sequence.hedgedPL"          );         // double   sequence.hedgedPL           = 34.56
+   sequence.openPL             = GetIniDouble (file, section, "sequence.openPL"            );         // double   sequence.openPL             = 23.45
+   sequence.closedPL           = GetIniDouble (file, section, "sequence.closedPL"          );         // double   sequence.closedPL           = 45.67
+   sequence.totalPL            = GetIniDouble (file, section, "sequence.totalPL"           );         // double   sequence.totalPL            = 123.45
+   sequence.maxProfit          = GetIniDouble (file, section, "sequence.maxProfit"         );         // double   sequence.maxProfit          = 23.45
+   sequence.maxDrawdown        = GetIniDouble (file, section, "sequence.maxDrawdown"       );         // double   sequence.maxDrawdown        = -11.23
+   sequence.tpPrice            = GetIniDouble (file, section, "sequence.tpPrice"           );         // double   sequence.tpPrice            = 1.17692
+   sequence.slPrice            = GetIniDouble (file, section, "sequence.slPrice"           );         // double   sequence.slPrice            = 1.17051
    SS.SequenceName();
 
    // long order data
    ResetOrderLog(D_LONG);
-   long.enabled                = GetIniBool   (file, section, "long.enabled" );                    // bool     long.enabled  = 1
-   long.openLots               = GetIniDouble (file, section, "long.openLots");                    // double   long.openLots = 0.02
-   long.slippage               = GetIniDouble (file, section, "long.slippage");                    // double   long.slippage = 0
-   long.openPL                 = GetIniDouble (file, section, "long.openPL"  );                    // double   long.openPL   = 12.34
-   long.closedPL               = GetIniDouble (file, section, "long.closedPL");                    // double   long.closedPL = 23.34
-   long.bePrice                = GetIniDouble (file, section, "long.bePrice" );                    // double   long.bePrice  = 1.17453
-   long.minLevel               = GetIniInt    (file, section, "long.minLevel");                    // int      long.minLevel = -2
-   long.maxLevel               = GetIniInt    (file, section, "long.maxLevel");                    // int      long.maxLevel = 7
+   long.enabled                = GetIniBool   (file, section, "long.enabled"          );              // bool     long.enabled  = 1
+   long.openLots               = GetIniDouble (file, section, "long.openLots"         );              // double   long.openLots = 0.02
+   long.slippage               = GetIniDouble (file, section, "long.slippage"         );              // double   long.slippage = 0
+   long.openPL                 = GetIniDouble (file, section, "long.openPL"           );              // double   long.openPL   = 12.34
+   long.closedPL               = GetIniDouble (file, section, "long.closedPL"         );              // double   long.closedPL = 23.34
+   long.bePrice                = GetIniDouble (file, section, "long.bePrice"          );              // double   long.bePrice  = 1.17453
+   long.minLevel               = GetIniInt    (file, section, "long.minLevel", INT_MAX);              // int      long.minLevel = -2
+   long.maxLevel               = GetIniInt    (file, section, "long.maxLevel", INT_MIN);              // int      long.maxLevel = 7
    string sKeys[], sOrder="";
    int size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_LONG, sKeys); if (size < 0) return(false);
    for (int i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // long.orders.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // long.orders.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(9)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_LONG, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // long.history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // long.history.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // short order data
    ResetOrderLog(D_SHORT);
-   short.enabled               = GetIniBool   (file, section, "short.enabled" );                   // bool     short.enabled  = 1
-   short.openLots              = GetIniDouble (file, section, "short.openLots");                   // double   short.openLots = 0.02
-   short.slippage              = GetIniDouble (file, section, "short.slippage");                   // double   short.slippage = 0
-   short.openPL                = GetIniDouble (file, section, "short.openPL"  );                   // double   short.openPL   = 12.34
-   short.closedPL              = GetIniDouble (file, section, "short.closedPL");                   // double   short.closedPL = 23.34
-   short.bePrice               = GetIniDouble (file, section, "short.bePrice" );                   // double   short.bePrice  = 1.17453
-   short.minLevel              = GetIniInt    (file, section, "short.minLevel");                   // int      short.minLevel = -2
-   short.maxLevel              = GetIniInt    (file, section, "short.maxLevel");                   // int      short.maxLevel = 7
+   short.enabled               = GetIniBool   (file, section, "short.enabled"          );             // bool     short.enabled  = 1
+   short.openLots              = GetIniDouble (file, section, "short.openLots"         );             // double   short.openLots = 0.02
+   short.slippage              = GetIniDouble (file, section, "short.slippage"         );             // double   short.slippage = 0
+   short.openPL                = GetIniDouble (file, section, "short.openPL"           );             // double   short.openPL   = 12.34
+   short.closedPL              = GetIniDouble (file, section, "short.closedPL"         );             // double   short.closedPL = 23.34
+   short.bePrice               = GetIniDouble (file, section, "short.bePrice"          );             // double   short.bePrice  = 1.17453
+   short.minLevel              = GetIniInt    (file, section, "short.minLevel", INT_MAX);             // int      short.minLevel = -2
+   short.maxLevel              = GetIniInt    (file, section, "short.maxLevel", INT_MIN);             // int      short.maxLevel = 7
    size = ReadStatus.OrderKeys(file, section, MODE_TRADES, D_SHORT, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // short.orders.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // short.orders.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(11)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    size = ReadStatus.OrderKeys(file, section, MODE_HISTORY, D_SHORT, sKeys); if (size < 0) return(false);
    for (i=0; i < size; i++) {
-      sOrder = GetIniStringA(file, section, sKeys[i], "");                                         // short.history.{i} = {data}
+      sOrder = GetIniStringA(file, section, sKeys[i], "");                                            // short.history.{i} = {data}
       if (!ReadStatus.ParseOrder(sKeys[i], sOrder)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid history record in status file "+ DoubleQuoteStr(file) + NL + sKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
 
    // other
-   stop.price.condition        = GetIniBool   (file, section, "stop.price.condition"      );       // bool     stop.price.condition       = 1
-   stop.price.type             = GetIniInt    (file, section, "stop.price.type"           );       // int      stop.price.type            = 4
-   stop.price.value            = GetIniDouble (file, section, "stop.price.value"          );       // double   stop.price.value           = 1.17453
-   stop.price.lastValue        = GetIniDouble (file, section, "stop.price.lastValue"      );       // double   stop.price.lastValue       = 0
-   stop.price.description      = GetIniStringA(file, section, "stop.price.description", "");       // string   stop.price.description     = text
+   stop.price.condition        = GetIniBool   (file, section, "stop.price.condition"      );          // bool     stop.price.condition       = 1
+   stop.price.type             = GetIniInt    (file, section, "stop.price.type"           );          // int      stop.price.type            = 4
+   stop.price.value            = GetIniDouble (file, section, "stop.price.value"          );          // double   stop.price.value           = 1.17453
+   stop.price.lastValue        = GetIniDouble (file, section, "stop.price.lastValue"      );          // double   stop.price.lastValue       = 0
+   stop.price.description      = GetIniStringA(file, section, "stop.price.description", "");          // string   stop.price.description     = text
 
-   stop.profitAbs.condition    = GetIniBool   (file, section, "stop.profitAbs.condition"      );   // bool     stop.profitAbs.condition   = 1
-   stop.profitAbs.value        = GetIniDouble (file, section, "stop.profitAbs.value"          );   // double   stop.profitAbs.value       = 10.00
-   stop.profitAbs.description  = GetIniStringA(file, section, "stop.profitAbs.description", "");   // string   stop.profitAbs.description = text
-   stop.profitPct.condition    = GetIniBool   (file, section, "stop.profitPct.condition"      );   // bool     stop.profitPct.condition   = 0
-   stop.profitPct.value        = GetIniDouble (file, section, "stop.profitPct.value"          );   // double   stop.profitPct.value       = 0
-   stop.profitPct.absValue     = GetIniDouble (file, section, "stop.profitPct.absValue"       );   // double   stop.profitPct.absValue    = 0.00
-   stop.profitPct.description  = GetIniStringA(file, section, "stop.profitPct.description", "");   // string   stop.profitPct.description = text
+   stop.profitAbs.condition    = GetIniBool   (file, section, "stop.profitAbs.condition"        );    // bool     stop.profitAbs.condition   = 1
+   stop.profitAbs.value        = GetIniDouble (file, section, "stop.profitAbs.value"            );    // double   stop.profitAbs.value       = 10.00
+   stop.profitAbs.description  = GetIniStringA(file, section, "stop.profitAbs.description",   "");    // string   stop.profitAbs.description = text
+   stop.profitPct.condition    = GetIniBool   (file, section, "stop.profitPct.condition"        );    // bool     stop.profitPct.condition   = 0
+   stop.profitPct.value        = GetIniDouble (file, section, "stop.profitPct.value"            );    // double   stop.profitPct.value       = 0
+   stop.profitPct.absValue     = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);    // double   stop.profitPct.absValue    = 0.00
+   stop.profitPct.description  = GetIniStringA(file, section, "stop.profitPct.description",   "");    // string   stop.profitPct.description = text
 
-   stop.lossAbs.condition      = GetIniBool   (file, section, "stop.lossAbs.condition"      );     // bool     stop.lossAbs.condition     = 1
-   stop.lossAbs.value          = GetIniDouble (file, section, "stop.lossAbs.value"          );     // double   stop.lossAbs.value         = -20.00
-   stop.lossAbs.description    = GetIniStringA(file, section, "stop.lossAbs.description", "");     // string   stop.lossAbs.description   = text
-   stop.lossPct.condition      = GetIniBool   (file, section, "stop.lossPct.condition"      );     // bool     stop.lossPct.condition     = 0
-   stop.lossPct.value          = GetIniDouble (file, section, "stop.lossPct.value"          );     // double   stop.lossPct.value         = 0
-   stop.lossPct.absValue       = GetIniDouble (file, section, "stop.lossPct.absValue"       );     // double   stop.lossPct.absValue      = 0.00
-   stop.lossPct.description    = GetIniStringA(file, section, "stop.lossPct.description", "");     // string   stop.lossPct.description   = text
+   stop.lossAbs.condition      = GetIniBool   (file, section, "stop.lossAbs.condition"        );      // bool     stop.lossAbs.condition     = 1
+   stop.lossAbs.value          = GetIniDouble (file, section, "stop.lossAbs.value"            );      // double   stop.lossAbs.value         = -20.00
+   stop.lossAbs.description    = GetIniStringA(file, section, "stop.lossAbs.description",   "");      // string   stop.lossAbs.description   = text
+   stop.lossPct.condition      = GetIniBool   (file, section, "stop.lossPct.condition"        );      // bool     stop.lossPct.condition     = 0
+   stop.lossPct.value          = GetIniDouble (file, section, "stop.lossPct.value"            );      // double   stop.lossPct.value         = 0
+   stop.lossPct.absValue       = GetIniDouble (file, section, "stop.lossPct.absValue", INT_MIN);      // double   stop.lossPct.absValue      = 0.00
+   stop.lossPct.description    = GetIniStringA(file, section, "stop.lossPct.description",   "");      // string   stop.lossPct.description   = text
 
-   sessionbreak.starttime      = GetIniInt    (file, section, "sessionbreak.starttime");           // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
-   sessionbreak.endtime        = GetIniInt    (file, section, "sessionbreak.endtime"  );           // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
+   sessionbreak.starttime      = GetIniInt    (file, section, "sessionbreak.starttime");              // datetime sessionbreak.starttime = 1583254806 (Mon, 2021.05.12 23:56:30)
+   sessionbreak.endtime        = GetIniInt    (file, section, "sessionbreak.endtime"  );              // datetime sessionbreak.endtime   = 1583254807 (Tue, 2021.05.13 00:02:10)
 
    return(!catch("ReadStatus(13)"));
 }
