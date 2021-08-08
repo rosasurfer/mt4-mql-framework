@@ -49,8 +49,8 @@ extern string   Sequence.ID            = "";                            // insta
 extern string   GridDirection          = "Long | Short";                // no bi-directional mode
 extern int      GridSize               = 20;                            //
 extern string   UnitSize               = "[L]{double} | auto*";         // "{double}"=fix, "L{double}"=compounding or "auto"=externally configured unitsize
-extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime)
-extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @tp(double[%]) | @sl(double[%])
+extern string   StartConditions        = "";                            // @trend(<indicator>:<timeframe>:<params>) & @price(double) & @time(datetime)
+extern string   StopConditions         = "";                            // @trend(<indicator>:<timeframe>:<params>) | @price(double) | @time(datetime) | @profit(double[%]) | @loss(double[%])
 extern string   AutoRestart            = "Off* | Continue | Reset";     // whether to continue or reset a sequence after StopSequence(SIGNAL_TAKEPROFIT|SIGNAL_STOPLOSS)
 extern int      StartLevel             = 0;                             //
 extern bool     ShowProfitInPercent    = true;                          // whether PL is displayed as absolute or percentage value
@@ -142,20 +142,20 @@ bool     stop.time.condition;                      // whether a stop time condit
 datetime stop.time.value;
 string   stop.time.description = "";
 
-bool     stop.profitAbs.condition;                 // whether an absolute takeprofit condition is active
+bool     stop.profitAbs.condition;                 // whether an absolute TP condition is active
 double   stop.profitAbs.value;
 string   stop.profitAbs.description = "";
 
-bool     stop.profitPct.condition;                 // whether a percentage takeprofit condition is active
+bool     stop.profitPct.condition;                 // whether a percentage TP condition is active
 double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-bool     stop.lossAbs.condition;                   // whether an absolute stoploss condition is active
+bool     stop.lossAbs.condition;                   // whether an absolute SL condition is active
 double   stop.lossAbs.value;
 string   stop.lossAbs.description = "";
 
-bool     stop.lossPct.condition;                   // whether a percentage stoploss condition is active
+bool     stop.lossPct.condition;                   // whether a percentage SL condition is active
 double   stop.lossPct.value;
 double   stop.lossPct.absValue    = INT_MIN;
 string   stop.lossPct.description = "";
@@ -2383,7 +2383,7 @@ bool IsStartSignal(int &signal) {
 /**
  * Whether a stop condition is satisfied for a waiting or a progressing sequence. All stop conditions are "OR" combined.
  *
- * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled stop condition
+ * @param  _Out_ int signal - variable receiving the signal identifier of a fulfilled stop condition
  *
  * @return bool
  */
@@ -2393,15 +2393,14 @@ bool IsStopSignal(int &signal) {
    if (!ArraySize(sequence.start.event))                                                       return(false);
    string message = "";
 
-   // -- stop.trend: fulfilled on trend change against the direction of the sequence ----------------------------------------
+   // stop.trend: fulfilled on trend change against the direction of the sequence -------------------------------------------
    if (stop.trend.condition) {
       if (sequence.status==STATUS_PROGRESSING || sessionbreak.waiting) {
          if (IsBarOpen(stop.trend.timeframe)) {
             int trend = GetStopTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==-1) || (sequence.direction==D_SHORT && trend==1)) {
-               message = "IsStopSignal(1)  "+ sequence.longName +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-               if (IsLogNotice()) logNotice(message);
+               if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ sequence.longName +" stop condition \"@"+ stop.trend.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
                signal = SIGNAL_TREND;
                return(true);
             }
@@ -2409,7 +2408,7 @@ bool IsStopSignal(int &signal) {
       }
    }
 
-   // -- stop.price: fulfilled when current price touches or crossses the limit----------------------------------------------
+   // stop.price: fulfilled when current price touches or crossses the limit-------------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
       double price;
@@ -2425,19 +2424,17 @@ bool IsStopSignal(int &signal) {
       stop.price.lastValue = price;
 
       if (triggered) {
-         message = "IsStopSignal(2)  "+ sequence.longName +" stop condition \"@"+ stop.price.description +"\" fulfilled";
-         if (IsLogNotice()) logNotice(message);
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.longName +" stop condition \"@"+ stop.price.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          stop.price.condition = false;
          signal = SIGNAL_PRICETIME;
          return(true);
       }
    }
 
-   // -- stop.time: fulfilled at the specified time and after ---------------------------------------------------------------
+   // stop.time: fulfilled at the specified time and after ------------------------------------------------------------------
    if (stop.time.condition) {
       if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
-         message = "IsStopSignal(4)  "+ sequence.longName +" stop condition \"@"+ stop.time.description +"\" fulfilled (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-         if (IsLogNotice()) logNotice(message);
+         if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.longName +" stop condition \"@"+ stop.time.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          stop.time.condition = false;
          signal = SIGNAL_PRICETIME;
          return(true);
@@ -2445,60 +2442,55 @@ bool IsStopSignal(int &signal) {
    }
 
    if (sequence.status == STATUS_PROGRESSING) {
-      // -- stop.profitAbs: -------------------------------------------------------------------------------------------------
+      // stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
-            message = "IsStopSignal(5)  "+ sequence.longName +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-            if (IsLogNotice()) logNotice(message);
+            if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.longName +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.profitAbs.condition = false;
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
       }
 
-      // -- stop.profitPct: -------------------------------------------------------------------------------------------------
+      // stop.profitPct: ----------------------------------------------------------------------------------------------------
       if (stop.profitPct.condition) {
          if (stop.profitPct.absValue == INT_MAX) {
             stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
          }
          if (sequence.totalPL >= stop.profitPct.absValue) {
-            message = "IsStopSignal(6)  "+ sequence.longName +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-            if (IsLogNotice()) logNotice(message);
+            if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.longName +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.profitPct.condition = false;
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
       }
 
-      // -- stop.lossAbs: ---------------------------------------------------------------------------------------------------
+      // stop.lossAbs: ------------------------------------------------------------------------------------------------------
       if (stop.lossAbs.condition) {
          if (sequence.totalPL <= stop.lossAbs.value) {
-            message = "IsStopSignal(7)  "+ sequence.longName +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-            if (IsLogNotice()) logNotice(message);
+            if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.longName +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.lossAbs.condition = false;
             signal = SIGNAL_STOPLOSS;
             return(true);
          }
       }
 
-      // -- stop.lossPct: ---------------------------------------------------------------------------------------------------
+      // stop.lossPct: ------------------------------------------------------------------------------------------------------
       if (stop.lossPct.condition) {
          if (stop.lossPct.absValue == INT_MIN) {
             stop.lossPct.absValue = stop.lossPct.value/100 * sequence.startEquity;
          }
          if (sequence.totalPL <= stop.lossPct.absValue) {
-            message = "IsStopSignal(8)  "+ sequence.longName +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-            if (IsLogNotice()) logNotice(message);
+            if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.longName +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.lossPct.condition = false;
             signal = SIGNAL_STOPLOSS;
             return(true);
          }
       }
 
-      // -- session break ---------------------------------------------------------------------------------------------------
+      // session break ------------------------------------------------------------------------------------------------------
       if (IsSessionBreak()) {
-         message = "IsStopSignal(9)  "+ sequence.longName +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled ("+ ifString(sequence.direction==D_LONG, "bid", "ask") +": "+ NumberToStr(ifDouble(sequence.direction==D_LONG, Bid, Ask), PriceFormat) +")";
-         if (IsLogDebug()) logDebug(message);
+         if (IsLogInfo()) logInfo("IsStopSignal(9)  "+ sequence.longName +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
@@ -6156,7 +6148,6 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-
    bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
 
    // Sequence.ID
@@ -6232,9 +6223,9 @@ bool ValidateInputs() {
 
    string trendIndicators[] = {"ALMA", "EMA", "HalfTrend", "JMA", "LWMA", "NonLagMA", "SATL", "SMA", "SuperSmoother", "SuperTrend", "TriEMA"};
 
-   // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](double) | @time(datetime)
-   // -----------------------------------------------------------------------------------------------------------------------------
-   // values are re-applied and StartConditions are re-activated on change only
+   // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) & @[bid|ask|price](double) & @time(datetime)
+   // ----------------------------------------------------------------------------------------------------------------------
+   // conditions are applied and re-enabled on change only
    if (!isParameterChange || StartConditions!=prev.StartConditions) {
       start.conditions      = false;
       start.trend.condition = false;
@@ -6243,7 +6234,7 @@ bool ValidateInputs() {
 
       // split StartConditions
       string exprs[], expr="", key="";
-      int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&&", exprs, NULL);
+      int    iValue, time, sizeOfElems, sizeOfExprs = Explode(StartConditions, "&", exprs, NULL);
 
       // parse and validate each expression
       for (int i=0; i < sizeOfExprs; i++) {
@@ -6285,7 +6276,7 @@ bool ValidateInputs() {
             start.trend.condition   = true;
          }
 
-         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
+         else if (key=="@bid" || key=="@ask" || key=="@price") {
             if (start.price.condition)                            return(!onInputError("ValidateInputs(28)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)"));
             sValue = StrReplace(sValue, "'", "");
             if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(29)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
@@ -6318,9 +6309,9 @@ bool ValidateInputs() {
       }
    }
 
-   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|median|price](1.33) | @time(12:00) | @[tp|profit](1234[%]) | @[sl|loss](1234[%])
-   // --------------------------------------------------------------------------------------------------------------------------------------------------------------------
-   // values are re-applied and StopConditions are re-activated on change only
+   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](1.33) | @time(12:00) | @profit(1.23[%]) | @loss(2.34[%])
+   // ---------------------------------------------------------------------------------------------------------------------------------------------------
+   // conditions are applied and re-enabled on change only
    if (!isParameterChange || StopConditions!=prev.StopConditions) {
       stop.trend.condition     = false;
       stop.price.condition     = false;
@@ -6331,7 +6322,7 @@ bool ValidateInputs() {
       stop.lossPct.condition   = false;
 
       // split StopConditions
-      sizeOfExprs = Explode(StrTrim(StopConditions), "||", exprs, NULL);
+      sizeOfExprs = Explode(StrTrim(StopConditions), "|", exprs, NULL);
 
       // parse and validate each expression
       for (i=0; i < sizeOfExprs; i++) {
@@ -6371,12 +6362,12 @@ bool ValidateInputs() {
             stop.trend.condition   = true;
          }
 
-         else if (key=="@bid" || key=="@ask" || key=="@median" || key=="@price") {
+         else if (key=="@bid" || key=="@ask" || key=="@price") {
             if (stop.price.condition)                             return(!onInputError("ValidateInputs(44)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
             if      (key == "@bid") stop.price.type = PRICE_BID;
@@ -6399,13 +6390,12 @@ bool ValidateInputs() {
             stop.time.condition   = true;
          }
 
-         else if (key=="@tp" || key=="@profit") {
-            if (stop.profitAbs.condition || stop.profitPct.condition)
-                                                                  return(!onInputError("ValidateInputs(49)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple takeprofit conditions)"));
+         else if (key == "@profit") {
+            if (stop.profitAbs.condition || stop.profitPct.condition) return(!onInputError("ValidateInputs(49)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(!onInputError("ValidateInputs(50)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (sizeOfElems > 2)                                      return(!onInputError("ValidateInputs(50)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(51)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                                return(!onInputError("ValidateInputs(51)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -6422,9 +6412,8 @@ bool ValidateInputs() {
             }
          }
 
-         else if (key=="@sl" || key=="@loss") {
-            if (stop.lossAbs.condition || stop.lossPct.condition)
-                                                                  return(!onInputError("ValidateInputs(52)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple stoploss conditions)"));
+         else if (key == "@loss") {
+            if (stop.lossAbs.condition || stop.lossPct.condition) return(!onInputError("ValidateInputs(52)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
             if (sizeOfElems > 2)                                  return(!onInputError("ValidateInputs(53)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
