@@ -853,7 +853,6 @@ bool IsStopSignal(int &signal) {
 
       if (triggered) {
          if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         stop.price.condition = false;
          signal = SIGNAL_PRICETIME;
          return(true);
       }
@@ -863,7 +862,6 @@ bool IsStopSignal(int &signal) {
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
          if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         stop.profitAbs.condition = false;
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -875,7 +873,6 @@ bool IsStopSignal(int &signal) {
 
       if (sequence.totalPL >= stop.profitPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         stop.profitPct.condition = false;
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -885,7 +882,6 @@ bool IsStopSignal(int &signal) {
    if (stop.lossAbs.condition) {
       if (sequence.totalPL <= stop.lossAbs.value) {
          if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         stop.lossAbs.condition = false;
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -897,7 +893,6 @@ bool IsStopSignal(int &signal) {
 
       if (sequence.totalPL <= stop.lossPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         stop.lossPct.condition = false;
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -999,7 +994,7 @@ bool IsSessionBreak() {
 /**
  * Start a waiting sequence.
  *
- * @param  int signal - signal which triggered a start condition or NULL if no condition was triggered (manual start)
+ * @param  int signal - signal which triggered a start condition or NULL on explicit (i.e. manual) start
  *
  * @return bool - success status
  */
@@ -1040,7 +1035,7 @@ bool StartSequence(int signal) {
 /**
  * Resume a stopped sequence.
  *
- * @param  int signal - signal which triggered a resume condition or NULL if no condition was triggered (manual resume)
+ * @param  int signal - signal which triggered a resume condition or NULL on explicit (i.e. manual) resume.
  *
  * @return bool - success status
  */
@@ -1142,7 +1137,7 @@ bool RestorePositions(double history[][], double &openPrice) {
 /**
  * Stop a waiting or progressing sequence. Closes open positions, deletes pending orders and stops the sequence.
  *
- * @param  int signal - signal which triggered the stop condition or NULL if no condition was triggered (explicit/manual stop)
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
  *
  * @return bool - success status
  */
@@ -1193,13 +1188,35 @@ bool StopSequence(int signal) {
    sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    SS.StopConditions();
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+
+   // update stop conditions
+   switch (signal) {
+      case SIGNAL_PRICETIME:
+         stop.price.condition = false;
+         break;
+
+      case SIGNAL_TAKEPROFIT:
+         stop.profitAbs.condition = false;
+         stop.profitPct.condition = false;
+         break;
+
+      case SIGNAL_STOPLOSS:
+         stop.lossAbs.condition = false;
+         stop.lossPct.condition = false;
+         break;
+
+      case NULL:                                                     // explicit (manual) stop or end of test
+         break;
+
+      default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   }
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
-      if (!IsVisualMode())       Tester.Stop("StopSequence(4)");
-      else if (test.onStopPause) Tester.Pause("StopSequence(5)");
+      if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
+      else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
-   return(!catch("StopSequence(6)"));
+   return(!catch("StopSequence(7)"));
 }
 
 
