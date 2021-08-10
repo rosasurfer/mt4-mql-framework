@@ -4228,7 +4228,9 @@ string registeredObjects[];
  * @return int - number of registered objects or -1 in case of errors
  */
 int RegisterObject(string label) {
-   return(ArrayPushString(registeredObjects, label));
+   if (!StringInArray(registeredObjects, label))
+      return(ArrayPushString(registeredObjects, label));
+   return(ArraySize(registeredObjects));
 }
 
 

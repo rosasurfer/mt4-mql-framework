@@ -3684,13 +3684,15 @@ bool SaveStatus() {
  * @param  string - active conditions
  */
 string SaveStatus.ConditionsToStr(string sConditions) {
+   if (sConditions == "-") return("");
+
    string values[], expr="", result="";
    int size = Explode(sConditions, "|", values, NULL);
 
    for (int i=0; i < size; i++) {
       expr = StrTrim(values[i]);
-      if (!StringLen(expr))              continue;                    // skip empty conditions
-      if (StringGetChar(expr, 0) == '!') continue;                    // skip disabled conditions
+      if (!StringLen(expr))              continue;              // skip empty conditions
+      if (StringGetChar(expr, 0) == '!') continue;              // skip disabled conditions
       result = StringConcatenate(result, " | ", expr);
    }
    if (StringLen(result) > 0) {
@@ -4204,8 +4206,10 @@ int ShowStatus(int error = NO_ERROR) {
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      RegisterObject(label);
    }
+   static bool isRegistered = false;
+   if (!isRegistered) isRegistered = _bool(RegisterObject(label));
+
    ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
    error = ifIntOr(catch("ShowStatus(2)"), error);
