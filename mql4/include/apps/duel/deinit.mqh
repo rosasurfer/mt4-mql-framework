@@ -55,7 +55,9 @@ int onDeinitUndefined() {
  */
 int onDeinitChartClose() {
    if (!IsTesting()) {
-      logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      if (sequence.status != STATUS_STOPPED) {
+         logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      }
    }
    return(NO_ERROR);
 }
@@ -69,7 +71,9 @@ int onDeinitChartClose() {
  */
 int onDeinitTemplate() {
    if (!IsTesting()) {
-      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      if (sequence.status != STATUS_STOPPED) {
+         logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      }
    }
    return(NO_ERROR);
 }
@@ -81,7 +85,9 @@ int onDeinitTemplate() {
  * @return int - error status
  */
 int onDeinitRemove() {
-   logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (sequence.status != STATUS_STOPPED) {
+      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   }
    return(NO_ERROR);
 }
 
@@ -92,6 +98,8 @@ int onDeinitRemove() {
  * @return int - error status
  */
 int onDeinitClose() {
-   logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (sequence.status != STATUS_STOPPED) {
+      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   }
    return(NO_ERROR);
 }
