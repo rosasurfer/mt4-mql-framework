@@ -126,7 +126,15 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   return(catch("onInitTemplate(1)", ERR_NOT_IMPLEMENTED));
+   // restore sequence id from the chart
+   if (FindSequenceId()) {                                  // on success a sequence id was restored
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
 }
 
 
@@ -144,5 +152,7 @@ int afterInit() {
       test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
+
+   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }

@@ -48,11 +48,10 @@ int onInitUser() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence data from the chart
-   if (RestoreChartStatus()) {
-      RestoreSequence();                                       // on success a sequence id was restored
+   // restore sequence id from the chart
+   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
+      RestoreSequence();
    }
-   DeleteChartStatus();
    return(last_error);
 }
 

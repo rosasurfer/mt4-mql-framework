@@ -843,8 +843,8 @@ int onDeinitAccountChange()
 
 
 /**
- * Online: Called in terminal builds <= 509 when another chart template is applied.
- *         Called when the chart profile is changed.
+ * Online: Called in terminal builds <= 509 when a new chart template is applied.
+ *         Called when the chart profile changes.
  *         Called when the chart is closed.
  *         Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: Called when the chart is closed with VisualMode="On".
@@ -859,7 +859,7 @@ int onDeinitChartClose()
 
 
 /**
- * Online: Called in terminal builds > 509 when another chart template is applied.
+ * Online: Called in terminal builds > 509 when a new chart template is applied.
  * Tester: ???
  *
  * @return int - error status

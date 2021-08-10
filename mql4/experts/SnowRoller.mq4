@@ -1059,16 +1059,24 @@ void RedrawStartStop() {
 
 
 /**
- * Restore sequence id and transient status found in the chart after recompilation or terminal restart.
+ * Store the sequence id in the chart before recompilation or terminal restart.
+ *
+ * @return bool - success status
+ */
+bool StoreChartStatus() {
+   return(Chart.StoreString(ProgramName() +".runtime.Sequence.ID", Sequence.ID));
+}
+
+
+/**
+ * Restore a sequence id found in the chart after recompilation or terminal restart.
  *
  * @return bool - whether a sequence id was found and restored
  */
 bool RestoreChartStatus() {
-   string name=ProgramName(), key=name +".runtime.Sequence.ID", sValue="";
+   string label = ProgramName() +".runtime.Sequence.ID", sValue="";
 
-   if (ObjectFind(key) == 0) {
-      Chart.RestoreString(key, sValue);
-
+   if (Chart.RestoreString(label, sValue)) {
       if (StrStartsWith(sValue, "T")) {
          sequence.isTest = true;
          sValue = StrSubstr(sValue, 1);
@@ -1082,31 +1090,9 @@ bool RestoreChartStatus() {
          Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
          sequence.status = STATUS_WAITING;
       }
-      bool bValue;
-      Chart.RestoreInt (name +".runtime.startStopDisplayMode", startStopDisplayMode);
-      Chart.RestoreInt (name +".runtime.orderDisplayMode",     orderDisplayMode    );
-      Chart.RestoreBool(name +".runtime.CANCELLED_BY_USER",    bValue              ); if (bValue) SetLastError(ERR_CANCELLED_BY_USER);
-      catch("RestoreChartStatus(1)");
       return(iValue != 0);
    }
    return(false);
-}
-
-
-/**
- * Delete all sequence data stored in the chart.
- *
- * @return int - error status
- */
-int DeleteChartStatus() {
-   string label="", prefix=ProgramName() +".runtime.";
-
-   for (int i=ObjectsTotal()-1; i>=0; i--) {
-      label = ObjectName(i);
-      if (StrStartsWith(label, prefix)) /*&&*/ if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-   }
-   return(catch("DeleteChartStatus(1)"));
 }
 
 
@@ -1147,21 +1133,6 @@ string StatusToStr(int status) {
       case STATUS_STOPPED    : return("STATUS_STOPPED"    );
    }
    return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.longName +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Store sequence id and transient status in the chart before recompilation or terminal restart.
- *
- * @return int - error status
- */
-int StoreChartStatus() {
-   string name = ProgramName();
-   Chart.StoreString(name +".runtime.Sequence.ID",          Sequence.ID                      );
-   Chart.StoreInt   (name +".runtime.startStopDisplayMode", startStopDisplayMode             );
-   Chart.StoreInt   (name +".runtime.orderDisplayMode",     orderDisplayMode                 );
-   Chart.StoreBool  (name +".runtime.CANCELLED_BY_USER",    last_error==ERR_CANCELLED_BY_USER);
-   return(catch("StoreChartStatus(1)"));
 }
 
 
