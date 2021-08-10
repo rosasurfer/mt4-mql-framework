@@ -4112,6 +4112,46 @@ bool ReadStatus.ParseOrder(string key, string value) {
 
 
 /**
+ * Store the current sequence id in the chart (for new templates, terminal restart, recompilation etc).
+ *
+ * @return bool - success status
+ */
+bool StoreSequenceId() {
+   if (!__isChart) return(false);
+   return(Chart.StoreString(ProgramName() +".Sequence.ID", ifString(sequence.isTest, "T", "") + sequence.id));
+}
+
+
+/**
+ * Find and restore a sequence id found in the chart (for new templates, terminal restart, recompilation etc).
+ *
+ * @return bool - whether a sequence id was found and successfully restored
+ */
+bool FindSequenceId() {
+   string sValue = "";
+
+   if (Chart.RestoreString(ProgramName() +".Sequence.ID", sValue)) {
+      bool isTest = false;
+
+      if (StrStartsWith(sValue, "T")) {
+         isTest = true;
+         sValue = StrSubstr(sValue, 1);
+      }
+      if (StrIsDigit(sValue)) {
+         int iValue = StrToInteger(sValue);
+         if (iValue > 0) {
+            sequence.id     = iValue;
+            sequence.isTest = isTest;
+            Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
+            return(true);
+         }
+      }
+   }
+   return(false);
+}
+
+
+/**
  * Return a description of a sequence status code.
  *
  * @param  int status
