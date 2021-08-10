@@ -183,12 +183,11 @@ int UpdateInstrumentInfos() {
    double marginHedged    = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged    = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                  fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
 
-   double spread          = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + PipToStr(spread, true, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spread, adr)*Pip * 100, 1) +"% of ADR"),      fgFontSize, fgFontName, fgFontColor);
+   double spreadPip       = MarketInfo(symbol, MODE_SPREAD)/PipPoints;      ObjectSetText(labels[I_SPREAD        ], "Spread:        "  + PipToStr(spreadPip, true, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadPip, adr)*Pip * 100, 1) +"% of ADR"),       fgFontSize, fgFontName, fgFontColor);
    double commission      = GetCommission();
-   double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Digits+1-PipDigits);
-                                                                            ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(IsEmpty(commission), "...", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ",'.1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
-   double totalFees       = spread + commission;                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(IsEmpty(commission), "...", ""),                                                                                                   fgFontSize, fgFontName, fgFontColor);
-
+   double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), (Digits & 1) + 1);
+                                                                            ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(!commission, "-", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
+                                                                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(!commission, "-", NumberToStr(spreadPip + commissionPip, ".1+") +" pip"),                                              fgFontSize, fgFontName, fgFontColor);
    int    swapMode        = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong        = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort       = MarketInfo(symbol, MODE_SWAPSHORT);
