@@ -86,10 +86,6 @@ string signal.sms.receiver = "";
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // (1) input validation
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;
@@ -153,17 +149,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(8)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
 }
 
 
@@ -358,46 +343,6 @@ void SetIndicatorOptions() {
 
    SetLevelValue(0,  Signal.Level);
    SetLevelValue(1, -Signal.Level);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
-   Chart.StoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
-   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   Chart.StoreInt   (name +".input.Signal.Level",          Signal.Level         );
-   Chart.StoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
-   Chart.StoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.StoreString(name +".input.Signal.Mail",           Signal.Mail          );
-   Chart.StoreString(name +".input.Signal.SMS",            Signal.SMS           );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreColor (name +".input.Histogram.Color.Long",  Histogram.Color.Long );
-   Chart.RestoreColor (name +".input.Histogram.Color.Short", Histogram.Color.Short);
-   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   Chart.RestoreInt   (name +".input.Signal.Level",          Signal.Level         );
-   Chart.RestoreString(name +".input.Signal.onLevelCross",   Signal.onLevelCross  );
-   Chart.RestoreString(name +".input.Signal.Sound",          Signal.Sound         );
-   Chart.RestoreString(name +".input.Signal.Mail",           Signal.Mail          );
-   Chart.RestoreString(name +".input.Signal.SMS",            Signal.SMS           );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

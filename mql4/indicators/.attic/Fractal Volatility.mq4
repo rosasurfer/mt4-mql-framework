@@ -44,10 +44,6 @@ int volaPeriods;
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // input validation
    // Vola.Periods
    if (Vola.Periods < 1) return(catch("onInit(1)  invalid input parameter Vola.Periods: "+ Vola.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -77,17 +73,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(3)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
 }
 
 
@@ -172,32 +157,6 @@ double Volatility(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.Vola.Periods", Vola.Periods);
-   Chart.StoreString(name +".input.Vola.Type",    Vola.Type   );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.Vola.Periods", Vola.Periods);
-   Chart.RestoreString(name +".input.Vola.Type",    Vola.Type   );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 
