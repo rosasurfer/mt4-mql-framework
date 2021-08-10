@@ -51,7 +51,7 @@ extern string   GridVolatility         = "{percent}";                         //
 extern string   VolatilityRange        = "[{number}] [ADR* | AWR | AMR]";     // pip range or multiple of range identifier for 'GridVolatility' (default: [1]ADR)
 extern string   GridSize               = "";                                  // grid spacing in pip or quote currency (2 | 3.4 | 123.00)
 extern double   UnitSize               = 0;                                   // lots at the first grid level
-extern int      MaxGridLevels          = 15;                                  // max. number of grid levels per direction
+extern int      MaxUnits               = 15;                                  // max. number of units per direction
 
 extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
@@ -1418,8 +1418,8 @@ bool UpdateStatus(bool &gridChanged, bool &gridError) {
    if (IsLastError())                         return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   static int prevMaxLevels = 0; if (MaxGridLevels != prevMaxLevels) {
-      prevMaxLevels = MaxGridLevels;                     // detect runtime changes of MaxGridLevels
+   static int prevMaxUnits = 0; if (MaxUnits != prevMaxUnits) {
+      prevMaxUnits = MaxUnits;                           // detect runtime changes of MaxGridLevels
       gridChanged = true;
    }
 
@@ -1720,8 +1720,8 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       plusLevels  = Max(0, long.maxLevel);
       minusLevels = -Min(0, long.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
-      if (plusLevels+minusLevels >= MaxGridLevels) {
-         log("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long grid levels reached ("+ MaxGridLevels +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+      if (plusLevels+minusLevels >= MaxUnits) {
+         log("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long units reached ("+ MaxUnits +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
@@ -1754,8 +1754,8 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       plusLevels  = Max(0, short.maxLevel);
       minusLevels = -Min(0, short.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
-      if (plusLevels+minusLevels >= MaxGridLevels) {
-         log("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short grid levels reached ("+ MaxGridLevels +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+      if (plusLevels+minusLevels >= MaxUnits) {
+         log("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short units reached ("+ MaxUnits +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
@@ -2624,7 +2624,7 @@ string   prev.GridVolatility  = "";
 string   prev.VolatilityRange = "";
 string   prev.GridSize        = "";
 double   prev.UnitSize;
-int      prev.MaxGridLevels;
+int      prev.MaxUnits;
 double   prev.Pyramid.Multiplier;
 double   prev.Martingale.Multiplier;
 string   prev.StopConditions = "";
@@ -2685,7 +2685,7 @@ void BackupInputs() {
    prev.VolatilityRange        = StringConcatenate(VolatilityRange, "");
    prev.GridSize               = StringConcatenate(GridSize, "");
    prev.UnitSize               = UnitSize;
-   prev.MaxGridLevels          = MaxGridLevels;
+   prev.MaxUnits               = MaxUnits;
    prev.Pyramid.Multiplier     = Pyramid.Multiplier;
    prev.Martingale.Multiplier  = Martingale.Multiplier;
    prev.StopConditions         = StringConcatenate(StopConditions, "");
@@ -2746,7 +2746,7 @@ void RestoreInputs() {
    VolatilityRange        = prev.VolatilityRange;
    GridSize               = prev.GridSize;
    UnitSize               = prev.UnitSize;
-   MaxGridLevels          = prev.MaxGridLevels;
+   MaxUnits               = prev.MaxUnits;
    Pyramid.Multiplier     = prev.Pyramid.Multiplier;
    Martingale.Multiplier  = prev.Martingale.Multiplier;
    StopConditions         = prev.StopConditions;
@@ -2900,8 +2900,8 @@ bool ValidateInputs() {
    if (NE(UnitSize, NormalizeLots(UnitSize)))                            return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    if (!sequenceWasStarted) sequence.unitsize = UnitSize;
    if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize)) return(!onInputError("ValidateInputs(13)  "+ sequence.name +" insufficient parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
-   // MaxGridLevels
-   if (MaxGridLevels < 1)                                                return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxGridLevels: "+ MaxGridLevels));
+   // MaxUnits
+   if (MaxUnits < 1)                                                     return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxUnits: "+ MaxUnits));
 
    // Pyramid.Multiplier
    if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
@@ -3563,7 +3563,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "VolatilityRange",             /*string  */ VolatilityRange);
    WriteIniString(file, section, "GridSize",                    /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                    /*double  */ NumberToStr(sequence.unitsize, ".+"));
-   WriteIniString(file, section, "MaxGridLevels",               /*int     */ MaxGridLevels);
+   WriteIniString(file, section, "MaxUnits",                    /*int     */ MaxUnits);
    WriteIniString(file, section, "Pyramid.Multiplier",          /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
    WriteIniString(file, section, "StopConditions",              /*string  */ StopConditions);
@@ -3842,7 +3842,7 @@ bool ReadStatus() {
    string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");        // string   VolatilityRange        = ADR
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");        // string   GridSize               = 12.00
    string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");        // double   UnitSize               = 0.01
-   int    iMaxGridLevels         = GetIniInt    (file, section, "MaxGridLevels"             );        // int      MaxGridLevels          = 15
+   int    iMaxUnits              = GetIniInt    (file, section, "MaxUnits"                  );        // int      MaxUnits               = 15
    string sPyramidMultiplier     = GetIniStringA(file, section, "Pyramid.Multiplier",     "");        // double   Pyramid.Multiplier     = 1.1
    string sMartingaleMultiplier  = GetIniStringA(file, section, "Martingale.Multiplier",  "");        // double   Martingale.Multiplier  = 1.1
    string sStopConditions        = GetIniStringA(file, section, "StopConditions",         "");        // string   StopConditions         = @profit(1%)
@@ -3861,7 +3861,7 @@ bool ReadStatus() {
    VolatilityRange        = sVolatilityRange;
    GridSize               = sGridSize;
    UnitSize               = StrToDouble(sUnitSize);
-   MaxGridLevels          = iMaxGridLevels;
+   MaxUnits               = iMaxUnits;
    Pyramid.Multiplier     = StrToDouble(sPyramidMultiplier);
    Martingale.Multiplier  = StrToDouble(sMartingaleMultiplier);
    StopConditions         = sStopConditions;
@@ -4242,9 +4242,9 @@ void SS.Lots() {
          openLevels  = plusLevels + minusLevels;
          sOpenLevels = "levels: "+ openLevels;
 
-         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+         if ((plusLevels && minusLevels) || (openLevels >= MaxUnits)) {
             if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
-            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            if (openLevels >= MaxUnits) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
             sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
          }
 
@@ -4262,9 +4262,9 @@ void SS.Lots() {
          openLevels  = plusLevels + minusLevels;
          sOpenLevels = "levels: "+ openLevels;
 
-         if ((plusLevels && minusLevels) || (openLevels >= MaxGridLevels)) {
+         if ((plusLevels && minusLevels) || (openLevels >= MaxUnits)) {
             if (plusLevels && minusLevels)   sMinusLevels = "-"+ minusLevels;
-            if (openLevels >= MaxGridLevels) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
+            if (openLevels >= MaxUnits) sMax = ifString(plusLevels && minusLevels, ", ", "") + "max";
             sOpenLevels = "levels: "+ openLevels +" ("+ sMinusLevels + sMax +")";
          }
 
@@ -4499,7 +4499,7 @@ string InputsToStr() {
                             "VolatilityRange=",        DoubleQuoteStr(VolatilityRange),              ";", NL,
                             "GridSize=",               DoubleQuoteStr(GridSize),                     ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
-                            "MaxGridLevels=",          MaxGridLevels,                                ";", NL,
+                            "MaxUnits=",               MaxUnits,                                     ";", NL,
                             "Pyramid.Multiplier=",     NumberToStr(Pyramid.Multiplier, ".1+"),       ";", NL,
                             "Martingale.Multiplier=",  NumberToStr(Martingale.Multiplier, ".1+"),    ";", NL,
                             "StopConditions=",         DoubleQuoteStr(StopConditions),               ";", NL,
