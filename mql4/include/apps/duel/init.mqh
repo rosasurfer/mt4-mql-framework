@@ -41,17 +41,17 @@ int onInitUser() {
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
          int level = 0;
 
-         for (level=+1; level <=  MaxGridLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
-         for (level=-1; level >= -MaxGridLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
-         for (level=+1; level <=  MaxGridLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
-         for (level=-1; level >= -MaxGridLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+         for (level=+1; level <=  MaxUnits; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+         for (level=-1; level >= -MaxUnits; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+         for (level=+1; level <=  MaxUnits; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+         for (level=-1; level >= -MaxUnits; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
 
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
          double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
          if (IsError(catch("onInitUser(3)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-            logWarn("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            logWarn("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxUnits +" units with a size of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          }
 
          // confirm dangerous live modes
