@@ -111,10 +111,6 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // validate inputs
    // ATR.Periods
    if (ATR.Periods < 1) return(catch("onInit(1)  invalid input parameter ATR.Periods: "+ ATR.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -196,17 +192,6 @@ int onInit() {
 int onDeinit() {
    RepositionLegend();
    return(catch("onDeinit(1)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(catch("onDeinitRecompile(1)"));
 }
 
 
@@ -388,54 +373,6 @@ void SetIndicatorOptions() {
 
    if (Color.MovingAverage == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                 SetIndexLabel(MODE_MA, ProgramName() +" SMA("+ SMA.Periods +")");
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.ATR.Periods",          ATR.Periods         );
-   Chart.StoreInt   (name +".input.SMA.Periods",          SMA.Periods         );
-   Chart.StoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
-   Chart.StoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
-   Chart.StoreColor (name +".input.Color.Channel",        Color.Channel       );
-   Chart.StoreColor (name +".input.Color.MovingAverage",  Color.MovingAverage );
-   Chart.StoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.StoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.StoreInt   (name +".input.Max.Bars",             Max.Bars            );
-   Chart.StoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
-   Chart.StoreString(name +".input.Signal.Sound",         Signal.Sound        );
-   Chart.StoreString(name +".input.Signal.Mail",          Signal.Mail         );
-   Chart.StoreString(name +".input.Signal.SMS",           Signal.SMS          );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.ATR.Periods",          ATR.Periods         );
-   Chart.RestoreInt   (name +".input.SMA.Periods",          SMA.Periods         );
-   Chart.RestoreColor (name +".input.Color.UpTrend",        Color.UpTrend       );
-   Chart.RestoreColor (name +".input.Color.DownTrend",      Color.DownTrend     );
-   Chart.RestoreColor (name +".input.Color.Channel",        Color.Channel       );
-   Chart.RestoreColor (name +".input.Color.MovingAverage",  Color.MovingAverage );
-   Chart.RestoreString(name +".input.Draw.Type",            Draw.Type           );
-   Chart.RestoreInt   (name +".input.Draw.Width",           Draw.Width          );
-   Chart.RestoreInt   (name +".input.Max.Bars",             Max.Bars            );
-   Chart.RestoreString(name +".input.Signal.onTrendChange", Signal.onTrendChange);
-   Chart.RestoreString(name +".input.Signal.Sound",         Signal.Sound        );
-   Chart.RestoreString(name +".input.Signal.Mail",          Signal.Mail         );
-   Chart.RestoreString(name +".input.Signal.SMS",           Signal.SMS          );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

@@ -36,10 +36,6 @@ double bufferKER[];
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // input validation
    // Periods
    if (Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -57,17 +53,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(2)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
 }
 
 
@@ -146,28 +131,6 @@ double Volatility(int bar) {
  */
 void SetIndicatorOptions() {
    IndicatorBuffers(indicator_buffers);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   Chart.StoreInt(ProgramName() +".input.Periods", Periods);
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   Chart.RestoreInt(ProgramName() +".input.Periods", Periods);
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 
