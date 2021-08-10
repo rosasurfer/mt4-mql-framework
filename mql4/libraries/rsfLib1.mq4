@@ -4228,9 +4228,10 @@ string registeredObjects[];
  * @return int - number of registered objects or -1 in case of errors
  */
 int RegisterObject(string label) {
-   if (!StringInArray(registeredObjects, label))
-      return(ArrayPushString(registeredObjects, label));
-   return(ArraySize(registeredObjects));
+   int size = ArraySize(registeredObjects);        // TODO: Needs massive performance improvement.
+   ArrayResize(registeredObjects, size+1);         //       On terminal start with 7 open charts we observe 106.000 calls.
+   registeredObjects[size] = label;
+   return(size+1);
 }
 
 
