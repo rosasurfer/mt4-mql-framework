@@ -123,8 +123,12 @@ int init() {
       if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
-   else if (initReason == IR_USER) {      // log account infos (becomes the first regular online log entry)
-      if (IsLogInfo()) logInfo("init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
+   else if (initReason == IR_USER) {      // log account infos (this becomes the first regular online log entry)
+      if (IsLogInfo()) {
+         string msg = "init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         logInfo(StrRepeat(":", StringLen(msg)));
+         logInfo(msg);
+      }
    }
 
    // log input parameters
