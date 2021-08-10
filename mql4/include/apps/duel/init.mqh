@@ -22,6 +22,7 @@ int onInitUser() {
    if (ValidateInputs.SID()) {
       if (RestoreSequence()) {                                       // a valid sequence id was specified
          ComputeTargets();
+         SS.All();
          logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
       }
    }
@@ -65,6 +66,7 @@ int onInitUser() {
             }
          }
          ComputeTargets();
+         SS.All();
          SaveStatus();
       }
    }
@@ -85,6 +87,7 @@ int onInitParameters() {
    if (ValidateInputs()) {
       if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
          ComputeTargets();
+         SS.All();
          SaveStatus();
          return(last_error);
       }
@@ -133,8 +136,6 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
-   SS.All();
-
    bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
