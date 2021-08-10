@@ -1186,7 +1186,6 @@ bool StopSequence(int signal) {
    sequence.status    = STATUS_STOPPED;
    sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
    sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
-   SS.StopConditions();
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 
    // update stop conditions
@@ -1210,6 +1209,7 @@ bool StopSequence(int signal) {
 
       default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
+   SS.StopConditions();
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
@@ -2933,9 +2933,10 @@ bool ValidateInputs() {
       // split conditions and parse/validate each expression
       for (int i=0; i < sizeOfExprs; i++) {
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
-
+         if (!StringLen(expr))              continue;
+         if (StringGetChar(expr, 0) == '!') continue;                    // skip disabled conditions
          if (StringGetChar(expr, 0) != '@')                              return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+
          if (Explode(expr, "(", sValues, NULL) != 2)                     return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          if (!StrEndsWith(sValues[1], ")"))                              return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
@@ -3566,7 +3567,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "MaxUnits",                    /*int     */ MaxUnits);
    WriteIniString(file, section, "Pyramid.Multiplier",          /*double  */ NumberToStr(Pyramid.Multiplier, ".+"));
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
-   WriteIniString(file, section, "StopConditions",              /*string  */ StopConditions);
+   WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
 
    WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
@@ -3672,6 +3673,30 @@ bool SaveStatus() {
    WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
 
    return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of only active stop conditions to be stored by SaveStatus().
+ *
+ * @param  string sConditions - active and inactive conditions
+ *
+ * @param  string - active conditions
+ */
+string SaveStatus.ConditionsToStr(string sConditions) {
+   string values[], expr="", result="";
+   int size = Explode(sConditions, "|", values, NULL);
+
+   for (int i=0; i < size; i++) {
+      expr = StrTrim(values[i]);
+      if (!StringLen(expr))              continue;                    // skip empty conditions
+      if (StringGetChar(expr, 0) == '!') continue;                    // skip disabled conditions
+      result = StringConcatenate(result, " | ", expr);
+   }
+   if (StringLen(result) > 0) {
+      result = StrRight(result, -3);
+   }
+   return(result);
 }
 
 

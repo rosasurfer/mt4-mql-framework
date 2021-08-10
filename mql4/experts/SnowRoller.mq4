@@ -4137,14 +4137,14 @@ void SaveStatus.ConditionsToStr(string &startConditions, string &stopConditions)
          sValue = "@"+ start.time.description;
       }
       if (start.price.condition) {
-         sValue = sValue + ifString(sValue=="", "", " && ") +"@"+ start.price.description;
+         sValue = sValue + ifString(sValue=="", "", " & ") +"@"+ start.price.description;
       }
       if (start.trend.condition) {
          if (start.time.condition && start.price.condition) {
             sValue = "("+ sValue +")";
          }
          if (start.time.condition || start.price.condition) {
-            sValue = " || "+ sValue;
+            sValue = " | "+ sValue;
          }
          sValue = "@"+ start.trend.description + sValue;
       }
@@ -4157,22 +4157,22 @@ void SaveStatus.ConditionsToStr(string &startConditions, string &stopConditions)
       sValue = "@"+ stop.trend.description;
    }
    if (stop.time.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.time.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.time.description;
    }
    if (stop.price.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.price.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.price.description;
    }
    if (stop.profitAbs.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitAbs.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.profitAbs.description;
    }
    if (stop.profitPct.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.profitPct.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.profitPct.description;
    }
    if (stop.lossAbs.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.lossAbs.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.lossAbs.description;
    }
    if (stop.lossPct.condition) {
-      sValue = sValue + ifString(sValue=="", "", " || ") +"@"+ stop.lossPct.description;
+      sValue = sValue + ifString(sValue=="", "", " | ") +"@"+ stop.lossPct.description;
    }
    stopConditions = sValue;
 }
@@ -6241,9 +6241,10 @@ bool ValidateInputs() {
          start.conditions = false;                                // make sure in case of errors start.conditions is disabled
 
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
-
+         if (!StringLen(expr))              continue;
+         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
          if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(16)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+
          if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(17)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
          if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(18)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
          key = StrTrim(sValues[0]);
@@ -6326,9 +6327,10 @@ bool ValidateInputs() {
       // parse and validate each expression
       for (i=0; i < sizeOfExprs; i++) {
          expr = StrTrim(exprs[i]);
-         if (!StringLen(expr)) continue;
-
+         if (!StringLen(expr))              continue;
+         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
          if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(33)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+
          if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(34)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
          if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(35)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
