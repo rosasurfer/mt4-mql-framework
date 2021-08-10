@@ -3684,7 +3684,8 @@ bool SaveStatus() {
  * @param  string - active conditions
  */
 string SaveStatus.ConditionsToStr(string sConditions) {
-   if (sConditions == "-") return("");
+   sConditions = StrTrim(sConditions);
+   if (!StringLen(sConditions) || sConditions=="-") return("");
 
    string values[], expr="", result="";
    int size = Explode(sConditions, "|", values, NULL);
