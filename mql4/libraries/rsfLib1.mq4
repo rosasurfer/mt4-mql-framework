@@ -4245,8 +4245,9 @@ int DeleteRegisteredObjects() {
    if (!size) return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      if (ObjectFind(registeredObjects[i]) != -1)
+      if (ObjectFind(registeredObjects[i]) != -1) {
          if (!ObjectDelete(registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+      }
    }
    ArrayResize(registeredObjects, 0);
 

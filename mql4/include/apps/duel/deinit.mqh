@@ -30,15 +30,15 @@ int onDeinitChartChange() {
  */
 int onDeinitUndefined() {
    if (IsTesting()) {
-      if (IsLastError()) return(last_error);
-
-      if (sequence.status == STATUS_PROGRESSING) {
-         logDebug("onDeinitUndefined(1)  "+ sequence.name +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
+      if (!last_error) {
+         if (sequence.status == STATUS_PROGRESSING) {
+            logDebug("onDeinitUndefined(1)  "+ sequence.name +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
+         }
+         SaveStatus();
       }
-      if (!SaveStatus()) return(last_error);
-      return(catch("onDeinitUndefined(2)"));
+      return(last_error);
    }
-   return(catch("onDeinitUndefined(3)", ERR_UNDEFINED_STATE));       // never encountered, do what the Expander would do
+   return(catch("onDeinitUndefined(2)", ERR_UNDEFINED_STATE));       // never encountered, do what the Expander would do
 }
 
 
@@ -88,7 +88,7 @@ int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
       logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
-   FindSequenceId();                                                 // remove the sequence id stored in the chart
+   RemoveStoredSequence();                                           // remove the sequence data stored in the chart
    return(NO_ERROR);
 }
 
