@@ -869,7 +869,8 @@ bool IsStopSignal(int &signal) {
 
    // stop.profitPct: -------------------------------------------------------------------------------------------------------
    if (stop.profitPct.condition) {
-      if (stop.profitPct.absValue == INT_MAX) stop.profitPct.absValue = stop.profitPct.AbsValue();
+      if (stop.profitPct.absValue == INT_MAX)
+         stop.profitPct.absValue = stop.profitPct.AbsValue();
 
       if (sequence.totalPL >= stop.profitPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
@@ -889,7 +890,8 @@ bool IsStopSignal(int &signal) {
 
    // stop.lossPct: ---------------------------------------------------------------------------------------------------------
    if (stop.lossPct.condition) {
-      if (stop.lossPct.absValue == INT_MIN) stop.lossPct.absValue = stop.lossPct.AbsValue();
+      if (stop.lossPct.absValue == INT_MIN)
+         stop.lossPct.absValue = stop.lossPct.AbsValue();
 
       if (sequence.totalPL <= stop.lossPct.absValue) {
          if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
