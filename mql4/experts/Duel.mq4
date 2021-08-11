@@ -1723,7 +1723,10 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       minusLevels = -Min(0, long.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
       if (plusLevels+minusLevels >= MaxUnits) {
-         log("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long units reached ("+ MaxUnits +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         if (IsLogInfo()) {
+            logInfo("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long units reached ("+ MaxUnits +")");
+            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+         }
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
@@ -1757,7 +1760,10 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       minusLevels = -Min(0, short.minLevel);
       if (plusLevels && minusLevels) minusLevels--;
       if (plusLevels+minusLevels >= MaxUnits) {
-         log("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short units reached ("+ MaxUnits +")", NO_ERROR, ifInt(IsTestSequence(), LOG_INFO, LOG_WARN));
+         if (IsLogInfo()) {
+            logInfo("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short units reached ("+ MaxUnits +")");
+            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+         }
          return(Grid.RemovePendingOrders(saveStatus));
       }
 
