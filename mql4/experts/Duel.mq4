@@ -4154,6 +4154,22 @@ bool FindSequenceId() {
 
 
 /**
+ * Remove stored sequence data from the chart.
+ *
+ * @return bool - success status
+ */
+bool RemoveStoredSequence() {
+   if (!__isChart) return(false);
+   string value="", label="Duel.status";
+   Chart.RestoreString(ProgramName() +".Sequence.ID", value);
+
+   if (ObjectFind(label) != -1)
+      ObjectDelete(label);
+   return(true);
+}
+
+
+/**
  * Return a description of a sequence status code.
  *
  * @param  int status
@@ -4250,9 +4266,6 @@ int ShowStatus(int error = NO_ERROR) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   static bool isRegistered = false;
-   if (!isRegistered) isRegistered = _bool(RegisterObject(label));
-
    ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
    error = ifIntOr(catch("ShowStatus(2)"), error);
@@ -4433,7 +4446,7 @@ void SS.CycleStats() {
          lastCycle = cycle;
       }
    }
-   if (lastCycle > 0) sCycleStats = StringConcatenate("----------------------------------------------------", NL, sResult);
+   if (lastCycle > 0) sCycleStats = StringConcatenate("-------------------------------------------------", NL, sResult);
 
    ArrayResize(history, 0);
 }
