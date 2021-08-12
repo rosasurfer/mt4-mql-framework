@@ -49,7 +49,7 @@ int onDeinitUndefined() {
  *         Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: Called when the chart is closed with VisualMode="On".
  *         Called if the test was explicitly stopped by using the "Stop" button (manually or by code). Global scalar variables
- *          may contain invalid values (strings are ok).
+ *         may contain invalid values (strings are ok).
  *
  * @return int - error status
  */
@@ -88,7 +88,7 @@ int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
       logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
-   RemoveStoredSequence();                                           // remove the sequence data stored in the chart
+   RemoveSequenceData();                                             // remove the sequence data stored in the chart
    return(NO_ERROR);
 }
 
