@@ -77,6 +77,24 @@ int onInitUser() {
 
 
 /**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   // restore sequence id from the chart
+   if (FindSequenceId()) {                                  // on success a sequence id was restored
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
+}
+
+
+/**
  * Called after the input parameters were changed through the input dialog.
  *
  * @return int - error status
@@ -117,24 +135,6 @@ int onInitTimeframeChange() {
  */
 int onInitSymbolChange() {
    return(catch("onInitSymbolChange(1)", ERR_ILLEGAL_STATE));
-}
-
-
-/**
- * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
- *
- * @return int - error status
- */
-int onInitTemplate() {
-   // restore sequence id from the chart
-   if (FindSequenceId()) {                                  // on success a sequence id was restored
-      if (RestoreSequence()) {
-         ComputeTargets();
-         SS.All();
-         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
-      }
-   }
-   return(last_error);
 }
 
 
