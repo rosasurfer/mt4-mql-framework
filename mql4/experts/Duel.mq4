@@ -1002,8 +1002,13 @@ bool IsSessionBreak() {
  */
 bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLogDebug()) logDebug("StartSequence(2)  "+ sequence.name +" starting sequence...");
-   SetLogfile(GetLogFilename());                         // create the logfile (and flush the logbuffer)
+   if (!stop.lossAbs.condition && !stop.lossPct.condition) {
+      PlaySoundEx("alert.wav");
+      MessageBoxEx(ProgramName() +"::StartSequence()", "Cannot start EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
+      return(false);
+   }
+   SetLogfile(GetLogFilename());                                  // flush the logbuffer
+   if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    sequence.status      = STATUS_PROGRESSING;
    sequence.startTime   = Max(TimeCurrentEx(), TimeServer());
@@ -1012,10 +1017,10 @@ bool StartSequence(int signal) {
    sequence.stopPrice   = 0;
 
    double longOpenPrice, shortOpenPrice, dNull;
-   if (long.enabled) {                                   // open a long position for level 1
+   if (long.enabled) {                                            // open a long position for level 1
       if (!Grid.AddPosition(D_LONG, 1, longOpenPrice, dNull)) return(false);
    }
-   if (short.enabled) {                                  // open a short position for level 1
+   if (short.enabled) {                                           // open a short position for level 1
       if (!Grid.AddPosition(D_SHORT, 1, shortOpenPrice, dNull)) return(false);
    }
 
@@ -1025,7 +1030,7 @@ bool StartSequence(int signal) {
    sequence.startPrice = NormalizeDouble(sequence.startPrice, Digits);
    sequence.gridbase   = sequence.startPrice;
 
-   if (!UpdatePendingOrders()) return(false);            // update pending orders
+   if (!UpdatePendingOrders()) return(false);                     // update pending orders
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" sequence started at "+ NumberToStr(sequence.startPrice, PriceFormat) +" (gridbase "+ NumberToStr(sequence.gridbase, PriceFormat) +")");
 
    ComputeProfit(true);
@@ -1043,7 +1048,13 @@ bool StartSequence(int signal) {
  */
 bool ResumeSequence(int signal) {
    if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (IsLogDebug()) logDebug("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
+   if (!stop.lossAbs.condition && !stop.lossPct.condition) {
+      PlaySoundEx("alert.wav");
+      MessageBoxEx(ProgramName() +"::ResumeSequence()", "Cannot resume EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
+      return(false);
+   }
+   SetLogfile(GetLogFilename());                                  // flush the logbuffer
+   if (IsLogInfo()) logInfo("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
    double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, longOpenPrice, shortOpenPrice;
 
@@ -1053,7 +1064,7 @@ bool ResumeSequence(int signal) {
 
    // re-initialize sequence data
    sequence.cycle++;
-   sequence.status       = STATUS_PROGRESSING;                 // TODO: update TP/SL conditions
+   sequence.status       = STATUS_PROGRESSING;                    // TODO: update TP/SL conditions
    sequence.gridbase     = 0;
    sequence.startTime    = Max(TimeCurrentEx(), TimeServer());
    sequence.startPrice   = 0;
@@ -1149,7 +1160,7 @@ bool StopSequence(int signal) {
    double hedgeOpenPrice = 0;
 
    if (sequence.status == STATUS_PROGRESSING) {                      // a progressing sequence has open orders to close (a waiting sequence has none)
-      if (IsLogDebug()) logDebug("StopSequence(2)  "+ sequence.name +" stopping sequence...");
+      if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping sequence...");
       int hedgeTicket, oe[];
 
       if (NE(sequence.openLots, 0)) {                               // hedge the total open position: execution price = sequence close price
