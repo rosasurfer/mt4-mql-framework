@@ -4175,13 +4175,13 @@ bool FindSequenceId() {
  *
  * @return bool - success status
  */
-bool RemoveStoredSequence() {
+bool RemoveSequenceData() {
    if (!__isChart) return(false);
-   string value="", label="Duel.status";
-   Chart.RestoreString(ProgramName() +".Sequence.ID", value);
 
+   string label = "Duel.status";
    if (ObjectFind(label) != -1)
       ObjectDelete(label);
+   Chart.RestoreString(ProgramName() +".Sequence.ID", label);
    return(true);
 }
 
