@@ -8,16 +8,18 @@
 
 #property indicator_chart_window
 #property indicator_buffers 1
-#property indicator_color1 Red
+#property indicator_color1 Blue
+#property indicator_width1 1
+
 //---- indicator parameters
-extern int ExtDepth=12;
+extern int ExtDepth=5;     // orig: 12
 extern int ExtDeviation=5;
 extern int ExtBackstep=3;
 //---- indicator buffers
 double ZigzagBuffer[];
 double HighMapBuffer[];
 double LowMapBuffer[];
-int level=3; // recounting's depth 
+int level=3; // recounting's depth
 bool downloadhistory=false;
 //+------------------------------------------------------------------+
 //| Custom indicator initialization function                         |
@@ -55,12 +57,12 @@ int start()
       ArrayInitialize(HighMapBuffer,0.0);
       ArrayInitialize(LowMapBuffer,0.0);
      }
-   if (counted_bars==0) 
+   if (counted_bars==0)
      {
       limit=Bars-ExtDepth;
       downloadhistory=true;
      }
-   if (counted_bars>0) 
+   if (counted_bars>0)
      {
       while (counterZ<level && i<100)
         {
@@ -70,7 +72,7 @@ int start()
         }
       i--;
       limit=i;
-      if (LowMapBuffer[i]!=0) 
+      if (LowMapBuffer[i]!=0)
         {
          curlow=LowMapBuffer[i];
          whatlookfor=1;
@@ -80,36 +82,36 @@ int start()
          curhigh=HighMapBuffer[i];
          whatlookfor=-1;
         }
-      for (i=limit-1;i>=0;i--)  
+      for (i=limit-1;i>=0;i--)
         {
-         ZigzagBuffer[i]=0.0;  
+         ZigzagBuffer[i]=0.0;
          LowMapBuffer[i]=0.0;
          HighMapBuffer[i]=0.0;
         }
      }
-      
+
    for(shift=limit; shift>=0; shift--)
      {
       val=Low[iLowest(NULL,0,MODE_LOW,ExtDepth,shift)];
       if(val==lastlow) val=0.0;
-      else 
-        { 
-         lastlow=val; 
+      else
+        {
+         lastlow=val;
          if((Low[shift]-val)>(ExtDeviation*Point)) val=0.0;
          else
            {
             for(back=1; back<=ExtBackstep; back++)
               {
                res=LowMapBuffer[shift+back];
-               if((res!=0)&&(res>val)) LowMapBuffer[shift+back]=0.0; 
+               if((res!=0)&&(res>val)) LowMapBuffer[shift+back]=0.0;
               }
            }
-        } 
+        }
       if (Low[shift]==val) LowMapBuffer[shift]=val; else LowMapBuffer[shift]=0.0;
       //--- high
       val=High[iHighest(NULL,0,MODE_HIGH,ExtDepth,shift)];
       if(val==lasthigh) val=0.0;
-      else 
+      else
         {
          lasthigh=val;
          if((val-High[shift])>(ExtDeviation*Point)) val=0.0;
@@ -118,18 +120,18 @@ int start()
             for(back=1; back<=ExtBackstep; back++)
               {
                res=HighMapBuffer[shift+back];
-               if((res!=0)&&(res<val)) HighMapBuffer[shift+back]=0.0; 
-              } 
+               if((res!=0)&&(res<val)) HighMapBuffer[shift+back]=0.0;
+              }
            }
         }
       if (High[shift]==val) HighMapBuffer[shift]=val; else HighMapBuffer[shift]=0.0;
      }
 
-   // final cutting 
+   // final cutting
    if (whatlookfor==0)
      {
       lastlow=0;
-      lasthigh=0;  
+      lasthigh=0;
      }
    else
      {
@@ -141,7 +143,7 @@ int start()
       res=0.0;
       switch(whatlookfor)
         {
-         case 0: // look for peak or lawn 
+         case 0: // look for peak or lawn
             if (lastlow==0 && lasthigh==0)
               {
                if (HighMapBuffer[shift]!=0)
@@ -161,7 +163,7 @@ int start()
                   res=1;
                  }
               }
-             break;  
+             break;
          case 1: // look for peak
             if (LowMapBuffer[shift]!=0.0 && LowMapBuffer[shift]<lastlow && HighMapBuffer[shift]==0.0)
               {
@@ -178,8 +180,8 @@ int start()
                ZigzagBuffer[shift]=lasthigh;
                whatlookfor=-1;
                res=1;
-              }   
-            break;               
+              }
+            break;
          case -1: // look for lawn
             if (HighMapBuffer[shift]!=0.0 && HighMapBuffer[shift]>lasthigh && LowMapBuffer[shift]==0.0)
               {
@@ -194,9 +196,9 @@ int start()
                lastlowpos=shift;
                ZigzagBuffer[shift]=lastlow;
                whatlookfor=1;
-              }   
-            break;               
-         default: return; 
+              }
+            break;
+         default: return;
         }
      }
 
