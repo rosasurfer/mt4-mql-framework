@@ -1578,12 +1578,12 @@ It can be one of the following values:</p>
 <p>Drawing shape types for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(). Can be one of the following values:</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">DRAW_LINE</td><td>0</td><td>Draws lines.</td></tr>
-<tr><td class="const">DRAW_SECTION</td><td>1</td><td>Draws sections.</td></tr>
-<tr><td class="const">DRAW_HISTOGRAM</td><td>2</td><td>Draws histograms between successive even and odd indicator buffers. The larger buffer value determines the color to use.</td></tr>
-<tr><td class="const">DRAW_ARROW</td><td>3</td><td>Draws symbols.</td></tr>
-<tr><td class="const">DRAW_ZIGZAG</td><td>4</td><td>Draws sections between successive even and odd indicator buffers.</td></tr>
-<tr><td class="const">DRAW_NONE</td><td>12</td><td>No drawing.</td></tr>
+<tr><td class="const">DRAW_LINE</td><td>0</td><td>Connects successive non-empty values of an indicator buffer by a line.</td></tr>
+<tr><td class="const">DRAW_SECTION</td><td>1</td><td>Connects all non-empty values of an indicator buffer by a line.</td></tr>
+<tr><td class="const">DRAW_HISTOGRAM</td><td>2</td><td>Connects non-empty values of two consecutive (even and odd) indicator buffers by a vertical histogram. The larger buffer value determines the color to use.</td></tr>
+<tr><td class="const">DRAW_ARROW</td><td>3</td><td>Draws for each indicator buffer value a symbol.</td></tr>
+<tr><td class="const">DRAW_ZIGZAG</td><td>4</td><td>Connects non-empty values of two consecutive (even and odd) indicator buffers by a line. The larger buffer value determines the color to use.</td></tr>
+<tr><td class="const">DRAW_NONE</td><td>12</td><td>Draws nothing.</td></tr>
 </table>
 <br/>
 <p>Drawing pen styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>() (valid when line width = 1). Can be one of the following values:</p>
