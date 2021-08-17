@@ -1,9 +1,11 @@
 /**
  * ZigZag
  *
- * The ZigZag indicator provided by MetaQuotes is very much useless. Not only is the computation broken but it also heavily
- * repaints. Furthermore it can't be used in automated trading. This implementation fixes those issues and is significantly
- * faster. The ZigZag deviation parameter is hardcoded to 0 (zero).
+ * The ZigZag indicator provided by MetaQuotes is very much useless. The used algorythm has nothing in common with the real
+ * ZigZag calculation formula, also the indicator heavily repaints. Furthermore it can't be used in automated trading.
+ *
+ * This version replaces the ZigZag deviation parameter by a Donchian channel to make the indicator more universal and
+ * accurate. It's significantly faster and can be used for auto-trading.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -11,8 +13,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Periods           = 5;         // Lookback periods to build the ZigZag high/low channel (a Donchian channel).        // orig: 12, MoneyZilla: 5
-extern int MinPeriodDistance = 3;         // Minimum number of periods between ZigZag highs/lows (horizontal distance).
+extern int Periods = 5;                   // lookback periods of the Donchian channel                                         // orig: 12, MZ: 5
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -20,35 +21,35 @@ extern int MinPeriodDistance = 3;         // Minimum number of periods between Z
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_ZIGZAG        0              // indicator buffer ids
-#define MODE_ZIGZAG_TOP    1
-#define MODE_ZIGZAG_BOTTOM 2
-#define MODE_UPPER_BAND    3
-#define MODE_LOWER_BAND    4
+#define MODE_ZIGZAG           0           // indicator buffer ids
+#define MODE_ZIGZAG_HIGH      1
+#define MODE_ZIGZAG_LOW       2
+#define MODE_DONCHIAN_UPPER   3
+#define MODE_DONCHIAN_LOWER   4
 
 #property indicator_chart_window
-#property indicator_buffers 5
+#property indicator_buffers   5
 
-#property indicator_color1  Blue          // main ZigZag line
-#property indicator_width1  2
-#property indicator_style1  STYLE_SOLID
+#property indicator_color1    Gold        // SaddleBrown Blue, main ZigZag line
+#property indicator_width1    2
 
-#property indicator_color2  CLR_NONE
-#property indicator_color3  CLR_NONE
+#property indicator_color2    DodgerBlue  // potential ZigZag high turning points
+#property indicator_width2    1
 
-#property indicator_color4  DodgerBlue    // upper Donchian channel band
-#property indicator_width4  1
-#property indicator_style4  STYLE_DOT
+#property indicator_color3    Magenta     // potential ZigZag low turning points
+#property indicator_width3    1
 
-#property indicator_color5  Magenta       // lower Donchian channel band
-#property indicator_width5  1
-#property indicator_style5  STYLE_DOT
+#property indicator_color4    DodgerBlue  // upper Donchian channel band
+#property indicator_style4    STYLE_DOT
 
-double zigzag   [];                       // actual ZigZag points (final result)
-double zTops    [];                       // potential upper ZigZag turning points
-double zBottoms [];                       // potential lower ZigZag turning points
-double upperBand[];                       // upper Donchian channel band
-double lowerBand[];                       // lower Donchian channel band
+#property indicator_color5    Magenta     // lower Donchian channel band
+#property indicator_style5    STYLE_DOT
+
+double zigzag [];                         // actual ZigZag points
+double zHighs [];                         // potential ZigZag high turning points
+double zLows  [];                         // potential ZigZag low turning points
+double dcUpper[];                         // upper Donchian channel band
+double dcLower[];                         // lower Donchian channel band
 
 #define ZZ_ANY       0                    // ids defining types of price extremes
 #define ZZ_TOP       1
@@ -61,11 +62,11 @@ double lowerBand[];                       // lower Donchian channel band
  * @return int - error status
  */
 int onInit() {
-   SetIndexBuffer(MODE_ZIGZAG,        zigzag   ); SetIndexEmptyValue(MODE_ZIGZAG,        0); SetIndexLabel(MODE_ZIGZAG,        "ZigZag"    );
-   SetIndexBuffer(MODE_ZIGZAG_TOP,    zTops    ); SetIndexEmptyValue(MODE_ZIGZAG_TOP,    0); SetIndexLabel(MODE_ZIGZAG_TOP,    "zTops"     );
-   SetIndexBuffer(MODE_ZIGZAG_BOTTOM, zBottoms ); SetIndexEmptyValue(MODE_ZIGZAG_BOTTOM, 0); SetIndexLabel(MODE_ZIGZAG_BOTTOM, "zBottoms"  );
-   SetIndexBuffer(MODE_UPPER_BAND,    upperBand); SetIndexEmptyValue(MODE_UPPER_BAND,    0); SetIndexLabel(MODE_UPPER_BAND,    "upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,    lowerBand); SetIndexEmptyValue(MODE_LOWER_BAND,    0); SetIndexLabel(MODE_LOWER_BAND,    "lower band");
+   SetIndexBuffer(MODE_ZIGZAG,         zigzag ); SetIndexEmptyValue(MODE_ZIGZAG,         0); SetIndexLabel(MODE_ZIGZAG,         "ZigZag");
+   SetIndexBuffer(MODE_ZIGZAG_HIGH,    zHighs ); SetIndexEmptyValue(MODE_ZIGZAG_HIGH,    0); SetIndexLabel(MODE_ZIGZAG_HIGH,    "zHighs");
+   SetIndexBuffer(MODE_ZIGZAG_LOW,     zLows  ); SetIndexEmptyValue(MODE_ZIGZAG_LOW,     0); SetIndexLabel(MODE_ZIGZAG_LOW,     "zLows");
+   SetIndexBuffer(MODE_DONCHIAN_UPPER, dcUpper); SetIndexEmptyValue(MODE_DONCHIAN_UPPER, 0); SetIndexLabel(MODE_DONCHIAN_UPPER, "Donchian upper");
+   SetIndexBuffer(MODE_DONCHIAN_LOWER, dcLower); SetIndexEmptyValue(MODE_DONCHIAN_LOWER, 0); SetIndexLabel(MODE_DONCHIAN_LOWER, "Donchian lower");
 
    SetIndicatorOptions();
    IndicatorDigits(Digits);
@@ -85,131 +86,117 @@ int onTick() {
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(zigzag,   0);
-      ArrayInitialize(zTops,    0);
-      ArrayInitialize(zBottoms, 0);
+      ArrayInitialize(zigzag,  0);
+      ArrayInitialize(zHighs,  0);
+      ArrayInitialize(zLows,   0);
+      ArrayInitialize(dcUpper, 0);
+      ArrayInitialize(dcLower, 0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(zigzag,   Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(zTops,    Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(zBottoms, Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(zigzag,  Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(zHighs,  Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(zLows,   Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(dcUpper, Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(dcLower, Bars, ShiftedBars, 0);
    }
+
+   // calculate startbar
+   int stdStartbar = Min(ChangedBars-1, Bars-Periods);
+   if (stdStartbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+
+   // update Donchian channel and potential turning points
+   for (int bar=stdStartbar; bar >= 0; bar--) {
+      dcUpper[bar] = High[iHighest(NULL, NULL, MODE_HIGH, Periods, bar)];
+      dcLower[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  Periods, bar)];
+   }
+
+
 
    // -- TODO ---------------------------------------------------------------------------------------------------------------
    // GBPUSD,M15 06.08.2021 10:15 broken: both bar High and Low crossed the Donchian channel
    // GBPUSD,M15 10.08.2021 01:00 broken: both bar High and Low crossed the Donchian channel
    // GBPUSD,M15 16.08.2021 14:15 broken: both bar High and Low crossed the Donchian channel
-   // -----------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
+   //
    // old -------------------------------------------------------------------------------------------------------------------
-   int startbar, nextZigzag;
+   int zzStartbar, nextZigzag;
    double currentHigh, currentLow;
 
    // calculate startbar
    if (!ValidBars) {
-      startbar    = Bars - Periods;
-      currentHigh = 0;
-      currentLow  = 0;
-      nextZigzag  = ZZ_ANY;
+      zzStartbar = Bars - Periods;
+      nextZigzag = ZZ_ANY;
    }
    else {
       for (int i, count=0; count < 3 && i < 100; i++) {  // find the last 3 ZigZags over 100 bars
          if (zigzag[i] != 0) count++;
       }
-      startbar = i-1;                                    // on every tick: repaint 3 ZigZags or 100 bars, this is so wrong...
+      zzStartbar = i-1;                                  // on every tick: repaint 3 ZigZags or 100 bars, this is so wrong...
 
-      if (zBottoms[startbar] != 0) {
-         currentLow = zBottoms[startbar];
+      if (zLows[zzStartbar] != 0) {
+         currentLow = zLows[zzStartbar];
          nextZigzag = ZZ_TOP;
       }
       else {
-         currentHigh = zTops[startbar];
+         currentHigh = zHighs[zzStartbar];
          nextZigzag  = ZZ_BOTTOM;
       }
 
-      for (i=startbar-1; i >= 0; i--) {                  // reset the range to repaint
-         zigzag  [i] = 0;
-         zTops   [i] = 0;
-         zBottoms[i] = 0;
+      for (i=zzStartbar-1; i >= 0; i--) {                // reset the range to repaint
+         zigzag[i] = 0;
       }
    }
 
+
+   // update potential turning points
    double high, prevHigh, low, prevLow;
-   int iH, iL;
 
-
-   // update zTops[] buffer
-   for (int bar=startbar; bar >= 0; bar--) {
-      zTops[bar] = 0;
-      high = High[iHighest(NULL, NULL, MODE_HIGH, Periods, bar)];
-      upperBand[bar] = high;
-      if (high == prevHigh) continue;
-      if (high == High[bar]) zTops[bar] = high;
-
-      for (i=1; i <= MinPeriodDistance; i++) {
-         if (high > zTops[bar+i]) zTops[bar+i] = 0;
-      }
+   for (bar=zzStartbar; bar >= 0; bar--) {
+      zHighs[bar] = 0;
+      high = dcUpper[bar];
+      if (high!=prevHigh && High[bar]==high) zHighs[bar] = high;
       prevHigh = high;
-   }
 
-
-   // update zBottoms[] buffer
-   for (bar=startbar; bar >= 0; bar--) {
-      zBottoms[bar] = 0;
-      low = Low[iLowest(NULL, NULL, MODE_LOW, Periods, bar)];
-      lowerBand[bar] = low;
-      if (low == prevLow) continue;
-      if (low == Low[bar]) zBottoms[bar] = low;
-
-      for (i=1; i <= MinPeriodDistance; i++) {
-         if (zBottoms[bar+i] > low) zBottoms[bar+i] = 0;
-      }
+      zLows[bar] = 0;
+      low = dcLower[bar];
+      if (low!=prevLow && Low[bar]==low) zLows[bar] = low;
       prevLow = low;
    }
 
 
-   // recalculate invalid zigzag[] range
-   double lastHigh, lastLow;
-   if (nextZigzag == ZZ_ANY) { lastHigh = 0;           lastLow = 0;          }
-   else                      { lastHigh = currentHigh; lastLow = currentLow; }
-
+   // recalculate zigzag[] range
+   double lastHigh = currentHigh;
+   double lastLow  = currentLow;
    int iLastHigh, iLastLow;
 
-   for (bar=startbar; bar >= 0; bar--) {
+   for (bar=zzStartbar; bar >= 0; bar--) {
       switch (nextZigzag) {
          case ZZ_ANY:                     // look for both a new top or bottom
-            if (!lastLow && !lastHigh) {
-               if (zTops[bar] != 0) {
-                  lastHigh    = High[bar];
-                  iLastHigh   = bar;
-                  zigzag[bar] = lastHigh;
-                  nextZigzag  = ZZ_BOTTOM;
-               }
-               if (zBottoms[bar] != 0) {
-                  lastLow     = Low[bar];
-                  iLastLow    = bar;
-                  zigzag[bar] = lastLow;
-                  nextZigzag  = ZZ_TOP;
-               }
+            if (zHighs[bar] != 0) {
+               lastHigh    = High[bar];
+               iLastHigh   = bar;
+               zigzag[bar] = lastHigh;
+               nextZigzag  = ZZ_BOTTOM;
+            }
+            if (zLows[bar] != 0) {
+               lastLow     = Low[bar];
+               iLastLow    = bar;
+               zigzag[bar] = lastLow;
+               nextZigzag  = ZZ_TOP;
             }
             break;
 
          case ZZ_TOP:                     // look for a new top
-            if (zBottoms[bar] && zBottoms[bar] < lastLow && !zTops[bar]) {
+            if (zLows[bar] && zLows[bar] < lastLow && !zHighs[bar]) {
                zigzag[iLastLow] = 0;
-               lastLow          = zBottoms[bar];
+               lastLow          = zLows[bar];
                iLastLow         = bar;
                zigzag[bar]      = lastLow;
             }
-            if (zTops[bar] && !zBottoms[bar]) {
-               lastHigh    = zTops[bar];
+            if (zHighs[bar] && !zLows[bar]) {
+               lastHigh    = zHighs[bar];
                iLastHigh   = bar;
                zigzag[bar] = lastHigh;
                nextZigzag  = ZZ_BOTTOM;
@@ -217,14 +204,14 @@ int onTick() {
             break;
 
          case ZZ_BOTTOM:                  // look for a new bottom
-            if (zTops[bar] > lastHigh && !zBottoms[bar]) {
+            if (zHighs[bar] > lastHigh && !zLows[bar]) {
                zigzag[iLastHigh] = 0;
-               lastHigh          = zTops[bar];
+               lastHigh          = zHighs[bar];
                iLastHigh         = bar;
                zigzag[bar]       = lastHigh;
             }
-            if (zBottoms[bar] && !zTops[bar]) {
-               lastLow     = zBottoms[bar];
+            if (zLows[bar] && !zHighs[bar]) {
+               lastLow     = zLows[bar];
                iLastLow    = bar;
                zigzag[bar] = lastLow;
                nextZigzag  = ZZ_TOP;
@@ -246,9 +233,9 @@ int onTick() {
 void SetIndicatorOptions() {
    //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL);
 
-   SetIndexStyle(MODE_ZIGZAG,        DRAW_SECTION);
-   SetIndexStyle(MODE_ZIGZAG_TOP,    DRAW_NONE);
-   SetIndexStyle(MODE_ZIGZAG_BOTTOM, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND,    DRAW_LINE);
-   SetIndexStyle(MODE_LOWER_BAND,    DRAW_LINE);
+   SetIndexStyle(MODE_ZIGZAG,      DRAW_SECTION); SetIndexArrow(MODE_ZIGZAG,      108);   // full circle
+   SetIndexStyle(MODE_ZIGZAG_HIGH,   DRAW_ARROW); SetIndexArrow(MODE_ZIGZAG_HIGH, 161);   // open circle
+   SetIndexStyle(MODE_ZIGZAG_LOW,    DRAW_ARROW); SetIndexArrow(MODE_ZIGZAG_LOW,  161);   // ...
+   SetIndexStyle(MODE_DONCHIAN_UPPER, DRAW_LINE);
+   SetIndexStyle(MODE_DONCHIAN_LOWER, DRAW_LINE);
 }
