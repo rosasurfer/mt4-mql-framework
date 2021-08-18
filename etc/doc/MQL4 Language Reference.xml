@@ -1575,25 +1575,25 @@ It can be one of the following values:</p>
       caption=Drawing styles
       keywords=;DRAW_NONE;DRAW_LINE;DRAW_SECTION;DRAW_HISTOGRAM;DRAW_ARROW;STYLE_SOLID;STYLE_DASH;STYLE_DOT;STYLE_DASHDOT;STYLE_DASHDOTDOT;
       <content>
-<p>Drawing shape types for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(). Can be one of the following values:</p>
+<p>Indicator drawing shapes for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>():</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">DRAW_LINE</td><td>0</td><td>Connects successive non-empty values of an indicator buffer by a line.</td></tr>
-<tr><td class="const">DRAW_SECTION</td><td>1</td><td>Connects all non-empty values of an indicator buffer by a line.</td></tr>
-<tr><td class="const">DRAW_HISTOGRAM</td><td>2</td><td>Connects non-empty values of two consecutive (even and odd) indicator buffers by a vertical histogram. The larger buffer value determines the color to use.</td></tr>
-<tr><td class="const">DRAW_ARROW</td><td>3</td><td>Draws for each indicator buffer value a symbol.</td></tr>
-<tr><td class="const">DRAW_ZIGZAG</td><td>4</td><td>Connects non-empty values of two consecutive (even and odd) indicator buffers by a line. The larger buffer value determines the color to use.</td></tr>
-<tr><td class="const">DRAW_NONE</td><td>12</td><td>Draws nothing.</td></tr>
+<tr><td class="const">DRAW_LINE</td><td class="number">0</td><td>Connects successive values of an indicator buffer by a line. Missing values interrupt the line.</td></tr>
+<tr><td class="const">DRAW_SECTION</td><td class="number">1</td><td>Connects all values of an indicator buffer by a line. Missing values don't interrupt the line. A zigzag line without vertical segments.</td></tr>
+<tr><td class="const">DRAW_HISTOGRAM</td><td class="number">2</td><td>Connects corresponding values (pairs) of two consecutive buffers (even and odd index) by a vertical histogram. The larger buffer value determines the color to use.</td></tr>
+<tr><td class="const">DRAW_ARROW</td><td class="number">3</td><td>Draws for each buffer value a symbol.</td></tr>
+<tr><td class="const">DRAW_ZIGZAG</td><td class="number">4</td><td>Connects value pairs of two consecutive buffers (even and odd index) by zigzag lines and vertical segments. Single values are not drawn. Uses the color of the even buffer.</td></tr>
+<tr><td class="const">DRAW_NONE</td><td class="number">12</td><td>Nothing is drawn.</td></tr>
 </table>
 <br/>
-<p>Drawing pen styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>() (valid when line width = 1). Can be one of the following values:</p>
+<p>Indicator line styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(..., drawType=<span class="const">DRAW_LINE</span>, ..., drawWidth=<span class="number">1</span>):</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">STYLE_SOLID</td><td>0</td><td>solid pen</td></tr>
-<tr><td class="const">STYLE_DASH</td><td>1</td><td>dashed pen</td></tr>
-<tr><td class="const">STYLE_DOT</td><td>2</td><td>dotted pen</td></tr>
-<tr><td class="const">STYLE_DASHDOT</td><td>3</td><td>pen with alternating dashes and dots</td></tr>
-<tr><td class="const">STYLE_DASHDOTDOT</td><td>4</td><td>pen with alternating dashes and double dots</td></tr>
+<tr><td class="const">STYLE_SOLID</td><td class="number">0</td><td>solid line</td></tr>
+<tr><td class="const">STYLE_DASH</td><td class="number">1</td><td>dashed line</td></tr>
+<tr><td class="const">STYLE_DOT</td><td class="number">2</td><td>dotted line</td></tr>
+<tr><td class="const">STYLE_DASHDOT</td><td class="number">3</td><td>line with alternating dashes and dots</td></tr>
+<tr><td class="const">STYLE_DASHDOTDOT</td><td class="number">4</td><td>line with alternating dashes and double dots</td></tr>
 </table>
       </content>
     </text>
@@ -1937,31 +1937,31 @@ It can be one of the following values:</p>
       caption=Indicator lines
       keywords=;MODE_MAIN;MODE_PLUSDI;MODE_MINUSDI;MODE_SIGNAL;MODE_UPPER;MODE_LOWER;
       <content>
-<p>Indicator line identifiers used in <a href="help://indicators_iMACD">iMACD()</a>, <a href="help://indicators_iRVI">iRVI()</a>
-and <a href="help://indicators_iStochastic">iStochastic()</a> indicators.<br/></p>
+<p>Indicator line identifiers used with <a href="help://indicators_iMACD">iMACD()</a>, <a href="help://indicators_iRVI">iRVI()</a>
+and <a href="help://indicators_iStochastic">iStochastic()</a>.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">MODE_MAIN</td><td>0</td><td>Base indicator line.</td></tr>
-<tr><td class="const">MODE_SIGNAL</td><td>1</td><td>Signal line.</td></tr>
+<tr><td class="const">MODE_MAIN</td><td class="number">0</td><td>Base indicator line.</td></tr>
+<tr><td class="const">MODE_SIGNAL</td><td class="number">1</td><td>Signal line.</td></tr>
 </table>
 <br/>
 <br/>
-<p>Indicator line identifiers used in <a href="help://indicators_iADX">iADX()</a> indicator.</p>
+<p>Indicator line identifiers used with <a href="help://indicators_iADX">iADX()</a>.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">MODE_MAIN</td><td>0</td><td>Base indicator line.</td></tr>
-<tr><td class="const">MODE_PLUSDI</td><td>1</td><td>+DI indicator line.</td></tr>
-<tr><td class="const">MODE_MINUSDI</td><td>2</td><td>-DI indicator line.</td></tr>
+<tr><td class="const">MODE_MAIN</td><td class="number">0</td><td>Base indicator line.</td></tr>
+<tr><td class="const">MODE_PLUSDI</td><td class="number">1</td><td>+DI indicator line.</td></tr>
+<tr><td class="const">MODE_MINUSDI</td><td class="number">2</td><td>-DI indicator line.</td></tr>
 </table>
 <br/>
 <br/>
-<p>Indicator line identifiers used in <a href="help://indicators_iBands">iBands()</a>,
-<a href="help://indicators_iEnvelopes">iEnvelopes()</a>, <a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray()</a>, <a href="help://indicators_iFractals">iFractals()</a>
-and <a href="help://indicators_iGator">iGator()</a> indicators.</p>
+<p>Indicator line identifiers used with <a href="help://indicators_iBands">iBands()</a>, <a href="help://indicators_iEnvelopes">iEnvelopes()</a>, 
+<a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray()</a>, <a href="help://indicators_iFractals">iFractals()</a> and 
+<a href="help://indicators_iGator">iGator()</a>.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">MODE_UPPER</td><td>1</td><td>Upper line.</td></tr>
-<tr><td class="const">MODE_LOWER</td><td>2</td><td>Lower line.</td></tr>
+<tr><td class="const">MODE_UPPER</td><td class="number">1</td><td>Upper line.</td></tr>
+<tr><td class="const">MODE_LOWER</td><td class="number">2</td><td>Lower line.</td></tr>
 </table>
       </content>
     </text>
@@ -1986,22 +1986,22 @@ It can be one of the following values:</p>
 
     <text>
       tag=constants_movings
-      caption=Moving Average methods
+      caption=Moving Averages
       keywords=;MODE_SMA;MODE_EMA;MODE_SMMA;MODE_LWMA;
       <content>
-<p>Moving Average calculation method used with <a href="help://indicators_iAlligator">iAlligator()</a>,
+<p>Moving Average calculation methods used with <a href="help://indicators_iAlligator">iAlligator()</a>,
 <a href="help://indicators_iEnvelopes">iEnvelopes()</a>, <a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray</a>,
 <a href="help://indicators_iForce">iForce()</a>, <a href="help://indicators_iGator">iGator()</a>,
 <a href="help://indicators_iMA">iMA()</a>, <a href="help://indicators_iMAOnArray">iMAOnArray()</a>,
 <a href="help://indicators_iStdDev">iStdDev()</a>, <a href="help://indicators_iStdDevOnArray">iStdDevOnArray()</a>,
-<a href="help://indicators_iStochastic">iStochastic()</a> indicators.<br/>
-It can be any of the following values:</p>
+<a href="help://indicators_iStochastic">iStochastic()</a>:
+</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">MODE_SMA</td><td>0</td><td>Simple moving average,</td></tr>
-<tr><td class="const">MODE_EMA</td><td>1</td><td>Exponential moving average,</td></tr>
-<tr><td class="const">MODE_SMMA</td><td>2</td><td>Smoothed moving average,</td></tr>
-<tr><td class="const">MODE_LWMA</td><td>3</td><td>Linear weighted moving average.</td></tr>
+<tr><td class="const">MODE_SMA</td><td class="number">0</td><td>Simple moving average</td></tr>
+<tr><td class="const">MODE_EMA</td><td class="number">1</td><td>Exponential moving average</td></tr>
+<tr><td class="const">MODE_SMMA</td><td class="number">2</td><td>Smoothed moving average, it holds: SMMA(n) = EMA(2*n-1)</td></tr>
+<tr><td class="const">MODE_LWMA</td><td class="number">3</td><td>Linear weighted moving average</td></tr>
 </table>
       </content>
     </text>
@@ -2188,7 +2188,7 @@ Objects can have 1-3 coordinates related to type.
 
     <text>
       tag=constants_uninit
-      caption=Uninitialize reason codes
+      caption=Uninitialize reasons
       keywords=;REASON_REMOVE;REASON_RECOMPILE;REASON_CHARTCHANGE;REASON_CHARTCLOSE;REASON_PARAMETERS;REASON_ACCOUNT;
       <content>
 <p>Uninitialize reason values returned by <a href="help://runtimestatus_UninitializeReason">UninitializeReason()</a>. Can be any one of the following values:</p>
@@ -5131,17 +5131,14 @@ int init() {
       caption=SetIndexStyle()
       type=void
       <content>
-         Sets drawing shape type, line pen style, line width and color of an indicator.<br/>
+         Sets drawing shape, line style, drawing width and color of an indicator.<br/>
          <br/>
-         <span style="color:red">Bug:</span><br/>
-         After recompilation the function must be called in <span class="function">Indicator::start</span>(), calling it in
-         <span class="function">Indicator::init</span>() will not apply the specified settings.
-         <br/>
-         Workaround: Implement a function <span class="function">SetIndicatorOptions</span>() and call it in both contexts. Call
-         <span class="function">SetIndexStyle</span>() from that function.
+         <span style="color:red">Bug:</span>
+         After recompilation the function must be called in <span class="function">Indicator::start</span>(). Calling it in
+         <span class="function">Indicator::init</span>() will not apply the specified settings.<br/>
       </content>
       <example>
-<span class="function">SetIndexStyle</span>(<span class="number">3</span>, <span class="const">DRAW_LINE</span>, <span class="const">EMPTY</span>, <span class="number">2</span>, <span class="const">Red</span>);
+<span class="function code">SetIndexStyle</span>(<span class="number code">0</span>, <span class="const code">DRAW_LINE</span>, <span class="const code">EMPTY</span>, <span class="number code">2</span>, <span class="const code">Red</span>);
       </example>
       <parameter>
         type=int
@@ -5160,7 +5157,7 @@ int init() {
         name=lineStyle
         def_value=<span class="const">EMPTY</span>
         <description>
-        One of the predefined <a href="help://constants_drawstyles">drawing pen styles</a> (default: <span class="const">EMPTY</span> - the pen style is not changed).
+        One of the predefined <a href="help://constants_drawstyles">drawing line styles</a> (<span class="const">EMPTY</span>: the line style is not changed).
         </description>
       </parameter>
       <parameter>
@@ -5168,14 +5165,14 @@ int init() {
         name=drawWidth
         def_value=<span class="const">EMPTY</span>
         <description>
-          Drawing width from 1 to 5 (default: <span class="const">EMPTY</span> - the drawing width is not changed).
+          Drawing width from 1 to 5 (<span class="const">EMPTY</span>: the drawing width is not changed).
         </description>
       </parameter>
       <parameter>
         type=color
         name=drawColor
         def_value=<span class="const">NULL</span>
-        description=Drawing color (optional: if not provided the color is not changed).
+        description=Drawing color (optional: if not specified the color is not changed).
       </parameter>
     </function>
 
