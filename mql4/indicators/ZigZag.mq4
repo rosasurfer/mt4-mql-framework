@@ -1,10 +1,10 @@
 /**
  * ZigZag
  *
- * The ZigZag indicator provided by MetaQuotes is very much useless. The used algorythm is flawed and has nothing in common
- * with the real ZigZag calculation formula. Also the indicator heavily repaints. Furthermore it can't be used in automation.
- * This version removes the ZigZag deviation parameter and uses only a Donchian channel. It fixes the calculation issues, can
- * be used for auto-trading and is significantly faster.
+ * The ZigZag indicator provided by MetaQuotes is very much useless. The algorythm is flawed and has nothing in common with
+ * the real ZigZag calculation formula. Also the indicator heavily repaints. Furthermore it can't be used in automation.
+ * This version removes the original deviation parameter and uses a Donchian channel for determining ZigZag turning points.
+ * It fixes all mentioned issues.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -12,7 +12,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int  Periods     = 5;              // lookback periods of the Donchian channel                                         // orig: 12, MZ: 5
+extern int  Periods     = 12;             // lookback periods of the Donchian channel                                         // MZ: 5
 extern int  CrossSize   = 0;
 extern int  ProcessBars = 0;              // 0: all bars
 extern bool Debug       = false;
@@ -35,15 +35,15 @@ extern bool Debug       = false;
 #property indicator_chart_window
 #property indicator_buffers   8
 
-#property indicator_color1    Blue        // main ZigZag line built from two buffers using the color of the first buffer
+#property indicator_color1    Blue        // ZigZag line built from two buffers using the color of the first buffer
 #property indicator_width1    2
 #property indicator_color2    CLR_NONE
 #property indicator_color3    DodgerBlue  // upper channel band
 #property indicator_color4    Magenta     // lower channel band
 #property indicator_color5    DodgerBlue  // upper channel band crossings
 #property indicator_color6    Magenta     // lower channel band crossings
-#property indicator_color7    CLR_NONE
-#property indicator_color8    CLR_NONE
+#property indicator_color7    CLR_NONE    // trend buffer
+#property indicator_color8    CLR_NONE    // notrend buffer
 
 double zigzagO   [];                      // ZigZag turning points (open price of a vertical segment)
 double zigzagC   [];                      // ...                  (close price of a vertical segment)
@@ -52,7 +52,7 @@ double lowerBand [];                      // lower channel band
 double upperCross[];                      // upper band crossings
 double lowerCross[];                      // lower band crossings
 double trend     [];                      // trend direction and length
-double notrend   [];                      // periods with unknown/unfinished trend direction
+double notrend   [];                      // periods with not yet known (unfinished) trend direction
 
 
 /**
@@ -326,7 +326,7 @@ bool IsUpperCrossFirst(int bar) {
  *
  * @param  int from  - start offset of the bar range
  * @param  int to    - end offset of the bar range
- * @param  int value - start trend counter value
+ * @param  int value - start trend value
  */
 void SetTrend(int from, int to, int value) {
    for (int i=from; i >= to; i--) {
