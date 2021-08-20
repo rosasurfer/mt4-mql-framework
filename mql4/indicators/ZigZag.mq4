@@ -38,15 +38,19 @@ extern bool Debug       = false;
 #property indicator_color1    Blue        // ZigZag line built from two buffers using the color of the first buffer
 #property indicator_width1    2
 #property indicator_color2    CLR_NONE
+
 #property indicator_color3    DodgerBlue  // upper channel band
+#property indicator_style3    STYLE_DOT   //
 #property indicator_color4    Magenta     // lower channel band
+#property indicator_style4    STYLE_DOT   //
+
 #property indicator_color5    DodgerBlue  // upper channel band crossings
 #property indicator_color6    Magenta     // lower channel band crossings
 #property indicator_color7    CLR_NONE    // trend buffer
 #property indicator_color8    CLR_NONE    // notrend buffer
 
-double zigzagO   [];                      // ZigZag turning points (open price of a vertical segment)
-double zigzagC   [];                      // ...                  (close price of a vertical segment)
+double zigzagO   [];                      // ZigZag semaphores (open price of a vertical segment)
+double zigzagC   [];                      // ...              (close price of a vertical segment)
 double upperBand [];                      // upper channel band
 double lowerBand [];                      // lower channel band
 double upperCross[];                      // upper band crossings
