@@ -1,10 +1,10 @@
 /**
  * ZigZag
  *
- * The ZigZag indicator provided by MetaQuotes is very much useless. The algorythm is flawed and has nothing in common with
- * the real ZigZag calculation formula. Also the indicator heavily repaints. Furthermore it can't be used in automation.
- * This version removes the original deviation parameter and uses a Donchian channel for determining ZigZag turning points.
- * It fixes all mentioned issues.
+ * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
+ * Furthermore it can't be used in automation. This version fixes those issues and does not repaint. Once a turning point is
+ * drawn it will never change afterwards. This version uses a Donchian channel for determining turning points and features
+ * vertical line segments if the range of a single large bar covers both the current upper and lower ZigZag deviation level.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
