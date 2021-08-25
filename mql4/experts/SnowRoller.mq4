@@ -907,16 +907,24 @@ string GetLogFilename() {
 /**
  * Return the full name of the instance status file.
  *
+ * @param  relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
+ *                               (default: the absolute path)
+ *
  * @return string - filename or an empty string in case of errors
  */
-string GetStatusFilename() {
+string GetStatusFilename(bool relative = false) {
+   relative = relative!=0;
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.longName +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
-   string subdirectory = "\\presets\\";
-   if (!IsTestSequence()) subdirectory = subdirectory + GetAccountCompany() +"\\";
-   string baseName = StrToLower(Symbol()) +".SR."+ sequence.id +".set";
+   static string filename = ""; if (!StringLen(filename)) {
+      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string baseName  = StrToLower(Symbol()) +".SR."+ sequence.id +".set";
+      filename = directory + baseName;
+   }
 
-   return(GetMqlFilesPath() + subdirectory + baseName);
+   if (relative)
+      return(filename);
+   return(GetMqlFilesPath() +"\\"+ filename);
 }
 
 
