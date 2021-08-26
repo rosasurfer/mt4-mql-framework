@@ -3669,9 +3669,8 @@ int Tester.Pause(string location = "") {
 
    if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
- //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread dead-lock
-   return(NO_ERROR);                                                    // which is accounted for by Tester.IsStopped()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a thread dead-lock in deinit()
+   return(NO_ERROR);
 }
 
 
