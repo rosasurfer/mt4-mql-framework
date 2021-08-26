@@ -653,14 +653,14 @@ double CalculateUnitSize(double equity) {
    bool   calculated = false;
    double result;
 
-   if (UnitSize == "auto") {
+   if (UnitSize=="auto" || UnitSize=="[L]{double} | auto*") {
       calculated = true;
       // read and parse configuration: Unitsize.{symbol} = L[everage]{double}
       string section="SnowRoller", key="Unitsize."+ StdSymbol(), sUnitSize=GetConfigString(section, key);
       if      (StrStartsWithI(sUnitSize, "Leverage")) sValue = StrTrim(StrSubstr(sUnitSize, 8));
       else if (StrStartsWithI(sUnitSize, "L"       )) sValue = StrTrim(StrSubstr(sUnitSize, 1));
       else                                            sValue = sUnitSize;
-      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(5)  "+ sequence.name +" invalid configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
+      if (!StrIsNumeric(sValue))               return(!catch("CalculateUnitSize(5)  "+ sequence.name +" "+ ifString(StringLen(sValue), "invalid", "missing") +" configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
       double leverage = StrToDouble(sValue);
       if (LE(leverage, 0))                     return(!catch("CalculateUnitSize(6)  "+ sequence.name +" invalid leverage value in configuration ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sUnitSize), ERR_INVALID_CONFIG_VALUE));
    }

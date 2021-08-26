@@ -14,7 +14,7 @@ int onInitUser() {
       return(last_error);
    }
    else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                      // on error an invalid sequence id was specified
+      return(last_error);                                      // if a sequence id was specified it's invalid
    }
 
    if (ValidateInputs()) {
@@ -37,20 +37,6 @@ int onInitUser() {
       else if (IsTesting() && !IsVisualMode()) {
          debug("onInitUser(2)  sequence "+ sequence.name +" created");
       }
-   }
-   return(last_error);
-}
-
-
-/**
- * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
- *
- * @return int - error status
- */
-int onInitTemplate() {
-   // restore sequence id from the chart
-   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
-      RestoreSequence();
    }
    return(last_error);
 }
@@ -103,12 +89,32 @@ int onInitSymbolChange() {
 
 
 /**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   // restore sequence id from the chart
+   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
+      RestoreSequence();
+      return(last_error);
+   }
+   return(catch("onInitTemplate(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
+}
+
+
+/**
  * Called after the expert was recompiled. There was no input dialog.
  *
  * @return int - error status
  */
-int onInitRecompile() {
-   return(onInitTemplate());                                   // same requirements as for onInitTemplate()
+int onInitRecompile() {                                        // same requirements as for onInitTemplate()
+   // restore sequence id from the chart
+   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
+      RestoreSequence();
+      return(last_error);
+   }
+   return(catch("onInitRecompile(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
