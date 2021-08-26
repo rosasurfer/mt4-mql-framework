@@ -63,10 +63,6 @@ double normalizedPrices[];                                  // normalized prices
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // (1) validate inputs
    // Fisher.Periods
    if (Fisher.Periods < 1)        return(catch("onInit(1)  invalid input parameter Fisher.Periods: "+ Fisher.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -110,17 +106,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(4)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
 }
 
 
@@ -221,36 +206,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SECTION,       DRAW_NONE, EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, drawType,  EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.Fisher.Periods",        Fisher.Periods       );
-   Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt  (name +".input.Fisher.Periods",        Fisher.Periods       );
-   Chart.RestoreColor(name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor(name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt  (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

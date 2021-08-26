@@ -7,12 +7,12 @@
  *  - The open position and the used leverage.
  *  - The current account stopout level.
  *  - A warning in different colors when the account's open order limit is approached.
- *  - P/L of open positions and/or trade history in two different modes, i.e.
+ *  - PL of open positions and/or trade history in two different modes, i.e.
  *     internal: positions and/or history from the current account,
- *               P/L as provided by the current account,
+ *               PL as provided by the current account,
  *               order execution notifications
  *     external: positions and/or history from an external account (e.g. synthetic instruments),
- *               P/L as provided by the external source,
+ *               PL as provided by the external source,
  *               limit monitoring and notifications
  */
 #include <stddefines.mqh>
@@ -890,7 +890,7 @@ string OrderMarkerText(int type, int magic, string comment) {
 
 
 /**
- * Schaltet die Anzeige der P/L-Beträge der Positionen zwischen "absolut" und "prozentual" um.
+ * Schaltet die Anzeige der PL-Beträge der Positionen zwischen "absolut" und "prozentual" um.
  *
  * @return bool - Erfolgsstatus
  */
@@ -1560,7 +1560,7 @@ bool AnalyzePositions(bool logTickets=false) {
       int sortKeys[][2];                                                         // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
 
-      // Sortierschlüssel auslesen und dabei P/L's von LFX-Positionen erfassen (alle Symbole).
+      // Sortierschlüssel auslesen und dabei PL von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
          if (OrderType() > OP_SELL) {
@@ -1569,7 +1569,7 @@ bool AnalyzePositions(bool logTickets=false) {
             continue;
          }
 
-         // P/L gefundener LFX-Positionen aufaddieren
+         // PL gefundener LFX-Positionen aufaddieren
          while (true) {                                                          // Pseudo-Schleife, dient dem einfacherem Verlassen des Blocks
             if (!lfxOrders.openPositions) break;
 
@@ -1603,7 +1603,7 @@ bool AnalyzePositions(bool logTickets=false) {
          sortKeys[n][1] = OrderTicket();
          n++;
       }
-      if (lfxProfits) /*&&*/if (!AnalyzePos.ProcessLfxProfits()) return(false);  // P/L's gefundener LFX-Positionen verarbeiten
+      if (lfxProfits) /*&&*/if (!AnalyzePos.ProcessLfxProfits()) return(false);  // PL gefundener LFX-Positionen verarbeiten
 
       if (n < orders)
          ArrayResize(sortKeys, n);
@@ -1848,7 +1848,7 @@ int SearchLfxTicket(int ticket) {
  *   OT{DateTime}-{DateTime}                         - offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4)  [TERM_OPEN_ALL      , 2014.02.01 08:00, 2014.02.10 18:00, ...     , ...     ]
  *   H{DateTime}             [Monthly|Weekly|Daily]  - Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)    [TERM_HISTORY_SYMBOL, 2014.01.01 00:00, 2014.12.31 23:59, {cache1}, {cache2}]
  *   HT{DateTime}-{DateTime} [Monthly|Weekly|Daily]  - Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)   [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, {cache1}, {cache2}]
- *   12.34                                           - dem P/L einer Position zuzuschlagender Betrag                          [TERM_ADJUSTMENT    , 12.34           , ...             , ...     , ...     ]
+ *   12.34                                           - dem PL einer Position zuzuschlagender Betrag                           [TERM_ADJUSTMENT    , 12.34           , ...             , ...     , ...     ]
  *   E123.00                                         - für Equityberechnungen zu verwendender Wert                            [TERM_EQUITY        , 123.00          , ...             , ...     , ...     ]
  *
  *   Kommentar (Text nach dem ersten Semikolon ";")  - wird als Beschreibung angezeigt
@@ -1995,7 +1995,7 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StrIsNumeric(values[n])) {                   // P/L-Adjustment
+               else if (StrIsNumeric(values[n])) {                   // PL-Adjustment
                   termType   = TERM_ADJUSTMENT;
                   termValue1 = StrToDouble(values[n]);
                   termValue2 = NULL;
@@ -3178,7 +3178,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       return(true);
 
    if (closedProfit == EMPTY_VALUE)
-      closedProfit = 0;                                                    // 0.00 ist gültiger P/L
+      closedProfit = 0;                                                    // 0.00 ist gültiger PL
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
@@ -3494,7 +3494,7 @@ bool QC.HandleLfxTerminalMessages() {
  * Messageformat: "LFX:{iTicket]:pending={1|0}"   - die angegebene Pending-Order wurde platziert (immer erfolgreich, da im Fehlerfall keine Message generiert wird)
  *                "LFX:{iTicket]:open={1|0}"      - die angegebene Pending-Order wurde ausgeführt/konnte nicht ausgeführt werden
  *                "LFX:{iTicket]:close={1|0}"     - die angegebene Position wurde geschlossen/konnte nicht geschlossen werden
- *                "LFX:{iTicket]:profit={dValue}" - der P/L der angegebenen Position hat sich geändert
+ *                "LFX:{iTicket]:profit={dValue}" - der PL der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
    //debug("ProcessLfxTerminalMessage(1)  tick="+ Tick +"  msg=\""+ message +"\"");
@@ -3514,7 +3514,7 @@ bool ProcessLfxTerminalMessage(string message) {
    if (StringSubstr(message, from, 7) == "profit=") {                         // die häufigste Message wird zuerst geprüft
       int size = ArrayRange(lfxOrders, 0);
       for (int i=0; i < size; i++) {
-         if (lfxOrders.iCache[i][IC.ticket] == ticket) {                      // geladene LFX-Orders durchsuchen und P/L aktualisieren
+         if (lfxOrders.iCache[i][IC.ticket] == ticket) {                      // geladene LFX-Orders durchsuchen und PL aktualisieren
             if (lfxOrders.bCache[i][BC.isOpenPosition]) {
                lfxOrders.dCache[i][DC.lastProfit] = lfxOrders.dCache[i][DC.profit];
                lfxOrders.dCache[i][DC.profit    ] = NormalizeDouble(StrToDouble(StringSubstr(message, from+7)), 2);
@@ -3559,8 +3559,8 @@ bool ProcessLfxTerminalMessage(string message) {
  *
  *                          TRUE:  Restauriert die Orderdaten aus in der Library zwischengespeicherten Daten.
  *
- *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein P/L
- *                                 gespeichert (ändert sich ständig). Stattdessen wird dieser P/L in globalen Terminal-Variablen zwischen-
+ *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein PL
+ *                                 gespeichert (ändert sich ständig). Stattdessen wird dieser PL in globalen Terminal-Variablen zwischen-
  *                                 gespeichert (schneller) und von dort restauriert.
  * @return bool - Erfolgsstatus
  */
@@ -3612,7 +3612,7 @@ bool RestoreLfxOrders(bool fromCache) {
    ArrayResize(lfxOrders.bCache, size);
    ArrayResize(lfxOrders.dCache, size);
 
-   // Zähler-Variablen und P/L-Daten aktualisieren
+   // Zähler-Variablen und PL-Daten aktualisieren
    for (i=0; i < size; i++) {
       lfxOrders.iCache[i][IC.ticket           ] = los.Ticket           (lfxOrders, i);
       lfxOrders.bCache[i][BC.isPendingOrder   ] = los.IsPendingOrder   (lfxOrders, i);
@@ -3649,7 +3649,7 @@ bool RestoreLfxOrders(bool fromCache) {
 
 
 /**
- * Speichert die aktuellen LFX-Order-P/L's in globalen Terminal-Variablen. So steht der letzte bekannte P/L auch dann zur Verfügung,
+ * Speichert die aktuellen LFX-Order-PLs in globalen Terminal-Variablen. So steht der letzte bekannte PL auch dann zur Verfügung,
  * wenn das Trade-Terminal nicht läuft.
  *
  * @return bool - Erfolgsstatus

@@ -55,10 +55,6 @@ int srLevels;
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // (1) validate inputs
    // Periods
    if (Periods < 0)   return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -84,17 +80,6 @@ int onInit() {
 
    SetIndicatorOptions();
    return(catch("onInit(4)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
 }
 
 
@@ -302,38 +287,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_S1, ifInt(srLevels>=1, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
    SetIndexStyle(MODE_S2, ifInt(srLevels>=2, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
    SetIndexStyle(MODE_S3, ifInt(srLevels>=3, DRAW_LINE, DRAW_NONE), EMPTY, EMPTY, Color.Support   );
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.Periods",          Periods         );
-   Chart.StoreInt   (name +".input.SR.Levels",        SR.Levels       );
-   Chart.StoreColor (name +".input.Color.Resistance", Color.Resistance);
-   Chart.StoreColor (name +".input.Color.Main",       Color.Main      );
-   Chart.StoreColor (name +".input.Color.Support",    Color.Support   );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt  (name +".input.Periods",          Periods         );
-   Chart.RestoreInt  (name +".input.SR.Levels",        SR.Levels       );
-   Chart.RestoreColor(name +".input.Color.Resistance", Color.Resistance);
-   Chart.RestoreColor(name +".input.Color.Main",       Color.Main      );
-   Chart.RestoreColor(name +".input.Color.Support",    Color.Support   );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

@@ -2,6 +2,8 @@
  * XMT.StartCopier
  *
  * Send a command to a virtual XMT-Scalper to start the trade copier.
+ *
+ * @see  mql4/experts/.attic/XMT-Scalper.mq4
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

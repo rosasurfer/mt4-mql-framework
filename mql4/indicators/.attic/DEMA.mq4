@@ -56,10 +56,6 @@ string legendLabel = "";
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // (1) validate inputs
    // MA.Periods
    if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -142,17 +138,6 @@ int onDeinit() {
 
 
 /**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(last_error);
-}
-
-
-/**
  * Main function
  *
  * @return int - error status
@@ -209,40 +194,6 @@ void SetIndicatorOptions() {
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
    SetIndexStyle(MODE_DEMA, draw_type, EMPTY, Draw.Width, MA.Color); SetIndexArrow(MODE_DEMA, 158);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.MA.Periods",      MA.Periods     );
-   Chart.StoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.StoreColor (name +".input.MA.Color",        MA.Color       );
-   Chart.StoreString(name +".input.Draw.Type",       Draw.Type      );
-   Chart.StoreInt   (name +".input.Draw.Width",      Draw.Width     );
-   Chart.StoreInt   (name +".input.Max.Bars",        Max.Bars       );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.MA.Periods",      MA.Periods     );
-   Chart.RestoreString(name +".input.MA.AppliedPrice", MA.AppliedPrice);
-   Chart.RestoreColor (name +".input.MA.Color",        MA.Color       );
-   Chart.RestoreString(name +".input.Draw.Type",       Draw.Type      );
-   Chart.RestoreInt   (name +".input.Draw.Width",      Draw.Width     );
-   Chart.RestoreInt   (name +".input.Max.Bars",        Max.Bars       );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

@@ -118,25 +118,33 @@ int init() {
    // resolve init reason and account number
    int initReason = ProgramInitReason();
    int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
+   string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
    if (IsTesting()) {                     // log MarketInfo() data
-      if (IsLogInfo()) logInfo("init(13)  MarketInfo: "+ Tester.GetMarketInfo());
+      if (IsLogInfo()) logInfo(initHandlers[initReason] +"(0)  MarketInfo: "+ Tester.GetMarketInfo());
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
-   else if (initReason == IR_USER) {      // log account infos (becomes the first regular online log entry)
-      if (IsLogInfo()) logInfo("init(14)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
+   else if (UninitializeReason() != UR_CHARTCHANGE) {
+      // log account infos (this becomes the first regular online log entry)
+      if (IsLogInfo()) {
+         string msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         logInfo(StrRepeat(":", StringLen(msg)));
+         logInfo(msg);
+      }
    }
 
-   // log input parameters
-   if (UninitializeReason()!=UR_CHARTCHANGE) /*&&*/ if (IsLogDebug()) {
-      string sInputs = InputsToStr();
-      if (StringLen(sInputs) > 0) {
-         sInputs = StringConcatenate(sInputs,
-            ifString(!EA.RecordEquity,   "", NL +"EA.RecordEquity=TRUE"                                            +";"),
-            ifString(!EA.CreateReport,   "", NL +"EA.CreateReport=TRUE"                                            +";"),
-            ifString(!Tester.StartTime,  "", NL +"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
-            ifString(!Tester.StartPrice, "", NL +"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
-         logDebug("init(15)  inputs: "+ sInputs);
+   if (UninitializeReason() != UR_CHARTCHANGE) {
+      // log input parameters
+      if (IsLogDebug()) {
+         string sInputs = InputsToStr();
+         if (StringLen(sInputs) > 0) {
+            sInputs = StringConcatenate(sInputs,
+               ifString(!EA.RecordEquity,   "", NL +"EA.RecordEquity=TRUE"                                            +";"),
+               ifString(!EA.CreateReport,   "", NL +"EA.CreateReport=TRUE"                                            +";"),
+               ifString(!Tester.StartTime,  "", NL +"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
+               ifString(!Tester.StartPrice, "", NL +"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
+            logDebug(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
+         }
       }
    }
 
@@ -166,7 +174,7 @@ int init() {
          case IR_RECOMPILE       : error = onInitRecompile();       break;    //
          case IR_TERMINAL_FAILURE:                                            //
          default:                                                             //
-            return(_last_error(CheckErrors("init(17)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
+            return(_last_error(CheckErrors("init(13)  unsupported initReason: "+ initReason, ERR_RUNTIME_ERROR)));
       }                                                                       //
    }                                                                          //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                    //
@@ -174,7 +182,7 @@ int init() {
    if (!error && !__STATUS_OFF)                                               //
       afterInit();                                                            // postprocessing hook
 
-   if (CheckErrors("init(18)")) return(last_error);
+   if (CheckErrors("init(14)")) return(last_error);
    ShowStatus(last_error);
 
    // setup virtual ticks to continue operation on a stalled data feed
@@ -182,7 +190,7 @@ int init() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(19)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
@@ -839,8 +847,8 @@ int onDeinitAccountChange()
 
 
 /**
- * Online: Called in terminal builds <= 509 when another chart template is applied.
- *         Called when the chart profile is changed.
+ * Online: Called in terminal builds <= 509 when a new chart template is applied.
+ *         Called when the chart profile changes.
  *         Called when the chart is closed.
  *         Called in terminal builds <= 509 when the terminal shuts down.
  * Tester: Called when the chart is closed with VisualMode="On".
@@ -855,7 +863,7 @@ int onDeinitChartClose()
 
 
 /**
- * Online: Called in terminal builds > 509 when another chart template is applied.
+ * Online: Called in terminal builds > 509 when a new chart template is applied.
  * Tester: ???
  *
  * @return int - error status

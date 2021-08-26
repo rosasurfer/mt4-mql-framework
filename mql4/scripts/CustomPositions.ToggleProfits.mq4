@@ -1,5 +1,5 @@
 /**
- * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der P/L-Beträge der Positionen von
+ * Schickt dem ChartInfos-Indikator des aktuellen Charts die Nachricht, die Anzeige der PL-Beträge der Positionen von
  * "absolut" zu "prozentual" umzuschaltem.
  */
 #include <stddefines.mqh>

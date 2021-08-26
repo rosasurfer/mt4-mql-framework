@@ -42,7 +42,6 @@ height=300
 
 <indicator>
 name=main
-
 <object>
 type=1
 object_name=Horizontal Line 0.50

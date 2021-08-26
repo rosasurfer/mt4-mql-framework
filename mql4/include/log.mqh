@@ -625,11 +625,11 @@ bool SetLogfile(string filename) {
       if (loglevel!=LOG_OFF && loglevelFile!=LOG_OFF) {
          string prevName = ec_LogFilename(__ExecutionContext);
          if (filename != prevName) {
-            if (IsLogDebug()) logDebug("SetLogfile(1)  "+ DoubleQuoteStr(filename));
+            if (IsLogDebug()) debug("SetLogfile(1)  "+ DoubleQuoteStr(filename));      // only to DebugView (for quick control)
          }
       }
-      else {
-         if (IsLogDebug()) logDebug("SetLogfile(2)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
+      else {                                                                           // only to DebugView (for quick control)
+         if (IsLogDebug()) debug("SetLogfile(2)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
       }
    }
    return(SetLogfileA(__ExecutionContext, filename));
