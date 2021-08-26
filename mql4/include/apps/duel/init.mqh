@@ -20,7 +20,7 @@ int onInit() {
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
-      if (RestoreSequence()) {                                       // a valid sequence id was specified
+      if (RestoreSequence()) {                                       // a valid sequence id was specified and restored
          ComputeTargets();
          SS.All();
          logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
@@ -77,24 +77,6 @@ int onInitUser() {
 
 
 /**
- * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
- *
- * @return int - error status
- */
-int onInitTemplate() {
-   // restore sequence id from the chart
-   if (FindSequenceId()) {                                  // on success a sequence id was restored
-      if (RestoreSequence()) {
-         ComputeTargets();
-         SS.All();
-         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
-      }
-   }
-   return(last_error);
-}
-
-
-/**
  * Called after the input parameters were changed through the input dialog.
  *
  * @return int - error status
@@ -135,6 +117,42 @@ int onInitTimeframeChange() {
  */
 int onInitSymbolChange() {
    return(catch("onInitSymbolChange(1)", ERR_ILLEGAL_STATE));
+}
+
+
+/**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   // restore sequence id from the chart
+   if (FindSequenceId()) {                                  // on success a sequence id was restored
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
+}
+
+
+/**
+ * Called after the expert was recompiled. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitRecompile() {                                     // same requirements as for onInitTemplate()
+   // restore sequence id from the chart
+   if (FindSequenceId()) {
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
 }
 
 

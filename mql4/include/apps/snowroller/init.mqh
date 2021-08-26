@@ -13,31 +13,30 @@ int onInitUser() {
       RestoreSequence();
       return(last_error);
    }
-   else if (StringLen(StrTrim(Sequence.ID)) > 0) {
-      return(last_error);                                      // if a sequence id was specified it's invalid
-   }
+   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+      if (ValidateInputs()) {
+         if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))                        // TODO: this must be Confirm() only
+            return(SetLastError(ERR_CANCELLED_BY_USER));
 
-   if (ValidateInputs()) {
-      // create a new sequence
-      if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))   // TODO: this must be Confirm() only
-         return(SetLastError(ERR_CANCELLED_BY_USER));
+         sequence.id      = CreateSequenceId();
+         Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id;
+         sequence.cycle   = 1;
+         sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.isTest  = IsTesting();
+         sequence.status  = STATUS_WAITING;
+         SS.SequenceName();
+         SaveStatus();
 
-      sequence.id      = CreateSequenceId();
-      Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id;
-      sequence.cycle   = 1;
-      sequence.created = Max(TimeCurrentEx(), TimeServer());
-      sequence.isTest  = IsTesting();
-      sequence.status  = STATUS_WAITING;
-      SS.SequenceName();
-      SaveStatus();
-
-      if (IsLogDebug()) {
-         logDebug("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
-      }
-      else if (IsTesting() && !IsVisualMode()) {
-         debug("onInitUser(2)  sequence "+ sequence.name +" created");
+         if (IsLogDebug()) {
+            logDebug("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+         }
+         else if (IsTesting() && !IsVisualMode()) {
+            debug("onInitUser(2)  sequence "+ sequence.name +" created");
+         }
       }
    }
+   //else {}                                                   // an invalid sequence id was specified
+
    return(last_error);
 }
 
