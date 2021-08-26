@@ -20,7 +20,9 @@ int onInit() {
 int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
-      if (RestoreSequence()) {                                       // a valid sequence id was specified
+      if (RestoreSequence()) {                                       // a valid sequence id was specified and restored
+         ComputeTargets();
+         SS.All();
          logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
       }
    }
@@ -33,27 +35,24 @@ int onInitUser() {
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
-            return(onInputError("onInitUser(2)  invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+            return(onInputError("onInitUser(2)  "+ sequence.name +" invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
          }
-         SS.All();
 
-         // prevent starting with too little free margin
+         // warn if starting with too little free margin
          double longLotsPlus=0, longLotsMinus=0, shortLotsPlus=0, shortLotsMinus=0;
          int level = 0;
 
-         for (level=+1; level <=  MaxGridLevels; level++) longLotsPlus   += CalculateLots(D_LONG, level);
-         for (level=-1; level >= -MaxGridLevels; level--) longLotsMinus  += CalculateLots(D_LONG, level);
-         for (level=+1; level <=  MaxGridLevels; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
-         for (level=-1; level >= -MaxGridLevels; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
+         for (level=+1; level <=  MaxUnits; level++) longLotsPlus   += CalculateLots(D_LONG, level);
+         for (level=-1; level >= -MaxUnits; level--) longLotsMinus  += CalculateLots(D_LONG, level);
+         for (level=+1; level <=  MaxUnits; level++) shortLotsPlus  += CalculateLots(D_SHORT, level);
+         for (level=-1; level >= -MaxUnits; level--) shortLotsMinus += CalculateLots(D_SHORT, level);
 
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
          double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
          if (IsError(catch("onInitUser(3)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-            StopSequence(NULL);
-            logError("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxGridLevels +" levels with a unitsize of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
-            return(catch("onInitUser(5)"));
+            logWarn("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxUnits +" units with a size of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          }
 
          // confirm dangerous live modes
@@ -62,10 +61,12 @@ int onInitUser() {
                PlaySoundEx("Windows Notify.wav");
                if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
                   StopSequence(NULL);
-                  return(catch("onInitUser(6)"));
+                  return(catch("onInitUser(5)"));
                }
             }
          }
+         ComputeTargets();
+         SS.All();
          SaveStatus();
       }
    }
@@ -85,6 +86,8 @@ int onInitParameters() {
 
    if (ValidateInputs()) {
       if (ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
+         ComputeTargets();
+         SS.All();
          SaveStatus();
          return(last_error);
       }
@@ -123,7 +126,33 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   return(catch("onInitTemplate(1)", ERR_NOT_IMPLEMENTED));
+   // restore sequence id from the chart
+   if (FindSequenceId()) {                                  // on success a sequence id was restored
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
+}
+
+
+/**
+ * Called after the expert was recompiled. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitRecompile() {                                     // same requirements as for onInitTemplate()
+   // restore sequence id from the chart
+   if (FindSequenceId()) {
+      if (RestoreSequence()) {
+         ComputeTargets();
+         SS.All();
+         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
 }
 
 
@@ -133,8 +162,6 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
-   SS.All();
-
    bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
@@ -143,5 +170,7 @@ int afterInit() {
       test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
+
+   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }

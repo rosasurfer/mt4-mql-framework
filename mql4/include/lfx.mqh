@@ -27,7 +27,7 @@ string lfxCurrency = "";
 int    lfxCurrencyId;
 int    lfxOrders[][LFX_ORDER.intSize];                         // Array von LFX_ORDERs
 
-// Trade-Terminal -> LFX-Terminal: P/L-Messages
+// Trade-Terminal -> LFX-Terminal: PL-Messages
 string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Währung bzw. LFX-Chart
 int    hQC.TradeToLfxSenders [9];                              // jeweils ein Sender
 string  qc.TradeToLfxChannel = "";                             // Channel des aktuellen LFX-Charts (einer)
@@ -254,9 +254,9 @@ int LFX.GetMaxOpenOrderMarker(/*LFX_ORDER*/int orders[][], int currencyId) {
  *
  * @param  _In_     LFX_ORDER orders[] - Array von LFX-ORDERs
  * @param  _In_     int       i        - Index der zu prüfenden Order innerhalb des übergebenen LFX_ORDER-Arrays
- * @param  _In_opt_ double    bid      - zur Prüfung zu benutzender Bid-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Bid-Preis)
- * @param  _In_opt_ double    ask      - zur Prüfung zu benutzender Ask-Preis bei Price-Limits   (NULL:        keine Limitprüfung gegen den Ask-Preis)
- * @param  _In_opt_ double    profit   - zur Prüfung zu benutzender P/L-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
+ * @param  _In_opt_ double    bid      - zur Prüfung zu benutzender Bid-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Bid-Preis)
+ * @param  _In_opt_ double    ask      - zur Prüfung zu benutzender Ask-Preis bei Price-Limits  (NULL:        keine Limitprüfung gegen den Ask-Preis)
+ * @param  _In_opt_ double    profit   - zur Prüfung zu benutzender PL-Betrag bei Profit-Limits (EMPTY_VALUE: keine Limitprüfung von Profitbeträgen )
  *
  * @return int - Triggerstatus, NO_LIMIT_TRIGGERED:         wenn kein Limit erreicht wurde
  *                              OPEN_LIMIT_TRIGGERED:       wenn ein Entry-Limit erreicht wurde

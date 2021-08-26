@@ -342,7 +342,7 @@ bool onCross(int section) {
    int error = 0;
 
    if (section == MODE_UPPER_SECTION) {
-      message = indicatorName +" turned positive at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
+      message = indicatorName +" crossed up at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
       if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));                   // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -353,7 +353,7 @@ bool onCross(int section) {
    }
 
    if (section == MODE_LOWER_SECTION) {
-      message = indicatorName +" turned negative at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
+      message = indicatorName +" crossed down at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
       if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 

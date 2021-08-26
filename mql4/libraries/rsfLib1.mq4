@@ -4228,7 +4228,10 @@ string registeredObjects[];
  * @return int - number of registered objects or -1 in case of errors
  */
 int RegisterObject(string label) {
-   return(ArrayPushString(registeredObjects, label));
+   int size = ArraySize(registeredObjects);        // TODO: Needs massive performance improvement.
+   ArrayResize(registeredObjects, size+1);         //       On terminal start with 7 open charts we observe 106.000 calls.
+   registeredObjects[size] = label;
+   return(size+1);
 }
 
 
@@ -4242,8 +4245,9 @@ int DeleteRegisteredObjects() {
    if (!size) return(NO_ERROR);
 
    for (int i=0; i < size; i++) {
-      if (ObjectFind(registeredObjects[i]) != -1)
+      if (ObjectFind(registeredObjects[i]) != -1) {
          if (!ObjectDelete(registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+      }
    }
    ArrayResize(registeredObjects, 0);
 

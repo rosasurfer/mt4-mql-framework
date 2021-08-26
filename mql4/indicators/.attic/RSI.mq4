@@ -59,10 +59,6 @@ int rsi.appliedPrice;
  * @return int - error status
  */
 int onInit() {
-   if (ProgramInitReason() == IR_RECOMPILE) {
-      if (!RestoreInputParameters()) return(last_error);
-   }
-
    // (1) validate inputs
    // RSI.Periods
    if (RSI.Periods < 2)           return(catch("onInit(1)  invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -125,17 +121,6 @@ int onInit() {
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
    return(catch("onInit(8)"));
-}
-
-
-/**
- * Called before recompilation.
- *
- * @return int - error status
- */
-int onDeinitRecompile() {
-   StoreInputParameters();
-   return(NO_ERROR);
 }
 
 
@@ -214,44 +199,6 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SECTION,       DRAW_NONE,   EMPTY, EMPTY,                 CLR_NONE             );
    SetIndexStyle(MODE_UPPER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Upper);
    SetIndexStyle(MODE_LOWER_SECTION, sectionType, EMPTY, Histogram.Style.Width, Histogram.Color.Lower);
-}
-
-
-/**
- * Store input parameters in the chart before recompilation.
- *
- * @return bool - success status
- */
-bool StoreInputParameters() {
-   string name = ProgramName();
-   Chart.StoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
-   Chart.StoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
-   Chart.StoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.StoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.StoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.StoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.StoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.StoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   return(!catch("StoreInputParameters(1)"));
-}
-
-
-/**
- * Restore input parameters found in the chart after recompilation.
- *
- * @return bool - success status
- */
-bool RestoreInputParameters() {
-   string name = ProgramName();
-   Chart.RestoreInt   (name +".input.RSI.Periods",           RSI.Periods          );
-   Chart.RestoreString(name +".input.RSI.AppliedPrice",      RSI.AppliedPrice     );
-   Chart.RestoreColor (name +".input.MainLine.Color",        MainLine.Color       );
-   Chart.RestoreInt   (name +".input.MainLine.Width",        MainLine.Width       );
-   Chart.RestoreColor (name +".input.Histogram.Color.Upper", Histogram.Color.Upper);
-   Chart.RestoreColor (name +".input.Histogram.Color.Lower", Histogram.Color.Lower);
-   Chart.RestoreInt   (name +".input.Histogram.Style.Width", Histogram.Style.Width);
-   Chart.RestoreInt   (name +".input.Max.Bars",              Max.Bars             );
-   return(!catch("RestoreInputParameters(1)"));
 }
 
 

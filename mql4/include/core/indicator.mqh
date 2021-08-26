@@ -745,8 +745,8 @@ int onDeinitChartClose()
 
 /**
  * Standalone: Called if an indicator is removed manually.
- *             Called when another chart template is applied.
- *             Called when the chart profile is changed.
+ *             Called when a new chart template is applied.
+ *             Called when the chart profile changes.
  *             Called when the chart is closed.
  *
  * In iCustom(): Called in all deinit() cases.

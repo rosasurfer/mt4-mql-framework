@@ -19,13 +19,16 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
-   if (ObjectFind("Duel.status") == 0) {
-      // chart status object of an active Duel instance found
-      SendChartCommand("Duel.command", "ToggleOpenOrders");
+   string label = "Duel.status";
+
+   if (ObjectFind(label) == 0) {                                     // chart status of a Duel instance found
+      if (StrToInteger(StrTrim(ObjectDescription(label))) > 0) {     // check for a valid instance id: format {sid}|{status}
+         SendChartCommand("Duel.command", "ToggleOpenOrders");
+         return(last_error);
+      }
    }
-   else {
-      // no active Duel instance found
-      SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders");
-   }
-   return(catch("onStart(1)"));
+
+   // no active Duel instance found
+   SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders");
+   return(last_error);
 }
