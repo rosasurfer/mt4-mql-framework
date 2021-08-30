@@ -102,10 +102,9 @@ int onInit() {
    else               return(catch("onInit(2)  invalid input parameter DrawType: "+ DoubleQuoteStr(DrawType), ERR_INVALID_INPUT_PARAMETER));
    // DrawWidth
    if (DrawWidth < 0) return(catch("onInit(3)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (DrawWidth > 5) return(catch("onInit(4)  invalid input parameter DrawWidth: "+ DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    drawWidth = DrawWidth;
    // Max.Bars
-   if (Max.Bars < -1) return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1) return(catch("onInit(4)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -121,7 +120,7 @@ int onInit() {
    SetIndexLabel(MODE_LOWER, NULL);
    SetIndicatorOptions();
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(5)"));
 }
 
 

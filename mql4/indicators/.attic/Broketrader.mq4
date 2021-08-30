@@ -131,15 +131,14 @@ int onInit() {
    if (Color.Short == 0xFF000000) Color.Short = CLR_NONE;
    // SMA.DrawWidth
    if (SMA.DrawWidth < 0)          return(catch("onInit(6)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (SMA.DrawWidth > 5)          return(catch("onInit(7)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    // StartDate
    string sValue = StrToLower(StrTrim(StartDate));
    if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
       startTime = ParseDateTime(sValue);
-      if (IsNaT(startTime))        return(catch("onInit(8)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+      if (IsNaT(startTime))        return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    }
    // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)              return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
@@ -185,7 +184,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(10)"));
+   return(catch("onInit(9)"));
 }
 
 
