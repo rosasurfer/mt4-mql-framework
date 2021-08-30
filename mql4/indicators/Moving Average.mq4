@@ -144,10 +144,9 @@ int onInit() {
 
    // Draw.Width
    if (Draw.Width < 0) return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5) return(catch("onInit(7)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)  return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
@@ -191,7 +190,7 @@ int onInit() {
    // pre-calculate ALMA bar weights
    if (maMethod == MODE_ALMA) @ALMA.CalculateWeights(almaWeights, MA.Periods);
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(8)"));
 }
 
 

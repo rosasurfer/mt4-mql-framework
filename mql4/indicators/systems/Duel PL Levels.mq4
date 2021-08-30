@@ -60,7 +60,6 @@ int onInit() {
 
    // Draw.Width
    if (Draw.Width < 0) return(catch("onInit(2)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5) return(catch("onInit(3)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // buffer management
    SetIndexBuffer(MODE_BE_LONG,  beLong);  SetIndexEmptyValue(MODE_BE_LONG,  0);
@@ -73,7 +72,7 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(3)"));
 }
 
 

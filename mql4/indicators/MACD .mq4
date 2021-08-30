@@ -187,10 +187,9 @@ int onInit() {
    if (Histogram.Style.Width < 0)       return(catch("onInit(11)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (Histogram.Style.Width > 5)       return(catch("onInit(12)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
    if (MainLine.Width < 0)              return(catch("onInit(13)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)              return(catch("onInit(14)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)                   return(catch("onInit(15)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                   return(catch("onInit(14)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
@@ -236,7 +235,7 @@ int onInit() {
    if (fastMA.method == MODE_ALMA) @ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
    if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
 
-   return(catch("onInit(16)"));
+   return(catch("onInit(15)"));
 }
 
 

@@ -106,11 +106,10 @@ int onInit() {
 
    // Signal.DrawWidth
    if (Signal.DrawWidth < 0)       return(catch("onInit(6)  invalid input parameter Signal.DrawWidth: "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Signal.DrawWidth > 5)       return(catch("onInit(7)  invalid input parameter Signal.DrawWidth: "+ Signal.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    signalDrawWidth = Signal.DrawWidth;
 
    // Max.Bars
-   if (Max.Bars < -1)              return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)              return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -140,7 +139,7 @@ int onInit() {
    IndicatorDigits(2);
    SetIndicatorOptions();
 
-   return(catch("onInit(6)"));
+   return(catch("onInit(8)"));
 }
 
 
