@@ -3669,7 +3669,7 @@ int Tester.Pause(string location = "") {
 
    if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a thread dead-lock in deinit()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
    return(NO_ERROR);
 }
 
@@ -3691,9 +3691,8 @@ int Tester.Stop(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
- //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // in deinit() SendMessage() causes a thread lock which is
-   return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // SendMessage() causes a UI thread dead-lock if called in deinit()
+   return(NO_ERROR);
 }
 
 
@@ -3723,11 +3722,10 @@ bool Tester.IsPaused() {
 bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   // TODO: because of i18n we can't rely on the control's text
-
    if (IsScript()) {
       int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       int hWndStartStopBtn   = GetDlgItem(hWndTesterSettings, IDC_TESTER_SETTINGS_STARTSTOP);
+      // TODO: because of i18n we can't rely on the control's text
       return(GetInternalWindowTextA(hWndStartStopBtn) == "Start");
    }
    return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);     // if in deinit() the tester was already stopped,
