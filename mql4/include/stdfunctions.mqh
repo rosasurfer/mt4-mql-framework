@@ -27,6 +27,18 @@ int SetLastError(int error, int param = NULL) {
 
 
 /**
+ * Return a readable version of an MQL error code.
+ *
+ * @param  int error - MQL error code or mapped Win32 error code
+ *
+ * @return string
+ */
+string ErrorToStr(int error) {
+   return(ErrorToStrA(error));
+}
+
+
+/**
  * Return the description of an error code.
  *
  * @param  int error - MQL error code or mapped Win32 error code
