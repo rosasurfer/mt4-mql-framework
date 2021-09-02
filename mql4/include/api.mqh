@@ -814,7 +814,7 @@ int      ec_Ticks                  (int &ec[]);;
 int      ec_Timeframe              (int &ec[]);;
 bool     ec_VisualMode             (int &ec[]);;
 bool     EmptyIniSectionA(string fileName, string section);;
-string   ErrorToStr(int error);;
+string   ErrorToStrA(int error);;
 bool     EventListener_ChartCommand(string &commands[]);;
 string   EXECUTION_CONTEXT_toStr(int &ec[]);;
 int      FindTesterWindow();;
