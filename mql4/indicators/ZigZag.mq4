@@ -408,8 +408,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_ZIGZAG_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_CLOSE, Semaphore.Symbol);
 
    drawType = ifInt(ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND, drawType, STYLE_DOT, EMPTY, UpperChannel.Color);
-   SetIndexStyle(MODE_LOWER_BAND, drawType, STYLE_DOT, EMPTY, LowerChannel.Color);
+   SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
+   SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
    drawType = ifInt(ShowChannelBreakouts, DRAW_ARROW, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_CROSS, 161);   // an open circle (dot)
