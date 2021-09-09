@@ -119,20 +119,18 @@ int onInit() {
 
    // MA.LineWidth
    if (MA.LineWidth < 0)      return(catch("onInit(5)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (MA.LineWidth > 5)      return(catch("onInit(6)  invalid input parameter MA.LineWidth: "+ MA.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.StdDevs
-   if (Bands.StdDevs < 0)     return(catch("onInit(7)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.StdDevs < 0)     return(catch("onInit(6)  invalid input parameter Bands.StdDevs: "+ NumberToStr(Bands.StdDevs, ".1+"), ERR_INVALID_INPUT_PARAMETER));
 
    // Bands.Color: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
 
    // Bands.LineWidth
-   if (Bands.LineWidth < 0)   return(catch("onInit(8)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5)   return(catch("onInit(9)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
+   if (Bands.LineWidth < 0)   return(catch("onInit(7)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)         return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)         return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
    // Signals
    if (!ConfigureSignals("BollingerBand", Signal.onTouchBand, signals))                                  return(last_error);
@@ -179,7 +177,7 @@ int onInit() {
    if (maMethod==MODE_ALMA && MA.Periods > 1) {
       @ALMA.CalculateWeights(almaWeights, MA.Periods);
    }
-   return(catch("onInit(11)"));
+   return(catch("onInit(9)"));
 }
 
 

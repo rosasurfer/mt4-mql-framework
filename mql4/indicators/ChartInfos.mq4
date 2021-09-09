@@ -399,6 +399,7 @@ int ShowOpenOrders() {
                if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
                   ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                   ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+                  ObjectSetText(label2, comment);
                }
             }
             else sTP = "";
@@ -412,6 +413,7 @@ int ShowOpenOrders() {
                if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
                   ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                   ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+                  ObjectSetText(label3, comment);
                }
             }
             else sSL = "";

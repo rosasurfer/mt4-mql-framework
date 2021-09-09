@@ -116,9 +116,8 @@ int onInit() {
    if (Bands.Color == 0xFF000000) Bands.Color = CLR_NONE;
    // Bands.LineWidth
    if (Bands.LineWidth < 0)                                   return(catch("onInit(5)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
-   if (Bands.LineWidth > 5)                                   return(catch("onInit(6)  invalid input parameter Bands.LineWidth: "+ Bands.LineWidth, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                                         return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                         return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // buffer management
@@ -155,7 +154,7 @@ int onInit() {
    // initialize global vars
    ArrayResize(tmaWindow, maPeriods);
 
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 

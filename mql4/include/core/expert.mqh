@@ -121,13 +121,17 @@ int init() {
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
    if (IsTesting()) {                     // log MarketInfo() data
-      if (IsLogInfo()) logInfo(initHandlers[initReason] +"(0)  MarketInfo: "+ Tester.GetMarketInfo());
+      if (IsLogInfo()) {
+         string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ Tester.GetMarketInfo();
+         logInfo(StrRepeat(":", StringLen(msg)));
+         logInfo(msg);
+      }
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {
       // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
-         string msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
          logInfo(msg);
       }

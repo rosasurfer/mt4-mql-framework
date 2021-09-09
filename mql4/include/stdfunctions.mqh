@@ -27,6 +27,18 @@ int SetLastError(int error, int param = NULL) {
 
 
 /**
+ * Return a readable version of an MQL error code.
+ *
+ * @param  int error - MQL error code or mapped Win32 error code
+ *
+ * @return string
+ */
+string ErrorToStr(int error) {
+   return(ErrorToStrA(error));
+}
+
+
+/**
  * Return the description of an error code.
  *
  * @param  int error - MQL error code or mapped Win32 error code
@@ -1061,6 +1073,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "GBPSEK") )    result = "GBPSEK";
                 else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
                 else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
+                else if (              _symbol=="GER30"   )    result = "DAX";
                 else if (              _symbol=="GOLD"    )    result = "XAUUSD";
                 else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
                 break;
@@ -3669,9 +3682,8 @@ int Tester.Pause(string location = "") {
 
    if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);
- //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // in deinit() SendMessage() causes a thread dead-lock
-   return(NO_ERROR);                                                    // which is accounted for by Tester.IsStopped()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
+   return(NO_ERROR);
 }
 
 
@@ -3692,9 +3704,8 @@ int Tester.Stop(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);
- //SendMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // in deinit() SendMessage() causes a thread lock which is
-   return(NO_ERROR);                                                    // accounted for by Tester.IsStopped()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // SendMessage() causes a UI thread dead-lock if called in deinit()
+   return(NO_ERROR);
 }
 
 
@@ -3724,11 +3735,10 @@ bool Tester.IsPaused() {
 bool Tester.IsStopped() {
    if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   // TODO: because of i18n we can't rely on the control's text
-
    if (IsScript()) {
       int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
       int hWndStartStopBtn   = GetDlgItem(hWndTesterSettings, IDC_TESTER_SETTINGS_STARTSTOP);
+      // TODO: because of i18n we can't rely on the control's text
       return(GetInternalWindowTextA(hWndStartStopBtn) == "Start");
    }
    return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);     // if in deinit() the tester was already stopped,

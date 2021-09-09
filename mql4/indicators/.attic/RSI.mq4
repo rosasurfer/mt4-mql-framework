@@ -85,12 +85,11 @@ int onInit() {
 
    // Styles
    if (MainLine.Width < 0)        return(catch("onInit(3)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (MainLine.Width > 5)        return(catch("onInit(4)  invalid input parameter MainLine.Width: "+ MainLine.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width < 0) return(catch("onInit(5)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Histogram.Style.Width > 5) return(catch("onInit(6)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width < 0) return(catch("onInit(4)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Histogram.Style.Width > 5) return(catch("onInit(5)  invalid input parameter Histogram.Style.Width: "+ Histogram.Style.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)             return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)             return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -120,7 +119,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_UPPER_SECTION, startDraw);
    SetIndexDrawBegin(MODE_LOWER_SECTION, startDraw);
    SetIndicatorOptions();
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
