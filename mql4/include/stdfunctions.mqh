@@ -1073,6 +1073,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "GBPSEK") )    result = "GBPSEK";
                 else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
                 else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
+                else if (              _symbol=="GER30"   )    result = "DAX";
                 else if (              _symbol=="GOLD"    )    result = "XAUUSD";
                 else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
                 break;
