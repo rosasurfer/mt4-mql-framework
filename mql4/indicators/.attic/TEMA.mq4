@@ -92,10 +92,9 @@ int onInit() {
 
    // Draw.Width
    if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Draw.Width > 5) return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) setup buffer management
@@ -126,7 +125,7 @@ int onInit() {
    SetIndexDrawBegin(MODE_TEMA, startDraw);
    SetIndicatorOptions();
 
-   return(catch("onInit(7)"));
+   return(catch("onInit(6)"));
 }
 
 

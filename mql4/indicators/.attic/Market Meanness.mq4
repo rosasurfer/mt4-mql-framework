@@ -52,10 +52,9 @@ int onInit() {
 
    // Styles
    if (Line.Width < 0)  return(catch("onInit(2)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
-   if (Line.Width > 5)  return(catch("onInit(3)  invalid input parameter Line.Width: "+ Line.Width, ERR_INVALID_INPUT_PARAMETER));
 
    // Max.Bars
-   if (Max.Bars < -1)   return(catch("onInit(4)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)   return(catch("onInit(3)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
 
 
    // (2) indicator buffer management
@@ -78,7 +77,7 @@ int onInit() {
    SetLevelValue(1, 50);
    SetIndicatorOptions();
 
-   return(catch("onInit(5)"));
+   return(catch("onInit(4)"));
 }
 
 
