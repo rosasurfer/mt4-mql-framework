@@ -1,10 +1,11 @@
 /**
  * Non-repainting ZigZag indicator suitable for automated trading
  *
+ *
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
  * Furthermore it can't be used for automation. This version fixes these issues. Once a ZigZag reversal point is drawn it
- * will not change anymore. This ZigZag indicator uses a Donchian channel for determining reversals and draws vertical line
- * segments if a large bar crosses both the upper and the lower ZigZag deviation level.
+ * will not change anymore. This indicator uses a Donchian channel for determining reversals and draws vertical lines if a
+ * large bar crosses both the upper and the lower channel band.
  *
  * TODO:
  *  - implement Max.bars
@@ -12,6 +13,7 @@
  *  - add chart legend
  *  - add InputsToStr()
  *  - add and document iCustom() buffers (1 or 2)
+ *  - add signals for new reversals and previous reversal breakouts
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -37,8 +39,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods       = 36;                    // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type          = "Line | Semaphores*";  // a ZigZag line or turning points, may be shortened to "l | s"
+extern int    ZigZag.Periods       = 12;                    // lookback periods of the Donchian channel
+extern string ZigZag.Type          = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "l | s"
 extern int    ZigZag.Width         = indicator_width1;
 extern color  ZigZag.Color         = indicator_color1;
 
