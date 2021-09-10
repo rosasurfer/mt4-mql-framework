@@ -3,8 +3,8 @@ symbol=GBPUSD
 period=60
 digits=5
 
-leftpos=9229
-scale=2
+leftpos=179
+scale=18
 graph=1
 fore=0
 grid=0
@@ -15,7 +15,7 @@ days=1
 descriptions=1
 scroll=1
 shift=1
-shift_size=33
+shift_size=11
 
 fixed_pos=620
 window_left=0
