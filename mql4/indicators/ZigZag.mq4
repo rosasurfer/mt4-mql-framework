@@ -5,20 +5,23 @@
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
  * Also it can't be used for automation.
  *
- * This version fixes all those issues. The display can be changed from ZigZag lines to ZigZag reversal points (semaphores).
- * Once a ZigZag reversal occurred the reversal point will not change anymore. Like the MetaQuotes version the indicator uses
- * a Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper
- * and lower channel band. Additionally this indicator can display the trail of a new ZigZag leg as it developed over time
- * which is especially usefull for breakout strategies.
+ * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (semaphores). Once
+ * a ZigZag reversal occurred the reversal point will not change anymore. Like the MetaQuotes version the indicator uses a
+ * Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper and
+ * lower channel band. Additionally this indicator can display the trail of a new ZigZag leg as it develops over time which
+ * is especially usefull for breakout strategies.
  *
  *
  * TODO:
  *  - remove trail markers not reaching a new high/low
  *  - add new leg up/down markers with price value
- *  - document two iCustom() buffers
  *  - add signals for new reversals and previous reversal breakouts
  *  - move indicator properties below input section (really?)
  *  - restore default values (hide channel and trail)
+ *  - rename notrend[] to waiting[]
+ *  - add auto-configuration
+ *  - document iCustom() usage
+ *  - document inputs
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -44,19 +47,19 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods       = 10;                    // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type          = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "l | s"
-extern int    ZigZag.Width         = indicator_width1;
-extern color  ZigZag.Color         = indicator_color1;
+extern int    ZigZag.Periods     = 10;                      // 12 lookback periods of the Donchian channel
+extern string ZigZag.Type        = "Line | Semaphores*";    // a ZigZag line or reversal points, may be shortened to "l | s"
+extern int    ZigZag.Width       = indicator_width1;
+extern color  ZigZag.Color       = indicator_color1;
 
-extern int    Semaphore.Symbol     = 108;                   // that's a small dot
+extern int    Semaphores.Symbol  = 108;                     // that's a small dot
 
-extern bool   ShowChannel          = true;
-extern bool   ShowChannelBreakouts = true;
-extern color  UpperChannel.Color   = indicator_color3;
-extern color  LowerChannel.Color   = indicator_color4;
+extern bool   ShowZigZagChannel  = true;
+extern bool   ShowZigZagTrail    = true;
+extern color  UpperChannel.Color = indicator_color3;
+extern color  LowerChannel.Color = indicator_color4;
 
-extern int    Max.Bars             = 10000;                 // max. values to calculate (-1: all available)
+extern int    Max.Bars           = 10000;                   // max. values to calculate (-1: all available)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -96,7 +99,7 @@ string legendLabel   = "";
 int onInit() {
    // validate inputs
    // ZigZag.Periods
-   if (ZigZag.Periods < 2)     return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Periods < 2)      return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    zigzagPeriods = ZigZag.Periods;
    // ZigZag.Type
    string sValues[], sValue = StrToLower(ZigZag.Type);
@@ -107,14 +110,14 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line",       sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Line";        }
    else if (StrStartsWith("semaphores", sValue)) { zigzagDrawType = DRAW_ARROW;  ZigZag.Type = "Semaphores";  }
-   else                        return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                         return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Width
-   if (ZigZag.Width < 0)       return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Semaphore.Symbol
-   if (Semaphore.Symbol <  32) return(catch("onInit(4)  invalid input parameter Semaphore.Symbol: "+ Semaphore.Symbol, ERR_INVALID_INPUT_PARAMETER));
-   if (Semaphore.Symbol > 255) return(catch("onInit(5)  invalid input parameter Semaphore.Symbol: "+ Semaphore.Symbol, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Width < 0)        return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
+   // Semaphores.Symbol
+   if (Semaphores.Symbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.Symbol: "+ Semaphores.Symbol, ERR_INVALID_INPUT_PARAMETER));
+   if (Semaphores.Symbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.Symbol: "+ Semaphores.Symbol, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)          return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)           return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
@@ -439,14 +442,14 @@ void SetIndicatorOptions() {
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
-   SetIndexStyle(MODE_ZIGZAG_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_OPEN,  Semaphore.Symbol);
-   SetIndexStyle(MODE_ZIGZAG_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_CLOSE, Semaphore.Symbol);
+   SetIndexStyle(MODE_ZIGZAG_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_OPEN,  Semaphores.Symbol);
+   SetIndexStyle(MODE_ZIGZAG_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_CLOSE, Semaphores.Symbol);
 
-   drawType = ifInt(ShowChannel, DRAW_LINE, DRAW_NONE);
+   drawType = ifInt(ShowZigZagChannel, DRAW_LINE, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
-   drawType = ifInt(ShowChannelBreakouts, DRAW_ARROW, DRAW_NONE);
+   drawType = ifInt(ShowZigZagTrail, DRAW_ARROW, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_CROSS, 161);   // an open circle (dot)
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_CROSS, 161);   // ...
 
@@ -461,15 +464,15 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",       ZigZag.Periods,                  ";", NL,
-                            "ZigZag.Type=",          DoubleQuoteStr(ZigZag.Type),     ";", NL,
-                            "ZigZag.Width=",         ZigZag.Width,                    ";", NL,
-                            "ZigZag.Color=",         ColorToStr(ZigZag.Color),        ";", NL,
-                            "Semaphore.Symbol=",     Semaphore.Symbol,                ";", NL,
-                            "ShowChannel=",          BoolToStr(ShowChannel),          ";", NL,
-                            "ShowChannelBreakouts=", BoolToStr(ShowChannelBreakouts), ";", NL,
-                            "UpperChannel.Color=",   ColorToStr(UpperChannel.Color),  ";", NL,
-                            "LowerChannel.Color=",   ColorToStr(LowerChannel.Color),  ";", NL,
-                            "Max.Bars=",             Max.Bars,                        ";")
+   return(StringConcatenate("ZigZag.Periods=",     ZigZag.Periods,                 ";", NL,
+                            "ZigZag.Type=",        DoubleQuoteStr(ZigZag.Type),    ";", NL,
+                            "ZigZag.Width=",       ZigZag.Width,                   ";", NL,
+                            "ZigZag.Color=",       ColorToStr(ZigZag.Color),       ";", NL,
+                            "Semaphores.Symbol=",  Semaphores.Symbol,              ";", NL,
+                            "ShowZigZagChannel=",  BoolToStr(ShowZigZagChannel),   ";", NL,
+                            "ShowZigZagTrail=",    BoolToStr(ShowZigZagTrail),     ";", NL,
+                            "UpperChannel.Color=", ColorToStr(UpperChannel.Color), ";", NL,
+                            "LowerChannel.Color=", ColorToStr(LowerChannel.Color), ";", NL,
+                            "Max.Bars=",           Max.Bars,                       ";")
    );
 }
