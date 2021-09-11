@@ -1,5 +1,5 @@
 /**
- * Non-repainting ZigZag indicator suitable for automated trading
+ * Non-repainting ZigZag indicator suitable for automation
  *
  *
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
@@ -8,12 +8,13 @@
  * large bar crosses both the upper and the lower channel band.
  *
  * TODO:
- *  - add chart legend
  *  - add and document iCustom() buffers (1 or 2)
+ *  - set trend[] buffer always to latest value (no zero trend)
  *  - add signals for new reversals and previous reversal breakouts
- *  - add new leg up/down markers with price value
  *  - remove trail markers not reaching a new high/low
- *  - rewrite indicator properties below input section
+ *  - add new leg up/down markers with price value
+ *  - move indicator properties below input section (really?)
+ *  - update default values (hide channel and trail)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -40,11 +41,11 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    ZigZag.Periods       = 12;                    // lookback periods of the Donchian channel
-extern string ZigZag.Type          = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "l | s"
+extern string ZigZag.Type          = "Line* | Semaphores";  // a ZigZag line or reversal points, may be shortened to "l | s"
 extern int    ZigZag.Width         = indicator_width1;
 extern color  ZigZag.Color         = indicator_color1;
 
-extern int    Semaphore.Symbol     = 108;                   // a dot
+extern int    Semaphore.Symbol     = 108;                   // that's a small dot
 
 extern bool   ShowChannel          = true;
 extern bool   ShowChannelBreakouts = true;
@@ -79,7 +80,8 @@ double notrend    [];            // bar periods with not yet known (unfinished) 
 int    zigzagPeriods;
 int    zigzagDrawType;
 int    maxValues;
-string legendLabel;
+string indicatorName = "";
+string legendLabel   = "";
 
 
 /**
@@ -116,15 +118,15 @@ int onInit() {
    if (LowerChannel.Color == 0xFF000000) LowerChannel.Color = CLR_NONE;
 
    // buffer management
-   string shortName = ProgramName() +"("+ ZigZag.Periods +")";
+   indicatorName = ProgramName() +"("+ ZigZag.Periods +")";
    SetIndexBuffer(MODE_ZIGZAG_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_ZIGZAG_OPEN,  0); SetIndexLabel(MODE_ZIGZAG_OPEN,  NULL);
    SetIndexBuffer(MODE_ZIGZAG_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_ZIGZAG_CLOSE, 0); SetIndexLabel(MODE_ZIGZAG_CLOSE, NULL);
    SetIndexBuffer(MODE_UPPER_BAND,   upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,   0); SetIndexLabel(MODE_UPPER_BAND,   NULL);
    SetIndexBuffer(MODE_LOWER_BAND,   lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,   0); SetIndexLabel(MODE_LOWER_BAND,   NULL);
    SetIndexBuffer(MODE_UPPER_CROSS,  upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,  0); SetIndexLabel(MODE_UPPER_CROSS,  NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,  lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,  0); SetIndexLabel(MODE_LOWER_CROSS,  NULL);
-   SetIndexBuffer(MODE_TREND,        trend      ); SetIndexEmptyValue(MODE_TREND,        0); SetIndexLabel(MODE_TREND,   shortName +" trend");
-   SetIndexBuffer(MODE_NOTREND,      notrend    ); SetIndexEmptyValue(MODE_NOTREND,      0); SetIndexLabel(MODE_NOTREND, shortName +" waiting");
+   SetIndexBuffer(MODE_TREND,        trend      ); SetIndexEmptyValue(MODE_TREND,        0); SetIndexLabel(MODE_TREND,   indicatorName +" trend");
+   SetIndexBuffer(MODE_NOTREND,      notrend    ); SetIndexEmptyValue(MODE_NOTREND,      0); SetIndexLabel(MODE_NOTREND, indicatorName +" waiting");
 
    // chart legend
    if (!IsSuperContext()) {
@@ -133,7 +135,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   IndicatorShortName(shortName);               // chart tooltips and context menu
+   IndicatorShortName(indicatorName);           // chart tooltips and context menu
    SetIndicatorOptions();
    IndicatorDigits(0);
 
@@ -237,6 +239,9 @@ int onTick() {
          ProcessLowerBandCross(bar);
       }
    }
+
+   if (!IsSuperContext()) UpdateLegend();
+
    return(catch("onTick(3)"));
 
    // notes:
@@ -250,6 +255,42 @@ int onTick() {
       ObjectSet    (label, OBJPROP_WIDTH,     0);
       RegisterObject(label);
    }
+}
+
+
+/**
+ * Update the chart legend.
+ */
+void UpdateLegend() {
+   static double lastTrend, lastNotrend;
+   static datetime lastBarTime;
+
+   // update if trend[0], notrend[0] or the current bar changed
+   if (trend[0]!=lastTrend || notrend[0]!=lastNotrend || Time[0]!=lastBarTime) {
+
+      int iNotrend = notrend[0];
+      int iTrend   = trend[0];
+      if (!iTrend) iTrend = trend[iNotrend];
+
+      string sTrend   = "  "+ NumberToStr(iTrend, "+.");
+      string sNotrend = ifString(!iNotrend, "", " (waiting "+ iNotrend +")");
+
+      string text = StringConcatenate(indicatorName, "    ", sTrend, sNotrend);
+      color clr = ZigZag.Color;
+      if      (clr == Aqua        ) clr = DeepSkyBlue;
+      else if (clr == Gold        ) clr = Orange;
+      else if (clr == LightSkyBlue) clr = C'94,174,255';
+      else if (clr == Lime        ) clr = LimeGreen;
+      else if (clr == Yellow      ) clr = Orange;
+
+      ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
+      int error = GetLastError();
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateLegend(1)", error);     // on Object::onDrag() or opened "Properties" dialog
+   }
+
+   lastTrend   = trend  [0];
+   lastNotrend = notrend[0];
+   lastBarTime = Time   [0];
 }
 
 
