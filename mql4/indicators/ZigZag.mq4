@@ -5,10 +5,11 @@
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
  * Also it can't be used for automation.
  *
- * This version fixes all those issues. Once a ZigZag reversal is drawn it will not change anymore. The indicator uses a
- * Donchian channel for determining possible reversals and draws vertical line segments if a large bar crosses both the upper
- * and the lower channel band. Additionally this indicator can display the trail of a new ZigZag leg as it developed over
- * time which is usefull especially for breakout strategies.
+ * This version fixes all those issues. The display can be changed from ZigZag lines to ZigZag reversal points (semaphores).
+ * Once a ZigZag reversal occurred the reversal point will not change anymore. Like the MetaQuotes version the indicator uses
+ * a Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper
+ * and lower channel band. Additionally this indicator can display the trail of a new ZigZag leg as it developed over time
+ * which is especially usefull for breakout strategies.
  *
  *
  * TODO:
@@ -199,6 +200,7 @@ int onTick() {
 
    // recalculate ZigZag
    for (bar=startbar; bar >= 0; bar--) {
+
       // if no cross (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend  [bar] = trend[bar+1];                                // keep known trend
