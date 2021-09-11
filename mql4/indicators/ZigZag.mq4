@@ -9,11 +9,11 @@
  *
  * TODO:
  *  - implement Max.bars
- *  - fix IndicatorDigits()
  *  - add chart legend
  *  - add InputsToStr()
  *  - add and document iCustom() buffers (1 or 2)
  *  - add signals for new reversals and previous reversal breakouts
+ *  - add breakout markers
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -118,14 +118,14 @@ int onInit() {
 
    // buffer management
    string shortName = ProgramName() +"("+ ZigZag.Periods +")";
-   SetIndexBuffer(MODE_ZIGZAG_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_ZIGZAG_OPEN,  0); SetIndexLabel(MODE_ZIGZAG_OPEN,  "O");
-   SetIndexBuffer(MODE_ZIGZAG_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_ZIGZAG_CLOSE, 0); SetIndexLabel(MODE_ZIGZAG_CLOSE, "C");
+   SetIndexBuffer(MODE_ZIGZAG_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_ZIGZAG_OPEN,  0); SetIndexLabel(MODE_ZIGZAG_OPEN,  NULL);
+   SetIndexBuffer(MODE_ZIGZAG_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_ZIGZAG_CLOSE, 0); SetIndexLabel(MODE_ZIGZAG_CLOSE, NULL);
    SetIndexBuffer(MODE_UPPER_BAND,   upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,   0); SetIndexLabel(MODE_UPPER_BAND,   NULL);
    SetIndexBuffer(MODE_LOWER_BAND,   lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,   0); SetIndexLabel(MODE_LOWER_BAND,   NULL);
    SetIndexBuffer(MODE_UPPER_CROSS,  upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,  0); SetIndexLabel(MODE_UPPER_CROSS,  NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,  lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,  0); SetIndexLabel(MODE_LOWER_CROSS,  NULL);
    SetIndexBuffer(MODE_TREND,        trend      ); SetIndexEmptyValue(MODE_TREND,        0); SetIndexLabel(MODE_TREND,        shortName +" trend");
-   SetIndexBuffer(MODE_NOTREND,      notrend    ); SetIndexEmptyValue(MODE_NOTREND,      0); SetIndexLabel(MODE_NOTREND,      shortName +" unknown");
+   SetIndexBuffer(MODE_NOTREND,      notrend    ); SetIndexEmptyValue(MODE_NOTREND,      0); SetIndexLabel(MODE_NOTREND,      shortName +" waiting");
 
    // chart legend
    if (!IsSuperContext()) {
@@ -135,8 +135,8 @@ int onInit() {
 
    // names, labels and display options
    IndicatorShortName(shortName);               // chart tooltips and context menu
-   //IndicatorDigits(0);
    SetIndicatorOptions();
+   IndicatorDigits(0);
 
    return(catch("onInit(7)"));
 }
