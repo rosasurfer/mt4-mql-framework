@@ -13,7 +13,7 @@
  *  - add InputsToStr()
  *  - add and document iCustom() buffers (1 or 2)
  *  - add signals for new reversals and previous reversal breakouts
- *  - add breakout markers
+ *  - add new leg up/down markers with price value
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -244,6 +244,17 @@ int onTick() {
       }
    }
    return(catch("onTick(3)"));
+
+   // new leg marker
+   string label = "ZigZag("+ ZigZag.Periods +") new leg up at 15'863.90";
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_ARROW, 0, D'2021.09.06 10:00', 15863.90)) {
+      ObjectSet    (label, OBJPROP_ARROWCODE, 161);
+      ObjectSet    (label, OBJPROP_COLOR,     UpperChannel.Color);
+      ObjectSet    (label, OBJPROP_WIDTH,     0);
+      RegisterObject(label);
+   }
 }
 
 

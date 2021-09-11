@@ -2126,27 +2126,27 @@ Objects can have 1-3 coordinates related to type.
 ;OBJPROP_LEVELCOLOR;OBJPROP_LEVELSTYLE;OBJPROP_LEVELWIDTH;
       </keywords>
       <content>
-<p>Object value index used with <a href="help://objects_ObjectGet">ObjectGet()</a> and <a href="help://objects_ObjectSet">ObjectSet()</a> functions. It can be any of the following values:</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="7%">Value</th><th width="8%">Type</th><th width="70%">Description</th></tr>
-<tr><td class="const">OBJPROP_TIME1</td><td>0</td><td>datetime</td><td>Datetime value to set/get first coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE1</td><td>1</td><td>double</td><td>Double value to set/get first coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_TIME2</td><td>2</td><td>datetime</td><td>Datetime value to set/get second coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE2</td><td>3</td><td>double</td><td>Double value to set/get second coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_TIME3</td><td>4</td><td>datetime</td><td>Datetime value to set/get third coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE3</td><td>5</td><td>double</td><td>Double value to set/get third coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_COLOR</td><td>6</td><td>color</td><td>Color value to set/get object color.</td></tr>
+<p>Object property constants used with <a href="help://objects_ObjectGet">ObjectGet()</a> and <a href="help://objects_ObjectSet">ObjectSet()</a>:</p>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="7%">Value</th><th width="8%">Type</th><th width="70%">Description</th></tr>
+<tr><td class="const">OBJPROP_TIME1</td><td>0</td><td>datetime</td><td>Datetime value to set/get an object's first coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE1</td><td>1</td><td>double</td><td>Double value to set/get an object's first coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_TIME2</td><td>2</td><td>datetime</td><td>Datetime value to set/get an object's second coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE2</td><td>3</td><td>double</td><td>Double value to set/get an object's second coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_TIME3</td><td>4</td><td>datetime</td><td>Datetime value to set/get an object's third coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE3</td><td>5</td><td>double</td><td>Double value to set/get an object's third coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_COLOR</td><td>6</td><td>color</td><td>Color value to set/get an object's color.</td></tr>
 <tr><td class="const">OBJPROP_STYLE</td><td>7</td><td>int</td><td>Value is one of <span class="const">STYLE_SOLID</span>, <span class="const">STYLE_DASH</span>, <span class="const">STYLE_DOT</span>, <span class="const">STYLE_DASHDOT</span>, <span class="const">STYLE_DASHDOTDOT</span> constants to set/get object line style.</td></tr>
-<tr><td class="const">OBJPROP_WIDTH</td><td>8</td><td>int</td><td>Integer value to set/get object line width. Can be from 1 to 5.</td></tr>
-<tr><td class="const">OBJPROP_BACK</td><td>9</td><td>bool</td><td>Boolean value to set/get background drawing flag for object.</td></tr>
-<tr><td class="const">OBJPROP_RAY</td><td>10</td><td>bool</td><td>Boolean value to set/get ray flag of object.</td></tr>
-<tr><td class="const">OBJPROP_ELLIPSE</td><td>11</td><td>bool</td><td>Boolean value to set/get ellipse flag for fibo arcs.</td></tr>
-<tr><td class="const">OBJPROP_SCALE</td><td>12</td><td>double</td><td>Double value to set/get scale object property.</td></tr>
-<tr><td class="const">OBJPROP_ANGLE</td><td>13</td><td>double</td><td>Double value to set/get angle object property in degrees.</td></tr>
-<tr><td class="const">OBJPROP_ARROWCODE</td><td>14</td><td>int</td><td>Integer value or <a href="help://constants_arrows">arrow enumeration</a> to set/get arrow code object property.</td></tr>
-<tr><td class="const">OBJPROP_TIMEFRAMES</td><td>15</td><td>int</td><td>Value can be one or combination (bitwise addition) of <a href="help://constants_objects_visible">object visibility constants</a> to set/get timeframe object property.</td></tr>
+<tr><td class="const">OBJPROP_WIDTH</td><td>8</td><td>int</td><td>Integer value to set/get an object's size or line width. Must be non-negative.</td></tr>
+<tr><td class="const">OBJPROP_BACK</td><td>9</td><td>bool</td><td>Boolean value to set/get an object's background drawing flag.</td></tr>
+<tr><td class="const">OBJPROP_RAY</td><td>10</td><td>bool</td><td>Boolean value to set/get an object's ray flag.</td></tr>
+<tr><td class="const">OBJPROP_ELLIPSE</td><td>11</td><td>bool</td><td>Boolean value to set/get the ellipse flag for fibo arcs.</td></tr>
+<tr><td class="const">OBJPROP_SCALE</td><td>12</td><td>double</td><td>Double value to set/get an object's scale property.</td></tr>
+<tr><td class="const">OBJPROP_ANGLE</td><td>13</td><td>double</td><td>Double value in degrees to set/get an object's angle property.</td></tr>
+<tr><td class="const">OBJPROP_ARROWCODE</td><td>14</td><td>int</td><td>Integer value or <a href="help://constants_arrows">arrow enumeration</a> to set/get an object's arrow code property.</td></tr>
+<tr><td class="const">OBJPROP_TIMEFRAMES</td><td>15</td><td>int</td><td>Value can be one or a combination (bitwise OR) of <a href="help://constants_objects_visible">object visibility constants</a> to set/get an object's timeframe property.</td></tr>
 <tr><td class="const">OBJPROP_DEVIATION</td><td>16</td><td>double</td><td>Double value to set/get deviation property for Standard deviation objects.</td></tr>
-<tr><td class="const">OBJPROP_FONTSIZE</td><td>100</td><td>int</td><td>Integer value to set/get font size for text objects.</td></tr>
+<tr><td class="const">OBJPROP_FONTSIZE</td><td>100</td><td>int</td><td>Integer value to set/get the font size for text objects.</td></tr>
 <tr><td class="const">OBJPROP_CORNER</td><td>101</td><td>int</td><td>Integer value to set/get anchor corner property for label objects. Must be from 0-3.</td></tr>
 <tr><td class="const">OBJPROP_XDISTANCE</td><td>102</td><td>int</td><td>Integer value to set/get anchor X distance object property in pixels.</td></tr>
 <tr><td class="const">OBJPROP_YDISTANCE</td><td>103</td><td>int</td><td>Integer value is to set/get anchor Y distance object property in pixels.</td></tr>
