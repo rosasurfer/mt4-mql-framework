@@ -10,7 +10,6 @@
  * TODO:
  *  - implement Max.bars
  *  - add chart legend
- *  - add InputsToStr()
  *  - add and document iCustom() buffers (1 or 2)
  *  - add signals for new reversals and previous reversal breakouts
  *  - add new leg up/down markers with price value
@@ -411,4 +410,24 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(MODE_TREND,   DRAW_NONE);
    SetIndexStyle(MODE_NOTREND, DRAW_NONE);
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("ZigZag.Periods=",       ZigZag.Periods,                  ";", NL,
+                            "ZigZag.Type=",          DoubleQuoteStr(ZigZag.Type),     ";", NL,
+                            "ZigZag.Width=",         ZigZag.Width,                    ";", NL,
+                            "ZigZag.Color=",         ColorToStr(ZigZag.Color),        ";", NL,
+                            "Semaphore.Symbol=",     Semaphore.Symbol,                ";", NL,
+                            "ShowChannel=",          BoolToStr(ShowChannel),          ";", NL,
+                            "ShowChannelBreakouts=", BoolToStr(ShowChannelBreakouts), ";", NL,
+                            "UpperChannel.Color=",   ColorToStr(UpperChannel.Color),  ";", NL,
+                            "LowerChannel.Color=",   ColorToStr(LowerChannel.Color),  ";", NL,
+                            "Max.Bars=",             Max.Bars,                        ";")
+   );
 }
