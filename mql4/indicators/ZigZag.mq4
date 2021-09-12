@@ -13,7 +13,6 @@
  *
  *
  * TODO:
- *  - add new leg up/down markers with price value
  *  - add signals for new reversals and previous reversal breakouts
  *  - move indicator properties below input section (really?)
  *  - restore default values (hide channel and trail)
@@ -40,8 +39,8 @@ int __DeinitFlags[];
 #property indicator_color4    Magenta                       // lower channel band
 #property indicator_style4    STYLE_DOT                     //
 
-#property indicator_color5    indicator_color3              // potential upper reversal points (ZigZag trail)
-#property indicator_color6    indicator_color4              // potential lower reversal points (ZigZag trail)
+#property indicator_color5    indicator_color3              // upper ZigZag point trail
+#property indicator_color6    indicator_color4              // lower ZigZag point trail
 
 #property indicator_color7    CLR_NONE                      // trend buffer
 #property indicator_color8    CLR_NONE                      // notrend buffer
@@ -67,23 +66,28 @@ extern int    Max.Bars           = 10000;                   // max. values to ca
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define MODE_ZIGZAG_OPEN   0     // indicator buffer ids
-#define MODE_ZIGZAG_CLOSE  1
-#define MODE_UPPER_BAND    2
-#define MODE_LOWER_BAND    3
-#define MODE_UPPER_CROSS   4
-#define MODE_LOWER_CROSS   5
-#define MODE_TREND         6
-#define MODE_NOTREND       7
+// breakout direction types
+#define D_LONG    TRADE_DIRECTION_LONG    // 1
+#define D_SHORT  TRADE_DIRECTION_SHORT    // 2
 
-double zigzagOpen [];            // ZigZag semaphores (open price of a vertical segment)
-double zigzagClose[];            // ZigZag semaphores (close price of a vertical segment)
-double upperBand  [];            // upper channel band
-double lowerBand  [];            // lower channel band
-double upperCross [];            // upper band crossings
-double lowerCross [];            // lower band crossings
-double trend      [];            // trend direction and length in bars
-double notrend    [];            // bar periods with not yet known trend direction
+// indicator buffer ids
+#define MODE_ZIGZAG_OPEN             0
+#define MODE_ZIGZAG_CLOSE            1
+#define MODE_UPPER_BAND              2
+#define MODE_LOWER_BAND              3
+#define MODE_UPPER_CROSS             4
+#define MODE_LOWER_CROSS             5
+#define MODE_TREND                   6
+#define MODE_NOTREND                 7
+
+double zigzagOpen [];                     // ZigZag semaphores (open price of a vertical segment)
+double zigzagClose[];                     // ZigZag semaphores (close price of a vertical segment)
+double upperBand  [];                     // upper channel band
+double lowerBand  [];                     // lower channel band
+double upperCross [];                     // upper band crossings
+double lowerCross [];                     // lower band crossings
+double trend      [];                     // trend direction and length in bars
+double notrend    [];                     // bar periods with not yet known trend direction
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -207,7 +211,7 @@ int onTick() {
 
 
       // recalculate ZigZag
-      // if no channel crossing (trend is unknown)
+      // if no channel crossings (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend  [bar] = trend[bar+1];                                // keep known trend
          notrend[bar] = Round(notrend[bar+1] + 1);                   // increase unknown trend
@@ -226,27 +230,29 @@ int onTick() {
                SetTrend(bar, bar, -1);                               // mark a new downtrend
             }
             zigzagClose[bar] = lowerCross[bar];
+            MarkBreakoutLevel(D_SHORT, bar);                         // mark the breakout level
          }
          else {
             prevZZ = ProcessLowerCross(bar);                         // first process the lower crossing
 
             if (notrend[bar] > 0) {                                  // then process the upper crossing
-               SetTrend(prevZZ-1, bar, 1);                           // (it always marks a new down leg)
+               SetTrend(prevZZ-1, bar, 1);                           // (it always marks a new up leg)
                zigzagOpen[bar] = upperCross[bar];
             }
             else {
                SetTrend(bar, bar, 1);                                // mark a new uptrend
             }
             zigzagClose[bar] = upperCross[bar];
+            MarkBreakoutLevel(D_LONG, bar);                          // mark the breakout level
          }
       }
 
-      // if one upper band crossing
+      // if a single upper band crossing
       else if (upperCross[bar] != 0) {
          ProcessUpperCross(bar);
       }
 
-      // if one lower band crossing
+      // if a signle lower band crossing
       else {
          ProcessLowerCross(bar);
       }
@@ -255,18 +261,6 @@ int onTick() {
    if (!IsSuperContext()) UpdateLegend();
 
    return(catch("onTick(3)"));
-
-   // notes:
-   // new leg marker
-   string label = "ZigZag("+ ZigZag.Periods +") new leg up at 15'863.90";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_ARROW, 0, D'2021.09.06 10:00', 15863.90)) {
-      ObjectSet    (label, OBJPROP_ARROWCODE, 161);
-      ObjectSet    (label, OBJPROP_COLOR,     UpperChannel.Color);
-      ObjectSet    (label, OBJPROP_WIDTH,     0);
-      RegisterObject(label);
-   }
 }
 
 
@@ -375,6 +369,7 @@ int ProcessUpperCross(int bar) {
       SetTrend(prevZZ-1, bar, 1);
       zigzagOpen [bar] = upperCross[bar];
       zigzagClose[bar] = upperCross[bar];
+      MarkBreakoutLevel(D_LONG, bar);                          // mark the breakout level
    }
    return(prevZZ);
 }
@@ -414,6 +409,7 @@ int ProcessLowerCross(int bar) {
       SetTrend(prevZZ-1, bar, -1);
       zigzagOpen [bar] = lowerCross[bar];
       zigzagClose[bar] = lowerCross[bar];
+      MarkBreakoutLevel(D_SHORT, bar);                         // mark the breakout level
    }
    return(prevZZ);
 }
@@ -433,6 +429,43 @@ void SetTrend(int from, int to, int value) {
 
       if (value > 0) value++;
       else           value--;
+   }
+}
+
+
+/**
+ * Mark the Donchian channel breakout level of a new ZigZag leg at the specified bar.
+ *
+ * @param  int direction - breakout direction: D_LONG | D_SHORT
+ * @param  int bar       - breakout offset
+ */
+void MarkBreakoutLevel(int direction, int bar) {
+   if (direction!=D_LONG && direction!=D_SHORT) return(catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   string label = "";
+   double price;
+   color  clr;
+
+   if (direction == D_LONG) {
+      price = upperBand[bar+1];
+      if (price > High[bar]) price = High[bar];
+      clr   = ifInt(price==High[bar], CLR_NONE, UpperChannel.Color);
+      label = StringConcatenate(indicatorName, " breakout long at ", NumberToStr(price, PriceFormat));
+   }
+   else {
+      price = lowerBand[bar+1];
+      if (price < Low[bar]) price = Low[bar];
+      clr   = ifInt(price==Low[bar], CLR_NONE, LowerChannel.Color);
+      label = StringConcatenate(indicatorName, " breakout short at ", NumberToStr(price, PriceFormat));
+   }
+
+   if (ObjectFind(label) == 0)
+      ObjectDelete(label);
+   if (ObjectCreate(label, OBJ_ARROW, 0, Time[bar], price)) {
+      ObjectSet    (label, OBJPROP_ARROWCODE, 161);
+      ObjectSet    (label, OBJPROP_COLOR,     clr);
+      ObjectSet    (label, OBJPROP_WIDTH,     0);
+      RegisterObject(label);
    }
 }
 
