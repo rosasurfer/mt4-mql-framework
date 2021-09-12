@@ -298,7 +298,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define B_UPPER                           1     // custom
 
 
-// custom indicator line identifiers
+// custom indicator buffer identifiers
 #define Bands.MODE_MA                     0     // MA value
 #define Bands.MODE_UPPER                  1     // upper band value
 #define Bands.MODE_LOWER                  2     // lower band value
@@ -338,6 +338,15 @@ double  N_INF;                                                    // -1.#INF: ne
 
 #define SuperTrend.MODE_MAIN      MODE_MAIN     // SuperTrend SR line (0)
 #define SuperTrend.MODE_TREND             1     // SuperTrend trend direction and length
+
+#define ZigZag.MODE_REVERSAL_OPEN         0     // ZigZag reversal open price
+#define ZigZag.MODE_REVERSAL_CLOSE        1     // ZigZag reversal close price
+#define ZigZag.MODE_UPPER_BAND            2     // ZigZag upper channel band
+#define ZigZag.MODE_LOWER_BAND            3     // ZigZag lower channel band
+#define ZigZag.MODE_UPPER_CROSS           4     // ZigZag upper channel band crossing
+#define ZigZag.MODE_LOWER_CROSS           5     // ZigZag lower channel band crossing
+#define ZigZag.MODE_TREND                 6     // ZigZag trend
+#define ZigZag.MODE_WAITING               7     // ZigZag unknown trend
 
 
 // sorting modes, see ArraySort()
