@@ -2,14 +2,14 @@
  * Non-repainting ZigZag indicator suitable for automation
  *
  *
- * The ZigZag indicator provided by MetaQuotes is of little use. The algorythm is flawed and the indicator heavily repaints.
- * Also it can't be used for automation.
+ * The ZigZag indicator provided by MetaQuotes is of little use. The implementation is flawed and the indicator heavily
+ * repaints. Also it can't be used for automation.
  *
  * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (semaphores). Once
- * a ZigZag reversal occurred the reversal point will not change anymore. Like the MetaQuotes version the indicator uses a
+ * a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version the indicator uses a
  * Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper and
- * lower channel band. Additionally this indicator can display the trail of a new ZigZag leg as it develops over time which
- * is especially usefull for breakout strategies.
+ * lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developed over time which is
+ * especially useful for breakout strategies.
  *
  *
  * TODO:
@@ -187,23 +187,31 @@ int onTick() {
    int startbar = Min(bars-1, Bars-zigzagPeriods);
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
 
-   // recalculate Donchian channel and crossings (potential ZigZag reversals)
+   // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
+      zigzagOpen [bar] = 0;
+      zigzagClose[bar] = 0;
+      upperBand  [bar] = 0;
+      lowerBand  [bar] = 0;
+      upperCross [bar] = 0;
+      lowerCross [bar] = 0;
+      trend      [bar] = 0;
+      notrend    [bar] = 0;
+
+      // recalculate Donchian channel and crossings (potential ZigZag reversals)
       int iH = iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar);
       int iL =  iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar);
-
       upperBand[bar] = High[iH];
       lowerBand[bar] =  Low[iL];
 
-      if (High[bar] == upperBand[bar]) upperCross[bar] = upperBand[bar];
-      else                             upperCross[bar] = 0;
-      if (Low[bar] == lowerBand[bar]) lowerCross[bar] = lowerBand[bar];
-      else                            lowerCross[bar] = 0;
-   }
+      if (High[bar] == upperBand[bar]) {
+         upperCross[bar] = upperBand[bar];
+      }
+      if (Low[bar] == lowerBand[bar]) {
+         lowerCross[bar] = lowerBand[bar];
+      }
 
-   // recalculate ZigZag
-   for (bar=startbar; bar >= 0; bar--) {
-
+      // recalculate ZigZag
       // if no cross (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend  [bar] = trend[bar+1];                                // keep known trend
