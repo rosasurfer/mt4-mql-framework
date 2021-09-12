@@ -8,20 +8,18 @@
  * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (semaphores). Once
  * a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version the indicator uses a
  * Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper and
- * lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developed over time which is
+ * lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time which is
  * especially useful for breakout strategies.
  *
  *
  * TODO:
  *  - add signals for new reversals and previous reversal breakouts
- *  - move indicator properties below input section (really?)
- *  - restore default values (hide channel and trail)
- *  - rename notrend[] to waiting[]
- *  - rename buffer constants
  *  - add auto-configuration
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
+ *  - move indicator properties below input section (really?)
+ *  - restore default values (hide channel and trail)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -67,27 +65,27 @@ extern int    Max.Bars           = 10000;                   // max. values to ca
 #include <rsfLibs.mqh>
 
 // breakout direction types
-#define D_LONG    TRADE_DIRECTION_LONG    // 1
-#define D_SHORT  TRADE_DIRECTION_SHORT    // 2
+#define D_LONG    TRADE_DIRECTION_LONG                   // 1
+#define D_SHORT   TRADE_DIRECTION_SHORT                  // 2
 
 // indicator buffer ids
-#define MODE_ZIGZAG_OPEN             0
-#define MODE_ZIGZAG_CLOSE            1
-#define MODE_UPPER_BAND              2
-#define MODE_LOWER_BAND              3
-#define MODE_UPPER_CROSS             4
-#define MODE_LOWER_CROSS             5
-#define MODE_TREND                   6
-#define MODE_NOTREND                 7
+#define MODE_REVERSAL_OPEN    ZigZag.MODE_REVERSAL_OPEN  // 0: reversal open price
+#define MODE_REVERSAL_CLOSE   ZigZag.MODE_REVERSAL_CLOSE // 1: reversal close price
+#define MODE_UPPER_BAND       ZigZag.MODE_UPPER_BAND     // 2: upper channel band
+#define MODE_LOWER_BAND       ZigZag.MODE_LOWER_BAND     // 3: lower channel band
+#define MODE_UPPER_CROSS      ZigZag.MODE_UPPER_CROSS    // 4: upper channel band crossing
+#define MODE_LOWER_CROSS      ZigZag.MODE_LOWER_CROSS    // 5: lower channel band crossing
+#define MODE_TREND            ZigZag.MODE_TREND          // 6: trend
+#define MODE_WAITING          ZigZag.MODE_WAITING        // 7: unknown trend
 
-double zigzagOpen [];                     // ZigZag semaphores (open price of a vertical segment)
-double zigzagClose[];                     // ZigZag semaphores (close price of a vertical segment)
-double upperBand  [];                     // upper channel band
-double lowerBand  [];                     // lower channel band
-double upperCross [];                     // upper band crossings
-double lowerCross [];                     // lower band crossings
-double trend      [];                     // trend direction and length in bars
-double notrend    [];                     // bar periods with not yet known trend direction
+double zigzagOpen [];                                    // ZigZag semaphores (open price of a vertical segment)
+double zigzagClose[];                                    // ZigZag semaphores (close price of a vertical segment)
+double upperBand  [];                                    // upper channel band
+double lowerBand  [];                                    // lower channel band
+double upperCross [];                                    // upper band crossings
+double lowerCross [];                                    // lower band crossings
+double trend      [];                                    // trend direction and length
+double notrend    [];                                    // bar periods with not yet known trend direction
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -131,14 +129,14 @@ int onInit() {
 
    // buffer management
    indicatorName = ProgramName() +"("+ ZigZag.Periods +")";
-   SetIndexBuffer(MODE_ZIGZAG_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_ZIGZAG_OPEN,  0); SetIndexLabel(MODE_ZIGZAG_OPEN,  NULL);
-   SetIndexBuffer(MODE_ZIGZAG_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_ZIGZAG_CLOSE, 0); SetIndexLabel(MODE_ZIGZAG_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,   upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,   0); SetIndexLabel(MODE_UPPER_BAND,   NULL);
-   SetIndexBuffer(MODE_LOWER_BAND,   lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,   0); SetIndexLabel(MODE_LOWER_BAND,   NULL);
-   SetIndexBuffer(MODE_UPPER_CROSS,  upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,  0); SetIndexLabel(MODE_UPPER_CROSS,  NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS,  lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,  0); SetIndexLabel(MODE_LOWER_CROSS,  NULL);
-   SetIndexBuffer(MODE_TREND,        trend      ); SetIndexEmptyValue(MODE_TREND,        0); SetIndexLabel(MODE_TREND,   indicatorName +" trend");
-   SetIndexBuffer(MODE_NOTREND,      notrend    ); SetIndexEmptyValue(MODE_NOTREND,      0); SetIndexLabel(MODE_NOTREND, indicatorName +" waiting");
+   SetIndexBuffer(MODE_REVERSAL_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_REVERSAL_OPEN,  0); SetIndexLabel(MODE_REVERSAL_OPEN,  NULL);
+   SetIndexBuffer(MODE_REVERSAL_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_REVERSAL_CLOSE, 0); SetIndexLabel(MODE_REVERSAL_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     NULL);
+   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     NULL);
+   SetIndexBuffer(MODE_UPPER_CROSS,    upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,    0); SetIndexLabel(MODE_UPPER_CROSS,    NULL);
+   SetIndexBuffer(MODE_LOWER_CROSS,    lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,    0); SetIndexLabel(MODE_LOWER_CROSS,    NULL);
+   SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,   indicatorName +" trend");
+   SetIndexBuffer(MODE_WAITING,        notrend    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING, indicatorName +" waiting");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
@@ -275,7 +273,7 @@ void UpdateLegend() {
    if (trend[0]!=lastTrend || notrend[0]!=lastNotrend || Time[0]!=lastBarTime) {
       int    iNotrend = notrend[0];
       string sTrend   = "  "+ NumberToStr(trend[0], "+.");
-      string sNotrend = ifString(!iNotrend, "", " (waiting "+ iNotrend +")");
+      string sNotrend = ifString(!iNotrend, "", " (waiting: "+ iNotrend +")");
 
       string text = StringConcatenate(indicatorName, "    ", sTrend, sNotrend);
       color clr = ZigZag.Color;
@@ -480,8 +478,8 @@ void SetIndicatorOptions() {
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
-   SetIndexStyle(MODE_ZIGZAG_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_OPEN,  Semaphores.Symbol);
-   SetIndexStyle(MODE_ZIGZAG_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_ZIGZAG_CLOSE, Semaphores.Symbol);
+   SetIndexStyle(MODE_REVERSAL_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_OPEN,  Semaphores.Symbol);
+   SetIndexStyle(MODE_REVERSAL_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_CLOSE, Semaphores.Symbol);
 
    drawType = ifInt(ShowZigZagChannel, DRAW_LINE, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
@@ -492,7 +490,7 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_CROSS, 161);   // ...
 
    SetIndexStyle(MODE_TREND,   DRAW_NONE);
-   SetIndexStyle(MODE_NOTREND, DRAW_NONE);
+   SetIndexStyle(MODE_WAITING, DRAW_NONE);
 }
 
 
