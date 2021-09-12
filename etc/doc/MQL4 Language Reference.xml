@@ -3781,7 +3781,7 @@ custom or non-standard timeseries. The first dimension of the target array holds
 
 <br/>
 <br/>
-<b>Changes in MQL4.5 (terminal builds > 509):</b>
+<b>Changes in MQL5 for MetaTrader 4 (terminal builds > 509):</b>
 <br/>
 Calling the function with a target parameter of type <span class="type">double[][]</span> now allocates new memory and performs a deep copy of the
 timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs
@@ -4763,7 +4763,7 @@ Optional data output mode can be one or combination of:<br/>
       <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
           Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
 <br/>
-<b>Changes in MQL4.5 (terminal builds > 509):</b><br/>
+<b>Changes in MQL5 for MetaTrader 4 (terminal builds > 509):</b><br/>
 For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see
 <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
 <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.
@@ -9343,41 +9343,39 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iHighest()
       type=int
       <content>
-      Returns the offset of the maximum value over the specific number of periods.<br/>
-      <br/>
-      Note:<br/>
-      Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
+      Returns the offset of the maximum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      of the oldest maximum.<br/>
       </content>
       <example>
-  // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
-  double val = High[iHighest(NULL, 0, MODE_HIGH, 20, 4)];
+<span class="comment code">// getting the highest high of 20 bars in the range from bar offset 4 to 23</span>
+<span class="type code">double</span> value = <span class="global code">High</span>[<span class="function code">iHighest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_HIGH</span>, <span class="number code">20</span>, <span class="number code">4</span>)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the data series. <span class="const">NULL</span> means the current chart symbol.
+        description=symbol of the data series (<span class="const">NULL</span>: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
+        description=<a href="help://constants_timeframes">timeframe</a> of the data series (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
+        description=<a href="help://constants_series">price type</a> of the values to inspect
       </parameter>
       <parameter>
         type=int
         name=periods
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Number of periods to inspect (counting from start backwards).
+        description=number of periods to inspect
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Bar offset to start from.
+        description=bar offset to start from
       </parameter>
     </function>
 
@@ -9417,41 +9415,39 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iLowest()
       type=int
       <content>
-      Returns the offset of the minimum value over the specific number of periods.<br/>
-      <br/>
-      Note:<br/>
-      Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
+      Returns the offset of the minimum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      of the oldest minimum.<br/>
       </content>
       <example>
-// getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index
-double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
+<span class="comment code">// getting the lowest low of 10 bars in the range from bar offset 10 to 19</span>
+<span class="type code">double</span> value = <span class="global code">Low</span>[<span class="function code">iLowest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_LOW</span>, <span class="number code">10</span>, <span class="number code">10</span>)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the data series. <span class="const">NULL</span> means the current chart symbol.
+        description=symbol of the data series (<span class="const">NULL</span>: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
+        description=<a href="help://constants_timeframes">timeframe</a> of the data series (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
+        description=<a href="help://constants_series">price type</a> of the values to inspect
       </parameter>
       <parameter>
         type=int
         name=periods
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Number of periods to inspect (counting from start backwards).
+        description=number of periods to inspect
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Bar offset to start from.
+        description=bar offset to start from
       </parameter>
     </function>
 
