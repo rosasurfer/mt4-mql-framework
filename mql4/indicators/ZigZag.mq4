@@ -13,12 +13,12 @@
  *
  *
  * TODO:
- *  - remove trail markers not reaching a new high/low
  *  - add new leg up/down markers with price value
  *  - add signals for new reversals and previous reversal breakouts
  *  - move indicator properties below input section (really?)
  *  - restore default values (hide channel and trail)
  *  - rename notrend[] to waiting[]
+ *  - rename buffer constants
  *  - add auto-configuration
  *  - document iCustom() usage
  *  - document inputs
@@ -199,17 +199,11 @@ int onTick() {
       notrend    [bar] = 0;
 
       // recalculate Donchian channel and crossings (potential ZigZag reversals)
-      int iH = iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar);
-      int iL =  iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar);
-      upperBand[bar] = High[iH];
-      lowerBand[bar] =  Low[iL];
+      upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar)];
+      lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar)];
+      if (High[bar] == upperBand[bar]) upperCross[bar] = upperBand[bar];
+      if ( Low[bar] == lowerBand[bar]) lowerCross[bar] = lowerBand[bar];
 
-      if (High[bar] == upperBand[bar]) {
-         upperCross[bar] = upperBand[bar];
-      }
-      if (Low[bar] == lowerBand[bar]) {
-         lowerCross[bar] = lowerBand[bar];
-      }
 
       // recalculate ZigZag
       // if no cross (trend is unknown)
@@ -371,8 +365,9 @@ int ProcessUpperBandCross(int bar) {
          zigzagClose[bar] = upperCross[bar];
       }
       else {                                                   // a lower high
-         trend  [bar] = trend[bar+1];                          // keep known trend
-         notrend[bar] = Round(notrend[bar+1] + 1);             // increase unknown trend
+         upperCross[bar] = 0;                                  // reset cross marker
+         trend     [bar] = trend[bar+1];                       // keep known trend
+         notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
    else {                                                      // start a new uptrend
@@ -409,8 +404,9 @@ int ProcessLowerBandCross(int bar) {
          zigzagClose[bar] = lowerCross[bar];
       }
       else {                                                   // a higher low
-         trend  [bar] = trend[bar+1];                          // keep known trend
-         notrend[bar] = Round(notrend[bar+1] + 1);             // increase unknown trend
+         lowerCross[bar] = 0;                                  // reset cross marker
+         trend     [bar] = trend[bar+1];                       // keep known trend
+         notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
    else {                                                      // start a new downtrend
