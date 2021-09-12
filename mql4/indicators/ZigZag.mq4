@@ -20,6 +20,7 @@
  *  - rename notrend[] to waiting[]
  *  - rename buffer constants
  *  - add auto-configuration
+ *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
  */
@@ -206,48 +207,48 @@ int onTick() {
 
 
       // recalculate ZigZag
-      // if no cross (trend is unknown)
+      // if no channel crossing (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend  [bar] = trend[bar+1];                                // keep known trend
          notrend[bar] = Round(notrend[bar+1] + 1);                   // increase unknown trend
       }
 
-      // if double cross (upper and lower band crossed by the same bar)
+      // if two crossings (upper and lower band crossed by the same bar)
       else if (upperCross[bar] && lowerCross[bar]) {
          if (IsUpperCrossFirst(bar)) {
-            int prevZZ = ProcessUpperBandCross(bar);                 // first process the upper band cross
+            int prevZZ = ProcessUpperCross(bar);                     // first process the upper crossing
 
-            if (notrend[bar] > 0) {                                  // then process the lower band cross
-               SetTrend(prevZZ-1, bar, -1);                          // mark a new downtrend
+            if (notrend[bar] > 0) {                                  // then process the lower crossing
+               SetTrend(prevZZ-1, bar, -1);                          // (it always marks a new down leg)
                zigzagOpen[bar] = lowerCross[bar];
             }
             else {
-               SetTrend(bar, bar, -1);
+               SetTrend(bar, bar, -1);                               // mark a new downtrend
             }
             zigzagClose[bar] = lowerCross[bar];
          }
          else {
-            prevZZ = ProcessLowerBandCross(bar);                     // first process the lower band cross
+            prevZZ = ProcessLowerCross(bar);                         // first process the lower crossing
 
-            if (notrend[bar] > 0) {                                  // then process the upper band cross
-               SetTrend(prevZZ-1, bar, 1);                           // mark a new uptrend
+            if (notrend[bar] > 0) {                                  // then process the upper crossing
+               SetTrend(prevZZ-1, bar, 1);                           // (it always marks a new down leg)
                zigzagOpen[bar] = upperCross[bar];
             }
             else {
-               SetTrend(bar, bar, 1);
+               SetTrend(bar, bar, 1);                                // mark a new uptrend
             }
             zigzagClose[bar] = upperCross[bar];
          }
       }
 
-      // if only upper band cross
+      // if one upper band crossing
       else if (upperCross[bar] != 0) {
-         ProcessUpperBandCross(bar);
+         ProcessUpperCross(bar);
       }
 
-      // if only lower band cross
+      // if one lower band crossing
       else {
-         ProcessLowerBandCross(bar);
+         ProcessLowerCross(bar);
       }
    }
 
@@ -324,18 +325,18 @@ bool IsUpperCrossFirst(int bar) {
 
 
 /**
- * Resolve the offset of the last previously drawn ZigZag point before the specified startbar. May be in same or opposite
- * trend direction.
+ * Resolve the bar offset of the last ZigZag point preceeding the specified startbar. May be in same or opposite trend
+ * direction.
  *
  * @param  int bar - startbar offset
  *
- * @return int - ZigZag point bar offset or the previous bar offset if no ZigZag point was yet drawn
+ * @return int - point offset or the previous bar offset if no previous ZigZag point exists
  */
 int GetPreviousZigZagPoint(int bar) {
-   bar++;
-   if      (notrend[bar] > 0) int zzOffset = bar + notrend[bar];
-   else if (!zigzagClose[bar])    zzOffset = bar + Abs(trend[bar]);
-   else                           zzOffset = bar;
+   int nextBar = bar + 1;
+   if      (notrend[nextBar] > 0) int zzOffset = nextBar + notrend[nextBar];
+   else if (!zigzagClose[nextBar])    zzOffset = nextBar + Abs(trend[nextBar]);
+   else                               zzOffset = nextBar;
    return(zzOffset);
 }
 
@@ -345,32 +346,32 @@ int GetPreviousZigZagPoint(int bar) {
  *
  * @param  int  bar - offset
  *
- * @return int - bar offset of the last previously drawn ZigZag point (same or opposite direction)
+ * @return int - bar offset of the previous ZigZag reversal (same or opposite trend direction)
  */
-int ProcessUpperBandCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                // bar offset of the last previously drawn ZigZag point (same or opposite direction)
-   int prevTrend = trend[prevZZ];                              // trend at the last drawn ZigZag point
+int ProcessUpperCross(int bar) {
+   int prevZZ    = GetPreviousZigZagPoint(bar);                // bar offset of the previous ZigZag reversal (same or opposite trend direction)
+   int prevTrend = trend[prevZZ];                              // trend at the previous ZigZag reversal
 
    if (prevTrend > 0) {                                        // an uptrend continuation
       if (upperCross[bar] > upperCross[prevZZ]) {              // a new high
          SetTrend(prevZZ, bar, prevTrend);                     // update existing trend
-         if (zigzagOpen[prevZZ] == zigzagClose[prevZZ]) {      // mark new high
+         if (zigzagOpen[prevZZ] == zigzagClose[prevZZ]) {      // reset previous reversal marker
             zigzagOpen [prevZZ] = 0;
             zigzagClose[prevZZ] = 0;
          }
          else {
             zigzagClose[prevZZ] = zigzagOpen[prevZZ];
          }
-         zigzagOpen [bar] = upperCross[bar];
+         zigzagOpen [bar] = upperCross[bar];                   // set new reversal marker
          zigzagClose[bar] = upperCross[bar];
       }
       else {                                                   // a lower high
-         upperCross[bar] = 0;                                  // reset cross marker
+         upperCross[bar] = 0;                                  // reset channel cross marker
          trend     [bar] = trend[bar+1];                       // keep known trend
          notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
-   else {                                                      // start a new uptrend
+   else {                                                      // mark a new uptrend
       SetTrend(prevZZ-1, bar, 1);
       zigzagOpen [bar] = upperCross[bar];
       zigzagClose[bar] = upperCross[bar];
@@ -384,32 +385,32 @@ int ProcessUpperBandCross(int bar) {
  *
  * @param  int bar - offset
  *
- * @return int - bar offset of the last previously drawn ZigZag point (same or opposite direction)
+ * @return int - bar offset of the previous ZigZag reversal (same or opposite trend direction)
  */
-int ProcessLowerBandCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                // bar offset of the last previously drawn ZigZag point (same or opposite direction)
-   int prevTrend = trend[prevZZ];                              // trend at the last drawn ZigZag point
+int ProcessLowerCross(int bar) {
+   int prevZZ    = GetPreviousZigZagPoint(bar);                // bar offset of the previous ZigZag reversal (same or opposite trend direction)
+   int prevTrend = trend[prevZZ];                              // trend at the previous ZigZag reversal
 
    if (prevTrend < 0) {                                        // a downtrend continuation
       if (lowerCross[bar] < lowerCross[prevZZ]) {              // a new low
          SetTrend(prevZZ, bar, prevTrend);                     // update existing trend
-         if (zigzagOpen[prevZZ] == zigzagClose[prevZZ]) {      // mark new low
+         if (zigzagOpen[prevZZ] == zigzagClose[prevZZ]) {      // reset previous reversal marker
             zigzagOpen [prevZZ] = 0;
             zigzagClose[prevZZ] = 0;
          }
          else {
             zigzagClose[prevZZ] = zigzagOpen[prevZZ];
          }
-         zigzagOpen [bar] = lowerCross[bar];
+         zigzagOpen [bar] = lowerCross[bar];                   // set new reversal marker
          zigzagClose[bar] = lowerCross[bar];
       }
       else {                                                   // a higher low
-         lowerCross[bar] = 0;                                  // reset cross marker
+         lowerCross[bar] = 0;                                  // reset channel cross marker
          trend     [bar] = trend[bar+1];                       // keep known trend
          notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
-   else {                                                      // start a new downtrend
+   else {                                                      // mark a new downtrend
       SetTrend(prevZZ-1, bar, -1);
       zigzagOpen [bar] = lowerCross[bar];
       zigzagClose[bar] = lowerCross[bar];
