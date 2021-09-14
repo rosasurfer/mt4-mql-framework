@@ -5,17 +5,17 @@
  * The ZigZag indicator provided by MetaQuotes is of little use. The implementation is flawed and the indicator heavily
  * repaints. Also it can't be used for automation.
  *
- * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (semaphores). Once
- * a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version the indicator uses a
- * Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper and
- * lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time which is
- * especially useful for breakout strategies.
+ * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores).
+ * Once a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version the indicator uses
+ * a Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper
+ * and lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time which
+ * is especially useful for breakout strategies.
  *
  *
  * TODO:
  *  - add signals for new reversals
  *  - add auto-configuration
- *  - implement magic value for double crossings of Donchian channel
+ *  - implement magic value for double crossings of channel
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
@@ -38,11 +38,11 @@ int __DeinitFlags[];
 #property indicator_color4    Magenta                          // lower channel band
 #property indicator_style4    STYLE_DOT                        //
 
-#property indicator_color5    indicator_color3                 // upper ZigZag point trail
-#property indicator_color6    indicator_color4                 // lower ZigZag point trail
+#property indicator_color5    indicator_color3                 // trail of upward ZigZag leg
+#property indicator_color6    indicator_color4                 // trail of downward ZigZag leg
 
 #property indicator_color7    CLR_NONE                         // trend buffer
-#property indicator_color8    CLR_NONE                         // notrend buffer
+#property indicator_color8    CLR_NONE                         // notrend buffer (waiting)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
