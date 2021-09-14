@@ -13,7 +13,6 @@
  *
  *
  * TODO:
- *  - fix breakout markers in tick mode
  *  - add signals for new reversals
  *  - add auto-configuration
  *  - implement magic value for double crossings of Donchian channel
@@ -47,7 +46,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods          = 36;                    // 12 lookback periods of the Donchian channel
+extern int    ZigZag.Periods          = 10;                    // 12 lookback periods of the Donchian channel
 extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, can be shortened to "L | S"
 extern int    ZigZag.Width            = indicator_width1;
 extern color  ZigZag.Color            = indicator_color1;
@@ -371,11 +370,12 @@ int ProcessUpperCross(int bar) {
          notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
-   else {                                                      // mark a new uptrend
-      SetTrend(prevZZ-1, bar, 1);
+   else {                                                      // a new uptrend
+      if (trend[bar+1] < 0 || notrend[bar+1])
+         MarkBreakoutLevel(D_LONG, bar);                       // mark the breakout
+      SetTrend(prevZZ-1, bar, 1);                              // set the trend
       zigzagOpen [bar] = upperCross[bar];
       zigzagClose[bar] = upperCross[bar];
-      MarkBreakoutLevel(D_LONG, bar);                          // mark the breakout level
    }
    return(prevZZ);
 }
@@ -411,11 +411,12 @@ int ProcessLowerCross(int bar) {
          notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
       }
    }
-   else {                                                      // mark a new downtrend
-      SetTrend(prevZZ-1, bar, -1);
+   else {                                                      // a new downtrend
+      if (trend[bar+1] > 0 || notrend[bar+1])
+         MarkBreakoutLevel(D_SHORT, bar);                      // mark the breakout
+      SetTrend(prevZZ-1, bar, -1);                             // set the trend
       zigzagOpen [bar] = lowerCross[bar];
       zigzagClose[bar] = lowerCross[bar];
-      MarkBreakoutLevel(D_SHORT, bar);                         // mark the breakout level
    }
    return(prevZZ);
 }
@@ -448,22 +449,23 @@ void SetTrend(int from, int to, int value) {
 void MarkBreakoutLevel(int direction, int bar) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   string label = "";
+   string sDirection = "";
    double price;
    color  clr;
 
    if (direction == D_LONG) {
+      sDirection = "long";
       price = upperBand[bar+1];
       if (price > High[bar]) price = High[bar];
-      clr   = ifInt(price==High[bar], CLR_NONE, UpperChannel.Color);
-      label = StringConcatenate(indicatorName, " long breakout at ", NumberToStr(price, PriceFormat), "  [", bar, "]");
+      clr = ifInt(price==High[bar], CLR_NONE, UpperChannel.Color);
    }
    else {
+      sDirection = "short";
       price = lowerBand[bar+1];
       if (price < Low[bar]) price = Low[bar];
-      clr   = ifInt(price==Low[bar], CLR_NONE, LowerChannel.Color);
-      label = StringConcatenate(indicatorName, " short breakout at ", NumberToStr(price, PriceFormat), "  [", bar, "]");
+      clr = ifInt(price==Low[bar], CLR_NONE, LowerChannel.Color);
    }
+   string label = StringConcatenate(indicatorName, " ", sDirection, " breakout at ", NumberToStr(price, PriceFormat), NL, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
