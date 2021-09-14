@@ -13,8 +13,10 @@
  *
  *
  * TODO:
- *  - add signals for new reversals and previous reversal breakouts
+ *  - fix breakout markers in tick mode
+ *  - add signals for new reversals
  *  - add auto-configuration
+ *  - implement magic value for double crossings of Donchian channel
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
@@ -28,36 +30,42 @@ int __DeinitFlags[];
 #property indicator_chart_window
 #property indicator_buffers   8
 
-#property indicator_color1    Blue                          // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
 #property indicator_width1    1
 #property indicator_color2    CLR_NONE
 
-#property indicator_color3    DodgerBlue                    // upper channel band
-#property indicator_style3    STYLE_DOT                     //
-#property indicator_color4    Magenta                       // lower channel band
-#property indicator_style4    STYLE_DOT                     //
+#property indicator_color3    DodgerBlue                       // upper channel band
+#property indicator_style3    STYLE_DOT                        //
+#property indicator_color4    Magenta                          // lower channel band
+#property indicator_style4    STYLE_DOT                        //
 
-#property indicator_color5    indicator_color3              // upper ZigZag point trail
-#property indicator_color6    indicator_color4              // lower ZigZag point trail
+#property indicator_color5    indicator_color3                 // upper ZigZag point trail
+#property indicator_color6    indicator_color4                 // lower ZigZag point trail
 
-#property indicator_color7    CLR_NONE                      // trend buffer
-#property indicator_color8    CLR_NONE                      // notrend buffer
+#property indicator_color7    CLR_NONE                         // trend buffer
+#property indicator_color8    CLR_NONE                         // notrend buffer
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods     = 10;                      // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type        = "Line | Semaphores*";    // a ZigZag line or reversal points, may be shortened to "l | s"
-extern int    ZigZag.Width       = indicator_width1;
-extern color  ZigZag.Color       = indicator_color1;
+extern int    ZigZag.Periods          = 36;                    // 12 lookback periods of the Donchian channel
+extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, can be shortened to "L | S"
+extern int    ZigZag.Width            = indicator_width1;
+extern color  ZigZag.Color            = indicator_color1;
 
-extern int    Semaphores.Symbol  = 108;                     // that's a small dot
+extern int    Semaphores.Symbol       = 108;                   // that's a small dot
 
-extern bool   ShowZigZagChannel  = true;
-extern bool   ShowZigZagTrail    = true;
-extern color  UpperChannel.Color = indicator_color3;
-extern color  LowerChannel.Color = indicator_color4;
+extern bool   ShowZigZagChannel       = true;
+extern bool   ShowZigZagTrail         = true;
+extern color  UpperChannel.Color      = indicator_color3;
+extern color  LowerChannel.Color      = indicator_color4;
+extern int    Max.Bars                = 10000;                 // max. values to calculate (-1: all available)
 
-extern int    Max.Bars           = 10000;                   // max. values to calculate (-1: all available)
+extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
+extern bool   Signal.onReversal       = false;
+extern bool   Signal.onReversal.Sound = false;
+extern bool   Signal.onReversal.Popup = true;
+extern bool   Signal.onReversal.Mail  = false;
+extern bool   Signal.onReversal.SMS   = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -131,17 +139,17 @@ int onInit() {
    indicatorName = ProgramName() +"("+ ZigZag.Periods +")";
    SetIndexBuffer(MODE_REVERSAL_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_REVERSAL_OPEN,  0); SetIndexLabel(MODE_REVERSAL_OPEN,  NULL);
    SetIndexBuffer(MODE_REVERSAL_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_REVERSAL_CLOSE, 0); SetIndexLabel(MODE_REVERSAL_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     NULL);
-   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     indicatorName +" upper band");
+   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     indicatorName +" lower band");
    SetIndexBuffer(MODE_UPPER_CROSS,    upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,    0); SetIndexLabel(MODE_UPPER_CROSS,    NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,    lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,    0); SetIndexLabel(MODE_LOWER_CROSS,    NULL);
-   SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,   indicatorName +" trend");
-   SetIndexBuffer(MODE_WAITING,        notrend    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING, indicatorName +" waiting");
+   SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          indicatorName +" trend");
+   SetIndexBuffer(MODE_WAITING,        notrend    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING,        indicatorName +" waiting");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
    SetIndicatorOptions();
-   IndicatorDigits(0);
+   IndicatorDigits(Digits);
 
    if (!IsSuperContext()) {
        legendLabel = CreateLegendLabel();
@@ -438,7 +446,7 @@ void SetTrend(int from, int to, int value) {
  * @param  int bar       - breakout offset
  */
 void MarkBreakoutLevel(int direction, int bar) {
-   if (direction!=D_LONG && direction!=D_SHORT) return(catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    string label = "";
    double price;
@@ -448,13 +456,13 @@ void MarkBreakoutLevel(int direction, int bar) {
       price = upperBand[bar+1];
       if (price > High[bar]) price = High[bar];
       clr   = ifInt(price==High[bar], CLR_NONE, UpperChannel.Color);
-      label = StringConcatenate(indicatorName, " breakout long at ", NumberToStr(price, PriceFormat));
+      label = StringConcatenate(indicatorName, " long breakout at ", NumberToStr(price, PriceFormat), "  [", bar, "]");
    }
    else {
       price = lowerBand[bar+1];
       if (price < Low[bar]) price = Low[bar];
       clr   = ifInt(price==Low[bar], CLR_NONE, LowerChannel.Color);
-      label = StringConcatenate(indicatorName, " breakout short at ", NumberToStr(price, PriceFormat));
+      label = StringConcatenate(indicatorName, " short breakout at ", NumberToStr(price, PriceFormat), "  [", bar, "]");
    }
 
    if (ObjectFind(label) == 0)
@@ -500,15 +508,21 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",     ZigZag.Periods,                 ";", NL,
-                            "ZigZag.Type=",        DoubleQuoteStr(ZigZag.Type),    ";", NL,
-                            "ZigZag.Width=",       ZigZag.Width,                   ";", NL,
-                            "ZigZag.Color=",       ColorToStr(ZigZag.Color),       ";", NL,
-                            "Semaphores.Symbol=",  Semaphores.Symbol,              ";", NL,
-                            "ShowZigZagChannel=",  BoolToStr(ShowZigZagChannel),   ";", NL,
-                            "ShowZigZagTrail=",    BoolToStr(ShowZigZagTrail),     ";", NL,
-                            "UpperChannel.Color=", ColorToStr(UpperChannel.Color), ";", NL,
-                            "LowerChannel.Color=", ColorToStr(LowerChannel.Color), ";", NL,
-                            "Max.Bars=",           Max.Bars,                       ";")
+   return(StringConcatenate("ZigZag.Periods=",          ZigZag.Periods,                     ";", NL,
+                            "ZigZag.Type=",             DoubleQuoteStr(ZigZag.Type),        ";", NL,
+                            "ZigZag.Width=",            ZigZag.Width,                       ";", NL,
+                            "ZigZag.Color=",            ColorToStr(ZigZag.Color),           ";", NL,
+                            "Semaphores.Symbol=",       Semaphores.Symbol,                  ";", NL,
+                            "ShowZigZagChannel=",       BoolToStr(ShowZigZagChannel),       ";", NL,
+                            "ShowZigZagTrail=",         BoolToStr(ShowZigZagTrail),         ";", NL,
+                            "UpperChannel.Color=",      ColorToStr(UpperChannel.Color),     ";", NL,
+                            "LowerChannel.Color=",      ColorToStr(LowerChannel.Color),     ";", NL,
+                            "Max.Bars=",                Max.Bars,                           ";", NL,
+
+                            "Signal.onReversal=",       BoolToStr(Signal.onReversal),       ";", NL,
+                            "Signal.onReversal.Sound=", BoolToStr(Signal.onReversal.Sound), ";", NL,
+                            "Signal.onReversal.Popup=", BoolToStr(Signal.onReversal.Popup), ";", NL,
+                            "Signal.onReversal.Mail=",  BoolToStr(Signal.onReversal.Mail),  ";", NL,
+                            "Signal.onReversal.SMS=",   BoolToStr(Signal.onReversal.SMS),   ";")
    );
 }
