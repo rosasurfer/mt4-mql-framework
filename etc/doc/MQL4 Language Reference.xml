@@ -356,8 +356,8 @@ C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
       keywords=;datetime;
       <content>
 <p>Datetime values can be expressed as literals consisting of values for year, month, date, hours, minutes and seconds. Literals are enclosed in single quotes
-and start with the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be skipped.
-Datetime literals can cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
+and preceeded by the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be omitted.
+Datetime literals cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
 D<span class="string code">'2004.01.01 00:00'</span>           <span class="comment code">// New Year</span>
