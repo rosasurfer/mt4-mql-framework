@@ -457,13 +457,13 @@ void MarkBreakoutLevel(int direction, int bar) {
       sDirection = "long";
       price = upperBand[bar+1];
       if (price > High[bar]) price = High[bar];
-      clr = ifInt(price==High[bar], CLR_NONE, UpperChannel.Color);
+      clr = ifInt(price==High[bar] && ChangedBars > 2, CLR_NONE, UpperChannel.Color);
    }
    else {
       sDirection = "short";
       price = lowerBand[bar+1];
       if (price < Low[bar]) price = Low[bar];
-      clr = ifInt(price==Low[bar], CLR_NONE, LowerChannel.Color);
+      clr = ifInt(price==Low[bar] && ChangedBars > 2, CLR_NONE, LowerChannel.Color);
    }
    string label = StringConcatenate(indicatorName, " ", sDirection, " breakout at ", NumberToStr(price, PriceFormat), NL, TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES));
 
