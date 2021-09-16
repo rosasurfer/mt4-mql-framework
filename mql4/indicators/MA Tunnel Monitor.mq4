@@ -33,8 +33,8 @@ extern string MA3.AppliedPrice               = "Open | High | Low | Close | Medi
 
 extern string __4___________________________ = "=== Signaling ================================";
 extern bool   Signal.onBreakout              = false;
-extern bool   Signal.onBreakout.Alert        = true;
 extern bool   Signal.onBreakout.Sound        = true;
+extern bool   Signal.onBreakout.Popup        = true;
 extern bool   Signal.onBreakout.Mail         = false;
 extern bool   Signal.onBreakout.SMS          = false;
 
@@ -191,12 +191,12 @@ int onInit() {
    string signalId = "Signal.onBreakout";
    if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onBreakout))                                                      return(last_error);
    if (Signal.onBreakout) {
-      if (!ConfigureSignalsByAlert2(signalId, AutoConfiguration, Signal.onBreakout.Alert))                                      return(last_error);
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onBreakout.Sound))                                      return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onBreakout.Popup))                                      return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onBreakout.Mail, signalMailSender, signalMailReceiver)) return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onBreakout.SMS, signalSmsReceiver))                     return(last_error);
-      if (Signal.onBreakout.Alert || Signal.onBreakout.Sound || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
-         signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Alert, "Alert+", "") + ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
+      if (Signal.onBreakout.Sound || Signal.onBreakout.Popup || Signal.onBreakout.Mail || Signal.onBreakout.SMS) {
+         signalDescription = "onBreakout="+ StrLeft(ifString(Signal.onBreakout.Sound, "Sound+", "") + ifString(Signal.onBreakout.Popup, "Popup+", "") + ifString(Signal.onBreakout.Mail, "Mail+", "") + ifString(Signal.onBreakout.SMS, "SMS+", ""), -1);
          if (IsLogDebug()) logDebug("onInit(11)  "+ signalDescription);
       }
       else Signal.onBreakout = false;
@@ -348,7 +348,7 @@ bool onBreakout(int mode) {
       if (IsLogInfo()) logInfo("onBreakout(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onBreakout.Alert)           Alert(message);
+      if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
       if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundUp);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
@@ -360,7 +360,7 @@ bool onBreakout(int mode) {
       if (IsLogInfo()) logInfo("onBreakout(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (Signal.onBreakout.Alert)           Alert(message);
+      if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
       if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundDown);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
@@ -435,8 +435,8 @@ string InputsToStr() {
                            +"MA3.Method="            + DoubleQuoteStr(MA3.Method)         +";"+ NL
                            +"MA3.AppliedPrice="      + DoubleQuoteStr(MA3.AppliedPrice)   +";"+ NL
                            +"Signal.onBreakout"      + BoolToStr(Signal.onBreakout)       +";"+ NL
-                           +"Signal.onBreakout.Alert"+ BoolToStr(Signal.onBreakout.Alert) +";"+ NL
                            +"Signal.onBreakout.Sound"+ BoolToStr(Signal.onBreakout.Sound) +";"+ NL
+                           +"Signal.onBreakout.Popup"+ BoolToStr(Signal.onBreakout.Popup) +";"+ NL
                            +"Signal.onBreakout.Mail" + BoolToStr(Signal.onBreakout.Mail)  +";"+ NL
                            +"Signal.onBreakout.SMS"  + BoolToStr(Signal.onBreakout.SMS),   ";")
    );

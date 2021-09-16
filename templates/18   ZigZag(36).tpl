@@ -1,21 +1,21 @@
 <chart>
 symbol=GBPUSD
-period=60
+period=30
 digits=5
 
-leftpos=179
-scale=18
+leftpos=9229
+scale=4
 graph=1
 fore=0
 grid=0
 volume=0
 ohlc=0
 askline=0
-days=1
+days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=11
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -23,6 +23,7 @@ window_top=0
 window_right=1292
 window_bottom=812
 window_type=3
+
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -36,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=300
 
 <indicator>
 name=main
@@ -9878,6 +9879,67 @@ weight=1
 background=1
 value_0=16250
 </object>
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Grid
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ChartInfos
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=SuperBars
+flags=339
+window_num=0
+</expert>
+period_flags=255
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=36
+ZigZag.Type=Semaphores
+ZigZag.Width=1
+ZigZag.Color=16711680
+ShowZigZagChannel=1
+ShowZigZagTrail=1
+UpperChannel.Color=16748574
+LowerChannel.Color=16711935
+</inputs>
+</expert>
+
+style_2=2
+style_3=2
+weight_4=0
+weight_5=0
+color_6=4294967295
+color_7=4294967295
+period_flags=0
+show_data=1
 </indicator>
 
 </window>
