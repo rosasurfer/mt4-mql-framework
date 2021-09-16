@@ -356,8 +356,8 @@ C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
       keywords=;datetime;
       <content>
 <p>Datetime values can be expressed as literals consisting of values for year, month, date, hours, minutes and seconds. Literals are enclosed in single quotes
-and start with the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be skipped.
-Datetime literals can cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
+and preceeded by the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be omitted.
+Datetime literals cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
 <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
 D<span class="string code">'2004.01.01 00:00'</span>           <span class="comment code">// New Year</span>
@@ -2126,27 +2126,27 @@ Objects can have 1-3 coordinates related to type.
 ;OBJPROP_LEVELCOLOR;OBJPROP_LEVELSTYLE;OBJPROP_LEVELWIDTH;
       </keywords>
       <content>
-<p>Object value index used with <a href="help://objects_ObjectGet">ObjectGet()</a> and <a href="help://objects_ObjectSet">ObjectSet()</a> functions. It can be any of the following values:</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="7%">Value</th><th width="8%">Type</th><th width="70%">Description</th></tr>
-<tr><td class="const">OBJPROP_TIME1</td><td>0</td><td>datetime</td><td>Datetime value to set/get first coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE1</td><td>1</td><td>double</td><td>Double value to set/get first coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_TIME2</td><td>2</td><td>datetime</td><td>Datetime value to set/get second coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE2</td><td>3</td><td>double</td><td>Double value to set/get second coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_TIME3</td><td>4</td><td>datetime</td><td>Datetime value to set/get third coordinate time part.</td></tr>
-<tr><td class="const">OBJPROP_PRICE3</td><td>5</td><td>double</td><td>Double value to set/get third coordinate price part.</td></tr>
-<tr><td class="const">OBJPROP_COLOR</td><td>6</td><td>color</td><td>Color value to set/get object color.</td></tr>
+<p>Object property constants used with <a href="help://objects_ObjectGet">ObjectGet()</a> and <a href="help://objects_ObjectSet">ObjectSet()</a>:</p>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="7%">Value</th><th width="8%">Type</th><th width="70%">Description</th></tr>
+<tr><td class="const">OBJPROP_TIME1</td><td>0</td><td>datetime</td><td>Datetime value to set/get an object's first coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE1</td><td>1</td><td>double</td><td>Double value to set/get an object's first coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_TIME2</td><td>2</td><td>datetime</td><td>Datetime value to set/get an object's second coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE2</td><td>3</td><td>double</td><td>Double value to set/get an object's second coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_TIME3</td><td>4</td><td>datetime</td><td>Datetime value to set/get an object's third coordinate time part.</td></tr>
+<tr><td class="const">OBJPROP_PRICE3</td><td>5</td><td>double</td><td>Double value to set/get an object's third coordinate price part.</td></tr>
+<tr><td class="const">OBJPROP_COLOR</td><td>6</td><td>color</td><td>Color value to set/get an object's color.</td></tr>
 <tr><td class="const">OBJPROP_STYLE</td><td>7</td><td>int</td><td>Value is one of <span class="const">STYLE_SOLID</span>, <span class="const">STYLE_DASH</span>, <span class="const">STYLE_DOT</span>, <span class="const">STYLE_DASHDOT</span>, <span class="const">STYLE_DASHDOTDOT</span> constants to set/get object line style.</td></tr>
-<tr><td class="const">OBJPROP_WIDTH</td><td>8</td><td>int</td><td>Integer value to set/get object line width. Can be from 1 to 5.</td></tr>
-<tr><td class="const">OBJPROP_BACK</td><td>9</td><td>bool</td><td>Boolean value to set/get background drawing flag for object.</td></tr>
-<tr><td class="const">OBJPROP_RAY</td><td>10</td><td>bool</td><td>Boolean value to set/get ray flag of object.</td></tr>
-<tr><td class="const">OBJPROP_ELLIPSE</td><td>11</td><td>bool</td><td>Boolean value to set/get ellipse flag for fibo arcs.</td></tr>
-<tr><td class="const">OBJPROP_SCALE</td><td>12</td><td>double</td><td>Double value to set/get scale object property.</td></tr>
-<tr><td class="const">OBJPROP_ANGLE</td><td>13</td><td>double</td><td>Double value to set/get angle object property in degrees.</td></tr>
-<tr><td class="const">OBJPROP_ARROWCODE</td><td>14</td><td>int</td><td>Integer value or <a href="help://constants_arrows">arrow enumeration</a> to set/get arrow code object property.</td></tr>
-<tr><td class="const">OBJPROP_TIMEFRAMES</td><td>15</td><td>int</td><td>Value can be one or combination (bitwise addition) of <a href="help://constants_objects_visible">object visibility constants</a> to set/get timeframe object property.</td></tr>
+<tr><td class="const">OBJPROP_WIDTH</td><td>8</td><td>int</td><td>Integer value to set/get an object's size or line width. Must be non-negative.</td></tr>
+<tr><td class="const">OBJPROP_BACK</td><td>9</td><td>bool</td><td>Boolean value to set/get an object's background drawing flag.</td></tr>
+<tr><td class="const">OBJPROP_RAY</td><td>10</td><td>bool</td><td>Boolean value to set/get an object's ray flag.</td></tr>
+<tr><td class="const">OBJPROP_ELLIPSE</td><td>11</td><td>bool</td><td>Boolean value to set/get the ellipse flag for fibo arcs.</td></tr>
+<tr><td class="const">OBJPROP_SCALE</td><td>12</td><td>double</td><td>Double value to set/get an object's scale property.</td></tr>
+<tr><td class="const">OBJPROP_ANGLE</td><td>13</td><td>double</td><td>Double value in degrees to set/get an object's angle property.</td></tr>
+<tr><td class="const">OBJPROP_ARROWCODE</td><td>14</td><td>int</td><td>Integer value or <a href="help://constants_arrows">arrow enumeration</a> to set/get an object's arrow code property.</td></tr>
+<tr><td class="const">OBJPROP_TIMEFRAMES</td><td>15</td><td>int</td><td>Value can be one or a combination (bitwise OR) of <a href="help://constants_objects_visible">object visibility constants</a> to set/get an object's timeframe property.</td></tr>
 <tr><td class="const">OBJPROP_DEVIATION</td><td>16</td><td>double</td><td>Double value to set/get deviation property for Standard deviation objects.</td></tr>
-<tr><td class="const">OBJPROP_FONTSIZE</td><td>100</td><td>int</td><td>Integer value to set/get font size for text objects.</td></tr>
+<tr><td class="const">OBJPROP_FONTSIZE</td><td>100</td><td>int</td><td>Integer value to set/get the font size for text objects.</td></tr>
 <tr><td class="const">OBJPROP_CORNER</td><td>101</td><td>int</td><td>Integer value to set/get anchor corner property for label objects. Must be from 0-3.</td></tr>
 <tr><td class="const">OBJPROP_XDISTANCE</td><td>102</td><td>int</td><td>Integer value to set/get anchor X distance object property in pixels.</td></tr>
 <tr><td class="const">OBJPROP_YDISTANCE</td><td>103</td><td>int</td><td>Integer value is to set/get anchor Y distance object property in pixels.</td></tr>
@@ -3781,7 +3781,7 @@ custom or non-standard timeseries. The first dimension of the target array holds
 
 <br/>
 <br/>
-<b>Changes in MQL4.5 (terminal builds > 509):</b>
+<b>Changes in MQL5 for MetaTrader 4 (terminal builds > 509):</b>
 <br/>
 Calling the function with a target parameter of type <span class="type">double[][]</span> now allocates new memory and performs a deep copy of the
 timeseries. Newly arriving data in the timeseries is not automatically reflected in the target array anymore. This change affects only MQL4 programs
@@ -4763,7 +4763,7 @@ Optional data output mode can be one or combination of:<br/>
       <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
           Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
 <br/>
-<b>Changes in MQL4.5 (terminal builds > 509):</b><br/>
+<b>Changes in MQL5 for MetaTrader 4 (terminal builds > 509):</b><br/>
 For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see
 <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
 <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.
@@ -9343,41 +9343,39 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iHighest()
       type=int
       <content>
-      Returns the offset of the maximum value over the specific number of periods.<br/>
-      <br/>
-      Note:<br/>
-      Existieren mehrere Bars mit dem Maximalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
+      Returns the offset of the maximum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      of the oldest maximum.<br/>
       </content>
       <example>
-  // getting the highest High of 20 consecutive bars in the range from the 4th to the 23rd index
-  double val = High[iHighest(NULL, 0, MODE_HIGH, 20, 4)];
+<span class="comment code">// getting the highest high of 20 bars in the range from bar offset 4 to 23</span>
+<span class="type code">double</span> value = <span class="global code">High</span>[<span class="function code">iHighest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_HIGH</span>, <span class="number code">20</span>, <span class="number code">4</span>)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the data series. <span class="const">NULL</span> means the current chart symbol.
+        description=symbol of the data series (<span class="const">NULL</span>: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
+        description=<a href="help://constants_timeframes">timeframe</a> of the data series (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
+        description=<a href="help://constants_series">price type</a> of the values to inspect
       </parameter>
       <parameter>
         type=int
         name=periods
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Number of periods to inspect (counting from start backwards).
+        description=number of periods to inspect
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Bar offset to start from.
+        description=bar offset to start from
       </parameter>
     </function>
 
@@ -9417,41 +9415,39 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iLowest()
       type=int
       <content>
-      Returns the offset of the minimum value over the specific number of periods.<br/>
-      <br/>
-      Note:<br/>
-      Existieren mehrere Bars mit dem Minimalwert, wird der Offset der am weitesten zur&uuml;ckliegenden Bar zur&uuml;ckgegeben.<br/>
+      Returns the offset of the minimum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      of the oldest minimum.<br/>
       </content>
       <example>
-// getting the lowest Low of 10 consecutive bars in the range from the 10th to the 19th index
-double val = Low[iLowest(NULL, 0, MODE_LOW, 10, 10)];
+<span class="comment code">// getting the lowest low of 10 bars in the range from bar offset 10 to 19</span>
+<span class="type code">double</span> value = <span class="global code">Low</span>[<span class="function code">iLowest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_LOW</span>, <span class="number code">10</span>, <span class="number code">10</span>)];
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the data series. <span class="const">NULL</span> means the current chart symbol.
+        description=symbol of the data series (<span class="const">NULL</span>: the current chart symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe identifier</a> of the data series (0 means the current chart timeframe).
+        description=<a href="help://constants_timeframes">timeframe</a> of the data series (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=<a href="help://constants_series">Price type identifier</a> used for series arrays.
+        description=<a href="help://constants_series">price type</a> of the values to inspect
       </parameter>
       <parameter>
         type=int
         name=periods
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Number of periods to inspect (counting from start backwards).
+        description=number of periods to inspect
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Bar offset to start from.
+        description=bar offset to start from
       </parameter>
     </function>
 
