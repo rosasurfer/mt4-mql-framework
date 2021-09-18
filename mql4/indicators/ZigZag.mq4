@@ -6,14 +6,14 @@
  * repaints. Also it can't be used for automation.
  *
  * This indicator fixes all those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores).
- * Once a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version the indicator uses
+ * Once a ZigZag reversal occures the reversal point will not change anymore. Like the MetaQuotes version this indicator uses
  * a Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both upper
- * and lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time which
- * is especially useful for breakout strategies.
+ * and lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time.
  *
  *
  * TODO:
  *  - add signals for new reversals
+ *  - after data pumping changed breakout markers are not removed
  *  - add auto-configuration
  *  - implement magic value for double crossings of channel
  *  - add dynamic period changes
