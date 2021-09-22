@@ -161,14 +161,12 @@ color  positions.fontColor.history = C'128,128,0';
 
 // Offline-Chartticker
 int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
+int    hWndTerminal;                                              // handle of the terminal main window (for listener registration)
 
 // order tracking
-bool   track.orders;
-int    hWndTerminal;                                              // handle of the terminal main window (listener registration)
-
-// Order-Events
-int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
-int    orders.knownOrders.type  [];
+bool   isOrderTracker;
+int    orderTracker.tickets[];                                    // order tickets known at the last call
+int    orderTracker.types  [];                                    // types of known orders
 
 // Close-Typen für automatisch geschlossene Positionen
 #define CLOSE_TYPE_TP               1                             // TakeProfit
@@ -216,7 +214,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      if (mode.intern && track.orders) {                                            // order tracking
+      if (mode.intern && isOrderTracker) {                                          // order tracking
          int failedOrders   [];    ArrayResize(failedOrders,    0);
          int openedPositions[];    ArrayResize(openedPositions, 0);
          int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
@@ -3840,13 +3838,21 @@ bool RestoreRuntimeStatus() {
 /**
  * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
  *
- * @param  int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
- * @param  int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
- * @param  int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ * @param  _Out_ int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
+ * @param  _Out_ int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
+ * @param  _Out_ int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[][]) {
+bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
+   static int lastAccountNumber = 0;
+   if (AccountNumber() != lastAccountNumber) {           // on account change reset known orders
+      ArrayResize(orderTracker.tickets, 0);
+      ArrayResize(orderTracker.types,   0);
+      lastAccountNumber = AccountNumber();
+      return(true);
+   }
+
    /*
    PositionOpen
    ------------
@@ -3871,33 +3877,33 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
            - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
    */
 
-   int type, knownSize=ArraySize(orders.knownOrders.ticket);
+   int type, knownSize = ArraySize(orderTracker.tickets);
 
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
    for (int i=knownSize-1; i >= 0; i--) {
-      if (!SelectTicket(orders.knownOrders.ticket[i], "OrderTracker.CheckPositions(1)"))
+      if (!SelectTicket(orderTracker.tickets[i], "OrderTracker.CheckPositions(1)"))
          return(false);
       type = OrderType();
 
-      if (orders.knownOrders.type[i] > OP_SELL) {
+      if (orderTracker.types[i] > OP_SELL) {
          // (1.1) beim letzten Aufruf Pending-Order
-         if (type == orders.knownOrders.type[i]) {
+         if (type == orderTracker.types[i]) {
             // immer noch Pending-Order
             if (OrderCloseTime() != 0) {
                if (OrderComment() != "cancelled")
-                  ArrayPushInt(failedOrders, orders.knownOrders.ticket[i]);      // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
+                  ArrayPushInt(failedOrders, orderTracker.tickets[i]);           // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
 
                // geschlossene Pending-Order aus der Überwachung entfernen
-               ArraySpliceInts(orders.knownOrders.ticket, i, 1);
-               ArraySpliceInts(orders.knownOrders.type,   i, 1);
+               ArraySpliceInts(orderTracker.tickets, i, 1);
+               ArraySpliceInts(orderTracker.types,   i, 1);
                knownSize--;
             }
          }
          else {
             // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(openedPositions, orders.knownOrders.ticket[i]);         // Pending-Order wurde ausgeführt
-            orders.knownOrders.type[i] = type;
+            ArrayPushInt(openedPositions, orderTracker.tickets[i]);              // Pending-Order wurde ausgeführt
+            orderTracker.types[i] = type;
             i++;
             continue;                                                            // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
          }
@@ -3938,12 +3944,12 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
                }
             }
             if (autoClosed) {
-               closeData[0] = orders.knownOrders.ticket[i];
+               closeData[0] = orderTracker.tickets[i];
                closeData[1] = closeType;
                ArrayPushInts(closedPositions, closeData);            // Position wurde automatisch geschlossen
             }
-            ArraySpliceInts(orders.knownOrders.ticket, i, 1);        // geschlossene Position aus der Überwachung entfernen
-            ArraySpliceInts(orders.knownOrders.type,   i, 1);
+            ArraySpliceInts(orderTracker.tickets, i, 1);             // geschlossene Position aus der Überwachung entfernen
+            ArraySpliceInts(orderTracker.types,   i, 1);
             knownSize--;
          }
       }
@@ -3960,12 +3966,12 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
             break;
          }
          for (int n=0; n < knownSize; n++) {
-            if (orders.knownOrders.ticket[n] == OrderTicket())                   // Order bereits bekannt
+            if (orderTracker.tickets[n] == OrderTicket())                        // Order bereits bekannt
                break;
          }
          if (n >= knownSize) {                                                   // Order unbekannt: in Überwachung aufnehmen
-            ArrayPushInt(orders.knownOrders.ticket, OrderTicket());
-            ArrayPushInt(orders.knownOrders.type,   OrderType()  );
+            ArrayPushInt(orderTracker.tickets, OrderTicket());
+            ArrayPushInt(orderTracker.types,   OrderType()  );
             knownSize++;
          }
       }

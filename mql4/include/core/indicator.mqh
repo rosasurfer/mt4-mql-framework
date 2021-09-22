@@ -386,20 +386,19 @@ int deinit() {
    if (!error) error = onDeinit();                                      // preprocessing hook
    if (!error) {                                                        //
       switch (UninitializeReason()) {                                   //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;   //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;   //
-         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;   //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;   //
-         case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
-         case UR_REMOVE     : error = onDeinitRemove();        break;   //
-         case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
+         case UR_PARAMETERS : error = onDeinitParameters();  break;     //
+         case UR_CHARTCHANGE: error = onDeinitChartChange(); break;     //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();  break;     //
+         case UR_UNDEFINED  : error = onDeinitUndefined();   break;     //
+         case UR_REMOVE     : error = onDeinitRemove();      break;     //
+         case UR_RECOMPILE  : error = onDeinitRecompile();   break;     //
          // terminal builds > 509                                       //
-         case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
-         case UR_INITFAILED : error = onDeinitFailed();        break;   //
-         case UR_CLOSE      : error = onDeinitClose();         break;   //
+         case UR_TEMPLATE   : error = onDeinitTemplate();    break;     //
+         case UR_INITFAILED : error = onDeinitFailed();      break;     //
+         case UR_CLOSE      : error = onDeinitClose();       break;     //
                                                                         //
          default:                                                       //
-            CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(2)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             return(last_error|LeaveContext(__ExecutionContext));        //
       }                                                                 //
    }                                                                    //
@@ -707,16 +706,6 @@ int onDeinitParameters()
  * @return int - error status
  *
 int onDeinitChartChange()
-   return(NO_ERROR);
-}
-
-
-/**
- * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
- *
- * @return int - error status
- *
-int onDeinitAccountChange()
    return(NO_ERROR);
 }
 

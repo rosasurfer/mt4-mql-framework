@@ -176,7 +176,7 @@ int afterInit() {
  */
 bool OrderTracker.Configure() {
    if (!mode.intern) return(true);
-   track.orders = false;
+   isOrderTracker = false;
 
    string sValues[], sValue = StrToLower(Track.Orders);     // default: "on | off | auto*"
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -186,17 +186,17 @@ bool OrderTracker.Configure() {
    sValue = StrTrim(sValue);
 
    if (sValue == "on") {
-      track.orders = true;
+      isOrderTracker = true;
    }
    else if (sValue == "off") {
-      track.orders = false;
+      isOrderTracker = false;
    }
    else if (sValue == "auto") {
-      track.orders = GetConfigBool("EventTracker", "Track.Orders");
+      isOrderTracker = GetConfigBool("EventTracker", "Track.Orders");
    }
    else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
-   if (track.orders) {
+   if (isOrderTracker) {
       // read signaling method configuration
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
