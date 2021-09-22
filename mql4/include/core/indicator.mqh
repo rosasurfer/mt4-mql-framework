@@ -1,12 +1,11 @@
 
-int __CoreFunction = NULL;                                           // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
-
 extern string ______________________________;
 extern bool   AutoConfiguration = true;
 extern int    __lpSuperContext;
 
-// current price series
-double __rates[][6];
+int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
+double __rates[][6];                                                 // current price series
+int    __lastAccountNumber = 0;                                      // previously active account number
 
 
 /**
@@ -342,6 +341,15 @@ int start() {
    ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
 
    __STATUS_HISTORY_UPDATE = false;
+
+   // detect and handle account changes
+   int accountNumber = AccountNumber();
+   if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {
+      error = onAccountChange(__lastAccountNumber, accountNumber);
+      if (!error) {}                      // continue processing the tick as ususal
+      else {}                             // do something
+   }
+   __lastAccountNumber = accountNumber;
 
    ArrayCopyRates(__rates);
 

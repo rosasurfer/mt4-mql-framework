@@ -154,11 +154,7 @@
    int      GetLastWin32Error();
    bool     IsProgramType(int type);
 
-   // Handlers for mandatory implementations (if used). Must be implemented in the MQL main module.
-   bool     onBarOpen();
-   bool     onCommand(string data[]);
-
-   // Empty stubs for optional functions. Can be overwritten by custom MQL implementations.
+   // Empty stubs for optional MQL event handlers. Overwritten by custom MQL implementations.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
@@ -170,21 +166,26 @@
    int      onInitRecompile();
    int      afterInit();
 
-   int      onStart();
-   int      onTick();
+   int      onStart();                                         // scripts
+   int      onTick();                                          // indicators and experts
+   int      onAccountChange(int oldAccount, int newAccount);   // indicators
 
    int      onDeinit();
-   int      onDeinitAccountChange();
+   int      onDeinitAccountChange();                           // experts
    int      onDeinitChartChange();
    int      onDeinitChartClose();
    int      onDeinitParameters();
    int      onDeinitRecompile();
    int      onDeinitRemove();
    int      onDeinitUndefined();
-   int      onDeinitClose();                          // terminal builds > 509
-   int      onDeinitFailed();                         // ...
-   int      onDeinitTemplate();                       // ...
+   int      onDeinitClose();                                   // terminal builds > 509
+   int      onDeinitFailed();                                  // ...
+   int      onDeinitTemplate();                                // ...
    int      afterDeinit();
+
+   // Error handlers for missing MQL handler implementations (if those events are used).
+   bool     onBarOpen();
+   bool     onCommand(string data[]);
 
    void     DummyCalls();
    bool     EventListener_ChartCommand(string &data[]);
