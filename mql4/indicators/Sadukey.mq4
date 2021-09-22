@@ -130,7 +130,7 @@ int onTick() {
    if (!ArraySize(buffer1)) return(logInfo("onTick(1)  size(buffer1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(buffer1, EMPTY_VALUE);
       ArrayInitialize(buffer2, EMPTY_VALUE);
       SetIndicatorOptions();

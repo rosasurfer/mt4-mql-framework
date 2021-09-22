@@ -216,7 +216,7 @@ int onTick() {
    ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
    // reset buffers before performing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(haOpen,     0);
       ArrayInitialize(haHigh,     0);
       ArrayInitialize(haLow,      0);

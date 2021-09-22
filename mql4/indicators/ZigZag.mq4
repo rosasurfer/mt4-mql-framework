@@ -168,7 +168,7 @@ int onTick() {
    if (!ArraySize(zigzagOpen)) return(logInfo("onTick(1)  size(zigzagOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(zigzagOpen,  0);
       ArrayInitialize(zigzagClose, 0);
       ArrayInitialize(upperBand,   0);
