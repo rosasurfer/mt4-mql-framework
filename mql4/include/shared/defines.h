@@ -66,7 +66,7 @@
 #define REASON_CHARTCLOSE                       4        // | chart closed or new template applied | chart closed                     |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_PARAMETERS                       5        // | input parameters changed                                                |
-#define REASON_ACCOUNT                          6        // | reconnection due to a changed trading account                           |
+#define REASON_ACCOUNT                          6        // | reconnection due to a changed trading account (experts only)            |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_TEMPLATE                         7        // | -                                    | new template applied             |
 #define REASON_INITFAILED                       8        // | -                                    | OnInit() returned an error       |

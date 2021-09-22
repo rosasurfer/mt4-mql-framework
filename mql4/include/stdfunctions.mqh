@@ -1027,6 +1027,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                else if (              _symbol=="DE40")        result = "DAX";
                 else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
@@ -1074,6 +1075,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
                 else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
                 else if (              _symbol=="GER30"   )    result = "DAX";
+                else if (              _symbol=="GER40"   )    result = "DAX";
                 else if (              _symbol=="GOLD"    )    result = "XAUUSD";
                 else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
                 break;
