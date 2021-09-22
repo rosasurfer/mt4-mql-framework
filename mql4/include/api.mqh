@@ -889,6 +889,7 @@ string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
+int      onAccountChange(int oldAccount, int newAccount);;
 bool     onBarOpen();;
 bool     onCommand(string &data[]);;
 int      onDeinitAccountChange();;

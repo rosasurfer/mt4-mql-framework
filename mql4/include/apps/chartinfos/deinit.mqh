@@ -14,7 +14,7 @@ int onDeinit() {
    if (!StoreRuntimeStatus()) return(last_error);
 
    // unregister the order event listener
-   if (isOrderTracker) {
+   if (orderTracker.enabled) {
       string name = "rsf::order-tracker::"+ StrToLower(Symbol());
       int counter = Max(GetWindowIntegerA(hWndTerminal, name), 1) - 1;
       SetWindowIntegerA(hWndTerminal, name, counter);
