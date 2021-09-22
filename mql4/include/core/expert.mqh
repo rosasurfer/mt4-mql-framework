@@ -253,8 +253,8 @@ int start() {
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = false;
    lastVolume    = Volume[0];
-   ChangedBars   = -1; InvalidBars = ChangedBars;                                   // in experts not available
-   UnchangedBars = -1; ValidBars = UnchangedBars;                                   // ...
+   ChangedBars   = -1;                                                              // in experts not available
+   UnchangedBars = -1;                                                              // ...
    ShiftedBars   = -1;                                                              // ...
 
    // if called after init() check it's return value

@@ -195,7 +195,7 @@ int onTick() {
    ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
    // reset buffers before performing a full recalculation
-   if (!ValidBars) {
+   if (!UnchangedBars) {
       ArrayInitialize(tmaRP,           0);
       ArrayInitialize(upperVarianceRP, 0);
       ArrayInitialize(lowerVarianceRP, 0);
