@@ -1,9 +1,7 @@
 
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
-
-// current price series
-double __rates[][6];
+double  __rates[][6];                                                // current price series
 
 
 /**
@@ -117,8 +115,8 @@ int start() {
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   ValidBars      = -1;                                                       // in scripts not available
-   ChangedBars    = -1;                                                       // ...
+   ChangedBars    = -1; InvalidBars = ChangedBars;                            // in scripts not available
+   UnchangedBars  = -1; ValidBars = UnchangedBars;                            // ...
    ShiftedBars    = -1;                                                       // ...
 
    ArrayCopyRates(__rates);
@@ -135,8 +133,9 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
-      if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
+      if (!Bars) {                                                            // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+      }
    }
 
    // call the userland main function
