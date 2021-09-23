@@ -12,7 +12,7 @@
  *
  *
  * TODO:
- *  - add signals for new reversals
+ *  - Periods=2: intrabar bug in tester (control points) on USDJPY,M15 2021.08.03 00:45
  *  - visible buffer for breakout markers
  *  - add breakout markers to "Data" window
  *  - invisible marker descriptions (or are built-in breakout markers enough)
@@ -73,6 +73,7 @@ extern bool   Signal.onReversal.SMS   = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/ConfigureSignals.mqh>
 
 // breakout direction types
 #define D_LONG    TRADE_DIRECTION_LONG                   // 1
@@ -102,6 +103,15 @@ int    zigzagDrawType;
 int    maxValues;
 string indicatorName = "";
 string legendLabel   = "";
+
+//string signalSoundUp    = "AlertDefault.wav";
+//string signalSoundDown  = "AlertDefault.wav";
+string signalSoundUp      = "Signal-Up.wav";
+string signalSoundDown    = "Signal-Down.wav";
+string signalMailSender   = "";
+string signalMailReceiver = "";
+string signalSmsReceiver  = "";
+string signalDescription  = "";
 
 
 /**
@@ -137,8 +147,23 @@ int onInit() {
    if (UpperChannel.Color == 0xFF000000) UpperChannel.Color = CLR_NONE;
    if (LowerChannel.Color == 0xFF000000) LowerChannel.Color = CLR_NONE;
 
+   // signaling
+   string signalId = "Signal.onReversal";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onReversal))                                                      return(last_error);
+   if (Signal.onReversal) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onReversal.Sound))                                      return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onReversal.Popup))                                      return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onReversal.Mail, signalMailSender, signalMailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onReversal.SMS, signalSmsReceiver))                     return(last_error);
+      if (Signal.onReversal.Sound || Signal.onReversal.Popup || Signal.onReversal.Mail || Signal.onReversal.SMS) {
+         signalDescription = "onReversal="+ StrLeft(ifString(Signal.onReversal.Sound, "Sound+", "") + ifString(Signal.onReversal.Popup, "Popup+", "") + ifString(Signal.onReversal.Mail, "Mail+", "") + ifString(Signal.onReversal.SMS, "SMS+", ""), -1);
+         if (IsLogDebug()) logDebug("onInit(7)  "+ signalDescription);
+      }
+      else Signal.onReversal = false;
+   }
+
    // buffer management
-   indicatorName = ProgramName() +"("+ ZigZag.Periods +")";
+   indicatorName = StrTrim(ProgramName()) +"("+ ZigZag.Periods +")";
    SetIndexBuffer(MODE_REVERSAL_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_REVERSAL_OPEN,  0); SetIndexLabel(MODE_REVERSAL_OPEN,  NULL);
    SetIndexBuffer(MODE_REVERSAL_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_REVERSAL_CLOSE, 0); SetIndexLabel(MODE_REVERSAL_CLOSE, NULL);
    SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     indicatorName +" upper band");
@@ -157,7 +182,7 @@ int onInit() {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -217,7 +242,6 @@ int onTick() {
       if (High[bar] == upperBand[bar]) upperCross[bar] = upperBand[bar];
       if ( Low[bar] == lowerBand[bar]) lowerCross[bar] = lowerBand[bar];
 
-
       // recalculate ZigZag
       // if no channel crossings (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
@@ -260,14 +284,13 @@ int onTick() {
          ProcessUpperCross(bar);
       }
 
-      // if a signle lower band crossing
+      // if a single lower band crossing
       else {
          ProcessLowerCross(bar);
       }
    }
 
-   if (!IsSuperContext()) UpdateLegend();
-
+   if (!IsSuperContext()) UpdateLegend();                            // signal handling happens in MarkBreakoutLevel()
    return(catch("onTick(3)"));
 }
 
@@ -444,12 +467,14 @@ void SetTrend(int from, int to, int value) {
 
 
 /**
- * Mark the Donchian channel breakout level of a new ZigZag leg at the specified bar.
+ * Mark the channel breakout level of the ZigZag leg at the specified bar and trigger new reversal signals.
  *
  * @param  int direction - breakout direction: D_LONG | D_SHORT
  * @param  int bar       - breakout offset
+ *
+ * @return bool - success status
  */
-void MarkBreakoutLevel(int direction, int bar) {
+bool MarkBreakoutLevel(int direction, int bar) {
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    string sDirection = "";
@@ -480,6 +505,62 @@ void MarkBreakoutLevel(int direction, int bar) {
       ObjectSet    (label, OBJPROP_WIDTH,     0);
       RegisterObject(label);
    }
+
+   // trigger new reversal signals
+   if (Signal.onReversal && ChangedBars <= 2)
+      return(onReversal(direction, bar));
+   return(true);
+}
+
+
+/**
+ * Event handler for new ZigZag reversals.
+ *
+ * @param  int direction - reversal direction: D_LONG | D_SHORT
+ * @param  int bar       - bar of the reversal (the current or the closed bar)
+ *
+ * @return bool - success status
+ */
+bool onReversal(int direction, int bar) {
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_ILLEGAL_STATE));
+
+   // check wether the event has already been signaled
+   int    hWnd  = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetTerminalMainWindow());
+   string event = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
+   bool isSignaled = false;
+   if (hWnd > 0) isSignaled = (GetWindowIntegerA(hWnd, event) != 0);
+
+   int error = NO_ERROR;
+
+   if (!isSignaled) {
+      if (hWnd > 0) SetWindowIntegerA(hWnd, event, 1);                        // mark event as signaled
+
+      string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
+      if (direction == D_LONG) {
+         message = indicatorName +" reversal up, bar "+ bar +", "+ TimeToStr(Time[bar], TIME_MINUTES|TIME_SECONDS) +" (market: "+ NumberToStr(Bid, PriceFormat) +")";
+         if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
+         message = Symbol() +","+ PeriodDescription() +": "+ message;
+
+         if (Signal.onReversal.Popup)           Alert(message);               // "Sound" drowns out an enabled alert sound
+         if (Signal.onReversal.Sound) error |= !PlaySoundEx(signalSoundUp);
+         if (Signal.onReversal.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
+         if (Signal.onReversal.SMS)   error |= !SendSMS(signalSmsReceiver, message + NL + accountTime);
+      }
+
+      if (direction == D_SHORT) {
+         message = indicatorName +" reversal down, bar "+ bar +", "+ TimeToStr(Time[bar], TIME_MINUTES|TIME_SECONDS) +" (market: "+ NumberToStr(Bid, PriceFormat) +")";
+         if (IsLogInfo()) logInfo("onReversal(3)  "+ message);
+         message = Symbol() +","+ PeriodDescription() +": "+ message;
+
+         if (Signal.onReversal.Popup)           Alert(message);               // "Sound" drowns out an enabled alert sound
+         if (Signal.onReversal.Sound) error |= !PlaySoundEx(signalSoundDown);
+         if (Signal.onReversal.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
+         if (Signal.onReversal.SMS)   error |= !SendSMS(signalSmsReceiver, message + NL + accountTime);
+      }
+   }
+   return(!error);
 }
 
 
@@ -488,8 +569,6 @@ void MarkBreakoutLevel(int direction, int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   //SetIndexStyle(int index, int drawType, int lineStyle=EMPTY, int drawWidth=EMPTY, color drawColor=NULL);
-
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
