@@ -13,9 +13,12 @@
  *
  * TODO:
  *  - add signals for new reversals
- *  - after data pumping changed breakout markers are not removed
+ *  - visible buffer for breakout markers
+ *  - add breakout markers to "Data" window
+ *  - invisible marker descriptions (or are built-in breakout markers enough)
+ *  - after data pumping changed marker decsriptions are not removed
  *  - add auto-configuration
- *  - implement magic value for double crossings of channel
+ *  - implement magic values (INT_MIN, INT_MAX) for double crossing bars
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs

@@ -276,7 +276,7 @@ int onTick() {
  */
 bool onTrendChange(int trend) {
    string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-   int error = 0;
+   int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";

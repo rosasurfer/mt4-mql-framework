@@ -1955,8 +1955,8 @@ and <a href="help://indicators_iStochastic">iStochastic()</a>.</p>
 </table>
 <br/>
 <br/>
-<p>Indicator line identifiers used with <a href="help://indicators_iBands">iBands()</a>, <a href="help://indicators_iEnvelopes">iEnvelopes()</a>, 
-<a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray()</a>, <a href="help://indicators_iFractals">iFractals()</a> and 
+<p>Indicator line identifiers used with <a href="help://indicators_iBands">iBands()</a>, <a href="help://indicators_iEnvelopes">iEnvelopes()</a>,
+<a href="help://indicators_iEnvelopesOnArray">iEnvelopesOnArray()</a>, <a href="help://indicators_iFractals">iFractals()</a> and
 <a href="help://indicators_iGator">iGator()</a>.</p>
         <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
         <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
@@ -3305,12 +3305,12 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=bool
       <content>
       Whether the program runs in the tester and visual mode is enabled.
-      
+
       <br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
-      <li>In MQL libraries in tester the VisualMode status is not reset between consecutive tests. In all following tests the function returns the status 
+      <li>In MQL libraries in tester the VisualMode status is not reset between consecutive tests. In all following tests the function returns the status
       of the first test, until the library is reloaded (tested with builds 225-670).</li>
 
       <br/>
@@ -3320,7 +3320,7 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       <example>
 <span class="keyword code">if</span> (<span class="function code">IsVisualMode()</span>) {
     <span class="function code">Comment</span>(<span class="string code">"Visual mode is enabled"</span>);
-} 
+}
       </example>
     </function>
 
@@ -3463,7 +3463,7 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       Return the account's free margin value in account currency. Free margin is the amount of money available to open new positions.
       </content>
       <example>
-<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());      
+<span class="function code">Print</span>(<span class="string code">"Free margin: "</span>, <span class="function code">AccountFreeMargin</span>());
       </example>
     </function>
 
@@ -3473,15 +3473,15 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
       type=double
       keywords=;AccountFreeMarginCheck;
       <content>
-        Return the remaining free margin after opening the specified position at current market price. If free margin is insufficient to open the position 
-        the return value will be negative and error <a href="help://constants_errors"><span class="const">ERR_NOT_ENOUGH_MONEY</span></a> will be set. 
+        Return the remaining free margin after opening the specified position at current market price. If free margin is insufficient to open the position
+        the return value will be negative and error <a href="help://constants_errors"><span class="const">ERR_NOT_ENOUGH_MONEY</span></a> will be set.
       </content>
       <example>
 <span class="type code">double</span> lots = <span class="number code">0.5</span>;
-      
+
 <span class="keyword code">if</span> (<span class="function code">AccountFreeMarginCheck</span>(<span class="function code">Symbol</span>(), <span class="const code">OP_BUY</span>, lots) &lt;= <span class="function code">0</span> || <span class="function code">GetLastError</span>()==<span class="const code">ERR_NOT_ENOUGH_MONEY</span>) {
     <span class="function code">Print</span>(<span class="string code">"not enough money to open a position of "</span>+ lots +<span class="string code">" lots"</span>);
-} 
+}
       </example>
       <parameter>
         type=string
@@ -3689,17 +3689,17 @@ Search direction. It can be any of the following values:<br/>
          and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first
          dimension of the target array (rows) is automatically increased.<br/>
          <br/>
-         
+
          <b>Notes:</b>
          <br/>
          <li>The source array range to copy must be non-empty.</li>
 
          <li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
-         
+
          <li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
              <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
              of the indexing order of the arrays.</li>
-         
+
          <li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
              <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
 
@@ -4737,20 +4737,20 @@ Optional data output mode can be one or combination of:<br/>
       caption=IndicatorCounted()
       type=int
       <content>
-      Returns the number of unmodified bars after the last execution of <span class="function">Indicator::start</span>(). The latest bar is always considered modified.<br/>
+      Returns the number of unmodified (unchanged) bars since last execution of <span class="function">Indicator::start</span>(). The latest bar (index 0) is always
+      reported as modified.<br/>
       <br/>
       <br/>
       <b>Notes:</b><br/>
       <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
-          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung wurden die globalen Variablen
-          <span class="global">ValidBars</span> und <span class="global">ChangedBars</span> definiert:<br/>
-          - <span class="global">ValidBars</span> bezeichnet die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
-          - <span class="global">ChangedBars</span> bezeichnet die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
-          Die aktuelle Bar wird bei jedem Tick als modifiziert angesehen (<span class="global">ChangedBars</span> ist immer mindestens <span class="number">1</span>). Bei einem
-          BarOpen-Event wird die gerade geschlossene Bar, deren Close-Tick evt. noch nicht verarbeitet wurde, ebenfalls immer als modifiziert angesehen
-          (<span class="global">ChangedBars</span> ist dann <span class="number">2</span>).<br/>
+          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung definiert das MQL-Framework die globalen Variablen
+          <span class="global">ChangedBars</span> und <span class="global">UnchangedBars</span>:<br/>
+          - <span class="global">ChangedBars</span> signalisiert die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
+          - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+          Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
+          BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet.<br/>
           <br/>
-          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">ValidBars</span></span><br/><br/></li>
+          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span><br/><br/></li>
 
       <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
           <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
@@ -4774,8 +4774,8 @@ For use of <span class="function">IndicatorCounted</span>() vs <span class="func
 <span class="keyword code">extern</span> <span class="type code">int</span> Periods = 20;
 ...
 <span class="type code">int</span> <span class="core code">start</span>() {
-   <span class="type code">int</span> <span class="global code">ValidBars</span> = <span class="function code">IndicatorCounted</span>();
-   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">ValidBars</span>;<br/>
+   <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
+   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
    <span class="comment">// main loop</span>
    <span class="keyword code">for</span> (<span class="type code">int</span> i=ChangedBars-1; i &gt;= 0; i--) {
       buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
@@ -6930,20 +6930,20 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-      Creates an object of the specified type in a chart window, with the provided name and coordinates properties. The number of required coordinates pairs depends 
+      Creates an object of the specified type in a chart window, with the provided name and coordinates properties. The number of required coordinates pairs depends
       on the object type and varies between 1 and 3.<br/>
       <br/>
-      Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use 
-      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_XDISTANCE</span>, ...) and 
+      Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use
+      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_XDISTANCE</span>, ...) and
       <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_YDISTANCE</span>, ...) instead.<br/>
-      <br/>      
+      <br/>
       Returns the success status of the operation. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
       <br/>
 
       Notes:<br/>
       <li>The main chart window always exists and has the index <span class="number">0</span>. Chart subwindows are indexed starting from <span class="number">1</span>.</li>
-      
-      <li>Coordinates must be specified in pairs of a time and a price value, even if some object types need only a single value of a pair 
+
+      <li>Coordinates must be specified in pairs of a time and a price value, even if some object types need only a single value of a pair
           (e.g. <span class="const">OBJ_VLINE</span> objects).</li>
       </content>
 
@@ -8618,8 +8618,8 @@ double value = iIchimoku(NULL, 0, 9, 26, 52, MODE_TENKANSEN, 1);
         type=int
         name=size
         <description>
-          Number of source values to create the MA price series from. Positive value or <span class="const">WHOLE_ARRAY</span> (<span class="number">0</span>) 
-          to use all available values.<br/>MA creation happens on an invalid cache only (e.g. on first usage or after write access to the source values). 
+          Number of source values to create the MA price series from. Positive value or <span class="const">WHOLE_ARRAY</span> (<span class="number">0</span>)
+          to use all available values.<br/>MA creation happens on an invalid cache only (e.g. on first usage or after write access to the source values).
           On a valid cache the parameter is ignored and the cache is used.
         </description>
       </parameter>
@@ -9343,7 +9343,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iHighest()
       type=int
       <content>
-      Returns the offset of the maximum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      Returns the offset of the maximum value of the specified bar range. If multiple bars with that value exist the function returns the offset
       of the oldest maximum.<br/>
       </content>
       <example>
@@ -9415,7 +9415,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iLowest()
       type=int
       <content>
-      Returns the offset of the minimum value of the specified bar range. If multiple bars with that value exist the function returns the offset 
+      Returns the offset of the minimum value of the specified bar range. If multiple bars with that value exist the function returns the offset
       of the oldest minimum.<br/>
       </content>
       <example>
@@ -10677,12 +10677,12 @@ Note: For custom indicators, this value is undefined.
       caption=WindowScreenShot()
       type=bool
       <content>
-         Saves a screenshot of the current chart as a GIF file and returns the success status. The image is saved in the MQL 
+         Saves a screenshot of the current chart as a GIF file and returns the success status. The image is saved in the MQL
          <span class="string">"files"</span> directory or it's subdirectories.
       </content>
       <example>
 <span class="keyword code">static</span> <span class="type code">int</span> counter = <span class="number code">0</span>;
-counter++;<br/>      
+counter++;<br/>
 
 <span class="keyword code">if</span> (!<span class="function code">WindowScreenShot</span>(<span class="string code">"shots\\tester"</span>+ counter +<span class="string code">".gif"</span>, <span class="number code">640</span>, <span class="number code">480</span>)) {
    <span class="function code">Print</span>(<span class="string code">"error: "</span>, <span class="function code">GetLastError</span>());
@@ -10724,7 +10724,7 @@ counter++;<br/>
         type=int
         name=barMode
         <description>
-          Chart displaying mode. It can take the following values: <span class="const">CHART_BAR</span> (0 is a sequence of bars), <span class="const">CHART_CANDLE</span> 
+          Chart displaying mode. It can take the following values: <span class="const">CHART_BAR</span> (0 is a sequence of bars), <span class="const">CHART_CANDLE</span>
           (1 is a sequence of candlesticks), <span class="const">CHART_LINE</span> (2 is a close prices line)
           (default: the current chart display mode).
         </description>

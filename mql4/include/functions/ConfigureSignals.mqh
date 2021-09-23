@@ -53,10 +53,10 @@ bool ConfigureSignals(string name, string &configValue, bool &enabled) {
 
 
 /**
- * Configure general signaling.
+ * Configure signaling.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
+ * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -82,7 +82,7 @@ bool ConfigureSignals2(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by sound.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
+ * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -103,7 +103,7 @@ bool ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by an alert dialog.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
+ * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  *
  * @return bool - success status
@@ -114,7 +114,7 @@ bool ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled) {
 
    if (autoConfig) {
       string section = ifString(This.IsTesting(), "Tester.", "") + StrTrim(ProgramName());
-      enabled = GetConfigBool(section, signalId +".Alert", enabled);
+      enabled = GetConfigBool(section, signalId +".Popup", enabled);
    }
    return(true);
 }
@@ -124,7 +124,7 @@ bool ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled) {
  * Configure signaling by email.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
+ * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  * @param  _Out_   string sender     - the configured email sender address
  * @param  _Out_   string receiver   - the configured email receiver address
@@ -175,7 +175,7 @@ bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled, st
  * Configure signaling by text message.
  *
  * @param  _In_    string signalId   - case-insensitive signal identifier
- * @param  _In_    bool   autoConfig - whether auto-configuration is enabled
+ * @param  _In_    bool   autoConfig - input parameter AutoConfiguration
  * @param  _InOut_ bool   enabled    - input parameter (in) and final activation status (out)
  * @param  _Out_   string receiver   - the configured receiver phone number
  *
