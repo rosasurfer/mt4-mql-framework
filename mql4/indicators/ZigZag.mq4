@@ -65,7 +65,7 @@ extern int    Max.Bars                = 10000;                 // max. values to
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
 extern bool   Signal.onReversal       = false;
 extern bool   Signal.onReversal.Sound = false;
-extern bool   Signal.onReversal.Popup = true;
+extern bool   Signal.onReversal.Popup = false;
 extern bool   Signal.onReversal.Mail  = false;
 extern bool   Signal.onReversal.SMS   = false;
 
@@ -539,7 +539,7 @@ bool onReversal(int direction, int bar) {
       string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (direction == D_LONG) {
-         message = indicatorName +" reversal up, bar "+ bar +", "+ TimeToStr(Time[bar], TIME_MINUTES|TIME_SECONDS) +" (market: "+ NumberToStr(Bid, PriceFormat) +")";
+         message = indicatorName +" reversal up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
          if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -550,7 +550,7 @@ bool onReversal(int direction, int bar) {
       }
 
       if (direction == D_SHORT) {
-         message = indicatorName +" reversal down, bar "+ bar +", "+ TimeToStr(Time[bar], TIME_MINUTES|TIME_SECONDS) +" (market: "+ NumberToStr(Bid, PriceFormat) +")";
+         message = indicatorName +" reversal down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
          if (IsLogInfo()) logInfo("onReversal(3)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
