@@ -170,7 +170,7 @@ int onInit(bool accountChange = false) {
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.Mail, signalReversal.MailSender, signalReversal.MailReceiver)) return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.SMS, signalReversal.SMSReceiver))                              return(last_error);
       if (signalReversal.Sound || signalReversal.Popup || signalReversal.Mail || signalReversal.SMS) {
-         signalInfo = "onReversal="+ StrLeft(ifString(signalReversal.Sound, "Sound+", "") + ifString(signalReversal.Popup, "Popup+", "") + ifString(signalReversal.Mail, "Mail+", "") + ifString(signalReversal.SMS, "SMS+", ""), -1);
+         signalInfo = "onReversal="+ StrLeft(ifString(signalReversal.Sound, "sound,", "") + ifString(signalReversal.Popup, "popup,", "") + ifString(signalReversal.Mail, "mail,", "") + ifString(signalReversal.SMS, "sms,", ""), -1);
       }
       else signalReversal = false;
    }
