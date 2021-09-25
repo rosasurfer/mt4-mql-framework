@@ -37,8 +37,12 @@ double smooth_coefficient;
 
 /**
  * Initialization
+ *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
+ * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    SetIndexStyle(0, DRAW_LINE);
    SetIndexBuffer(0, DssBuffer);
    SetIndexStyle(1, DRAW_LINE);

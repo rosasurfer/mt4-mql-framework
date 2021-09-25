@@ -98,9 +98,11 @@ string signal.info = "";                                 // additional chart leg
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // validate inputs
    // MA.Periods
    if (MA.Periods < 1)        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));

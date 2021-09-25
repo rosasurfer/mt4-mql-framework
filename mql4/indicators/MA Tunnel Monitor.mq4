@@ -100,9 +100,11 @@ string signalDescription  = "";
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // input validation
    if (UseMA1) {
       // MA1.Periods

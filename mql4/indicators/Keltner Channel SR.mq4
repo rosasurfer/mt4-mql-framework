@@ -100,9 +100,11 @@ string legendLabel   = "";
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // validate inputs
    // MA.Method
    string sValues[], sValue = MA.Method;
