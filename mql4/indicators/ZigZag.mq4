@@ -3,18 +3,17 @@
  *
  *
  * The ZigZag indicator provided by MetaQuotes is of little use. The implementation is flawed and the indicator repaints
- * past reversal points. Also it can't be used for automation.
+ * past reversals. Also it can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
- * a ZigZag reversal occures the reversal point will not change anymore. Similar to the MetaQuotes version this indicator
- * uses a Donchian channel for determining possible reversals but draws vertical line segments if a large bar crosses both
- * upper and lower channel band. Additionally this indicator can display the trail of a ZigZag leg as it developes over time.
+ * a reversal occures it will not change anymore. Similar to the MetaQuotes version it uses a Donchian channel for determining
+ * reversals but draws vertical line segments if a large bar crosses both upper and lower channel band. Additionally it can
+ * display the trail of a ZigZag leg as it developes over time. The indicator supports reversal signaling.
  *
  *
  * TODO:
  *  - visible buffer for breakout markers
  *  - reset framework buffers on account change
- *  - after data pumping changed marker descriptions are not removed
  *  - signaling bug during data pumping
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
  *  - channel calculation must not always include the current bar
@@ -23,7 +22,7 @@
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
- *  - restore default values (hide channel and trail)
+ *  - restore default values (type, hide channel and trail)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -31,25 +30,25 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods          = 12;                    // lookback periods of the Donchian channel
-extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "L | S"
-extern int    ZigZag.Width            = 1;
-extern color  ZigZag.Color            = Blue;
+extern int    ZigZag.Periods             = 12;                    // lookback periods of the Donchian channel
+extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened
+extern int    ZigZag.Width               = 1;
+extern color  ZigZag.Color               = Blue;
 
-extern int    Semaphores.Symbol       = 108;                   // that's a small dot
+extern int    Semaphores.WingDingsSymbol = 108;                   // that's a small dot
 
-extern bool   ShowZigZagChannel       = true;
-extern bool   ShowZigZagTrail         = true;
-extern color  UpperChannel.Color      = DodgerBlue;
-extern color  LowerChannel.Color      = Magenta;
-extern int    Max.Bars                = 10000;                 // max. values to calculate (-1: all available)
+extern bool   ShowZigZagChannel          = true;
+extern bool   ShowZigZagTrail            = true;
+extern color  UpperChannel.Color         = DodgerBlue;
+extern color  LowerChannel.Color         = Magenta;
+extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
-extern bool   Signal.onReversal       = false;
-extern bool   Signal.onReversal.Sound = false;
-extern bool   Signal.onReversal.Popup = false;
-extern bool   Signal.onReversal.Mail  = false;
-extern bool   Signal.onReversal.SMS   = false;
+extern bool   Signal.onReversal          = false;
+extern bool   Signal.onReversal.Sound    = false;
+extern bool   Signal.onReversal.Popup    = false;
+extern bool   Signal.onReversal.Mail     = false;
+extern bool   Signal.onReversal.SMS      = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <core/indicator.mqh>
@@ -66,8 +65,8 @@ extern bool   Signal.onReversal.SMS   = false;
 #define MODE_UPPER_CROSS      ZigZag.MODE_UPPER_CROSS    // 4: upper channel band crossing (trail of ZigZag leg)
 #define MODE_LOWER_CROSS      ZigZag.MODE_LOWER_CROSS    // 5: lower channel band crossing (trail of ZigZag leg)
 #define MODE_COMBINED_TREND   ZigZag.MODE_TREND          // 6: combined MODE_TREND + MODE_WAITING buffers
-#define MODE_TREND            7                          // 7: known trend
-#define MODE_WAITING          8                          // 8: not yet known trend
+#define MODE_TREND            7                          // known trend
+#define MODE_WAITING          8                          // not yet known trend
 
 #property indicator_chart_window
 #property indicator_buffers   7                          // buffers visible to the user
@@ -106,15 +105,15 @@ string legendLabel   = "";
 
 bool   signalReversal;
 bool   signalReversal.Sound;
-string signalReversal.SoundUp      = "Signal-Up.wav";
-string signalReversal.SoundDown    = "Signal-Down.wav";
+string signalReversal.SoundUp   = "Signal-Up.wav";
+string signalReversal.SoundDown = "Signal-Down.wav";
 bool   signalReversal.Popup;
 bool   signalReversal.Mail;
 string signalReversal.MailSender   = "";
 string signalReversal.MailReceiver = "";
 bool   signalReversal.SMS;
-string signalReversal.SMSReceiver  = "";
-string signalInfo                  = "";
+string signalReversal.SMSReceiver = "";
+string signalInfo                 = "";
 
 // breakout direction types
 #define D_LONG    TRADE_DIRECTION_LONG                   // 1
@@ -131,7 +130,7 @@ string signalInfo                  = "";
 int onInit(bool accountChange = false) {
    // validate inputs
    // ZigZag.Periods
-   if (ZigZag.Periods < 2)      return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Periods < 2)               return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    zigzagPeriods = ZigZag.Periods;
    // ZigZag.Type
    string sValues[], sValue = StrToLower(ZigZag.Type);
@@ -142,14 +141,14 @@ int onInit(bool accountChange = false) {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line",       sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Line";        }
    else if (StrStartsWith("semaphores", sValue)) { zigzagDrawType = DRAW_ARROW;  ZigZag.Type = "Semaphores";  }
-   else                         return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                                  return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Width
-   if (ZigZag.Width < 0)        return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Semaphores.Symbol
-   if (Semaphores.Symbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.Symbol: "+ Semaphores.Symbol, ERR_INVALID_INPUT_PARAMETER));
-   if (Semaphores.Symbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.Symbol: "+ Semaphores.Symbol, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Width < 0)                 return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
+   // Semaphores.WingDingsSymbol
+   if (Semaphores.WingDingsSymbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   if (Semaphores.WingDingsSymbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)           return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                    return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
@@ -603,15 +602,15 @@ void SetIndicatorOptions() {
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
-   SetIndexStyle(MODE_REVERSAL_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_OPEN,  Semaphores.Symbol);
-   SetIndexStyle(MODE_REVERSAL_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_CLOSE, Semaphores.Symbol);
+   SetIndexStyle(MODE_REVERSAL_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_OPEN,  Semaphores.WingDingsSymbol);
+   SetIndexStyle(MODE_REVERSAL_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_REVERSAL_CLOSE, Semaphores.WingDingsSymbol);
 
    drawType = ifInt(ShowZigZagChannel, DRAW_LINE, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
    drawType = ifInt(ShowZigZagTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_CROSS, 161);   // an open circle (dot)
+   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_CROSS, 161);   // that's an open circle (dot)
    SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_CROSS, 161);   // ...
 
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -624,21 +623,21 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",          ZigZag.Periods,                     ";", NL,
-                            "ZigZag.Type=",             DoubleQuoteStr(ZigZag.Type),        ";", NL,
-                            "ZigZag.Width=",            ZigZag.Width,                       ";", NL,
-                            "ZigZag.Color=",            ColorToStr(ZigZag.Color),           ";", NL,
-                            "Semaphores.Symbol=",       Semaphores.Symbol,                  ";", NL,
-                            "ShowZigZagChannel=",       BoolToStr(ShowZigZagChannel),       ";", NL,
-                            "ShowZigZagTrail=",         BoolToStr(ShowZigZagTrail),         ";", NL,
-                            "UpperChannel.Color=",      ColorToStr(UpperChannel.Color),     ";", NL,
-                            "LowerChannel.Color=",      ColorToStr(LowerChannel.Color),     ";", NL,
-                            "Max.Bars=",                Max.Bars,                           ";", NL,
+   return(StringConcatenate("ZigZag.Periods=",             ZigZag.Periods,                     ";", NL,
+                            "ZigZag.Type=",                DoubleQuoteStr(ZigZag.Type),        ";", NL,
+                            "ZigZag.Width=",               ZigZag.Width,                       ";", NL,
+                            "ZigZag.Color=",               ColorToStr(ZigZag.Color),           ";", NL,
+                            "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";", NL,
+                            "ShowZigZagChannel=",          BoolToStr(ShowZigZagChannel),       ";", NL,
+                            "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";", NL,
+                            "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";", NL,
+                            "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";", NL,
+                            "Max.Bars=",                   Max.Bars,                           ";", NL,
 
-                            "Signal.onReversal=",       BoolToStr(Signal.onReversal),       ";", NL,
-                            "Signal.onReversal.Sound=", BoolToStr(Signal.onReversal.Sound), ";", NL,
-                            "Signal.onReversal.Popup=", BoolToStr(Signal.onReversal.Popup), ";", NL,
-                            "Signal.onReversal.Mail=",  BoolToStr(Signal.onReversal.Mail),  ";", NL,
-                            "Signal.onReversal.SMS=",   BoolToStr(Signal.onReversal.SMS),   ";")
+                            "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";", NL,
+                            "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound), ";", NL,
+                            "Signal.onReversal.Popup=",    BoolToStr(Signal.onReversal.Popup), ";", NL,
+                            "Signal.onReversal.Mail=",     BoolToStr(Signal.onReversal.Mail),  ";", NL,
+                            "Signal.onReversal.SMS=",      BoolToStr(Signal.onReversal.SMS),   ";")
    );
 }
