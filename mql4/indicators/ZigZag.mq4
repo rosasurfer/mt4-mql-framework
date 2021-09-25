@@ -13,7 +13,7 @@
  *
  * TODO:
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
- *  - channel calculation bug: must not always include the current bar
+ *  - channel calculation must not always include the current bar
  *  - visible buffer for breakout markers
  *  - add breakout markers to "Data" window
  *  - invisible marker descriptions (or are built-in breakout markers sufficient)
@@ -91,32 +91,32 @@ extern bool   Signal.onReversal.SMS   = false;
 #define MODE_TREND            ZigZag.MODE_TREND          // 6: trend
 #define MODE_WAITING          ZigZag.MODE_WAITING        // 7: unknown trend
 
-double   zigzagOpen [];                                  // ZigZag semaphores (open price of a vertical segment)
-double   zigzagClose[];                                  // ZigZag semaphores (close price of a vertical segment)
-double   upperBand  [];                                  // upper channel band
-double   lowerBand  [];                                  // lower channel band
-double   upperCross [];                                  // upper band crossings
-double   lowerCross [];                                  // lower band crossings
-double   trend      [];                                  // trend direction and length
-double   waiting    [];                                  // bar periods with not yet known trend direction
+double zigzagOpen [];                                    // ZigZag semaphores (open price of a vertical segment)
+double zigzagClose[];                                    // ZigZag semaphores (close price of a vertical segment)
+double upperBand  [];                                    // upper channel band
+double lowerBand  [];                                    // lower channel band
+double upperCross [];                                    // upper band crossings
+double lowerCross [];                                    // lower band crossings
+double trend      [];                                    // trend direction and length
+double waiting    [];                                    // bar periods with not yet known trend direction
 
-int      zigzagPeriods;
-int      zigzagDrawType;
-int      maxValues;
-string   indicatorName = "";
-string   legendLabel   = "";
+int    zigzagPeriods;
+int    zigzagDrawType;
+int    maxValues;
+string indicatorName = "";
+string legendLabel   = "";
 
-bool     signalReversal;
-bool     signalReversal.Sound;
-string   signalReversal.SoundUp      = "Signal-Up.wav";
-string   signalReversal.SoundDown    = "Signal-Down.wav";
-bool     signalReversal.Popup;
-bool     signalReversal.Mail;
-string   signalReversal.MailSender   = "";
-string   signalReversal.MailReceiver = "";
-bool     signalReversal.SMS;
-string   signalReversal.SMSReceiver  = "";
-string   signalInfo                  = "";
+bool   signalReversal;
+bool   signalReversal.Sound;
+string signalReversal.SoundUp      = "Signal-Up.wav";
+string signalReversal.SoundDown    = "Signal-Down.wav";
+bool   signalReversal.Popup;
+bool   signalReversal.Mail;
+string signalReversal.MailSender   = "";
+string signalReversal.MailReceiver = "";
+bool   signalReversal.SMS;
+string signalReversal.SMSReceiver  = "";
+string signalInfo                  = "";
 
 
 /**
