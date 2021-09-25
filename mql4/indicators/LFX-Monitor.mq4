@@ -119,9 +119,11 @@ int    tickTimerId;                                      // id of the tick timer
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // initialize array sizes
    int size = ArraySize(symbols);
    ArrayResize(isEnabled,   size);

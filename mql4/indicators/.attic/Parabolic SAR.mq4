@@ -37,9 +37,11 @@ double save_sar;
 
 
 /**
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
  *
+ * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    SetIndexBuffer(0, SarBuffer );
    SetIndexStyle (0, DRAW_ARROW);
    SetIndexArrow (0, 159       );

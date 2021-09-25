@@ -56,9 +56,11 @@ int rsi.appliedPrice;
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // (1) validate inputs
    // RSI.Periods
    if (RSI.Periods < 2)           return(catch("onInit(1)  invalid input parameter RSI.Periods: "+ RSI.Periods, ERR_INVALID_INPUT_PARAMETER));

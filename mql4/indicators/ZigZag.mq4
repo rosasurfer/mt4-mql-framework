@@ -12,11 +12,11 @@
  *
  *
  * TODO:
+ *  - visible buffer for breakout markers
+ *  - after data pumping changed marker descriptions are not removed
+ *  - signaling bug during data pumping
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
  *  - channel calculation must not always include the current bar
- *  - visible buffer for breakout markers
- *  - signaling bug during data pumping
- *  - after data pumping changed marker descriptions are not removed
  *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changes

@@ -1,9 +1,11 @@
 /**
  * Initialization preprocessing
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    hWndTerminal = GetTerminalMainWindow();
 
    if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()

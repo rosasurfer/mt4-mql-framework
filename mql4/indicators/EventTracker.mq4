@@ -124,9 +124,11 @@ string signal.mail.receiver = "";
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
+ * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    if (!Configure())                                                 // Konfiguration einlesen, ruft zum Schluﬂ ShowStatus() auf
       return(last_error);
 

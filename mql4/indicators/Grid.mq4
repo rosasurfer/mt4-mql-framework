@@ -26,9 +26,11 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    SetIndexLabel(0, NULL);
    return(catch("onInit(1)"));
 }
