@@ -9937,7 +9937,6 @@ style_3=2
 weight_4=0
 weight_5=0
 color_6=4294967295
-color_7=4294967295
 period_flags=0
 show_data=1
 </indicator>
