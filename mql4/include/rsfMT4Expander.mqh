@@ -155,7 +155,7 @@
    bool     IsProgramType(int type);
 
    // Empty stubs for optional MQL event handlers. Overwritten by custom MQL implementations.
-   int      onInit();
+   int      onInit(bool accountChange = false);                // indicators
    int      onInitUser();
    int      onInitParameters();
    int      onInitTimeframeChange();
