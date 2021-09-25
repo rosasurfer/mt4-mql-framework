@@ -15,8 +15,6 @@
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
  *  - channel calculation must not always include the current bar
  *  - visible buffer for breakout markers
- *  - add breakout markers to "Data" window
- *  - invisible marker descriptions (or are built-in breakout markers sufficient)
  *  - signaling bug during data pumping
  *  - after data pumping changed marker descriptions are not removed
  *  - add auto-configuration
@@ -178,12 +176,12 @@ int onInit(bool accountChange = false) {
    indicatorName = StrTrim(ProgramName()) +"("+ ZigZag.Periods +")";
    SetIndexBuffer(MODE_REVERSAL_OPEN,  zigzagOpen ); SetIndexEmptyValue(MODE_REVERSAL_OPEN,  0); SetIndexLabel(MODE_REVERSAL_OPEN,  NULL);
    SetIndexBuffer(MODE_REVERSAL_CLOSE, zigzagClose); SetIndexEmptyValue(MODE_REVERSAL_CLOSE, 0); SetIndexLabel(MODE_REVERSAL_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     indicatorName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     indicatorName +" lower band");
-   SetIndexBuffer(MODE_UPPER_CROSS,    upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,    0); SetIndexLabel(MODE_UPPER_CROSS,    NULL);
-   SetIndexBuffer(MODE_LOWER_CROSS,    lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,    0); SetIndexLabel(MODE_LOWER_CROSS,    NULL);
-   SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          indicatorName +" trend");
-   SetIndexBuffer(MODE_WAITING,        waiting    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING,        indicatorName +" waiting");
+   SetIndexBuffer(MODE_UPPER_BAND,     upperBand  ); SetIndexEmptyValue(MODE_UPPER_BAND,     0); SetIndexLabel(MODE_UPPER_BAND,     NULL); //SetIndexLabel(MODE_UPPER_BAND,  "Upper band");
+   SetIndexBuffer(MODE_LOWER_BAND,     lowerBand  ); SetIndexEmptyValue(MODE_LOWER_BAND,     0); SetIndexLabel(MODE_LOWER_BAND,     NULL); //SetIndexLabel(MODE_LOWER_BAND,  "Lower band");
+   SetIndexBuffer(MODE_UPPER_CROSS,    upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,    0); SetIndexLabel(MODE_UPPER_CROSS,    NULL); SetIndexLabel(MODE_UPPER_CROSS, indicatorName +" breakout long");
+   SetIndexBuffer(MODE_LOWER_CROSS,    lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,    0); SetIndexLabel(MODE_LOWER_CROSS,    NULL); SetIndexLabel(MODE_LOWER_CROSS, indicatorName +" breakout short");
+   SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          NULL); SetIndexLabel(MODE_TREND,       indicatorName +" trend");
+   SetIndexBuffer(MODE_WAITING,        waiting    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING,        NULL); SetIndexLabel(MODE_WAITING,     indicatorName +" waiting");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
