@@ -225,7 +225,7 @@ int start() {
 
 
    // (1) UnchangedBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
-   UnchangedBars = IndicatorCounted();
+   UnchangedBars = IndicatorCounted(); ValidBars = UnchangedBars;
    ChangedBars   = Bars - UnchangedBars;
    ShiftedBars   = 0;
 
@@ -309,7 +309,7 @@ int start() {
    last.bars             = Bars;
    last.startBarOpenTime = Time[0];
    last.endBarOpenTime   = Time[Bars-1];
-   UnchangedBars         = Bars - ChangedBars;                                      // UnchangedBars neu definieren
+   UnchangedBars         = Bars - ChangedBars; ValidBars = UnchangedBars;           // UnchangedBars neu definieren
 
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
@@ -329,7 +329,7 @@ int start() {
          }
       }
       last_error    = NO_ERROR;                                                     // init() war erfolgreich
-      UnchangedBars = 0;
+      UnchangedBars = 0; ValidBars = UnchangedBars;
    }
    else {
       // normaler Tick
@@ -340,6 +340,7 @@ int start() {
       else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
       else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
       if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      ValidBars = UnchangedBars;
    }
    if (!UnchangedBars) ShiftedBars = 0;
    ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)

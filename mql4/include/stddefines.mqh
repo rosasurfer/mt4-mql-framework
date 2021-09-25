@@ -6,7 +6,7 @@
 #include <mqldefines.mqh>                                         // to be increased. Using 32KB has always been sufficient.
 #include <win32defines.mqh>                                       //
 #include <structs/sizes.mqh>                                      //  @see  https://docs.mql4.com/basis/variables/local#stack
-                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation
+                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation#
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];           // aktueller ExecutionContext
@@ -29,7 +29,7 @@ int      Tick;                                                    // number of t
 datetime Tick.Time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
 int      ChangedBars;                                             // it holds: Bars = ChangedBars + UnchangedBars
-int      UnchangedBars;                                           // IndicatorCounted() => UnchangedBars
+int      UnchangedBars, ValidBars;                                // IndicatorCounted() => UnchangedBars (with alias ValidBars)
 int      ShiftedBars;                                             // offline charts only
 
 int      last_error;                                              // last error of the current core function call
