@@ -12,13 +12,14 @@
  *
  *
  * TODO:
- *  - Periods=2: intrabar bug in tester (control points) on USDJPY,M15 2021.08.03 00:45
+ *  - add signal status to legend
+ *  - Periods=2: intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45
  *  - visible buffer for breakout markers
  *  - add breakout markers to "Data" window
- *  - invisible marker descriptions (or are built-in breakout markers enough)
- *  - after data pumping changed marker decsriptions are not removed
+ *  - invisible marker descriptions (or are built-in breakout markers sufficient)
+ *  - after data pumping changed marker descriptions are not removed
  *  - add auto-configuration
- *  - implement magic values (INT_MIN, INT_MAX) for double crossing bars
+ *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
