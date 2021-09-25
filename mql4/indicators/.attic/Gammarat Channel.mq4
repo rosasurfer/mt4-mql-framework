@@ -38,7 +38,7 @@ extern bool   AlertsOn         = false;
 #include <rsfLibs.mqh>
 #include <functions/@Bands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/ManageIndicatorBuffer.mqh>
+#include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
@@ -92,9 +92,11 @@ bool   test.onSignalPause = false;                 // whether to pause a test on
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // validate inputs
    // MA.Periods
    if (MA.Periods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -192,7 +194,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(tmaRP)) return(logInfo("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
+   ManageDoubleIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
    // reset buffers before performing a full recalculation
    if (!UnchangedBars) {
