@@ -91,8 +91,10 @@
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
    // array functions
+   //bool   InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);
    //bool   InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
-   //bool   ShiftIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
+   //bool   ShiftIntIndicatorBuffer   (int    &buffer[], int size, int count, int    emptyValue);
+   //bool   ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
    //string MD5Hash(int buffer[], int size);

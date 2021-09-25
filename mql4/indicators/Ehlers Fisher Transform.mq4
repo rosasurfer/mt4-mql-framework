@@ -133,12 +133,12 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(fisherMain,       Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(fisherSection,    Bars, ShiftedBars,           0);
-      ShiftIndicatorBuffer(fisherUpper,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(fisherLower,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(rawPrices,        Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(normalizedPrices, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(fisherMain,       Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(fisherSection,    Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(fisherUpper,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(fisherLower,      Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(rawPrices,        Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(normalizedPrices, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
 

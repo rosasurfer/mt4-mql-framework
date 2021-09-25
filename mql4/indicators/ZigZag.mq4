@@ -13,6 +13,7 @@
  *
  * TODO:
  *  - visible buffer for breakout markers
+ *  - reset framework buffers on account change
  *  - after data pumping changed marker descriptions are not removed
  *  - signaling bug during data pumping
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
@@ -22,44 +23,25 @@
  *  - add dynamic period changes
  *  - document iCustom() usage
  *  - document inputs
- *  - move indicator properties below input section (really?)
  *  - restore default values (hide channel and trail)
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
 int __DeinitFlags[];
 
-#property indicator_chart_window
-#property indicator_buffers   8
-
-#property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
-#property indicator_width1    1
-#property indicator_color2    CLR_NONE
-
-#property indicator_color3    DodgerBlue                       // upper channel band
-#property indicator_style3    STYLE_DOT                        //
-#property indicator_color4    Magenta                          // lower channel band
-#property indicator_style4    STYLE_DOT                        //
-
-#property indicator_color5    indicator_color3                 // trail of upward ZigZag leg
-#property indicator_color6    indicator_color4                 // trail of downward ZigZag leg
-
-#property indicator_color7    CLR_NONE                         // trend buffer
-#property indicator_color8    CLR_NONE                         // notrend buffer (waiting)
-
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    ZigZag.Periods          = 12;                    // lookback periods of the Donchian channel
 extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "L | S"
-extern int    ZigZag.Width            = indicator_width1;
-extern color  ZigZag.Color            = indicator_color1;
+extern int    ZigZag.Width            = 1;
+extern color  ZigZag.Color            = Blue;
 
 extern int    Semaphores.Symbol       = 108;                   // that's a small dot
 
 extern bool   ShowZigZagChannel       = true;
 extern bool   ShowZigZagTrail         = true;
-extern color  UpperChannel.Color      = indicator_color3;
-extern color  LowerChannel.Color      = indicator_color4;
+extern color  UpperChannel.Color      = DodgerBlue;
+extern color  LowerChannel.Color      = Magenta;
 extern int    Max.Bars                = 10000;                 // max. values to calculate (-1: all available)
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
@@ -74,10 +56,7 @@ extern bool   Signal.onReversal.SMS   = false;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/ConfigureSignals.mqh>
-
-// breakout direction types
-#define D_LONG    TRADE_DIRECTION_LONG                   // 1
-#define D_SHORT   TRADE_DIRECTION_SHORT                  // 2
+#include <functions/ManageIntIndicatorBuffer.mqh>
 
 // indicator buffer ids
 #define MODE_REVERSAL_OPEN    ZigZag.MODE_REVERSAL_OPEN  // 0: reversal open price
@@ -89,6 +68,26 @@ extern bool   Signal.onReversal.SMS   = false;
 #define MODE_TREND            ZigZag.MODE_TREND          // 6: trend
 #define MODE_WAITING          ZigZag.MODE_WAITING        // 7: unknown trend
 
+#property indicator_chart_window
+#property indicator_buffers   8                          // buffers visible to the user
+int       terminal_buffers  = 8;                         // buffers managed by the terminal
+int       framework_buffers = 1;                         // buffers managed by the framework
+
+#property indicator_color1    Blue                       // the ZigZag line is built from two buffers using the color of the first buffer
+#property indicator_width1    1
+#property indicator_color2    CLR_NONE
+
+#property indicator_color3    DodgerBlue                 // upper channel band
+#property indicator_style3    STYLE_DOT                  //
+#property indicator_color4    Magenta                    // lower channel band
+#property indicator_style4    STYLE_DOT                  //
+
+#property indicator_color5    indicator_color3           // trail of upward ZigZag leg
+#property indicator_color6    indicator_color4           // trail of downward ZigZag leg
+
+#property indicator_color7    CLR_NONE                   // trend
+#property indicator_color8    CLR_NONE                   // unknown trend (waiting)
+
 double zigzagOpen [];                                    // ZigZag semaphores (open price of a vertical segment)
 double zigzagClose[];                                    // ZigZag semaphores (close price of a vertical segment)
 double upperBand  [];                                    // upper channel band
@@ -97,6 +96,7 @@ double upperCross [];                                    // upper band crossings
 double lowerCross [];                                    // lower band crossings
 double trend      [];                                    // trend direction and length
 double waiting    [];                                    // bar periods with not yet known trend direction
+int    merged     [];
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -115,6 +115,10 @@ string signalReversal.MailReceiver = "";
 bool   signalReversal.SMS;
 string signalReversal.SMSReceiver  = "";
 string signalInfo                  = "";
+
+// breakout direction types
+#define D_LONG    TRADE_DIRECTION_LONG                   // 1
+#define D_SHORT   TRADE_DIRECTION_SHORT                  // 2
 
 
 /**
@@ -205,6 +209,8 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(zigzagOpen)) return(logInfo("onTick(1)  size(zigzagOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
+   ManageIntIndicatorBuffer(0, merged);
+
    // reset buffers before performing a full recalculation
    if (!UnchangedBars) {
       ArrayInitialize(zigzagOpen,  0);
@@ -215,19 +221,21 @@ int onTick() {
       ArrayInitialize(lowerCross,  0);
       ArrayInitialize(trend,       0);
       ArrayInitialize(waiting,     0);
+      ArrayInitialize(merged,      0);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(zigzagOpen,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(zigzagClose, Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperBand,   Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerBand,   Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperCross,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerCross,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(trend,       Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(waiting,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(zigzagOpen,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(zigzagClose, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperBand,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerBand,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperCross,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerCross,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(trend,       Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(waiting,     Bars, ShiftedBars, 0);
+      ShiftIntIndicatorBuffer   (merged,      Bars, ShiftedBars, 0);
    }
 
    // calculate start bar
@@ -594,6 +602,8 @@ bool onReversal(int direction, int bar) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   IndicatorBuffers(terminal_buffers);
+
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
