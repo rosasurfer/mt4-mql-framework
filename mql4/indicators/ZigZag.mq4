@@ -12,7 +12,6 @@
  *
  *
  * TODO:
- *  - add signal status to legend
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
  *  - channel calculation bug: must not always include the current bar
  *  - visible buffer for breakout markers
@@ -92,35 +91,42 @@ extern bool   Signal.onReversal.SMS   = false;
 #define MODE_TREND            ZigZag.MODE_TREND          // 6: trend
 #define MODE_WAITING          ZigZag.MODE_WAITING        // 7: unknown trend
 
-double zigzagOpen [];                                    // ZigZag semaphores (open price of a vertical segment)
-double zigzagClose[];                                    // ZigZag semaphores (close price of a vertical segment)
-double upperBand  [];                                    // upper channel band
-double lowerBand  [];                                    // lower channel band
-double upperCross [];                                    // upper band crossings
-double lowerCross [];                                    // lower band crossings
-double trend      [];                                    // trend direction and length
-double waiting    [];                                    // bar periods with not yet known trend direction
+double   zigzagOpen [];                                  // ZigZag semaphores (open price of a vertical segment)
+double   zigzagClose[];                                  // ZigZag semaphores (close price of a vertical segment)
+double   upperBand  [];                                  // upper channel band
+double   lowerBand  [];                                  // lower channel band
+double   upperCross [];                                  // upper band crossings
+double   lowerCross [];                                  // lower band crossings
+double   trend      [];                                  // trend direction and length
+double   waiting    [];                                  // bar periods with not yet known trend direction
 
-int    zigzagPeriods;
-int    zigzagDrawType;
-int    maxValues;
-string indicatorName = "";
-string legendLabel   = "";
+int      zigzagPeriods;
+int      zigzagDrawType;
+int      maxValues;
+string   indicatorName = "";
+string   legendLabel   = "";
 
-string signalSoundUp      = "Signal-Up.wav";
-string signalSoundDown    = "Signal-Down.wav";
-string signalMailSender   = "";
-string signalMailReceiver = "";
-string signalSmsReceiver  = "";
-string signalDescription  = "";
+bool     signalReversal;
+bool     signalReversal.Sound;
+string   signalReversal.SoundUp      = "Signal-Up.wav";
+string   signalReversal.SoundDown    = "Signal-Down.wav";
+bool     signalReversal.Popup;
+bool     signalReversal.Mail;
+string   signalReversal.MailSender   = "";
+string   signalReversal.MailReceiver = "";
+bool     signalReversal.SMS;
+string   signalReversal.SMSReceiver  = "";
+string   signalInfo                  = "";
 
 
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // validate inputs
    // ZigZag.Periods
    if (ZigZag.Periods < 2)      return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
@@ -149,18 +155,23 @@ int onInit() {
    if (LowerChannel.Color == 0xFF000000) LowerChannel.Color = CLR_NONE;
 
    // signaling
+   signalReversal       = Signal.onReversal;             // reset global vars (possible account change)
+   signalReversal.Sound = Signal.onReversal.Sound;
+   signalReversal.Popup = Signal.onReversal.Popup;
+   signalReversal.Mail  = Signal.onReversal.Mail;
+   signalReversal.SMS   = Signal.onReversal.SMS;
+   signalInfo           = "";
    string signalId = "Signal.onReversal";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, Signal.onReversal))                                                      return(last_error);
-   if (Signal.onReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, Signal.onReversal.Sound))                                      return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, Signal.onReversal.Popup))                                      return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, Signal.onReversal.Mail, signalMailSender, signalMailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, Signal.onReversal.SMS, signalSmsReceiver))                     return(last_error);
-      if (Signal.onReversal.Sound || Signal.onReversal.Popup || Signal.onReversal.Mail || Signal.onReversal.SMS) {
-         signalDescription = "onReversal="+ StrLeft(ifString(Signal.onReversal.Sound, "Sound+", "") + ifString(Signal.onReversal.Popup, "Popup+", "") + ifString(Signal.onReversal.Mail, "Mail+", "") + ifString(Signal.onReversal.SMS, "SMS+", ""), -1);
-         if (IsLogDebug()) logDebug("onInit(7)  "+ signalDescription);
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal))                                                                        return(last_error);
+   if (signalReversal) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.Sound))                                                        return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.Popup))                                                        return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.Mail, signalReversal.MailSender, signalReversal.MailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.SMS, signalReversal.SMSReceiver))                              return(last_error);
+      if (signalReversal.Sound || signalReversal.Popup || signalReversal.Mail || signalReversal.SMS) {
+         signalInfo = "onReversal="+ StrLeft(ifString(signalReversal.Sound, "Sound+", "") + ifString(signalReversal.Popup, "Popup+", "") + ifString(signalReversal.Mail, "Mail+", "") + ifString(signalReversal.SMS, "SMS+", ""), -1);
       }
-      else Signal.onReversal = false;
+      else signalReversal = false;
    }
 
    // buffer management
@@ -183,7 +194,7 @@ int onInit() {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
-   return(catch("onInit(8)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -297,19 +308,33 @@ int onTick() {
 
 
 /**
+ * Handle AccountChange events.
+ *
+ * @param  int previous - account number
+ * @param  int current  - account number
+ *
+ * @return int - error status
+ */
+int onAccountChange(int previous, int current) {
+   return(onInit(true));
+}
+
+
+/**
  * Update the chart legend.
  */
 void UpdateLegend() {
    static double lastTrend, lastWaiting;
-   static datetime lastBarTime;
+   static int lastBarTime, lastAccount;
 
-   // update if trend[0], waiting[0] or the current bar changed
-   if (trend[0]!=lastTrend || waiting[0]!=lastWaiting || Time[0]!=lastBarTime) {
+   // update if trend[0], waiting[0], the current bar or the account changed
+   if (trend[0]!=lastTrend || waiting[0]!=lastWaiting || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
+      string sTrend   = NumberToStr(trend[0], "+.");
       int    iWaiting = waiting[0];
-      string sTrend   = "  "+ NumberToStr(trend[0], "+.");
       string sWaiting = ifString(!iWaiting, "", " (waiting: "+ iWaiting +")");
+      string sSignal  = ifString(signalReversal, "    "+ signalInfo, "");
+      string text     = StringConcatenate(indicatorName, "    ", sTrend, sWaiting, sSignal);
 
-      string text = StringConcatenate(indicatorName, "    ", sTrend, sWaiting);
       color clr = ZigZag.Color;
       if      (clr == Aqua        ) clr = DeepSkyBlue;
       else if (clr == Gold        ) clr = Orange;
@@ -320,11 +345,12 @@ void UpdateLegend() {
       ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateLegend(1)", error);     // on Object::onDrag() or opened "Properties" dialog
-   }
 
-   lastTrend   = trend  [0];
-   lastWaiting = waiting[0];
-   lastBarTime = Time   [0];
+      lastTrend   = trend  [0];
+      lastWaiting = waiting[0];
+      lastBarTime = Time   [0];
+      lastAccount = AccountNumber();
+   }
 }
 
 
@@ -508,7 +534,7 @@ bool MarkBreakoutLevel(int direction, int bar) {
    }
 
    // trigger new reversal signals
-   if (Signal.onReversal && ChangedBars <= 2)
+   if (signalReversal && ChangedBars <= 2)
       return(onReversal(direction, bar));
    return(true);
 }
@@ -544,10 +570,10 @@ bool onReversal(int direction, int bar) {
          if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onReversal.Popup)           Alert(message);               // "Sound" drowns out an enabled alert sound
-         if (Signal.onReversal.Sound) error |= !PlaySoundEx(signalSoundUp);
-         if (Signal.onReversal.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
-         if (Signal.onReversal.SMS)   error |= !SendSMS(signalSmsReceiver, message + NL + accountTime);
+         if (signalReversal.Popup)           Alert(message);                  // "Sound" drowns out an enabled alert sound
+         if (signalReversal.Sound) error |= !PlaySoundEx(signalReversal.SoundUp);
+         if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
+         if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
       }
 
       if (direction == D_SHORT) {
@@ -555,10 +581,10 @@ bool onReversal(int direction, int bar) {
          if (IsLogInfo()) logInfo("onReversal(3)  "+ message);
          message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-         if (Signal.onReversal.Popup)           Alert(message);               // "Sound" drowns out an enabled alert sound
-         if (Signal.onReversal.Sound) error |= !PlaySoundEx(signalSoundDown);
-         if (Signal.onReversal.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
-         if (Signal.onReversal.SMS)   error |= !SendSMS(signalSmsReceiver, message + NL + accountTime);
+         if (signalReversal.Popup)           Alert(message);                  // "Sound" drowns out an enabled alert sound
+         if (signalReversal.Sound) error |= !PlaySoundEx(signalReversal.SoundDown);
+         if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
+         if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
       }
    }
    return(!error);
