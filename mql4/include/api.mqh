@@ -341,7 +341,7 @@ string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 string   JoinStrings(string &values[], string separator = ", ");;
-bool     ManageIndicatorBuffer(int id, double buffer[]);;
+bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 
 
 // include/structs/mt4/

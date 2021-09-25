@@ -40,7 +40,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
-#include <functions/ManageIndicatorBuffer.mqh>
+#include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
@@ -90,9 +90,11 @@ string legendLabel   = "";
 /**
  * Initialization
  *
+ * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
+ *
  * @return int - error status
  */
-int onInit() {
+int onInit(bool accountChange = false) {
    // validate inputs
    // Input.MA
    string sValues[], sValue=StrTrim(Input.MA.Method);
@@ -213,7 +215,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(haOpen)) return(logInfo("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
+   ManageDoubleIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
    // reset buffers before performing a full recalculation
    if (!UnchangedBars) {
