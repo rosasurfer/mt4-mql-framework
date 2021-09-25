@@ -1,23 +1,23 @@
 /**
- * Manage a double array as additional indicator buffer, i.e. automatically resize it and shift the content according to
+ * Manage an integer array as additional indicator buffer, i.e. automatically resize it and shift the content according to
  * incoming new bar data.
  *
  * In MQL4 the terminal manages a maximum of 8 indicator buffers. Additional buffers can be used but must be managed by the
  * framework. Such buffers are for internal calculations only, they can't be drawn on the chart or accessed via iCustom().
  *
- * @param  int    id                    - buffer index
- * @param  double buffer[]              - buffer array
- * @param  double emptyValue [optional] - buffer value interpreted as "no value" (default: 0)
+ * @param  int id                    - buffer index
+ * @param  int buffer[]              - buffer array
+ * @param  int emptyValue [optional] - buffer value interpreted as "no value" (default: 0)
  *
  * @return bool - success status
  */
-bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0) {
+bool ManageIntIndicatorBuffer(int id, int buffer[], int emptyValue = 0) {
    // TODO: At the moment the function reallocates memory each time the number of bars changes.
    //       Pre-allocate excess memory and use a dynamic offset to improve the performance of additional buffers.
 
-   if (id < 0)                                                 return(!catch("ManageDoubleIndicatorBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
-   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("ManageDoubleIndicatorBuffer(2)  id="+ id +", invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE));
-   if (!Bars)                                                  return(!catch("ManageDoubleIndicatorBuffer(3)  id="+ id +", Tick="+ Tick +"  Bars=0", ERR_ILLEGAL_STATE));
+   if (id < 0)                                                 return(!catch("ManageIntIndicatorBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
+   if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("ManageIntIndicatorBuffer(2)  id="+ id +", invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE));
+   if (!Bars)                                                  return(!catch("ManageIntIndicatorBuffer(3)  id="+ id +", Tick="+ Tick +"  Bars=0", ERR_ILLEGAL_STATE));
 
    // maintain a metadata array {id => data[]} to support multiple buffers
    #define IB.Tick            0                                      // last Tick value for detecting multiple calls during the same tick
@@ -39,29 +39,29 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
       // the number of Bars is unchanged
       if (Time[Bars-1] != prevOldestBarTime) {                       // the oldest bar changed and bars have been shifted off the end (e.g. in self-updating offline charts when MAX_CHART_BARS is hit on each new bar)
          if (!ShiftedBars || Time[ShiftedBars]!=prevNewestBarTime) {
-            return(!catch("ManageDoubleIndicatorBuffer(4)  id="+ id +", Tick="+ Tick +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", ShiftedBars="+ ShiftedBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_ILLEGAL_STATE));
+            return(!catch("ManageIntIndicatorBuffer(4)  id="+ id +", Tick="+ Tick +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", ShiftedBars="+ ShiftedBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_ILLEGAL_STATE));
          }
       }
    }
    else if (Bars > prevBars) {
       // the number of Bars increased                                // new bars have been inserted or appended (anywhere, all cases are covered by ChangedBars)
       if (prevBars && Time[Bars-1]!=prevOldestBarTime) {             // the oldest bar changed: bars have been added at the end (data pumping)
-         if (UnchangedBars != 0) return(!catch("ManageDoubleIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but UnchangedBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", UnchangedBars="+ UnchangedBars +")", ERR_ILLEGAL_STATE));
+         if (UnchangedBars != 0) return(!catch("ManageIntIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but UnchangedBars != 0 (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", UnchangedBars="+ UnchangedBars +")", ERR_ILLEGAL_STATE));
       }
-      ResizeDoubleIndicatorBuffer(buffer, Bars, emptyValue);
+      ResizeIntIndicatorBuffer(buffer, Bars, emptyValue);
    }
    else /*Bars < prevBars*/ {
       // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ca. 1200 bars)
       for (int i=0; i < Bars; i++) {
          if (Time[i] == prevNewestBarTime) break;                    // find the index of previous Time[0] aka prevNewestBarTime
       }
-      if (i == Bars) return(!catch("ManageDoubleIndicatorBuffer(6)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" but previous Time[0] not found", ERR_ILLEGAL_STATE));
+      if (i == Bars) return(!catch("ManageIntIndicatorBuffer(6)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" but previous Time[0] not found", ERR_ILLEGAL_STATE));
       if (i > 0) {                                                   // manually shift the content according to the found Time[0] offset
-         ResizeDoubleIndicatorBuffer(buffer, ArraySize(buffer)+i, emptyValue);
+         ResizeIntIndicatorBuffer(buffer, ArraySize(buffer)+i, emptyValue);
       }
-      ResizeDoubleIndicatorBuffer(buffer, Bars);
+      ResizeIntIndicatorBuffer(buffer, Bars);
 
-      if (IsLogInfo()) logInfo("ManageDoubleIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
+      if (IsLogInfo()) logInfo("ManageIntIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
    }
 
    data[id][IB.Tick         ] = Tick;
@@ -70,9 +70,9 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
    data[id][IB.OldestBarTime] = Time[Bars-1];
 
    // safety double-check (should never happen)
-   if (ArraySize(buffer) != Bars) return(!catch("ManageDoubleIndicatorBuffer(7)  id="+ id +", Tick="+ Tick +", size(buffer)="+ ArraySize(buffer) +" doesn't match Bars="+ Bars, ERR_RUNTIME_ERROR));
+   if (ArraySize(buffer) != Bars) return(!catch("ManageIntIndicatorBuffer(7)  id="+ id +", Tick="+ Tick +", size(buffer)="+ ArraySize(buffer) +" doesn't match Bars="+ Bars, ERR_RUNTIME_ERROR));
 
-   return(!catch("ManageDoubleIndicatorBuffer(8)"));
+   return(!catch("ManageIntIndicatorBuffer(8)"));
 }
 
 
@@ -80,13 +80,13 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
  * Adjust the size of a managed timeseries buffer. If size increases new elements are appended at index 0. If size decreases
  * existing elements are removed from the end (the oldest elements).
  *
- * @param  _InOut_ double buffer[]              - buffer
- * @param  _In_    int    newSize               - new buffer size
- * @param  _In_    double emptyValue [optional] - new buffer elements will be initialized with this value (default: NULL)
+ * @param  _InOut_ int buffer[]              - buffer
+ * @param  _In_    int newSize               - new buffer size
+ * @param  _In_    int emptyValue [optional] - new buffer elements will be initialized with this value (default: NULL)
  *
  * @return bool - success status
  */
-bool ResizeDoubleIndicatorBuffer(double &buffer[], int newSize, double emptyValue = NULL) {
+bool ResizeIntIndicatorBuffer(int &buffer[], int newSize, int emptyValue = NULL) {
    int oldSize = ArraySize(buffer);
 
    if      (newSize > oldSize) ArraySetAsSeries(buffer, false);   // new elements are added at index 0
@@ -105,14 +105,15 @@ bool ResizeDoubleIndicatorBuffer(double &buffer[], int newSize, double emptyValu
             buffer[0] = emptyValue;                               // a single new bar after a regular BarOpen event
          }
          else {
-            InitializeDoubleArray(buffer, newSize, emptyValue, oldSize, newBars);
+            InitializeIntArray(buffer, newSize, emptyValue, oldSize, newBars);
          }
       }
    }
-   return(!catch("ResizeDoubleIndicatorBuffer(1)"));
+   return(!catch("ResizeIntIndicatorBuffer(1)"));
 }
 
 
 #import "rsfMT4Expander.dll"
-   bool InitializeDoubleArray(double values[], int size, double initValue, int from, int count);
+   bool InitializeIntArray(int values[], int size, int initValue, int from, int count);
+   bool ShiftIntIndicatorBuffer(int &buffer[], int size, int count, int emptyValue);
 #import

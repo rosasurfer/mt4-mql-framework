@@ -96,8 +96,8 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(beLong,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(beShort, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(beLong,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(beShort, Bars, ShiftedBars, 0);
    }
 
    // draw breakeven line
