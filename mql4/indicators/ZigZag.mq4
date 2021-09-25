@@ -13,10 +13,12 @@
  *
  * TODO:
  *  - add signal status to legend
- *  - Periods=2: intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45
+ *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
+ *  - channel calculation bug: must not always include the current bar
  *  - visible buffer for breakout markers
  *  - add breakout markers to "Data" window
  *  - invisible marker descriptions (or are built-in breakout markers sufficient)
+ *  - signaling bug during data pumping
  *  - after data pumping changed marker descriptions are not removed
  *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
@@ -50,8 +52,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods          = 10;                    // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, can be shortened to "L | S"
+extern int    ZigZag.Periods          = 12;                    // lookback periods of the Donchian channel
+extern string ZigZag.Type             = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened to "L | S"
 extern int    ZigZag.Width            = indicator_width1;
 extern color  ZigZag.Color            = indicator_color1;
 
@@ -97,7 +99,7 @@ double lowerBand  [];                                    // lower channel band
 double upperCross [];                                    // upper band crossings
 double lowerCross [];                                    // lower band crossings
 double trend      [];                                    // trend direction and length
-double notrend    [];                                    // bar periods with not yet known trend direction
+double waiting    [];                                    // bar periods with not yet known trend direction
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -105,8 +107,6 @@ int    maxValues;
 string indicatorName = "";
 string legendLabel   = "";
 
-//string signalSoundUp    = "AlertDefault.wav";
-//string signalSoundDown  = "AlertDefault.wav";
 string signalSoundUp      = "Signal-Up.wav";
 string signalSoundDown    = "Signal-Down.wav";
 string signalMailSender   = "";
@@ -172,7 +172,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_CROSS,    upperCross ); SetIndexEmptyValue(MODE_UPPER_CROSS,    0); SetIndexLabel(MODE_UPPER_CROSS,    NULL);
    SetIndexBuffer(MODE_LOWER_CROSS,    lowerCross ); SetIndexEmptyValue(MODE_LOWER_CROSS,    0); SetIndexLabel(MODE_LOWER_CROSS,    NULL);
    SetIndexBuffer(MODE_TREND,          trend      ); SetIndexEmptyValue(MODE_TREND,          0); SetIndexLabel(MODE_TREND,          indicatorName +" trend");
-   SetIndexBuffer(MODE_WAITING,        notrend    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING,        indicatorName +" waiting");
+   SetIndexBuffer(MODE_WAITING,        waiting    ); SetIndexEmptyValue(MODE_WAITING,        0); SetIndexLabel(MODE_WAITING,        indicatorName +" waiting");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);           // chart tooltips and context menu
@@ -205,7 +205,7 @@ int onTick() {
       ArrayInitialize(upperCross,  0);
       ArrayInitialize(lowerCross,  0);
       ArrayInitialize(trend,       0);
-      ArrayInitialize(notrend,     0);
+      ArrayInitialize(waiting,     0);
       SetIndicatorOptions();
    }
 
@@ -218,7 +218,7 @@ int onTick() {
       ShiftIndicatorBuffer(upperCross,  Bars, ShiftedBars, 0);
       ShiftIndicatorBuffer(lowerCross,  Bars, ShiftedBars, 0);
       ShiftIndicatorBuffer(trend,       Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(notrend,     Bars, ShiftedBars, 0);
+      ShiftIndicatorBuffer(waiting,     Bars, ShiftedBars, 0);
    }
 
    // calculate start bar
@@ -235,7 +235,7 @@ int onTick() {
       upperCross [bar] = 0;
       lowerCross [bar] = 0;
       trend      [bar] = 0;
-      notrend    [bar] = 0;
+      waiting    [bar] = 0;
 
       // recalculate Donchian channel and crossings (potential ZigZag reversals)
       upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar)];
@@ -247,7 +247,7 @@ int onTick() {
       // if no channel crossings (trend is unknown)
       if (!upperCross[bar] && !lowerCross[bar]) {
          trend  [bar] = trend[bar+1];                                // keep known trend
-         notrend[bar] = Round(notrend[bar+1] + 1);                   // increase unknown trend
+         waiting[bar] = Round(waiting[bar+1] + 1);                   // increase unknown trend
       }
 
       // if two crossings (upper and lower band crossed by the same bar)
@@ -255,7 +255,7 @@ int onTick() {
          if (IsUpperCrossFirst(bar)) {
             int prevZZ = ProcessUpperCross(bar);                     // first process the upper crossing
 
-            if (notrend[bar] > 0) {                                  // then process the lower crossing
+            if (waiting[bar] > 0) {                                  // then process the lower crossing
                SetTrend(prevZZ-1, bar, -1);                          // (it always marks a new down leg)
                zigzagOpen[bar] = lowerCross[bar];
             }
@@ -268,7 +268,7 @@ int onTick() {
          else {
             prevZZ = ProcessLowerCross(bar);                         // first process the lower crossing
 
-            if (notrend[bar] > 0) {                                  // then process the upper crossing
+            if (waiting[bar] > 0) {                                  // then process the upper crossing
                SetTrend(prevZZ-1, bar, 1);                           // (it always marks a new up leg)
                zigzagOpen[bar] = upperCross[bar];
             }
@@ -300,16 +300,16 @@ int onTick() {
  * Update the chart legend.
  */
 void UpdateLegend() {
-   static double lastTrend, lastNotrend;
+   static double lastTrend, lastWaiting;
    static datetime lastBarTime;
 
-   // update if trend[0], notrend[0] or the current bar changed
-   if (trend[0]!=lastTrend || notrend[0]!=lastNotrend || Time[0]!=lastBarTime) {
-      int    iNotrend = notrend[0];
+   // update if trend[0], waiting[0] or the current bar changed
+   if (trend[0]!=lastTrend || waiting[0]!=lastWaiting || Time[0]!=lastBarTime) {
+      int    iWaiting = waiting[0];
       string sTrend   = "  "+ NumberToStr(trend[0], "+.");
-      string sNotrend = ifString(!iNotrend, "", " (waiting: "+ iNotrend +")");
+      string sWaiting = ifString(!iWaiting, "", " (waiting: "+ iWaiting +")");
 
-      string text = StringConcatenate(indicatorName, "    ", sTrend, sNotrend);
+      string text = StringConcatenate(indicatorName, "    ", sTrend, sWaiting);
       color clr = ZigZag.Color;
       if      (clr == Aqua        ) clr = DeepSkyBlue;
       else if (clr == Gold        ) clr = Orange;
@@ -323,7 +323,7 @@ void UpdateLegend() {
    }
 
    lastTrend   = trend  [0];
-   lastNotrend = notrend[0];
+   lastWaiting = waiting[0];
    lastBarTime = Time   [0];
 }
 
@@ -360,7 +360,7 @@ bool IsUpperCrossFirst(int bar) {
  */
 int GetPreviousZigZagPoint(int bar) {
    int nextBar = bar + 1;
-   if      (notrend[nextBar] > 0) int zzOffset = nextBar + notrend[nextBar];
+   if      (waiting[nextBar] > 0) int zzOffset = nextBar + waiting[nextBar];
    else if (!zigzagClose[nextBar])    zzOffset = nextBar + Abs(trend[nextBar]);
    else                               zzOffset = nextBar;
    return(zzOffset);
@@ -394,11 +394,11 @@ int ProcessUpperCross(int bar) {
       else {                                                   // a lower high
          upperCross[bar] = 0;                                  // reset channel cross marker
          trend     [bar] = trend[bar+1];                       // keep known trend
-         notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
+         waiting   [bar] = Round(waiting[bar+1] + 1);          // increase unknown trend
       }
    }
    else {                                                      // a new uptrend
-      if (trend[bar+1] < 0 || notrend[bar+1])
+      if (trend[bar+1] < 0 || waiting[bar+1])
          MarkBreakoutLevel(D_LONG, bar);                       // mark the breakout
       SetTrend(prevZZ-1, bar, 1);                              // set the trend
       zigzagOpen [bar] = upperCross[bar];
@@ -435,11 +435,11 @@ int ProcessLowerCross(int bar) {
       else {                                                   // a higher low
          lowerCross[bar] = 0;                                  // reset channel cross marker
          trend     [bar] = trend[bar+1];                       // keep known trend
-         notrend   [bar] = Round(notrend[bar+1] + 1);          // increase unknown trend
+         waiting   [bar] = Round(waiting[bar+1] + 1);          // increase unknown trend
       }
    }
    else {                                                      // a new downtrend
-      if (trend[bar+1] > 0 || notrend[bar+1])
+      if (trend[bar+1] > 0 || waiting[bar+1])
          MarkBreakoutLevel(D_SHORT, bar);                      // mark the breakout
       SetTrend(prevZZ-1, bar, -1);                             // set the trend
       zigzagOpen [bar] = lowerCross[bar];
@@ -459,7 +459,7 @@ int ProcessLowerCross(int bar) {
 void SetTrend(int from, int to, int value) {
    for (int i=from; i >= to; i--) {
       trend  [i] = value;
-      notrend[i] = 0;
+      waiting[i] = 0;
 
       if (value > 0) value++;
       else           value--;
