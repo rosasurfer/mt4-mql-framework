@@ -1,6 +1,7 @@
 /**
  * Displays additional market and account infos on the chart.
  *
+ *
  *  - The current price and spread.
  *  - In terminal builds <= 509 the current instrument name.
  *  - The calculated unitsize according to the configured risk profiles.
@@ -14,6 +15,9 @@
  *     external: positions and/or history from an external account (e.g. synthetic instruments),
  *               PL as provided by the external source,
  *               limit monitoring and notifications
+ *
+ * TODO:
+ *  - set order tracker sound on stopout to "margin-call"
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

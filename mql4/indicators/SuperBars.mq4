@@ -19,6 +19,9 @@
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
+ *
+ * TODO:
+ *  - doesn't work on offline charts
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};

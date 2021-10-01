@@ -17,6 +17,7 @@
  *  - signaling bug during data pumping
  *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
  *  - channel calculation must not always include the current bar
+ *  - add next reversal to legend: ZigZag(36)  -15/3  reversal @15'645.20 (popup)
  *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changes
@@ -329,10 +330,10 @@ void UpdateLegend() {
 
    // update if trend, current bar or the account changed
    if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
-      string sTrend   = NumberToStr(trend[0], "+.");
-      string sWaiting = ifString(!waiting[0], "", " (waiting: "+ waiting[0] +")");
-      string sSignal  = ifString(signalReversal, "    "+ signalInfo, "");
-      string text     = StringConcatenate(indicatorName, "    ", sTrend, sWaiting, sSignal);
+      string sTrend   = "   "+ NumberToStr(trend[0], "+.");
+      string sWaiting = ifString(!waiting[0], "", "/"+ waiting[0]);
+      string sSignal  = ifString(signalReversal, "   "+ signalInfo, "");
+      string text     = StringConcatenate(indicatorName, sTrend, sWaiting, sSignal);
 
       color clr = ZigZag.Color;
       if      (clr == Aqua        ) clr = DeepSkyBlue;
