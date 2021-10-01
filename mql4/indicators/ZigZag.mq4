@@ -331,7 +331,7 @@ void UpdateLegend() {
    if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
-      string sReversal = "   reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0], upperBand[0]), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0], upperBand[0]), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
@@ -344,7 +344,7 @@ void UpdateLegend() {
 
       ObjectSetText(legendLabel, text, 9, "Arial Fett", clr);
       int error = GetLastError();
-      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateLegend(1)", error);     // on Object::onDrag() or opened "Properties" dialog
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST) catch("UpdateLegend(1)", error);     // on ObjectDrag or opened "Properties" dialog
 
       lastTrend   = combinedTrend[0];
       lastBarTime = Time[0];
