@@ -949,7 +949,7 @@ bool ToggleAccountBalance() {
    }
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on Object::onDrag() or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
       return(!catch("AccountBalance(1)", error));
 
    // store current display status
@@ -1145,7 +1145,7 @@ bool UpdatePrice() {
    ObjectSetText(label.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }
@@ -1164,7 +1164,7 @@ bool UpdateSpread() {
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1195,7 +1195,7 @@ bool UpdateUnitSize() {
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1228,7 +1228,7 @@ bool UpdatePositions() {
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or opened "Properties" dialog
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
 
@@ -1451,7 +1451,7 @@ bool UpdateOrderCounter() {
    ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateOrderCounter(1)", error));
 }
@@ -1475,7 +1475,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1493,7 +1493,7 @@ bool UpdateStopoutLevel() {
    if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or opened "Properties" dialog
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on ObjectDrag or opened "Properties" dialog
          return(!catch("UpdateStopoutLevel(1)", error));
       return(true);
    }
@@ -1529,7 +1529,7 @@ bool UpdateStopoutLevel() {
 
 
    error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
 }

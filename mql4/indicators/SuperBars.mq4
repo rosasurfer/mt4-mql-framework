@@ -624,7 +624,7 @@ bool UpdateDescription() {
    ObjectSetText(legendLabel, description, legendFontSize, legendFontName, legendFontColor);
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on Object::onDrag() or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdateDescription(1)", error));
    return(true);
 }
