@@ -12,10 +12,10 @@
  *
  *
  * TODO:
- *  - reset framework buffers on account change
+ *  - channel calculation on Bar[0] must not include the current bar
+ *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
  *  - signaling bug during data pumping
- *  - intrabar bug in tester (MODE_CONTROLPOINTS) on USDJPY,M15 2021.08.03 00:45 with Periods=2
- *  - channel calculation must not always include the current bar
+ *  - reset framework buffers on account change
  *  - add auto-configuration and remove global var __isAutoConfig
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
@@ -268,11 +268,13 @@ int onTick() {
       waiting      [bar] = 0;
       combinedTrend[bar] = 0;
 
-      // recalculate Donchian channel and crossings (potential ZigZag reversals)
+      // recalculate Donchian channel
       upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar)];
       lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar)];
-      if (High[bar] == upperBand[bar]) upperCross[bar] = upperBand[bar];
-      if ( Low[bar] == lowerBand[bar]) lowerCross[bar] = lowerBand[bar];
+
+      // recalculate channel crossings (potential ZigZag reversals)
+      if (upperBand[bar] > upperBand[bar+1]) upperCross[bar] = upperBand[bar];
+      if (lowerBand[bar] < lowerBand[bar+1]) lowerCross[bar] = lowerBand[bar];
 
       // recalculate ZigZag
       // if no channel crossings (trend is unknown)
@@ -524,14 +526,12 @@ bool MarkBreakoutLevel(int direction, int bar) {
 
    if (direction == D_LONG) {
       price = upperBand[bar+1];
-      if (price > High[bar]) price = High[bar];
-      if (price <  Low[bar]) price =  Low[bar];
+      if (price < Low[bar]) price = Low[bar];
       upperBreakout[bar] = price;
    }
    else {
       price = lowerBand[bar+1];
       if (price > High[bar]) price = High[bar];
-      if (price <  Low[bar]) price =  Low[bar];
       lowerBreakout[bar] = price;
    }
 
