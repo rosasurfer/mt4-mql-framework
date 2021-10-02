@@ -51,7 +51,7 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
       ResizeDoubleIndicatorBuffer(buffer, Bars, emptyValue);
    }
    else /*Bars < prevBars*/ {
-      // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ca. 1200 bars)
+      // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ~1200 bars)
       for (int i=0; i < Bars; i++) {
          if (Time[i] == prevNewestBarTime) break;                    // find the index of previous Time[0] aka prevNewestBarTime
       }
@@ -69,10 +69,7 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
    data[id][IB.NewestBarTime] = Time[0];
    data[id][IB.OldestBarTime] = Time[Bars-1];
 
-   // safety double-check (should never happen)
-   if (ArraySize(buffer) != Bars) return(!catch("ManageDoubleIndicatorBuffer(7)  id="+ id +", Tick="+ Tick +", size(buffer)="+ ArraySize(buffer) +" doesn't match Bars="+ Bars, ERR_RUNTIME_ERROR));
-
-   return(!catch("ManageDoubleIndicatorBuffer(8)"));
+   return(!catch("ManageDoubleIndicatorBuffer(7)"));
 }
 
 
@@ -114,5 +111,6 @@ bool ResizeDoubleIndicatorBuffer(double &buffer[], int newSize, double emptyValu
 
 
 #import "rsfMT4Expander.dll"
-   bool InitializeDoubleArray(double values[], int size, double initValue, int from, int count);
+   bool InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
+   bool ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 #import

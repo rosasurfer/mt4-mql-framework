@@ -9927,6 +9927,7 @@ ZigZag.Width=1
 ZigZag.Color=16711680
 ShowZigZagChannel=1
 ShowZigZagTrail=1
+FirstTrailPointPerBar=0
 UpperChannel.Color=16748574
 LowerChannel.Color=16711935
 </inputs>
@@ -9936,9 +9937,7 @@ style_2=2
 style_3=2
 weight_4=0
 weight_5=0
-weight_6=0
-weight_7=0
-_color_6=4294967295
+color_6=4294967295
 period_flags=0
 show_data=1
 </indicator>
