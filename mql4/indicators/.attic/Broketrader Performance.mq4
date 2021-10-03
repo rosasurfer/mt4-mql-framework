@@ -60,11 +60,9 @@ datetime systemStartDate;
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // validate inputs
    if (SMA.Periods < 1)            return(catch("onInit(1)  invalid input parameter SMA.Periods: "+ SMA.Periods, ERR_INVALID_INPUT_PARAMETER));
    if (Stochastic.Periods < 2)     return(catch("onInit(2)  invalid input parameter Stochastic.Periods: "+ Stochastic.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));

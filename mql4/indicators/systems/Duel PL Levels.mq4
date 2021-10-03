@@ -40,11 +40,9 @@ int drawType;
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Color.Breakeven == 0xFF000000) Color.Breakeven = CLR_NONE;

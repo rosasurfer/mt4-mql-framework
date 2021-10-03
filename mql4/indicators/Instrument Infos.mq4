@@ -55,11 +55,9 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // validate inputs
    // Volatility.UsedLeverage
    if (Volatility.UsedLeverage < 1)     return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));

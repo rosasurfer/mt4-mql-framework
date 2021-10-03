@@ -83,11 +83,9 @@ string signal.sms.receiver = "";
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // (1) input validation
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (Histogram.Color.Long  == 0xFF000000) Histogram.Color.Long  = CLR_NONE;

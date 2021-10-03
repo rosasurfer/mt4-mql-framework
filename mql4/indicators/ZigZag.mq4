@@ -136,11 +136,9 @@ string signalInfo                 = "";
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // validate inputs
    // ZigZag.Periods
    if (ZigZag.Periods < 2)               return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));

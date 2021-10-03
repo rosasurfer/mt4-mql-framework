@@ -31,11 +31,9 @@ double iLowerLevel[];                           // unterer Level
 /**
  * Initialisierung
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // Periods
    if (Periods < 2) return(catch("onInit(1)  invalid input parameter Periods: "+ Periods, ERR_INVALID_CONFIG_VALUE));
 

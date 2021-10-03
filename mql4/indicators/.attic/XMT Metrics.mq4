@@ -41,11 +41,9 @@ double close[];
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // buffer management
    SetIndexBuffer(MODE_OPEN,  open );
    SetIndexBuffer(MODE_HIGH,  high );

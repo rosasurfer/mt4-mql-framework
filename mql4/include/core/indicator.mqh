@@ -587,11 +587,9 @@ bool EventListener_ChartCommand(string &commands[]) {
 /**
  * Initialization preprocessing
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  *
-int onInit(bool accountChange = false)                         // opening curly braces are intentionally missing (UEStudio)
+int onInit()                                                   // opening curly braces are intentionally missing (UEStudio)
    return(NO_ERROR);
 }
 
