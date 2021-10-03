@@ -76,11 +76,9 @@ int maxValues;
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // validate inputs
    if (Stoch.Main.Periods < 2)       return(catch("onInit(1)  invalid input parameter Stoch.Main.Periods: "+ Stoch.Main.Periods +" (min. 2)", ERR_INVALID_INPUT_PARAMETER));
    if (Stoch.SlowedMain.Periods < 0) return(catch("onInit(2)  invalid input parameter Stoch.SlowedMain.Periods: "+ Stoch.SlowedMain.Periods, ERR_INVALID_INPUT_PARAMETER));

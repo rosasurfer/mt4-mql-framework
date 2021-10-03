@@ -39,11 +39,9 @@ int mmi.periods;
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // (1) input validation
    // MMI.Periods
    if (MMI.Periods < 1) return(catch("onInit(1)  invalid input parameter Periods: "+ MMI.Periods, ERR_INVALID_INPUT_PARAMETER));

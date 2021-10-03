@@ -74,11 +74,9 @@ int ema.appliedPrice;
 /**
  * Initialization
  *
- * @param  bool accountChange [optional] - whether called due to an account change event (default: no)
- *
  * @return int - error status
  */
-int onInit(bool accountChange = false) {
+int onInit() {
    // (1) validate inputs
    // EMA.Periods
    if (EMA.Periods < 1)           return(catch("onInit(1)  invalid input parameter EMA.Periods: "+ EMA.Periods, ERR_INVALID_INPUT_PARAMETER));
