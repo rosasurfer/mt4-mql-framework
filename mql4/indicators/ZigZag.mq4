@@ -364,7 +364,7 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   return(onInit(true));
+   return(onInit());
 }
 
 
