@@ -9927,7 +9927,6 @@ ZigZag.Width=1
 ZigZag.Color=16711680
 ShowZigZagChannel=1
 ShowZigZagTrail=1
-FirstTrailPointPerBar=0
 UpperChannel.Color=16748574
 LowerChannel.Color=16711935
 </inputs>

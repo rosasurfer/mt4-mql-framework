@@ -12,7 +12,6 @@
  *
  *
  * TODO:
- *  - merge channel crossing and breakout buffers
  *  - channel calculation on Bar[0] must not include the current bar
  *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
  *  - signaling bug during data pumping
@@ -39,7 +38,7 @@ extern int    Semaphores.WingDingsSymbol = 108;                   // that's a sm
 
 extern bool   ShowZigZagChannel          = true;
 extern bool   ShowZigZagTrail            = true;
-extern bool   FirstTrailPointPerBar      = false;                 // whether to display first or last trail point per bar
+extern bool   ShowFirstCrossingPerBar    = false;                 // display the first or the last crossing point per bar
 extern color  UpperChannel.Color         = DodgerBlue;
 extern color  LowerChannel.Color         = Magenta;
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
@@ -288,8 +287,15 @@ int onTick() {
       lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar)];
 
       // recalculate channel crossings (potential ZigZag reversals)
-      if (upperBand[bar] > upperBand[bar+1]) upperTrailEnd[bar] = upperBand[bar];
-      if (lowerBand[bar] < lowerBand[bar+1]) lowerTrailEnd[bar] = lowerBand[bar];
+      if (upperBand[bar] > upperBand[bar+1]) {
+         upperTrailStart[bar] = MathMax(Low[bar], upperBand[bar+1]);
+         upperTrailEnd  [bar] = upperBand[bar];
+      }
+
+      if (lowerBand[bar] < lowerBand[bar+1]) {
+         lowerTrailEnd[bar] = MathMin(High[bar], lowerBand[bar+1]);
+         lowerTrailEnd[bar] = lowerBand[bar];
+      }
 
       // recalculate ZigZag
       // if no channel crossings (trend is unknown)
@@ -312,7 +318,7 @@ int onTick() {
                SetTrend(bar, bar, -1);                                     // mark a new downtrend
             }
             zigzagClose[bar] = lowerTrailEnd[bar];
-            MarkBreakoutLevel(D_SHORT, bar);                               // mark the breakout level
+            CheckReversalSignal(D_SHORT, bar);                             // process the reversal signal
          }
          else {
             prevZZ = ProcessLowerCross(bar);                               // first process the lower crossing
@@ -325,7 +331,7 @@ int onTick() {
                SetTrend(bar, bar, 1);                                      // mark a new uptrend
             }
             zigzagClose[bar] = upperTrailEnd[bar];
-            MarkBreakoutLevel(D_LONG, bar);                                // mark the breakout level
+            CheckReversalSignal(D_LONG, bar);                              // process the reversal signal
          }
       }
 
@@ -333,8 +339,8 @@ int onTick() {
       else if (upperTrailEnd[bar] != 0) ProcessUpperCross(bar);
       else                              ProcessLowerCross(bar);
 
-      // populate visible trail buffer
-      if (FirstTrailPointPerBar) {
+      // populate the visible trail buffer
+      if (ShowFirstCrossingPerBar) {
          upperTrail[bar] = upperTrailStart[bar];
          lowerTrail[bar] = lowerTrailStart[bar];
       }
@@ -344,7 +350,7 @@ int onTick() {
       }
    }
 
-   if (!IsSuperContext()) UpdateLegend();                                  // signals are processed in MarkBreakoutLevel()
+   if (!IsSuperContext()) UpdateLegend();                                  // signals are processed in CalculateFirstTrailPoint()
    return(catch("onTick(3)"));
 }
 
@@ -458,7 +464,8 @@ int ProcessUpperCross(int bar) {
          zigzagClose[bar] = upperTrailEnd[bar];
       }
       else {                                                   // a lower high
-         upperTrailEnd[bar] = 0;                               // reset channel cross marker
+         //upperTrailStart[bar] = 0;                           // dismiss the cross markers
+         //upperTrailEnd  [bar] = 0;
          trend        [bar] = trend[bar+1];                    // keep known trend
          waiting      [bar] = waiting[bar+1] + 1;              // increase unknown trend
          combinedTrend[bar] = Round(Sign(trend[bar]) * waiting[bar] * 100000 + trend[bar]);
@@ -466,7 +473,7 @@ int ProcessUpperCross(int bar) {
    }
    else {                                                      // a new uptrend
       if (trend[bar+1] < 0 || waiting[bar+1])
-         MarkBreakoutLevel(D_LONG, bar);                       // mark the breakout
+         CheckReversalSignal(D_LONG, bar);
       SetTrend(prevZZ-1, bar, 1);                              // set the trend
       zigzagOpen [bar] = upperTrailEnd[bar];
       zigzagClose[bar] = upperTrailEnd[bar];
@@ -500,7 +507,8 @@ int ProcessLowerCross(int bar) {
          zigzagClose[bar] = lowerTrailEnd[bar];
       }
       else {                                                   // a higher low
-         lowerTrailEnd[bar] = 0;                               // reset channel cross marker
+         //lowerTrailStart[bar] = 0;                           // dismiss the cross markers
+         //lowerTrailEnd  [bar] = 0;
          trend        [bar] = trend[bar+1];                    // keep known trend
          waiting      [bar] = waiting[bar+1] + 1;              // increase unknown trend
          combinedTrend[bar] = Round(Sign(trend[bar]) * waiting[bar] * 100000 + trend[bar]);
@@ -508,7 +516,7 @@ int ProcessLowerCross(int bar) {
    }
    else {                                                      // a new downtrend
       if (trend[bar+1] > 0 || waiting[bar+1])
-         MarkBreakoutLevel(D_SHORT, bar);                      // mark the breakout
+         CheckReversalSignal(D_SHORT, bar);
       SetTrend(prevZZ-1, bar, -1);                             // set the trend
       zigzagOpen [bar] = lowerTrailEnd[bar];
       zigzagClose[bar] = lowerTrailEnd[bar];
@@ -537,30 +545,14 @@ void SetTrend(int from, int to, int value) {
 
 
 /**
- * Mark the channel breakout level of the ZigZag leg at the specified bar and trigger new reversal signals.
+ * Check for and trigger new reversal signals.
  *
  * @param  int direction - breakout direction: D_LONG | D_SHORT
  * @param  int bar       - breakout offset
  *
- * @return bool - success status
+ * @return bool - success status, not whether a reversal occurred
  */
-bool MarkBreakoutLevel(int direction, int bar) {
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("MarkBreakoutLevel(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-
-   double price;
-
-   if (direction == D_LONG) {
-      price = upperBand[bar+1];
-      if (price < Low[bar]) price = Low[bar];
-      upperTrailStart[bar] = price;
-   }
-   else {
-      price = lowerBand[bar+1];
-      if (price > High[bar]) price = High[bar];
-      lowerTrailStart[bar] = price;
-   }
-
-   // trigger signaling of new reversals
+bool CheckReversalSignal(int direction, int bar) {
    if (signalReversal && ChangedBars <= 2)
       return(onReversal(direction, bar));
    return(true);
@@ -656,7 +648,7 @@ string InputsToStr() {
                             "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";", NL,
                             "ShowZigZagChannel=",          BoolToStr(ShowZigZagChannel),       ";", NL,
                             "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";", NL,
-                            "FirstTrailPointPerBar=",      BoolToStr(FirstTrailPointPerBar),   ";", NL,
+                            "ShowFirstCrossingPerBar=",    BoolToStr(ShowFirstCrossingPerBar), ";", NL,
                             "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";", NL,
                             "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";", NL,
                             "Max.Bars=",                   Max.Bars,                           ";", NL,
