@@ -13,6 +13,8 @@
  *
  * TODO:
  *  - channel calculation on Bar[0] must not include the current bar
+ *  - on reversal always mark the first channel breakout irresepective of ShowFirstBreakoutPerBar
+ *  - add external buffer for the reversal bar
  *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
  *  - signaling bug during data pumping
  *  - reset framework buffers on account change
@@ -40,7 +42,7 @@ extern int    Semaphores.WingDingsSymbol = 108;                   // that's a sm
 extern bool   ShowZigZagChannel          = true;
 extern bool   ShowZigZagTrail            = true;
 extern bool   ShowChannelBreakouts       = true;
-extern bool   ShowFirstBreakoutPerBar    = false;                 // display the first or the last channel crossing per bar
+extern bool   ShowFirstBreakoutPerBar    = true;                 // display the first or the last channel crossing per bar
 extern color  UpperChannel.Color         = DodgerBlue;
 extern color  LowerChannel.Color         = Magenta;
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
@@ -378,7 +380,7 @@ void UpdateLegend() {
    if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0], upperBand[0]), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*Point, upperBand[0]+1*Point), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
