@@ -12,7 +12,7 @@
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];           // aktueller ExecutionContext
 //int    __lpSuperContext;                                        // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-//int    __CoreFunction;                                          // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
+//int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
 bool     __isAutoConfig;                                          // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
 
@@ -28,12 +28,12 @@ string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformat
 int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // it holds: Bars = ChangedBars + UnchangedBars
-int      UnchangedBars, ValidBars;                                // IndicatorCounted() => UnchangedBars (with alias ValidBars)
-int      ShiftedBars;                                             // offline charts only
+int      ChangedBars;                                             // indicators: ChangedBars, it holds: Bars = ChangedBars + UnchangedBars         (in experts and scripts always -1)
+int      UnchangedBars, ValidBars;                                // indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted()    (in experts and scripts always -1)
+int      ShiftedBars;                                             // indicators: non-zero in offline charts only                                   (in experts and scripts always -1)
 
-int      last_error;                                              // last error of the current core function call
-int      prev_error;                                              // last error of the previous core function call
+int      last_error;                                              // last error of the current execution
+int      prev_error;                                              // last error of the previous start() call
 
 int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
 
