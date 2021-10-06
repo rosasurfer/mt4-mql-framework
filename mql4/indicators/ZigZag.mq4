@@ -12,6 +12,8 @@
  *
  *
  * TODO:
+ *  - TickSize is not set
+ *  - rename Tick/TickSize
  *  - channel calculation on Bar[0] must not include the current bar
  *  - on reversal always mark the first channel breakout irresepective of ShowFirstBreakoutPerBar
  *  - add external buffer for the reversal bar
@@ -380,7 +382,7 @@ void UpdateLegend() {
    if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*Point, upperBand[0]+1*Point), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*TickSize, upperBand[0]+1*TickSize), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
