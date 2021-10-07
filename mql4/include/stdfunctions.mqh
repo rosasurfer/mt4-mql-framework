@@ -824,7 +824,7 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!tickSize) {
-      if (!suppressErrors) catch("PipValueEx(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(2)  illegal MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
@@ -835,7 +835,7 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!tickValue) {
-      if (!suppressErrors) catch("PipValueEx(4)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(4)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
