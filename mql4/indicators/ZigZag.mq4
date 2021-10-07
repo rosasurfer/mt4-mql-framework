@@ -408,7 +408,7 @@ void UpdateLegend() {
 /**
  * Resolve the current ticksize.
  *
- * @return double - ticksize value or NULL in case of errors
+ * @return double - ticksize value or NULL (0) in case of errors
  */
 double GetTickSize() {
    double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet, e.g.
@@ -419,7 +419,7 @@ double GetTickSize() {
          return(_NULL(logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error)));
       return(!catch("GetTickSize(2)", error));
    }
-   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE) = 0");
+   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE): 0");
 
    return(tickSize);
 }
