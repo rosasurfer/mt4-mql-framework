@@ -19,9 +19,9 @@ shift_size=10
 
 fixed_pos=620
 window_left=0
-window_top=47
-window_right=996
-window_bottom=632
+window_top=0
+window_right=1292
+window_bottom=812
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -36,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=10
+height=300
 
 <indicator>
 name=main
