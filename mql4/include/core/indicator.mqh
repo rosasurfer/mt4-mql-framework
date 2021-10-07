@@ -68,10 +68,10 @@ int init() {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
-      error = GetLastError();
-      if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
+      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet, e.g.
+      error = GetLastError();                                        // - symbol not yet subscribed (on start or account/template change), it shows up later
+      if (IsError(error)) {                                          // - synthetic symbol in offline chart
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)
             return(_last_error(logInfo("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
@@ -184,9 +184,9 @@ bool InitGlobals() {
    Tick           = __ExecutionContext[EC.ticks       ];
    Tick.Time      = __ExecutionContext[EC.currTickTime];
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   N_INF = MathLog(0);                                               // negative infinity
+   P_INF = -N_INF;                                                   // positive infinity
+   NaN   =  N_INF - N_INF;                                           // not-a-number
 
    return(!catch("InitGlobals(1)"));
 }

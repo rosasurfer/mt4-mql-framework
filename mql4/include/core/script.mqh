@@ -88,9 +88,9 @@ bool InitGlobals() {
    PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   N_INF = MathLog(0);                                               // negative infinity
+   P_INF = -N_INF;                                                   // positive infinity
+   NaN   =  N_INF - N_INF;                                           // not-a-number
 
    return(!catch("InitGlobals(1)"));
 }
