@@ -12,8 +12,6 @@
  *
  *
  * TODO:
- *  - TickSize is not set
- *  - rename Tick/TickSize
  *  - channel calculation on Bar[0] must not include the current bar
  *  - on reversal always mark the first channel breakout irresepective of ShowFirstBreakoutPerBar
  *  - add external buffer for the reversal bar
@@ -117,6 +115,7 @@ double combinedTrend     [];                                   // combined trend
 int    zigzagPeriods;
 int    zigzagDrawType;
 int    maxValues;
+double tickSize;
 string indicatorName = "";
 string legendLabel   = "";
 
@@ -368,6 +367,7 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
+   tickSize = 0;
    return(onInit());
 }
 
@@ -382,7 +382,8 @@ void UpdateLegend() {
    if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*TickSize, upperBand[0]+1*TickSize), PriceFormat);
+      if (!tickSize) tickSize = GetTickSize();
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*tickSize, upperBand[0]+1*tickSize), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
@@ -401,6 +402,26 @@ void UpdateLegend() {
       lastBarTime = Time[0];
       lastAccount = AccountNumber();
    }
+}
+
+
+/**
+ * Resolve the current ticksize.
+ *
+ * @return double - ticksize value or NULL in case of errors
+ */
+double GetTickSize() {
+   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);      // fails if there is no tick yet, e.g.
+                                                               // - symbol not yet subscribed (on start or account/template change), it shows up later
+   int error = GetLastError();                                 // - synthetic symbol in offline chart
+   if (IsError(error)) {
+      if (error == ERR_SYMBOL_NOT_AVAILABLE)
+         return(_NULL(logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error)));
+      return(!catch("GetTickSize(2)", error));
+   }
+   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE) = 0");
+
+   return(tickSize);
 }
 
 
