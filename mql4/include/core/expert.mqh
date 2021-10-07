@@ -322,7 +322,7 @@ int start() {
             if (error != NO_ERROR) {
                if (CheckErrors("start(4)", error)) return(last_error);
             }
-            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE) = 0", ERS_TERMINAL_NOT_YET_READY))));
+            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo(MODE_TICKVALUE): 0", ERS_TERMINAL_NOT_YET_READY))));
          }
       }
    }
