@@ -12,8 +12,6 @@
  *
  *
  * TODO:
- *  - channel calculation on Bar[0] must not include the current bar
- *  - on reversal always mark the first channel breakout irresepective of ShowFirstBreakoutPerBar
  *  - add external buffer for the reversal bar
  *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
  *  - signaling bug during data pumping
@@ -32,7 +30,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods             = 12;                    // lookback periods of the Donchian channel
+extern int    ZigZag.Periods             = 4;                     // 12 lookback periods of the Donchian channel
 extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened
 extern int    ZigZag.Width               = 1;
 extern color  ZigZag.Color               = Blue;
@@ -286,8 +284,14 @@ int onTick() {
       combinedTrend     [bar] = 0;
 
       // recalculate Donchian channel
-      upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar)];
-      lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar)];
+      if (bar > 0) {
+         upperBand[bar] = High[iHighest(NULL, NULL, MODE_HIGH, zigzagPeriods, bar)];
+         lowerBand[bar] =  Low[ iLowest(NULL, NULL, MODE_LOW,  zigzagPeriods, bar)];
+      }
+      else {
+         upperBand[bar] = MathMax(upperBand[1], High[0]);
+         lowerBand[bar] = MathMin(lowerBand[1],  Low[0]);
+      }
 
       // recalculate channel breakouts
       if (upperBand[bar] > upperBand[bar+1]) {
@@ -383,7 +387,7 @@ void UpdateLegend() {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
       if (!tickSize) tickSize = GetTickSize();
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] > 0, lowerBand[0]-1*tickSize, upperBand[0]+1*tickSize), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
