@@ -5,14 +5,15 @@
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorithm is seriously flawed and the implementation
  * performes badly. Furthermore the indicator repaints past ZigZag points and can't be used for automation.
  *
- * This indicator fixes those issues. The display can be changed from ZigZag lines to semaphores. Once trend changed the
- * reversal will not change anymore. Similar to the MetaQuotes version the indicator uses a Donchian channel for determining
- * reversals but draws vertical line segments if a large bar crosses both upper and lower channel band. Additionally it can
- * display the trail of a ZigZag leg as it developes over time. The indicator supports reversal signaling.
+ * This indicator fixes those issues. The display can be changed from ZigZag lines to points (aka semaphores). Once the
+ * direction changed the reversal point will not change anymore. Similar to the MetaQuotes version the indicator uses a
+ * Donchian channel for determining reversals but draws vertical line segments if a large bar crosses both upper and lower
+ * channel band. Additionally it can display the trail of a ZigZag leg as it developes over time. The indicator supports
+ * reversal signaling.
  *
  *
  * TODO:
- *  - add external buffer for the reversal bar
+ *  - populate reversal bar buffer
  *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
  *  - signaling bug during data pumping
  *  - reset framework buffers on account change
@@ -68,17 +69,18 @@ extern bool   Signal.onReversal.SMS      = false;
 #define MODE_UPPER_BREAKOUT        4                           //  4: upper channel breakout (start or end point)
 #define MODE_LOWER_BREAKOUT        5                           //  5: lower channel breakout (start or end point)
 #define MODE_COMBINED_TREND        6                           //  6: combined MODE_TREND + MODE_WAITING buffers
-#define MODE_UPPER_BREAKOUT_START  7                           //  7: start point of upper breakout
-#define MODE_UPPER_BREAKOUT_END    8                           //  8: end point of upper breakout
-#define MODE_LOWER_BREAKOUT_START  9                           //  9: start point of lower breakout
-#define MODE_LOWER_BREAKOUT_END   10                           // 10: end point of lower breakout
-#define MODE_TREND                11                           // 11: known trend
-#define MODE_WAITING              12                           // 12: not yet known trend
+#define MODE_REVERSAL              7                           //  7: ZigZag leg reversal bar
+#define MODE_UPPER_BREAKOUT_START  8                           //  8: start point of upper breakout
+#define MODE_UPPER_BREAKOUT_END    9                           //  9: end point of upper breakout
+#define MODE_LOWER_BREAKOUT_START 10                           // 10: start point of lower breakout
+#define MODE_LOWER_BREAKOUT_END   11                           // 11: end point of lower breakout
+#define MODE_TREND                12                           // 12: known trend
+#define MODE_WAITING              13                           // 13: not yet known trend
 
 #property indicator_chart_window
-#property indicator_buffers   7                                // buffers visible to the user
+#property indicator_buffers   6                                // buffers visible to the user
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
-int       framework_buffers = 5;                               // buffers managed by the framework
+int       framework_buffers = 6;                               // buffers managed by the framework
 
 #property indicator_color1    Blue                             // the ZigZag line is built from two buffers using the color of the first buffer
 #property indicator_width1    1
@@ -95,6 +97,7 @@ int       framework_buffers = 5;                               // buffers manage
 #property indicator_width6    0                                //
 
 #property indicator_color7    CLR_NONE                         // combined MODE_TREND + MODE_WAITING buffers
+#property indicator_color8    CLR_NONE                         // ZigZag leg reversal bar
 
 double semaphoreOpen     [];                                   // ZigZag semaphores (open price of a vertical segment)
 double semaphoreClose    [];                                   // ZigZag semaphores (close price of a vertical segment)
@@ -106,10 +109,10 @@ double upperBreakoutEnd  [];                                   // end point of u
 double lowerBreakout     [];                                   // lower channel breakout (start or end point)
 double lowerBreakoutStart[];                                   // start point of lower channel breakout
 double lowerBreakoutEnd  [];                                   // end point of lower channel breakout
+double reversal          [];                                   // offset of the ZigZag leg reversal bar
 int    trend             [];                                   // trend direction and length
 int    waiting           [];                                   // bar periods with not yet known trend direction
 double combinedTrend     [];                                   // combined trend[] and waiting[] buffers
-double reversal          [];                                   // relative bar of the first price reversal
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -190,14 +193,14 @@ int onInit() {
 
    // buffer management
    indicatorName = StrTrim(ProgramName()) +"("+ ZigZag.Periods +")";
-   SetIndexBuffer(MODE_SEMAPHORE_OPEN,       semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
-   SetIndexBuffer(MODE_SEMAPHORE_CLOSE,      semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,           upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      indicatorName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,           lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      indicatorName +" lower band");
-   SetIndexBuffer(MODE_UPPER_BREAKOUT,       upperBreakout ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,  0); SetIndexLabel(MODE_UPPER_BREAKOUT,  indicatorName +" breakout up"  + ifString(ShowFirstBreakoutPerBar, " (1)", " (2)"));
-   SetIndexBuffer(MODE_LOWER_BREAKOUT,       lowerBreakout ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,  0); SetIndexLabel(MODE_LOWER_BREAKOUT,  indicatorName +" breakout down"+ ifString(ShowFirstBreakoutPerBar, " (1)", " (2)"));
-   SetIndexBuffer(MODE_COMBINED_TREND,       combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  indicatorName +" trend");
-   SetIndexBuffer(MODE_UPPER_BREAKOUT_START, upperBreakoutStart); // invisible
+   SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
+   SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      indicatorName +" upper band");
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      indicatorName +" lower band");
+   SetIndexBuffer(MODE_UPPER_BREAKOUT,  upperBreakout ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,  0); SetIndexLabel(MODE_UPPER_BREAKOUT,  indicatorName +" breakout up"  + ifString(ShowFirstBreakoutPerBar, " (1)", " (2)"));
+   SetIndexBuffer(MODE_LOWER_BREAKOUT,  lowerBreakout ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,  0); SetIndexLabel(MODE_LOWER_BREAKOUT,  indicatorName +" breakout down"+ ifString(ShowFirstBreakoutPerBar, " (1)", " (2)"));
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  indicatorName +" trend");
+   SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,        0); SetIndexLabel(MODE_REVERSAL,        indicatorName +" reversal");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
@@ -221,6 +224,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  size(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
+   ManageDoubleIndicatorBuffer(MODE_UPPER_BREAKOUT_START, upperBreakoutStart);
    ManageDoubleIndicatorBuffer(MODE_UPPER_BREAKOUT_END,   upperBreakoutEnd  );
    ManageDoubleIndicatorBuffer(MODE_LOWER_BREAKOUT_START, lowerBreakoutStart);
    ManageDoubleIndicatorBuffer(MODE_LOWER_BREAKOUT_END,   lowerBreakoutEnd  );
@@ -239,6 +243,7 @@ int onTick() {
       ArrayInitialize(lowerBreakout,      0);
       ArrayInitialize(lowerBreakoutStart, 0);
       ArrayInitialize(lowerBreakoutEnd,   0);
+      ArrayInitialize(reversal,           0);
       ArrayInitialize(trend,              0);
       ArrayInitialize(waiting,            0);
       ArrayInitialize(combinedTrend,      0);
@@ -258,6 +263,7 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(lowerBreakout,      Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(lowerBreakoutStart, Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(lowerBreakoutEnd,   Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversal,           Bars, ShiftedBars, 0);
       ShiftIntIndicatorBuffer   (trend,              Bars, ShiftedBars, 0);
       ShiftIntIndicatorBuffer   (waiting,            Bars, ShiftedBars, 0);
       ShiftDoubleIndicatorBuffer(combinedTrend,      Bars, ShiftedBars, 0);
@@ -280,6 +286,7 @@ int onTick() {
       lowerBreakout     [bar] = 0;
       lowerBreakoutStart[bar] = 0;
       lowerBreakoutEnd  [bar] = 0;
+      reversal          [bar] = 0;
       trend             [bar] = 0;
       waiting           [bar] = 0;
       combinedTrend     [bar] = 0;
@@ -453,16 +460,17 @@ bool IsUpperCrossFirst(int bar) {
 
 
 /**
- * Resolve the bar offset of the last ZigZag point preceeding the specified startbar. May be in same or opposite trend
- * direction.
+ * Resolve the bar offset of the last ZigZag point preceeding the specified startbar. The chart's youngest ZigZag point is
+ * always unfinished and subject to change.
  *
  * @param  int bar - startbar offset
  *
- * @return int - point offset or the previous bar offset if no previous ZigZag point exists
+ * @return int - ZigZag point offset or the previous bar offset if no previous ZigZag point exists yet
  */
 int GetPreviousZigZagPoint(int bar) {
-   int nextBar = bar + 1;
-   if      (waiting[nextBar] > 0) int zzOffset = nextBar + waiting[nextBar];
+   int zzOffset, nextBar=bar + 1;
+
+   if (waiting[nextBar] > 0)          zzOffset = nextBar + waiting[nextBar];
    else if (!semaphoreClose[nextBar]) zzOffset = nextBar + Abs(trend[nextBar]);
    else                               zzOffset = nextBar;
    return(zzOffset);
@@ -470,15 +478,15 @@ int GetPreviousZigZagPoint(int bar) {
 
 
 /**
- * Process an upper channel band crossing at the specified bar offset.
+ * Process an upper channel band extension at the specified bar offset.
  *
  * @param  int  bar - offset
  *
- * @return int - bar offset of the previous ZigZag semaphore (same or opposite trend direction)
+ * @return int - bar offset of the previous ZigZag point
  */
 int ProcessUpperCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag semaphore (same or opposite trend direction)
-   int prevTrend = trend[prevZZ];                                 // trend at the previous ZigZag semaphore
+   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag point
+   int prevTrend = trend[prevZZ];                                 // trend at the previous ZigZag point
 
    if (prevTrend > 0) {                                           // an uptrend continuation
       if (upperBreakoutEnd[bar] > upperBreakoutEnd[prevZZ]) {     // a new high
@@ -511,15 +519,15 @@ int ProcessUpperCross(int bar) {
 
 
 /**
- * Process a lower channel band crossing at the specified bar offset.
+ * Process a lower channel band extension at the specified bar offset.
  *
  * @param  int bar - offset
  *
- * @return int - bar offset of the previous ZigZag semaphore (same or opposite trend direction)
+ * @return int - bar offset of the previous ZigZag point
  */
 int ProcessLowerCross(int bar) {
-   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag semaphore (same or opposite trend direction)
-   int prevTrend = trend[prevZZ];                                 // trend at the previous ZigZag semaphore
+   int prevZZ    = GetPreviousZigZagPoint(bar);                   // bar offset of the previous ZigZag point
+   int prevTrend = trend[prevZZ];                                 // trend at the previous ZigZag point
 
    if (prevTrend < 0) {                                           // a downtrend continuation
       if (lowerBreakoutEnd[bar] < lowerBreakoutEnd[prevZZ]) {     // a new low
@@ -657,6 +665,7 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, 161);   // that's an open circle (dot)
    SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, 161);   // ...
 
+   SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
 }
 
