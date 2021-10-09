@@ -72,10 +72,10 @@ extern bool   Signal.onReversal.SMS      = false;
 #define MODE_REVERSAL              7                           //  7: ZigZag leg reversal bar
 #define MODE_UPPER_BREAKOUT_START  8                           //  8: start point of upper breakout
 #define MODE_UPPER_BREAKOUT_END    9                           //  9: end point of upper breakout
-#define MODE_LOWER_BREAKOUT_START 10                           // 10: start point of lower breakout
-#define MODE_LOWER_BREAKOUT_END   11                           // 11: end point of lower breakout
-#define MODE_TREND                12                           // 12: known trend
-#define MODE_WAITING              13                           // 13: not yet known trend
+#define MODE_LOWER_BREAKOUT_START  10                          // 10: start point of lower breakout
+#define MODE_LOWER_BREAKOUT_END    11                          // 11: end point of lower breakout
+#define MODE_TREND                 12                          // 12: known trend
+#define MODE_WAITING               13                          // 13: not yet known trend
 
 #property indicator_chart_window
 #property indicator_buffers   6                                // buffers visible to the user
@@ -395,7 +395,7 @@ void UpdateLegend() {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
       if (!tickSize) tickSize = GetTickSize();
-      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
+      string sReversal = "   next "+ ifString(trend[0] < 0, "up", "down") +" reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
