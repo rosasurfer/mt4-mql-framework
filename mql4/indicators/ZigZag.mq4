@@ -13,16 +13,15 @@
  *
  *
  * TODO:
- *  - intrabar bug in tester (MODE_CONTROLPOINTS): ZigZag(2) USDJPY,M15 2021.08.03 00:45
- *  - signaling bug during data pumping
  *  - reset framework buffers on account change
+ *  - signaling bug during data pumping
  *  - process input ShowChannelBreakouts
  *  - add auto-configuration and remove global var __isAutoConfig
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
  *  - restore default values (type, hide channel and trail)
  *  - document inputs
- *  - document iCustom() usage
+ *  - document usage of iCustom()
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -67,8 +66,8 @@ extern bool   Signal.onReversal.SMS      = false;
 #define MODE_LOWER_BAND            ZigZag.MODE_LOWER_BAND      //  3: lower channel band
 #define MODE_UPPER_BREAKOUT        4                           //  4: upper channel breakout (start or end point)
 #define MODE_LOWER_BREAKOUT        5                           //  5: lower channel breakout (start or end point)
-#define MODE_COMBINED_TREND        6                           //  6: combined MODE_TREND + MODE_WAITING buffers
-#define MODE_REVERSAL              7                           //  7: ZigZag leg reversal bar
+#define MODE_REVERSAL              6                           //  6: ZigZag leg reversal bar
+#define MODE_COMBINED_TREND        7                           //  7: combined MODE_TREND + MODE_WAITING buffers
 #define MODE_UPPER_BREAKOUT_START  8                           //  8: start point of upper breakout
 #define MODE_UPPER_BREAKOUT_END    9                           //  9: end point of upper breakout
 #define MODE_LOWER_BREAKOUT_START  10                          // 10: start point of lower breakout
@@ -108,10 +107,10 @@ double upperBreakoutEnd  [];                                   // end point of u
 double lowerBreakout     [];                                   // lower channel breakout (start or end point)
 double lowerBreakoutStart[];                                   // start point of lower channel breakout
 double lowerBreakoutEnd  [];                                   // end point of lower channel breakout
+double reversal          [];                                   // offset of the ZigZag leg reversal bar
 int    trend             [];                                   // trend direction and length
 int    waiting           [];                                   // bar periods with not yet known trend direction
 double combinedTrend     [];                                   // combined trend[] and waiting[] buffers
-double reversal          [];                                   // offset of the ZigZag leg reversal bar
 
 int    zigzagPeriods;
 int    zigzagDrawType;
@@ -198,8 +197,8 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      indicatorName +" lower band");
    SetIndexBuffer(MODE_UPPER_BREAKOUT,  upperBreakout ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,  0); SetIndexLabel(MODE_UPPER_BREAKOUT,  indicatorName +" breakout up");
    SetIndexBuffer(MODE_LOWER_BREAKOUT,  lowerBreakout ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,  0); SetIndexLabel(MODE_LOWER_BREAKOUT,  indicatorName +" breakout down");
-   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  indicatorName +" trend");
    SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,       -1); SetIndexLabel(MODE_REVERSAL,        indicatorName +" reversal");
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  indicatorName +" trend");
 
    // names, labels and display options
    IndicatorShortName(indicatorName);                             // chart tooltips and context menu
@@ -242,10 +241,10 @@ int onTick() {
       ArrayInitialize(lowerBreakout,      0);
       ArrayInitialize(lowerBreakoutStart, 0);
       ArrayInitialize(lowerBreakoutEnd,   0);
+      ArrayInitialize(reversal,          -1);
       ArrayInitialize(trend,              0);
       ArrayInitialize(waiting,            0);
       ArrayInitialize(combinedTrend,      0);
-      ArrayInitialize(reversal,          -1);
       SetIndicatorOptions();
    }
    if (IsError(last_error)) return(last_error);
@@ -262,10 +261,10 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(lowerBreakout,      Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(lowerBreakoutStart, Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(lowerBreakoutEnd,   Bars, ShiftedBars,  0);
+      ShiftDoubleIndicatorBuffer(reversal,           Bars, ShiftedBars, -1);
       ShiftIntIndicatorBuffer   (trend,              Bars, ShiftedBars,  0);
       ShiftIntIndicatorBuffer   (waiting,            Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(combinedTrend,      Bars, ShiftedBars,  0);
-      ShiftDoubleIndicatorBuffer(reversal,           Bars, ShiftedBars, -1);
    }
 
    // calculate start bar
@@ -674,8 +673,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, 161);   // that's an open circle (dot)
    SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, 161);   // ...
 
-   SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
+   SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
 }
 
 
