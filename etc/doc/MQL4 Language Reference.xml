@@ -97,13 +97,14 @@
 
     <content>
       <p>Syntax of MQL4 is similar to C apart from some features:</p>
-      <ul><li><p>no pointer arithmetic</p></li>
-      <li><p>no <i>do ... while</i> operator</p></li>
-      <li><p>no <i>goto</i> operator </p></li>
-      <li><p>no ternary operator <i>[condition] ? [expression1] : [expression2]</i></p></li>
-      <li><p>no compound data types (structures)</p></li>
-      <li><p>complex assignments are not possible, none of the following will work: val1=val2=0; arr[i++]=val; cond=(cnt=OrdersTotal)>0;</p></li>
-      <li><p>evaluation of logical expressions is always completed, never early terminated</p></li>
+      <ul>
+        <li><p>no pointer arithmetic</p></li>
+        <li><p>no <i>do ... while</i> operator</p></li>
+        <li><p>no <i>goto</i> operator </p></li>
+        <li><p>no ternary operator <i>[condition] ? [expression1] : [expression2]</i></p></li>
+        <li><p>no compound data types (structures)</p></li>
+        <li><p>complex assignments are not possible, none of the following will work: val1=val2=0; arr[i++]=val; cond=(cnt=OrdersTotal)>0;</p></li>
+        <li><p>evaluation of logical expressions is always completed, never early terminated</p></li>
       </ul>
     </content>
 
@@ -169,13 +170,14 @@
 
     <content>
       <p>The main data types are:</p>
-      <ul><li><a href="help://basics_types_integer">Integer (int)</a></li>
-          <li><a href="help://basics_types_literal">Character literals (int)</a></li>
-          <li><a href="help://basics_types_bool">Boolean (bool)</a></li>
-          <li><a href="help://basics_types_double">Floating-point number (double)</a></li>
-          <li><a href="help://basics_types_color">Color (color)</a></li>
-          <li><a href="help://basics_types_datetime">Date and time (datetime)</a></li>
-          <li><a href="help://basics_types_string">String (string)</a></li>
+      <ul>
+        <li><a href="help://basics_types_integer">Integer (int)</a></li>
+        <li><a href="help://basics_types_literal">Character literals (int)</a></li>
+        <li><a href="help://basics_types_bool">Boolean (bool)</a></li>
+        <li><a href="help://basics_types_double">Floating-point number (double)</a></li>
+        <li><a href="help://basics_types_color">Color (color)</a></li>
+        <li><a href="help://basics_types_datetime">Date and time (datetime)</a></li>
+        <li><a href="help://basics_types_string">String (string)</a></li>
       </ul>
       <p>Only implicit <a href="help://basics_types_casting">type casting</a> is used in <a href="help://basics_operations_expression">expressions</a>.</p>
     </content>
@@ -1011,9 +1013,9 @@ somefunc(3.14, 0.0002, 10);   // proper call</pre><br/>
       variables are used for them to be defined and for types to be declared. Description is not an operator.</p>
       <p><b>The basic types are:</b></p>
       <ul>
-          <li><a href="help://basics_types_bool">bool</a> - boolean values of <em><span class="const">TRUE</span></em> and <em><span class="const">FALSE</span></em>;</li>
-          <li><a href="help://basics_types_string">string</a> - character strings;</li>
-          <li><a href="help://basics_types_double">double</a> - double-precision numbers with floating point.</li>
+        <li><a href="help://basics_types_bool">bool</a> - boolean values of <em><span class="const">TRUE</span></em> and <em><span class="const">FALSE</span></em>;</li>
+        <li><a href="help://basics_types_string">string</a> - character strings;</li>
+        <li><a href="help://basics_types_double">double</a> - double-precision numbers with floating point.</li>
       </ul>
 
 <p class="doctabhdr">Examples:</p>
@@ -1025,11 +1027,12 @@ bool   bLog;
 </pre><br/>
 
         <p><b>Additional types:</b></p>
-        <ul><li><a href="help://basics_types_color">color</a> is an integer representing an RGB color;</li>
-            <li><a href="help://basics_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
-         have passed since 0.00 a.m. on 1 January, 1970.</li>
-
-</ul>
+        <ul>
+          <li><a href="help://basics_types_color">color</a> is an integer representing an RGB color;</li>
+          <li><a href="help://basics_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
+          have passed since 0.00 a.m. on 1 January, 1970.</li>
+        </ul>
+        
         <p>Additional data types make sense only at the declaration of <a href="help://basics_variables_extern">input parameters</a> for their more convenient
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
@@ -4737,47 +4740,43 @@ Optional data output mode can be one or combination of:<br/>
       caption=IndicatorCounted()
       type=int
       <content>
-      Returns the number of unmodified (unchanged) bars since last execution of <span class="function">Indicator::start</span>(). The latest bar (index 0) is always
-      reported as modified.<br/>
-      <br/>
-      <br/>
-      <b>Notes:</b><br/>
-      <li><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
-          Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung definiert das MQL-Framework die globalen Variablen
-          <span class="global">ChangedBars</span> und <span class="global">UnchangedBars</span>:<br/>
-          - <span class="global">ChangedBars</span> signalisiert die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
-          - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
-          Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
-          BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet.<br/>
-          <br/>
-          It holds: <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span><br/><br/></li>
+      <p>Returns the number of unmodified (unchanged) bars since last execution of <span class="function">Indicator::start</span>(). The youngest bar (index 0) is always
+      reported as modified.</p>
 
-      <li>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
-          <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
-          <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
-          <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
-          <span class="number">0</span> (alle Bars modifiziert).<br/>
-          Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
-          (BarOpen-Event) im Chart erscheint.<br/><br/></li>
+      <ul>
+        <li><p><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
+            Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung definiert das MQL-Framework die globalen Variablen
+            <span class="global">ChangedBars</span> und <span class="global">UnchangedBars</span>:<br/>
+            - <span class="global">ChangedBars</span> signalisiert die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
+            - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
+            Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
+            BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet. It holds: 
+            <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span></p></li>
+        
+        <li><p>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
+            <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
+            <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
+            <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
+            <span class="number">0</span> (alle Bars modifiziert).<br/>
+            Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
+            (BarOpen-Event) im Chart erscheint.</p></li>
 
-      <li><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
-          Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.<br/><br/></li>
-<br/>
-<b>Changes in MQL5 for MetaTrader 4 (terminal builds > 509):</b><br/>
-For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>(int rates_total, int prev_calculated, ...) see
-<a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
-<a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.
-<br/>
-<br/>
+        <li><p><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
+            Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.</p></li>
+        
+        <li><p>For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>() in MQL5 for MetaTrader 4 see
+          <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
+          <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.</p></li>
+      </ul>
       </content>
       <example>
-<span class="keyword code">extern</span> <span class="type code">int</span> Periods = 20;
+<span class="keyword code">extern</span> <span class="type code">int</span> Periods = <span class="number code">20</span>;
 ...
 <span class="type code">int</span> <span class="core code">start</span>() {
    <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
    <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
    <span class="comment">// main loop</span>
-   <span class="keyword code">for</span> (<span class="type code">int</span> i=ChangedBars-1; i &gt;= 0; i--) {
+   <span class="keyword code">for</span> (<span class="type code">int</span> i=<span class="global code">ChangedBars</span>-<span class="number code">1</span>; i &gt;= <span class="number code">0</span>; i--) {
       buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
    }
    <span class="keyword code">return</span>(<span class="global code">last_error</span>);
