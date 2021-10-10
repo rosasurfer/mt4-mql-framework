@@ -13,7 +13,6 @@
  *
  *
  * TODO:
- *  - reset framework buffers on account change
  *  - signaling bug during data pumping
  *  - process input ShowChannelBreakouts
  *  - add auto-configuration and remove global var __isAutoConfig
