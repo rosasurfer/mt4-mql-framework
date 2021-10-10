@@ -37,7 +37,7 @@ double save_sar;
 
 
 /**
- *
+ * @return int - error status
  */
 int onInit() {
    SetIndexBuffer(0, SarBuffer );
@@ -199,7 +199,7 @@ int onTick() {
    /*
    double iSar = iSAR(NULL, 0, StepSize, StepMaximum, 0);
    if (SarBuffer[0] != iSar)
-      debug("start()  custom="+ NumberToStr(SarBuffer[0], PriceFormat) +"   iSAR="+ NumberToStr(iSar, PriceFormat) +"   ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars);
+      debug("start()  custom="+ NumberToStr(SarBuffer[0], PriceFormat) +"  iSAR="+ NumberToStr(iSar, PriceFormat) +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars);
    */
    return(catch("start()"));
 }

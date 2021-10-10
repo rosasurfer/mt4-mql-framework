@@ -230,8 +230,7 @@ int onDeinit() {
 
    // uninstall the chart ticker
    if (tickTimerId > NULL) {
-      int id = tickTimerId;
-      tickTimerId = NULL;
+      int id = tickTimerId; tickTimerId = NULL;
       if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
@@ -822,7 +821,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                 // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }

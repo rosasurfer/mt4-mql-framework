@@ -1,9 +1,7 @@
 
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
-
-// current price series
-double __rates[][6];
+double  __rates[][6];                                                // current price series
 
 
 /**
@@ -55,13 +53,13 @@ int init() {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
-      if (!TickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE) = 0", ERR_INVALID_MARKET_DATA)));
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -90,9 +88,9 @@ bool InitGlobals() {
    PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   N_INF = MathLog(0);                                               // negative infinity
+   P_INF = -N_INF;                                                   // positive infinity
+   NaN   =  N_INF - N_INF;                                           // not-a-number
 
    return(!catch("InitGlobals(1)"));
 }
@@ -117,8 +115,8 @@ int start() {
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   ValidBars      = -1;                                                       // in scripts not available
-   ChangedBars    = -1;                                                       // ...
+   ChangedBars    = -1;                                                       // in scripts not available
+   UnchangedBars  = -1; ValidBars = UnchangedBars;                            // ...
    ShiftedBars    = -1;                                                       // ...
 
    ArrayCopyRates(__rates);
@@ -135,8 +133,9 @@ int start() {
 
    // Abschluß der Chart-Initialisierung überprüfen
    if (!(__ExecutionContext[EC.programInitFlags] & INIT_NO_BARS_REQUIRED)) {  // Bars kann 0 sein, wenn das Script auf einem leeren Chart startet (Waiting for update...)
-      if (!Bars)                                                              // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
+      if (!Bars) {                                                            // oder der Chart beim Terminal-Start noch nicht vollständig initialisiert ist
          return(_last_error(CheckErrors("start(4)  Bars = 0", ERS_TERMINAL_NOT_YET_READY)));
+      }
    }
 
    // call the userland main function

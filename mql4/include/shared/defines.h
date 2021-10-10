@@ -66,7 +66,7 @@
 #define REASON_CHARTCLOSE                       4        // | chart closed or new template applied | chart closed                     |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_PARAMETERS                       5        // | input parameters changed                                                |
-#define REASON_ACCOUNT                          6        // | reconnection due to a changed trading account                           |
+#define REASON_ACCOUNT                          6        // | reconnection due to a changed trading account (experts only)            |
                                                          // +--------------------------------------+----------------------------------+
 #define REASON_TEMPLATE                         7        // | -                                    | new template applied             |
 #define REASON_INITFAILED                       8        // | -                                    | OnInit() returned an error       |
@@ -348,9 +348,9 @@
 
 
 // bar model types in tester
-#define BARMODEL_EVERYTICK                      0
-#define BARMODEL_CONTROLPOINTS                  1
-#define BARMODEL_BAROPEN                        2
+#define MODE_EVERYTICK                          0
+#define MODE_CONTROLPOINTS                      1
+#define MODE_BAROPEN                            2
 
 
 // configuration flags for synthetic ticks

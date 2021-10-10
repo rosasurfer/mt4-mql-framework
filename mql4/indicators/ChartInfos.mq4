@@ -1,6 +1,7 @@
 /**
  * Displays additional market and account infos on the chart.
  *
+ *
  *  - The current price and spread.
  *  - In terminal builds <= 509 the current instrument name.
  *  - The calculated unitsize according to the configured risk profiles.
@@ -14,6 +15,9 @@
  *     external: positions and/or history from an external account (e.g. synthetic instruments),
  *               PL as provided by the external source,
  *               limit monitoring and notifications
+ *
+ * TODO:
+ *  - set order tracker sound on stopout to "margin-call"
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -68,8 +72,8 @@ double mm.equity;                                                 // total appli
 #define POSITION_CONFIG_TERM.size      40                         // in Bytes
 #define POSITION_CONFIG_TERM.doubleSize 5                         // in Doubles
 
-double positions.config[][POSITION_CONFIG_TERM.doubleSize];       // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
-string positions.config.comments[];                               // Kommentare konfigurierter Positionen (Arraygröße entspricht positions.config[])
+double  positions.config[][POSITION_CONFIG_TERM.doubleSize];      // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
+string  positions.config.comments[];                              // Kommentare konfigurierter Positionen (Arraygröße entspricht positions.config[])
 
 #define TERM_OPEN_LONG                  1                         // ConfigTerm-Types
 #define TERM_OPEN_SHORT                 2
@@ -81,15 +85,15 @@ string positions.config.comments[];                               // Kommentare 
 #define TERM_EQUITY                     8
 
 // internal + external position data
-bool   isPendings;                                                // ob Pending-Limite im Markt liegen (Orders oder Positions)
-bool   isPosition;                                                // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
-double totalPosition;
-double longPosition;
-double shortPosition;
-int    positions.iData[][3];                                      // Positionsdetails: [ConfigType, PositionType, CommentIndex]
-double positions.dData[][9];                                      //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
-bool   positions.analyzed;
-bool   positions.absoluteProfits;                                 // default: online=FALSE, tester=TRUE
+bool    isPendings;                                               // ob Pending-Limite im Markt liegen (Orders oder Positions)
+bool    isPosition;                                               // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
+double  totalPosition;
+double  longPosition;
+double  shortPosition;
+int     positions.iData[][3];                                     // Positionsdetails: [ConfigType, PositionType, CommentIndex]
+double  positions.dData[][9];                                     //                   [DirectionalLots, HedgedLots, BreakevenPrice|PipDistance, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
+bool    positions.analyzed;
+bool    positions.absoluteProfits;                                // default: online=FALSE, tester=TRUE
 
 #define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
 #define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
@@ -118,12 +122,12 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
-int      lfxOrders.iCache[][1];                                   // = {Ticket}
-bool     lfxOrders.bCache[][3];                                   // = {IsPendingOrder, IsOpenPosition , IsPendingPosition}
-double   lfxOrders.dCache[][7];                                   // = {OpenEquity    , Profit         , LastProfit       , TP-Amount , TP-Percent, SL-Amount, SL-Percent}
-int      lfxOrders.pendingOrders;                                 // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
-int      lfxOrders.openPositions;                                 // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
-int      lfxOrders.pendingPositions;                              // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
+int     lfxOrders.iCache[][1];                                    // = {Ticket}
+bool    lfxOrders.bCache[][3];                                    // = {IsPendingOrder, IsOpenPosition , IsPendingPosition}
+double  lfxOrders.dCache[][7];                                    // = {OpenEquity    , Profit         , LastProfit       , TP-Amount , TP-Percent, SL-Amount, SL-Percent}
+int     lfxOrders.pendingOrders;                                  // Anzahl der PendingOrders (mit Entry-Limit)  : lo.IsPendingOrder()    = 1
+int     lfxOrders.openPositions;                                  // Anzahl der offenen Positionen               : lo.IsOpenPosition()    = 1
+int     lfxOrders.pendingPositions;                               // Anzahl der offenen Positionen mit Exit-Limit: lo.IsPendingPosition() = 1
 
 #define IC.ticket                   0                             // Arrayindizes für Cache-Arrays
 
@@ -140,35 +144,33 @@ int      lfxOrders.pendingPositions;                              // Anzahl der 
 #define DC.stopLossPercent          6
 
 // Textlabel für die einzelnen Anzeigen
-string label.instrument     = "${__NAME__}.Instrument";
-string label.price          = "${__NAME__}.Price";
-string label.spread         = "${__NAME__}.Spread";
-string label.externalAssets = "${__NAME__}.ExternalAssets";
-string label.position       = "${__NAME__}.Position";
-string label.unitSize       = "${__NAME__}.UnitSize";
-string label.orderCounter   = "${__NAME__}.OrderCounter";
-string label.tradeAccount   = "${__NAME__}.TradeAccount";
-string label.stopoutLevel   = "${__NAME__}.StopoutLevel";
+string  label.instrument     = "${__NAME__}.Instrument";
+string  label.price          = "${__NAME__}.Price";
+string  label.spread         = "${__NAME__}.Spread";
+string  label.externalAssets = "${__NAME__}.ExternalAssets";
+string  label.position       = "${__NAME__}.Position";
+string  label.unitSize       = "${__NAME__}.UnitSize";
+string  label.orderCounter   = "${__NAME__}.OrderCounter";
+string  label.tradeAccount   = "${__NAME__}.TradeAccount";
+string  label.stopoutLevel   = "${__NAME__}.StopoutLevel";
 
 // Font-Settings der CustomPositions-Anzeige
-string positions.fontName          = "MS Sans Serif";
-int    positions.fontSize          = 8;
-color  positions.fontColor.intern  = Blue;
-color  positions.fontColor.extern  = Red;
-color  positions.fontColor.remote  = Blue;
-color  positions.fontColor.virtual = Green;
-color  positions.fontColor.history = C'128,128,0';
+string  positions.fontName          = "MS Sans Serif";
+int     positions.fontSize          = 8;
+color   positions.fontColor.intern  = Blue;
+color   positions.fontColor.extern  = Red;
+color   positions.fontColor.remote  = Blue;
+color   positions.fontColor.virtual = Green;
+color   positions.fontColor.history = C'128,128,0';
 
 // Offline-Chartticker
-int    tickTimerId;                                               // ID eines ggf. installierten Offline-Tickers
+int     tickTimerId;                                              // ID eines ggf. installierten Offline-Tickers
+int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
-bool   track.orders;
-int    hWndTerminal;                                              // handle of the terminal main window (listener registration)
-
-// Order-Events
-int    orders.knownOrders.ticket[];                               // vom letzten Aufruf bekannte offene Orders
-int    orders.knownOrders.type  [];
+bool    orderTracker.enabled;
+int     orderTracker.tickets[];                                   // order tickets known at the last call
+int     orderTracker.types  [];                                   // types of known orders
 
 // Close-Typen für automatisch geschlossene Positionen
 #define CLOSE_TYPE_TP               1                             // TakeProfit
@@ -176,15 +178,15 @@ int    orders.knownOrders.type  [];
 #define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
 
 // Konfiguration der Signalisierung
-bool   signal.sound;
-string signal.sound.orderFailed    = "speech/OrderCancelled.wav";
-string signal.sound.positionOpened = "speech/OrderFilled.wav";
-string signal.sound.positionClosed = "speech/PositionClosed.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
+bool    signal.sound;
+string  signal.sound.orderFailed    = "speech/OrderCancelled.wav";
+string  signal.sound.positionOpened = "speech/OrderFilled.wav";
+string  signal.sound.positionClosed = "speech/PositionClosed.wav";
+bool    signal.mail;
+string  signal.mail.sender   = "";
+string  signal.mail.receiver = "";
+bool    signal.sms;
+string  signal.sms.receiver = "";
 
 
 #include <apps/chartinfos/init.mqh>
@@ -216,7 +218,7 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      if (mode.intern && track.orders) {                                            // order tracking
+      if (mode.intern && orderTracker.enabled) {                                    // order tracking
          int failedOrders   [];    ArrayResize(failedOrders,    0);
          int openedPositions[];    ArrayResize(openedPositions, 0);
          int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
@@ -230,6 +232,21 @@ int onTick() {
       }
    }
    return(last_error);
+}
+
+
+/**
+ * Handle AccountChange events.
+ *
+ * @param  int previous - previous account number
+ * @param  int current  - current account number
+ *
+ * @return int - error status
+ */
+int onAccountChange(int previous, int current) {
+   ArrayResize(orderTracker.tickets, 0);
+   ArrayResize(orderTracker.types,   0);
+   return(onInit());
 }
 
 
@@ -932,7 +949,7 @@ bool ToggleAccountBalance() {
    }
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on Object::onDrag() or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
       return(!catch("AccountBalance(1)", error));
 
    // store current display status
@@ -1128,7 +1145,7 @@ bool UpdatePrice() {
    ObjectSetText(label.price, NumberToStr(price, PriceFormat), 13, "Microsoft Sans Serif", Black);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdatePrice(1)", error));
 }
@@ -1147,7 +1164,7 @@ bool UpdateSpread() {
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateSpread(1)", error));
 }
@@ -1178,7 +1195,7 @@ bool UpdateUnitSize() {
    ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1211,7 +1228,7 @@ bool UpdatePositions() {
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on Object::onDrag() or opened "Properties" dialog
+   if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)     // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
 
@@ -1434,7 +1451,7 @@ bool UpdateOrderCounter() {
    ObjectSetText(label.orderCounter, sText, 8, "Tahoma Fett", objectColor);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateOrderCounter(1)", error));
 }
@@ -1458,7 +1475,7 @@ bool UpdateAccountDisplay() {
    }
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateAccountDisplay(1)", error));
 }
@@ -1476,7 +1493,7 @@ bool UpdateStopoutLevel() {
    if (!mode.intern || !totalPosition) {                                               // keine effektive Position im Markt: vorhandene Marker löschen
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on Object::onDrag() or opened "Properties" dialog
+      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)                 // on ObjectDrag or opened "Properties" dialog
          return(!catch("UpdateStopoutLevel(1)", error));
       return(true);
    }
@@ -1512,7 +1529,7 @@ bool UpdateStopoutLevel() {
 
 
    error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on Object::onDrag() or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(2)", error));
 }
@@ -3840,13 +3857,13 @@ bool RestoreRuntimeStatus() {
 /**
  * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
  *
- * @param  int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
- * @param  int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
- * @param  int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ * @param  _Out_ int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
+ * @param  _Out_ int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
+ * @param  _Out_ int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
  *
  * @return bool - Erfolgsstatus
  */
-bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int closedPositions[][]) {
+bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
    /*
    PositionOpen
    ------------
@@ -3871,33 +3888,33 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
            - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
    */
 
-   int type, knownSize=ArraySize(orders.knownOrders.ticket);
+   int type, knownSize = ArraySize(orderTracker.tickets);
 
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
    for (int i=knownSize-1; i >= 0; i--) {
-      if (!SelectTicket(orders.knownOrders.ticket[i], "OrderTracker.CheckPositions(1)"))
+      if (!SelectTicket(orderTracker.tickets[i], "OrderTracker.CheckPositions(1)"))
          return(false);
       type = OrderType();
 
-      if (orders.knownOrders.type[i] > OP_SELL) {
+      if (orderTracker.types[i] > OP_SELL) {
          // (1.1) beim letzten Aufruf Pending-Order
-         if (type == orders.knownOrders.type[i]) {
+         if (type == orderTracker.types[i]) {
             // immer noch Pending-Order
             if (OrderCloseTime() != 0) {
                if (OrderComment() != "cancelled")
-                  ArrayPushInt(failedOrders, orders.knownOrders.ticket[i]);      // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
+                  ArrayPushInt(failedOrders, orderTracker.tickets[i]);           // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
 
                // geschlossene Pending-Order aus der Überwachung entfernen
-               ArraySpliceInts(orders.knownOrders.ticket, i, 1);
-               ArraySpliceInts(orders.knownOrders.type,   i, 1);
+               ArraySpliceInts(orderTracker.tickets, i, 1);
+               ArraySpliceInts(orderTracker.types,   i, 1);
                knownSize--;
             }
          }
          else {
             // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(openedPositions, orders.knownOrders.ticket[i]);         // Pending-Order wurde ausgeführt
-            orders.knownOrders.type[i] = type;
+            ArrayPushInt(openedPositions, orderTracker.tickets[i]);              // Pending-Order wurde ausgeführt
+            orderTracker.types[i] = type;
             i++;
             continue;                                                            // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
          }
@@ -3938,12 +3955,12 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
                }
             }
             if (autoClosed) {
-               closeData[0] = orders.knownOrders.ticket[i];
+               closeData[0] = orderTracker.tickets[i];
                closeData[1] = closeType;
                ArrayPushInts(closedPositions, closeData);            // Position wurde automatisch geschlossen
             }
-            ArraySpliceInts(orders.knownOrders.ticket, i, 1);        // geschlossene Position aus der Überwachung entfernen
-            ArraySpliceInts(orders.knownOrders.type,   i, 1);
+            ArraySpliceInts(orderTracker.tickets, i, 1);             // geschlossene Position aus der Überwachung entfernen
+            ArraySpliceInts(orderTracker.types,   i, 1);
             knownSize--;
          }
       }
@@ -3960,12 +3977,12 @@ bool OrderTracker.CheckPositions(int failedOrders[], int openedPositions[], int 
             break;
          }
          for (int n=0; n < knownSize; n++) {
-            if (orders.knownOrders.ticket[n] == OrderTicket())                   // Order bereits bekannt
+            if (orderTracker.tickets[n] == OrderTicket())                        // Order bereits bekannt
                break;
          }
          if (n >= knownSize) {                                                   // Order unbekannt: in Überwachung aufnehmen
-            ArrayPushInt(orders.knownOrders.ticket, OrderTicket());
-            ArrayPushInt(orders.knownOrders.type,   OrderType()  );
+            ArrayPushInt(orderTracker.tickets, OrderTicket());
+            ArrayPushInt(orderTracker.types,   OrderType());
             knownSize++;
          }
       }

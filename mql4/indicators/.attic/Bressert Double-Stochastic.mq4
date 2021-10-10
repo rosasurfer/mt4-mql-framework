@@ -37,6 +37,8 @@ double smooth_coefficient;
 
 /**
  * Initialization
+ *
+ * @return int - error status
  */
 int onInit() {
    SetIndexStyle(0, DRAW_LINE);

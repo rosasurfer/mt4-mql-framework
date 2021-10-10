@@ -341,7 +341,7 @@ string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 string   JoinStrings(string &values[], string separator = ", ");;
-bool     ManageIndicatorBuffer(int id, double buffer[]);;
+bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 
 
 // include/structs/mt4/
@@ -858,6 +858,7 @@ int      GetWindowIntegerA(int hWnd, string name);;
 string   GetWindowStringA(int hWnd, string name);;
 string   GmtTimeFormatA(datetime timestamp, string format);;
 string   InitFlagsToStr(int flags);;
+bool     InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);;
 bool     InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
@@ -889,6 +890,7 @@ string   ModuleTypeDescription(int type);;
 string   ModuleTypeToStr(int type);;
 int      MT4InternalMsg();;
 string   NumberFormat(double value, string format);;
+int      onAccountChange(int oldAccount, int newAccount);;
 bool     onBarOpen();;
 bool     onCommand(string &data[]);;
 int      onDeinitAccountChange();;
@@ -914,7 +916,8 @@ int      SetupTickTimer(int hWnd, int millis, int flags);;
 bool     SetWindowDoubleA(int hWnd, string name, double value);;
 bool     SetWindowIntegerA(int hWnd, string name, int value);;
 bool     SetWindowStringA(int hWnd, string name, string value);;
-bool     ShiftIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);;
+bool     ShiftIntIndicatorBuffer(int &buffer[], int size, int count, int emptyValue);;
+bool     ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);;
 int      ShowStatus(int error);;
 string   ShowWindowCmdToStr(int cmdShow);;
 bool     SortMqlStringsA(string values[], int size);;

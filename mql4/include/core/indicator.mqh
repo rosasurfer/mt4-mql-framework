@@ -1,12 +1,15 @@
 
-int __CoreFunction = NULL;                                           // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
+//////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string ______________________________;
 extern bool   AutoConfiguration = true;
 extern int    __lpSuperContext;
 
-// current price series
-double __rates[][6];
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
+double __rates[][6];                                                 // current price series
+int    __lastAccountNumber = 0;                                      // previously active account number
 
 
 /**
@@ -37,7 +40,7 @@ int init() {
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in Tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
    int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
@@ -65,20 +68,20 @@ int init() {
       if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
-      error = GetLastError();
-      if (IsError(error)) {                                          // - symbol not yet subscribed (start, account/template change), it may "show up" later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // - synthetic symbol in offline chart
-            return(_last_error(logInfo("init(4)  MarketInfo() => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet, e.g.
+      error = GetLastError();                                        // - symbol not yet subscribed (on start or account/template change), it shows up later
+      if (IsError(error)) {                                          // - synthetic symbol in offline chart
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)
+            return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
+      if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
          if (CheckErrors("init(9)", error)) return(last_error);
-      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
+      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_AUTOCONFIG && 1) {                           // initialize auto configuration
       __isAutoConfig = AutoConfiguration;
@@ -181,9 +184,9 @@ bool InitGlobals() {
    Tick           = __ExecutionContext[EC.ticks       ];
    Tick.Time      = __ExecutionContext[EC.currTickTime];
 
-   N_INF = MathLog(0);                                      // negative infinity
-   P_INF = -N_INF;                                          // positive infinity
-   NaN   =  N_INF - N_INF;                                  // not-a-number
+   N_INF = MathLog(0);                                               // negative infinity
+   P_INF = -N_INF;                                                   // positive infinity
+   NaN   =  N_INF - N_INF;                                           // not-a-number
 
    return(!catch("InitGlobals(1)"));
 }
@@ -221,10 +224,10 @@ int start() {
    }
 
 
-   // (1) ValidBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
-   ValidBars   = IndicatorCounted();
-   ChangedBars = Bars - ValidBars;
-   ShiftedBars = 0;
+   // (1) UnchangedBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
+   UnchangedBars = IndicatorCounted(); ValidBars = UnchangedBars;
+   ChangedBars   = Bars - UnchangedBars;
+   ShiftedBars   = 0;
 
 
    // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
@@ -296,7 +299,7 @@ int start() {
                      if (Time[i] == last.startBarOpenTime) break;
                   }
                   if (i == Bars) return(_last_error(CheckErrors("start(6)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
-                  ShiftedBars =i;
+                  ShiftedBars = i;
                   ChangedBars = i+1;                                                // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
                }
             }
@@ -306,7 +309,7 @@ int start() {
    last.bars             = Bars;
    last.startBarOpenTime = Time[0];
    last.endBarOpenTime   = Time[Bars-1];
-   ValidBars             = Bars - ChangedBars;                                      // ValidBars neu definieren
+   UnchangedBars         = Bars - ChangedBars; ValidBars = UnchangedBars;           // UnchangedBars neu definieren
 
 
    // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
@@ -325,28 +328,43 @@ int start() {
             return(error);
          }
       }
-      last_error = NO_ERROR;                                                        // init() war erfolgreich
-      ValidBars  = 0;
+      last_error    = NO_ERROR;                                                     // init() war erfolgreich
+      UnchangedBars = 0; ValidBars = UnchangedBars;
    }
    else {
       // normaler Tick
       prev_error = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      ValidBars = UnchangedBars;
    }
-   if (!ValidBars) ShiftedBars = 0;
-   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
+   if (!UnchangedBars) ShiftedBars = 0;
+   ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)
 
    __STATUS_HISTORY_UPDATE = false;
+
+   // Detect and handle account changes
+   // ---------------------------------
+   // If the account server changes due to an account change IndicatorCounted() = ValidBars will immediately return 0 (zero).
+   // If the server doesn't change the new account will continue to use the same history and IndicatorCounted() will not immediately
+   // return zero. However, in both cases after 2-3 ticks in the new account all bars will be indicated as changed again.
+   // Summary: In both cases we can fully rely on the return value of IndicatorCounted().
+   int accountNumber = AccountNumber();
+   if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {
+      error = onAccountChange(__lastAccountNumber, accountNumber);
+      //if (error) {}     // TODO: do something
+      //else {}
+   }
+   __lastAccountNumber = accountNumber;
 
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(8)")) return(last_error);
+      if (CheckErrors("start(9)")) return(last_error);
    }
 
    // call the userland main function
@@ -356,7 +374,7 @@ int start() {
    // check errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(9)", error);
+      CheckErrors("start(10)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
@@ -386,20 +404,19 @@ int deinit() {
    if (!error) error = onDeinit();                                      // preprocessing hook
    if (!error) {                                                        //
       switch (UninitializeReason()) {                                   //
-         case UR_PARAMETERS : error = onDeinitParameters();    break;   //
-         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;   //
-         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;   //
-         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;   //
-         case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
-         case UR_REMOVE     : error = onDeinitRemove();        break;   //
-         case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
+         case UR_PARAMETERS : error = onDeinitParameters();  break;     //
+         case UR_CHARTCHANGE: error = onDeinitChartChange(); break;     //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();  break;     //
+         case UR_UNDEFINED  : error = onDeinitUndefined();   break;     //
+         case UR_REMOVE     : error = onDeinitRemove();      break;     //
+         case UR_RECOMPILE  : error = onDeinitRecompile();   break;     //
          // terminal builds > 509                                       //
-         case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
-         case UR_INITFAILED : error = onDeinitFailed();        break;   //
-         case UR_CLOSE      : error = onDeinitClose();         break;   //
+         case UR_TEMPLATE   : error = onDeinitTemplate();    break;     //
+         case UR_INITFAILED : error = onDeinitFailed();      break;     //
+         case UR_CLOSE      : error = onDeinitClose();       break;     //
                                                                         //
          default:                                                       //
-            CheckErrors("deinit(2)  unknown UninitializeReason = "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(2)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             return(last_error|LeaveContext(__ExecutionContext));        //
       }                                                                 //
    }                                                                    //
@@ -561,7 +578,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    int  ec_SetDllError           (int ec[], int error   );
    int  ec_SetProgramCoreFunction(int ec[], int function);
 
-   bool ShiftIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
+   bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
    int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
@@ -707,16 +724,6 @@ int onDeinitParameters()
  * @return int - error status
  *
 int onDeinitChartChange()
-   return(NO_ERROR);
-}
-
-
-/**
- * Never encountered. Tracked in MT4Expander::onDeinitAccountChange().
- *
- * @return int - error status
- *
-int onDeinitAccountChange()
    return(NO_ERROR);
 }
 
