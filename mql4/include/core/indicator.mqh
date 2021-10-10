@@ -245,7 +245,7 @@ int start() {
    // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
    static datetime last.startBarOpenTime, last.endBarOpenTime;
-   if (!UnchangedBars) /*&&*/ if (!IsConnected()) {                                 // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
+   if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
       // Initialisierung
       if (last.bars == -1) {
          ChangedBars = Bars;                                                        // erster Zugriff auf die Zeitreihe
@@ -351,7 +351,7 @@ int start() {
    // ---------------------------------
    // If the account server changes due to an account change IndicatorCounted() = ValidBars will immediately return 0 (zero).
    // If the server doesn't change the new account will continue to use the same history and IndicatorCounted() will not immediately
-   // return zero. However, in both cases after 2-3 ticks in the new account all bars will be indicated as changed.
+   // return zero. However, in both cases after 2-3 ticks in the new account all bars will be indicated as changed again.
    // Summary: In both cases we can fully rely on the return value of IndicatorCounted().
    int accountNumber = AccountNumber();
    if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {

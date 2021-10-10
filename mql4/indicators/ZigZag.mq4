@@ -230,7 +230,7 @@ int onTick() {
    ManageIntIndicatorBuffer   (MODE_WAITING,              waiting           );
 
    // reset buffers before performing a full recalculation
-   if (!UnchangedBars) {
+   if (!ValidBars) {
       ArrayInitialize(semaphoreOpen,      0);
       ArrayInitialize(semaphoreClose,     0);
       ArrayInitialize(upperBand,          0);
