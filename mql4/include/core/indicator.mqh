@@ -347,19 +347,24 @@ int start() {
 
    __STATUS_HISTORY_UPDATE = false;
 
-   // detect and handle account changes
+   // Detect and handle account changes
+   // ---------------------------------
+   // If the account server changes due to an account change IndicatorCounted() = ValidBars will immediately return 0 (zero).
+   // If the server doesn't change the new account will continue to use the same history and IndicatorCounted() will not immediately
+   // return zero. However, in both cases after 2-3 ticks in the new account all bars will be indicated as changed.
+   // Summary: In both cases we can fully rely on the return value of IndicatorCounted().
    int accountNumber = AccountNumber();
    if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {
       error = onAccountChange(__lastAccountNumber, accountNumber);
-      if (!error) {}                      // continue processing the tick as ususal
-      else {}                             // do something
+      //if (error) {}     // TODO: do something
+      //else {}
    }
    __lastAccountNumber = accountNumber;
 
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(8)")) return(last_error);
+      if (CheckErrors("start(9)")) return(last_error);
    }
 
    // call the userland main function
@@ -369,7 +374,7 @@ int start() {
    // check errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(9)", error);
+      CheckErrors("start(10)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
