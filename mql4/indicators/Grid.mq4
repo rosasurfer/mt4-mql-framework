@@ -51,7 +51,7 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   if (!UnchangedBars)
+   if (!ValidBars)
       DrawGrid();
    return(last_error);
 }
