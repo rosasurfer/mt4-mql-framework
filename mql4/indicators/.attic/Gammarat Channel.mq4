@@ -38,7 +38,7 @@ extern bool   AlertsOn         = false;
 #include <rsfLibs.mqh>
 #include <functions/@Bands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/ManageIndicatorBuffer.mqh>
+#include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
@@ -192,7 +192,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(tmaRP)) return(logInfo("onTick(1)  size(tmaRP) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
+   ManageDoubleIndicatorBuffer(MODE_LOWER_VARIANCE_RP, lowerVarianceRP);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -210,15 +210,15 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(tmaRP,           Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperVarianceRP, Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerVarianceRP, Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperBandRP,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerBandRP,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(upperBandNRP,    Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(lowerBandNRP,    Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(reversalMarker,  Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(reversalAge,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(tmaRP,           Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperVarianceRP, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerVarianceRP, Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperBandRP,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerBandRP,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(upperBandNRP,    Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(lowerBandNRP,    Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversalMarker,  Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(reversalAge,     Bars, ShiftedBars, 0);
    }
 
    // calculate start bars

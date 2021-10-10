@@ -4118,12 +4118,12 @@ string GetServerTimezone() {
    #define IDX_COMPANY  1
    #define IDX_TIMEZONE 2
 
-   int Tick=__ExecutionContext[EC.ticks], ValidBars=__ExecutionContext[EC.unchangedBars];
+   int tick=__ExecutionContext[EC.ticks], unchangedBars=__ExecutionContext[EC.unchangedBars];
    static int lastTick = -1;
    static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
-   if (Tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) && !ValidBars) {
+   if (tick != lastTick) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !unchangedBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
@@ -4153,7 +4153,7 @@ string GetServerTimezone() {
       }
    }
 
-   lastTick = Tick;
+   lastTick = tick;
    return(lastResult[IDX_TIMEZONE]);
 }
 

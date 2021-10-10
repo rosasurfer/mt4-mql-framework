@@ -695,34 +695,31 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
    static double tickSize;
    if (!tickSize) {
-      if (!TickSize) {
-         TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);             // schlägt fehl, wenn kein Tick vorhanden ist
-         int error = GetLastError();                                 // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-         if (error != NO_ERROR) {                                    // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-            if (!suppressErrors) catch("PipValue(1)", error);
-            return(0);
-         }
-         if (!TickSize) {
-            if (!suppressErrors) catch("PipValue(2)  illegal TickSize: 0", ERR_INVALID_MARKET_DATA);
-            return(0);
-         }
+      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);             // schlägt fehl, wenn kein Tick vorhanden ist
+      int error = GetLastError();                                 // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+      if (IsError(error)) {                                       // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+         if (!suppressErrors) catch("PipValue(1)", error);
+         return(0);
       }
-      tickSize = TickSize;
+      if (!tickSize) {
+         if (!suppressErrors) catch("PipValue(2)  illegal MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA);
+         return(0);
+      }
    }
 
-   static double static.tickValue;
+   static double staticTickValue;
    static bool   isResolved, isConstant, isCorrect, isCalculatable, doWarn;
 
    if (!isResolved) {
       if (StrEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
-         static.tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+         staticTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
          error = GetLastError();
          if (error != NO_ERROR) {
             if (!suppressErrors) catch("PipValue(3)", error);
             return(0);
          }
-         if (!static.tickValue) {
-            if (!suppressErrors) catch("PipValue(4)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+         if (!staticTickValue) {
+            if (!suppressErrors) catch("PipValue(4)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
             return(0);
          }
          isConstant = true;
@@ -739,67 +736,67 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
    // constant value
    if (isConstant)
-      return(Pip/tickSize * static.tickValue * lots);
+      return(Pip/tickSize * staticTickValue * lots);
 
    // dynamic but correct value
    if (isCorrect) {
-      double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+      double dynamicTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (error != NO_ERROR) {
          if (!suppressErrors) catch("PipValue(5)", error);
          return(0);
       }
-      if (!tickValue) {
-         if (!suppressErrors) catch("PipValue(6)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+      if (!dynamicTickValue) {
+         if (!suppressErrors) catch("PipValue(6)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
          return(0);
       }
-      return(Pip/tickSize * tickValue * lots);
+      return(Pip/tickSize * dynamicTickValue * lots);
    }
 
    // dynamic and incorrect value
    if (isCalculatable) {                                             // TickValue can be calculated
-      if      (Symbol() == "EURAUD") tickValue =   1/Close[0];
-      else if (Symbol() == "EURCAD") tickValue =   1/Close[0];
-      else if (Symbol() == "EURCHF") tickValue =   1/Close[0];
-      else if (Symbol() == "EURGBP") tickValue =   1/Close[0];
-      else if (Symbol() == "EURUSD") tickValue =   1/Close[0];
+      if      (Symbol() == "EURAUD") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "EURCAD") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "EURCHF") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "EURGBP") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "EURUSD") dynamicTickValue =   1/Close[0];
 
-      else if (Symbol() == "GBPAUD") tickValue =   1/Close[0];
-      else if (Symbol() == "GBPCAD") tickValue =   1/Close[0];
-      else if (Symbol() == "GBPCHF") tickValue =   1/Close[0];
-      else if (Symbol() == "GBPUSD") tickValue =   1/Close[0];
+      else if (Symbol() == "GBPAUD") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "GBPCAD") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "GBPCHF") dynamicTickValue =   1/Close[0];
+      else if (Symbol() == "GBPUSD") dynamicTickValue =   1/Close[0];
 
-      else if (Symbol() == "AUDJPY") tickValue = 100/Close[0];
-      else if (Symbol() == "CADJPY") tickValue = 100/Close[0];
-      else if (Symbol() == "CHFJPY") tickValue = 100/Close[0];
-      else if (Symbol() == "EURJPY") tickValue = 100/Close[0];
-      else if (Symbol() == "GBPJPY") tickValue = 100/Close[0];
-      else if (Symbol() == "USDJPY") tickValue = 100/Close[0];
+      else if (Symbol() == "AUDJPY") dynamicTickValue = 100/Close[0];
+      else if (Symbol() == "CADJPY") dynamicTickValue = 100/Close[0];
+      else if (Symbol() == "CHFJPY") dynamicTickValue = 100/Close[0];
+      else if (Symbol() == "EURJPY") dynamicTickValue = 100/Close[0];
+      else if (Symbol() == "GBPJPY") dynamicTickValue = 100/Close[0];
+      else if (Symbol() == "USDJPY") dynamicTickValue = 100/Close[0];
       else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
-      return(Pip/tickSize * tickValue * lots);                       // return the calculated value
+      return(Pip/tickSize * dynamicTickValue * lots);                // return the calculated value
    }
 
    // dynamic and incorrect value: we must live with the approximated online value
-   tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error     = GetLastError();
+   dynamicTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   error = GetLastError();
    if (error != NO_ERROR) {
       if (!suppressErrors) catch("PipValue(8)", error);
       return(0);
    }
-   if (!tickValue) {
-      if (!suppressErrors) catch("PipValue(9)  illegal TickValue: 0", ERR_INVALID_MARKET_DATA);
+   if (!dynamicTickValue) {
+      if (!suppressErrors) catch("PipValue(9)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    // emit a single warning at test start
    if (doWarn) {
       string message = "Exact tickvalue not available."+ NL
-                      +"The test will use the current online tickvalue ("+ tickValue +") which is an approximation. "
+                      +"The test will use the current online tickvalue ("+ dynamicTickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
       logWarn("PipValue(10)  "+ message);
       doWarn = false;
    }
-   return(Pip/tickSize * tickValue * lots);
+   return(Pip/tickSize * dynamicTickValue * lots);
 }
 
 
@@ -824,7 +821,7 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!tickSize) {
-      if (!suppressErrors) catch("PipValueEx(2)  illegal TickSize = 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(2)  illegal MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
@@ -835,7 +832,7 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!tickValue) {
-      if (!suppressErrors) catch("PipValueEx(4)  illegal TickValue = 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(4)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
@@ -1027,6 +1024,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
+                else if (              _symbol=="DE40")        result = "DAX";
                 else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
@@ -1074,6 +1072,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "GBPUSD") )    result = "GBPUSD";
                 else if (StrStartsWith(_symbol, "GBPZAR") )    result = "GBPZAR";
                 else if (              _symbol=="GER30"   )    result = "DAX";
+                else if (              _symbol=="GER40"   )    result = "DAX";
                 else if (              _symbol=="GOLD"    )    result = "XAUUSD";
                 else if (              _symbol=="GOLDEURO")    result = "XAUEUR";
                 break;

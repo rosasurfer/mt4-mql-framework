@@ -6,13 +6,13 @@
 #include <mqldefines.mqh>                                         // to be increased. Using 32KB has always been sufficient.
 #include <win32defines.mqh>                                       //
 #include <structs/sizes.mqh>                                      //  @see  https://docs.mql4.com/basis/variables/local#stack
-                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation
+                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation#
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT.intSize];           // aktueller ExecutionContext
 //int    __lpSuperContext;                                        // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-//int    __CoreFunction;                                          // the core function currently executed by the main MQL module: CF_INIT|CF_START|CF_DEINIT
+//int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
 bool     __isAutoConfig;                                          // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
 
@@ -23,17 +23,16 @@ int      __STATUS_OFF.reason;                                     // Ursache für
 double   Pip, Pips;                                               // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                                 // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
 int      PipPoint, PipPoints;                                     // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
-double   TickSize;                                                // kleinste Änderung des Preises des aktuellen Symbols je Tick (Vielfaches von Point)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.Time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ValidBars;                                               // it holds: Bars = ValidBars + ChangedBars
-int      ChangedBars;                                             // used in indicators only, otherwise IndicatorCounted() is not supported
-int      ShiftedBars;                                             // used in offline charts only
+int      ChangedBars;                                             // indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts always -1)
+int      UnchangedBars, ValidBars;                                // indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts always -1)
+int      ShiftedBars;                                             // indicators: non-zero in offline charts only                                (in experts and scripts always -1)
 
-int      last_error;                                              // last error of the current core function call
-int      prev_error;                                              // last error of the previous core function call
+int      last_error;                                              // last error of the current execution
+int      prev_error;                                              // last error of the previous start() call
 
 int      __orderStack[];                                          // FIFO stack of selected orders (per MQL module)
 
@@ -339,14 +338,13 @@ double  N_INF;                                                    // -1.#INF: ne
 #define SuperTrend.MODE_MAIN      MODE_MAIN     // SuperTrend SR line (0)
 #define SuperTrend.MODE_TREND             1     // SuperTrend trend direction and length
 
-#define ZigZag.MODE_REVERSAL_OPEN         0     // ZigZag reversal open price
-#define ZigZag.MODE_REVERSAL_CLOSE        1     // ZigZag reversal close price
+#define ZigZag.MODE_SEMAPHORE_OPEN        0     // ZigZag semaphore open price
+#define ZigZag.MODE_SEMAPHORE_CLOSE       1     // ZigZag semaphore close price
 #define ZigZag.MODE_UPPER_BAND            2     // ZigZag upper channel band
 #define ZigZag.MODE_LOWER_BAND            3     // ZigZag lower channel band
 #define ZigZag.MODE_UPPER_CROSS           4     // ZigZag upper channel band crossing
 #define ZigZag.MODE_LOWER_CROSS           5     // ZigZag lower channel band crossing
-#define ZigZag.MODE_TREND                 6     // ZigZag trend
-#define ZigZag.MODE_WAITING               7     // ZigZag unknown trend
+#define ZigZag.MODE_TREND                 6     // ZigZag trend (combined trend and waiting buffers)
 
 
 // sorting modes, see ArraySort()

@@ -40,7 +40,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/@Trend.mqh>
-#include <functions/ManageIndicatorBuffer.mqh>
+#include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
@@ -213,7 +213,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(haOpen)) return(logInfo("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   ManageIndicatorBuffer(MODE_HA_CLOSE, haClose);
+   ManageDoubleIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -231,15 +231,15 @@ int onTick() {
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftIndicatorBuffer(haOpen,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(haHigh,     Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(haLow,      Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(haClose,    Bars, ShiftedBars, 0);
-      ShiftIndicatorBuffer(outOpen,    Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(outClose,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(outHighLow, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(outLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(haOpen,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(haHigh,     Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(haLow,      Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(haClose,    Bars, ShiftedBars, 0);
+      ShiftDoubleIndicatorBuffer(outOpen,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(outClose,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(outHighLow, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(outLowHigh, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(trend,      Bars, ShiftedBars, 0);
    }
 
    // +-----------------------------------------------------------+-------------------------------------------------------+

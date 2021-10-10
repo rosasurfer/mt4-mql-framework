@@ -19,6 +19,9 @@
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
+ *
+ * TODO:
+ *  - doesn't work on offline charts
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};
@@ -619,7 +622,7 @@ bool UpdateDescription() {
    ObjectSetText(legendLabel, description, legendFontSize, legendFontName, legendFontColor);
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on Object::onDrag() or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdateDescription(1)", error));
    return(true);
 }

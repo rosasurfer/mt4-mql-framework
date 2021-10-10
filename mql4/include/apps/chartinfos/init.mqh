@@ -46,8 +46,8 @@ int onInit() {
          key    = symbolRangeKey;
          sValue = sSymbolRange;
          if (StrCompareI(sValue, "ADR")) {
-            mm.pipRange = iADR()/Pip;
-            mm.pipRangeIsADR = true;
+            mm.pipRange = iADR()/Pip;        // FATAL  EURUSD,H4  ChartInfos::onInit(0.1)  mm.pipRange=93.98666667  [ERS_HISTORY_UPDATE]
+            mm.pipRangeIsADR = true;         // if (!catch("onInit(0.1)  mm.pipRange="+ mm.pipRange)) debug("onInit(0.2)  mm.pipRange="+ mm.pipRange);
          }
          else {
             if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
@@ -176,7 +176,7 @@ int afterInit() {
  */
 bool OrderTracker.Configure() {
    if (!mode.intern) return(true);
-   track.orders = false;
+   orderTracker.enabled = false;
 
    string sValues[], sValue = StrToLower(Track.Orders);     // default: "on | off | auto*"
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -186,17 +186,17 @@ bool OrderTracker.Configure() {
    sValue = StrTrim(sValue);
 
    if (sValue == "on") {
-      track.orders = true;
+      orderTracker.enabled = true;
    }
    else if (sValue == "off") {
-      track.orders = false;
+      orderTracker.enabled = false;
    }
    else if (sValue == "auto") {
-      track.orders = GetConfigBool("EventTracker", "Track.Orders");
+      orderTracker.enabled = GetConfigBool("EventTracker", "Track.Orders");
    }
    else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
-   if (track.orders) {
+   if (orderTracker.enabled) {
       // read signaling method configuration
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);

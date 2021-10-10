@@ -84,24 +84,25 @@ bool InitTradeAccount(string accountId = "") {
       }
    }
 
-   // cancel execution if the resolved trade account is already active
-   if (tradeAccount.company==_accountCompany && tradeAccount.number==_accountNumber)
+   // stop execution if the resolved trade account is already active
+   if (tradeAccount.company==_accountCompany && tradeAccount.number==_accountNumber) {
       return(true);
+   }
 
-   // resolve the remaining vars
+   // resolve account currency, type and name
    _accountCurrency = AccountCurrency();
    _accountType     = ifInt(IsDemoFix(), ACCOUNT_TYPE_DEMO, ACCOUNT_TYPE_REAL);
    _accountName     = AccountName();
 
    if (_accountCompany!=currAccountCompany || _accountNumber!=currAccountNumber) {
-      // AccountCurrency
+      // account currency
       section = "Accounts";
       key     = _accountNumber +".currency";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(7)  missing global account setting ["+ section +"]->"+ key));
       if (!IsCurrency(sValue))                                                      return(!logWarn("InitTradeAccount(8)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
       _accountCurrency = StrToUpper(sValue);
 
-      // AccountType
+      // account type
       section = "Accounts";
       key     = _accountNumber +".type";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(9)  missing global account setting ["+ section +"]->"+ key));
@@ -109,7 +110,7 @@ bool InitTradeAccount(string accountId = "") {
       else if (StrCompareI(sValue, "real")) _accountType = ACCOUNT_TYPE_REAL;
       else                                                                          return(!logWarn("InitTradeAccount(10)  invalid global account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
 
-      // AccountName
+      // account name
       section = "Accounts";
       key     = _accountNumber +".name";
       sValue  = GetGlobalConfigString(section, key); if (!StringLen(sValue))        return(!logWarn("InitTradeAccount(11)  missing global account setting ["+ section +"]->"+ key));
@@ -126,7 +127,7 @@ bool InitTradeAccount(string accountId = "") {
    tradeAccount.type     = _accountType;
    tradeAccount.name     = _accountName;
 
-   // store account identifier in the chart to enable remote access by scripts
+   // store account identifier in the chart to enable remote access by other programs
    string label = "TradeAccount";
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);

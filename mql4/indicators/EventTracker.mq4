@@ -124,7 +124,7 @@ string signal.mail.receiver = "";
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    if (!Configure())                                                 // Konfiguration einlesen, ruft zum Schluﬂ ShowStatus() auf

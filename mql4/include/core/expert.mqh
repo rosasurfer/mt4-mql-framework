@@ -1,6 +1,5 @@
 
-#define __lpSuperContext NULL
-int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+//////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
 extern bool     EA.RecordEquity   = false;
@@ -8,11 +7,13 @@ extern bool     EA.CreateReport   = false;
 extern datetime Tester.StartTime  = 0;                               // time to start a test
 extern double   Tester.StartPrice = 0;                               // price to start a test
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <functions/InitializeByteBuffer.mqh>
 
-
-double __rates[][6];                                                 // current price series (passed to the Expander on every tick)
-int    tickTimerId;                                                  // timer id for virtual ticks
+#define __lpSuperContext NULL
+int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+double  __rates[][6];                                                // current price series
+int     __tickTimerId;                                               // timer id for virtual ticks
 
 // test metadata
 double tester.startEquity       = 0;
@@ -84,19 +85,19 @@ int init() {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      TickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // fails if there is no tick yet
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet
       error = GetLastError();
       if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may appear later
          if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
-            return(logInfo("init(5)  MarketInfo("+ Symbol() +", ...) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!TickSize) return(logInfo("init(7)  MarketInfo("+ Symbol() +", MODE_TICKSIZE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -193,8 +194,8 @@ int init() {
    if (!IsTesting()) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
-      tickTimerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
@@ -251,10 +252,10 @@ int start() {
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = false;
-   lastVolume = Volume[0];
-   ValidBars   = -1;                                                                // in experts not available
-   ChangedBars = -1;                                                                // ...
-   ShiftedBars = -1;                                                                // ...
+   lastVolume    = Volume[0];
+   ChangedBars   = -1;                                                              // in experts not available
+   UnchangedBars = -1; ValidBars = UnchangedBars;                                   // ...
+   ShiftedBars   = -1;                                                              // ...
 
    // if called after init() check it's return value
    if (__CoreFunction == CF_INIT) {
@@ -321,14 +322,14 @@ int start() {
             if (error != NO_ERROR) {
                if (CheckErrors("start(4)", error)) return(last_error);
             }
-            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo("+ Symbol() +", MODE_TICKVALUE) = 0", ERS_TERMINAL_NOT_YET_READY))));
+            return(ShowStatus(SetLastError(logInfo("start(5)  MarketInfo(MODE_TICKVALUE): 0", ERS_TERMINAL_NOT_YET_READY))));
          }
       }
    }
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, -1, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(6)")) return(last_error);
    }
 
@@ -393,9 +394,8 @@ int deinit() {
       }
 
       // reset the virtual tick timer
-      if (tickTimerId != NULL) {
-         tmp = tickTimerId;
-         tickTimerId = NULL;
+      if (__tickTimerId != NULL) {
+         tmp = __tickTimerId; __tickTimerId = NULL;
          if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
       }
 
