@@ -13,8 +13,8 @@
  *
  *
  * TODO:
- *  - signaling bug during data pumping
  *  - process input ShowChannelBreakouts
+ *  - add breakout marker configuration
  *  - add auto-configuration and remove global var __isAutoConfig
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
@@ -33,14 +33,16 @@ extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag li
 extern int    ZigZag.Width               = 1;
 extern color  ZigZag.Color               = Blue;
 
-extern int    Semaphores.WingDingsSymbol = 108;                   // that's a small dot
-
 extern bool   ShowZigZagChannel          = true;
 extern bool   ShowZigZagTrail            = true;
 extern bool   ShowChannelBreakouts       = true;
 extern bool   ShowFirstBreakoutPerBar    = true;                  // display the first or the last channel crossing per bar
 extern color  UpperChannel.Color         = DodgerBlue;
 extern color  LowerChannel.Color         = Magenta;
+
+extern int    Semaphores.WingDingsSymbol = 108;                   // a medium dot
+extern int    Breakouts.WingDingsSymbol  = 161;                   // a small open circle
+
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
@@ -160,8 +162,11 @@ int onInit() {
    // Semaphores.WingDingsSymbol
    if (Semaphores.WingDingsSymbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
    if (Semaphores.WingDingsSymbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   // Breakouts.WingDingsSymbol
+   if (Breakouts.WingDingsSymbol <  32)  return(catch("onInit(6)  invalid input parameter Breakouts.WingDingsSymbol: "+ Breakouts.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   if (Breakouts.WingDingsSymbol > 255)  return(catch("onInit(7)  invalid input parameter Breakouts.WingDingsSymbol: "+ Breakouts.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                    return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                    return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
@@ -208,7 +213,7 @@ int onInit() {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
-   return(catch("onInit(7)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -331,7 +336,7 @@ int onTick() {
                SetTrend(bar, bar, -1);                                     // mark a new downtrend
             }
             semaphoreClose[bar] = lowerBreakoutEnd[bar];
-            CheckReversalSignal(D_SHORT, bar);                             // process the reversal signal
+            onReversal(D_SHORT, bar);                                      // handle the reversal
          }
          else {
             prevZZ = ProcessLowerCross(bar);                               // first process the lower crossing
@@ -344,7 +349,7 @@ int onTick() {
                SetTrend(bar, bar, 1);                                      // mark a new uptrend
             }
             semaphoreClose[bar] = upperBreakoutEnd[bar];
-            CheckReversalSignal(D_LONG, bar);                              // process the reversal signal
+            onReversal(D_LONG, bar);                                       // handle the reversal
          }
          reversal[bar] = 0;                                                // the 2nd crossing is always a new reversal
       }
@@ -509,7 +514,7 @@ int ProcessUpperCross(int bar) {
    }
    else {                                                         // a new uptrend
       if (trend[bar+1] < 0 || waiting[bar+1])
-         CheckReversalSignal(D_LONG, bar);
+         onReversal(D_LONG, bar);
       SetTrend(prevZZ-1, bar, 1, true);                           // set the trend
       semaphoreOpen [bar] = upperBreakoutEnd[bar];
       semaphoreClose[bar] = upperBreakoutEnd[bar];
@@ -552,7 +557,7 @@ int ProcessLowerCross(int bar) {
    }
    else {                                                         // a new downtrend
       if (trend[bar+1] > 0 || waiting[bar+1])
-         CheckReversalSignal(D_SHORT, bar);
+         onReversal(D_SHORT, bar);
       SetTrend(prevZZ-1, bar, -1, true);                          // set the trend
       semaphoreOpen [bar] = lowerBreakoutEnd[bar];
       semaphoreClose[bar] = lowerBreakoutEnd[bar];
@@ -587,22 +592,7 @@ void SetTrend(int from, int to, int value, bool resetReversal = false) {
 
 
 /**
- * Check for and trigger new reversal signals.
- *
- * @param  int direction - breakout direction: D_LONG | D_SHORT
- * @param  int bar       - breakout offset
- *
- * @return bool - success status, not whether a reversal occurred
- */
-bool CheckReversalSignal(int direction, int bar) {
-   if (signalReversal && ChangedBars <= 2)
-      return(onReversal(direction, bar));
-   return(true);
-}
-
-
-/**
- * Event handler for new ZigZag reversals.
+ * Event handler for ZigZag reversals. New reversals will be signaled (historic ones not).
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  * @param  int bar       - bar of the reversal (the current or the closed bar)
@@ -610,25 +600,29 @@ bool CheckReversalSignal(int direction, int bar) {
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
+   if (!signalReversal || ChangedBars > 2)      return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_ILLEGAL_STATE));
 
+   datetime started=__ExecutionContext[EC.created], now=GetGmtTime();         // skip erroneous signals caused by data pumping at program start
+   if (now < started+30*SECONDS) return(false);
+
    // check wether the event was already signaled
    int    hWnd  = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetTerminalMainWindow());
-   string event = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
+   string sEvent = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
    bool isSignaled = false;
-   if (hWnd > 0) isSignaled = (GetWindowIntegerA(hWnd, event) != 0);
+   if (hWnd > 0) isSignaled = (GetWindowIntegerA(hWnd, sEvent) != 0);
 
    int error = NO_ERROR;
 
    if (!isSignaled) {
-      if (hWnd > 0) SetWindowIntegerA(hWnd, event, 1);                        // mark event as signaled
+      if (hWnd > 0) SetWindowIntegerA(hWnd, sEvent, 1);                       // mark event as signaled
       string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (direction == D_LONG) {
-         message = indicatorName +" reversal up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+         message = "up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
          if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
-         message = Symbol() +","+ PeriodDescription() +": "+ message;
+         message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
 
          if (signalReversal.Popup)           Alert(message);                  // before "Sound" to get drowned out by the next sound
          if (signalReversal.Sound) error |= !PlaySoundEx(signalReversal.SoundUp);
@@ -637,9 +631,9 @@ bool onReversal(int direction, int bar) {
       }
 
       if (direction == D_SHORT) {
-         message = indicatorName +" reversal down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+         message = "down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
          if (IsLogInfo()) logInfo("onReversal(3)  "+ message);
-         message = Symbol() +","+ PeriodDescription() +": "+ message;
+         message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
 
          if (signalReversal.Popup)           Alert(message);                  // before "Sound" to get drowned out by the next sound
          if (signalReversal.Sound) error |= !PlaySoundEx(signalReversal.SoundDown);
@@ -669,8 +663,8 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
    drawType = ifInt(ShowZigZagTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, 161);   // that's an open circle (dot)
-   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, 161);   // ...
+   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Breakouts.WingDingsSymbol);
+   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Breakouts.WingDingsSymbol);
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -687,13 +681,14 @@ string InputsToStr() {
                             "ZigZag.Type=",                DoubleQuoteStr(ZigZag.Type),        ";"+ NL,
                             "ZigZag.Width=",               ZigZag.Width,                       ";"+ NL,
                             "ZigZag.Color=",               ColorToStr(ZigZag.Color),           ";"+ NL,
-                            "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
                             "ShowZigZagChannel=",          BoolToStr(ShowZigZagChannel),       ";"+ NL,
                             "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";"+ NL,
                             "ShowChannelBreakouts=",       BoolToStr(ShowChannelBreakouts),    ";"+ NL,
                             "ShowFirstBreakoutPerBar=",    BoolToStr(ShowFirstBreakoutPerBar), ";"+ NL,
                             "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";"+ NL,
                             "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";"+ NL,
+                            "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
+                            "Breakouts.WingDingsSymbol=",  Breakouts.WingDingsSymbol,          ";"+ NL,
                             "Max.Bars=",                   Max.Bars,                           ";"+ NL,
 
                             "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,
