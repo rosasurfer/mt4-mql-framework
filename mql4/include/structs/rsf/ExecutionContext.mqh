@@ -21,6 +21,7 @@
    // getters
    int      ec_Pid                (int ec[]);
    int      ec_PreviousPid        (int ec[]);
+   datetime ec_Created            (int ec[]);
 
    int      ec_ProgramType        (int ec[]);
    string   ec_ProgramName        (int ec[]);
