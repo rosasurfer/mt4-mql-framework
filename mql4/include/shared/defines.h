@@ -342,9 +342,9 @@
 
 #define MT4_OPEN_CHART                         51
 
-#define MT4_COMPILE_REQUEST                 12345
-#define MT4_COMPILE_PERMISSION              12346
-#define MT4_MQL_REFRESH                     12349        // rescan und reload modified .ex4 files
+#define MT4_COMPILE_ANNOUNC                 12345
+#define MT4_COMPILE_ACK                     12346
+#define MT4_COMPILE_REFRESH                 12349        // rescan und reload modified .ex4 files
 
 
 // bar model types in tester
