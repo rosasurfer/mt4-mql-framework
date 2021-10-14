@@ -14,7 +14,6 @@
  *
  * TODO:
  *  - process input ShowChannelBreakouts
- *  - add breakout marker configuration
  *  - add auto-configuration and remove global var __isAutoConfig
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
