@@ -218,7 +218,7 @@ bool ReadAndCheckHeader(int hFile, int period, int &bars) {
    iValue = FileReadInteger(hFile, LONG_VALUE);
    if (iValue <= 0 || iValue > 500)                            return(false);  // account leverage
 
-   if (FileSize(hFile) < FXT_HEADER.size + bars*FXT_TICK.size) return(false);  // file size
+   if (FileSize(hFile) < FXT_HEADER_size + bars*FXT_TICK_size) return(false);  // file size
 
    return(!catch("ReadAndCheckHeader(1)"));
    WriteHeader(NULL, NULL, NULL, NULL, NULL);

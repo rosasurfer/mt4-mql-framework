@@ -69,10 +69,10 @@ double mm.equity;                                                 // total appli
                                                                   //  - enthält offene Verluste ungehedgter Positionen
                                                                   //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (unrealisiert)
 // configuration of custom positions
-#define POSITION_CONFIG_TERM.size      40                         // in Bytes
-#define POSITION_CONFIG_TERM.doubleSize 5                         // in Doubles
+#define POSITION_CONFIG_TERM_size      40                         // in Bytes
+#define POSITION_CONFIG_TERM_doubleSize 5                         // in Doubles
 
-double  positions.config[][POSITION_CONFIG_TERM.doubleSize];      // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
+double  positions.config[][POSITION_CONFIG_TERM_doubleSize];      // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
 string  positions.config.comments[];                              // Kommentare konfigurierter Positionen (Arraygröße entspricht positions.config[])
 
 #define TERM_OPEN_LONG                  1                         // ConfigTerm-Types
@@ -2104,7 +2104,7 @@ bool CustomPositions.ReadConfig() {
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden, siehe (2).
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
                   if (!isPositionEmpty && !isPositionVirtual) {
-                     double tmp[POSITION_CONFIG_TERM.doubleSize] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL};   // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
+                     double tmp[POSITION_CONFIG_TERM_doubleSize] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL};   // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
                      ArrayInsertDoubleArray(positions.config, positionStartOffset, tmp);
                   }
                   isPositionVirtual = true;

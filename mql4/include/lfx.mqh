@@ -25,7 +25,7 @@ string tradeAccount.name = "";                                 // Inhaber
 
 string lfxCurrency = "";
 int    lfxCurrencyId;
-int    lfxOrders[][LFX_ORDER.intSize];                         // Array von LFX_ORDERs
+int    lfxOrders[][LFX_ORDER_intSize];                         // Array von LFX_ORDERs
 
 // Trade-Terminal -> LFX-Terminal: PL-Messages
 string  qc.TradeToLfxChannels[9];                              // ein Channel je LFX-Währung bzw. LFX-Chart
@@ -717,7 +717,7 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
 
    // (3) Orderdaten in übergebenes Array schreiben (erst nach vollständiger erfolgreicher Validierung)
-   InitializeByteBuffer(lo, LFX_ORDER.size);
+   InitializeByteBuffer(lo, LFX_ORDER_size);
 
    lo.setTicket             (lo,  ticket             );              // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
    lo.setType               (lo, _orderType          );
@@ -785,7 +785,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
       fSelection |= OF_OPEN;
 
    ArrayResize(orders, 0);
-   int error = InitializeByteBuffer(orders, LFX_ORDER.size);               // validiert Dimensionierung
+   int error = InitializeByteBuffer(orders, LFX_ORDER_size);               // validiert Dimensionierung
    if (IsError(error)) return(_EMPTY(SetLastError(error)));
 
    // (2) alle Tickets einlesen
@@ -862,20 +862,20 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
    int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders: "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
 
-   /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER.intSize);
+   /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER_intSize);
    if (dims == 1) {
       // Parameter orders[] ist einzelne Order
-      if (ArrayRange(orders, 0) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      if (ArrayRange(orders, 0) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       ArrayCopy(order, orders);
    }
    else {
       // Parameter orders[] ist Order-Array
-      if (ArrayRange(orders, 1) != LFX_ORDER.intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      if (ArrayRange(orders, 1) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
       int ordersSize = ArrayRange(orders, 0);
       if (index < 0 || index > ordersSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index: "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
-      int src  = GetIntsAddress(orders) + index*LFX_ORDER.intSize*4;
+      int src  = GetIntsAddress(orders) + index*LFX_ORDER_intSize*4;
       int dest = GetIntsAddress(order);
-      CopyMemory(dest, src, LFX_ORDER.intSize*4);
+      CopyMemory(dest, src, LFX_ORDER_intSize*4);
    }
 
 

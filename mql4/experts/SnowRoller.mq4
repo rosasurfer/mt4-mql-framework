@@ -1334,7 +1334,7 @@ bool StopSequence(int signal) {
 
       // close open orders
       double stopPrice;
-      int level, oeFlags, oes[][ORDER_EXECUTION.intSize], slippage = 10;    // point
+      int level, oeFlags, oes[][ORDER_EXECUTION_intSize], slippage = 10;    // point
       int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
       ArrayResize(pendingLimits, 0);
       ArrayResize(openPositions, 0);

@@ -1270,7 +1270,7 @@ bool StopSequence.ClosePositions(int hedgeTicket) {
    // close open positions and update local order state
    if (ArraySize(positions) > 0) {
       int slippage = 10;    // point
-      int oeFlags, oes[][ORDER_EXECUTION.intSize], pos;
+      int oeFlags, oes[][ORDER_EXECUTION_intSize], pos;
       if (!OrdersClose(positions, slippage, CLR_CLOSED, oeFlags, oes)) return(!SetLastError(oes.Error(oes, 0)));
 
       double remainingSwap, remainingCommission, remainingProfit;

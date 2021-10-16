@@ -659,7 +659,7 @@ string GetAccountServer() {
          // search the created file
          string pattern = GetTerminalDataPathA() +"\\history\\*";
 
-         /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
+         /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
          while (next != 0) {
             if (wfd_FileAttribute_Directory(wfd)) {
@@ -2647,12 +2647,12 @@ string GetWindowsShortcutTarget(string lnkFilename) {
  * @return int - Fehlerstatus
  */
 int WinExecWait(string cmdLine, int cmdShow) {
-   /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO.size);
-   si_setSize      (si, STARTUPINFO.size);
+   /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO_size);
+   si_setSize      (si, STARTUPINFO_size);
    si_setFlags     (si, STARTF_USESHOWWINDOW);
    si_setShowWindow(si, cmdShow);
 
-   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION.size);
+   int    iNull[], /*PROCESS_INFORMATION*/pi[]; InitializeByteBuffer(pi, PROCESS_INFORMATION_size);
    string sNull;
 
    if (!CreateProcessA(sNull, cmdLine, iNull, iNull, false, 0, iNull, sNull, si, pi))
@@ -4083,7 +4083,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 int GetLocalToGmtTimeOffset() {
    if (This.IsTesting()) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
 
-   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION.size);
+   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION_size);
 
    int offset, type=GetTimeZoneInformation(tzi);
 
@@ -4302,7 +4302,7 @@ int FindFileNames(string pattern, string &lpResults[], int flags = NULL) {
    ArrayResize(lpResults, 0);
 
    string name = "";
-   /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA.size);
+   /*WIN32_FIND_DATA*/ int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
    int hSearch = FindFirstFileA(pattern, wfd), next=hSearch;
 
    while (next > 0) {
@@ -4712,8 +4712,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderSendEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
-      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize)
+      ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // symbol
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
@@ -5048,8 +5048,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderModifyEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
-      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize)
+      ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // ticket
    if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));
@@ -5284,8 +5284,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderCloseEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
-      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize)
+      ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // ticket
    if (!SelectTicket(ticket, "OrderCloseEx(2)", O_PUSH))       return(!oe.setError(oe, ERR_INVALID_TICKET));
@@ -5584,8 +5584,8 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                    return(!catch("OrderCloseByEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
-      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize)
+      ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // ticket
    if (!SelectTicket(ticket, "OrderCloseByEx(2)", O_PUSH))        return(!oe.setError(oe, ERR_INVALID_TICKET));
@@ -5902,7 +5902,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                    return(!catch("OrdersClose(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)               return(!catch("OrdersClose(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION_intSize)               return(!catch("OrdersClose(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1));  ArrayInitialize(oes, 0);
    // tickets[]
@@ -5947,7 +5947,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
    }
 
    // close tickets together if all are of the same symbol
-   int oes2[][ORDER_EXECUTION.intSize];
+   int oes2[][ORDER_EXECUTION_intSize];
    int sizeOfSymbols = ArraySize(symbols);
    if (sizeOfSymbols == 1) {
       if (!OrdersCloseSameSymbol(tickets, slippage, markerColor, oeFlags, oes2))
@@ -6070,7 +6070,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                      return(!catch("OrdersCloseSameSymbol(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)                 return(!catch("OrdersCloseSameSymbol(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION_intSize)                 return(!catch("OrdersCloseSameSymbol(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1));  ArrayInitialize(oes, 0);
    // tickets[]
@@ -6109,7 +6109,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
       for (i=0; i < sizeOfTickets; i++) {
          if (!OrderCloseEx(tickets[i], NULL, slippage, markerColor, oeFlags, oe)) return(!oes.setError(oes, -1, oe.Error(oe)));
          src  = GetIntsAddress(oe);
-         dest = GetIntsAddress(oes) + i*ORDER_EXECUTION.intSize*4;
+         dest = GetIntsAddress(oes) + i*ORDER_EXECUTION_intSize*4;
          CopyMemory(dest, src, ArraySize(oe)*4);
       }
       ArrayResize(oe, 0);
@@ -6124,7 +6124,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    int sizeOfCopy = ArrayCopy(ticketsCopy, tickets);
 
    // hedge the total position
-   int oes2[][ORDER_EXECUTION.intSize];                                 // newTicket = -1: no new ticket (one of the tickets was fully closed)
+   int oes2[][ORDER_EXECUTION_intSize];                                 // newTicket = -1: no new ticket (one of the tickets was fully closed)
    int newTicket = OrdersHedge(ticketsCopy, slippage, oeFlags, oes2);   // newTicket =  0: error or total position was already flat
    if (IsError(oes.Error(oes2, 0)))                                     // newTicket >  0: new ticket of offsetting transaction (new position) or remaining position after a partial close
       return(!oes.setError(oes, -1, oes.Error(oes2, 0)));
@@ -6207,7 +6207,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                    return(!catch("OrdersHedge(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)               return(!catch("OrdersHedge(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION_intSize)               return(!catch("OrdersHedge(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
    // tickets[]
@@ -6367,7 +6367,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
    // validate parameters
    // oes[][]
    if (ArrayDimension(oes) != 2)                                          return(!catch("OrdersCloseHedged(1)  invalid parameter oes[] (illegal number of dimensions: "+ ArrayDimension(oes) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArrayRange(oes, 1) != ORDER_EXECUTION.intSize)                     return(!catch("OrdersCloseHedged(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(oes, 1) != ORDER_EXECUTION_intSize)                     return(!catch("OrdersCloseHedged(2)  invalid size of parameter oes["+ ArrayRange(oes, 0) +"]["+ ArrayRange(oes, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
    int sizeOfTickets = ArraySize(tickets);
    ArrayResize(oes, Max(sizeOfTickets, 1)); ArrayInitialize(oes, 0);
    // tickets[]
@@ -6481,8 +6481,8 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
    if (ArrayDimension(oe) > 1)                                 return(!catch("OrderDeleteEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAYS));
-   if (ArraySize(oe) != ORDER_EXECUTION.intSize)
-      ArrayResize(oe, ORDER_EXECUTION.intSize);
+   if (ArraySize(oe) != ORDER_EXECUTION_intSize)
+      ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // ticket
    if (!SelectTicket(ticket, "OrderDeleteEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));
@@ -7207,10 +7207,10 @@ bool IsRawSymbol(string symbol, string server = "") {
    // validate the file size
    int fileSize = FileSize(hFile);
    if (!fileSize)                   { FileClose(hFile); return(false); }
-   if (fileSize % SYMBOL.size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
 
    // read all symbols
-   int symbolsCount = fileSize/SYMBOL.size;
+   int symbolsCount = fileSize/SYMBOL_size;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
    int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
    error = GetLastError();
@@ -7272,7 +7272,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    groupColor = sgs_BackgroundColor(sgs, i);
 
    // create symbol
-   /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL.size);
+   /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL_size);
    if (!SetRawSymbolTemplate               (iSymbol, SYMBOL_TYPE_INDEX))             return(-1);
    if (!StringLen(symbol_SetName           (iSymbol, symbol           )))            return(_EMPTY(catch("CreateRawSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
    if (!StringLen(symbol_SetDescription    (iSymbol, description      )))            return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
@@ -7299,7 +7299,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
  */
 int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, color bgColor) {
    int byteSize = ArraySize(sgs) * 4;
-   if (byteSize % SYMBOL_GROUP.size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
+   if (byteSize % SYMBOL_GROUP_size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
    if (name == "0") name = "";                    // (string) NULL
    if (!StringLen(name))                          return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name: "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter name: "+ DoubleQuoteStr(name) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
@@ -7307,7 +7307,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
    if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(4)  invalid parameter bgColor: 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
 
    // überprüfen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
-   int groupsSize = byteSize/SYMBOL_GROUP.size;
+   int groupsSize = byteSize/SYMBOL_GROUP_size;
    int iFree = -1;
    for (int i=0; i < groupsSize; i++) {
       string foundName = sgs_Name(sgs, i);
@@ -7318,20 +7318,20 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
    // ohne freien Index das Array entsprechend vergrößern
    if (iFree == -1) {
-      ArrayResize(sgs, (groupsSize+1)*SYMBOL_GROUP.intSize);
+      ArrayResize(sgs, (groupsSize+1)*SYMBOL_GROUP_intSize);
       iFree = groupsSize;
       groupsSize++;
    }
 
    // neue Gruppe erstellen und an freien Index kopieren
-   /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP.size);
+   /*SYMBOL_GROUP*/int sg[]; InitializeByteBuffer(sg, SYMBOL_GROUP_size);
    if (!StringLen(sg_SetName           (sg, name       )))            return(_EMPTY(catch("AddSymbolGroup(6)->sg_SetName() => NULL", ERR_RUNTIME_ERROR)));
    if (!StringLen(sg_SetDescription    (sg, description)))            return(_EMPTY(catch("AddSymbolGroup(7)->sg_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
    if (           sg_SetBackgroundColor(sg, bgColor    ) == CLR_NONE) return(_EMPTY(catch("AddSymbolGroup(8)->sg_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    int src  = GetIntsAddress(sg);
-   int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP.size;
-   CopyMemory(dest, src, SYMBOL_GROUP.size);
+   int dest = GetIntsAddress(sgs) + iFree*SYMBOL_GROUP_size;
+   CopyMemory(dest, src, SYMBOL_GROUP_size);
    ArrayResize(sg, 0);
 
    return(iFree);
@@ -7362,10 +7362,10 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    int error = GetLastError();
    if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR))));
    int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_GROUP.size != 0) {
-      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+   if (fileSize % SYMBOL_GROUP_size != 0) {
+      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
-   if (!fileSize) { FileClose(hFile); return(0); }                   // Eine leere Datei wird akzeptiert. Eigentlich muß sie immer 32 * SYMBOL_GROUP.size groß sein,
+   if (!fileSize) { FileClose(hFile); return(0); }                   // Eine leere Datei wird akzeptiert. Eigentlich muß sie immer 32 * SYMBOL_GROUP_size groß sein,
                                                                      // doch im Moment der Erstellung (von jemand anderem) kann sie vorübergehend 0 Bytes groß sein.
    // (3) Datei einlesen
    InitializeByteBuffer(sgs, fileSize);
@@ -7374,7 +7374,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    FileClose(hFile);
    if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))));
 
-   return(fileSize/SYMBOL_GROUP.size);
+   return(fileSize/SYMBOL_GROUP_size);
 }
 
 
@@ -7387,7 +7387,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
  * @return bool - Erfolgsstatus
  */
 bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
-   if (ArraySize(symbol) != SYMBOL.intSize)                                        return(!catch("InsertRawSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL.intSize)", ERR_RUNTIME_ERROR));
+   if (ArraySize(symbol) != SYMBOL_intSize)                                        return(!catch("InsertRawSymbol(1)  invalid size "+ ArraySize(symbol) +" of parameter symbol[] (not SYMBOL_intSize)", ERR_RUNTIME_ERROR));
    string name="", newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name: "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
@@ -7400,10 +7400,10 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    int error = GetLastError();
    if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL.size != 0) {
-      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   if (fileSize % SYMBOL_size != 0) {
+      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
-   int symbolsSize=fileSize/SYMBOL.size, maxId=-1;
+   int symbolsSize=fileSize/SYMBOL_size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
 
    if (fileSize > 0) {
@@ -7422,23 +7422,23 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    // (2) neue Symbol-ID setzen und Symbol am Ende anfügen
    if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(7)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
 
-   ArrayResize(symbols, (symbolsSize+1)*SYMBOL.intSize);
+   ArrayResize(symbols, (symbolsSize+1)*SYMBOL_intSize);
    i = symbolsSize;
    symbolsSize++;
    int src  = GetIntsAddress(symbol);
-   int dest = GetIntsAddress(symbols) + i*SYMBOL.size;
-   CopyMemory(dest, src, SYMBOL.size);
+   int dest = GetIntsAddress(symbols) + i*SYMBOL_size;
+   CopyMemory(dest, src, SYMBOL_size);
 
 
    // (3) Array sortieren und Symbole speichern                      // TODO: "symbols.sel" synchronisieren oder löschen
    if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(8)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
 
    if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(9)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
-   int elements = symbolsSize * SYMBOL.size / 4;
+   int elements = symbolsSize * SYMBOL_size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL.size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
@@ -7455,15 +7455,15 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
  */
 bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    int byteSize = ArraySize(sgs) * 4;
-   if (byteSize % SYMBOL_GROUP.size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP.size) +" trailing bytes)", ERR_RUNTIME_ERROR));
-   if (byteSize > 32*SYMBOL_GROUP.size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
+   if (byteSize % SYMBOL_GROUP_size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR));
+   if (byteSize > 32*SYMBOL_GROUP_size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";                      // (string) NULL
    if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
 
    // "symgroups.raw" muß immer 32 Gruppen enthalten (ggf. undefiniert)
    int sgs.copy[]; ArrayResize(sgs.copy, 0);
-   if (ArraySize(sgs) < 32*SYMBOL_GROUP.intSize)
-      InitializeByteBuffer(sgs.copy, 32*SYMBOL_GROUP.size);          // um das übergebene Array nicht zu verändern, erweitern wir ggf. eine Kopie
+   if (ArraySize(sgs) < 32*SYMBOL_GROUP_intSize)
+      InitializeByteBuffer(sgs.copy, 32*SYMBOL_GROUP_size);          // um das übergebene Array nicht zu verändern, erweitern wir ggf. eine Kopie
    ArrayCopy(sgs.copy, sgs);
 
    // Datei öffnen                                                   // TODO: Verzeichnis überprüfen und ggf. erstellen
@@ -7513,7 +7513,7 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    int error = GetLastError();
    if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
-   if (fileSize != SYMBOL.size) {
+   if (fileSize != SYMBOL_size) {
       FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 

@@ -49,7 +49,7 @@ string   hf.name       [];                            // Dateiname, ggf. mit Unt
 bool     hf.readAccess [];                            // ob das Handle Lese-Zugriff erlaubt
 bool     hf.writeAccess[];                            // ob das Handle Schreib-Zugriff erlaubt
 
-int      hf.header     [][HISTORY_HEADER.intSize];    // History-Header der Datei
+int      hf.header     [][HISTORY_HEADER_intSize];    // History-Header der Datei
 int      hf.format     [];                            // Datenformat: 400 | 401
 int      hf.barSize    [];                            // Größe einer Bar entsprechend dem Datenformat
 string   hf.symbol     [];                            // Symbol
@@ -181,7 +181,7 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
    string baseName="", mqlFileName="", fullFileName="";
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
-   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
+   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    hh_SetBarFormat(hh, format   );
    hh_SetCopyright(hh, copyright);
    hh_SetSymbol   (hh, symbol   );
@@ -297,14 +297,14 @@ int HistorySet1.Get(string symbol, string server = "") {
          if (hFile <= 0) return(!catch("HistorySet1.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
          fileSize = FileSize(hFile);                                    // Datei geöffnet
-         if (fileSize < HISTORY_HEADER.size) {
+         if (fileSize < HISTORY_HEADER_size) {
             FileClose(hFile);
             logWarn("HistorySet1.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
             continue;
          }
                                                                         // HISTORY_HEADER auslesen
-         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER.intSize);
-         FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize);
+         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER_intSize);
+         FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
          FileClose(hFile);
 
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
@@ -472,13 +472,13 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
    }
 
 
-   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER.size);
+   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    int      bars=0, from.offset=-1, to.offset=-1, fileSize=FileSize(hFile), periodSecs=timeframe * MINUTES;
    datetime from.openTime=0, from.closeTime=0, from.nextCloseTime=0, to.openTime=0, to.closeTime=0, to.nextCloseTime=0;
 
 
    // (2) ggf. neuen HISTORY_HEADER schreiben
-   if (write_only || (read_write && fileSize < HISTORY_HEADER.size)) {
+   if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
       // Parameter validieren
       if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
       if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
@@ -490,25 +490,25 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
       hh_SetSymbol   (hh, symbol   );
       hh_SetPeriod   (hh, timeframe);
       hh_SetDigits   (hh, digits   );
-      FileWriteArray(hFile, hh, 0, HISTORY_HEADER.intSize);
+      FileWriteArray(hFile, hh, 0, HISTORY_HEADER_intSize);
    }
 
 
    // (3.1) ggf. vorhandenen HISTORY_HEADER auslesen
    else if (read_only || fileSize > 0) {
-      if (FileReadArray(hFile, hh, 0, HISTORY_HEADER.intSize) != HISTORY_HEADER.intSize) {
+      if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
          return(_NULL(catch("HistoryFile1.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
       }
 
       // (3.2) ggf. Bar-Statistik auslesen
-      if (fileSize > HISTORY_HEADER.size) {
-         int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
-         bars        = (fileSize-HISTORY_HEADER.size) / barSize;
+      if (fileSize > HISTORY_HEADER_size) {
+         int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
+         bars        = (fileSize-HISTORY_HEADER_size) / barSize;
          if (bars > 0) {
             from.offset   = 0;
             from.openTime = FileReadInteger(hFile);
-            to.offset     = bars-1; FileSeek(hFile, HISTORY_HEADER.size + to.offset*barSize, SEEK_SET);
+            to.offset     = bars-1; FileSeek(hFile, HISTORY_HEADER_size + to.offset*barSize, SEEK_SET);
             to.openTime   = FileReadInteger(hFile);
 
             if (timeframe <= PERIOD_W1) {
@@ -539,7 +539,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
 
    ArraySetInts(hf.header,        hFile,          hh);               // entspricht: hf.header[hFile] = hh;
    hf.format                     [hFile]        = hh_BarFormat(hh);
-   hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400.size, HISTORY_BAR_401.size);
+   hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
    hf.symbol                     [hFile]        = hh_Symbol(hh);
    hf.symbolUpper                [hFile]        = symbolUpper;
    hf.period                     [hFile]        = timeframe;
@@ -769,7 +769,7 @@ bool HistoryFile1.ReadBar(int hFile, int offset, double &bar[]) {
    }
 
    // FilePointer positionieren, Bar lesen, normalisieren und validieren
-   int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
+   int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile1.ReadBar(7)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
    if (hf.format[hFile] == 400) {
@@ -872,7 +872,7 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    }
 
    // FilePointer positionieren, Bar normalisieren (Funktionsparameter nicht modifizieren) und schreiben
-   int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
+   int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile1.WriteBar(14)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
    double O = NormalizeDouble(bar[BAR_O], digits);
@@ -1087,7 +1087,7 @@ bool HistoryFile1.WriteLastStoredBar(int hFile, int flags=NULL) {
    int      V  = Round(hf.lastStoredBar.data    [hFile][BAR_V]); if (!V)        return(!catch("HistoryFile1.WriteLastStoredBar(9)  invalid hf.lastStoredBar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
    // FilePointer positionieren, Daten normalisieren und schreiben
-   int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
+   int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
    if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile1.WriteLastStoredBar(7)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
    if (hf.format[hFile] == 400) {
@@ -1157,7 +1157,7 @@ bool HistoryFile1.WriteBufferedBar(int hFile, int flags=NULL) {
       int      V  = Round(hf.bufferedBar.data    [hFile][BAR_V]); if (!V)        return(!catch("HistoryFile1.WriteBufferedBar(8)  invalid hf.lastStoredBar["+ offset +"].volume: "+ V +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
       // FilePointer positionieren, Daten normalisieren und schreiben
-      int position = HISTORY_HEADER.size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
+      int position = HISTORY_HEADER_size + offset*hf.barSize[hFile], digits=hf.digits[hFile];
       if (!FileSeek(hFile, position, SEEK_SET)) return(!catch("HistoryFile1.WriteBufferedBar(9)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile])));
 
       hf.bufferedBar.data[hFile][BAR_O] = NormalizeDouble(hf.bufferedBar.data[hFile][BAR_O], digits);
