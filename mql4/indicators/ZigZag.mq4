@@ -52,6 +52,7 @@ extern bool   Signal.onReversal.Mail     = false;
 extern bool   Signal.onReversal.SMS      = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
@@ -97,39 +98,42 @@ int       framework_buffers = 6;                               // buffers manage
 #property indicator_color7    CLR_NONE                         // combined MODE_TREND + MODE_WAITING buffers
 #property indicator_color8    CLR_NONE                         // ZigZag leg reversal bar
 
-double semaphoreOpen     [];                                   // ZigZag semaphores (open price of a vertical segment)
-double semaphoreClose    [];                                   // ZigZag semaphores (close price of a vertical segment)
-double upperBand         [];                                   // upper channel band
-double lowerBand         [];                                   // lower channel band
-double upperBreakout     [];                                   // upper channel breakout (start or end point)
-double upperBreakoutStart[];                                   // start point of upper channel breakout
-double upperBreakoutEnd  [];                                   // end point of upper channel breakout
-double lowerBreakout     [];                                   // lower channel breakout (start or end point)
-double lowerBreakoutStart[];                                   // start point of lower channel breakout
-double lowerBreakoutEnd  [];                                   // end point of lower channel breakout
-double reversal          [];                                   // offset of the ZigZag leg reversal bar
-int    trend             [];                                   // trend direction and length
-int    waiting           [];                                   // bar periods with not yet known trend direction
-double combinedTrend     [];                                   // combined trend[] and waiting[] buffers
+double   semaphoreOpen     [];                                 // ZigZag semaphores (open price of a vertical segment)
+double   semaphoreClose    [];                                 // ZigZag semaphores (close price of a vertical segment)
+double   upperBand         [];                                 // upper channel band
+double   lowerBand         [];                                 // lower channel band
+double   upperBreakout     [];                                 // upper channel breakout (start or end point)
+double   upperBreakoutStart[];                                 // start point of upper channel breakout
+double   upperBreakoutEnd  [];                                 // end point of upper channel breakout
+double   lowerBreakout     [];                                 // lower channel breakout (start or end point)
+double   lowerBreakoutStart[];                                 // start point of lower channel breakout
+double   lowerBreakoutEnd  [];                                 // end point of lower channel breakout
+double   reversal          [];                                 // offset of the ZigZag leg reversal bar
+int      trend             [];                                 // trend direction and length
+int      waiting           [];                                 // bar periods with not yet known trend direction
+double   combinedTrend     [];                                 // combined trend[] and waiting[] buffers
 
-int    zigzagPeriods;
-int    zigzagDrawType;
-int    maxValues;
-double tickSize;
-string indicatorName = "";
-string legendLabel   = "";
+int      zigzagPeriods;
+int      zigzagDrawType;
+int      maxValues;
+string   indicatorName = "";
+string   legendLabel   = "";
+int      tickTimerId;
+double   tickSize;
+datetime lastTick;
+datetime waitUntil;
 
-bool   signalReversal;
-bool   signalReversal.Sound;
-string signalReversal.SoundUp   = "Signal-Up.wav";
-string signalReversal.SoundDown = "Signal-Down.wav";
-bool   signalReversal.Popup;
-bool   signalReversal.Mail;
-string signalReversal.MailSender   = "";
-string signalReversal.MailReceiver = "";
-bool   signalReversal.SMS;
-string signalReversal.SMSReceiver = "";
-string signalInfo                 = "";
+bool     signalReversal;
+bool     signalReversal.Sound;
+string   signalReversal.SoundUp   = "Signal-Up.wav";
+string   signalReversal.SoundDown = "Signal-Down.wav";
+bool     signalReversal.Popup;
+bool     signalReversal.Mail;
+string   signalReversal.MailSender   = "";
+string   signalReversal.MailReceiver = "";
+bool     signalReversal.SMS;
+string   signalReversal.SMSReceiver = "";
+string   signalInfo                 = "";
 
 // breakout direction types
 #define D_LONG    TRADE_DIRECTION_LONG       // 1
@@ -212,7 +216,31 @@ int onInit() {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
-   return(catch("onInit(9)"));
+
+   // setup a chart ticker to detect data pumping periods by the reversal event handler
+   if (!This.IsTesting()) {
+      int hWnd    = __ExecutionContext[EC.hChart];
+      int millis  = 2000;                                         // a virtual tick every 2 seconds
+      int timerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!timerId) return(catch("onInit(9)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+   }
+   return(catch("onInit(10)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   // remove an installed chhart ticker
+   if (tickTimerId > NULL) {
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
+   return(catch("onDeinit(2)"));
 }
 
 
@@ -269,6 +297,9 @@ int onTick() {
       ShiftIntIndicatorBuffer   (waiting,            Bars, ShiftedBars,  0);
       ShiftDoubleIndicatorBuffer(combinedTrend,      Bars, ShiftedBars,  0);
    }
+
+   // check data pumping so the reversal handler can skip possibly errornous signals
+   IsPossibleDataPumping();
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
@@ -382,7 +413,9 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   tickSize = 0;
+   tickSize  = 0;
+   lastTick  = 0;             // reset vars of the reversal event handler
+   waitUntil = 0;
    return(onInit());
 }
 
@@ -591,7 +624,7 @@ void SetTrend(int from, int to, int value, bool resetReversal = false) {
 
 
 /**
- * Event handler for ZigZag reversals. New reversals will be signaled (historic ones not).
+ * An event handler signaling new ZigZag reversals.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  * @param  int bar       - bar of the reversal (the current or the closed bar)
@@ -602,9 +635,7 @@ bool onReversal(int direction, int bar) {
    if (!signalReversal || ChangedBars > 2)      return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_ILLEGAL_STATE));
-
-   datetime started=__ExecutionContext[EC.created], now=GetGmtTime();         // skip erroneous signals caused by data pumping at program start
-   if (now < started+30*SECONDS) return(false);
+   if (IsPossibleDataPumping())                 return(true);                 // skip signals during possible data pumping
 
    // check wether the event was already signaled
    int    hWnd  = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetTerminalMainWindow());
@@ -641,6 +672,28 @@ bool onReversal(int direction, int bar) {
       }
    }
    return(!error);
+}
+
+
+/**
+ * Whether the current tick possibly occurred during data pumping.
+ *
+ * @return bool
+ */
+bool IsPossibleDataPumping() {
+   if (This.IsTesting()) return(false);
+
+   int waitTime = 10 * SECONDS;
+   datetime now = GetGmtTime();
+   bool result = true;
+
+   if (now > waitUntil) waitUntil = 0;
+   if (!waitUntil) {
+      if (now > lastTick + waitTime) waitUntil = now + waitTime;
+      else                           result = false;
+   }
+   lastTick = now;
+   return(result);
 }
 
 
