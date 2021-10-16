@@ -5,15 +5,14 @@
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorithm is seriously flawed and the implementation
  * performes badly. Furthermore the indicator repaints past ZigZag points and can't be used for automation.
  *
- * This indicator fixes those issues. The display can be changed from ZigZag lines to points (aka semaphores). Once the
- * direction changed the reversal point will not change anymore. Similar to the MetaQuotes version the indicator uses a
+ * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
+ * the direction changed the reversal point will not change anymore. Similar to the MetaQuotes version the indicator uses a
  * Donchian channel for determining reversals but draws vertical line segments if a large bar crosses both upper and lower
  * channel band. Additionally it can display the trail of a ZigZag leg as it developes over time. The indicator supports
  * reversal signaling.
  *
  *
  * TODO:
- *  - process input ShowChannelBreakouts
  *  - add auto-configuration and remove global var __isAutoConfig
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
@@ -32,15 +31,15 @@ extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag li
 extern int    ZigZag.Width               = 1;
 extern color  ZigZag.Color               = Blue;
 
-extern bool   ShowZigZagChannel          = true;
-extern bool   ShowZigZagTrail            = true;
-extern bool   ShowChannelBreakouts       = true;
-extern bool   ShowFirstBreakoutPerBar    = true;                  // display the first or the last channel crossing per bar
+extern bool   ShowZigZagChannel          = true;                  // display the channel for determining reversal points
+extern bool   ShowZigZagTrail            = true;                  // display only the crossings forming a ZigZag leg
+extern bool   ShowAllChannelCrossings    = true;                  // display all channel crossings
+extern bool   ShowFirstCrossingPerBar    = true;                  // display the first or the last crossing per bar
 extern color  UpperChannel.Color         = DodgerBlue;
 extern color  LowerChannel.Color         = Magenta;
 
 extern int    Semaphores.WingDingsSymbol = 108;                   // a medium dot
-extern int    Breakouts.WingDingsSymbol  = 161;                   // a small open circle
+extern int    Crossings.WingDingsSymbol  = 161;                   // a small circle
 
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
 
@@ -165,9 +164,9 @@ int onInit() {
    // Semaphores.WingDingsSymbol
    if (Semaphores.WingDingsSymbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
    if (Semaphores.WingDingsSymbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
-   // Breakouts.WingDingsSymbol
-   if (Breakouts.WingDingsSymbol <  32)  return(catch("onInit(6)  invalid input parameter Breakouts.WingDingsSymbol: "+ Breakouts.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
-   if (Breakouts.WingDingsSymbol > 255)  return(catch("onInit(7)  invalid input parameter Breakouts.WingDingsSymbol: "+ Breakouts.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   // Crossings.WingDingsSymbol
+   if (Crossings.WingDingsSymbol <  32)  return(catch("onInit(6)  invalid input parameter Crossings.WingDingsSymbol: "+ Crossings.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   if (Crossings.WingDingsSymbol > 255)  return(catch("onInit(7)  invalid input parameter Crossings.WingDingsSymbol: "+ Crossings.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
    if (Max.Bars < -1)                    return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
@@ -389,13 +388,15 @@ int onTick() {
       else                                 ProcessLowerCross(bar);
 
       // populate the visible breakout buffers
-      if (ShowFirstBreakoutPerBar) {
-         upperBreakout[bar] = upperBreakoutStart[bar];
-         lowerBreakout[bar] = lowerBreakoutStart[bar];
-      }
-      else {
-         upperBreakout[bar] = upperBreakoutEnd[bar];
-         lowerBreakout[bar] = lowerBreakoutEnd[bar];
+      if (ShowAllChannelCrossings || (ShowZigZagTrail && !waiting[bar])) {
+         if (ShowFirstCrossingPerBar) {
+            upperBreakout[bar] = upperBreakoutStart[bar];
+            lowerBreakout[bar] = lowerBreakoutStart[bar];
+         }
+         else {
+            upperBreakout[bar] = upperBreakoutEnd[bar];
+            lowerBreakout[bar] = lowerBreakoutEnd[bar];
+         }
       }
    }
 
@@ -714,9 +715,9 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
-   drawType = ifInt(ShowZigZagTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Breakouts.WingDingsSymbol);
-   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Breakouts.WingDingsSymbol);
+   drawType = ifInt(ShowZigZagTrail || ShowAllChannelCrossings, DRAW_ARROW, DRAW_NONE);
+   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Crossings.WingDingsSymbol);
+   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Crossings.WingDingsSymbol);
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -735,12 +736,12 @@ string InputsToStr() {
                             "ZigZag.Color=",               ColorToStr(ZigZag.Color),           ";"+ NL,
                             "ShowZigZagChannel=",          BoolToStr(ShowZigZagChannel),       ";"+ NL,
                             "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";"+ NL,
-                            "ShowChannelBreakouts=",       BoolToStr(ShowChannelBreakouts),    ";"+ NL,
-                            "ShowFirstBreakoutPerBar=",    BoolToStr(ShowFirstBreakoutPerBar), ";"+ NL,
+                            "ShowAllChannelCrossings=",    BoolToStr(ShowAllChannelCrossings), ";"+ NL,
+                            "ShowFirstCrossingPerBar=",    BoolToStr(ShowFirstCrossingPerBar), ";"+ NL,
                             "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";"+ NL,
                             "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";"+ NL,
                             "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
-                            "Breakouts.WingDingsSymbol=",  Breakouts.WingDingsSymbol,          ";"+ NL,
+                            "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,          ";"+ NL,
                             "Max.Bars=",                   Max.Bars,                           ";"+ NL,
 
                             "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,

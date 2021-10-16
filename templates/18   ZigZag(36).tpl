@@ -9926,7 +9926,9 @@ ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=16711680
 ShowZigZagChannel=1
+ShowChannelCrossings=1
 ShowZigZagTrail=1
+ShowFirstCrossingPerBar=1
 UpperChannel.Color=16748574
 LowerChannel.Color=16711935
 </inputs>
