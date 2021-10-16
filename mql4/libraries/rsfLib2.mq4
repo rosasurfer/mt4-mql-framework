@@ -663,7 +663,7 @@ string TicketsToStr.Position(int tickets[]) {
 int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]) {
    store = store!=0;
 
-   static int    static.orders[][LFX_ORDER.intSize];
+   static int    static.orders[][LFX_ORDER_intSize];
    static int    static.iData [][1];
    static bool   static.bData [][3];
    static double static.dData [][7];
@@ -1052,8 +1052,8 @@ bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], i
  * @return int - Millisekunden seit Programmstart
  */
 int GetTerminalRuntime() {
-   /*FILETIME*/  int ft[], iNull[]; InitializeByteBuffer(ft, FILETIME.size  ); InitializeByteBuffer(iNull, FILETIME.size);
-   /*SYSTEMTIME*/int st[];          InitializeByteBuffer(st, SYSTEMTIME.size);
+   /*FILETIME*/  int ft[], iNull[]; InitializeByteBuffer(ft, FILETIME_size  ); InitializeByteBuffer(iNull, FILETIME_size);
+   /*SYSTEMTIME*/int st[];          InitializeByteBuffer(st, SYSTEMTIME_size);
 
    int creationTime[2], currentTime[2], hProcess=GetCurrentProcess();
 

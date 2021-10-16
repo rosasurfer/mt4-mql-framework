@@ -143,7 +143,7 @@ int onStart() {
       int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to close "+ ifString(isInput, "the specified "+ selected, "all "+ selected +" open") +" position"+ Pluralize(selected) +"?", ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oeFlags = NULL;
-         int oes[][ORDER_EXECUTION.intSize];
+         int oes[][ORDER_EXECUTION_intSize];
          if (!OrdersClose(tickets, 1, Orange, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
          ArrayResize(oes, 0);
       }

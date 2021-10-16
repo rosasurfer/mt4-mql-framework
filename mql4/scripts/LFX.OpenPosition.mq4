@@ -274,7 +274,7 @@ int onStart() {
    // (7) neue LFX-Order erzeugen und speichern
    datetime now.fxt = TimeFXT(); if (!now.fxt) return(_last_error(ReleaseLock(mutex)));
 
-   /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER.size);
+   /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER_size);
       lo.setTicket           (lo, magicNumber);                                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
       lo.setType             (lo, direction  );
       lo.setUnits            (lo, realUnits  );

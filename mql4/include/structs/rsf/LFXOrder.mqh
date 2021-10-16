@@ -124,7 +124,7 @@ datetime los.CloseTriggerTime   (/*LFX_ORDER*/int lo[][], int i) {              
 datetime los.CloseTime          (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][LFX_ORDER.closeTime          ]);                                                                   LFX_ORDER.toStr(lo); }
 double   los.ClosePrice         (/*LFX_ORDER*/int lo[][], int i) { int digits=los.Digits(lo ,i);    return(NormalizeDouble(lo[i][LFX_ORDER.closePrice         ]/MathPow(10, digits), digits));                                      LFX_ORDER.toStr(lo); }
 double   los.Profit             (/*LFX_ORDER*/int lo[][], int i) {                                  return(NormalizeDouble(lo[i][LFX_ORDER.profit             ]/100., 2));                                                          LFX_ORDER.toStr(lo); }
-string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                        return(GetStringA(GetIntsAddress(lo)+ (i*LFX_ORDER.intSize + LFX_ORDER.comment)*4));                                                      LFX_ORDER.toStr(lo); }
+string   los.Comment            (/*LFX_ORDER*/int lo[][], int i) {                        return(GetStringA(GetIntsAddress(lo)+ (i*LFX_ORDER_intSize + LFX_ORDER.comment)*4));                                                      LFX_ORDER.toStr(lo); }
 datetime los.ModificationTime   (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][LFX_ORDER.modificationTime   ]);                                                                   LFX_ORDER.toStr(lo); }
 int      los.Version            (/*LFX_ORDER*/int lo[][], int i) {                                                  return(lo[i][LFX_ORDER.version            ]);                                                                   LFX_ORDER.toStr(lo); }
 //----------------------------------------------------------------------- Helper Functions -----------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -211,7 +211,7 @@ string   los.setComment            (/*LFX_ORDER*/int &lo[][], int i, string   co
    if ( StringLen(comment) > 31) return(_EMPTY_STR(catch("los.setComment()  too long parameter comment: \""+ comment +"\" (maximum 31 chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(lo) + (i*LFX_ORDER.intSize + LFX_ORDER.comment)*4;
+   int dest = GetIntsAddress(lo) + (i*LFX_ORDER_intSize + LFX_ORDER.comment)*4;
    CopyMemory(dest, src, StringLen(comment)+1);
    ArrayResize(array, 0);                                                                                                                                                                                                                     return(comment                 ); LFX_ORDER.toStr(lo); }
 datetime los.setModificationTime   (/*LFX_ORDER*/int &lo[][], int i, datetime modificationTime   ) { int v=modificationTime;                                                                      lo[i][LFX_ORDER.modificationTime   ] = v; return(modificationTime        ); LFX_ORDER.toStr(lo); }
@@ -233,7 +233,7 @@ string LFX_ORDER.toStr(/*LFX_ORDER*/int lo[], bool outputDebug=false) {
    int dimensions = ArrayDimension(lo);
 
    if (dimensions > 2)                                    return(_EMPTY_STR(catch("LFX_ORDER.toStr(1)  too many dimensions of parameter lo: "+ dimensions, ERR_INVALID_PARAMETER)));
-   if (ArrayRange(lo, dimensions-1) != LFX_ORDER.intSize) return(_EMPTY_STR(catch("LFX_ORDER.toStr(2)  invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_PARAMETER)));
+   if (ArrayRange(lo, dimensions-1) != LFX_ORDER_intSize) return(_EMPTY_STR(catch("LFX_ORDER.toStr(2)  invalid size of parameter lo ("+ ArrayRange(lo, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;
    string priceFormat="", line="", lines[]; ArrayResize(lines, 0);

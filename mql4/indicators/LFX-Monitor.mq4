@@ -84,21 +84,21 @@ int      hSet       [];                                  // HistorySet handles
 string   serverName = "XTrade-Synthetic";                // default server name for storing recorded history
 datetime staleLimit;                                     // current time limit (server time) for stale quotes determination
 
-int AUDLFX.orders[][LFX_ORDER.intSize];                  // array of LFX orders
-int CADLFX.orders[][LFX_ORDER.intSize];
-int CHFLFX.orders[][LFX_ORDER.intSize];
-int EURLFX.orders[][LFX_ORDER.intSize];
-int GBPLFX.orders[][LFX_ORDER.intSize];
-int JPYLFX.orders[][LFX_ORDER.intSize];
-int NZDLFX.orders[][LFX_ORDER.intSize];
-int USDLFX.orders[][LFX_ORDER.intSize];
-int NOKFX7.orders[][LFX_ORDER.intSize];
-int SEKFX7.orders[][LFX_ORDER.intSize];
-int SGDFX7.orders[][LFX_ORDER.intSize];
-int ZARFX7.orders[][LFX_ORDER.intSize];
-int   EURX.orders[][LFX_ORDER.intSize];
-int   USDX.orders[][LFX_ORDER.intSize];
-int   XAUI.orders[][LFX_ORDER.intSize];
+int AUDLFX.orders[][LFX_ORDER_intSize];                  // array of LFX orders
+int CADLFX.orders[][LFX_ORDER_intSize];
+int CHFLFX.orders[][LFX_ORDER_intSize];
+int EURLFX.orders[][LFX_ORDER_intSize];
+int GBPLFX.orders[][LFX_ORDER_intSize];
+int JPYLFX.orders[][LFX_ORDER_intSize];
+int NZDLFX.orders[][LFX_ORDER_intSize];
+int USDLFX.orders[][LFX_ORDER_intSize];
+int NOKFX7.orders[][LFX_ORDER_intSize];
+int SEKFX7.orders[][LFX_ORDER_intSize];
+int SGDFX7.orders[][LFX_ORDER_intSize];
+int ZARFX7.orders[][LFX_ORDER_intSize];
+int   EURX.orders[][LFX_ORDER_intSize];
+int   USDX.orders[][LFX_ORDER_intSize];
+int   XAUI.orders[][LFX_ORDER_intSize];
 
 // text labels for various display elements
 string labels[];

@@ -229,7 +229,7 @@ bool OpenLfxOrder(int ticket, string trigger="") {
    //  - LFX-Terminal benachrichtigen (Erfolgs- oder Fehlerstatus)
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
-   int order[LFX_ORDER.intSize];
+   int order[LFX_ORDER_intSize];
    int result = LFX.GetOrder(ticket, order);
    if (result < 1) { if (!result) return(last_error); return(catch("OpenLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
 
@@ -546,7 +546,7 @@ bool CloseLfxOrder(int ticket, string trigger) {
    //  - SMS-Benachrichtigung verschicken (Erfolgs- oder Fehlerstatus)
 
    // Order holen
-   int order[LFX_ORDER.intSize];
+   int order[LFX_ORDER_intSize];
    int result = LFX.GetOrder(ticket, order);
    if (result < 1) { if (!result) return(last_error); return(catch("CloseLfxOrder(1)  LFX ticket #"+ ticket +" not found", ERR_INVALID_INPUT_PARAMETER)); }
 
@@ -596,7 +596,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int   slippage    = 1;
    color markerColor = CLR_NONE;
    int   oeFlags     = NULL;
-   int   oes[][ORDER_EXECUTION.intSize];
+   int   oes[][ORDER_EXECUTION_intSize];
    if (!OrdersClose(tickets, slippage, markerColor, oeFlags, oes)) return(false);
 
 

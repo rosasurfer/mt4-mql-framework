@@ -566,8 +566,8 @@ bool Tester.InitReporting() {
       if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL.size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL.size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
-      int symbolsSize = fileSize/SYMBOL.size;
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+      int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
