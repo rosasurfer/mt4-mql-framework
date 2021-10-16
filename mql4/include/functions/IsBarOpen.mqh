@@ -57,8 +57,8 @@ bool IsBarOpen(int timeframe = NULL) {
    }
 
    // recalculate bar open/close time of the timeframe in question
-   if (Tick.Time >= barCloseTime[i]) {                                     // TRUE at first call and at BarOpen
-      barOpenTime [i] = Tick.Time - Tick.Time % (timeframes[i]*MINUTES);
+   if (Tick.time >= barCloseTime[i]) {                                     // TRUE at first call and at BarOpen
+      barOpenTime [i] = Tick.time - Tick.time % (timeframes[i]*MINUTES);
       barCloseTime[i] = barOpenTime[i]        + (timeframes[i]*MINUTES);
    }
 

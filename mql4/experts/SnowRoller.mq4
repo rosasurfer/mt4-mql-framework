@@ -956,7 +956,7 @@ bool HandleNetworkErrors() {
             return(!catch("HandleNetworkErrors(1)  "+ sequence.name +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
 
          if (sequence.status == STATUS_PROGRESSING) {
-            if (Tick.Time >= nextRetry) {
+            if (Tick.time >= nextRetry) {
                retries++;
                return(true);
             }
@@ -2677,9 +2677,9 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
       if (NE(gridbase, orders.gridbase[i], Digits)) {
          static int lastTrailed = 0;
 
-         if (/*IsTesting() ||*/Tick.Time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+         if (/*IsTesting() ||*/Tick.time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
-            lastTrailed = Tick.Time;
+            lastTrailed = Tick.time;
             if (saveStatusMode != SAVESTATUS_SKIP) saveStatus = true;
 
             if (IsLimitOrderType(type)) {                                  // on a limit order the sequence level increased
@@ -6051,7 +6051,7 @@ int SetLastNetworkError(int oe[]) {
       retries = 0;
    }
    else {
-      datetime now = Tick.Time + Ceil(duration/1000.);            // assumed current server time (may lag real time)
+      datetime now = Tick.time + Ceil(duration/1000.);            // assumed current server time (may lag real time)
       int pauses[6]; if (!pauses[0]) {
          pauses[0] =  5*SECONDS;
          pauses[1] = 30*SECONDS;
