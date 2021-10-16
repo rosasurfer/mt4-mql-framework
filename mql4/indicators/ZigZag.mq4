@@ -13,7 +13,7 @@
  *
  *
  * TODO:
- *  - add auto-configuration and remove constant INIT_AUTOCONFIG
+ *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
  *  - add dynamic period changing
  *  - restore default values (type, hide channel and trail)

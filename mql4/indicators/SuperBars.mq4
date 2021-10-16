@@ -24,7 +24,7 @@
  *  - doesn't work on offline charts
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};
+int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
