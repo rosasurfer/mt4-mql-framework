@@ -84,7 +84,7 @@ int onInit() {
    if (UnchangedBars.Color == 0xFF000000) UnchangedBars.Color = CLR_NONE;
    if (CloseMarker.Color   == 0xFF000000) CloseMarker.Color   = CLR_NONE;
    if (ETH.Color           == 0xFF000000) ETH.Color           = CLR_NONE;
-   if (__isAutoConfig) {
+   if (AutoConfiguration) {
       UpBars.Color        = GetConfigColor(indicator, "UpBars.Color",        UpBars.Color);
       DownBars.Color      = GetConfigColor(indicator, "DownBars.Color",      DownBars.Color);
       UnchangedBars.Color = GetConfigColor(indicator, "UnchangedBars.Color", UnchangedBars.Color);
@@ -93,7 +93,7 @@ int onInit() {
    }
    // ETH.Symbols
    string values[], sValue = StrTrim(ETH.Symbols);
-   if (__isAutoConfig) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
    if (StringLen(sValue) > 0) {
       int size = Explode(StrToLower(sValue), ",", values, NULL);
       for (int i=0; i < size; i++) {
