@@ -247,7 +247,7 @@ int start() {
 
    // resolve tick status
    Tick++;                                                                          // simple counter, the value is meaningless
-   Tick.Time = MarketInfo(Symbol(), MODE_TIME);
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
@@ -287,7 +287,7 @@ int start() {
    if (IsTesting()) {
       if (Tester.StartTime != 0) {
          static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
-         if (Tick.Time < Tester.StartTime) {
+         if (Tick.time < Tester.StartTime) {
             Comment(NL, NL, NL, "Tester: starting at ", startTime);
             return(last_error);
          }
@@ -329,7 +329,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(6)")) return(last_error);
    }
 
@@ -688,7 +688,7 @@ bool Tester.RecordEquity() {
    if (!tester.equityValue) double value = AccountEquity()-AccountCredit();
    else                            value = tester.equityValue;
 
-   return(HistorySet1.AddTick(tester.hEquitySet, Tick.Time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(tester.hEquitySet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 

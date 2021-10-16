@@ -25,7 +25,7 @@ int      PipDigits, SubPipDigits;                                 // Digits eine
 int      PipPoint, PipPoints;                                     // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
-datetime Tick.Time;                                               // server time of the last received tick
+datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
 int      ChangedBars;                                             // indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts always -1)
 int      UnchangedBars, ValidBars;                                // indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts always -1)

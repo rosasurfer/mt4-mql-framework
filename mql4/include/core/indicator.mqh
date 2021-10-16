@@ -182,7 +182,7 @@ bool InitGlobals() {
    PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    Tick           = __ExecutionContext[EC.ticks       ];
-   Tick.Time      = __ExecutionContext[EC.currTickTime];
+   Tick.time      = __ExecutionContext[EC.currTickTime];
 
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity
@@ -215,9 +215,9 @@ int start() {
    }
 
    Tick++;                                                                          // einfacher Zähler, der konkrete Werte hat keine Bedeutung
-   Tick.Time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   if (!Tick.Time) {
+   if (!Tick.time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
@@ -363,7 +363,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(9)")) return(last_error);
    }
 
