@@ -14,7 +14,6 @@ int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // aktueller E
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
-bool     __isAutoConfig;                                          // Whether auto-configuration is enabled (framework config values have precedence over manual inputs).
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
 bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)

@@ -84,7 +84,6 @@ int init() {
       if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_AUTOCONFIG && 1) {                           // initialize auto configuration
-      __isAutoConfig = AutoConfiguration;
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
