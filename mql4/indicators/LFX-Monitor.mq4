@@ -40,6 +40,7 @@ extern bool   Recording.Enabled = false;                 // by default recording
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <rsfHistory.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
