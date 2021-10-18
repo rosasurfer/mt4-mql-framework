@@ -536,34 +536,6 @@ bool CheckErrors(string location, int error = NULL) {
 }
 
 
-/**
- * Whether a chart command was sent to the indicator. If so, the command is retrieved and stored.
- *
- * @param  _Out_ string &commands[] - array to store received commands in
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
-}
-
-
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 

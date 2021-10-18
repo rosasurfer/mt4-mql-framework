@@ -187,10 +187,7 @@
 
    // Error handlers for missing MQL handler implementations (if those events are used).
    bool     onBarOpen();
-   bool     onCommand(string data[]);
-
    void     DummyCalls();
-   bool     EventListener_ChartCommand(string &data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

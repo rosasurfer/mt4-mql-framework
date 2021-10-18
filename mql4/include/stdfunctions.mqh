@@ -507,15 +507,16 @@ int ResetLastError() {
 
 
 /**
- * Check for received commands and call the respective handlers.
+ * Check for received commands and pass them to the command handler.
  *
  * @return bool - success status
  */
 bool HandleCommands() {
-   string commands[]; ArrayResize(commands, 0);
-   if (EventListener_ChartCommand(commands)) {
+   string commands[];
+   ArrayResize(commands, 0);
+
+   if (EventListener_ChartCommand(commands))
       return(onCommand(commands));
-   }
    return(true);
 }
 
@@ -7055,9 +7056,6 @@ void __DummyCalls() {
 
 
 #import "rsfLib1.ex4"
-   bool     onBarOpen();
-   bool     onCommand(string data[]);
-
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
