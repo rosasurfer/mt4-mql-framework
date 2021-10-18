@@ -1972,9 +1972,9 @@ bool Orders.RemoveRealTicket(int ticket) {
 
 
 /**
- * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
+ * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
  *
- * @param  _Out_ string &commands[] - array to store received commands
+ * @param  _InOut_ string &commands[] - array to add the received command to
  *
  * @return bool
  */
