@@ -13,9 +13,9 @@
  *
  *
  * TODO:
+ *  - move period stepper command to the window
+ *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - add auto-configuration
- *  - implement magic values (INT_MIN, INT_MAX) for large double crossing bars
- *  - add dynamic period changing
  *  - restore default values (type, hide channel and trail)
  *  - document inputs
  *  - document usage of iCustom()
@@ -42,6 +42,7 @@ extern int    Semaphores.WingDingsSymbol = 108;                   // a medium do
 extern int    Crossings.WingDingsSymbol  = 161;                   // a small circle
 
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
+extern int    PeriodStepSize             = 0;                     // enable the period stepper with the specified stepsize
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
 extern bool   Signal.onReversal          = false;
@@ -56,6 +57,7 @@ extern bool   Signal.onReversal.SMS      = false;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 #include <functions/ConfigureSignals.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
 
@@ -135,8 +137,12 @@ string   signalReversal.SMSReceiver = "";
 string   signalInfo                 = "";
 
 // breakout direction types
-#define D_LONG    TRADE_DIRECTION_LONG       // 1
-#define D_SHORT   TRADE_DIRECTION_SHORT      // 2
+#define D_LONG     TRADE_DIRECTION_LONG      // 1
+#define D_SHORT    TRADE_DIRECTION_SHORT     // 2
+
+// period stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
 
 
 /**
@@ -170,6 +176,8 @@ int onInit() {
    // Max.Bars
    if (Max.Bars < -1)                    return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // PeriodStepSize
+   if (PeriodStepSize < 0)               return(catch("onInit(9)  invalid input parameter PeriodStepSize: "+ PeriodStepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
    if (UpperChannel.Color == 0xFF000000) UpperChannel.Color = CLR_NONE;
@@ -196,20 +204,17 @@ int onInit() {
    }
 
    // buffer management
-   indicatorName = StrTrim(ProgramName()) +"("+ ZigZag.Periods +")";
    SetIndexBuffer(MODE_SEMAPHORE_OPEN,  semaphoreOpen ); SetIndexEmptyValue(MODE_SEMAPHORE_OPEN,  0); SetIndexLabel(MODE_SEMAPHORE_OPEN,  NULL);
    SetIndexBuffer(MODE_SEMAPHORE_CLOSE, semaphoreClose); SetIndexEmptyValue(MODE_SEMAPHORE_CLOSE, 0); SetIndexLabel(MODE_SEMAPHORE_CLOSE, NULL);
-   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0); SetIndexLabel(MODE_UPPER_BAND,      indicatorName +" upper band");
-   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0); SetIndexLabel(MODE_LOWER_BAND,      indicatorName +" lower band");
-   SetIndexBuffer(MODE_UPPER_BREAKOUT,  upperBreakout ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,  0); SetIndexLabel(MODE_UPPER_BREAKOUT,  indicatorName +" breakout up");
-   SetIndexBuffer(MODE_LOWER_BREAKOUT,  lowerBreakout ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,  0); SetIndexLabel(MODE_LOWER_BREAKOUT,  indicatorName +" breakout down");
-   SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,       -1); SetIndexLabel(MODE_REVERSAL,        indicatorName +" reversal");
-   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0); SetIndexLabel(MODE_COMBINED_TREND,  indicatorName +" trend");
+   SetIndexBuffer(MODE_UPPER_BAND,      upperBand     ); SetIndexEmptyValue(MODE_UPPER_BAND,      0);
+   SetIndexBuffer(MODE_LOWER_BAND,      lowerBand     ); SetIndexEmptyValue(MODE_LOWER_BAND,      0);
+   SetIndexBuffer(MODE_UPPER_BREAKOUT,  upperBreakout ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,  0);
+   SetIndexBuffer(MODE_LOWER_BREAKOUT,  lowerBreakout ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,  0);
+   SetIndexBuffer(MODE_REVERSAL,        reversal      ); SetIndexEmptyValue(MODE_REVERSAL,       -1);
+   SetIndexBuffer(MODE_COMBINED_TREND,  combinedTrend ); SetIndexEmptyValue(MODE_COMBINED_TREND,  0);
 
-   // names, labels and display options
-   IndicatorShortName(indicatorName);                             // chart tooltips and context menu
+   // set names, labels and display options
    SetIndicatorOptions();
-   IndicatorDigits(Digits);
 
    if (!IsSuperContext()) {
        legendLabel = CreateLegendLabel();
@@ -221,10 +226,10 @@ int onInit() {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 2000;                                         // a virtual tick every 2 seconds
       int timerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!timerId) return(catch("onInit(9)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      if (!timerId) return(catch("onInit(10)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-   return(catch("onInit(10)"));
+   return(catch("onInit(11)"));
 }
 
 
@@ -252,6 +257,10 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  size(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
+   // process incoming commands
+   if (__isChart && PeriodStepSize) HandleCommands();
+
+   // manage framework buffers
    ManageDoubleIndicatorBuffer(MODE_UPPER_BREAKOUT_START, upperBreakoutStart);
    ManageDoubleIndicatorBuffer(MODE_UPPER_BREAKOUT_END,   upperBreakoutEnd  );
    ManageDoubleIndicatorBuffer(MODE_LOWER_BREAKOUT_START, lowerBreakoutStart);
@@ -346,41 +355,41 @@ int onTick() {
       // recalculate ZigZag
       // if no channel crossings (future direction is unknown)
       if (!upperBreakoutEnd[bar] && !lowerBreakoutEnd[bar]) {
-         trend        [bar] = trend[bar+1];                                // keep known trend:        in combinedTrend[] <  100'000
-         waiting      [bar] = waiting[bar+1] + 1;                          // increase unknown buffer: in combinedTrend[] >= 100'000
+         trend        [bar] = trend[bar+1];                       // keep known trend:        in combinedTrend[] <  100'000
+         waiting      [bar] = waiting[bar+1] + 1;                 // increase unknown buffer: in combinedTrend[] >= 100'000
          combinedTrend[bar] = Round(Sign(trend[bar]) * waiting[bar] * 100000 + trend[bar]);
-         reversal     [bar] = reversal[bar+1];                             // keep previous reversal offset
+         reversal     [bar] = reversal[bar+1];                    // keep previous reversal offset
       }
 
       // if two crossings (upper and lower channel band crossed by the same bar)
       else if (upperBreakoutEnd[bar] && lowerBreakoutEnd[bar]) {
          if (IsUpperCrossFirst(bar)) {
-            int prevZZ = ProcessUpperCross(bar);                           // first process the upper crossing
+            int prevZZ = ProcessUpperCross(bar);                  // first process the upper crossing
 
-            if (waiting[bar] > 0) {                                        // then process the lower crossing
-               SetTrend(prevZZ-1, bar, -1);                                // (it always marks a new down leg)
+            if (waiting[bar] > 0) {                               // then process the lower crossing
+               SetTrend(prevZZ-1, bar, -1);                       // (it always marks a new down leg)
                semaphoreOpen[bar] = lowerBreakoutEnd[bar];
             }
             else {
-               SetTrend(bar, bar, -1);                                     // mark a new downtrend
+               SetTrend(bar, bar, -1);                            // mark a new downtrend
             }
             semaphoreClose[bar] = lowerBreakoutEnd[bar];
-            onReversal(D_SHORT, bar);                                      // handle the reversal
+            onReversal(D_SHORT, bar);                             // handle the reversal
          }
          else {
-            prevZZ = ProcessLowerCross(bar);                               // first process the lower crossing
+            prevZZ = ProcessLowerCross(bar);                      // first process the lower crossing
 
-            if (waiting[bar] > 0) {                                        // then process the upper crossing
-               SetTrend(prevZZ-1, bar, 1);                                 // (it always marks a new up leg)
+            if (waiting[bar] > 0) {                               // then process the upper crossing
+               SetTrend(prevZZ-1, bar, 1);                        // (it always marks a new up leg)
                semaphoreOpen[bar] = upperBreakoutEnd[bar];
             }
             else {
-               SetTrend(bar, bar, 1);                                      // mark a new uptrend
+               SetTrend(bar, bar, 1);                             // mark a new uptrend
             }
             semaphoreClose[bar] = upperBreakoutEnd[bar];
-            onReversal(D_LONG, bar);                                       // handle the reversal
+            onReversal(D_LONG, bar);                              // handle the reversal
          }
-         reversal[bar] = 0;                                                // the 2nd crossing is always a new reversal
+         reversal[bar] = 0;                                       // the 2nd crossing is always a new reversal
       }
 
       // if a single band crossing
@@ -400,7 +409,7 @@ int onTick() {
       }
    }
 
-   if (!IsSuperContext()) UpdateLegend();                                  // signals are processed in CheckReversalSignal()
+   if (!IsSuperContext()) UpdateLegend();                         // signals are processed in CheckReversalSignal()
    return(catch("onTick(3)"));
 }
 
@@ -415,9 +424,76 @@ int onTick() {
  */
 int onAccountChange(int previous, int current) {
    tickSize  = 0;
-   lastTick  = 0;             // reset vars of the reversal event handler
+   lastTick  = 0;                                                 // reset vars used by the reversal event handler
    waitUntil = 0;
    return(onInit());
+}
+
+
+/**
+ * Dispatch incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+   string cmd = commands[0];
+   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
+
+   if (StrEndsWith(cmd, "|up"))   return(PeriodStepper(STEP_UP));
+   if (StrEndsWith(cmd, "|down")) return(PeriodStepper(STEP_DOWN));
+
+   logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
+   return(true);                                                  // signal success anyway
+}
+
+
+/**
+ * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
+ *
+ * @param  _InOut_ string &commands[] - array to add the received command to
+ *
+ * @return bool
+ */
+bool EventListener_ChartCommand(string &commands[]) {
+   if (!__isChart) return(false);
+   string label = "PeriodStepper.command";
+
+   if (ObjectFind(label) == 0) {
+      string cmd = ObjectDescription(label);
+      int tickcount = StrToInteger(cmd);
+      static int lastTickcount;
+
+      if (tickcount > lastTickcount) {
+         ArrayPushString(commands, cmd);
+         lastTickcount = tickcount;
+         return(true);
+      }
+   }
+   return(false);
+}
+
+
+/**
+ * Change the currently active ZigZag period.
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ *
+ * @return bool - success status
+ */
+bool PeriodStepper(int direction) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   if (direction == STEP_UP) zigzagPeriods += PeriodStepSize;
+   else                      zigzagPeriods -= PeriodStepSize;
+
+   ChangedBars = Bars;
+   ValidBars   = 0; UnchangedBars = ValidBars;
+   ShiftedBars = 0;
+
+   return(true);
 }
 
 
@@ -427,8 +503,8 @@ int onAccountChange(int previous, int current) {
 void UpdateLegend() {
    static int lastTrend, lastBarTime, lastAccount;
 
-   // update if trend, current bar or the account changed
-   if (combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
+   // update on full recalculation or if trend, current bar or the account changed
+   if (!ValidBars || combinedTrend[0]!=lastTrend || Time[0]!=lastBarTime || AccountNumber()!=lastAccount) {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
       if (!tickSize) tickSize = GetTickSize();
@@ -721,6 +797,16 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
+
+   indicatorName = StrTrim(ProgramName()) +"("+ zigzagPeriods + ifString(PeriodStepSize, "-dyn", "") +")";
+   SetIndexLabel(MODE_UPPER_BAND,     indicatorName +" upper band");
+   SetIndexLabel(MODE_LOWER_BAND,     indicatorName +" lower band");
+   SetIndexLabel(MODE_UPPER_BREAKOUT, indicatorName +" breakout up");
+   SetIndexLabel(MODE_LOWER_BREAKOUT, indicatorName +" breakout down");
+   SetIndexLabel(MODE_REVERSAL,       indicatorName +" reversal");
+   SetIndexLabel(MODE_COMBINED_TREND, indicatorName +" trend");
+   IndicatorShortName(indicatorName);                                // chart tooltips and context menu
+   IndicatorDigits(Digits);
 }
 
 
@@ -743,6 +829,7 @@ string InputsToStr() {
                             "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
                             "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,          ";"+ NL,
                             "Max.Bars=",                   Max.Bars,                           ";"+ NL,
+                            "PeriodStepSize=",             PeriodStepSize,                     ";"+ NL,
 
                             "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,
                             "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound), ";"+ NL,
