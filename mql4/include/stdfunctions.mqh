@@ -507,21 +507,6 @@ int ResetLastError() {
 
 
 /**
- * Check for received commands and pass them to the command handler.
- *
- * @return bool - success status
- */
-bool HandleCommands() {
-   string commands[];
-   ArrayResize(commands, 0);
-
-   if (EventListener_ChartCommand(commands))
-      return(onCommand(commands));
-   return(true);
-}
-
-
-/**
  * Ob das angegebene Ticket existiert und erreichbar ist.
  *
  * @param  int ticket - Ticket-Nr.
@@ -6883,7 +6868,6 @@ void __DummyCalls() {
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
-   HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icChartInfos();

@@ -41,6 +41,7 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
@@ -206,8 +207,6 @@ bool EventListener_ChartCommand(string &commands[]) {
  * @return bool - success status
  */
 bool SwitchSuperTimeframe(int direction) {
-   bool reset = false;
-
    if (direction == STF_DOWN) {
       switch (superTimeframe) {
          case  INT_MIN:

@@ -154,7 +154,6 @@ int      GetRandomValue(int min, int max);;
 datetime GetServerTime();;
 string   GmtTimeFormat(datetime timestamp, string format);;
 bool     GT(double double1, double double2, int digits = 8);;
-bool     HandleCommands();;
 string   HistoryFlagsToStr(int flags);;
 double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar);;
 bool     icChartInfos();;
@@ -328,6 +327,7 @@ bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sende
 bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 int      ExplodeStrings(int &buffer[], string &results[]);;
+bool     HandleCommands();;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
