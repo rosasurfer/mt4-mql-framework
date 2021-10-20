@@ -15,6 +15,7 @@
  * TODO:
  *  - fix positioning bug with multiple legends
  *  - move period stepper command to the window
+ *  - add input mode ShowStoplossSegments
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - add auto-configuration
  *  - restore default values (type, hide channel and trail)
@@ -43,7 +44,7 @@ extern int    Semaphores.WingDingsSymbol = 108;                   // a medium do
 extern int    Crossings.WingDingsSymbol  = 161;                   // a small circle
 
 extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
-extern int    PeriodStepSize             = 0;                     // enable the period stepper with the specified stepsize
+extern int    PeriodStepper.StepSize     = 0;                     // enable the period stepper with the specified stepsize
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
 extern bool   Signal.onReversal          = false;
@@ -177,8 +178,8 @@ int onInit() {
    // Max.Bars
    if (Max.Bars < -1)                    return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
-   // PeriodStepSize
-   if (PeriodStepSize < 0)               return(catch("onInit(9)  invalid input parameter PeriodStepSize: "+ PeriodStepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+   // PeriodStepper.StepSize
+   if (PeriodStepper.StepSize < 0)       return(catch("onInit(9)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
    if (UpperChannel.Color == 0xFF000000) UpperChannel.Color = CLR_NONE;
@@ -259,7 +260,7 @@ int onTick() {
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  size(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands
-   if (__isChart && PeriodStepSize) HandleCommands();
+   if (__isChart && PeriodStepper.StepSize) HandleCommands();
 
    // manage framework buffers
    ManageDoubleIndicatorBuffer(MODE_UPPER_BREAKOUT_START, upperBreakoutStart);
@@ -487,8 +488,8 @@ bool EventListener_ChartCommand(string &commands[]) {
 bool PeriodStepper(int direction) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (direction == STEP_UP) zigzagPeriods += PeriodStepSize;
-   else                      zigzagPeriods -= PeriodStepSize;
+   if (direction == STEP_UP) zigzagPeriods += PeriodStepper.StepSize;
+   else                      zigzagPeriods -= PeriodStepper.StepSize;
 
    ChangedBars = Bars;
    ValidBars   = 0; UnchangedBars = ValidBars;
@@ -799,7 +800,7 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
 
-   indicatorName = StrTrim(ProgramName()) +"("+ zigzagPeriods + ifString(PeriodStepSize, "-dyn", "") +")";
+   indicatorName = StrTrim(ProgramName()) +"("+ zigzagPeriods + ifString(PeriodStepper.StepSize, "-dyn", "") +")";
    SetIndexLabel(MODE_UPPER_BAND,     indicatorName +" upper band");
    SetIndexLabel(MODE_LOWER_BAND,     indicatorName +" lower band");
    SetIndexLabel(MODE_UPPER_BREAKOUT, indicatorName +" breakout up");
@@ -830,7 +831,7 @@ string InputsToStr() {
                             "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
                             "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,          ";"+ NL,
                             "Max.Bars=",                   Max.Bars,                           ";"+ NL,
-                            "PeriodStepSize=",             PeriodStepSize,                     ";"+ NL,
+                            "PeriodStepper.StepSize=",     PeriodStepper.StepSize,             ";"+ NL,
 
                             "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,
                             "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound), ";"+ NL,
