@@ -13,6 +13,7 @@
  *
  *
  * TODO:
+ *  - fix positioning bug with multiple legends
  *  - move period stepper command to the window
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - add auto-configuration
@@ -508,7 +509,7 @@ void UpdateLegend() {
       string sTrend    = "   "+ NumberToStr(trend[0], "+.");
       string sWaiting  = ifString(!waiting[0], "", "/"+ waiting[0]);
       if (!tickSize) tickSize = GetTickSize();
-      string sReversal = "   next "+ ifString(trend[0] < 0, "up", "down") +" reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
+      string sReversal = "   next reversal @" + NumberToStr(ifDouble(trend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
       string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
       string text      = StringConcatenate(indicatorName, sTrend, sWaiting, sReversal, sSignal);
 
