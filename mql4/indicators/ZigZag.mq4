@@ -33,9 +33,9 @@ extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag li
 extern int    ZigZag.Width               = 1;
 extern color  ZigZag.Color               = Blue;
 
-extern bool   ShowZigZagChannel          = true;                  // display the channel for determining reversal points
 extern bool   ShowZigZagTrail            = true;                  // display only the crossings forming a ZigZag leg
-extern bool   ShowAllChannelCrossings    = true;                  // display all channel crossings
+extern bool   ShowDonchianChannel        = true;                  // display the channel for determining reversal points
+extern bool   ShowChannelCrossings       = true;                  // display all channel crossings
 extern bool   ShowFirstCrossingPerBar    = true;                  // display the first or the last crossing per bar
 extern color  UpperChannel.Color         = DodgerBlue;
 extern color  LowerChannel.Color         = Magenta;
@@ -399,7 +399,7 @@ int onTick() {
       else                                 ProcessLowerCross(bar);
 
       // populate the visible breakout buffers
-      if (ShowAllChannelCrossings || (ShowZigZagTrail && !waiting[bar])) {
+      if (ShowChannelCrossings || (ShowZigZagTrail && !waiting[bar])) {
          if (ShowFirstCrossingPerBar) {
             upperBreakout[bar] = upperBreakoutStart[bar];
             lowerBreakout[bar] = lowerBreakoutStart[bar];
@@ -789,11 +789,11 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_OPEN,  Semaphores.WingDingsSymbol);
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, Semaphores.WingDingsSymbol);
 
-   drawType = ifInt(ShowZigZagChannel, DRAW_LINE, DRAW_NONE);
+   drawType = ifInt(ShowDonchianChannel, DRAW_LINE, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BAND, drawType, EMPTY, EMPTY, UpperChannel.Color);
    SetIndexStyle(MODE_LOWER_BAND, drawType, EMPTY, EMPTY, LowerChannel.Color);
 
-   drawType = ifInt(ShowZigZagTrail || ShowAllChannelCrossings, DRAW_ARROW, DRAW_NONE);
+   drawType = ifInt(ShowZigZagTrail || ShowChannelCrossings, DRAW_ARROW, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Crossings.WingDingsSymbol);
    SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Crossings.WingDingsSymbol);
 
@@ -822,9 +822,9 @@ string InputsToStr() {
                             "ZigZag.Type=",                DoubleQuoteStr(ZigZag.Type),        ";"+ NL,
                             "ZigZag.Width=",               ZigZag.Width,                       ";"+ NL,
                             "ZigZag.Color=",               ColorToStr(ZigZag.Color),           ";"+ NL,
-                            "ShowZigZagChannel=",          BoolToStr(ShowZigZagChannel),       ";"+ NL,
                             "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";"+ NL,
-                            "ShowAllChannelCrossings=",    BoolToStr(ShowAllChannelCrossings), ";"+ NL,
+                            "ShowDonchianChannel=",        BoolToStr(ShowDonchianChannel),     ";"+ NL,
+                            "ShowChannelCrossings=",       BoolToStr(ShowChannelCrossings),    ";"+ NL,
                             "ShowFirstCrossingPerBar=",    BoolToStr(ShowFirstCrossingPerBar), ";"+ NL,
                             "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";"+ NL,
                             "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";"+ NL,

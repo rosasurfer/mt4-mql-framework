@@ -9925,9 +9925,9 @@ ZigZag.Periods=36
 ZigZag.Type=Semaphores
 ZigZag.Width=3
 ZigZag.Color=16760576
-ShowZigZagChannel=1
-ShowChannelCrossings=1
 ShowZigZagTrail=1
+ShowDonchianChannel=1
+ShowChannelCrossings=1
 ShowFirstCrossingPerBar=1
 UpperChannel.Color=16748574
 LowerChannel.Color=16711935
@@ -9954,9 +9954,9 @@ ZigZag.Periods=18
 ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=17919
-ShowZigZagChannel=0
 ShowZigZagTrail=0
-ShowAllChannelCrossings=0
+ShowDonchianChannel=0
+ShowChannelCrossings=0
 AutoConfiguration=0
 </inputs>
 </expert>
