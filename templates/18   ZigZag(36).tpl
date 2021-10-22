@@ -9927,7 +9927,8 @@ ZigZag.Width=3
 ZigZag.Color=16760576
 ShowZigZagTrail=1
 ShowDonchianChannel=1
-ShowChannelCrossings=1
+ShowStopChannelSegments=0
+ShowAllChannelCrossings=1
 ShowFirstCrossingPerBar=1
 UpperChannel.Color=16748574
 LowerChannel.Color=16711935
@@ -9956,7 +9957,8 @@ ZigZag.Width=1
 ZigZag.Color=17919
 ShowZigZagTrail=0
 ShowDonchianChannel=0
-ShowChannelCrossings=0
+ShowStopChannelSegments=0
+ShowAllChannelCrossings=0
 AutoConfiguration=0
 </inputs>
 </expert>
