@@ -1527,8 +1527,7 @@ bool UpdateStopoutLevel() {
       return(true);
    }
 
-
-   // (1) Stopout-Preis berechnen
+   // Stopout-Preis berechnen
    double equity     = AccountEquity();
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
@@ -1542,20 +1541,18 @@ bool UpdateStopoutLevel() {
    if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
    else                   soPrice = NormalizeDouble(Ask + soDistance, Digits);
 
-
-   // (2) Stopout-Preis anzeigen
+   // Stopout-Preis anzeigen
    if (ObjectFind(label.stopoutLevel) == -1) {
       ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
       ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
       ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed  );
       ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true       );
-         if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
-         else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
-      ObjectSetText(label.stopoutLevel, text);
       RegisterObject(label.stopoutLevel);
    }
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
-
+      if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
+      else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
+   ObjectSetText(label.stopoutLevel, text);
 
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on ObjectDrag or opened "Properties" dialog

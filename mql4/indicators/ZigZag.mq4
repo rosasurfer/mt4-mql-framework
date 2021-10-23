@@ -14,6 +14,8 @@
  *
  * TODO:
  *  - process input ShowStopChannelSegments
+ *  - reorganize inputs: ZigZag.* | Donchian.*
+ *  - rename UpperChannel.Color to Donchian.UpperBand.Color
  *  - add signal onZigZagBreakout (rename all breakout vars to crossing)
  *  - onReversal = onLeg?
  *  - fix positioning bug of multiple legends
@@ -45,9 +47,8 @@ extern color  LowerChannel.Color         = Magenta;
 
 extern int    Semaphores.WingDingsSymbol = 108;                   // a medium dot
 extern int    Crossings.WingDingsSymbol  = 161;                   // a small circle
-
-extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
 extern int    PeriodStepper.StepSize     = 0;                     // enable the period stepper with the specified stepsize
+extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
 
 extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
 extern bool   Signal.onReversal          = false;
@@ -837,8 +838,8 @@ string InputsToStr() {
                             "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";"+ NL,
                             "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
                             "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,          ";"+ NL,
-                            "Max.Bars=",                   Max.Bars,                           ";"+ NL,
                             "PeriodStepper.StepSize=",     PeriodStepper.StepSize,             ";"+ NL,
+                            "Max.Bars=",                   Max.Bars,                           ";"+ NL,
 
                             "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,
                             "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound), ";"+ NL,
