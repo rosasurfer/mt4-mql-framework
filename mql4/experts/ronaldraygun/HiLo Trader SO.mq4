@@ -3,7 +3,7 @@
  *
  * History:
  *  - removed tickdatabase functionality
- *  - removed obsolete parts and simplified logic
+ *  - removed obsolete parts, simplify logic
  *
  * @source  https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#     [@Ronald Raygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -16,24 +16,24 @@
 
 extern string Remark1 = "== Main Settings ==";
 extern int MagicNumber = 0;
-extern bool SignalsOnly = False;
-extern bool Alerts = False;
-extern bool PlaySounds = False;
+extern bool SignalsOnly = false;
+extern bool Alerts = false;
+extern bool PlaySounds = false;
 extern int SleepTime = 100;
-extern bool EachTickMode = True;
-extern bool AnimateOptimization = True;
+extern bool EachTickMode = true;
+extern bool AnimateOptimization = true;
 extern int MaxSimultaneousTrades = 10;
 extern double Lots = 00.1;
-extern bool MoneyManagement = False;
+extern bool MoneyManagement = false;
 extern int Risk = 0;
 extern int Slippage = 5;
-extern  bool UseStopLoss = True;
+extern  bool UseStopLoss = true;
 extern int StopLoss = 200;
-extern bool UseTakeProfit = True;
+extern bool UseTakeProfit = true;
 extern int TakeProfit = 200;
-extern bool UseTrailingStop = False;
+extern bool UseTrailingStop = false;
 extern int TrailingStop = 30;
-extern bool MoveStopOnce = False;
+extern bool MoveStopOnce = false;
 extern int MoveStopWhenPrice = 50;
 extern int MoveStopTo = 1;
 
@@ -45,13 +45,13 @@ extern double MinimumWinRate = 50;
 extern double MinimumRiskReward = 0;
 extern double MinimumSuccessScore = 0;
 extern int MinimumSampleSize = 10;
-extern bool ReverseTrades = False;
+extern bool ReverseTrades = false;
 
 extern string Remark3 = "== Optimize Based On ==";
-extern bool HighestProfit = False;
-extern bool HighestWinRate = False;
-extern bool HighestRiskReward = False;
-extern bool HighestSuccessScore = True;
+extern bool HighestProfit = false;
+extern bool HighestWinRate = false;
+extern bool HighestRiskReward = false;
+extern bool HighestSuccessScore = true;
 
 
 int GMTBar;
@@ -78,7 +78,7 @@ int ShortAlertSignalBarCount;
 double BrokerMultiplier = 1;
 
 int Current;
-bool TickCheck = False;
+bool TickCheck = false;
 //+------------------------------------------------------------------+
 //| expert initialization function                                   |
 //+------------------------------------------------------------------+
@@ -261,14 +261,14 @@ void MasterFunction()
          CommentString = StartFunction(Symbol());
 
          TotalTime = GetTickCount() - StartTime;
-         Rates = "True";
+         Rates = "true";
          LastTick = 0;
          }
          else
          {
          CycleCount++;
          LastTick++;
-         Rates = "False";
+         Rates = "false";
          Sleep(SleepTime);
          }
          LastComputerStop = TimeLocal();
@@ -288,7 +288,7 @@ string StartFunction(string SymbolUsed)
 
 
 
-   if (EachTickMode && Bars != CloseBarCount) TickCheck = False;
+   if (EachTickMode && Bars != CloseBarCount) TickCheck = false;
    Total = OrdersTotal();
    Order = SIGNAL_NONE;
 
@@ -330,7 +330,7 @@ if(TimeDayOfYear(TimeCurrent()) != LastCalcDay)
    }
 
 //Determine Day's start
-int DayStart = iBarShift(NULL, 0, StrToTime("00:00"), False);
+int DayStart = iBarShift(NULL, 0, StrToTime("00:00"), false);
 int RangeStart = DayStart - InitialRange;
 
 //Determine Current Hilo
@@ -429,12 +429,12 @@ string CommentString = StringConcatenate("Last Optimized: ", LastOptimize, "\n",
    //+------------------------------------------------------------------+
 
    //Check position
-   bool IsTrade = False;
+   bool IsTrade = false;
 
    for (int i = 0; i < Total; i ++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if(OrderType() <= OP_SELL &&  OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber) {
-         IsTrade = True;
+         IsTrade = true;
          if(OrderType() == OP_BUY) {
 
 
@@ -453,7 +453,7 @@ string CommentString = StringConcatenate("Last Optimized: ", LastOptimize, "\n",
             if (Order == SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
                if (!EachTickMode) CloseBarCount = Bars;
-               IsTrade = False;
+               IsTrade = false;
                continue;
             }
 
@@ -483,7 +483,7 @@ string CommentString = StringConcatenate("Last Optimized: ", LastOptimize, "\n",
             if (Order == SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
                if (!EachTickMode) CloseBarCount = Bars;
-               IsTrade = False;
+               IsTrade = false;
                continue;
             }
 
@@ -511,7 +511,7 @@ if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
    //| Signal End                                                       |
    //+------------------------------------------------------------------+
 
-IsTrade = False;
+IsTrade = false;
    //Buy
    if (Order == SIGNAL_BUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != OpenBarCount)))) {
       if(SignalsOnly) {
@@ -557,7 +557,7 @@ IsTrade = False;
                }
             }
 
-         if (EachTickMode) TickCheck = True;
+         if (EachTickMode) TickCheck = true;
          if (!EachTickMode) OpenBarCount = Bars;
          return(CommentString);
       }
@@ -606,7 +606,7 @@ IsTrade = False;
                 Print("Error opening SELL order : ", GetLastError());
             }
          }
-         if (EachTickMode) TickCheck = True;
+         if (EachTickMode) TickCheck = true;
          if (!EachTickMode) OpenBarCount = Bars;
          return(CommentString);
       }
