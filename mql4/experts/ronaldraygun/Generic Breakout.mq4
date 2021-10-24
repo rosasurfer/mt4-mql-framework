@@ -56,31 +56,31 @@ user Ronald Raygun on www.ForexFactory.com.
 
 
 int InternetOpenA(
-	string 	sAgent,
-	int		lAccessType,
-	string 	sProxyName="",
-	string 	sProxyBypass="",
-	int 	lFlags=0
+    string  sAgent,
+    int     lAccessType,
+    string  sProxyName="",
+    string  sProxyBypass="",
+    int     lFlags=0
 );
 
 int InternetOpenUrlA(
-	int 	hInternetSession,
-	string 	sUrl,
-	string 	sHeaders="",
-	int 	lHeadersLength=0,
-	int 	lFlags=0,
-	int 	lContext=0
+    int     hInternetSession,
+    string  sUrl,
+    string  sHeaders="",
+    int     lHeadersLength=0,
+    int     lFlags=0,
+    int     lContext=0
 );
 
 int InternetReadFile(
-	int 	hFile,
-	string 	sBuffer,
-	int 	lNumBytesToRead,
-	int& 	lNumberOfBytesRead[]
+    int     hFile,
+    string  sBuffer,
+    int     lNumBytesToRead,
+    int&    lNumberOfBytesRead[]
 );
 
 int InternetCloseHandle(
-	int 	hInet
+    int     hInet
 );
 #import
 
@@ -655,7 +655,7 @@ if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
          if(!ECNBroker) Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Buy(#" + MagicNumber + ")", MagicNumber, 0, DodgerBlue);
             if(Ticket > 0) {
                if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-				  Print("BUY order opened : ", OrderOpenPrice());
+                  Print("BUY order opened : ", OrderOpenPrice());
                   if (SignalMail && LongMailSignalBarCount != Bars)
                      {
                      SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
@@ -672,9 +672,9 @@ if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
                      LongSoundSignalBarCount = Bars;
                      }
                   TradesThisBar++;
-			   } else {
-   				Print("Error opening BUY order : ", GetLastError());
-			   }
+               } else {
+                Print("Error opening BUY order : ", GetLastError());
+               }
             }
 
          if (EachTickMode) TickCheck = True;
@@ -730,7 +730,7 @@ if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
          if(!ECNBroker) Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Sell(#" + MagicNumber + ")", MagicNumber, 0, DeepPink);
          if(Ticket > 0) {
             if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-				Print("SELL order opened : ", OrderOpenPrice());
+                Print("SELL order opened : ", OrderOpenPrice());
                 if (SignalMail && ShortMailSignalBarCount != Bars)
                   {
                   SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
@@ -747,9 +747,9 @@ if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
                   ShortSoundSignalBarCount = Bars;
                   }
                 TradesThisBar++;
-			} else {
-				Print("Error opening SELL order : ", GetLastError());
-			}
+            } else {
+                Print("Error opening SELL order : ", GetLastError());
+            }
          }
          if (EachTickMode) TickCheck = True;
          if (!EachTickMode) OpenBarCount = Bars;
