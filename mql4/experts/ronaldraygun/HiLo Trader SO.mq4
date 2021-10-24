@@ -5,8 +5,8 @@
  *
  *
  * Changes:
- *  - removed obsolete functionalities: activation, tick db, ECN distinction, signaling, animation
- *  - simplified and slimmed down the whole code base
+ *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation
+ *  - simplified and slimmed down everything
  *
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
