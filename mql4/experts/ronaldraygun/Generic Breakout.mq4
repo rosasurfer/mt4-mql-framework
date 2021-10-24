@@ -1,7 +1,7 @@
 /**
  * Rewritten Generic Breakout EA v7
  *
- * rsf-History:
+ * History:
  *  - removed tickdatabase functionality
  *  - removed obsolete parts and simplified logic
  *
@@ -345,10 +345,10 @@ int start() {
             }
 
             PotentialStopLoss = OrderStopLoss();
-            BEven             = BreakEvenValue(MoveStopOnce, OrderTicket(), MoveStopTo.Points, MoveStopWhenPrice.Points);
-            BEven1            = BreakEvenValue(UseMultipleMoveStopOnce, OrderTicket(), (CalculateRange(OrderOpenTime()) * MoveStopToMultiple) / Point + (MoveStopToMultipleBuffer.Points), (CalculateRange(OrderOpenTime()) * MoveStopWhenRangeMultiple) / Point + MoveStopWhenRangeMulBuf.Points);
-            TrailStop         = TrailingStopValue(UseTrailingStop, OrderTicket(), TrailingStop.Points);
-            TrailStop1        = TrailingStopValue(UseMultipleTrailingStop, OrderTicket(), (CalculateRange(OrderOpenTime()) * TSMultiple) / Point + TSMultipleBuffer.Points);
+            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo.Points, MoveStopWhenPrice.Points);
+            BEven1            = CalcBreakEven(UseMultipleMoveStopOnce, OrderTicket(), (CalculateRange(OrderOpenTime()) * MoveStopToMultiple) / Point + (MoveStopToMultipleBuffer.Points), (CalculateRange(OrderOpenTime()) * MoveStopWhenRangeMultiple) / Point + MoveStopWhenRangeMulBuf.Points);
+            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop.Points);
+            TrailStop1        = CalcTrailingStop(UseMultipleTrailingStop, OrderTicket(), (CalculateRange(OrderOpenTime()) * TSMultiple) / Point + TSMultipleBuffer.Points);
 
             if (BEven      > PotentialStopLoss && BEven)      PotentialStopLoss = BEven;
             if (BEven1     > PotentialStopLoss && BEven1)     PotentialStopLoss = BEven1;
@@ -369,10 +369,10 @@ int start() {
             }
 
             PotentialStopLoss = OrderStopLoss();
-            BEven             = BreakEvenValue(MoveStopOnce, OrderTicket(), MoveStopTo.Points, MoveStopWhenPrice.Points);
-            BEven1            = BreakEvenValue(UseMultipleMoveStopOnce, OrderTicket(), (CalculateRange(OrderOpenTime()) * MoveStopToMultiple) / Point + (MoveStopToMultipleBuffer.Points), (CalculateRange(OrderOpenTime()) * MoveStopWhenRangeMultiple) / Point + MoveStopWhenRangeMulBuf.Points);
-            TrailStop         = TrailingStopValue(UseTrailingStop, OrderTicket(), TrailingStop.Points);
-            TrailStop1        = TrailingStopValue(UseMultipleTrailingStop, OrderTicket(), (CalculateRange(OrderOpenTime()) * TSMultiple) / Point + TSMultipleBuffer.Points);
+            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo.Points, MoveStopWhenPrice.Points);
+            BEven1            = CalcBreakEven(UseMultipleMoveStopOnce, OrderTicket(), (CalculateRange(OrderOpenTime()) * MoveStopToMultiple) / Point + (MoveStopToMultipleBuffer.Points), (CalculateRange(OrderOpenTime()) * MoveStopWhenRangeMultiple) / Point + MoveStopWhenRangeMulBuf.Points);
+            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop.Points);
+            TrailStop1        = CalcTrailingStop(UseMultipleTrailingStop, OrderTicket(), (CalculateRange(OrderOpenTime()) * TSMultiple) / Point + TSMultipleBuffer.Points);
 
             if ((BEven      < PotentialStopLoss && BEven)      || !PotentialStopLoss) PotentialStopLoss = BEven;
             if ((BEven1     < PotentialStopLoss && BEven1)     || !PotentialStopLoss) PotentialStopLoss = BEven1;
@@ -456,20 +456,18 @@ int start() {
 /**
  *
  */
-double BreakEvenValue(bool isDecision, int ticket, int moveStopTo, int moveStopWhenPrice) {
+double CalcBreakEven(bool condition, int ticket, int moveStopTo, int moveStopWhenPrice) {
    OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
    if (OrderType() == OP_BUY) {
-      if (isDecision && moveStopWhenPrice > 0) {
-         // check if the trade is above the required profit threshold
+      if (condition && moveStopWhenPrice > 0) {
          if (Bid-OrderOpenPrice() >= moveStopWhenPrice*Point) {
             return(OrderOpenPrice() + moveStopTo*Point);
          }
       }
    }
    else if (OrderType() == OP_SELL) {
-      if (isDecision && moveStopWhenPrice > 0) {
-         // check if the trade is above the required profit threshold
+      if (condition && moveStopWhenPrice > 0) {
          if (OrderOpenPrice()-Ask >= moveStopWhenPrice*Point) {
             return(OrderOpenPrice() - moveStopTo*Point);
          }
@@ -482,20 +480,18 @@ double BreakEvenValue(bool isDecision, int ticket, int moveStopTo, int moveStopW
 /**
  *
  */
-double TrailingStopValue(bool isDecision, int ticket, int trailingStop) {
+double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
    OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
    if (OrderType() == OP_BUY) {
-      if (isDecision && trailingStop > 0) {
-         // check to see that the profit threshold is met
+      if (condition && trailingStop > 0) {
          if (Bid-OrderOpenPrice() > trailingStop*Point) {
             return(Bid - trailingStop*Point);
          }
       }
    }
    else if (OrderType() == OP_SELL) {
-      if (isDecision && trailingStop > 0) {
-         // check to see that the profit threshold is met
+      if (condition && trailingStop > 0) {
          if (OrderOpenPrice()-Ask > trailingStop*Point) {
             return(Ask + trailingStop*Point);
          }
