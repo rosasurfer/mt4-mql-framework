@@ -1,11 +1,14 @@
 /**
- * Rewritten Self-Optimizing HiLo Trader originally published by Ronald Raygun.
+ * Self-Optimizing HiLo Trader
  *
- * History:
- *  - removed tickdatabase functionality
- *  - removed obsolete parts, simplify logic
+ * Rewritten version of the concept published by FF user Ronald Raygun.
  *
- * @source  https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#     [@Ronald Raygun: Old Dog with New Tricks]
+ *
+ * Major changes:
+ *  - removed obsolete functionalities: activation, tick db, ECN distinction, signaling, animation
+ *  - simplified and slimmed down whole code base
+ *
+ * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
  */
 #define SIGNAL_NONE 0
@@ -16,12 +19,8 @@
 
 extern string Remark1               = "== Main Settings ==";
 extern int    MagicNumber           = 0;
-extern bool   SignalsOnly           = false;
-extern bool   Alerts                = false;
-extern bool   PlaySounds            = false;
 extern int    SleepTime             = 100;
 extern bool   EachTickMode          = true;
-extern bool   AnimateOptimization   = true;
 extern int    MaxSimultaneousTrades = 10;
 extern double Lots                  = 0.1;
 extern bool   MoneyManagement       = false;
@@ -67,14 +66,9 @@ int      TradeBar;
 int      TradesThisBar;
 int      OpenBarCount;
 int      CloseBarCount;
-int      LongSoundSignalBarCount;
-int      ShortSoundSignalBarCount;
-int      LongAlertSignalBarCount;
-int      ShortAlertSignalBarCount;
-
 int      Current;
 bool     TickCheck = false;
-int      PipPoints = 1;
+int      PipPoints;
 
 
 /**
@@ -83,16 +77,11 @@ int      PipPoints = 1;
  * @return int - error status
  */
 int init() {
-   OpenBarCount             = Bars;
-   CloseBarCount            = Bars;
-   LongSoundSignalBarCount  = Bars;
-   ShortSoundSignalBarCount = Bars;
-   LongAlertSignalBarCount  = Bars;
-   ShortAlertSignalBarCount = Bars;
+   OpenBarCount  = Bars;
+   CloseBarCount = Bars;
 
-   if (Digits==3 || Digits==5) {
-      PipPoints = 10;
-   }
+   if (Digits==3 || Digits==5) PipPoints = 10;
+   else                        PipPoints = 1;
 
    if (EachTickMode) Current = 0;
    else              Current = 1;
@@ -119,9 +108,8 @@ int start() {
  *
  */
 void MasterFunction() {
-   int CycleCount, LastTick;
+   int CycleCount, LastTick, StartTime, TotalTime;
    datetime LastComputerStart, LastComputerStop, LastServerStart, LastServerStop;
-   int StartTime, TotalTime;
    string CommentString, Rates = "None";
 
    while (true) {
@@ -185,8 +173,8 @@ void MasterFunction() {
          StartTime         = GetTickCount();
          CommentString     = StartFunction(Symbol());
          TotalTime         = GetTickCount() - StartTime;
-         Rates    = "true";
-         LastTick = 0;
+         Rates             = "true";
+         LastTick          = 0;
       }
       else {
          CycleCount++;
@@ -217,14 +205,14 @@ string StartFunction(string SymbolUsed) {
       TradesThisBar = 0;
    }
 
-   // money management sequence
+   // money management
    if (MoneyManagement) {
       if (Risk < 1 || Risk > 100) {
          Comment("Invalid risk value.");
          return(0);
       }
       else {
-         Lots = MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*PipPoints*100) / (Ask*MarketInfo(Symbol(), MODE_LOTSIZE)*MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
+         Lots = MathFloor((AccountFreeMargin() * AccountLeverage() * Risk*Point*PipPoints*100) / (Ask * MarketInfo(Symbol(), MODE_LOTSIZE) * MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
       }
    }
 
@@ -251,15 +239,9 @@ string StartFunction(string SymbolUsed) {
    double LowPrice  =  iLow(NULL, NULL, LowShift);
 
    // read back optimization values
-   static int CurrentHour;
-   static int CurrentHighTP;
-   static int CurrentHighProfit;
-   static double CurrentWinRate;
-   static double CurrentRiskReward;
-   static double CurrentSuccessScore;
+   static int    CurrentHour, CurrentHighTP, CurrentHighProfit, CurrentArraySizes, CurrentArrayNum;
+   static double CurrentWinRate, CurrentRiskReward, CurrentSuccessScore;
    static string CurrentTradeStyle;
-   static int CurrentArraySizes;
-   static int CurrentArrayNum;
 
    if (CurrentHour != TimeHour(TimeCurrent())) {
       int Handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
@@ -268,15 +250,15 @@ string StartFunction(string SymbolUsed) {
 
    if (Handle > 0) {
       while (!FileIsEnding(Handle)) {
-         int HourUsed            = StrToInteger(FileReadString(Handle));
-         int HighTP              = StrToInteger(FileReadString(Handle));
-         int HighProfit          = StrToInteger(FileReadString(Handle));
+         int    HourUsed         = StrToInteger(FileReadString(Handle));
+         int    HighTP           = StrToInteger(FileReadString(Handle));
+         int    HighProfit       = StrToInteger(FileReadString(Handle));
          double HighWinRate      = StrToDouble(FileReadString(Handle));
          double HighRiskReward   = StrToDouble(FileReadString(Handle));
          double HighSuccessScore = StrToDouble(FileReadString(Handle));
          string TradeStyle       = FileReadString(Handle);
-         int ArraySizes          = StrToInteger(FileReadString(Handle));
-         int ArrayNum            = StrToInteger(FileReadString(Handle));
+         int    ArraySizes       = StrToInteger(FileReadString(Handle));
+         int    ArrayNum         = StrToInteger(FileReadString(Handle));
 
          if (HourUsed == TimeHour(TimeCurrent())) {
             CurrentHour         = HourUsed;
@@ -299,8 +281,8 @@ string StartFunction(string SymbolUsed) {
 
    // count number of open trades
    int TradeCount = 0;
-   for (int OT=OrdersTotal(); OT >= 0; OT--) {
-      OrderSelect(OT, SELECT_BY_POS, MODE_TRADES);
+   for (int i=OrdersTotal(); i >= 0; i--) {
+      OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderMagicNumber()==MagicNumber && OrderSymbol()==SymbolUsed && OrderType()<=OP_SELL) TradeCount++;
    }
 
@@ -314,44 +296,33 @@ string StartFunction(string SymbolUsed) {
    if (ReverseTrades && TradeTrigger1=="Open Long")  TradeTrigger = "Open Short";
    if (ReverseTrades && TradeTrigger1=="Open Short") TradeTrigger = "Open Long";
 
-   string CommentString = StringConcatenate("Last optimization: ", LastOptimize, "\n",
-                                            "Bars used: ", BarCount, "\n",
-                                            "Total bars: ", Bars, "\n",
-                                            "Current hour: ", CurrentHour, "\n",
-                                            "Current TP: ", CurrentHighTP, "\n",
-                                            "Current win rate: ", CurrentWinRate * 100.0, "% (", MinimumWinRate, ")\n",
-                                            "Current risk reward: ", CurrentRiskReward, " (", MinimumRiskReward, ")\n",
-                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")\n",
-                                            "Array win: ", CurrentArraySizes - CurrentArrayNum - 1, "\n",
-                                            "Array lose: ", CurrentArrayNum + 1, "\n",
-                                            "Total array: ", CurrentArraySizes, "\n",
-                                            "Total open Trades: ", TradeCount, "\n",
-                                            "Trade style: ", CurrentTradeStyle, "\n",
-                                            "Trade trigger: ", TradeTrigger);
-
-   // check position
+   string CommentString = StringConcatenate("Last optimization: ",     LastOptimize,                                              "\n",
+                                            "Bars used: ",             BarCount,                                                  "\n",
+                                            "Total bars: ",            Bars,                                                      "\n",
+                                            "Current hour: ",          CurrentHour,                                               "\n",
+                                            "Current TP: ",            CurrentHighTP,                                             "\n",
+                                            "Current win rate: ",      CurrentWinRate * 100.0, "% (", MinimumWinRate, ")",        "\n",
+                                            "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",           "\n",
+                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")", "\n",
+                                            "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   "\n",
+                                            "Array lose: ",            CurrentArrayNum + 1,                                       "\n",
+                                            "Total array: ",           CurrentArraySizes,                                         "\n",
+                                            "Total open Trades: ",     TradeCount,                                                "\n",
+                                            "Trade style: ",           CurrentTradeStyle,                                         "\n",
+                                            "Trade trigger: ",         TradeTrigger);
    bool IsTrade = false;
 
-   for (int i = 0; i < Total; i ++) {
+   for (i=0; i < Total; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if(OrderType() <= OP_SELL &&  OrderSymbol() == Symbol() && OrderMagicNumber() == MagicNumber) {
+
+      // close open positions
+      if (OrderType()<=OP_SELL &&  OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
          IsTrade = true;
-         if(OrderType() == OP_BUY) {
 
+         if (OrderType() == OP_BUY) {
+            if (TradeTrigger == "Open Short") Order = SIGNAL_CLOSEBUY;
 
-            //Close
-
-            //+------------------------------------------------------------------+
-            //| Signal Begin(Exit Buy)                                           |
-            //+------------------------------------------------------------------+
-
-            if(TradeTrigger == "Open Short") Order = SIGNAL_CLOSEBUY;
-
-            //+------------------------------------------------------------------+
-            //| Signal End(Exit Buy)                                             |
-            //+------------------------------------------------------------------+
-
-            if (Order == SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
+            if (Order==SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
                if (!EachTickMode) CloseBarCount = Bars;
                IsTrade = false;
@@ -359,29 +330,19 @@ string StartFunction(string SymbolUsed) {
             }
 
             PotentialStopLoss = OrderStopLoss();
-            BEven = BreakEvenValue(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
-            TrailStop = TrailingStopValue(UseTrailingStop, OrderTicket(), TrailingStop);
+            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
+            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
 
-            if(BEven > PotentialStopLoss && BEven != 0) PotentialStopLoss = BEven;
-            if(TrailStop > PotentialStopLoss && TrailStop != 0) PotentialStopLoss = TrailStop;
+            if (BEven     > PotentialStopLoss && BEven)     PotentialStopLoss = BEven;
+            if (TrailStop > PotentialStopLoss && TrailStop) PotentialStopLoss = TrailStop;
 
-            if(PotentialStopLoss != OrderStopLoss()) OrderModify(OrderTicket(),OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
+            if (PotentialStopLoss != OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
 
-         } else {
+         }
+         else {
+            if (TradeTrigger == "Open Long") Order = SIGNAL_CLOSESELL;
 
-            //Close
-
-            //+------------------------------------------------------------------+
-            //| Signal Begin(Exit Sell)                                          |
-            //+------------------------------------------------------------------+
-
-            if(TradeTrigger == "Open Long") Order = SIGNAL_CLOSESELL;
-
-            //+------------------------------------------------------------------+
-            //| Signal End(Exit Sell)                                            |
-            //+------------------------------------------------------------------+
-
-            if (Order == SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
+            if (Order==SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
                if (!EachTickMode) CloseBarCount = Bars;
                IsTrade = false;
@@ -389,132 +350,55 @@ string StartFunction(string SymbolUsed) {
             }
 
             PotentialStopLoss = OrderStopLoss();
-            BEven = BreakEvenValue(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
-            TrailStop = TrailingStopValue(UseTrailingStop, OrderTicket(), TrailingStop);
+            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
+            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
 
-            if((BEven < PotentialStopLoss && BEven != 0) || (PotentialStopLoss == 0)) PotentialStopLoss = BEven;
-            if((TrailStop < PotentialStopLoss && TrailStop != 0) || (PotentialStopLoss == 0)) PotentialStopLoss = TrailStop;
+            if ((BEven     < PotentialStopLoss && BEven)     || (!PotentialStopLoss)) PotentialStopLoss = BEven;
+            if ((TrailStop < PotentialStopLoss && TrailStop) || (!PotentialStopLoss)) PotentialStopLoss = TrailStop;
 
-            if(PotentialStopLoss != OrderStopLoss() || OrderStopLoss() == 0) OrderModify(OrderTicket(),OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, DarkOrange);
-
+            if (PotentialStopLoss!=OrderStopLoss() || !OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, DarkOrange);
          }
       }
    }
 
-   //+------------------------------------------------------------------+
-   //| Signal Begin(Entry)                                              |
-   //+------------------------------------------------------------------+
+   // open new positions
+   if (TradeTrigger == "Open Long")  Order = SIGNAL_BUY;
+   if (TradeTrigger == "Open Short") Order = SIGNAL_SELL;
+   IsTrade = false;
 
-if(TradeTrigger == "Open Long") Order = SIGNAL_BUY;
-if(TradeTrigger == "Open Short") Order = SIGNAL_SELL;
+   if (Order==SIGNAL_BUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount)))) {
+      if (!IsTrade && TradesThisBar < 1) {
+         if (UseStopLoss)   StopLossLevel   = Ask - StopLoss*Point;
+         else               StopLossLevel   = 0;
+         if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point;
+         else               TakeProfitLevel = 0;
 
-   //+------------------------------------------------------------------+
-   //| Signal End                                                       |
-   //+------------------------------------------------------------------+
-
-IsTrade = false;
-   //Buy
-   if (Order == SIGNAL_BUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != OpenBarCount)))) {
-      if(SignalsOnly) {
-         if (Alerts && LongAlertSignalBarCount != Bars)
-            {
-            Alert("[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
-            LongAlertSignalBarCount = Bars;
-            }
-         if (PlaySounds && LongSoundSignalBarCount != Bars)
-            {
-            PlaySound("alert.wav");
-            LongSoundSignalBarCount = Bars;
-            }
-      }
-
-      if(!IsTrade && !SignalsOnly && TradesThisBar < 1) {
-         //Check free margin
-         if (AccountFreeMarginCheck(Symbol(), OP_BUY, Lots) < 0) {
-            Print("We have no money. Free Margin = ", AccountFreeMargin());
-            return(CommentString);
-         }
-
-         if (UseStopLoss) StopLossLevel = Ask - StopLoss * Point; else StopLossLevel = 0.0;
-         if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit * Point; else TakeProfitLevel = 0.0;
-
-         Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Buy(#" + MagicNumber + ")", MagicNumber, 0, DodgerBlue);
-            if(Ticket > 0) {
-               if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-                  Print("BUY order opened : ", OrderOpenPrice());
-                  if (Alerts && LongAlertSignalBarCount != Bars)
-                     {
-                     Alert("[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
-                     LongAlertSignalBarCount = Bars;
-                     }
-                  if (PlaySounds && LongSoundSignalBarCount != Bars)
-                     {
-                     PlaySound("alert.wav");
-                     LongSoundSignalBarCount = Bars;
-                     }
-                  TradesThisBar++;
-               } else {
-                Print("Error opening BUY order : ", GetLastError());
-               }
-            }
+         Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "HiLo long", MagicNumber, 0, DodgerBlue);
+         TradesThisBar++;
 
          if (EachTickMode) TickCheck = true;
-         if (!EachTickMode) OpenBarCount = Bars;
+         else              OpenBarCount = Bars;
          return(CommentString);
       }
    }
 
-   //Sell
-   if (Order == SIGNAL_SELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != OpenBarCount)))) {
-      if(SignalsOnly) {
-          if (Alerts && ShortAlertSignalBarCount != Bars)
-            {
-            Alert("[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
-            ShortAlertSignalBarCount = Bars;
-            }
-          if (PlaySounds && ShortSoundSignalBarCount != Bars)
-            {
-            PlaySound("alert.wav");
-            ShortSoundSignalBarCount = Bars;
-            }
-         }
-      if(!IsTrade && !SignalsOnly && TradesThisBar < 1) {
-         //Check free margin
-         if (AccountFreeMarginCheck(Symbol(), OP_SELL, Lots) < 0) {
-            Print("We have no money. Free Margin = ", AccountFreeMargin());
-            return(CommentString);
-         }
+   if (Order==SIGNAL_SELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount)))) {
+      if (!IsTrade && TradesThisBar < 1) {
+         if (UseStopLoss)   StopLossLevel   = Bid + StopLoss*Point;
+         else               StopLossLevel   = 0;
+         if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point;
+         else               TakeProfitLevel = 0;
 
-         if (UseStopLoss) StopLossLevel = Bid + StopLoss * Point; else StopLossLevel = 0.0;
-         if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit * Point; else TakeProfitLevel = 0.0;
+         Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "HiLo short", MagicNumber, 0, DeepPink);
+         TradesThisBar++;
 
-         Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Sell(#" + MagicNumber + ")", MagicNumber, 0, DeepPink);
-         if(Ticket > 0) {
-            if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-                Print("SELL order opened : ", OrderOpenPrice());
-               if (Alerts && ShortAlertSignalBarCount != Bars)
-                  {
-                  Alert("[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
-                  ShortAlertSignalBarCount = Bars;
-                  }
-               if (PlaySounds && ShortSoundSignalBarCount != Bars)
-                  {
-                  PlaySound("alert.wav");
-                  ShortSoundSignalBarCount = Bars;
-                  }
-                TradesThisBar++;
-            } else {
-                Print("Error opening SELL order : ", GetLastError());
-            }
-         }
          if (EachTickMode) TickCheck = true;
-         if (!EachTickMode) OpenBarCount = Bars;
+         else              OpenBarCount = Bars;
          return(CommentString);
       }
    }
 
    if (!EachTickMode) CloseBarCount = Bars;
-
    return(CommentString);
 }
 
@@ -522,81 +406,48 @@ IsTrade = false;
 /**
  *
  */
-double BreakEvenValue(bool Decision, int OrderTicketNum, int MoveStopTo, int MoveStopwhenPrice) {
-   //Select the appropriate order ticket
-   OrderSelect(OrderTicketNum, SELECT_BY_TICKET, MODE_TRADES);
+double CalcBreakEven(bool condition, int ticket, int moveStopTo, int moveStopWhenPrice) {
+   OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
-   //If the Order is a BUY order...
-   if(OrderType() == OP_BUY)
-      {
-      //Check if the user wants to use the MoveStopOnce function and did it correctly
-      if(Decision && MoveStopWhenPrice > 0)
-         {
-         //Check if the trade is above the required profit threshold
-         if(Bid - OrderOpenPrice() >= Point * MoveStopWhenPrice)
-            {
-            //Return the value of the stoploss
-            return(OrderOpenPrice() + Point * MoveStopTo);
-            }
+   if (OrderType() == OP_BUY) {
+      if (condition && moveStopWhenPrice > 0) {
+         if (Bid-OrderOpenPrice() >= moveStopWhenPrice*Point) {
+            return(OrderOpenPrice() + moveStopTo*Point);
          }
       }
-
-   //If the Order is a SELL order...
-   if(OrderType() == OP_SELL)
-      {
-      //Check if the user wants to use the MoveStopOnce function and did it correctly
-      if(Decision && MoveStopWhenPrice > 0)
-         {
-         //Check if the trade is above the required profit threshold
-         if(OrderOpenPrice() - Ask >= Point * MoveStopWhenPrice)
-            {
-            //Return the value of the stoploss
-            return(OrderOpenPrice() - Point * MoveStopTo);
-            }
+   }
+   else if (OrderType() == OP_SELL) {
+      if (condition && moveStopWhenPrice > 0) {
+         if (OrderOpenPrice()-Ask >= moveStopWhenPrice*Point) {
+            return(OrderOpenPrice() - moveStopTo*Point);
          }
       }
-
-   if(OrderType() != OP_BUY || OrderType() != OP_SELL) return(0);
+   }
+   return(0);
 }
 
 
 /**
  *
  */
-double TrailingStopValue(bool Decision, int OrderTicketNum, int TrailingStop) {
-   //Select the appropriate order ticket
-   OrderSelect(OrderTicketNum, SELECT_BY_TICKET, MODE_TRADES);
+double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
+   OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
-   //If the Order is a BUY order...
-   if(OrderType() == OP_BUY)
-      {
-      //Check if the user wants to use teh Trailingstop function and did it correctly
-      if(Decision && TrailingStop > 0)
-         {
-         //Check to see that the profit threshold is met
-         if(Bid - OrderOpenPrice() > Point * TrailingStop)
-            {
-            //Return the value of the potential stoploss
-            return(Bid - Point * TrailingStop);
-            }
+   if (OrderType() == OP_BUY) {
+      if (condition && trailingStop > 0) {
+         if (Bid-OrderOpenPrice() > trailingStop*Point) {
+            return(Bid - trailingStop*Point);
          }
       }
-   //If the Order is a SELL order...
-   if(OrderType() == OP_SELL)
-      {
-      //Check if the user wants to use teh Trailingstop function and did it correctly
-      if(Decision && TrailingStop > 0)
-         {
-         //Check to see that the profit threshold is met
-         if((OrderOpenPrice() - Ask) > (Point * TrailingStop))
-            {
-            //Return the value of the potential stoploss
-            return(Ask + Point * TrailingStop);
-            }
+   }
+   else if (OrderType() == OP_SELL) {
+      if (condition && trailingStop > 0) {
+         if (OrderOpenPrice()-Ask > trailingStop*Point) {
+            return(Ask + trailingStop*Point);
          }
       }
-   //If the trade is not the right order type, give a stoploss of 0
-   if(OrderType() != OP_BUY || OrderType() != OP_SELL) return(0);
+   }
+   return(0);
 }
 
 
@@ -604,294 +455,224 @@ double TrailingStopValue(bool Decision, int OrderTicketNum, int TrailingStop) {
  *
  */
 int SelfOptimize(string SymbolUsed) {
-      int OptimizeBars;
-      for(int H = 0; H <= 23; H++)
-      {
+   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" Master Copy.csv"             );
+   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv"      );
+   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" All Settings.csv"            );
+   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv");
+
+   int OptimizeBars = BarsToOptimize;
+   if (!OptimizeBars) OptimizeBars = iBars(SymbolUsed, 0);
+   if (OptimizeBars > iBars(SymbolUsed, 0)) {
+      Alert("Error: Not enough bars to optimize for "+ SymbolUsed);
+      return(0);
+   }
+
+   int HighShift, LowShift, HighClose, LowClose;
+   double HighValue, LowValue, HighValue1, LowValue1, HighestValue, LowestValue;
+
+   int FBarStart     = OptimizeBars;
+   int DayStartShift = FBarStart;
+   int RangeEndShift = FBarStart;
+
+   for (int SearchShift=DayStartShift; SearchShift > 1; SearchShift--) {
+      Comment(" Looking for trades on bar "+SearchShift);
+
+      // determine if the bar is the daily start
+      if (TimeDayOfYear(Time[SearchShift]) != TimeDayOfYear(Time[SearchShift+1])) {
+         DayStartShift = SearchShift;
       }
-      DeleteFile(WindowExpertName()+" "+SymbolUsed+" Master Copy.csv");
-      DeleteFile(WindowExpertName()+" "+SymbolUsed+" Optimized Settings.csv");
-      DeleteFile(WindowExpertName()+" "+SymbolUsed+" All Settings.csv");
-      DeleteFile(WindowExpertName()+" "+SymbolUsed+" All Permutation Settings.csv");
 
-      OptimizeBars = BarsToOptimize;
-      if(BarsToOptimize == 0) OptimizeBars = iBars(SymbolUsed, 0);
-      if(BarsToOptimize > iBars(SymbolUsed, 0))
-         {
-         Alert("Error: Not enough bars to optimize for symbol: "+SymbolUsed+".");
-         return(0);
+      // find the end of the range and establish initial high and low
+      if (DayStartShift-SearchShift == InitialRange) {
+         RangeEndShift = SearchShift;
+         HighShift = iHighest(SymbolUsed, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift);
+         HighValue =    iHigh(SymbolUsed, NULL, HighShift);
+         LowShift  =  iLowest(SymbolUsed, NULL, MODE_LOW, DayStartShift-RangeEndShift, RangeEndShift);
+         LowValue  =     iLow(SymbolUsed, NULL, LowShift);
+      }
+
+      // determine subsequent high and low
+      if (DayStartShift > RangeEndShift) {
+         if (iHigh(NULL, NULL, SearchShift) > HighValue) {
+            HighValue1   = HighValue;
+            HighValue    = iHigh(NULL, NULL, SearchShift);
+            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", HighValue1, SearchShift) + 1);
+            HighestValue = iHigh(SymbolUsed, NULL, iHighest(SymbolUsed, NULL, MODE_HIGH, SearchShift-HighClose, HighClose));
+            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose-1, SearchShift-HighClose);
+
+            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", HighValue1, SearchShift) + 1);
+            LowestValue = iLow(SymbolUsed, NULL,  iLowest(SymbolUsed, NULL, MODE_LOW, SearchShift-HighClose, HighClose));
+            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose-1, SearchShift-HighClose);
          }
+         if (iLow(NULL, NULL, SearchShift) < LowValue) {
+            LowValue1    = LowValue;
+            LowValue     = iLow(NULL, NULL, SearchShift);
+            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", LowValue1, SearchShift) + 1);
+            HighestValue = iHigh(SymbolUsed, NULL, iHighest(SymbolUsed, NULL, MODE_HIGH, SearchShift-LowClose, LowClose));
+            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose-1, SearchShift-LowClose);
 
-      //Print("There are "+iBars(SymbolUsed, 0)+" bars on the chart. Only "+OptimizeBars+" bars are being used.");
-
-
-      int SearchShift;
-
-      int FBarStart = OptimizeBars;
-      int DayStartShift = FBarStart;
-      int RangeEndShift = FBarStart;
-      double HighValue = 0;
-      double LowValue = 0;
-      double HighValue1 = 0;
-      double LowValue1 = 0;
-      int HighShift = 0;
-      int LowShift = 0;
-      int HighClose = 0;
-      int LowClose = 0;
-      double HighestValue = 0;
-      double LowestValue = 0;
-
-      for (SearchShift = DayStartShift; SearchShift > 1; SearchShift--)
-         {
-         OptimizationComments(" Looking for trades on bar "+SearchShift);
-         //Determine if the bar is the daily start
-         if(TimeDayOfYear(Time[SearchShift]) != TimeDayOfYear(Time[SearchShift + 1]))
-            {
-            DayStartShift = SearchShift;
-            }
-         //Find the end of the range and establish initial high and low
-         if(DayStartShift - SearchShift == InitialRange)
-            {
-            RangeEndShift = SearchShift;
-            HighShift = iHighest(SymbolUsed, 0, MODE_HIGH, DayStartShift - RangeEndShift, RangeEndShift);
-            HighValue = iHigh(SymbolUsed, 0, HighShift);
-            LowShift = iLowest(SymbolUsed, 0, MODE_LOW, DayStartShift - RangeEndShift, RangeEndShift);
-            LowValue = iLow(SymbolUsed, 0, LowShift);
-            }
-         //Determine subsequent high and low
-         if(DayStartShift > RangeEndShift)
-            {
-            if(iHigh(NULL, 0, SearchShift) > HighValue)
-               {
-               HighValue1 = HighValue;
-               HighValue = iHigh(NULL, 0, SearchShift);
-               HighClose = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", HighValue1, SearchShift) + 1);
-               HighestValue = iHigh(SymbolUsed, 0, iHighest(SymbolUsed, 0, MODE_HIGH, SearchShift - HighClose, HighClose));
-               FileWriter(SymbolUsed, TimeHour(iTime(SymbolUsed, 0, SearchShift)), "Breakout", ((HighestValue - HighValue1) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose - 1, SearchShift - HighClose);
-               HighClose = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", HighValue1, SearchShift) + 1);
-               LowestValue = iLow(SymbolUsed, 0,  iLowest(SymbolUsed, 0, MODE_LOW, SearchShift - HighClose, HighClose));
-               FileWriter(SymbolUsed, TimeHour(iTime(SymbolUsed, 0, SearchShift)), "Counter", ((HighValue1 - LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose - 1, SearchShift - HighClose);
-               }
-            if(iLow(NULL, 0, SearchShift) < LowValue)
-               {
-               LowValue1 = LowValue;
-               LowValue = iLow(NULL, 0, SearchShift);
-               LowClose = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", LowValue1, SearchShift) + 1);
-               HighestValue = iHigh(SymbolUsed, 0, iHighest(SymbolUsed, 0, MODE_HIGH, SearchShift - LowClose, LowClose));
-               FileWriter(SymbolUsed, TimeHour(iTime(SymbolUsed, 0, SearchShift)), "Counter", ((HighestValue - LowValue1) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose - 1, SearchShift - LowClose);
-               LowClose = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", LowValue1, SearchShift) + 1);
-               LowestValue = iLow(SymbolUsed, 0, iLowest(SymbolUsed, 0, MODE_LOW, SearchShift - LowClose, LowClose));
-               FileWriter(SymbolUsed, TimeHour(iTime(SymbolUsed, 0, SearchShift)), "Breakout", ((LowValue1 - LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose - 1, SearchShift - LowClose);
-               }
-            }
+            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", LowValue1, SearchShift) + 1);
+            LowestValue = iLow(SymbolUsed, NULL, iLowest(SymbolUsed, NULL, MODE_LOW, SearchShift-LowClose, LowClose));
+            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose-1, SearchShift-LowClose);
          }
+      }
+   }
 
-      //Determine the most profitable combination
-      for(int OptimizeHour = 0; OptimizeHour <= 23; OptimizeHour++)
-         {
-         OptimizeTP(SymbolUsed, OptimizeHour);
-         FileDelete(WindowExpertName()+" "+SymbolUsed+" "+OptimizeHour+".csv");
-         }
-
-
-      return(OptimizeBars);
+   // determine the most profitable combination
+   for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
+      OptimizeTakeProfit(SymbolUsed, OptimizeHour);
+      FileDelete(WindowExpertName() +" "+ SymbolUsed +" "+ OptimizeHour +".csv");
+   }
+   return(OptimizeBars);
 }
 
 
 /**
  *
  */
-void OptimizeTP(string SymbolUsed, int HourUsed) {
-   double BOTPArray[0];
-   double CTTPArray[0];
-   ArrayResize(BOTPArray, 0);
-   ArrayResize(CTTPArray, 0);
-   int Handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" "+HourUsed+".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(Handle == -1) return(0);
-   if(Handle > 0)
-      {
-      while(!FileIsEnding(Handle))
-         {
-         string TPMax = FileReadString(Handle);
-         string CloseDistance = FileReadString(Handle);
-         string CloseSpread = FileReadString(Handle);
-         string FoundStyle = FileReadString(Handle);
+void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
+   double BOTPArray[]; ArrayResize(BOTPArray, 0);
+   double CTTPArray[]; ArrayResize(CTTPArray, 0);
 
-         if(TPMax != "" && FoundStyle == "Breakout")
-            {
-            BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray) + 1) - 1] = StrToDouble(TPMax);
-            //Print(StrToDouble(TPMax));
-            }
-         if(TPMax != "" && FoundStyle == "Counter")
-            {
-            CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray) + 1) - 1] = StrToDouble(TPMax);
-            }
-         OptimizationComments("Reading trade files for "+HourUsed+":00");
-         }
+   int Handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" "+ HourUsed +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   if (Handle == -1) return;
+
+   while (!FileIsEnding(Handle)) {
+      string TPMax         = FileReadString(Handle);
+      string CloseDistance = FileReadString(Handle);
+      string CloseSpread   = FileReadString(Handle);
+      string FoundStyle    = FileReadString(Handle);
+
+      if (TPMax!="" && FoundStyle=="Breakout") {
+         BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray)+1)-1] = StrToDouble(TPMax);
       }
+      if (TPMax!="" && FoundStyle=="Counter") {
+         CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray)+1)-1] = StrToDouble(TPMax);
+      }
+      Comment("Reading trade files for "+ HourUsed +":00");
+   }
    FileClose(Handle);
-   if(ArraySize(BOTPArray) != 0) ArraySort(BOTPArray);
-   if(ArraySize(CTTPArray) != 0) ArraySort(CTTPArray);
 
-   double BOHighProfit;
-   double BOHighTP;
-   double BOHighWinRate;
-   double BOHighRiskReward;
-   double BOHighSuccessScore;
-   double BOArrayNum;
+   if (ArraySize(BOTPArray) != 0) ArraySort(BOTPArray);
+   if (ArraySize(CTTPArray) != 0) ArraySort(CTTPArray);
 
-   for(int BOArray = 0; BOArray < ArraySize(BOTPArray); BOArray++)
-      {
-      //Calculate SL total and TP total for each side.
+   double BOHighProfit, BOHighTP, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, BOArrayNum;
 
-      double BOStopLossValue = StopLoss * (BOArray);
-      double BOTakeProfitValue = BOTPArray[BOArray] * (ArraySize(BOTPArray) - BOArray);
-      double BOProfit = BOTakeProfitValue - BOStopLossValue;
-      double BOWinRate = 1.0 - ((BOArray + 1) * 1.0 / ArraySize(BOTPArray) * 1.0);
-      double BORiskReward = BOTPArray[BOArray] * 1.0 / StopLoss * 1.0;
-      double BOSS = BOWinRate * BORiskReward;
-      //Print("Hour: ", HourUsed, " Array Number: ", BOArray, " Array Total: ", ArraySize(BOTPArray), " Array Value: ", BOTPArray[BOArray], " SL: ", BOStopLossValue, " TP: ", BOTakeProfitValue);
-      int BOhandle = FileOpen(WindowExpertName()+" "+SymbolUsed+" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      if(BOhandle > 0)
-         {
-         FileSeek(BOhandle,0,SEEK_END);
-         FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
-         FileFlush(BOhandle);
-         FileClose(BOhandle);
-         }
+   for (int BOArray=0; BOArray < ArraySize(BOTPArray); BOArray++) {
+      // calculate SL total and TP total for each side
+      double BOStopLossValue   = StopLoss * BOArray;
+      double BOTakeProfitValue = BOTPArray[BOArray] * (ArraySize(BOTPArray)-BOArray);
+      double BOProfit          = BOTakeProfitValue - BOStopLossValue;
+      double BOWinRate         = 1 - ((BOArray+1) * 1.0 / ArraySize(BOTPArray) * 1.0);
+      double BORiskReward      = BOTPArray[BOArray] * 1.0 / StopLoss * 1.0;
+      double BOSS              = BOWinRate * BORiskReward;
 
-      if(BOWinRate >= MinimumWinRate / 100.0 && BORiskReward >= MinimumRiskReward && BOSS >= MinimumSuccessScore)
-         {
-         BOHighProfit = BOProfit;
-         BOHighTP = BOTPArray[BOArray];
-         BOArrayNum = BOArray;
-         BOHighWinRate = BOWinRate * 1.0;
-         BOHighRiskReward = BORiskReward;
+      int BOhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      FileSeek(BOhandle, 0, SEEK_END);
+      FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
+      FileFlush(BOhandle);
+      FileClose(BOhandle);
+
+      if (BOWinRate >= MinimumWinRate/100 && BORiskReward >= MinimumRiskReward && BOSS >= MinimumSuccessScore) {
+         BOHighProfit       = BOProfit;
+         BOHighTP           = BOTPArray[BOArray];
+         BOArrayNum         = BOArray;
+         BOHighWinRate      = BOWinRate * 1.0;
+         BOHighRiskReward   = BORiskReward;
          BOHighSuccessScore = BOSS;
-         }
-      OptimizationComments("Optimizing Breakout for "+HourUsed+":00");
       }
+      Comment("Optimizing Breakout for "+ HourUsed +":00");
+   }
 
-   double CTHighProfit;
-   double CTHighTP;
-   double CTHighWinRate;
-   double CTHighRiskReward;
-   double CTHighSuccessScore;
-   double CTArrayNum;
+   double CTHighProfit, CTHighTP, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, CTArrayNum;
 
-   for(int CTArray = 0; CTArray < ArraySize(CTTPArray); CTArray++)
-      {
-      //Calculate SL total and TP total for each side.
+   for (int CTArray=0; CTArray < ArraySize(CTTPArray); CTArray++) {
+      // calculate SL total and TP total for each side.
+      double CTStopLossValue   = StopLoss * (CTArray);
+      double CTTakeProfitValue = CTTPArray[CTArray] * (ArraySize(CTTPArray)-CTArray);
+      double CTProfit          = CTTakeProfitValue - CTStopLossValue;
+      double CTWinRate         = 1 - ((CTArray+1) * 1.0 / ArraySize(CTTPArray) * 1.0);
+      double CTRiskReward      = CTTPArray[CTArray] * 1.0 / StopLoss * 1.0;
+      double CTSS              = CTWinRate * CTRiskReward;
 
-      double CTStopLossValue = StopLoss * (CTArray);
-      double CTTakeProfitValue = CTTPArray[CTArray] * (ArraySize(CTTPArray) - CTArray);
-      double CTProfit = CTTakeProfitValue - CTStopLossValue;
-      double CTWinRate = 1.0 - ((CTArray + 1) * 1.0 / ArraySize(CTTPArray) * 1.0);
-      double CTRiskReward = CTTPArray[CTArray] * 1.0 / StopLoss * 1.0;
-      double CTSS = CTWinRate * CTRiskReward;
-      //Print("Hour: ", HourUsed, " Array Number: ", CTArray, " Array Total: ", ArraySize(CTTPArray), " Array Value: ", CTTPArray[CTArray], " SL: ", CTStopLossValue, " TP: ", CTTakeProfitValue);
-      int CThandle = FileOpen(WindowExpertName()+" "+SymbolUsed+" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      if(CThandle > 0)
-         {
-         FileSeek(CThandle,0,SEEK_END);
-         FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
-         FileFlush(CThandle);
-         FileClose(CThandle);
-         }
+      int CThandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      FileSeek(CThandle, 0, SEEK_END);
+      FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
+      FileFlush(CThandle);
+      FileClose(CThandle);
 
-      if(CTWinRate >= MinimumWinRate / 100.0 && CTRiskReward >= MinimumRiskReward && CTSS >= MinimumSuccessScore)
-         {
-         CTHighProfit = CTProfit;
-         CTHighTP = CTTPArray[CTArray];
-         CTArrayNum = CTArray;
-         CTHighWinRate = CTWinRate * 1.0;
-         CTHighRiskReward = CTRiskReward;
+      if (CTWinRate >= MinimumWinRate/100 && CTRiskReward >= MinimumRiskReward && CTSS >= MinimumSuccessScore) {
+         CTHighProfit       = CTProfit;
+         CTHighTP           = CTTPArray[CTArray];
+         CTArrayNum         = CTArray;
+         CTHighWinRate      = CTWinRate * 1.0;
+         CTHighRiskReward   = CTRiskReward;
          CTHighSuccessScore = CTSS;
-         }
-      OptimizationComments("Optimizing Counter for "+HourUsed+":00");
       }
+      Comment("Optimizing Counter for "+ HourUsed +":00");
+   }
 
-   double HighTP = -1;
-   double HighProfit = -1;
-   double HighWinRate = -1;
-   double HighRiskReward = -1;
-   double HighSuccessScore = -1;
+   double HighTP=-1, HighProfit=-1, HighWinRate=-1, HighRiskReward=-1, HighSuccessScore=-1;
+   int    ArraySizes=-1, ArrayNum=-1;
    string TradeStyle = "None";
-   int ArraySizes = -1;
-   int ArrayNum = -1;
 
-
-   if((HighestProfit && BOHighProfit > CTHighProfit) || (HighestWinRate && BOHighWinRate > CTHighWinRate) || (HighestRiskReward && BOHighRiskReward > CTHighRiskReward) || (HighestSuccessScore && BOHighSuccessScore > CTHighSuccessScore))
-      {
-      HighTP = BOHighTP;
-      HighProfit = BOHighProfit;
-      HighWinRate = BOHighWinRate * 1.0;
-      HighRiskReward = BOHighRiskReward;
+   if ((HighestProfit && BOHighProfit > CTHighProfit) || (HighestWinRate && BOHighWinRate > CTHighWinRate) || (HighestRiskReward && BOHighRiskReward > CTHighRiskReward) || (HighestSuccessScore && BOHighSuccessScore > CTHighSuccessScore)) {
+      HighTP           = BOHighTP;
+      HighProfit       = BOHighProfit;
+      HighWinRate      = BOHighWinRate * 1.0;
+      HighRiskReward   = BOHighRiskReward;
       HighSuccessScore = BOHighSuccessScore;
-      TradeStyle = "Breakout";
-      ArraySizes = ArraySize(BOTPArray);
-      ArrayNum = BOArrayNum;
-      }
+      TradeStyle       = "Breakout";
+      ArraySizes       = ArraySize(BOTPArray);
+      ArrayNum         = BOArrayNum;
+   }
 
-   if((HighestProfit && CTHighProfit > BOHighProfit) || (HighestWinRate && CTHighWinRate > BOHighWinRate) || (HighestRiskReward && CTHighRiskReward > BOHighRiskReward) || (HighestSuccessScore && CTHighSuccessScore > BOHighSuccessScore))
-      {
-      HighTP = CTHighTP;
-      HighProfit = CTHighProfit;
-      HighWinRate = CTHighWinRate * 1.0;
-      HighRiskReward = CTHighRiskReward;
+   if ((HighestProfit && CTHighProfit > BOHighProfit) || (HighestWinRate && CTHighWinRate > BOHighWinRate) || (HighestRiskReward && CTHighRiskReward > BOHighRiskReward) || (HighestSuccessScore && CTHighSuccessScore > BOHighSuccessScore)) {
+      HighTP           = CTHighTP;
+      HighProfit       = CTHighProfit;
+      HighWinRate      = CTHighWinRate * 1.0;
+      HighRiskReward   = CTHighRiskReward;
       HighSuccessScore = CTHighSuccessScore;
-      TradeStyle = "Counter";
-      ArraySizes = ArraySize(CTTPArray);
-      ArrayNum = CTArrayNum;
-      }
+      TradeStyle       = "Counter";
+      ArraySizes       = ArraySize(CTTPArray);
+      ArrayNum         = CTArrayNum;
+   }
 
-   int handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(handle > 0)
-      {
-      FileSeek(handle,0,SEEK_END);
-      FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
-      FileFlush(handle);
-      FileClose(handle);
-      }
+   int handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(handle, 0, SEEK_END);
+   FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
+   FileFlush(handle);
+   FileClose(handle);
 
-   int Mainhandle = FileOpen(WindowExpertName()+" "+SymbolUsed+" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(Mainhandle > 0)
-      {
-      FileSeek(Mainhandle,0,SEEK_END);
-      FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
-      FileFlush(Mainhandle);
-      FileClose(Mainhandle);
-      }
-   Mainhandle = FileOpen(WindowExpertName()+" "+SymbolUsed+" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(Mainhandle > 0)
-      {
-      FileSeek(Mainhandle,0,SEEK_END);
-      FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
-      FileFlush(Mainhandle);
-      FileClose(Mainhandle);
-      }
+   int Mainhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed+ " All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(Mainhandle, 0, SEEK_END);
+   FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
+   FileFlush(Mainhandle);
+   FileClose(Mainhandle);
+
+   Mainhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(Mainhandle, 0, SEEK_END);
+   FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
+   FileFlush(Mainhandle);
+   FileClose(Mainhandle);
 }
 
 
 /**
  *
  */
-string FileWriter(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
-   int handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" "+TradeHour+".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(handle > 0)
-      {
-      FileSeek(handle,0,SEEK_END);
-      FileWrite(handle, TPMax, CloseDistance, CloseSpread, TradeStyle);
-      FileFlush(handle);
-      FileClose(handle);
-      }
-   handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(handle > 0)
-      {
-      FileSeek(handle,0,SEEK_END);
-      FileWrite(handle, TradeHour, TradeStyle, TPMax, CloseDistance, CloseSpread);
-      FileFlush(handle);
-      FileClose(handle);
-      }
+string WriteFile(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
+   int handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" "+ TradeHour +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(handle, 0, SEEK_END);
+   FileWrite(handle, TPMax, CloseDistance, CloseSpread, TradeStyle);
+   FileFlush(handle);
+   FileClose(handle);
+
+   handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(handle, 0, SEEK_END);
+   FileWrite(handle, TradeHour, TradeStyle, TPMax, CloseDistance, CloseSpread);
+   FileFlush(handle);
+   FileClose(handle);
 }
 
 
@@ -901,33 +682,27 @@ string FileWriter(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax
 int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int Shift) {
    double TargetPrice = 0;
 
-   if(Direction == "Long")
-      {
-      if(!ReverseTrades) TargetPrice = EntryPrice - (StopLoss * MarketInfo(SymbolUsed, MODE_POINT));
-      if(ReverseTrades)  TargetPrice = EntryPrice - (TakeProfit * MarketInfo(SymbolUsed, MODE_POINT));
-      }
-   if(Direction == "Short")
-      {
-      if(!ReverseTrades) TargetPrice = EntryPrice + (StopLoss * MarketInfo(SymbolUsed, MODE_POINT));
-      if(ReverseTrades)  TargetPrice = EntryPrice + (TakeProfit * MarketInfo(SymbolUsed, MODE_POINT));
-      }
-   for (int FShift = Shift; FShift > 0; FShift--)
-      {
-      if(Direction == "Long")
-         {
-         if(iHigh(SymbolUsed, 0, FShift) >= TargetPrice && iLow(SymbolUsed, 0, FShift) <= TargetPrice)
-            {
+   if (Direction == "Long") {
+      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss   * MarketInfo(SymbolUsed, MODE_POINT);
+      else                TargetPrice = EntryPrice - TakeProfit * MarketInfo(SymbolUsed, MODE_POINT);
+   }
+   if (Direction == "Short") {
+      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss   * MarketInfo(SymbolUsed, MODE_POINT);
+      else                TargetPrice = EntryPrice + TakeProfit * MarketInfo(SymbolUsed, MODE_POINT);
+   }
+
+   for (int FShift=Shift; FShift > 0; FShift--) {
+      if (Direction == "Long") {
+         if (iHigh(SymbolUsed, NULL, FShift) >= TargetPrice && iLow(SymbolUsed, NULL, FShift) <= TargetPrice) {
             return(FShift);
-            }
-         }
-      if(Direction == "Short")
-         {
-         if(iHigh(SymbolUsed, 0, FShift) >= TargetPrice && iLow(SymbolUsed, 0, FShift) <= TargetPrice)
-            {
-            return(FShift);
-            }
          }
       }
+      if (Direction == "Short") {
+         if (iHigh(SymbolUsed, NULL, FShift) >= TargetPrice && iLow(SymbolUsed, NULL, FShift) <= TargetPrice) {
+            return(FShift);
+         }
+      }
+   }
    return(0);
 }
 
@@ -938,110 +713,9 @@ int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int 
 void DeleteFile(string FileName) {
    int DeleteHandle = FileOpen(FileName, FILE_CSV|FILE_READ, ';');
 
-   if(DeleteHandle > 0)
-      {
+   if (DeleteHandle > 0) {
       FileClose(DeleteHandle);
       FileDelete(FileName);
-      }
+   }
    return(0);
-}
-
-
-/**
- *
- */
-void OptimizationComments(string OptimizationStatus) {
-   static string Process   = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process1  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process2  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process3  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process4  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process5  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process6  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process7  = "RRRRRR               RRRRRRR             RRRRRRRRRRRRR.....";
-   static string Process8  = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
-   static string Process9  = "RRRRRR   RRRRRR  RRRRRR  RRRRRRR   RRRRRRRRRR.....         ";
-   static string Process10 = "RRRRRR   RRRRRR  RRRRRR  RRRRRR   RRRRRRRRRRR.....         ";
-   static string Process11 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
-   static string Process12 = "RRRRRR             RRRRRRRR           RRRRRRRRRRRRRR.....  ";
-   static string Process13 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
-   static string Process14 = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
-   static string Process15 = "RRRRRR   RRRRRR    RRRRR  RRRRRR   RRRRRRRRRRR.....        ";
-   static string Process16 = "RRRRRR   RRRRRR    RRRRR  RRRRRRR     RRRRRRRRR.....       ";
-   static string Process17 = "RRRRRR   RRRRRRR    RRRR  RRRRRRR     RRRRRRRRR.....       ";
-   static string Process18 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process19 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process20 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process21 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process22 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process23 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-   static string Process24 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-
-   if(AnimateOptimization)
-      {
-      Process = ShiftString(Process);
-      Process1 = ShiftString(Process1);
-      Process2 = ShiftString(Process2);
-      Process3 = ShiftString(Process3);
-      Process4 = ShiftString(Process4);
-      Process5 = ShiftString(Process5);
-      Process6 = ShiftString(Process6);
-      Process7 = ShiftString(Process7);
-      Process8 = ShiftString(Process8);
-      Process9 = ShiftString(Process9);
-      Process10 = ShiftString(Process10);
-      Process11 = ShiftString(Process11);
-      Process12 = ShiftString(Process12);
-      Process13 = ShiftString(Process13);
-      Process14 = ShiftString(Process14);
-      Process15 = ShiftString(Process15);
-      Process16 = ShiftString(Process16);
-      Process17 = ShiftString(Process17);
-      Process18 = ShiftString(Process18);
-      Process19 = ShiftString(Process19);
-      Process20 = ShiftString(Process20);
-      Process21 = ShiftString(Process21);
-      Process22 = ShiftString(Process22);
-      Process23 = ShiftString(Process23);
-      Process24 = ShiftString(Process24);
-      }
-
-   Comment(Process+ "\n",
-           Process1+ "\n",
-           Process2+ "\n",
-           Process3+ "\n",
-           Process4+ "\n",
-           Process5+ "\n",
-           Process6+ "\n",
-           Process7+ "\n",
-           Process8+ "\n",
-           Process9+ "\n",
-           Process10+ "\n",
-           Process11+ "\n",
-           Process12+ "\n",
-           Process13+ "\n",
-           Process14+ "\n",
-           Process15+ "\n",
-           Process16+ "\n",
-           Process17+ "\n",
-           Process18+ "\n",
-           Process19+ "\n",
-           Process20+ "\n",
-           Process21+ "\n",
-           Process22+ "\n",
-           Process23+ "\n",
-           Process24+ "\n",
-           OptimizationStatus);
-   return(0);
-}
-
-
-/**
- *
- */
-string ShiftString(string StringShift) {
-   string Process1 = StringSubstr(StringShift, 0, 1);
-   string Process2 = StringSubstr(StringShift, 1, StringLen(StringShift) - 1);
-   StringShift = Process2 + Process1;
-   return(StringShift);
 }
