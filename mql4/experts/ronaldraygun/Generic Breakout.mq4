@@ -1,5 +1,5 @@
 /**
- * Rewritten Generic Breakout EA v7
+ * Rewritten Generic Breakout EA v7. Work-in-progress, don't use for real trading!
  *
  * History:
  *  - removed tickdatabase functionality

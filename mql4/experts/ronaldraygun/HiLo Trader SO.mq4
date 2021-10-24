@@ -1,7 +1,7 @@
 /**
  * Self-Optimizing HiLo Trader
  *
- * Rewritten version of the concept published by FF user Ronald Raygun.
+ * Rewritten version of the concept published by FF user Ronald Raygun. Work-in-progress, don't use for real trading!
  *
  *
  * Changes:
