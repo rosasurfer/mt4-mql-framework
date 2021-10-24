@@ -1,16 +1,16 @@
 /**
  * Rewritten Generic Breakout EA v7. Work-in-progress, don't use for real trading!
  *
- * History:
- *  - removed tickdatabase functionality
- *  - removed obsolete parts and simplified logic
  *
- * @source  https://www.forexfactory.com/thread/post/3775867#post3775867                 [Ronald Raygun: Generic Breakout v7]
+ * Changes:
+ *  - removed obsolete parts: tick db, signaling
+ *  - simplified and slimmed down everything
+ *
+ *
+ * @source  https://www.forexfactory.com/thread/post/3775867#post3775867                      [@rraygun: Generic Breakout v7]
  */
 extern string Remark1 = "== Main Settings ==";
 extern int    MagicNumber = 0;
-extern bool   Alerts = false;
-extern bool   PlaySounds = false;
 extern bool   UseTradingTimes = false;
 extern int    StartHour = 0;
 extern int    StartMinute = 0;
@@ -84,12 +84,6 @@ int      TradeBar;
 int      TradesThisBar;
 int      OpenBarCount;
 int      CloseBarCount;
-
-int      LongSoundSignalBarCount;
-int      ShortSoundSignalBarCount;
-int      LongAlertSignalBarCount;
-int      ShortAlertSignalBarCount;
-
 int      Current;
 bool     TickCheck = false;
 
@@ -100,10 +94,8 @@ bool     TickCheck = false;
  * @return int - error status
  */
 int init() {
-   OpenBarCount             = Bars;
-   CloseBarCount            = Bars;
-   LongAlertSignalBarCount  = Bars;
-   ShortAlertSignalBarCount = Bars;
+   OpenBarCount  = Bars;
+   CloseBarCount = Bars;
 
    if (EachTickMode) Current = 0;
    else              Current = 1;
@@ -404,14 +396,8 @@ int start() {
          }
 
          Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage.Points, StopLossLevel, TakeProfitLevel, "breakout long", MagicNumber, 0, DodgerBlue);
-         if (Ticket > 0) {
-            if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-               if (Alerts     && LongAlertSignalBarCount != Bars) LongAlertSignalBarCount = Bars;
-               if (PlaySounds && LongSoundSignalBarCount != Bars) LongSoundSignalBarCount = Bars;
-               TradesThisBar++;
-            }
-            else Alert("Error opening long order: ", GetLastError());
-         }
+         TradesThisBar++;
+
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
          return(0);
@@ -434,14 +420,8 @@ int start() {
          }
 
          Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage.Points, StopLossLevel, TakeProfitLevel, "breakout short", MagicNumber, 0, DeepPink);
-         if (Ticket > 0) {
-            if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
-               if (Alerts     && ShortAlertSignalBarCount != Bars) ShortAlertSignalBarCount = Bars;
-               if (PlaySounds && ShortSoundSignalBarCount != Bars) ShortSoundSignalBarCount = Bars;
-               TradesThisBar++;
-            }
-            else Alert("Error opening short order: ", GetLastError());
-         }
+         TradesThisBar++;
+
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
          return(0);
