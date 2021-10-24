@@ -1,5 +1,5 @@
 /**
- * Rewritten HiLo Self-Optimizing Trader originally published by Ronald Raygun.
+ * Rewritten Self-Optimizing HiLo Trader originally published by Ronald Raygun.
  *
  * History:
  *  - removed tickdatabase functionality
@@ -14,421 +14,322 @@
 #define SIGNAL_CLOSEBUY 3
 #define SIGNAL_CLOSESELL 4
 
-extern string Remark1 = "== Main Settings ==";
-extern int MagicNumber = 0;
-extern bool SignalsOnly = false;
-extern bool Alerts = false;
-extern bool PlaySounds = false;
-extern int SleepTime = 100;
-extern bool EachTickMode = true;
-extern bool AnimateOptimization = true;
-extern int MaxSimultaneousTrades = 10;
-extern double Lots = 00.1;
-extern bool MoneyManagement = false;
-extern int Risk = 0;
-extern int Slippage = 5;
-extern  bool UseStopLoss = true;
-extern int StopLoss = 200;
-extern bool UseTakeProfit = true;
-extern int TakeProfit = 200;
-extern bool UseTrailingStop = false;
-extern int TrailingStop = 30;
-extern bool MoveStopOnce = false;
-extern int MoveStopWhenPrice = 50;
-extern int MoveStopTo = 1;
+extern string Remark1               = "== Main Settings ==";
+extern int    MagicNumber           = 0;
+extern bool   SignalsOnly           = false;
+extern bool   Alerts                = false;
+extern bool   PlaySounds            = false;
+extern int    SleepTime             = 100;
+extern bool   EachTickMode          = true;
+extern bool   AnimateOptimization   = true;
+extern int    MaxSimultaneousTrades = 10;
+extern double Lots                  = 0.1;
+extern bool   MoneyManagement       = false;
+extern int    Risk                  = 0;
+extern int    Slippage              = 5;
+extern bool   UseStopLoss           = true;
+extern int    StopLoss              = 200;
+extern bool   UseTakeProfit         = true;
+extern int    TakeProfit            = 200;
+extern bool   UseTrailingStop       = false;
+extern int    TrailingStop          = 30;
+extern bool   MoveStopOnce          = false;
+extern int    MoveStopWhenPrice     = 50;
+extern int    MoveStopTo            = 1;
 
-extern string Remark2 = "== Breakout Settings ==";
-extern int BarsToOptimize = 0;
-extern int InitialRange = 60;
-extern int MaximumBarShift = 1440;
-extern double MinimumWinRate = 50;
-extern double MinimumRiskReward = 0;
-extern double MinimumSuccessScore = 0;
-extern int MinimumSampleSize = 10;
-extern bool ReverseTrades = false;
+extern string Remark2               = "== Breakout Settings ==";
+extern int    BarsToOptimize        = 0;
+extern int    InitialRange          = 60;
+extern int    MaximumBarShift       = 1440;
+extern double MinimumWinRate        = 50;
+extern double MinimumRiskReward     = 0;
+extern double MinimumSuccessScore   = 0;
+extern int    MinimumSampleSize     = 10;
+extern bool   ReverseTrades         = false;
 
-extern string Remark3 = "== Optimize Based On ==";
-extern bool HighestProfit = false;
-extern bool HighestWinRate = false;
-extern bool HighestRiskReward = false;
-extern bool HighestSuccessScore = true;
+extern string Remark3               = "== Optimize Based On ==";
+extern bool   HighestProfit         = false;
+extern bool   HighestWinRate        = false;
+extern bool   HighestRiskReward     = false;
+extern bool   HighestSuccessScore   = true;
 
 
-int GMTBar;
-string GMTTime;
-string BrokerTime;
-int GMTShift;
+int      GMTBar;
+string   GMTTime;
+string   BrokerTime;
+int      GMTShift;
 
 datetime CurGMTTime;
 datetime CurBrokerTime;
 datetime CurrentGMTTime;
 
-int TradeBar;
-int TradesThisBar;
+int      TradeBar;
+int      TradesThisBar;
+int      OpenBarCount;
+int      CloseBarCount;
+int      LongSoundSignalBarCount;
+int      ShortSoundSignalBarCount;
+int      LongAlertSignalBarCount;
+int      ShortAlertSignalBarCount;
 
-int OpenBarCount;
-int CloseBarCount;
+int      Current;
+bool     TickCheck = false;
+int      PipPoints = 1;
 
-int LongSoundSignalBarCount;
-int ShortSoundSignalBarCount;
 
-int LongAlertSignalBarCount;
-int ShortAlertSignalBarCount;
-
-double BrokerMultiplier = 1;
-
-int Current;
-bool TickCheck = false;
-//+------------------------------------------------------------------+
-//| expert initialization function                                   |
-//+------------------------------------------------------------------+
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
 int init() {
-   OpenBarCount = Bars;
-   CloseBarCount = Bars;
-
-   LongSoundSignalBarCount = Bars;
+   OpenBarCount             = Bars;
+   CloseBarCount            = Bars;
+   LongSoundSignalBarCount  = Bars;
    ShortSoundSignalBarCount = Bars;
-
-   LongAlertSignalBarCount = Bars;
+   LongAlertSignalBarCount  = Bars;
    ShortAlertSignalBarCount = Bars;
 
+   if (Digits==3 || Digits==5) {
+      PipPoints = 10;
+   }
+
+   if (EachTickMode) Current = 0;
+   else              Current = 1;
+
+   if (!IsTesting()) MasterFunction();
+
+   return(0);
+}
 
 
-   if(Digits == 3 || Digits == 5)
-      {
-      BrokerMultiplier = 10;
+/**
+ * Main function
+ *
+ * @return int - error status
+ */
+int start() {
+   string msg = StartFunction(Symbol());
+   Comment(msg);
+   return(0);
+}
+
+
+/**
+ *
+ */
+void MasterFunction() {
+   int CycleCount, LastTick;
+   datetime LastComputerStart, LastComputerStop, LastServerStart, LastServerStop;
+   int StartTime, TotalTime;
+   string CommentString, Rates = "None";
+
+   while (true) {
+      string ServerStartDayOfWeek = "";
+      switch (TimeDayOfWeek(LastServerStart)) {
+         case 0: ServerStartDayOfWeek = "Sunday";    break;
+         case 1: ServerStartDayOfWeek = "Monday";    break;
+         case 2: ServerStartDayOfWeek = "Tuesday";   break;
+         case 3: ServerStartDayOfWeek = "Wednesday"; break;
+         case 4: ServerStartDayOfWeek = "Thursday";  break;
+         case 5: ServerStartDayOfWeek = "Friday";    break;
+         case 6: ServerStartDayOfWeek = "Saturday";  break;
       }
 
-
-   if (EachTickMode) Current = 0; else Current = 1;
-
-   if (!IsTesting() && !IsOptimization()) {
-      MasterFunction();
-   }
-   return(0);
-}
-//+------------------------------------------------------------------+
-//| expert deinitialization function                                 |
-//+------------------------------------------------------------------+
-int deinit() {
-   return(0);
-}
-//+------------------------------------------------------------------+
-//| expert start function                                            |
-//+------------------------------------------------------------------+
-
-int start() {
-   Comment(StartFunction(Symbol()));
-   return(0);
-}
-
-void MasterFunction()
-   {
-   int CycleCount = 0;
-   int LastTick = 0;
-   datetime LastComputerStart;
-   datetime LastServerStart;
-   datetime LastComputerStop;
-   datetime LastServerStop;
-   int StartTime;
-   string CommentString;
-   int TotalTime;
-   string Rates = "None";
-
-
-   while(1 == 1)
-      {
-      string ServerStartDayOfWeek = "";
-      switch(TimeDayOfWeek(LastServerStart))
-         {
-         case 0:
-            ServerStartDayOfWeek = "Sunday";
-            break;
-         case 1:
-            ServerStartDayOfWeek = "Monday";
-            break;
-         case 2:
-            ServerStartDayOfWeek = "Tuesday";
-            break;
-         case 3:
-            ServerStartDayOfWeek = "Wednesday";
-            break;
-         case 4:
-            ServerStartDayOfWeek = "Thursday";
-            break;
-         case 5:
-            ServerStartDayOfWeek = "Friday";
-            break;
-         case 6:
-            ServerStartDayOfWeek = "Saturday";
-            break;
-         }
-
       string TerminalStartDayOfWeek = "";
-      switch(TimeDayOfWeek(LastComputerStart))
-         {
-         case 0:
-            TerminalStartDayOfWeek = "Sunday";
-            break;
-         case 1:
-            TerminalStartDayOfWeek = "Monday";
-            break;
-         case 2:
-            TerminalStartDayOfWeek = "Tuesday";
-            break;
-         case 3:
-            TerminalStartDayOfWeek = "Wednesday";
-            break;
-         case 4:
-            TerminalStartDayOfWeek = "Thursday";
-            break;
-         case 5:
-            TerminalStartDayOfWeek = "Friday";
-            break;
-         case 6:
-            TerminalStartDayOfWeek = "Saturday";
-            break;
-         }
+      switch (TimeDayOfWeek(LastComputerStart)) {
+         case 0: TerminalStartDayOfWeek = "Sunday";    break;
+         case 1: TerminalStartDayOfWeek = "Monday";    break;
+         case 2: TerminalStartDayOfWeek = "Tuesday";   break;
+         case 3: TerminalStartDayOfWeek = "Wednesday"; break;
+         case 4: TerminalStartDayOfWeek = "Thursday";  break;
+         case 5: TerminalStartDayOfWeek = "Friday";    break;
+         case 6: TerminalStartDayOfWeek = "Saturday";  break;
+      }
+
       string ServerStopDayOfWeek = "";
-      switch(TimeDayOfWeek(LastServerStop))
-         {
-         case 0:
-            ServerStopDayOfWeek = "Sunday";
-            break;
-         case 1:
-            ServerStopDayOfWeek = "Monday";
-            break;
-         case 2:
-            ServerStopDayOfWeek = "Tuesday";
-            break;
-         case 3:
-            ServerStopDayOfWeek = "Wednesday";
-            break;
-         case 4:
-            ServerStopDayOfWeek = "Thursday";
-            break;
-         case 5:
-            ServerStopDayOfWeek = "Friday";
-            break;
-         case 6:
-            ServerStopDayOfWeek = "Saturday";
-            break;
-         }
+      switch (TimeDayOfWeek(LastServerStop)) {
+         case 0: ServerStopDayOfWeek = "Sunday";    break;
+         case 1: ServerStopDayOfWeek = "Monday";    break;
+         case 2: ServerStopDayOfWeek = "Tuesday";   break;
+         case 3: ServerStopDayOfWeek = "Wednesday"; break;
+         case 4: ServerStopDayOfWeek = "Thursday";  break;
+         case 5: ServerStopDayOfWeek = "Friday";    break;
+         case 6: ServerStopDayOfWeek = "Saturday";  break;
+      }
 
       string TerminalStopDayOfWeek = "";
-      switch(TimeDayOfWeek(LastComputerStop))
-         {
-         case 0:
-            TerminalStopDayOfWeek = "Sunday";
-            break;
-         case 1:
-            TerminalStopDayOfWeek = "Monday";
-            break;
-         case 2:
-            TerminalStopDayOfWeek = "Tuesday";
-            break;
-         case 3:
-            TerminalStopDayOfWeek = "Wednesday";
-            break;
-         case 4:
-            TerminalStopDayOfWeek = "Thursday";
-            break;
-         case 5:
-            TerminalStopDayOfWeek = "Friday";
-            break;
-         case 6:
-            TerminalStopDayOfWeek = "Saturday";
-            break;
-         }
+      switch (TimeDayOfWeek(LastComputerStop)) {
+         case 0: TerminalStopDayOfWeek = "Sunday";    break;
+         case 1: TerminalStopDayOfWeek = "Monday";    break;
+         case 2: TerminalStopDayOfWeek = "Tuesday";   break;
+         case 3: TerminalStopDayOfWeek = "Wednesday"; break;
+         case 4: TerminalStopDayOfWeek = "Thursday";  break;
+         case 5: TerminalStopDayOfWeek = "Friday";    break;
+         case 6: TerminalStopDayOfWeek = "Saturday";  break;
+      }
 
-
-      Comment("Last Server Start: "+ServerStartDayOfWeek+" ", TimeToStr(LastServerStart, TIME_DATE|TIME_SECONDS), "\n",
-              "Last Computer Start: "+TerminalStartDayOfWeek+" ", TimeToStr(LastComputerStart, TIME_DATE|TIME_SECONDS), "\n",
-              "Last Server Stop: "+ServerStopDayOfWeek+" ", TimeToStr(LastServerStop, TIME_DATE|TIME_SECONDS), "\n",
-              "Last Computer Stop: "+TerminalStopDayOfWeek+" ", TimeToStr(LastComputerStop, TIME_DATE|TIME_SECONDS), "\n",
-              "Last Calculation took ", TotalTime, " miliseconds. \n",
-              "Refresh Rates: ", Rates, "\n",
-              "Last Tick: ", LastTick, "\n",
-              "Cycle Count: ", CycleCount, "\n",
+      Comment("Last server start: ",    ServerStartDayOfWeek   +" ", TimeToStr(LastServerStart,   TIME_DATE|TIME_SECONDS), "\n",
+              "Last computer start: ",  TerminalStartDayOfWeek +" ", TimeToStr(LastComputerStart, TIME_DATE|TIME_SECONDS), "\n",
+              "Last server stop: ",     ServerStopDayOfWeek    +" ", TimeToStr(LastServerStop,    TIME_DATE|TIME_SECONDS), "\n",
+              "Last computer stop: ",   TerminalStopDayOfWeek  +" ", TimeToStr(LastComputerStop,  TIME_DATE|TIME_SECONDS), "\n",
+              "Last calculation took ", TotalTime, " miliseconds. \n",
+              "Refresh rates: ",        Rates, "\n",
+              "Last tick: ",            LastTick, "\n",
+              "Cycle count: ",          CycleCount, "\n",
               CommentString);
 
-
-      if(RefreshRates())
-         {
+      if (RefreshRates()) {
          LastComputerStart = TimeLocal();
-         LastServerStart = TimeCurrent();
-         StartTime = GetTickCount();
-         CommentString = StartFunction(Symbol());
-
-         TotalTime = GetTickCount() - StartTime;
-         Rates = "true";
+         LastServerStart   = TimeCurrent();
+         StartTime         = GetTickCount();
+         CommentString     = StartFunction(Symbol());
+         TotalTime         = GetTickCount() - StartTime;
+         Rates    = "true";
          LastTick = 0;
-         }
-         else
-         {
+      }
+      else {
          CycleCount++;
          LastTick++;
          Rates = "false";
          Sleep(SleepTime);
-         }
-         LastComputerStop = TimeLocal();
-         LastServerStop = TimeCurrent();
       }
+      LastComputerStop = TimeLocal();
+      LastServerStop   = TimeCurrent();
    }
+}
 
-string StartFunction(string SymbolUsed)
 
-{
+/**
+ *
+ */
+string StartFunction(string SymbolUsed) {
+   int Ticket;
+   double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
+
+   if (EachTickMode && Bars!=CloseBarCount) TickCheck = false;
+   int Total = OrdersTotal();
    int Order = SIGNAL_NONE;
-   int Total, Ticket;
-   double StopLossLevel, TakeProfitLevel;
-   double PotentialStopLoss;
-   double BEven;
-   double TrailStop;
 
-
-
-   if (EachTickMode && Bars != CloseBarCount) TickCheck = false;
-   Total = OrdersTotal();
-   Order = SIGNAL_NONE;
-
-//Limit Trades Per Bar
-if(TradeBar != Bars)
-   {
-   TradeBar = Bars;
-   TradesThisBar = 0;
+   // limit trades per bar
+   if (TradeBar != Bars) {
+      TradeBar      = Bars;
+      TradesThisBar = 0;
    }
 
-
-//Money Management sequence
- if (MoneyManagement)
-   {
-      if (Risk<1 || Risk>100)
-      {
-         Comment("Invalid Risk Value.");
+   // money management sequence
+   if (MoneyManagement) {
+      if (Risk < 1 || Risk > 100) {
+         Comment("Invalid risk value.");
          return(0);
       }
-      else
-      {
-         Lots=MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*BrokerMultiplier*100)/(Ask*MarketInfo(Symbol(),MODE_LOTSIZE)*MarketInfo(Symbol(),MODE_MINLOT)))*MarketInfo(Symbol(),MODE_MINLOT);
+      else {
+         Lots = MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*PipPoints*100) / (Ask*MarketInfo(Symbol(), MODE_LOTSIZE)*MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
       }
    }
 
-   //+------------------------------------------------------------------+
-   //| Variable Begin                                                   |
-   //+------------------------------------------------------------------+
+   // variable begin
+   static int LastCalcDay;
+   static int BarCount;
+   static string LastOptimize;
 
-static int LastCalcDay;
-static int BarCount;
-static string LastOptimize;
-
-if(TimeDayOfYear(TimeCurrent()) != LastCalcDay)
-   {
-   BarCount = SelfOptimize(SymbolUsed);
-   LastCalcDay = TimeDayOfYear(TimeCurrent());
-   LastOptimize = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
+   if (TimeDayOfYear(TimeCurrent()) != LastCalcDay) {
+      BarCount     = SelfOptimize(SymbolUsed);
+      LastCalcDay  = TimeDayOfYear(TimeCurrent());
+      LastOptimize = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
    }
 
-//Determine Day's start
-int DayStart = iBarShift(NULL, 0, StrToTime("00:00"), false);
-int RangeStart = DayStart - InitialRange;
+   // determine day's start
+   int DayStart   = iBarShift(NULL, NULL, StrToTime("00:00"), false);
+   int RangeStart = DayStart - InitialRange;
 
-//Determine Current Hilo
-int HighShift =  iHighest(NULL, 0, MODE_HIGH, RangeStart - 1, 1);
-int LowShift = iLowest(NULL, 0, MODE_LOW, RangeStart - 1, 1);
+   // determine current HiLo
+   int HighShift = iHighest(NULL, NULL, MODE_HIGH, RangeStart-1, 1);
+   int LowShift  =  iLowest(NULL, NULL, MODE_LOW,  RangeStart-1, 1);
 
-double HighPrice = iHigh(NULL, 0, HighShift);
-double LowPrice = iLow(NULL, 0, LowShift);
+   double HighPrice = iHigh(NULL, NULL, HighShift);
+   double LowPrice  =  iLow(NULL, NULL, LowShift);
 
-//Read Back Optimized Values
-static int CurrentHour;
-static int CurrentHighTP;
-static int CurrentHighProfit;
-static double CurrentWinRate;
-static double CurrentRiskReward;
-static double CurrentSuccessScore;
-static string CurrentTradeStyle;
-static int CurrentArraySizes;
-static int CurrentArrayNum;
+   // read back optimization values
+   static int CurrentHour;
+   static int CurrentHighTP;
+   static int CurrentHighProfit;
+   static double CurrentWinRate;
+   static double CurrentRiskReward;
+   static double CurrentSuccessScore;
+   static string CurrentTradeStyle;
+   static int CurrentArraySizes;
+   static int CurrentArrayNum;
 
-if(CurrentHour != TimeHour(TimeCurrent()))
-   int Handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if(Handle == -1)
-      {
-      return(0);
-      }
-   if(Handle > 0)
-      {
-      while(!FileIsEnding(Handle))
-         {
-         int HourUsed = StrToInteger(FileReadString(Handle));
-         int HighTP = StrToInteger(FileReadString(Handle));
-         int HighProfit =  StrToInteger(FileReadString(Handle));
-         double HighWinRate = StrToDouble(FileReadString(Handle));
-         double HighRiskReward = StrToDouble(FileReadString(Handle));
+   if (CurrentHour != TimeHour(TimeCurrent())) {
+      int Handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      if (Handle == -1) return(0);
+   }
+
+   if (Handle > 0) {
+      while (!FileIsEnding(Handle)) {
+         int HourUsed            = StrToInteger(FileReadString(Handle));
+         int HighTP              = StrToInteger(FileReadString(Handle));
+         int HighProfit          = StrToInteger(FileReadString(Handle));
+         double HighWinRate      = StrToDouble(FileReadString(Handle));
+         double HighRiskReward   = StrToDouble(FileReadString(Handle));
          double HighSuccessScore = StrToDouble(FileReadString(Handle));
-         string TradeStyle = FileReadString(Handle);
-         int ArraySizes = StrToInteger(FileReadString(Handle));
-         int ArrayNum = StrToInteger(FileReadString(Handle));
+         string TradeStyle       = FileReadString(Handle);
+         int ArraySizes          = StrToInteger(FileReadString(Handle));
+         int ArrayNum            = StrToInteger(FileReadString(Handle));
 
-         if(HourUsed == TimeHour(TimeCurrent()))
-            {
-            CurrentHour = HourUsed;
-            CurrentHighTP = HighTP;
-            CurrentHighProfit = HighProfit;
-            CurrentWinRate = HighWinRate;
-            CurrentRiskReward = HighRiskReward;
+         if (HourUsed == TimeHour(TimeCurrent())) {
+            CurrentHour         = HourUsed;
+            CurrentHighTP       = HighTP;
+            CurrentHighProfit   = HighProfit;
+            CurrentWinRate      = HighWinRate;
+            CurrentRiskReward   = HighRiskReward;
             CurrentSuccessScore = HighSuccessScore;
-            CurrentTradeStyle = TradeStyle;
-            CurrentArraySizes = ArraySizes;
-            CurrentArrayNum = ArrayNum;
+            CurrentTradeStyle   = TradeStyle;
+            CurrentArraySizes   = ArraySizes;
+            CurrentArrayNum     = ArrayNum;
             break;
-            }
          }
       }
-   if(Handle > 0) FileClose(Handle);
-
-if(!ReverseTrades) TakeProfit = CurrentHighTP;
-if(ReverseTrades) StopLoss = CurrentHighTP;
-
-//Count Number of open trades
-int TradeCount = 0;
-for(int OT = OrdersTotal(); OT >= 0; OT--)
-   {
-   OrderSelect(OT, SELECT_BY_POS, MODE_TRADES);
-   if(OrderMagicNumber() == MagicNumber && OrderSymbol() == SymbolUsed && (OrderType() == OP_BUY || OrderType() == OP_SELL)) TradeCount++;
+      FileClose(Handle);
    }
 
-string TradeTrigger1 = "None";
-if((TradeCount < MaxSimultaneousTrades || MaxSimultaneousTrades == 0) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle == "Breakout" && Close[Current] > HighPrice) TradeTrigger1 = "Open Long";
-if((TradeCount < MaxSimultaneousTrades || MaxSimultaneousTrades == 0) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle == "Counter" && Close[Current] > HighPrice) TradeTrigger1 = "Open Short";
-if((TradeCount < MaxSimultaneousTrades || MaxSimultaneousTrades == 0) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle == "Breakout" && Close[Current] < LowPrice) TradeTrigger1 = "Open Short";
-if((TradeCount < MaxSimultaneousTrades || MaxSimultaneousTrades == 0) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle == "Counter" && Close[Current] < LowPrice) TradeTrigger1 = "Open Long";
+   if (!ReverseTrades) TakeProfit = CurrentHighTP;
+   else                StopLoss   = CurrentHighTP;
 
-string TradeTrigger = TradeTrigger1;
-if(ReverseTrades && TradeTrigger1 == "Open Long") TradeTrigger = "Open Short";
-if(ReverseTrades && TradeTrigger1 == "Open Short") TradeTrigger = "Open Long";
+   // count number of open trades
+   int TradeCount = 0;
+   for (int OT=OrdersTotal(); OT >= 0; OT--) {
+      OrderSelect(OT, SELECT_BY_POS, MODE_TRADES);
+      if (OrderMagicNumber()==MagicNumber && OrderSymbol()==SymbolUsed && OrderType()<=OP_SELL) TradeCount++;
+   }
 
-string CommentString = StringConcatenate("Last Optimized: ", LastOptimize, "\n",
-                                         "Bars Used: ", BarCount, "\n",
-                                         "Total Bars: ", Bars, "\n",
-                                         "Current Hour: ", CurrentHour, "\n",
-                                         "Current TP: ", CurrentHighTP, "\n",
-                                         "Current Win Rate: ", CurrentWinRate * 100.0, "% (", MinimumWinRate, ")\n",
-                                         "Current Risk Reward: ", CurrentRiskReward, " (", MinimumRiskReward, ")\n",
-                                         "Current Success Score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")\n",
-                                         "Array Win: ", CurrentArraySizes - CurrentArrayNum - 1, "\n",
-                                         "Array Lose: ", CurrentArrayNum + 1, "\n",
-                                         "Total Array: ", CurrentArraySizes, "\n",
-                                         "Total Open Trades: ", TradeCount, "\n",
-                                         "Trade Style: ", CurrentTradeStyle, "\n",
-                                         "Trade Trigger: ", TradeTrigger);
+   string TradeTrigger1 = "None";
+   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger1 = "Open Long";
+   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger1 = "Open Short";
+   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger1 = "Open Short";
+   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger1 = "Open Long";
 
-   //+------------------------------------------------------------------+
-   //| Variable End                                                     |
-   //+------------------------------------------------------------------+
+   string TradeTrigger = TradeTrigger1;
+   if (ReverseTrades && TradeTrigger1=="Open Long")  TradeTrigger = "Open Short";
+   if (ReverseTrades && TradeTrigger1=="Open Short") TradeTrigger = "Open Long";
 
-   //Check position
+   string CommentString = StringConcatenate("Last optimization: ", LastOptimize, "\n",
+                                            "Bars used: ", BarCount, "\n",
+                                            "Total bars: ", Bars, "\n",
+                                            "Current hour: ", CurrentHour, "\n",
+                                            "Current TP: ", CurrentHighTP, "\n",
+                                            "Current win rate: ", CurrentWinRate * 100.0, "% (", MinimumWinRate, ")\n",
+                                            "Current risk reward: ", CurrentRiskReward, " (", MinimumRiskReward, ")\n",
+                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")\n",
+                                            "Array win: ", CurrentArraySizes - CurrentArrayNum - 1, "\n",
+                                            "Array lose: ", CurrentArrayNum + 1, "\n",
+                                            "Total array: ", CurrentArraySizes, "\n",
+                                            "Total open Trades: ", TradeCount, "\n",
+                                            "Trade style: ", CurrentTradeStyle, "\n",
+                                            "Trade trigger: ", TradeTrigger);
+
+   // check position
    bool IsTrade = false;
 
    for (int i = 0; i < Total; i ++) {
@@ -618,8 +519,10 @@ IsTrade = false;
 }
 
 
-double BreakEvenValue (bool Decision, int OrderTicketNum, int MoveStopTo, int MoveStopwhenPrice)
-   {
+/**
+ *
+ */
+double BreakEvenValue(bool Decision, int OrderTicketNum, int MoveStopTo, int MoveStopwhenPrice) {
    //Select the appropriate order ticket
    OrderSelect(OrderTicketNum, SELECT_BY_TICKET, MODE_TRADES);
 
@@ -654,10 +557,13 @@ double BreakEvenValue (bool Decision, int OrderTicketNum, int MoveStopTo, int Mo
       }
 
    if(OrderType() != OP_BUY || OrderType() != OP_SELL) return(0);
-   }
+}
 
-double TrailingStopValue (bool Decision, int OrderTicketNum, int TrailingStop)
-   {
+
+/**
+ *
+ */
+double TrailingStopValue(bool Decision, int OrderTicketNum, int TrailingStop) {
    //Select the appropriate order ticket
    OrderSelect(OrderTicketNum, SELECT_BY_TICKET, MODE_TRADES);
 
@@ -691,10 +597,13 @@ double TrailingStopValue (bool Decision, int OrderTicketNum, int TrailingStop)
       }
    //If the trade is not the right order type, give a stoploss of 0
    if(OrderType() != OP_BUY || OrderType() != OP_SELL) return(0);
-   }
+}
 
-int SelfOptimize(string SymbolUsed)
-      {
+
+/**
+ *
+ */
+int SelfOptimize(string SymbolUsed) {
       int OptimizeBars;
       for(int H = 0; H <= 23; H++)
       {
@@ -785,10 +694,13 @@ int SelfOptimize(string SymbolUsed)
 
 
       return(OptimizeBars);
-      }
+}
 
-void OptimizeTP(string SymbolUsed, int HourUsed)
-   {
+
+/**
+ *
+ */
+void OptimizeTP(string SymbolUsed, int HourUsed) {
    double BOTPArray[0];
    double CTTPArray[0];
    ArrayResize(BOTPArray, 0);
@@ -957,10 +869,13 @@ void OptimizeTP(string SymbolUsed, int HourUsed)
       FileFlush(Mainhandle);
       FileClose(Mainhandle);
       }
-   }
+}
 
-string FileWriter(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread)
-   {
+
+/**
+ *
+ */
+string FileWriter(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
    int handle = FileOpen(WindowExpertName()+" "+SymbolUsed+" "+TradeHour+".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    if(handle > 0)
       {
@@ -977,10 +892,13 @@ string FileWriter(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax
       FileFlush(handle);
       FileClose(handle);
       }
-   }
+}
 
-int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int Shift)
-   {
+
+/**
+ *
+ */
+int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int Shift) {
    double TargetPrice = 0;
 
    if(Direction == "Long")
@@ -1011,11 +929,13 @@ int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int 
          }
       }
    return(0);
-   }
+}
 
 
-void DeleteFile(string FileName)
-   {
+/**
+ *
+ */
+void DeleteFile(string FileName) {
    int DeleteHandle = FileOpen(FileName, FILE_CSV|FILE_READ, ';');
 
    if(DeleteHandle > 0)
@@ -1024,38 +944,38 @@ void DeleteFile(string FileName)
       FileDelete(FileName);
       }
    return(0);
-   }
+}
 
 
-void OptimizationComments(string OptimizationStatus)
-   {
-   //static string Process = ".................Optimizing.................Original EA Concept by Ronald Raygun (TM)......Contact Ronald Raygun on www.ForexFactory.com for more details.";
-
-  static string Process = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process1 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process2 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process3 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process4 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process5 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process6 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
- static string Process7 = "RRRRRR               RRRRRRR             RRRRRRRRRRRRR.....";
- static string Process8 = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
- static string Process9 = "RRRRRR   RRRRRR  RRRRRR  RRRRRRR   RRRRRRRRRR.....         ";
-static string Process10 = "RRRRRR   RRRRRR  RRRRRR  RRRRRR   RRRRRRRRRRR.....         ";
-static string Process11 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
-static string Process12 = "RRRRRR             RRRRRRRR           RRRRRRRRRRRRRR.....  ";
-static string Process13 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
-static string Process14 = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
-static string Process15 = "RRRRRR   RRRRRR    RRRRR  RRRRRR   RRRRRRRRRRR.....        ";
-static string Process16 = "RRRRRR   RRRRRR    RRRRR  RRRRRRR     RRRRRRRRR.....       ";
-static string Process17 = "RRRRRR   RRRRRRR    RRRR  RRRRRRR     RRRRRRRRR.....       ";
-static string Process18 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process19 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process20 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process21 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process22 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process23 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
-static string Process24 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+/**
+ *
+ */
+void OptimizationComments(string OptimizationStatus) {
+   static string Process   = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process1  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process2  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process3  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process4  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process5  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process6  = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process7  = "RRRRRR               RRRRRRR             RRRRRRRRRRRRR.....";
+   static string Process8  = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
+   static string Process9  = "RRRRRR   RRRRRR  RRRRRR  RRRRRRR   RRRRRRRRRR.....         ";
+   static string Process10 = "RRRRRR   RRRRRR  RRRRRR  RRRRRR   RRRRRRRRRRR.....         ";
+   static string Process11 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
+   static string Process12 = "RRRRRR             RRRRRRRR           RRRRRRRRRRRRRR.....  ";
+   static string Process13 = "RRRRRR   RRRRR  RRRRRRR  RRRRR   RRRRRRRRRRRR.....         ";
+   static string Process14 = "RRRRRR   RRRRR    RRRRRR  RRRRRR   RRRRRRRRRRR.....        ";
+   static string Process15 = "RRRRRR   RRRRRR    RRRRR  RRRRRR   RRRRRRRRRRR.....        ";
+   static string Process16 = "RRRRRR   RRRRRR    RRRRR  RRRRRRR     RRRRRRRRR.....       ";
+   static string Process17 = "RRRRRR   RRRRRRR    RRRR  RRRRRRR     RRRRRRRRR.....       ";
+   static string Process18 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process19 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process20 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process21 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process22 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process23 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
+   static string Process24 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....              ";
 
    if(AnimateOptimization)
       {
@@ -1112,14 +1032,16 @@ static string Process24 = "RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR.....        
            Process23+ "\n",
            Process24+ "\n",
            OptimizationStatus);
-   //Sleep(100);
    return(0);
-   }
+}
 
-string ShiftString(string StringShift)
-   {
+
+/**
+ *
+ */
+string ShiftString(string StringShift) {
    string Process1 = StringSubstr(StringShift, 0, 1);
    string Process2 = StringSubstr(StringShift, 1, StringLen(StringShift) - 1);
    StringShift = Process2 + Process1;
    return(StringShift);
-   }
+}
