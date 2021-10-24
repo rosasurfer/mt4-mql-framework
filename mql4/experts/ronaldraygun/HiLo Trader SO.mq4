@@ -3,11 +3,10 @@
  *
  * Rewritten version of the concept published by FF user Ronald Raygun. Work-in-progress, don't use for real trading!
  *
- *
  * Changes:
- *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation
+ *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
+ *  - restored regular start() function
  *  - simplified and slimmed down everything
- *
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -20,7 +19,6 @@
 
 extern string Remark1               = "== Main Settings ==";
 extern int    MagicNumber           = 0;
-extern int    SleepTime             = 100;
 extern bool   EachTickMode          = true;
 extern int    MaxSimultaneousTrades = 10;
 extern double Lots                  = 0.1;
@@ -87,8 +85,6 @@ int init() {
    if (EachTickMode) Current = 0;
    else              Current = 1;
 
-   if (!IsTesting()) MasterFunction();
-
    return(0);
 }
 
@@ -99,8 +95,7 @@ int init() {
  * @return int - error status
  */
 int start() {
-   string msg = StartFunction(Symbol());
-   Comment(msg);
+   Comment(MainFunction());
    return(0);
 }
 
@@ -108,91 +103,7 @@ int start() {
 /**
  *
  */
-void MasterFunction() {
-   int CycleCount, LastTick, StartTime, TotalTime;
-   datetime LastComputerStart, LastComputerStop, LastServerStart, LastServerStop;
-   string CommentString, Rates = "None";
-
-   while (true) {
-      string ServerStartDayOfWeek = "";
-      switch (TimeDayOfWeek(LastServerStart)) {
-         case 0: ServerStartDayOfWeek = "Sunday";    break;
-         case 1: ServerStartDayOfWeek = "Monday";    break;
-         case 2: ServerStartDayOfWeek = "Tuesday";   break;
-         case 3: ServerStartDayOfWeek = "Wednesday"; break;
-         case 4: ServerStartDayOfWeek = "Thursday";  break;
-         case 5: ServerStartDayOfWeek = "Friday";    break;
-         case 6: ServerStartDayOfWeek = "Saturday";  break;
-      }
-
-      string TerminalStartDayOfWeek = "";
-      switch (TimeDayOfWeek(LastComputerStart)) {
-         case 0: TerminalStartDayOfWeek = "Sunday";    break;
-         case 1: TerminalStartDayOfWeek = "Monday";    break;
-         case 2: TerminalStartDayOfWeek = "Tuesday";   break;
-         case 3: TerminalStartDayOfWeek = "Wednesday"; break;
-         case 4: TerminalStartDayOfWeek = "Thursday";  break;
-         case 5: TerminalStartDayOfWeek = "Friday";    break;
-         case 6: TerminalStartDayOfWeek = "Saturday";  break;
-      }
-
-      string ServerStopDayOfWeek = "";
-      switch (TimeDayOfWeek(LastServerStop)) {
-         case 0: ServerStopDayOfWeek = "Sunday";    break;
-         case 1: ServerStopDayOfWeek = "Monday";    break;
-         case 2: ServerStopDayOfWeek = "Tuesday";   break;
-         case 3: ServerStopDayOfWeek = "Wednesday"; break;
-         case 4: ServerStopDayOfWeek = "Thursday";  break;
-         case 5: ServerStopDayOfWeek = "Friday";    break;
-         case 6: ServerStopDayOfWeek = "Saturday";  break;
-      }
-
-      string TerminalStopDayOfWeek = "";
-      switch (TimeDayOfWeek(LastComputerStop)) {
-         case 0: TerminalStopDayOfWeek = "Sunday";    break;
-         case 1: TerminalStopDayOfWeek = "Monday";    break;
-         case 2: TerminalStopDayOfWeek = "Tuesday";   break;
-         case 3: TerminalStopDayOfWeek = "Wednesday"; break;
-         case 4: TerminalStopDayOfWeek = "Thursday";  break;
-         case 5: TerminalStopDayOfWeek = "Friday";    break;
-         case 6: TerminalStopDayOfWeek = "Saturday";  break;
-      }
-
-      Comment("Last server start: ",    ServerStartDayOfWeek   +" ", TimeToStr(LastServerStart,   TIME_DATE|TIME_SECONDS), "\n",
-              "Last computer start: ",  TerminalStartDayOfWeek +" ", TimeToStr(LastComputerStart, TIME_DATE|TIME_SECONDS), "\n",
-              "Last server stop: ",     ServerStopDayOfWeek    +" ", TimeToStr(LastServerStop,    TIME_DATE|TIME_SECONDS), "\n",
-              "Last computer stop: ",   TerminalStopDayOfWeek  +" ", TimeToStr(LastComputerStop,  TIME_DATE|TIME_SECONDS), "\n",
-              "Last calculation took ", TotalTime, " miliseconds. \n",
-              "Refresh rates: ",        Rates, "\n",
-              "Last tick: ",            LastTick, "\n",
-              "Cycle count: ",          CycleCount, "\n",
-              CommentString);
-
-      if (RefreshRates()) {
-         LastComputerStart = TimeLocal();
-         LastServerStart   = TimeCurrent();
-         StartTime         = GetTickCount();
-         CommentString     = StartFunction(Symbol());
-         TotalTime         = GetTickCount() - StartTime;
-         Rates             = "true";
-         LastTick          = 0;
-      }
-      else {
-         CycleCount++;
-         LastTick++;
-         Rates = "false";
-         Sleep(SleepTime);
-      }
-      LastComputerStop = TimeLocal();
-      LastServerStop   = TimeCurrent();
-   }
-}
-
-
-/**
- *
- */
-string StartFunction(string SymbolUsed) {
+string MainFunction() {
    int Ticket;
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
 
@@ -217,13 +128,12 @@ string StartFunction(string SymbolUsed) {
       }
    }
 
-   // variable begin
-   static int LastCalcDay;
-   static int BarCount;
+   // vars
+   static int BarCount, LastCalcDay;
    static string LastOptimize;
 
    if (TimeDayOfYear(TimeCurrent()) != LastCalcDay) {
-      BarCount     = SelfOptimize(SymbolUsed);
+      BarCount     = SelfOptimize();
       LastCalcDay  = TimeDayOfYear(TimeCurrent());
       LastOptimize = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
    }
@@ -245,7 +155,7 @@ string StartFunction(string SymbolUsed) {
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(TimeCurrent())) {
-      int Handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       if (Handle == -1) return(0);
    }
 
@@ -280,11 +190,11 @@ string StartFunction(string SymbolUsed) {
    if (!ReverseTrades) TakeProfit = CurrentHighTP;
    else                StopLoss   = CurrentHighTP;
 
-   // count number of open trades
+   // count open positions
    int TradeCount = 0;
    for (int i=OrdersTotal(); i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderMagicNumber()==MagicNumber && OrderSymbol()==SymbolUsed && OrderType()<=OP_SELL) TradeCount++;
+      if (OrderMagicNumber()==MagicNumber && OrderSymbol()==Symbol() && OrderType()<=OP_SELL) TradeCount++;
    }
 
    string TradeTrigger1 = "None";
@@ -313,10 +223,10 @@ string StartFunction(string SymbolUsed) {
                                             "Trade trigger: ",         TradeTrigger);
    bool IsTrade = false;
 
+   // close open positions
    for (i=0; i < Total; i++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
 
-      // close open positions
       if (OrderType()<=OP_SELL &&  OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
          IsTrade = true;
 
@@ -455,16 +365,16 @@ double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
 /**
  *
  */
-int SelfOptimize(string SymbolUsed) {
-   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" Master Copy.csv"             );
-   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv"      );
-   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" All Settings.csv"            );
-   DeleteFile(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv");
+int SelfOptimize() {
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" Master Copy.csv"             );
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv"      );
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" All Settings.csv"            );
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv");
 
    int OptimizeBars = BarsToOptimize;
-   if (!OptimizeBars) OptimizeBars = iBars(SymbolUsed, 0);
-   if (OptimizeBars > iBars(SymbolUsed, 0)) {
-      Alert("Error: Not enough bars to optimize for "+ SymbolUsed);
+   if (!OptimizeBars) OptimizeBars = iBars(NULL, NULL);
+   if (OptimizeBars > iBars(NULL, NULL)) {
+      Alert("Error: Not enough bars to optimize for "+ Symbol());
       return(0);
    }
 
@@ -486,10 +396,10 @@ int SelfOptimize(string SymbolUsed) {
       // find the end of the range and establish initial high and low
       if (DayStartShift-SearchShift == InitialRange) {
          RangeEndShift = SearchShift;
-         HighShift = iHighest(SymbolUsed, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift);
-         HighValue =    iHigh(SymbolUsed, NULL, HighShift);
-         LowShift  =  iLowest(SymbolUsed, NULL, MODE_LOW, DayStartShift-RangeEndShift, RangeEndShift);
-         LowValue  =     iLow(SymbolUsed, NULL, LowShift);
+         HighShift = iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift);
+         HighValue =    iHigh(NULL, NULL, HighShift);
+         LowShift  =  iLowest(NULL, NULL, MODE_LOW, DayStartShift-RangeEndShift, RangeEndShift);
+         LowValue  =     iLow(NULL, NULL, LowShift);
       }
 
       // determine subsequent high and low
@@ -497,32 +407,32 @@ int SelfOptimize(string SymbolUsed) {
          if (iHigh(NULL, NULL, SearchShift) > HighValue) {
             HighValue1   = HighValue;
             HighValue    = iHigh(NULL, NULL, SearchShift);
-            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", HighValue1, SearchShift) + 1);
-            HighestValue = iHigh(SymbolUsed, NULL, iHighest(SymbolUsed, NULL, MODE_HIGH, SearchShift-HighClose, HighClose));
-            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose-1, SearchShift-HighClose);
+            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Long", HighValue1, SearchShift) + 1);
+            HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-HighClose, HighClose));
+            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(Symbol(), MODE_POINT)), HighClose-1, SearchShift-HighClose);
 
-            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", HighValue1, SearchShift) + 1);
-            LowestValue = iLow(SymbolUsed, NULL,  iLowest(SymbolUsed, NULL, MODE_LOW, SearchShift-HighClose, HighClose));
-            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), HighClose-1, SearchShift-HighClose);
+            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", HighValue1, SearchShift) + 1);
+            LowestValue = iLow(NULL, NULL,  iLowest(NULL, NULL, MODE_LOW, SearchShift-HighClose, HighClose));
+            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)), HighClose-1, SearchShift-HighClose);
          }
          if (iLow(NULL, NULL, SearchShift) < LowValue) {
             LowValue1    = LowValue;
             LowValue     = iLow(NULL, NULL, SearchShift);
-            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift(SymbolUsed, "Long", LowValue1, SearchShift) + 1);
-            HighestValue = iHigh(SymbolUsed, NULL, iHighest(SymbolUsed, NULL, MODE_HIGH, SearchShift-LowClose, LowClose));
-            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose-1, SearchShift-LowClose);
+            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift("Long", LowValue1, SearchShift) + 1);
+            HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-LowClose, LowClose));
+            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(Symbol(), MODE_POINT)), LowClose-1, SearchShift-LowClose);
 
-            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift(SymbolUsed, "Short", LowValue1, SearchShift) + 1);
-            LowestValue = iLow(SymbolUsed, NULL, iLowest(SymbolUsed, NULL, MODE_LOW, SearchShift-LowClose, LowClose));
-            WriteFile(SymbolUsed, TimeHour(iTime(SymbolUsed, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(SymbolUsed, MODE_POINT)), LowClose-1, SearchShift-LowClose);
+            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", LowValue1, SearchShift) + 1);
+            LowestValue = iLow(NULL, NULL, iLowest(NULL, NULL, MODE_LOW, SearchShift-LowClose, LowClose));
+            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)), LowClose-1, SearchShift-LowClose);
          }
       }
    }
 
    // determine the most profitable combination
    for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
-      OptimizeTakeProfit(SymbolUsed, OptimizeHour);
-      FileDelete(WindowExpertName() +" "+ SymbolUsed +" "+ OptimizeHour +".csv");
+      OptimizeTakeProfit(OptimizeHour);
+      FileDelete(WindowExpertName() +" "+ Symbol() +" "+ OptimizeHour +".csv");
    }
    return(OptimizeBars);
 }
@@ -531,11 +441,11 @@ int SelfOptimize(string SymbolUsed) {
 /**
  *
  */
-void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
+void OptimizeTakeProfit(int HourUsed) {
    double BOTPArray[]; ArrayResize(BOTPArray, 0);
    double CTTPArray[]; ArrayResize(CTTPArray, 0);
 
-   int Handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" "+ HourUsed +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ HourUsed +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    if (Handle == -1) return;
 
    while (!FileIsEnding(Handle)) {
@@ -568,7 +478,7 @@ void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
       double BORiskReward      = BOTPArray[BOArray] * 1.0 / StopLoss * 1.0;
       double BOSS              = BOWinRate * BORiskReward;
 
-      int BOhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int BOhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(BOhandle, 0, SEEK_END);
       FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
       FileFlush(BOhandle);
@@ -596,7 +506,7 @@ void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
       double CTRiskReward      = CTTPArray[CTArray] * 1.0 / StopLoss * 1.0;
       double CTSS              = CTWinRate * CTRiskReward;
 
-      int CThandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int CThandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(CThandle, 0, SEEK_END);
       FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
       FileFlush(CThandle);
@@ -639,19 +549,19 @@ void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
       ArrayNum         = CTArrayNum;
    }
 
-   int handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
    FileFlush(handle);
    FileClose(handle);
 
-   int Mainhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed+ " All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   int Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
    FileFlush(Mainhandle);
    FileClose(Mainhandle);
 
-   Mainhandle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
    FileFlush(Mainhandle);
@@ -662,14 +572,14 @@ void OptimizeTakeProfit(string SymbolUsed, int HourUsed) {
 /**
  *
  */
-string WriteFile(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
-   int handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" "+ TradeHour +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+string WriteFile(int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
+   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ TradeHour +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, TPMax, CloseDistance, CloseSpread, TradeStyle);
    FileFlush(handle);
    FileClose(handle);
 
-   handle = FileOpen(WindowExpertName() +" "+ SymbolUsed +" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, TradeHour, TradeStyle, TPMax, CloseDistance, CloseSpread);
    FileFlush(handle);
@@ -680,26 +590,26 @@ string WriteFile(string SymbolUsed, int TradeHour, string TradeStyle, int TPMax,
 /**
  *
  */
-int TradeCloseShift(string SymbolUsed, string Direction, double EntryPrice, int Shift) {
+int TradeCloseShift(string Direction, double EntryPrice, int Shift) {
    double TargetPrice = 0;
 
    if (Direction == "Long") {
-      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss   * MarketInfo(SymbolUsed, MODE_POINT);
-      else                TargetPrice = EntryPrice - TakeProfit * MarketInfo(SymbolUsed, MODE_POINT);
+      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss   * MarketInfo(Symbol(), MODE_POINT);
+      else                TargetPrice = EntryPrice - TakeProfit * MarketInfo(Symbol(), MODE_POINT);
    }
    if (Direction == "Short") {
-      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss   * MarketInfo(SymbolUsed, MODE_POINT);
-      else                TargetPrice = EntryPrice + TakeProfit * MarketInfo(SymbolUsed, MODE_POINT);
+      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss   * MarketInfo(Symbol(), MODE_POINT);
+      else                TargetPrice = EntryPrice + TakeProfit * MarketInfo(Symbol(), MODE_POINT);
    }
 
    for (int FShift=Shift; FShift > 0; FShift--) {
       if (Direction == "Long") {
-         if (iHigh(SymbolUsed, NULL, FShift) >= TargetPrice && iLow(SymbolUsed, NULL, FShift) <= TargetPrice) {
+         if (iHigh(NULL, NULL, FShift) >= TargetPrice && iLow(NULL, NULL, FShift) <= TargetPrice) {
             return(FShift);
          }
       }
       if (Direction == "Short") {
-         if (iHigh(SymbolUsed, NULL, FShift) >= TargetPrice && iLow(SymbolUsed, NULL, FShift) <= TargetPrice) {
+         if (iHigh(NULL, NULL, FShift) >= TargetPrice && iLow(NULL, NULL, FShift) <= TargetPrice) {
             return(FShift);
          }
       }
