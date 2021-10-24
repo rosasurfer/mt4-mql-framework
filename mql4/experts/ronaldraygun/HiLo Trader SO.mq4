@@ -6,11 +6,6 @@
  *
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031
  */
-
-// To unlock the EA:
-//
-// 1) Look for this line: [string AcceptReject = "Reject";]
-// 2) Change "Reject" to "Accept"
 #define SIGNAL_NONE 0
 #define SIGNAL_BUY   1
 #define SIGNAL_SELL  2
@@ -81,8 +76,6 @@ int ShortAlertSignalBarCount;
 int LongSoundSignalBarCount;
 int ShortSoundSignalBarCount;
 
-string AcceptReject = "Reject";
-
 string BrokerType = "4-Digit Broker";
 double BrokerMultiplier = 1;
 
@@ -115,15 +108,9 @@ int init() {
 
    if (EachTickMode) Current = 0; else Current = 1;
 
-
-
-   if(!IsTesting() && !IsOptimization() && AcceptReject != "Reject")
-      {
+   if (!IsTesting() && !IsOptimization()) {
       MasterFunction();
-      }
-
-
-
+   }
    return(0);
 }
 //+------------------------------------------------------------------+
@@ -136,19 +123,10 @@ int deinit() {
 //| expert start function                                            |
 //+------------------------------------------------------------------+
 
-int start()
-   {
-   if(AcceptReject != "Reject")
-      {
-      Comment(StartFunction(Symbol()));
-      }
-      else
-      {
-      Comment("I know you didn\'t read the source code. Otherwise, the EA would be optimizing itself by now.");
-      }
-
+int start() {
+   Comment(StartFunction(Symbol()));
    return(0);
-   }
+}
 
 void MasterFunction()
    {
@@ -286,10 +264,7 @@ void MasterFunction()
          LastComputerStart = TimeLocal();
          LastServerStart = TimeCurrent();
          StartTime = GetTickCount();
-         if(AcceptReject != "Reject")
-            {
-            CommentString = StartFunction(Symbol());
-            }
+         CommentString = StartFunction(Symbol());
 
          TotalTime = GetTickCount() - StartTime;
          Rates = "True";
