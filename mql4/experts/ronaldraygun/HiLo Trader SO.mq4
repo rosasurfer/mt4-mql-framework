@@ -7,15 +7,16 @@
  *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
  *  - restored regular start() function
  *  - simplified and slimmed down everything
+ *  - convert to/integrate rosasurfer framework
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
  */
-#define SIGNAL_NONE        0
-#define SIGNAL_BUY         1
-#define SIGNAL_SELL        2
-#define SIGNAL_CLOSEBUY    3
-#define SIGNAL_CLOSESELL   4
+#include <stddefines.mqh>
+int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
+int __DeinitFlags[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Remark1               = "== Main Settings ==";
 extern int    MagicNumber           = 0;
@@ -51,6 +52,17 @@ extern bool   HighestWinRate        = false;
 extern bool   HighestRiskReward     = false;
 extern bool   HighestSuccessScore   = true;
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLibs.mqh>
+
+#define SIGNAL_NONE        0
+#define SIGNAL_BUY         1
+#define SIGNAL_SELL        2
+#define SIGNAL_CLOSEBUY    3
+#define SIGNAL_CLOSESELL   4
 
 int      GMTBar;
 string   GMTTime;
@@ -67,7 +79,6 @@ int      OpenBarCount;
 int      CloseBarCount;
 int      Current;
 bool     TickCheck = false;
-int      PipPoints;
 
 
 /**
@@ -75,17 +86,14 @@ int      PipPoints;
  *
  * @return int - error status
  */
-int init() {
+int onInit() {
    OpenBarCount  = Bars;
    CloseBarCount = Bars;
-
-   if (Digits==3 || Digits==5) PipPoints = 10;
-   else                        PipPoints = 1;
 
    if (EachTickMode) Current = 0;
    else              Current = 1;
 
-   return(0);
+   return(catch("onInit(1)"));
 }
 
 
@@ -94,9 +102,9 @@ int init() {
  *
  * @return int - error status
  */
-int start() {
+int onTick() {
    Comment(MainFunction());
-   return(0);
+   return(catch("onTick(1)"));
 }
 
 
@@ -119,8 +127,7 @@ string MainFunction() {
    // money management
    if (MoneyManagement) {
       if (Risk < 1 || Risk > 100) {
-         Comment("Invalid risk value.");
-         return(0);
+         return(_EMPTY_STR(catch("MainFunction(1)  invalid risk value: "+ Risk, ERR_INVALID_INPUT_PARAMETER)));
       }
       else {
          Lots = MathFloor((AccountFreeMargin() * AccountLeverage() * Risk*Point*PipPoints*100) / (Ask * MarketInfo(Symbol(), MODE_LOTSIZE) * MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
@@ -155,7 +162,7 @@ string MainFunction() {
 
    if (CurrentHour != TimeHour(TimeCurrent())) {
       int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      if (Handle == -1) return(0);
+      if (Handle == -1) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen() failed", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
 
    if (Handle > 0) {
@@ -288,7 +295,7 @@ string MainFunction() {
 
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
-         return(CommentString);
+         return(_string(CommentString, catch("MainFunction(3)")));
       }
    }
 
@@ -304,12 +311,12 @@ string MainFunction() {
 
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
-         return(CommentString);
+         return(_string(CommentString, catch("MainFunction(4)")));
       }
    }
 
    if (!EachTickMode) CloseBarCount = Bars;
-   return(CommentString);
+   return(_string(CommentString, catch("MainFunction(5)")));
 }
 
 
@@ -373,8 +380,7 @@ int SelfOptimize() {
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = iBars(NULL, NULL);
    if (OptimizeBars > iBars(NULL, NULL)) {
-      Alert("Error: Not enough bars to optimize for "+ Symbol());
-      return(0);
+      return(!catch("SelfOptimize(1)  Not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
    }
 
    int HighShift, LowShift, HighClose, LowClose;
@@ -385,7 +391,7 @@ int SelfOptimize() {
    int RangeEndShift = FBarStart;
 
    for (int SearchShift=DayStartShift; SearchShift > 1; SearchShift--) {
-      Comment(" Looking for trades on bar "+SearchShift);
+      Comment("Looking for trades on bar "+SearchShift);
 
       // determine if the bar is the daily start
       if (TimeDayOfYear(Time[SearchShift]) != TimeDayOfYear(Time[SearchShift+1])) {
@@ -433,7 +439,8 @@ int SelfOptimize() {
       OptimizeTakeProfit(OptimizeHour);
       FileDelete(WindowExpertName() +" "+ Symbol() +" "+ OptimizeHour +".csv");
    }
-   return(OptimizeBars);
+
+   return(ifInt(catch("SelfOptimize(2)"), 0, OptimizeBars));
 }
 
 
@@ -613,12 +620,11 @@ int TradeCloseShift(string Direction, double EntryPrice, int Shift) {
 /**
  *
  */
-void DeleteFile(string FileName) {
-   int DeleteHandle = FileOpen(FileName, FILE_CSV|FILE_READ, ';');
+void DeleteFile(string name) {
+   int hFile = FileOpen(name, FILE_CSV|FILE_READ, ';');
 
-   if (DeleteHandle > 0) {
-      FileClose(DeleteHandle);
-      FileDelete(FileName);
+   if (hFile > 0) {
+      FileClose(hFile);
+      FileDelete(name);
    }
-   return(0);
 }
