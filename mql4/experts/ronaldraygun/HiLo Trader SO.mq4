@@ -1,11 +1,12 @@
 /**
- * Rewritten HiLo Self-Optimizing Trader, last fixed version by @stevegee58.
+ * Rewritten HiLo Self-Optimizing Trader originally published by Ronald Raygun.
  *
  * History:
  *  - removed tickdatabase functionality
  *  - removed obsolete parts and simplified logic
  *
- * @source  https://www.forexfactory.com/thread/post/3922031#post3922031
+ * @source  https://www.forexfactory.com/thread/211657-old-dog-with-new-tricks#     [@Ronald Raygun: Old Dog with New Tricks]
+ * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
  */
 #define SIGNAL_NONE 0
 #define SIGNAL_BUY   1
@@ -68,13 +69,12 @@ int TradesThisBar;
 int OpenBarCount;
 int CloseBarCount;
 
-int LongAlertSignalBarCount;
-int ShortAlertSignalBarCount;
-
 int LongSoundSignalBarCount;
 int ShortSoundSignalBarCount;
 
-string BrokerType = "4-Digit Broker";
+int LongAlertSignalBarCount;
+int ShortAlertSignalBarCount;
+
 double BrokerMultiplier = 1;
 
 int Current;
@@ -86,8 +86,8 @@ int init() {
    OpenBarCount = Bars;
    CloseBarCount = Bars;
 
-   LongAlertSignalBarCount = Bars;
-   ShortAlertSignalBarCount = Bars;
+   LongSoundSignalBarCount = Bars;
+   ShortSoundSignalBarCount = Bars;
 
    LongAlertSignalBarCount = Bars;
    ShortAlertSignalBarCount = Bars;
@@ -96,7 +96,6 @@ int init() {
 
    if(Digits == 3 || Digits == 5)
       {
-      BrokerType = "5-Digit Broker";
       BrokerMultiplier = 10;
       }
 
@@ -410,8 +409,7 @@ string TradeTrigger = TradeTrigger1;
 if(ReverseTrades && TradeTrigger1 == "Open Long") TradeTrigger = "Open Short";
 if(ReverseTrades && TradeTrigger1 == "Open Short") TradeTrigger = "Open Long";
 
-string CommentString = StringConcatenate("Broker Type: ", BrokerType, "\n",
-                                         "Last Optimized: ", LastOptimize, "\n",
+string CommentString = StringConcatenate("Last Optimized: ", LastOptimize, "\n",
                                          "Bars Used: ", BarCount, "\n",
                                          "Total Bars: ", Bars, "\n",
                                          "Current Hour: ", CurrentHour, "\n",
