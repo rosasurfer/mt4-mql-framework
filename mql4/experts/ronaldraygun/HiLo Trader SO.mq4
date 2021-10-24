@@ -1,92 +1,21 @@
-// @link  https://www.forexfactory.com/thread/post/3922031#post3922031
+/**
+ * Rewritten HiLo Trader Self-Optimizing, last version by @stevegee58.
+ *
+ * History:
+ *  - removed tickdatabase functionality
+ *
+ * @source  https://www.forexfactory.com/thread/post/3922031#post3922031
+ */
 
-//+------------------------------------------------------------------+
-
-/*
-
-Copyright (c) 2010, Ronald Raygun
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are required provided that the following conditions are met:
-
-    * Redistributions of source code must retain the above copyright
-      notice, this list of conditions and the following disclaimer.
-    * Redistributions in binary form must reproduce the above copyright
-      notice, this list of conditions and the following disclaimer in
-      the documentation and/or other materials provided with the distribution.
-    * Neither the name of Ronald Raygun nor the names of any contributors
-      may be used to endorse or promote products derived from this software
-      without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-
-By following the instructions below, you accept the terms above.
-
-To unlock the EA:
-
-1) Look for this line: [string AcceptReject = "Reject";]
-2) Change "Reject" to "Accept"
-
-For those wishing to purchase a commercial license for this code, please contact
-user Ronald Raygun on www.ForexFactory.com.
-*/
-
+// To unlock the EA:
+//
+// 1) Look for this line: [string AcceptReject = "Reject";]
+// 2) Change "Reject" to "Accept"
 #define SIGNAL_NONE 0
 #define SIGNAL_BUY   1
 #define SIGNAL_SELL  2
 #define SIGNAL_CLOSEBUY 3
 #define SIGNAL_CLOSESELL 4
-
-#property copyright "Ronald Raygun"
-#property link      "http://www.RonaldRaygunForex.com/Support"
-
-#import "wininet.dll"
-
-#define INTERNET_FLAG_PRAGMA_NOCACHE    0x00000100 // Forces the request to be resolved by the origin server, even if a cached copy exists on the proxy.
-#define INTERNET_FLAG_NO_CACHE_WRITE    0x04000000 // Does not add the returned entity to the cache.
-#define INTERNET_FLAG_RELOAD            0x80000000 // Forces a download of the requested file, object, or directory listing from the origin server, not from the cache.
-#define INTERNET_FLAG_NO_COOKIES        0x00080000 // Does not automatically add cookie headers to requests, and does not automatically add returned cookies to the cookie database. This flag can be used by
-
-
-int InternetOpenA(
-    string  sAgent,
-    int     lAccessType,
-    string  sProxyName="",
-    string  sProxyBypass="",
-    int     lFlags=0
-);
-
-int InternetOpenUrlA(
-    int     hInternetSession,
-    string  sUrl,
-    string  sHeaders="",
-    int     lHeadersLength=0,
-    int     lFlags=0,
-    int     lContext=0
-);
-
-int InternetReadFile(
-    int     hFile,
-    string  sBuffer,
-    int     lNumBytesToRead,
-    int&    lNumberOfBytesRead[]
-);
-
-int InternetCloseHandle(
-    int     hInet
-);
-#import
 
 extern string Remark1 = "== Main Settings ==";
 extern int MagicNumber = 0;
@@ -112,8 +41,7 @@ extern int TrailingStop = 30;
 extern bool MoveStopOnce = False;
 extern int MoveStopWhenPrice = 50;
 extern int MoveStopTo = 1;
-extern string Remark2 = "";
-extern string Remark3 = "== Breakout Settings ==";
+extern string Remark2 = "== Breakout Settings ==";
 extern int BarsToOptimize = 0;
 extern int InitialRange = 60;
 extern int MaximumBarShift = 1440;
@@ -122,44 +50,21 @@ extern double MinimumRiskReward = 0;
 extern double MinimumSuccessScore = 0;
 extern int MinimumSampleSize = 10;
 extern bool ReverseTrades = False;
-extern string Remark4 = "== Optimize Based On ==";
+extern string Remark3 = "== Optimize Based On ==";
 extern bool HighestProfit = False;
 extern bool HighestWinRate = False;
 extern bool HighestRiskReward = False;
 extern bool HighestSuccessScore = True;
 
-int Internet_Open_Type_Direct = 1;
 
+int GMTBar;
+string GMTTime;
+string BrokerTime;
+int GMTShift;
 
-   string URL;
-   int URLHandle = 0;
-   int SessionHandle = 0;
-   int MaxTries = 0;
-
-
-   string FinalStr ;
-   int bytesreturned[1];
-   int readresult;
-
-   int GMTBar;
-   string GMTTime;
-   string BrokerTime;
-   int GMTShift;
-
-   datetime CurGMTTime;
-   datetime CurBrokerTime;
-   datetime CurrentGMTTime;
-
-
-
-
-   string TempStr ="000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-#define  maxreadlen 200
-
-//string SymbolUsed;
-int TickCount = 0;
-int RecordDay = -1;
-bool ShowDiagnostics = False;
+datetime CurGMTTime;
+datetime CurBrokerTime;
+datetime CurrentGMTTime;
 
 int TradeBar;
 int TradesThisBar;
@@ -389,7 +294,6 @@ void MasterFunction()
          TotalTime = GetTickCount() - StartTime;
          Rates = "True";
          LastTick = 0;
-         TickData();
          }
          else
          {
@@ -1193,112 +1097,6 @@ void DeleteFile(string FileName)
    return(0);
    }
 
-
-void TickData ()
-   {
-   string UserName = WindowExpertName();
-   string SymbolUsed = StringSubstr(Symbol(), 0, 6);
-   if(GMTBar != Bars)
-      {
-      GMTTime = LoadURL("http://www.ronaldraygunforex.com/TickDB/Time.php");
-      GMTBar = Bars;
-      GMTShift = TimeCurrent() - StrToTime(GMTTime);
-      }
-
-   if(TimeDayOfYear(TimeCurrent()) != RecordDay)
-      {
-      URL = LoadURL("http://www.ronaldraygunforex.com/TickDB/UserLog.php?UN="+UserName+"&P="+SymbolUsed+"&TL="+TickCount);
-
-      if(StringFind(URL, "1 record added") != -1)
-         {
-         TickCount = 0;
-         RecordDay = TimeDayOfYear(TimeCurrent());
-         }
-      }
-
-   CurGMTTime = StrToTime(GMTTime);
-
-   CurrentGMTTime = TimeCurrent() - GMTShift;
-   //CurrentGMTTime = CurGMTTime + TimeCurrent - CurBrokerTime
-
-   URL = LoadURL("http://www.ronaldraygunforex.com/TickDB/Load.php?TN="+SymbolUsed+"&GMT="+CurrentGMTTime+"&TT="+TimeCurrent()+"&B="+DoubleToStr(NormalizeDouble(Bid,Digits),Digits)+"&A="+DoubleToStr(NormalizeDouble(Ask,Digits),Digits)+"&BN="+AccountCompany()+"&UN="+UserName);
-
-   if(StringFind(URL, "1 record added") != -1)
-      {
-      TickCount++;
-      }
-      else
-      {
-      Print(SymbolUsed+" Error: "+URL);
-      LoadURL("http://www.ronaldraygunforex.com/TickDB/Error.php?UN="+UserName+"&Error="+URL);
-      }
-   }
-
-
-string LoadURL (string URLLoad)
-   {
-   int Position = StringFind(URLLoad, " ");
-
-   while (Position != -1)
-      {
-      string InitialURLA = StringTrimLeft(StringTrimRight(StringSubstr(URLLoad, 0, StringFind(URLLoad, " ", 0))));
-      string InitialURLB = StringTrimLeft(StringTrimRight(StringSubstr(URLLoad, StringFind(URLLoad, " ", 0))));
-      URLLoad = InitialURLA+"%20"+InitialURLB;
-      Position = StringFind(URLLoad, " ");
-      if(ShowDiagnostics) Print("Processing URL: "+URLLoad);
-      }
-
-   MaxTries =0;
-   URLHandle=0;
-   while (MaxTries < 3 && URLHandle == 0)
-      {
-      if(SessionHandle != 0)
-         {
-         URLHandle = InternetOpenUrlA(SessionHandle, URLLoad, NULL, 0, INTERNET_FLAG_NO_CACHE_WRITE |
-                                                                   INTERNET_FLAG_PRAGMA_NOCACHE |
-                                                                   INTERNET_FLAG_RELOAD |
-                                                                   INTERNET_FLAG_NO_COOKIES, 0);
-         }
-      if(URLHandle == 0)
-         {
-         InternetCloseHandle(SessionHandle);
-         if(ShowDiagnostics) Print("Closing Handle");
-         SessionHandle = InternetOpenA("mymt4InetSession", Internet_Open_Type_Direct, NULL, NULL, 0);
-         }
-
-      MaxTries++;
-      }
-
-   if(ShowDiagnostics) Print("URL Handle: ", URLHandle);
-
-   //Parse file
-
-   FinalStr = "";
-   bytesreturned[0]=1;
-
-   while (bytesreturned[0] > 0)
-      {
-
-
-
-      // get next chunk
-      InternetReadFile(URLHandle, TempStr , maxreadlen, bytesreturned);
-      if(ShowDiagnostics) Print("bytes returned: "+bytesreturned[0]);
-
-
-
-      if(bytesreturned[0] > 0)
-      FinalStr = FinalStr + StringSubstr(TempStr, 0, bytesreturned[0]);
-
-      }
-
-      if(ShowDiagnostics) Print("FinalStr: "+FinalStr);
-
-   // now we are done with the URL we can close its handle
-   InternetCloseHandle(URLHandle);
-
-   return(FinalStr);
-   }
 
 void OptimizationComments(string OptimizationStatus)
    {
