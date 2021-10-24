@@ -1,5 +1,5 @@
 /**
- * Rewritten HiLo Trader Self-Optimizing, last version by @stevegee58.
+ * Rewritten HiLo Self-Optimizing Trader, last fixed version by @stevegee58.
  *
  * History:
  *  - removed tickdatabase functionality
@@ -18,7 +18,6 @@ extern int MagicNumber = 0;
 extern bool SignalsOnly = False;
 extern bool Alerts = False;
 extern bool PlaySounds = False;
-extern bool ECNBroker = False;
 extern int SleepTime = 100;
 extern bool EachTickMode = True;
 extern bool AnimateOptimization = True;
@@ -539,16 +538,8 @@ IsTrade = False;
 
          if (UseStopLoss) StopLossLevel = Ask - StopLoss * Point; else StopLossLevel = 0.0;
          if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit * Point; else TakeProfitLevel = 0.0;
-         if(ECNBroker)
-         {
-            Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, 0, 0, "Buy(#" + MagicNumber + ")", MagicNumber, 0, DodgerBlue);
-            if (Ticket > 0)
-            {
-               OrderSelect(Ticket, SELECT_BY_TICKET);
-               OrderModify(OrderTicket(), OrderOpenPrice(), StopLossLevel, TakeProfitLevel, 0, CLR_NONE);
-            }
-         }
-         if(!ECNBroker) Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Buy(#" + MagicNumber + ")", MagicNumber, 0, DodgerBlue);
+
+         Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Buy(#" + MagicNumber + ")", MagicNumber, 0, DodgerBlue);
             if(Ticket > 0) {
                if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
                   Print("BUY order opened : ", OrderOpenPrice());
@@ -598,16 +589,7 @@ IsTrade = False;
          if (UseStopLoss) StopLossLevel = Bid + StopLoss * Point; else StopLossLevel = 0.0;
          if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit * Point; else TakeProfitLevel = 0.0;
 
-         if(ECNBroker)
-         {
-            Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, 0, 0, "Sell(#" + MagicNumber + ")", MagicNumber, 0, DeepPink);
-            if (Ticket > 0)
-            {
-               OrderSelect(Ticket,SELECT_BY_TICKET);
-               OrderModify(OrderTicket(), OrderOpenPrice(), StopLossLevel, TakeProfitLevel, 0, CLR_NONE);
-            }
-         }
-         if(!ECNBroker) Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Sell(#" + MagicNumber + ")", MagicNumber, 0, DeepPink);
+         Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Sell(#" + MagicNumber + ")", MagicNumber, 0, DeepPink);
          if(Ticket > 0) {
             if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
                 Print("SELL order opened : ", OrderOpenPrice());
