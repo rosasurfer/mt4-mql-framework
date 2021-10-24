@@ -3,6 +3,7 @@
  *
  * History:
  *  - removed tickdatabase functionality
+ *  - removed obsolete parts and simplified logic
  *
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031
  */
@@ -16,7 +17,6 @@ extern string Remark1 = "== Main Settings ==";
 extern int MagicNumber = 0;
 extern bool SignalsOnly = False;
 extern bool Alerts = False;
-extern bool SignalMail = False;
 extern bool PlaySounds = False;
 extern bool ECNBroker = False;
 extern int SleepTime = 100;
@@ -36,6 +36,7 @@ extern int TrailingStop = 30;
 extern bool MoveStopOnce = False;
 extern int MoveStopWhenPrice = 50;
 extern int MoveStopTo = 1;
+
 extern string Remark2 = "== Breakout Settings ==";
 extern int BarsToOptimize = 0;
 extern int InitialRange = 60;
@@ -45,6 +46,7 @@ extern double MinimumRiskReward = 0;
 extern double MinimumSuccessScore = 0;
 extern int MinimumSampleSize = 10;
 extern bool ReverseTrades = False;
+
 extern string Remark3 = "== Optimize Based On ==";
 extern bool HighestProfit = False;
 extern bool HighestWinRate = False;
@@ -67,9 +69,6 @@ int TradesThisBar;
 int OpenBarCount;
 int CloseBarCount;
 
-int LongMailSignalBarCount;
-int ShortMailSignalBarCount;
-
 int LongAlertSignalBarCount;
 int ShortAlertSignalBarCount;
 
@@ -87,9 +86,6 @@ bool TickCheck = False;
 int init() {
    OpenBarCount = Bars;
    CloseBarCount = Bars;
-
-   LongMailSignalBarCount = Bars;
-   ShortMailSignalBarCount = Bars;
 
    LongAlertSignalBarCount = Bars;
    ShortAlertSignalBarCount = Bars;
@@ -459,7 +455,6 @@ string CommentString = StringConcatenate("Broker Type: ", BrokerType, "\n",
 
             if (Order == SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
-               if (SignalMail) SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + " Close Buy");
                if (!EachTickMode) CloseBarCount = Bars;
                IsTrade = False;
                continue;
@@ -490,7 +485,6 @@ string CommentString = StringConcatenate("Broker Type: ", BrokerType, "\n",
 
             if (Order == SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
-               if (SignalMail) SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + " Close Sell");
                if (!EachTickMode) CloseBarCount = Bars;
                IsTrade = False;
                continue;
@@ -524,11 +518,6 @@ IsTrade = False;
    //Buy
    if (Order == SIGNAL_BUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != OpenBarCount)))) {
       if(SignalsOnly) {
-         if (SignalMail && LongMailSignalBarCount != Bars)
-            {
-            SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
-            LongMailSignalBarCount = Bars;
-            }
          if (Alerts && LongAlertSignalBarCount != Bars)
             {
             Alert("[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
@@ -563,11 +552,6 @@ IsTrade = False;
             if(Ticket > 0) {
                if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
                   Print("BUY order opened : ", OrderOpenPrice());
-                  if (SignalMail && LongMailSignalBarCount != Bars)
-                     {
-                     SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
-                     LongMailSignalBarCount = Bars;
-                     }
                   if (Alerts && LongAlertSignalBarCount != Bars)
                      {
                      Alert("[" + Symbol() + "] " + DoubleToStr(Ask, Digits) + "Buy Signal");
@@ -593,11 +577,6 @@ IsTrade = False;
    //Sell
    if (Order == SIGNAL_SELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars != OpenBarCount)))) {
       if(SignalsOnly) {
-          if (SignalMail && ShortMailSignalBarCount != Bars)
-            {
-            SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
-            ShortMailSignalBarCount = Bars;
-            }
           if (Alerts && ShortAlertSignalBarCount != Bars)
             {
             Alert("[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
@@ -632,11 +611,6 @@ IsTrade = False;
          if(Ticket > 0) {
             if (OrderSelect(Ticket, SELECT_BY_TICKET, MODE_TRADES)) {
                 Print("SELL order opened : ", OrderOpenPrice());
-                if (SignalMail && ShortMailSignalBarCount != Bars)
-                  {
-                  SendMail("[Signal Alert]", "[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
-                  ShortMailSignalBarCount = Bars;
-                  }
                if (Alerts && ShortAlertSignalBarCount != Bars)
                   {
                   Alert("[" + Symbol() + "] " + DoubleToStr(Bid, Digits) + "Sell Signal");
