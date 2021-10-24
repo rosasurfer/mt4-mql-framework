@@ -11,11 +11,11 @@
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
  */
-#define SIGNAL_NONE 0
-#define SIGNAL_BUY   1
-#define SIGNAL_SELL  2
-#define SIGNAL_CLOSEBUY 3
-#define SIGNAL_CLOSESELL 4
+#define SIGNAL_NONE        0
+#define SIGNAL_BUY         1
+#define SIGNAL_SELL        2
+#define SIGNAL_CLOSEBUY    3
+#define SIGNAL_CLOSESELL   4
 
 extern string Remark1               = "== Main Settings ==";
 extern int    MagicNumber           = 0;
@@ -104,7 +104,6 @@ int start() {
  *
  */
 string MainFunction() {
-   int Ticket;
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
 
    if (EachTickMode && Bars!=CloseBarCount) TickCheck = false;
@@ -284,7 +283,7 @@ string MainFunction() {
          if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point;
          else               TakeProfitLevel = 0;
 
-         Ticket = OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "HiLo long", MagicNumber, 0, DodgerBlue);
+         OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "HiLo long", MagicNumber, 0, DodgerBlue);
          TradesThisBar++;
 
          if (EachTickMode) TickCheck = true;
@@ -300,7 +299,7 @@ string MainFunction() {
          if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point;
          else               TakeProfitLevel = 0;
 
-         Ticket = OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "HiLo short", MagicNumber, 0, DeepPink);
+         OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "HiLo short", MagicNumber, 0, DeepPink);
          TradesThisBar++;
 
          if (EachTickMode) TickCheck = true;
@@ -481,7 +480,6 @@ void OptimizeTakeProfit(int HourUsed) {
       int BOhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(BOhandle, 0, SEEK_END);
       FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
-      FileFlush(BOhandle);
       FileClose(BOhandle);
 
       if (BOWinRate >= MinimumWinRate/100 && BORiskReward >= MinimumRiskReward && BOSS >= MinimumSuccessScore) {
@@ -509,7 +507,6 @@ void OptimizeTakeProfit(int HourUsed) {
       int CThandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(CThandle, 0, SEEK_END);
       FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
-      FileFlush(CThandle);
       FileClose(CThandle);
 
       if (CTWinRate >= MinimumWinRate/100 && CTRiskReward >= MinimumRiskReward && CTSS >= MinimumSuccessScore) {
@@ -552,19 +549,16 @@ void OptimizeTakeProfit(int HourUsed) {
    int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
-   FileFlush(handle);
    FileClose(handle);
 
    int Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
-   FileFlush(Mainhandle);
    FileClose(Mainhandle);
 
    Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
-   FileFlush(Mainhandle);
    FileClose(Mainhandle);
 }
 
@@ -576,13 +570,11 @@ string WriteFile(int TradeHour, string TradeStyle, int TPMax, int CloseDistance,
    int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ TradeHour +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, TPMax, CloseDistance, CloseSpread, TradeStyle);
-   FileFlush(handle);
    FileClose(handle);
 
    handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, TradeHour, TradeStyle, TPMax, CloseDistance, CloseSpread);
-   FileFlush(handle);
    FileClose(handle);
 }
 
