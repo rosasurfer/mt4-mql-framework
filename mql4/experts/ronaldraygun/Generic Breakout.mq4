@@ -1,11 +1,9 @@
 /**
  * Rewritten Generic Breakout EA v7. Work-in-progress, don't use for real trading!
  *
- *
  * Changes:
  *  - removed obsolete parts: tick db, signaling
  *  - simplified and slimmed down everything
- *
  *
  * @source  https://www.forexfactory.com/thread/post/3775867#post3775867                      [@rraygun: Generic Breakout v7]
  */
