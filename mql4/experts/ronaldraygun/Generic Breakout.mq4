@@ -523,8 +523,8 @@ double CalculateRange(datetime time) {
    int RangeStartShift = iBarShift(NULL, NULL, RangeStartTime, false);
    int RangeStopShift  = iBarShift(NULL, NULL, RangeStopTime, false);
 
-   double HighPrice = iHigh(NULL, NULL, iHighest(NULL, NULL, PRICE_HIGH, RangeStartShift-RangeStopShift, RangeStopShift));
-   double LowPrice  =  iLow(NULL, NULL,  iLowest(NULL, NULL, PRICE_LOW,  RangeStartShift-RangeStopShift, RangeStopShift));
+   double HighPrice = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, RangeStartShift-RangeStopShift, RangeStopShift));
+   double LowPrice  =  iLow(NULL, NULL,  iLowest(NULL, NULL, MODE_LOW,  RangeStartShift-RangeStopShift, RangeStopShift));
 
    return(HighPrice - LowPrice);
 }
