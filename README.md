@@ -73,6 +73,48 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1344/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1344
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1344/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1343/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1343
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1343/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1342/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1342
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1342/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1340/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Terminal build 1340
         </a>
@@ -185,6 +227,20 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1323/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1323
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1323/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1322/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Terminal build 1322
         </a>
@@ -233,6 +289,20 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
     </td>
     <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1314/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1313/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1313
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1313/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             MetaEditor
         </a>
     </td>
