@@ -13,6 +13,7 @@
  *
  *
  * TODO:
+ *  - visible buffer for mid channel?
  *  - process input ShowStopChannelSegments
  *  - reorganize inputs: ZigZag.* | Donchian.*
  *  - rename UpperChannel.Color to Donchian.UpperBand.Color
