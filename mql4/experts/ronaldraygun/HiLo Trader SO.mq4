@@ -7,7 +7,7 @@
  *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
  *  - restored regular start() function
  *  - simplified and slimmed down everything
- *  - convert to/integrate rosasurfer framework
+ *  - converted to and integrated rosasurfer framework
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -134,7 +134,7 @@ string MainFunction() {
       }
    }
 
-   // vars
+   // optimization
    static int BarCount, LastCalcDay;
    static string LastOptimize;
 
