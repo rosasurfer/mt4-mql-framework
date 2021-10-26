@@ -342,17 +342,18 @@ int start() {
    }
 
    // call the userland main function
-   onTick();
+   int uError = onTick();
+   if (uError && uError!=last_error) catch("start(8)", uError);
 
    // record equity if configured
    if (IsTesting()) /*&&*/ if (!IsOptimization()) /*&&*/ if (EA.RecordEquity) {
-      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(8)")));
+      if (!Tester.RecordEquity()) return(_last_error(CheckErrors("start(9)")));
    }
 
    // check all errors
-   error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(9)", error)));
+   int lError = GetLastError();
+   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      return(_last_error(CheckErrors("start(10)", lError)));
    return(ShowStatus(NO_ERROR));
 }
 
@@ -524,9 +525,10 @@ bool CheckErrors(string location, int error = NULL) {
 
    // check uncatched errors
    if (!error) error = GetLastError();
-   if (error != NO_ERROR)
-      catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors()
-                                                                     // which updates __STATUS_OFF accordingly
+   if (error != NO_ERROR) {
+      catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors() again
+   }                                                                 // which updates __STATUS_OFF accordingly
+
    // update the variable last_error
    if (__STATUS_OFF) {
       if (!last_error) last_error = __STATUS_OFF.reason;

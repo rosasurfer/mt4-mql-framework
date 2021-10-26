@@ -365,13 +365,13 @@ int start() {
    }
 
    // call the userland main function
-   error = onTick();
-   if (error && error!=last_error) SetLastError(error);
+   int uError = onTick();
+   if (uError && uError!=last_error) catch("start(10)", uError);
 
    // check errors
-   error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(10)", error);
+   int lError = GetLastError();
+   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(11)", lError);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
