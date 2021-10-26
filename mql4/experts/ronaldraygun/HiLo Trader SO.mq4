@@ -186,7 +186,7 @@ string MainFunction() {
 
    // count open positions
    int TradeCount = 0;
-   for (int i=OrdersTotal(); i >= 0; i--) {
+   for (int i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderMagicNumber()==MagicNumber && OrderSymbol()==Symbol() && OrderType()<=OP_SELL) TradeCount++;
    }
