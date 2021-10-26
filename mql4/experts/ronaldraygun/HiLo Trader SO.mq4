@@ -130,7 +130,7 @@ string MainFunction() {
    static string sLastOptimizationTime;
 
    if (TimeDayOfYear(Tick.time) != LastCalcDay) {
-      lastOptimizationBars  = SelfOptimize();
+      lastOptimizationBars  = SelfOptimize(); if (!lastOptimizationBars) return("");
       LastCalcDay           = TimeDayOfYear(Tick.time);
       sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
    }
@@ -152,31 +152,33 @@ string MainFunction() {
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(Tick.time)) {
-      int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" optimized settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen()")));
 
-      while (!FileIsEnding(hFile)) {
-         int    HourUsed         = StrToInteger(FileReadString(hFile));
-         int    HighTP           = StrToInteger(FileReadString(hFile));
-         int    HighProfit       = StrToInteger(FileReadString(hFile));
-         double HighWinRate      = StrToDouble(FileReadString(hFile));
-         double HighRiskReward   = StrToDouble(FileReadString(hFile));
-         double HighSuccessScore = StrToDouble(FileReadString(hFile));
-         string TradeStyle       = FileReadString(hFile);
-         int    ArraySizes       = StrToInteger(FileReadString(hFile));
-         int    ArrayNum         = StrToInteger(FileReadString(hFile));
+      if (FileSize(hFile) > 0) {
+         while (!FileIsEnding(hFile)) {
+            int    HourUsed         = StrToInteger(FileReadString(hFile));
+            int    HighTP           = StrToInteger(FileReadString(hFile));
+            int    HighProfit       = StrToInteger(FileReadString(hFile));
+            double HighWinRate      = StrToDouble(FileReadString(hFile));
+            double HighRiskReward   = StrToDouble(FileReadString(hFile));
+            double HighSuccessScore = StrToDouble(FileReadString(hFile));
+            string TradeStyle       = FileReadString(hFile);
+            int    ArraySizes       = StrToInteger(FileReadString(hFile));
+            int    ArrayNum         = StrToInteger(FileReadString(hFile));
 
-         if (HourUsed == TimeHour(Tick.time)) {
-            CurrentHour         = HourUsed;
-            CurrentHighTP       = HighTP;
-            CurrentHighProfit   = HighProfit;
-            CurrentWinRate      = HighWinRate;
-            CurrentRiskReward   = HighRiskReward;
-            CurrentSuccessScore = HighSuccessScore;
-            CurrentTradeStyle   = TradeStyle;
-            CurrentArraySizes   = ArraySizes;
-            CurrentArrayNum     = ArrayNum;
-            break;
+            if (HourUsed == TimeHour(Tick.time)) {
+               CurrentHour         = HourUsed;
+               CurrentHighTP       = HighTP;
+               CurrentHighProfit   = HighProfit;
+               CurrentWinRate      = HighWinRate;
+               CurrentRiskReward   = HighRiskReward;
+               CurrentSuccessScore = HighSuccessScore;
+               CurrentTradeStyle   = TradeStyle;
+               CurrentArraySizes   = ArraySizes;
+               CurrentArrayNum     = ArrayNum;
+               break;
+            }
          }
       }
       FileClose(hFile);
@@ -362,10 +364,10 @@ double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
  * @return int
  */
 int SelfOptimize() {
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" Master Copy.csv"             );
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv"      );
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" All Settings.csv"            );
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv");
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" stats all hours.csv");
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" optimized settings.csv");
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" all settings.csv");
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" all permutations.csv");
 
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = iBars(NULL, NULL);
@@ -381,8 +383,6 @@ int SelfOptimize() {
    int RangeEndShift = FBarStart;
 
    for (int SearchShift=DayStartShift; SearchShift > 1; SearchShift--) {
-      Comment("Looking for trades on bar "+SearchShift);
-
       // determine if the bar is the daily start
       if (TimeDayOfYear(Time[SearchShift]) != TimeDayOfYear(Time[SearchShift+1])) {
          DayStartShift = SearchShift;
@@ -393,7 +393,7 @@ int SelfOptimize() {
          RangeEndShift = SearchShift;
          HighShift = iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift);
          HighValue =    iHigh(NULL, NULL, HighShift);
-         LowShift  =  iLowest(NULL, NULL, MODE_LOW, DayStartShift-RangeEndShift, RangeEndShift);
+         LowShift  =  iLowest(NULL, NULL, MODE_LOW,  DayStartShift-RangeEndShift, RangeEndShift);
          LowValue  =     iLow(NULL, NULL, LowShift);
       }
 
@@ -404,22 +404,22 @@ int SelfOptimize() {
             HighValue    = iHigh(NULL, NULL, SearchShift);
             HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Long", HighValue1, SearchShift) + 1);
             HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-HighClose, HighClose));
-            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(Symbol(), MODE_POINT)), HighClose-1, SearchShift-HighClose);
+            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(Symbol(), MODE_POINT)));
 
             HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", HighValue1, SearchShift) + 1);
             LowestValue = iLow(NULL, NULL,  iLowest(NULL, NULL, MODE_LOW, SearchShift-HighClose, HighClose));
-            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)), HighClose-1, SearchShift-HighClose);
+            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)));
          }
          if (iLow(NULL, NULL, SearchShift) < LowValue) {
             LowValue1    = LowValue;
             LowValue     = iLow(NULL, NULL, SearchShift);
             LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift("Long", LowValue1, SearchShift) + 1);
             HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-LowClose, LowClose));
-            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(Symbol(), MODE_POINT)), LowClose-1, SearchShift-LowClose);
+            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(Symbol(), MODE_POINT)));
 
             LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", LowValue1, SearchShift) + 1);
             LowestValue = iLow(NULL, NULL, iLowest(NULL, NULL, MODE_LOW, SearchShift-LowClose, LowClose));
-            WriteFile(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)), LowClose-1, SearchShift-LowClose);
+            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)));
          }
       }
    }
@@ -427,9 +427,7 @@ int SelfOptimize() {
    // determine the most profitable combination
    for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
       if (!OptimizeTakeProfit(OptimizeHour)) return(NULL);
-      FileDelete(WindowExpertName() +" "+ Symbol() +" "+ OptimizeHour +".csv");
    }
-
    return(ifInt(catch("SelfOptimize(2)"), 0, OptimizeBars));
 }
 
@@ -442,32 +440,33 @@ bool OptimizeTakeProfit(int HourUsed) {
    double BOTPArray[]; ArrayResize(BOTPArray, 0);
    double CTTPArray[]; ArrayResize(CTTPArray, 0);
 
-   int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ HourUsed +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if (Handle < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen()"));
+   // read hourly stats
+   string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ HourUsed, 2) +".csv";
 
-   while (!FileIsEnding(Handle)) {
-      string TPMax         = FileReadString(Handle);
-      string CloseDistance = FileReadString(Handle);
-      string CloseSpread   = FileReadString(Handle);
-      string FoundStyle    = FileReadString(Handle);
+   if (MQL.IsFile(filename)) {
+      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen(\""+ filename +"\")"));
+      debug("OptimizeTakeProfit(2)  reading \""+ filename +"\"");
 
-      if (TPMax!="" && FoundStyle=="Breakout") {
-         BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray)+1)-1] = StrToDouble(TPMax);
+      while (!FileIsEnding(hFile)) {
+         string TPMax      = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 1, TPMax))         break;
+         string FoundStyle = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 2, FoundStyle))    break;
+
+         if      (FoundStyle == "Breakout") BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray)+1)-1] = StrToDouble(TPMax);
+         else if (FoundStyle == "Counter")  CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray)+1)-1] = StrToDouble(TPMax);
+         else                               return(!catch("OptimizeTakeProfit(3)  invalid file format: FoundStyle=\""+ FoundStyle +"\"", ERR_INVALID_FILE_FORMAT));
       }
-      if (TPMax!="" && FoundStyle=="Counter") {
-         CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray)+1)-1] = StrToDouble(TPMax);
-      }
-      Comment("Reading trade files for "+ HourUsed +":00");
+      if (IsLastError()) return(false);
+      FileClose(hFile);
+      FileDelete(filename);
+
+      if (ArraySize(BOTPArray) != 0) ArraySort(BOTPArray);
+      if (ArraySize(CTTPArray) != 0) ArraySort(CTTPArray);
    }
-   FileClose(Handle);
 
-   if (ArraySize(BOTPArray) != 0) ArraySort(BOTPArray);
-   if (ArraySize(CTTPArray) != 0) ArraySort(CTTPArray);
-
+   // breakout trades: calculate SL total and TP total for each side
    double BOHighProfit, BOHighTP, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, BOArrayNum;
 
    for (int BOArray=0; BOArray < ArraySize(BOTPArray); BOArray++) {
-      // calculate SL total and TP total for each side
       double BOStopLossValue   = StopLoss * BOArray;
       double BOTakeProfitValue = BOTPArray[BOArray] * (ArraySize(BOTPArray)-BOArray);
       double BOProfit          = BOTakeProfitValue - BOStopLossValue;
@@ -475,7 +474,7 @@ bool OptimizeTakeProfit(int HourUsed) {
       double BORiskReward      = BOTPArray[BOArray] * 1.0 / StopLoss * 1.0;
       double BOSS              = BOWinRate * BORiskReward;
 
-      int BOhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int BOhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all permutations.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(BOhandle, 0, SEEK_END);
       FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
       FileClose(BOhandle);
@@ -488,13 +487,12 @@ bool OptimizeTakeProfit(int HourUsed) {
          BOHighRiskReward   = BORiskReward;
          BOHighSuccessScore = BOSS;
       }
-      Comment("Optimizing Breakout for "+ HourUsed +":00");
    }
 
+   // counter trades: calculate SL total and TP total for each side.
    double CTHighProfit, CTHighTP, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, CTArrayNum;
 
    for (int CTArray=0; CTArray < ArraySize(CTTPArray); CTArray++) {
-      // calculate SL total and TP total for each side.
       double CTStopLossValue   = StopLoss * (CTArray);
       double CTTakeProfitValue = CTTPArray[CTArray] * (ArraySize(CTTPArray)-CTArray);
       double CTProfit          = CTTakeProfitValue - CTStopLossValue;
@@ -502,7 +500,7 @@ bool OptimizeTakeProfit(int HourUsed) {
       double CTRiskReward      = CTTPArray[CTArray] * 1.0 / StopLoss * 1.0;
       double CTSS              = CTWinRate * CTRiskReward;
 
-      int CThandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Permutation Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      int CThandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all permutations.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
       FileSeek(CThandle, 0, SEEK_END);
       FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
       FileClose(CThandle);
@@ -515,7 +513,6 @@ bool OptimizeTakeProfit(int HourUsed) {
          CTHighRiskReward   = CTRiskReward;
          CTHighSuccessScore = CTSS;
       }
-      Comment("Optimizing Counter for "+ HourUsed +":00");
    }
 
    double HighTP=-1, HighProfit=-1, HighWinRate=-1, HighRiskReward=-1, HighSuccessScore=-1;
@@ -544,37 +541,33 @@ bool OptimizeTakeProfit(int HourUsed) {
       ArrayNum         = CTArrayNum;
    }
 
-   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" optimized settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
    FileClose(handle);
 
-   int Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   int Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
+   FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter",  ArraySize(CTTPArray), CTArrayNum);
    FileClose(Mainhandle);
 
-   Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" All Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   FileSeek(Mainhandle, 0, SEEK_END);
-   FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
-   FileClose(Mainhandle);
-
-   return(!catch("OptimizeTakeProfit(2)"));
+   return(!catch("OptimizeTakeProfit(6)"));
 }
 
 
 /**
  *
  */
-string WriteFile(int TradeHour, string TradeStyle, int TPMax, int CloseDistance, int CloseSpread) {
-   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ TradeHour +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+string WriteHourlyStats(int TradeHour, string TradeStyle, int TPMax) {
+   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ TradeHour, 2) +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
-   FileWrite(handle, TPMax, CloseDistance, CloseSpread, TradeStyle);
+   FileWrite(handle, TPMax, TradeStyle);
    FileClose(handle);
 
-   handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Master Copy.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   handle = FileOpen(WindowExpertName() +" "+ Symbol() +" stats all hours.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
-   FileWrite(handle, TradeHour, TradeStyle, TPMax, CloseDistance, CloseSpread);
+   FileWrite(handle, TradeHour, TradeStyle, TPMax);
    FileClose(handle);
 }
 
@@ -611,13 +604,48 @@ int TradeCloseShift(string Direction, double EntryPrice, int Shift) {
 
 
 /**
- *
+ * @return bool - success status
  */
-void DeleteFile(string name) {
-   int hFile = FileOpen(name, FILE_CSV|FILE_READ, ';');
-
-   if (hFile > 0) {
-      FileClose(hFile);
+bool DeleteFile(string name) {
+   if (MQL.IsFile(name)) {
       FileDelete(name);
+      return(!catch("DeleteFile(1)"));
    }
+   return(false);
+}
+
+
+/**
+ * @return bool - whether the read value is valid in the current context
+ */
+bool IsValidHourlyStatsField(int hFile, string filename, int fieldNo, string value) {
+   if (FileIsEnding(hFile)) {
+      int error = GetLastError();
+      if (error && error!=ERR_END_OF_FILE) return(!catch("IsValidHourlyStatsField(1)", error));
+   }
+
+   switch (fieldNo) {
+      case 1:
+         if (FileIsEnding(hFile)) {
+            if (value != "") catch("IsValidHourlyStatsField(2)  invalid line format in \""+ filename +"\": EOF but TPMax not empty (\""+ value +"\")", ERR_INVALID_FILE_FORMAT);
+            return(false);
+         }
+         else if (FileIsLineEnding(hFile)) {
+            return(!catch("IsValidHourlyStatsField(3)  invalid line format in \""+ filename +"\": EOL after TPMax (\""+ value +"\")", ERR_INVALID_FILE_FORMAT));
+         }
+         break;
+
+      case 2:
+         if (FileIsEnding(hFile)) {
+            return(!catch("IsValidHourlyStatsField(4)  invalid line format in \""+ filename +"\": EOF but no EOL after FoundStyle (\""+ value +"\")", ERR_INVALID_FILE_FORMAT));
+         }
+         else if (!FileIsLineEnding(hFile)) {
+            return(!catch("IsValidHourlyStatsField(5)  invalid line format in \""+ filename +"\": no EOL after FoundStyle (\""+ value +"\")", ERR_INVALID_FILE_FORMAT));
+         }
+         break;
+
+      default:
+         return(!catch("IsValidHourlyStatsField(6)  invalid parameter fieldNo: "+ fieldNo, ERR_INVALID_PARAMETER));
+   }
+   return(true);
 }
