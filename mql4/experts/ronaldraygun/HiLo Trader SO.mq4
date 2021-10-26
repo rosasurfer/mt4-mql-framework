@@ -107,7 +107,6 @@ string MainFunction() {
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
 
    if (EachTickMode && Bars!=CloseBarCount) TickCheck = false;
-   int Total = OrdersTotal();
    int Order = SIGNAL_NONE;
 
    // limit trades per bar
@@ -131,7 +130,7 @@ string MainFunction() {
    static string sLastOptimizationTime;
 
    if (TimeDayOfYear(Tick.time) != LastCalcDay) {
-      lastOptimizationBars  = SelfOptimize(); if (!lastOptimizationBars) return("");
+      lastOptimizationBars  = OptimizeSettings(); if (!lastOptimizationBars) return("");
       LastCalcDay           = TimeDayOfYear(Tick.time);
       sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
    }
@@ -141,11 +140,8 @@ string MainFunction() {
    int RangeStart = DayStart - InitialRange;
 
    // determine current HiLo
-   int HighShift = iHighest(NULL, NULL, MODE_HIGH, RangeStart-1, 1);
-   int LowShift  =  iLowest(NULL, NULL, MODE_LOW,  RangeStart-1, 1);
-
-   double HighPrice = iHigh(NULL, NULL, HighShift);
-   double LowPrice  =  iLow(NULL, NULL, LowShift);
+   double HighPrice = High[iHighest(NULL, NULL, MODE_HIGH, RangeStart-1, 1)];
+   double LowPrice  =  Low[ iLowest(NULL, NULL, MODE_LOW,  RangeStart-1, 1)];
 
    // read back optimization values
    static int    CurrentHour, CurrentHighTP, CurrentHighProfit, CurrentArraySizes, CurrentArrayNum;
@@ -153,8 +149,8 @@ string MainFunction() {
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(Tick.time)) {
-      int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" optimized settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen()")));
+      string filename = WindowExpertName() +" "+ Symbol() +" optimized settings.csv";
+      int hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, ';'); if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen(\""+ filename +"\")")));
 
       if (FileSize(hFile) > 0) {
          while (!FileIsEnding(hFile)) {
@@ -196,10 +192,12 @@ string MainFunction() {
    }
 
    string TradeTrigger1 = "None";
-   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger1 = "Open Long";
-   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger1 = "Open Short";
-   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger1 = "Open Short";
-   if ((TradeCount < MaxSimultaneousTrades || !MaxSimultaneousTrades) && CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger1 = "Open Long";
+   if (!MaxSimultaneousTrades || TradeCount < MaxSimultaneousTrades) {
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger1 = "Open Long";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger1 = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger1 = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger1 = "Open Long";
+   }
 
    string TradeTrigger = TradeTrigger1;
    if (ReverseTrades && TradeTrigger1=="Open Long")  TradeTrigger = "Open Short";
@@ -219,25 +217,20 @@ string MainFunction() {
                                             "Total open Trades: ",     TradeCount,                                                NL,
                                             "Trade style: ",           CurrentTradeStyle,                                         NL,
                                             "Trade trigger: ",         TradeTrigger);
-   bool IsTrade = false;
 
    // close open positions
-   for (i=0; i < Total; i++) {
+   for (i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
 
-      if (OrderType()<=OP_SELL &&  OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         IsTrade = true;
-
+      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
          if (OrderType() == OP_BUY) {
             if (TradeTrigger == "Open Short") Order = SIGNAL_CLOSEBUY;
 
             if (Order==SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
                if (!EachTickMode) CloseBarCount = Bars;
-               IsTrade = false;
                continue;
             }
-
             PotentialStopLoss = OrderStopLoss();
             BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
             TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
@@ -246,18 +239,15 @@ string MainFunction() {
             if (TrailStop > PotentialStopLoss && TrailStop) PotentialStopLoss = TrailStop;
 
             if (PotentialStopLoss != OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
-
          }
-         else {
+         else if (OrderType() == OP_SELL) {
             if (TradeTrigger == "Open Long") Order = SIGNAL_CLOSESELL;
 
             if (Order==SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
                OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
                if (!EachTickMode) CloseBarCount = Bars;
-               IsTrade = false;
                continue;
             }
-
             PotentialStopLoss = OrderStopLoss();
             BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
             TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
@@ -273,10 +263,9 @@ string MainFunction() {
    // open new positions
    if (TradeTrigger == "Open Long")  Order = SIGNAL_BUY;
    if (TradeTrigger == "Open Short") Order = SIGNAL_SELL;
-   IsTrade = false;
 
-   if (Order==SIGNAL_BUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount)))) {
-      if (!IsTrade && TradesThisBar < 1) {
+   if (!TradesThisBar && (((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount))))) {
+      if (Order == SIGNAL_BUY) {
          if (UseStopLoss)   StopLossLevel   = Ask - StopLoss*Point;
          else               StopLossLevel   = 0;
          if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point;
@@ -289,10 +278,7 @@ string MainFunction() {
          else              OpenBarCount = Bars;
          return(_string(CommentString, catch("MainFunction(3)")));
       }
-   }
-
-   if (Order==SIGNAL_SELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount)))) {
-      if (!IsTrade && TradesThisBar < 1) {
+      else if (Order == SIGNAL_SELL) {
          if (UseStopLoss)   StopLossLevel   = Bid + StopLoss*Point;
          else               StopLossLevel   = 0;
          if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point;
@@ -361,22 +347,19 @@ double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
 
 
 /**
- *
  * @return int
  */
-int SelfOptimize() {
+int OptimizeSettings() {
    DeleteFile(WindowExpertName() +" "+ Symbol() +" optimized settings.csv");
    DeleteFile(WindowExpertName() +" "+ Symbol() +" all settings.csv");
    DeleteFile(WindowExpertName() +" "+ Symbol() +" all permutations.csv");
 
    int OptimizeBars = BarsToOptimize;
-   if (!OptimizeBars) OptimizeBars = iBars(NULL, NULL);
-   if (OptimizeBars > iBars(NULL, NULL)) {
-      return(!catch("SelfOptimize(1)  not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
-   }
+   if (!OptimizeBars) OptimizeBars = Bars;
+   if (OptimizeBars > Bars) return(!catch("OptimizeSettings(1)  not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
 
-   int HighShift, LowShift, HighClose, LowClose;
-   double HighValue, LowValue, HighValue1, LowValue1, HighestValue, LowestValue;
+   int HighClose, LowClose;
+   double HighValue, LowValue, HighestValue, LowestValue;
 
    int FBarStart     = OptimizeBars;
    int DayStartShift = FBarStart;
@@ -391,35 +374,31 @@ int SelfOptimize() {
       // find the end of the range and establish initial high and low
       if (DayStartShift-SearchShift == InitialRange) {
          RangeEndShift = SearchShift;
-         HighShift = iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift);
-         HighValue =    iHigh(NULL, NULL, HighShift);
-         LowShift  =  iLowest(NULL, NULL, MODE_LOW,  DayStartShift-RangeEndShift, RangeEndShift);
-         LowValue  =     iLow(NULL, NULL, LowShift);
+         HighValue = High[iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift)];
+         LowValue  =  Low[ iLowest(NULL, NULL, MODE_LOW,  DayStartShift-RangeEndShift, RangeEndShift)];
       }
 
       // determine subsequent high and low
       if (DayStartShift > RangeEndShift) {
-         if (iHigh(NULL, NULL, SearchShift) > HighValue) {
-            HighValue1   = HighValue;
-            HighValue    = iHigh(NULL, NULL, SearchShift);
-            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Long", HighValue1, SearchShift) + 1);
-            HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-HighClose, HighClose));
-            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((HighestValue-HighValue1) / MarketInfo(Symbol(), MODE_POINT)));
+         if (High[SearchShift] > HighValue) {
+            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Long", HighValue, SearchShift) + 1);
+            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, SearchShift-HighClose, HighClose)];
+            WriteHourlyStats(TimeHour(Time[SearchShift]), "Breakout", ((HighestValue-HighValue) / Point));
 
-            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", HighValue1, SearchShift) + 1);
-            LowestValue = iLow(NULL, NULL,  iLowest(NULL, NULL, MODE_LOW, SearchShift-HighClose, HighClose));
-            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)));
+            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", HighValue, SearchShift) + 1);
+            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, SearchShift-HighClose, HighClose)];
+            WriteHourlyStats(TimeHour(Time[SearchShift]), "Counter", ((HighValue-LowestValue) / Point));
+            HighValue   = High[SearchShift];
          }
-         if (iLow(NULL, NULL, SearchShift) < LowValue) {
-            LowValue1    = LowValue;
-            LowValue     = iLow(NULL, NULL, SearchShift);
-            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift("Long", LowValue1, SearchShift) + 1);
-            HighestValue = iHigh(NULL, NULL, iHighest(NULL, NULL, MODE_HIGH, SearchShift-LowClose, LowClose));
-            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Counter", ((HighestValue-LowValue1) / MarketInfo(Symbol(), MODE_POINT)));
+         if (Low[SearchShift] < LowValue) {
+            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift("Long", LowValue, SearchShift) + 1);
+            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, SearchShift-LowClose, LowClose)];
+            WriteHourlyStats(TimeHour(Time[SearchShift]), "Counter", ((HighestValue-LowValue) / Point));
 
-            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", LowValue1, SearchShift) + 1);
-            LowestValue = iLow(NULL, NULL, iLowest(NULL, NULL, MODE_LOW, SearchShift-LowClose, LowClose));
-            WriteHourlyStats(TimeHour(iTime(NULL, NULL, SearchShift)), "Breakout", ((LowValue1-LowestValue) / MarketInfo(Symbol(), MODE_POINT)));
+            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", LowValue, SearchShift) + 1);
+            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, SearchShift-LowClose, LowClose)];
+            WriteHourlyStats(TimeHour(Time[SearchShift]), "Breakout", ((LowValue-LowestValue) / Point));
+            LowValue    = Low[SearchShift];
          }
       }
    }
@@ -428,12 +407,11 @@ int SelfOptimize() {
    for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
       if (!OptimizeTakeProfit(OptimizeHour)) return(NULL);
    }
-   return(ifInt(catch("SelfOptimize(2)"), 0, OptimizeBars));
+   return(ifInt(catch("OptimizeSettings(2)"), 0, OptimizeBars));
 }
 
 
 /**
- *
  * @return bool - success status
  */
 bool OptimizeTakeProfit(int HourUsed) {
@@ -572,22 +550,22 @@ int TradeCloseShift(string Direction, double EntryPrice, int Shift) {
    double TargetPrice = 0;
 
    if (Direction == "Long") {
-      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss   * MarketInfo(Symbol(), MODE_POINT);
-      else                TargetPrice = EntryPrice - TakeProfit * MarketInfo(Symbol(), MODE_POINT);
+      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss  *Point;
+      else                TargetPrice = EntryPrice - TakeProfit*Point;
    }
    if (Direction == "Short") {
-      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss   * MarketInfo(Symbol(), MODE_POINT);
-      else                TargetPrice = EntryPrice + TakeProfit * MarketInfo(Symbol(), MODE_POINT);
+      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss  *Point;
+      else                TargetPrice = EntryPrice + TakeProfit*Point;
    }
 
    for (int FShift=Shift; FShift > 0; FShift--) {
       if (Direction == "Long") {
-         if (iHigh(NULL, NULL, FShift) >= TargetPrice && iLow(NULL, NULL, FShift) <= TargetPrice) {
+         if (High[FShift] >= TargetPrice && Low[FShift] <= TargetPrice) {
             return(FShift);
          }
       }
       if (Direction == "Short") {
-         if (iHigh(NULL, NULL, FShift) >= TargetPrice && iLow(NULL, NULL, FShift) <= TargetPrice) {
+         if (High[FShift] >= TargetPrice && Low[FShift] <= TargetPrice) {
             return(FShift);
          }
       }
