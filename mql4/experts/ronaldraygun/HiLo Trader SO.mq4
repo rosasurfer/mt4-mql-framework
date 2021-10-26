@@ -8,6 +8,7 @@
  *  - restored regular start() function
  *  - simplified and slimmed down everything
  *  - converted to and integrated rosasurfer framework
+ *  - drop obsolete hourly summary stats file "Master Copy"
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -364,7 +365,6 @@ double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
  * @return int
  */
 int SelfOptimize() {
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" stats all hours.csv");
    DeleteFile(WindowExpertName() +" "+ Symbol() +" optimized settings.csv");
    DeleteFile(WindowExpertName() +" "+ Symbol() +" all settings.csv");
    DeleteFile(WindowExpertName() +" "+ Symbol() +" all permutations.csv");
@@ -372,7 +372,7 @@ int SelfOptimize() {
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = iBars(NULL, NULL);
    if (OptimizeBars > iBars(NULL, NULL)) {
-      return(!catch("SelfOptimize(1)  Not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
+      return(!catch("SelfOptimize(1)  not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
    }
 
    int HighShift, LowShift, HighClose, LowClose;
@@ -445,15 +445,13 @@ bool OptimizeTakeProfit(int HourUsed) {
 
    if (MQL.IsFile(filename)) {
       int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen(\""+ filename +"\")"));
-      debug("OptimizeTakeProfit(2)  reading \""+ filename +"\"");
-
       while (!FileIsEnding(hFile)) {
          string TPMax      = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 1, TPMax))         break;
          string FoundStyle = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 2, FoundStyle))    break;
 
          if      (FoundStyle == "Breakout") BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray)+1)-1] = StrToDouble(TPMax);
          else if (FoundStyle == "Counter")  CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray)+1)-1] = StrToDouble(TPMax);
-         else                               return(!catch("OptimizeTakeProfit(3)  invalid file format: FoundStyle=\""+ FoundStyle +"\"", ERR_INVALID_FILE_FORMAT));
+         else                               return(!catch("OptimizeTakeProfit(2)  invalid file format in \""+ filename +"\": FoundStyle=\""+ FoundStyle +"\"", ERR_INVALID_FILE_FORMAT));
       }
       if (IsLastError()) return(false);
       FileClose(hFile);
@@ -552,7 +550,7 @@ bool OptimizeTakeProfit(int HourUsed) {
    FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter",  ArraySize(CTTPArray), CTArrayNum);
    FileClose(Mainhandle);
 
-   return(!catch("OptimizeTakeProfit(6)"));
+   return(!catch("OptimizeTakeProfit(3)"));
 }
 
 
@@ -563,11 +561,6 @@ string WriteHourlyStats(int TradeHour, string TradeStyle, int TPMax) {
    int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ TradeHour, 2) +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(handle, 0, SEEK_END);
    FileWrite(handle, TPMax, TradeStyle);
-   FileClose(handle);
-
-   handle = FileOpen(WindowExpertName() +" "+ Symbol() +" stats all hours.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   FileSeek(handle, 0, SEEK_END);
-   FileWrite(handle, TradeHour, TradeStyle, TPMax);
    FileClose(handle);
 }
 
