@@ -8,7 +8,7 @@
  *  - restored regular start() function
  *  - simplified and slimmed down everything
  *  - converted to and integrated rosasurfer framework
- *  - drop obsolete hourly summary stats file "Master Copy"
+ *  - dropped obsolete hourly summary stats file "Master Copy"
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -59,12 +59,6 @@ extern bool   HighestSuccessScore   = true;
 #include <stdfunctions.mqh>
 #include <rsfLibs.mqh>
 
-#define SIGNAL_NONE        0
-#define SIGNAL_BUY         1
-#define SIGNAL_SELL        2
-#define SIGNAL_CLOSEBUY    3
-#define SIGNAL_CLOSESELL   4
-
 int  TradeBar;
 int  TradesThisBar;
 int  OpenBarCount;
@@ -107,7 +101,6 @@ string MainFunction() {
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
 
    if (EachTickMode && Bars!=CloseBarCount) TickCheck = false;
-   int Order = SIGNAL_NONE;
 
    // limit trades per bar
    if (TradeBar != Bars) {
@@ -191,17 +184,17 @@ string MainFunction() {
       if (OrderMagicNumber()==MagicNumber && OrderSymbol()==Symbol() && OrderType()<=OP_SELL) TradeCount++;
    }
 
-   string TradeTrigger1 = "None";
+   string TradeTrigger = "None";
    if (!MaxSimultaneousTrades || TradeCount < MaxSimultaneousTrades) {
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger1 = "Open Long";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger1 = "Open Short";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger1 = "Open Short";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger1 = "Open Long";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger = "Open Long";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger = "Open Long";
+      if (ReverseTrades) {
+         if      (TradeTrigger == "Open Long")  TradeTrigger = "Open Short";
+         else if (TradeTrigger == "Open Short") TradeTrigger = "Open Long";
+      }
    }
-
-   string TradeTrigger = TradeTrigger1;
-   if (ReverseTrades && TradeTrigger1=="Open Long")  TradeTrigger = "Open Short";
-   if (ReverseTrades && TradeTrigger1=="Open Short") TradeTrigger = "Open Long";
 
    string CommentString = StringConcatenate("Last optimization: ",     sLastOptimizationTime,                                     NL,
                                             "Bars used: ",             lastOptimizationBars,                                      NL,
@@ -218,54 +211,46 @@ string MainFunction() {
                                             "Trade style: ",           CurrentTradeStyle,                                         NL,
                                             "Trade trigger: ",         TradeTrigger);
 
-   // close open positions
+   // process open positions
    for (i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
+      if (OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
 
-      if (OrderSymbol()==Symbol() && OrderMagicNumber()==MagicNumber) {
-         if (OrderType() == OP_BUY) {
-            if (TradeTrigger == "Open Short") Order = SIGNAL_CLOSEBUY;
-
-            if (Order==SIGNAL_CLOSEBUY && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
-               OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
-               if (!EachTickMode) CloseBarCount = Bars;
-               continue;
-            }
-            PotentialStopLoss = OrderStopLoss();
-            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
-            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
-
-            if (BEven     > PotentialStopLoss && BEven)     PotentialStopLoss = BEven;
-            if (TrailStop > PotentialStopLoss && TrailStop) PotentialStopLoss = TrailStop;
-
-            if (PotentialStopLoss != OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
+      if (OrderType() == OP_BUY) {
+         if (TradeTrigger=="Open Short" && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
+            OrderClose(OrderTicket(), OrderLots(), Bid, Slippage, MediumSeaGreen);
+            if (!EachTickMode) CloseBarCount = Bars;
+            continue;
          }
-         else if (OrderType() == OP_SELL) {
-            if (TradeTrigger == "Open Long") Order = SIGNAL_CLOSESELL;
+         PotentialStopLoss = OrderStopLoss();
+         BEven             = CalcBreakEven(OrderTicket());
+         TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
 
-            if (Order==SIGNAL_CLOSESELL && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
-               OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
-               if (!EachTickMode) CloseBarCount = Bars;
-               continue;
-            }
-            PotentialStopLoss = OrderStopLoss();
-            BEven             = CalcBreakEven(MoveStopOnce, OrderTicket(), MoveStopTo, MoveStopWhenPrice);
-            TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
+         if (BEven     > PotentialStopLoss) PotentialStopLoss = BEven;
+         if (TrailStop > PotentialStopLoss) PotentialStopLoss = TrailStop;
 
-            if ((BEven     < PotentialStopLoss && BEven)     || (!PotentialStopLoss)) PotentialStopLoss = BEven;
-            if ((TrailStop < PotentialStopLoss && TrailStop) || (!PotentialStopLoss)) PotentialStopLoss = TrailStop;
-
-            if (PotentialStopLoss!=OrderStopLoss() || !OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, DarkOrange);
+         if (OrderStopLoss() != PotentialStopLoss) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
+      }
+      else if (OrderType() == OP_SELL) {
+         if (TradeTrigger=="Open Long" && ((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=CloseBarCount)))) {
+            OrderClose(OrderTicket(), OrderLots(), Ask, Slippage, DarkOrange);
+            if (!EachTickMode) CloseBarCount = Bars;
+            continue;
          }
+         PotentialStopLoss = OrderStopLoss();
+         BEven             = CalcBreakEven(OrderTicket());
+         TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
+
+         if ((BEven     < PotentialStopLoss && BEven)     || (!PotentialStopLoss)) PotentialStopLoss = BEven;
+         if ((TrailStop < PotentialStopLoss && TrailStop) || (!PotentialStopLoss)) PotentialStopLoss = TrailStop;
+
+         if (PotentialStopLoss!=OrderStopLoss() || !OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, DarkOrange);
       }
    }
 
-   // open new positions
-   if (TradeTrigger == "Open Long")  Order = SIGNAL_BUY;
-   if (TradeTrigger == "Open Short") Order = SIGNAL_SELL;
-
+   // process signals for new positions
    if (!TradesThisBar && (((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount))))) {
-      if (Order == SIGNAL_BUY) {
+      if (TradeTrigger == "Open Long") {
          if (UseStopLoss)   StopLossLevel   = Ask - StopLoss*Point;
          else               StopLossLevel   = 0;
          if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point;
@@ -278,7 +263,7 @@ string MainFunction() {
          else              OpenBarCount = Bars;
          return(_string(CommentString, catch("MainFunction(3)")));
       }
-      else if (Order == SIGNAL_SELL) {
+      else if (TradeTrigger == "Open Short") {
          if (UseStopLoss)   StopLossLevel   = Bid + StopLoss*Point;
          else               StopLossLevel   = 0;
          if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point;
@@ -299,22 +284,20 @@ string MainFunction() {
 
 
 /**
- *
+ * @return double
  */
-double CalcBreakEven(bool condition, int ticket, int moveStopTo, int moveStopWhenPrice) {
-   OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
+double CalcBreakEven(int ticket) {
+   if (MoveStopOnce && MoveStopWhenPrice) {
+      OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
-   if (OrderType() == OP_BUY) {
-      if (condition && moveStopWhenPrice > 0) {
-         if (Bid-OrderOpenPrice() >= moveStopWhenPrice*Point) {
-            return(OrderOpenPrice() + moveStopTo*Point);
+      if (OrderType() == OP_BUY) {
+         if (Bid-OrderOpenPrice() >= MoveStopWhenPrice*Point) {
+            return(OrderOpenPrice() + MoveStopTo*Point);
          }
       }
-   }
-   else if (OrderType() == OP_SELL) {
-      if (condition && moveStopWhenPrice > 0) {
-         if (OrderOpenPrice()-Ask >= moveStopWhenPrice*Point) {
-            return(OrderOpenPrice() - moveStopTo*Point);
+      else if (OrderType() == OP_SELL) {
+         if (OrderOpenPrice()-Ask >= MoveStopWhenPrice*Point) {
+            return(OrderOpenPrice() - MoveStopTo*Point);
          }
       }
    }
