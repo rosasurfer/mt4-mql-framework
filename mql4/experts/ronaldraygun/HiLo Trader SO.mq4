@@ -64,21 +64,12 @@ extern bool   HighestSuccessScore   = true;
 #define SIGNAL_CLOSEBUY    3
 #define SIGNAL_CLOSESELL   4
 
-int      GMTBar;
-string   GMTTime;
-string   BrokerTime;
-int      GMTShift;
-
-datetime CurGMTTime;
-datetime CurBrokerTime;
-datetime CurrentGMTTime;
-
-int      TradeBar;
-int      TradesThisBar;
-int      OpenBarCount;
-int      CloseBarCount;
-int      Current;
-bool     TickCheck = false;
+int  TradeBar;
+int  TradesThisBar;
+int  OpenBarCount;
+int  CloseBarCount;
+int  Current;
+bool TickCheck = false;
 
 
 /**
@@ -135,13 +126,13 @@ string MainFunction() {
    }
 
    // optimization
-   static int BarCount, LastCalcDay;
-   static string LastOptimize;
+   static int lastOptimizationBars, LastCalcDay;
+   static string sLastOptimizationTime;
 
-   if (TimeDayOfYear(TimeCurrent()) != LastCalcDay) {
-      BarCount     = SelfOptimize();
-      LastCalcDay  = TimeDayOfYear(TimeCurrent());
-      LastOptimize = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
+   if (TimeDayOfYear(Tick.time) != LastCalcDay) {
+      lastOptimizationBars  = SelfOptimize();
+      LastCalcDay           = TimeDayOfYear(Tick.time);
+      sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
    }
 
    // determine day's start
@@ -160,24 +151,22 @@ string MainFunction() {
    static double CurrentWinRate, CurrentRiskReward, CurrentSuccessScore;
    static string CurrentTradeStyle;
 
-   if (CurrentHour != TimeHour(TimeCurrent())) {
-      int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      if (Handle == -1) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen() failed", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
-   }
+   if (CurrentHour != TimeHour(Tick.time)) {
+      int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" Optimized Settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+      if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen()")));
 
-   if (Handle > 0) {
-      while (!FileIsEnding(Handle)) {
-         int    HourUsed         = StrToInteger(FileReadString(Handle));
-         int    HighTP           = StrToInteger(FileReadString(Handle));
-         int    HighProfit       = StrToInteger(FileReadString(Handle));
-         double HighWinRate      = StrToDouble(FileReadString(Handle));
-         double HighRiskReward   = StrToDouble(FileReadString(Handle));
-         double HighSuccessScore = StrToDouble(FileReadString(Handle));
-         string TradeStyle       = FileReadString(Handle);
-         int    ArraySizes       = StrToInteger(FileReadString(Handle));
-         int    ArrayNum         = StrToInteger(FileReadString(Handle));
+      while (!FileIsEnding(hFile)) {
+         int    HourUsed         = StrToInteger(FileReadString(hFile));
+         int    HighTP           = StrToInteger(FileReadString(hFile));
+         int    HighProfit       = StrToInteger(FileReadString(hFile));
+         double HighWinRate      = StrToDouble(FileReadString(hFile));
+         double HighRiskReward   = StrToDouble(FileReadString(hFile));
+         double HighSuccessScore = StrToDouble(FileReadString(hFile));
+         string TradeStyle       = FileReadString(hFile);
+         int    ArraySizes       = StrToInteger(FileReadString(hFile));
+         int    ArrayNum         = StrToInteger(FileReadString(hFile));
 
-         if (HourUsed == TimeHour(TimeCurrent())) {
+         if (HourUsed == TimeHour(Tick.time)) {
             CurrentHour         = HourUsed;
             CurrentHighTP       = HighTP;
             CurrentHighProfit   = HighProfit;
@@ -190,7 +179,7 @@ string MainFunction() {
             break;
          }
       }
-      FileClose(Handle);
+      FileClose(hFile);
    }
 
    if (!ReverseTrades) TakeProfit = CurrentHighTP;
@@ -213,19 +202,19 @@ string MainFunction() {
    if (ReverseTrades && TradeTrigger1=="Open Long")  TradeTrigger = "Open Short";
    if (ReverseTrades && TradeTrigger1=="Open Short") TradeTrigger = "Open Long";
 
-   string CommentString = StringConcatenate("Last optimization: ",     LastOptimize,                                              "\n",
-                                            "Bars used: ",             BarCount,                                                  "\n",
-                                            "Total bars: ",            Bars,                                                      "\n",
-                                            "Current hour: ",          CurrentHour,                                               "\n",
-                                            "Current TP: ",            CurrentHighTP,                                             "\n",
-                                            "Current win rate: ",      CurrentWinRate * 100.0, "% (", MinimumWinRate, ")",        "\n",
-                                            "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",           "\n",
-                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")", "\n",
-                                            "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   "\n",
-                                            "Array lose: ",            CurrentArrayNum + 1,                                       "\n",
-                                            "Total array: ",           CurrentArraySizes,                                         "\n",
-                                            "Total open Trades: ",     TradeCount,                                                "\n",
-                                            "Trade style: ",           CurrentTradeStyle,                                         "\n",
+   string CommentString = StringConcatenate("Last optimization: ",     sLastOptimizationTime,                                     NL,
+                                            "Bars used: ",             lastOptimizationBars,                                      NL,
+                                            "Total bars: ",            Bars,                                                      NL,
+                                            "Current hour: ",          CurrentHour,                                               NL,
+                                            "Current TP: ",            CurrentHighTP,                                             NL,
+                                            "Current win rate: ",      CurrentWinRate * 100.0, "% (", MinimumWinRate, ")",        NL,
+                                            "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",           NL,
+                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")", NL,
+                                            "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   NL,
+                                            "Array lose: ",            CurrentArrayNum + 1,                                       NL,
+                                            "Total array: ",           CurrentArraySizes,                                         NL,
+                                            "Total open Trades: ",     TradeCount,                                                NL,
+                                            "Trade style: ",           CurrentTradeStyle,                                         NL,
                                             "Trade trigger: ",         TradeTrigger);
    bool IsTrade = false;
 
@@ -370,6 +359,7 @@ double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
 
 /**
  *
+ * @return int
  */
 int SelfOptimize() {
    DeleteFile(WindowExpertName() +" "+ Symbol() +" Master Copy.csv"             );
@@ -436,7 +426,7 @@ int SelfOptimize() {
 
    // determine the most profitable combination
    for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
-      OptimizeTakeProfit(OptimizeHour);
+      if (!OptimizeTakeProfit(OptimizeHour)) return(NULL);
       FileDelete(WindowExpertName() +" "+ Symbol() +" "+ OptimizeHour +".csv");
    }
 
@@ -446,13 +436,14 @@ int SelfOptimize() {
 
 /**
  *
+ * @return bool - success status
  */
-void OptimizeTakeProfit(int HourUsed) {
+bool OptimizeTakeProfit(int HourUsed) {
    double BOTPArray[]; ArrayResize(BOTPArray, 0);
    double CTTPArray[]; ArrayResize(CTTPArray, 0);
 
    int Handle = FileOpen(WindowExpertName() +" "+ Symbol() +" "+ HourUsed +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   if (Handle == -1) return;
+   if (Handle < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen()"));
 
    while (!FileIsEnding(Handle)) {
       string TPMax         = FileReadString(Handle);
@@ -567,6 +558,8 @@ void OptimizeTakeProfit(int HourUsed) {
    FileSeek(Mainhandle, 0, SEEK_END);
    FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter", ArraySize(CTTPArray), CTArrayNum);
    FileClose(Mainhandle);
+
+   return(!catch("OptimizeTakeProfit(2)"));
 }
 
 
