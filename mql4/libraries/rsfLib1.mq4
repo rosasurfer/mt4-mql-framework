@@ -2710,7 +2710,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    while (!FileIsEnding(hFile)) {
       newLine = false;
       if (lineEnd) {                                                       // if the last loop reached EOF
-         newLine   = true;                                                 // mark start of a new line = BOL
+         newLine   = true;                                                 // mark begin of a new line = BOL
          blankLine = false;
          lineEnd   = false;
          fPointer  = FileTell(hFile);                                      // points to the start of the current line
@@ -2770,7 +2770,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // check whether the end of file triggered ERR_END_OF_FILE
    int error = GetLastError();
-   if (error!=ERR_END_OF_FILE) /*&&*/ if (IsError(error)) {
+   if (error && error!=ERR_END_OF_FILE) {
       FileClose(hFile);
       if (hFileBin != 0)
          FileClose(hFileBin);

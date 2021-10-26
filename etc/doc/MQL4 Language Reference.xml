@@ -5667,11 +5667,9 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsEnding()
       type=bool
       <content>
-        Whether the file pointer of the specified file is at the end of the file.<br/>
+        Returns <span class="const">TRUE</span> after a failed attempt to move the file pointer or to read past the end of a file. 
+        <span class="const">TRUE</span> is also returned if an invalid or closed file handle is passed (the read attempt will fail). 
         <br/>
-        <span style="color:red">Bug:</span>
-        <br/>
-        Returns <span class="const">TRUE</span> if an invalid or closed file handle is passed.
       </content>
       <example>
 <span class="keyword code">if</span> (<span class="function code">FileIsEnding</span>(hFile)) {
