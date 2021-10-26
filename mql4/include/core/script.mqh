@@ -139,12 +139,13 @@ int start() {
    }
 
    // call the userland main function
-   onStart();
+   int uError = onStart();
+   if (uError && uError!=last_error) catch("start(5)", uError);
 
    // check errors
-   error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(5)", error);
+   int lError = GetLastError();
+   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(6)", lError);
    return(last_error);
 }
 
