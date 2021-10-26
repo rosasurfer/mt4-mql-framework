@@ -5667,20 +5667,22 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsEnding()
       type=bool
       <content>
-        Returns logical <span class="const">TRUE</span> if file pointer is at the end of the file, otherwise returns <span class="const">FALSE</span>.
-        To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
-        If the end of file is reached <a href="help://runtimestatus_GetLastError">GetLastError()</a> will return <span class="const">ERR_END_OF_FILE</span> (4099).
+        Whether the file pointer of the specified file is at the end of the file.<br/>
+        <br/>
+        <span style="color:red">Bug:</span>
+        <br/>
+        Returns <span class="const">TRUE</span> if an invalid or closed file handle is passed.
       </content>
       <example>
-   if (FileIsEnding(hFile)) {
-      FileClose(hFile);
-      return(false);
-   }
+<span class="keyword code">if</span> (<span class="function code">FileIsEnding</span>(hFile)) {
+   <span class="function code">FileClose</span>(hFile);
+   <span class="keyword code">return</span>(<span class="const code">false</span>);
+}
       </example>
       <parameter>
         type=int
         name=hFile
-        description=File handle as returned by FileOpen().
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen</a>()
       </parameter>
     </function>
 
@@ -5689,19 +5691,18 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsLineEnding()
       type=bool
       <content>
-        For CSV file returns logical <span class="const">TRUE</span> if file pointer is at the end of the line, otherwise returns <span class="const">FALSE</span>.
-        To get detailed error information call <a href="help://runtimestatus_GetLastError">GetLastError()</a> function.
+        For CSV file returns <span class="const">TRUE</span> if file pointer is at the end of the line, otherwise returns <span class="const">FALSE</span>.
       </content>
       <example>
-   if (FileIsLineEnding(hFile)) {
-      FileClose(hFile);
-      return(false);
-   }
+if (FileIsLineEnding(hFile)) {
+   FileClose(hFile);
+   return(false);
+}
       </example>
       <parameter>
         type=int
         name=hFile
-        description=File handle as returned by FileOpen().
+        description=file handle as returned by <a href="help://files_FileOpen">FileOpen</a>()
       </parameter>
     </function>
 
