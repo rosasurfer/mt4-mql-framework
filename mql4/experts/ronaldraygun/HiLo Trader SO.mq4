@@ -8,7 +8,9 @@
  *  - restored regular start() function
  *  - simplified and slimmed down everything
  *  - converted to and integrated rosasurfer framework
- *  - dropped obsolete hourly summary stats file "Master Copy"
+ *  - dropped obsolete input param MoveStopTo
+ *  - dropped unused optimization files "All Settings", "All Permutation Settings" and "Master Copy"
+ *  - dropped unused hourly optimization file fields "CloseDistance" and "CloseSpread"
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -19,39 +21,40 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Remark1               = "== Main Settings ==";
-extern int    MagicNumber           = 0;
-extern bool   EachTickMode          = true;
-extern int    MaxSimultaneousTrades = 10;
-extern double Lots                  = 0.1;
-extern bool   MoneyManagement       = false;
-extern int    Risk                  = 0;
-extern int    Slippage              = 5;
-extern bool   UseStopLoss           = true;
-extern int    StopLoss              = 200;
-extern bool   UseTakeProfit         = true;
-extern int    TakeProfit            = 200;
-extern bool   UseTrailingStop       = false;
-extern int    TrailingStop          = 30;
-extern bool   MoveStopOnce          = false;
-extern int    MoveStopWhenPrice     = 50;
-extern int    MoveStopTo            = 1;
+extern string ___1___________________________ = "=== Order settings ===";
+extern double Lots                            = 0.1;        // fix lot size to use if MoneyManagement=FALSE
+extern bool   MoneyManagement                 = false;      // TRUE: dynamic lot size using the specified Risk
+extern int    Risk                            = 0;          // percent of available margin to use for each position
+extern bool   UseTakeProfit                   = true;
+extern int    TakeProfit                      = 200;        // takeprofit in point (optimized if ReverseTrades=FALSE)
+extern bool   UseStopLoss                     = true;
+extern int    StopLoss                        = 200;        // stoploss in point (optimized if ReverseTrades=TRUE)
+extern bool   UseTrailingStop                 = false;
+extern int    TrailingStop                    = 30;         // trailing stop in point (fix)
+extern bool   MoveStopToBreakeven             = false;
+extern int    MoveStopToBreakevenWhen         = 50;         // min. profit distance in point to move the stop to breakeven
+extern int    MagicNumber                     = 0;
+extern int    Slippage                        = 5;          // max. accepted order slippage in point
 
-extern string Remark2               = "== Breakout Settings ==";
-extern int    BarsToOptimize        = 0;
-extern int    InitialRange          = 60;
-extern int    MaximumBarShift       = 1440;
-extern double MinimumWinRate        = 50;
-extern double MinimumRiskReward     = 0;
-extern double MinimumSuccessScore   = 0;
-extern int    MinimumSampleSize     = 10;
-extern bool   ReverseTrades         = false;
+extern string ___2___________________________ = "=== Trade conditions ===";
+extern bool   EachTickMode                    = true;       // FALSE: open positions only on BarOpen
+extern int    MaxSimultaneousTrades           = 10;         // max. number of all open positions at any time
+extern bool   ReverseTrades                   = false;      // reverse trades and switch takeprofit/stoploss (allows to separately optimize TP and SL)
 
-extern string Remark3               = "== Optimize Based On ==";
-extern bool   HighestProfit         = false;
-extern bool   HighestWinRate        = false;
-extern bool   HighestRiskReward     = false;
-extern bool   HighestSuccessScore   = true;
+extern string ___3___________________________ = "=== Breakout configuration ===";
+extern int    InitialRange                    = 60;         // number of bars after Midnight defining the breakout range
+
+extern string ___4___________________________ = "=== Optimization ===";
+extern int    BarsToOptimize                  = 0;          // number of bars to use (0: all available bars)
+extern int    MaximumBarShift                 = 1440;       // max. number of bars a test trade can stay open
+extern int    MinimumWinRate                  = 50;         // min. required winning rate in percent to make a system decision
+extern double MinimumRiskReward               = 0;          // min. required risk/reward ratio required for a system (calculated as tp/sl)
+extern double MinimumSuccessScore             = 0;          // min. required system success score (see thread on success scores for calculation)
+extern int    MinimumSampleSize               = 10;         // min. required number of trades per parameter combination of trading hour, system and exit condition
+extern bool   OptimizeForProfit               = false;      // max. profit
+extern bool   OptimizeForWinRate              = false;      // max. number of winning trades
+extern bool   OptimizeForRiskReward           = false;      // max. risk/reward ratio (calculated as reward/risk)
+extern bool   OptimizeForSuccessScore         = true;       // max. success score (see thread on success scores for calculation)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -123,7 +126,7 @@ string MainFunction() {
    static string sLastOptimizationTime;
 
    if (TimeDayOfYear(Tick.time) != LastCalcDay) {
-      lastOptimizationBars  = OptimizeSettings(); if (!lastOptimizationBars) return("");
+      lastOptimizationBars  = Optimize(); if (!lastOptimizationBars) return("");
       LastCalcDay           = TimeDayOfYear(Tick.time);
       sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
    }
@@ -137,38 +140,35 @@ string MainFunction() {
    double LowPrice  =  Low[ iLowest(NULL, NULL, MODE_LOW,  RangeStart-1, 1)];
 
    // read back optimization values
-   static int    CurrentHour, CurrentHighTP, CurrentHighProfit, CurrentArraySizes, CurrentArrayNum;
+   static int    CurrentHour, CurrentHighTP, CurrentArraySizes, CurrentArrayNum;
    static double CurrentWinRate, CurrentRiskReward, CurrentSuccessScore;
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(Tick.time)) {
       string filename = WindowExpertName() +" "+ Symbol() +" optimized settings.csv";
-      int hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, ';'); if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen(\""+ filename +"\")")));
+      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen(\""+ filename +"\")")));
 
-      if (FileSize(hFile) > 0) {
-         while (!FileIsEnding(hFile)) {
-            int    HourUsed         = StrToInteger(FileReadString(hFile));
-            int    HighTP           = StrToInteger(FileReadString(hFile));
-            int    HighProfit       = StrToInteger(FileReadString(hFile));
-            double HighWinRate      = StrToDouble(FileReadString(hFile));
-            double HighRiskReward   = StrToDouble(FileReadString(hFile));
-            double HighSuccessScore = StrToDouble(FileReadString(hFile));
-            string TradeStyle       = FileReadString(hFile);
-            int    ArraySizes       = StrToInteger(FileReadString(hFile));
-            int    ArrayNum         = StrToInteger(FileReadString(hFile));
+      while (!FileIsEnding(hFile)) {
+         int    HourUsed         = StrToInteger(FileReadString(hFile));
+         int    HighTP           = StrToInteger(FileReadString(hFile));
+         int    HighProfit       = StrToInteger(FileReadString(hFile));
+         double HighWinRate      = StrToDouble(FileReadString(hFile));
+         double HighRiskReward   = StrToDouble(FileReadString(hFile));
+         double HighSuccessScore = StrToDouble(FileReadString(hFile));
+         string TradeStyle       = FileReadString(hFile);
+         int    ArraySizes       = StrToInteger(FileReadString(hFile));
+         int    ArrayNum         = StrToInteger(FileReadString(hFile));
 
-            if (HourUsed == TimeHour(Tick.time)) {
-               CurrentHour         = HourUsed;
-               CurrentHighTP       = HighTP;
-               CurrentHighProfit   = HighProfit;
-               CurrentWinRate      = HighWinRate;
-               CurrentRiskReward   = HighRiskReward;
-               CurrentSuccessScore = HighSuccessScore;
-               CurrentTradeStyle   = TradeStyle;
-               CurrentArraySizes   = ArraySizes;
-               CurrentArrayNum     = ArrayNum;
-               break;
-            }
+         if (HourUsed == TimeHour(Tick.time)) {
+            CurrentHour         = HourUsed;
+            CurrentHighTP       = HighTP;
+            CurrentWinRate      = HighWinRate;
+            CurrentRiskReward   = HighRiskReward;
+            CurrentSuccessScore = HighSuccessScore;
+            CurrentTradeStyle   = TradeStyle;
+            CurrentArraySizes   = ArraySizes;
+            CurrentArrayNum     = ArrayNum;
+            break;
          }
       }
       FileClose(hFile);
@@ -207,7 +207,7 @@ string MainFunction() {
                                             "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   NL,
                                             "Array lose: ",            CurrentArrayNum + 1,                                       NL,
                                             "Total array: ",           CurrentArraySizes,                                         NL,
-                                            "Total open Trades: ",     TradeCount,                                                NL,
+                                            "Total open trades: ",     TradeCount,                                                NL,
                                             "Trade style: ",           CurrentTradeStyle,                                         NL,
                                             "Trade trigger: ",         TradeTrigger);
 
@@ -224,7 +224,7 @@ string MainFunction() {
          }
          PotentialStopLoss = OrderStopLoss();
          BEven             = CalcBreakEven(OrderTicket());
-         TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
+         TrailStop         = CalcTrailingStop(OrderTicket());
 
          if (BEven     > PotentialStopLoss) PotentialStopLoss = BEven;
          if (TrailStop > PotentialStopLoss) PotentialStopLoss = TrailStop;
@@ -239,7 +239,7 @@ string MainFunction() {
          }
          PotentialStopLoss = OrderStopLoss();
          BEven             = CalcBreakEven(OrderTicket());
-         TrailStop         = CalcTrailingStop(UseTrailingStop, OrderTicket(), TrailingStop);
+         TrailStop         = CalcTrailingStop(OrderTicket());
 
          if ((BEven     < PotentialStopLoss && BEven)     || (!PotentialStopLoss)) PotentialStopLoss = BEven;
          if ((TrailStop < PotentialStopLoss && TrailStop) || (!PotentialStopLoss)) PotentialStopLoss = TrailStop;
@@ -287,55 +287,51 @@ string MainFunction() {
  * @return double
  */
 double CalcBreakEven(int ticket) {
-   if (MoveStopOnce && MoveStopWhenPrice) {
+   if (MoveStopToBreakeven && MoveStopToBreakevenWhen) {
       OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
       if (OrderType() == OP_BUY) {
-         if (Bid-OrderOpenPrice() >= MoveStopWhenPrice*Point) {
-            return(OrderOpenPrice() + MoveStopTo*Point);
+         if (Bid-OrderOpenPrice() >= MoveStopToBreakevenWhen*Point) {
+            return(OrderOpenPrice());
          }
       }
       else if (OrderType() == OP_SELL) {
-         if (OrderOpenPrice()-Ask >= MoveStopWhenPrice*Point) {
-            return(OrderOpenPrice() - MoveStopTo*Point);
+         if (OrderOpenPrice()-Ask >= MoveStopToBreakevenWhen*Point) {
+            return(OrderOpenPrice());
          }
       }
    }
-   return(0);
+   return(NULL);
 }
 
 
 /**
- *
+ * @return double
  */
-double CalcTrailingStop(bool condition, int ticket, int trailingStop) {
-   OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
+double CalcTrailingStop(int ticket) {
+   if (UseTrailingStop && TrailingStop) {
+      OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
-   if (OrderType() == OP_BUY) {
-      if (condition && trailingStop > 0) {
-         if (Bid-OrderOpenPrice() > trailingStop*Point) {
-            return(Bid - trailingStop*Point);
+      if (OrderType() == OP_BUY) {
+         if (Bid-OrderOpenPrice() > TrailingStop*Point) {
+            return(Bid - TrailingStop*Point);
+         }
+      }
+      else if (OrderType() == OP_SELL) {
+         if (OrderOpenPrice()-Ask > TrailingStop*Point) {
+            return(Ask + TrailingStop*Point);
          }
       }
    }
-   else if (OrderType() == OP_SELL) {
-      if (condition && trailingStop > 0) {
-         if (OrderOpenPrice()-Ask > trailingStop*Point) {
-            return(Ask + trailingStop*Point);
-         }
-      }
-   }
-   return(0);
+   return(NULL);
 }
 
 
 /**
  * @return int
  */
-int OptimizeSettings() {
+int Optimize() {
    DeleteFile(WindowExpertName() +" "+ Symbol() +" optimized settings.csv");
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" all settings.csv");
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" all permutations.csv");
 
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = Bars;
@@ -348,64 +344,66 @@ int OptimizeSettings() {
    int DayStartShift = FBarStart;
    int RangeEndShift = FBarStart;
 
-   for (int SearchShift=DayStartShift; SearchShift > 1; SearchShift--) {
+   for (int bar=DayStartShift; bar > 1; bar--) {
       // determine if the bar is the daily start
-      if (TimeDayOfYear(Time[SearchShift]) != TimeDayOfYear(Time[SearchShift+1])) {
-         DayStartShift = SearchShift;
+      if (TimeDayOfYear(Time[bar]) != TimeDayOfYear(Time[bar+1])) {
+         DayStartShift = bar;
       }
 
       // find the end of the range and establish initial high and low
-      if (DayStartShift-SearchShift == InitialRange) {
-         RangeEndShift = SearchShift;
+      if (DayStartShift-bar == InitialRange) {
+         RangeEndShift = bar;
          HighValue = High[iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift)];
          LowValue  =  Low[ iLowest(NULL, NULL, MODE_LOW,  DayStartShift-RangeEndShift, RangeEndShift)];
       }
 
       // determine subsequent high and low
       if (DayStartShift > RangeEndShift) {
-         if (High[SearchShift] > HighValue) {
-            HighClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Long", HighValue, SearchShift) + 1);
-            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, SearchShift-HighClose, HighClose)];
-            WriteHourlyStats(TimeHour(Time[SearchShift]), "Breakout", ((HighestValue-HighValue) / Point));
+         if (High[bar] > HighValue) {
+            HighClose    = MathMax(bar-MaximumBarShift, TradeCloseShift("Long", HighValue, bar) + 1);
+            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, bar-HighClose, HighClose)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", ((HighestValue-HighValue) / Point));
 
-            HighClose   = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", HighValue, SearchShift) + 1);
-            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, SearchShift-HighClose, HighClose)];
-            WriteHourlyStats(TimeHour(Time[SearchShift]), "Counter", ((HighValue-LowestValue) / Point));
-            HighValue   = High[SearchShift];
+            HighClose   = MathMax(bar-MaximumBarShift, TradeCloseShift("Short", HighValue, bar) + 1);
+            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, bar-HighClose, HighClose)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Counter", ((HighValue-LowestValue) / Point));
+            HighValue   = High[bar];
          }
-         if (Low[SearchShift] < LowValue) {
-            LowClose     = MathMax(SearchShift - MaximumBarShift, TradeCloseShift("Long", LowValue, SearchShift) + 1);
-            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, SearchShift-LowClose, LowClose)];
-            WriteHourlyStats(TimeHour(Time[SearchShift]), "Counter", ((HighestValue-LowValue) / Point));
+         if (Low[bar] < LowValue) {
+            LowClose     = MathMax(bar - MaximumBarShift, TradeCloseShift("Long", LowValue, bar) + 1);
+            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, bar-LowClose, LowClose)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Counter", ((HighestValue-LowValue) / Point));
 
-            LowClose    = MathMax(SearchShift-MaximumBarShift, TradeCloseShift("Short", LowValue, SearchShift) + 1);
-            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, SearchShift-LowClose, LowClose)];
-            WriteHourlyStats(TimeHour(Time[SearchShift]), "Breakout", ((LowValue-LowestValue) / Point));
-            LowValue    = Low[SearchShift];
+            LowClose    = MathMax(bar-MaximumBarShift, TradeCloseShift("Short", LowValue, bar) + 1);
+            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, bar-LowClose, LowClose)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", ((LowValue-LowestValue) / Point));
+            LowValue    = Low[bar];
          }
       }
    }
 
    // determine the most profitable combination
-   for (int OptimizeHour=0; OptimizeHour <= 23; OptimizeHour++) {
-      if (!OptimizeTakeProfit(OptimizeHour)) return(NULL);
+   for (int i=0; i <= 23; i++) {
+      if (!OptimizeTakeProfit(i)) return(NULL);
    }
    return(ifInt(catch("OptimizeSettings(2)"), 0, OptimizeBars));
 }
 
 
 /**
+ * @param  int hour - hour to optimize
+ *
  * @return bool - success status
  */
-bool OptimizeTakeProfit(int HourUsed) {
+bool OptimizeTakeProfit(int hour) {
    double BOTPArray[]; ArrayResize(BOTPArray, 0);
    double CTTPArray[]; ArrayResize(CTTPArray, 0);
 
    // read hourly stats
-   string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ HourUsed, 2) +".csv";
-
+   string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv";
    if (MQL.IsFile(filename)) {
       int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen(\""+ filename +"\")"));
+
       while (!FileIsEnding(hFile)) {
          string TPMax      = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 1, TPMax))         break;
          string FoundStyle = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 2, FoundStyle))    break;
@@ -424,25 +422,21 @@ bool OptimizeTakeProfit(int HourUsed) {
 
    // breakout trades: calculate SL total and TP total for each side
    double BOHighProfit, BOHighTP, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, BOArrayNum;
+   int arraySize = ArraySize(BOTPArray);
 
-   for (int BOArray=0; BOArray < ArraySize(BOTPArray); BOArray++) {
-      double BOStopLossValue   = StopLoss * BOArray;
-      double BOTakeProfitValue = BOTPArray[BOArray] * (ArraySize(BOTPArray)-BOArray);
+   for (int i=0; i < arraySize; i++) {
+      double BOStopLossValue   = StopLoss * i;
+      double BOTakeProfitValue = BOTPArray[i] * (arraySize-i);
       double BOProfit          = BOTakeProfitValue - BOStopLossValue;
-      double BOWinRate         = 1 - ((BOArray+1) * 1.0 / ArraySize(BOTPArray) * 1.0);
-      double BORiskReward      = BOTPArray[BOArray] * 1.0 / StopLoss * 1.0;
+      double BOWinRate         = 1 - (i+1.0) / arraySize;
+      double BORiskReward      = BOTPArray[i] / StopLoss;
       double BOSS              = BOWinRate * BORiskReward;
 
-      int BOhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all permutations.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      FileSeek(BOhandle, 0, SEEK_END);
-      FileWrite(BOhandle, HourUsed, BOArray, "Breakout", BOStopLossValue, BOTakeProfitValue, BOProfit, BOWinRate, BORiskReward, BOSS);
-      FileClose(BOhandle);
-
-      if (BOWinRate >= MinimumWinRate/100 && BORiskReward >= MinimumRiskReward && BOSS >= MinimumSuccessScore) {
+      if (BOWinRate >= MinimumWinRate/100. && BORiskReward >= MinimumRiskReward && BOSS >= MinimumSuccessScore) {
          BOHighProfit       = BOProfit;
-         BOHighTP           = BOTPArray[BOArray];
-         BOArrayNum         = BOArray;
-         BOHighWinRate      = BOWinRate * 1.0;
+         BOHighTP           = BOTPArray[i];
+         BOArrayNum         = i;
+         BOHighWinRate      = BOWinRate;
          BOHighRiskReward   = BORiskReward;
          BOHighSuccessScore = BOSS;
       }
@@ -450,25 +444,21 @@ bool OptimizeTakeProfit(int HourUsed) {
 
    // counter trades: calculate SL total and TP total for each side.
    double CTHighProfit, CTHighTP, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, CTArrayNum;
+   arraySize = ArraySize(CTTPArray);
 
-   for (int CTArray=0; CTArray < ArraySize(CTTPArray); CTArray++) {
-      double CTStopLossValue   = StopLoss * (CTArray);
-      double CTTakeProfitValue = CTTPArray[CTArray] * (ArraySize(CTTPArray)-CTArray);
+   for (i=0; i < arraySize; i++) {
+      double CTStopLossValue   = StopLoss * i;
+      double CTTakeProfitValue = CTTPArray[i] * (arraySize-i);
       double CTProfit          = CTTakeProfitValue - CTStopLossValue;
-      double CTWinRate         = 1 - ((CTArray+1) * 1.0 / ArraySize(CTTPArray) * 1.0);
-      double CTRiskReward      = CTTPArray[CTArray] * 1.0 / StopLoss * 1.0;
+      double CTWinRate         = 1 - (i+1.0) / arraySize;
+      double CTRiskReward      = CTTPArray[i] / StopLoss;
       double CTSS              = CTWinRate * CTRiskReward;
 
-      int CThandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all permutations.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-      FileSeek(CThandle, 0, SEEK_END);
-      FileWrite(CThandle, HourUsed, CTArray, "Counter", CTStopLossValue, CTTakeProfitValue, CTProfit, CTWinRate, CTRiskReward, CTSS);
-      FileClose(CThandle);
-
-      if (CTWinRate >= MinimumWinRate/100 && CTRiskReward >= MinimumRiskReward && CTSS >= MinimumSuccessScore) {
+      if (CTWinRate >= MinimumWinRate/100. && CTRiskReward >= MinimumRiskReward && CTSS >= MinimumSuccessScore) {
          CTHighProfit       = CTProfit;
-         CTHighTP           = CTTPArray[CTArray];
-         CTArrayNum         = CTArray;
-         CTHighWinRate      = CTWinRate * 1.0;
+         CTHighTP           = CTTPArray[i];
+         CTArrayNum         = i;
+         CTHighWinRate      = CTWinRate;
          CTHighRiskReward   = CTRiskReward;
          CTHighSuccessScore = CTSS;
       }
@@ -478,10 +468,10 @@ bool OptimizeTakeProfit(int HourUsed) {
    int    ArraySizes=-1, ArrayNum=-1;
    string TradeStyle = "None";
 
-   if ((HighestProfit && BOHighProfit > CTHighProfit) || (HighestWinRate && BOHighWinRate > CTHighWinRate) || (HighestRiskReward && BOHighRiskReward > CTHighRiskReward) || (HighestSuccessScore && BOHighSuccessScore > CTHighSuccessScore)) {
+   if ((OptimizeForProfit && BOHighProfit > CTHighProfit) || (OptimizeForWinRate && BOHighWinRate > CTHighWinRate) || (OptimizeForRiskReward && BOHighRiskReward > CTHighRiskReward) || (OptimizeForSuccessScore && BOHighSuccessScore > CTHighSuccessScore)) {
       HighTP           = BOHighTP;
       HighProfit       = BOHighProfit;
-      HighWinRate      = BOHighWinRate * 1.0;
+      HighWinRate      = BOHighWinRate;
       HighRiskReward   = BOHighRiskReward;
       HighSuccessScore = BOHighSuccessScore;
       TradeStyle       = "Breakout";
@@ -489,10 +479,10 @@ bool OptimizeTakeProfit(int HourUsed) {
       ArrayNum         = BOArrayNum;
    }
 
-   if ((HighestProfit && CTHighProfit > BOHighProfit) || (HighestWinRate && CTHighWinRate > BOHighWinRate) || (HighestRiskReward && CTHighRiskReward > BOHighRiskReward) || (HighestSuccessScore && CTHighSuccessScore > BOHighSuccessScore)) {
+   if ((OptimizeForProfit && CTHighProfit > BOHighProfit) || (OptimizeForWinRate && CTHighWinRate > BOHighWinRate) || (OptimizeForRiskReward && CTHighRiskReward > BOHighRiskReward) || (OptimizeForSuccessScore && CTHighSuccessScore > BOHighSuccessScore)) {
       HighTP           = CTHighTP;
       HighProfit       = CTHighProfit;
-      HighWinRate      = CTHighWinRate * 1.0;
+      HighWinRate      = CTHighWinRate;
       HighRiskReward   = CTHighRiskReward;
       HighSuccessScore = CTHighSuccessScore;
       TradeStyle       = "Counter";
@@ -500,56 +490,51 @@ bool OptimizeTakeProfit(int HourUsed) {
       ArrayNum         = CTArrayNum;
    }
 
-   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" optimized settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   FileSeek(handle, 0, SEEK_END);
-   FileWrite(handle, HourUsed, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
-   FileClose(handle);
+   filename = WindowExpertName() +" "+ Symbol() +" optimized settings.csv";
+   hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(3)->FileOpen(\""+ filename +"\")"));
+   FileSeek(hFile, 0, SEEK_END);
+   FileWrite(hFile, hour, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
+   FileClose(hFile);
 
-   int Mainhandle = FileOpen(WindowExpertName() +" "+ Symbol() +" all settings.csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   FileSeek(Mainhandle, 0, SEEK_END);
-   FileWrite(Mainhandle, HourUsed, BOHighTP, BOHighProfit, BOHighWinRate, BOHighRiskReward, BOHighSuccessScore, "Breakout", ArraySize(BOTPArray), BOArrayNum);
-   FileWrite(Mainhandle, HourUsed, CTHighTP, CTHighProfit, CTHighWinRate, CTHighRiskReward, CTHighSuccessScore, "Counter",  ArraySize(CTTPArray), CTArrayNum);
-   FileClose(Mainhandle);
-
-   return(!catch("OptimizeTakeProfit(3)"));
+   return(!catch("OptimizeTakeProfit(5)"));
 }
 
 
 /**
  *
  */
-string WriteHourlyStats(int TradeHour, string TradeStyle, int TPMax) {
-   int handle = FileOpen(WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ TradeHour, 2) +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
-   FileSeek(handle, 0, SEEK_END);
-   FileWrite(handle, TPMax, TradeStyle);
-   FileClose(handle);
+string WriteHourlyStats(int hour, string TradeStyle, int TPMax) {
+   int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
+   FileSeek(hFile, 0, SEEK_END);
+   FileWrite(hFile, TPMax, TradeStyle);
+   FileClose(hFile);
 }
 
 
 /**
  *
  */
-int TradeCloseShift(string Direction, double EntryPrice, int Shift) {
+int TradeCloseShift(string Direction, double EntryPrice, int shift) {
    double TargetPrice = 0;
 
    if (Direction == "Long") {
-      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss  *Point;
+      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss*Point;
       else                TargetPrice = EntryPrice - TakeProfit*Point;
    }
    if (Direction == "Short") {
-      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss  *Point;
+      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss*Point;
       else                TargetPrice = EntryPrice + TakeProfit*Point;
    }
 
-   for (int FShift=Shift; FShift > 0; FShift--) {
+   for (int bar=shift; bar > 0; bar--) {
       if (Direction == "Long") {
-         if (High[FShift] >= TargetPrice && Low[FShift] <= TargetPrice) {
-            return(FShift);
+         if (High[bar] >= TargetPrice && Low[bar] <= TargetPrice) {
+            return(bar);
          }
       }
       if (Direction == "Short") {
-         if (High[FShift] >= TargetPrice && Low[FShift] <= TargetPrice) {
-            return(FShift);
+         if (High[bar] >= TargetPrice && Low[bar] <= TargetPrice) {
+            return(bar);
          }
       }
    }
