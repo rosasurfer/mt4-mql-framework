@@ -36,7 +36,7 @@ extern int    MoveStopToBreakevenWhen         = 50;         // min. profit dista
 extern int    MagicNumber                     = 0;
 extern int    Slippage                        = 5;          // max. accepted order slippage in point
 
-extern string ___2___________________________ = "=== Trading conditions ===";
+extern string ___2___________________________ = "=== Order entry conditions ===";
 extern bool   EachTickMode                    = true;       // FALSE: open positions only on BarOpen
 extern int    MaxSimultaneousTrades           = 10;         // max. number of all open positions at any time
 extern bool   ReverseTrades                   = false;      // reverse trades and switch takeprofit/stoploss (allows to separately optimize TP and SL)
