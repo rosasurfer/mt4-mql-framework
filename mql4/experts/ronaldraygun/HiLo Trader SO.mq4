@@ -145,7 +145,7 @@ string MainFunction() {
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(Tick.time)) {
-      string filename = WindowExpertName() +" "+ Symbol() +" optimized settings.csv";
+      string filename = WindowExpertName() +" "+ Symbol() +" optimization.csv";
       int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen(\""+ filename +"\")")));
 
       while (!FileIsEnding(hFile)) {
@@ -331,7 +331,7 @@ double CalcTrailingStop(int ticket) {
  * @return int
  */
 int Optimize() {
-   DeleteFile(WindowExpertName() +" "+ Symbol() +" optimized settings.csv");
+   DeleteFile(WindowExpertName() +" "+ Symbol() +" optimization.csv");
 
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = Bars;
@@ -490,7 +490,7 @@ bool OptimizeTakeProfit(int hour) {
       ArrayNum         = CTArrayNum;
    }
 
-   filename = WindowExpertName() +" "+ Symbol() +" optimized settings.csv";
+   filename = WindowExpertName() +" "+ Symbol() +" optimization.csv";
    hFile = FileOpen(filename, FILE_CSV|FILE_READ|FILE_WRITE, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(3)->FileOpen(\""+ filename +"\")"));
    FileSeek(hFile, 0, SEEK_END);
    FileWrite(hFile, hour, HighTP, HighProfit, HighWinRate, HighRiskReward, HighSuccessScore, TradeStyle, ArraySizes, ArrayNum);
