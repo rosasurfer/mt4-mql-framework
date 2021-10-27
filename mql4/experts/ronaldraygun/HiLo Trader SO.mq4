@@ -21,7 +21,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___1___________________________ = "=== Order settings ===";
+extern string ___1___________________________ = "=== Order management ===";
 extern double Lots                            = 0.1;        // fix lot size to use if MoneyManagement=FALSE
 extern bool   MoneyManagement                 = false;      // TRUE: dynamic lot size using the specified Risk
 extern int    Risk                            = 0;          // percent of available margin to use for each position
@@ -36,7 +36,7 @@ extern int    MoveStopToBreakevenWhen         = 50;         // min. profit dista
 extern int    MagicNumber                     = 0;
 extern int    Slippage                        = 5;          // max. accepted order slippage in point
 
-extern string ___2___________________________ = "=== Trade conditions ===";
+extern string ___2___________________________ = "=== Trading conditions ===";
 extern bool   EachTickMode                    = true;       // FALSE: open positions only on BarOpen
 extern int    MaxSimultaneousTrades           = 10;         // max. number of all open positions at any time
 extern bool   ReverseTrades                   = false;      // reverse trades and switch takeprofit/stoploss (allows to separately optimize TP and SL)
@@ -44,7 +44,7 @@ extern bool   ReverseTrades                   = false;      // reverse trades an
 extern string ___3___________________________ = "=== Breakout configuration ===";
 extern int    InitialRange                    = 60;         // number of bars after Midnight defining the breakout range
 
-extern string ___4___________________________ = "=== Optimization ===";
+extern string ___4___________________________ = "=== Optimization settings===";
 extern int    BarsToOptimize                  = 0;          // number of bars to use (0: all available bars)
 extern int    MaximumBarShift                 = 1440;       // max. number of bars a test trade can stay open
 extern int    MinimumWinRate                  = 50;         // min. required winning rate in percent to make a system decision
