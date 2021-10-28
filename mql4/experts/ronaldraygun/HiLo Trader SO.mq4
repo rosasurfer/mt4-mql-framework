@@ -5,12 +5,12 @@
  *
  * Changes:
  *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
- *  - restored regular start() function
- *  - simplified and slimmed down everything
+ *  - merged StartFunction() and MainFunction() and restored regular start() function
  *  - converted to and integrated rosasurfer framework
+ *  - simplified and slimmed down everything
  *  - dropped obsolete input param MoveStopTo
  *  - dropped unused optimization files "All Settings", "All Permutation Settings" and "Master Copy"
- *  - dropped unused hourly optimization file fields "CloseDistance" and "CloseSpread"
+ *  - dropped unused hourly optimization fields "CloseDistance" and "CloseSpread"
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -92,15 +92,6 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   Comment(MainFunction());
-   return(catch("onTick(1)"));
-}
-
-
-/**
- *
- */
-string MainFunction() {
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
 
    if (EachTickMode && Bars!=CloseBarCount) TickCheck = false;
@@ -114,7 +105,7 @@ string MainFunction() {
    // money management
    if (MoneyManagement) {
       if (Risk < 1 || Risk > 100) {
-         return(_EMPTY_STR(catch("MainFunction(1)  invalid risk value: "+ Risk, ERR_INVALID_INPUT_PARAMETER)));
+         return(catch("onTick(1)  invalid risk value: "+ Risk, ERR_INVALID_INPUT_PARAMETER));
       }
       else {
          Lots = MathFloor((AccountFreeMargin() * AccountLeverage() * Risk*Point*PipPoints*100) / (Ask * MarketInfo(Symbol(), MODE_LOTSIZE) * MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
@@ -126,7 +117,7 @@ string MainFunction() {
    static string sLastOptimizationTime;
 
    if (TimeDayOfYear(Tick.time) != LastCalcDay) {
-      lastOptimizationBars  = Optimize(); if (!lastOptimizationBars) return("");
+      lastOptimizationBars  = Optimize(); if (!lastOptimizationBars) return(catch("onTick(2)"));
       LastCalcDay           = TimeDayOfYear(Tick.time);
       sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
    }
@@ -139,14 +130,14 @@ string MainFunction() {
    double HighPrice = High[iHighest(NULL, NULL, MODE_HIGH, RangeStart-1, 1)];
    double LowPrice  =  Low[ iLowest(NULL, NULL, MODE_LOW,  RangeStart-1, 1)];
 
-   // read back optimization values
+   // read back optimized values
    static int    CurrentHour, CurrentHighTP, CurrentArraySizes, CurrentArrayNum;
    static double CurrentWinRate, CurrentRiskReward, CurrentSuccessScore;
    static string CurrentTradeStyle;
 
    if (CurrentHour != TimeHour(Tick.time)) {
       string filename = WindowExpertName() +" "+ Symbol() +" optimization.csv";
-      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(_EMPTY_STR(catch("MainFunction(2)->FileOpen(\""+ filename +"\")")));
+      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(catch("onTick(3)->FileOpen(\""+ filename +"\")"));
 
       while (!FileIsEnding(hFile)) {
          int    HourUsed         = StrToInteger(FileReadString(hFile));
@@ -195,21 +186,6 @@ string MainFunction() {
          else if (TradeTrigger == "Open Short") TradeTrigger = "Open Long";
       }
    }
-
-   string CommentString = StringConcatenate("Last optimization: ",     sLastOptimizationTime,                                     NL,
-                                            "Bars used: ",             lastOptimizationBars,                                      NL,
-                                            "Total bars: ",            Bars,                                                      NL,
-                                            "Current hour: ",          CurrentHour,                                               NL,
-                                            "Current TP: ",            CurrentHighTP,                                             NL,
-                                            "Current win rate: ",      CurrentWinRate * 100.0, "% (", MinimumWinRate, ")",        NL,
-                                            "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",           NL,
-                                            "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")", NL,
-                                            "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   NL,
-                                            "Array lose: ",            CurrentArrayNum + 1,                                       NL,
-                                            "Total array: ",           CurrentArraySizes,                                         NL,
-                                            "Total open trades: ",     TradeCount,                                                NL,
-                                            "Trade style: ",           CurrentTradeStyle,                                         NL,
-                                            "Trade trigger: ",         TradeTrigger);
 
    // process open positions
    for (i=OrdersTotal()-1; i >= 0; i--) {
@@ -261,7 +237,6 @@ string MainFunction() {
 
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
-         return(_string(CommentString, catch("MainFunction(3)")));
       }
       else if (TradeTrigger == "Open Short") {
          if (UseStopLoss)   StopLossLevel   = Bid + StopLoss*Point;
@@ -274,12 +249,24 @@ string MainFunction() {
 
          if (EachTickMode) TickCheck = true;
          else              OpenBarCount = Bars;
-         return(_string(CommentString, catch("MainFunction(4)")));
       }
    }
 
-   if (!EachTickMode) CloseBarCount = Bars;
-   return(_string(CommentString, catch("MainFunction(5)")));
+   if (!TradesThisBar && !EachTickMode) CloseBarCount = Bars;
+
+   Comment("Last optimization: ",     sLastOptimizationTime, "  (over ", lastOptimizationBars ," bars)", NL,
+           "Current hour: ",          CurrentHour,                                                       NL,
+           "Current TP: ",            CurrentHighTP,                                                     NL,
+           "Current win rate: ",      CurrentWinRate * 100, "% (", MinimumWinRate, ")",                  NL,
+           "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",                   NL,
+           "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")",         NL,
+           "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                           NL,
+           "Array lose: ",            CurrentArrayNum + 1,                                               NL,
+           "Total array: ",           CurrentArraySizes,                                                 NL,
+           "Total open trades: ",     TradeCount,                                                        NL,
+           "Trade style: ",           CurrentTradeStyle,                                                 NL,
+           "Trade trigger: ",         TradeTrigger);
+   return(catch("onTick(4)"));
 }
 
 
@@ -335,7 +322,7 @@ int Optimize() {
 
    int OptimizeBars = BarsToOptimize;
    if (!OptimizeBars) OptimizeBars = Bars;
-   if (OptimizeBars > Bars) return(!catch("OptimizeSettings(1)  not enough bars to optimize for "+ Symbol(), ERR_RUNTIME_ERROR));
+   if (OptimizeBars > Bars) return(!catch("Optimize(1)  not enough bars", ERR_RUNTIME_ERROR));
 
    int HighClose, LowClose;
    double HighValue, LowValue, HighestValue, LowestValue;
@@ -386,7 +373,7 @@ int Optimize() {
    for (int i=0; i <= 23; i++) {
       if (!OptimizeTakeProfit(i)) return(NULL);
    }
-   return(ifInt(catch("OptimizeSettings(2)"), 0, OptimizeBars));
+   return(ifInt(catch("Optimize(2)"), 0, OptimizeBars));
 }
 
 
