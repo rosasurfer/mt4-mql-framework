@@ -4246,6 +4246,7 @@ string InputsToStr() {
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);
+   string   IntsToStr(int array[], string separator);
    int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
@@ -4259,7 +4260,6 @@ string InputsToStr() {
    bool     SortOpenTickets  (int keys[][]);
 
    string   DoublesToStr(double array[], string separator);
-   string   IntsToStr            (int array[], string separator);
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import

@@ -4941,7 +4941,7 @@ bool SynchronizeStatus() {
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
-         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
+         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time: "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
 
       sequence.stop.event [i] = CreateEventId();
       sequence.stop.time  [i] = stopTime;
