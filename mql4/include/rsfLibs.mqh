@@ -234,6 +234,8 @@
    string   IntsToStr          (int array[], string separator);
    string   MoneysToStr     (double array[], string separator);
    string   OperationTypesToStr(int array[], string separator);
+   string   PricesToStr     (double array[], string separator);    // alias of RatesToStr()
+   string   RatesToStr      (double array[], string separator);
    string   StringsToStr    (string array[], string separator);
    string   TicketsToStr       (int array[], string separator);
 
@@ -252,8 +254,6 @@
    string   TimesToStr         (datetime array[], string separator);
    string   DoublesToStr         (double array[], string separator);
    string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
-   string   RatesToStr           (double array[], string separator);
-   string   PricesToStr          (double array[], string separator);    // alias of RatesToStr()
 
 
    // other
