@@ -110,43 +110,6 @@ string MoneysToStr(double values[], string separator=", ") {
 
 
 /**
- * Konvertiert einen Indikatorbuffer in einen lesbaren String. Ganzzahlige Werte werden als Integer, gebrochene Werte
- * mit dem aktuellen PriceFormat formatiert.
- *
- * @param  double values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string iBufferToStr(double values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("iBufferToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(values);
-   if (size == 0)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string strings[];
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      if (!MathModFix(values[i], 1)) strings[i] = DoubleToStr(values[i], 0);
-      else                           strings[i] = NumberToStr(values[i], PriceFormat);
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
-}
-
-
-/**
  * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  double values[]
