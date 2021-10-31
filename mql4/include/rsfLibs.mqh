@@ -251,7 +251,6 @@
    string   TimesToStr         (datetime array[], string separator);
    string   DoublesToStr         (double array[], string separator);
    string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
-   string   iBufferToStr         (double array[], string separator);
    string   MoneysToStr          (double array[], string separator);
    string   RatesToStr           (double array[], string separator);
    string   PricesToStr          (double array[], string separator);    // alias of RatesToStr()

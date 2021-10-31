@@ -718,7 +718,6 @@ string   WordToHexStr(int word);;
 string   CharsToStr(int &array[], string separator);;
 string   DoublesToStr(double &array[], string separator);;
 string   DoublesToStrEx(double &array[], string separator, int digits/*=0..16*/);;
-string   iBufferToStr(double &array[], string separator);;
 string   IntsToStr(int &array[], string separator);;
 string   MoneysToStr(double &array[], string separator);;
 string   PricesToStr(double &array[], string separator);;
