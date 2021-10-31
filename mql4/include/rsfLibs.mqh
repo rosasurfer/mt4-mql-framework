@@ -228,17 +228,19 @@
 
 
    // toString helpers
-   string   BoolsToStr(bool array[], string separator);
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
-   string   StringsToStr(string array[], string separator);
-   string   TicketsToStr(int array[], string separator);
-   string   WaitForSingleObjectValueToStr(int value);
+
+   string   BoolsToStr        (bool array[], string separator);
+   string   OperationTypesToStr(int array[], string separator);
+   string   StringsToStr    (string array[], string separator);
+   string   TicketsToStr       (int array[], string separator);
 
    string   CharToHexStr(int chr);
-   string   WordToHexStr(int word);
-   string   IntegerToHexStr(int decimal);
-
    string   IntegerToBinaryStr(int integer);
+   string   IntegerToHexStr(int decimal);
+   string   WaitForSingleObjectValueToStr(int value);
+   string   WordToHexStr(int word);
+
 
 #import "rsfLib2.ex4"
    string   IntsToStr               (int array[], string separator);
@@ -246,7 +248,6 @@
    string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);
    string   TicketsToStr.Position   (int array[]);
-   string   OperationTypesToStr     (int array[], string separator);
    string   TimesToStr         (datetime array[], string separator);
    string   DoublesToStr         (double array[], string separator);
    string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
