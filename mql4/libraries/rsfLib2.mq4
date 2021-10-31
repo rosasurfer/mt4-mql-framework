@@ -351,40 +351,6 @@ string TimesToStr(datetime values[], string separator=", ") {
 
 
 /**
- * Konvertiert ein OperationType-Array in einen lesbaren String.
- *
- * @param  int    values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string OperationTypesToStr(int values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("OperationTypesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(values);
-   if (ArraySize(values) == 0)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string strings[]; ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = OperationTypeToStr(values[i]);
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
-}
-
-
-/**
  * Konvertiert ein Char-Array in einen lesbaren String.
  *
  * @param  int    values[]
