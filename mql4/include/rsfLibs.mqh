@@ -231,6 +231,7 @@
    string   DoubleToStrEx(double value, int digits/*=0..16*/);
 
    string   BoolsToStr        (bool array[], string separator);
+   string   IntsToStr          (int array[], string separator);
    string   MoneysToStr     (double array[], string separator);
    string   OperationTypesToStr(int array[], string separator);
    string   StringsToStr    (string array[], string separator);
@@ -244,7 +245,6 @@
 
 
 #import "rsfLib2.ex4"
-   string   IntsToStr               (int array[], string separator);
    string   CharsToStr              (int array[], string separator);
    string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);

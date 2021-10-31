@@ -35,6 +35,7 @@ int __DeinitFlags[];
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinBools.mqh>
+#include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -4619,6 +4620,85 @@ bool DoubleQuoteStrings(string &values[]) {
 
 
 /**
+ * Convert an integer array (max. 3 dimensions) to a human-readable string.
+ *
+ * @param  int    values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string IntsToStr(int values[][], string separator = ", ") {
+   return(__IntsToStr(values, values, separator));
+}
+
+
+/**
+ * Internal helper for IntsToStr(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __IntsToStr(int values2[][], int values3[][][], string separator) {
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinInts(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional
+   if (dimensions == 2) {
+      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
+      int       values2.Y[]; ArrayResize(   values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         strValues2.X[x] = IntsToStr(values2.Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
+      ArrayResize(strValues2.X, 0);
+      ArrayResize(   values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional
+   if (dimensions == 3) {
+      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
+      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
+      int       values3.Z[]; ArrayResize(   values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            strValues3.Y[y] = IntsToStr(values3.Z, separator);
+         }
+         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
+      ArrayResize(strValues3.X, 0);
+      ArrayResize(strValues3.Y, 0);
+      ArrayResize(   values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
  * Convert an array with money amounts to a human-readable string (with 2 digits per value).
  *
  * @param  double values[]
@@ -7626,7 +7706,6 @@ void onLibraryInit() {
 
 
 #import "rsfLib2.ex4"
-   string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfMT4Expander.dll"
