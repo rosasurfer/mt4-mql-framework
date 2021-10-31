@@ -12,27 +12,30 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string __a___________________________;
-extern bool   AUDLFX.Enabled    = true;                  // by default all indexes are enabled
-extern bool   CADLFX.Enabled    = true;
-extern bool   CHFLFX.Enabled    = true;
-extern bool   EURLFX.Enabled    = true;
-extern bool   GBPLFX.Enabled    = true;
-extern bool   JPYLFX.Enabled    = true;
-extern bool   NZDLFX.Enabled    = true;
-extern bool   USDLFX.Enabled    = true;
-extern string __b___________________________;
-extern bool   NOKFX7.Enabled    = true;
-extern bool   SEKFX7.Enabled    = true;
-extern bool   SGDFX7.Enabled    = true;
-extern bool   ZARFX7.Enabled    = true;
-extern string __c___________________________;
-extern bool   EURX.Enabled      = true;
-extern bool   USDX.Enabled      = true;
-extern string __d___________________________;
-extern bool   XAUI.Enabled      = true;
-extern string __e___________________________;
-extern bool   Recording.Enabled = false;                 // by default recording is disabled
+extern string ___a___________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
+extern bool   AUDLFX.Enabled                  = true;                   // default: all indexes enabled
+extern bool   CADLFX.Enabled                  = true;
+extern bool   CHFLFX.Enabled                  = true;
+extern bool   EURLFX.Enabled                  = true;
+extern bool   GBPLFX.Enabled                  = true;
+extern bool   JPYLFX.Enabled                  = true;
+extern bool   NZDLFX.Enabled                  = true;
+extern bool   USDLFX.Enabled                  = true;
+extern string ___b___________________________ = "=== Synthetic FX7 indexes ===";
+extern bool   NOKFX7.Enabled                  = true;
+extern bool   SEKFX7.Enabled                  = true;
+extern bool   SGDFX7.Enabled                  = true;
+extern bool   ZARFX7.Enabled                  = true;
+extern string ___c___________________________ = "=== ICE indexes ===";
+extern bool   EURX.Enabled                    = true;
+extern bool   USDX.Enabled                    = true;
+extern string ___d___________________________ = "=== Synthetic Gold index ===";
+extern bool   XAUI.Enabled                    = true;
+extern string ___e___________________________ = "=== Other settings ===";
+extern string Symbols.Suffix                  = "";                     // symbol suffix for brokers with non-standard symbols
+extern bool   Recording.Enabled               = false;                  // default: disabled
+extern string Recording.ServerName            = "Synthetic-History";    // name of the history directory to store recorded data
+extern int    Recording.HistoryFormat         = 401;                    // stored history format
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,13 +75,13 @@ int      digits      [] = { 5       , 5       , 5       , 5       , 5       , 5 
 double   pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01   };
 string   priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'" };
 
-bool     isEnabled  [];                                  // whether calculation is enabled (equal to *.Enabled)
+bool     isEnabled  [];                                  // whether calculation is enabled (matches inputs *.Enabled)
 bool     isAvailable[];                                  // whether all prices for calculation are available
 bool     isStale    [];                                  // whether some prices for calculation are stale (not current)
-double   currBid   [];                                   // current calculated Bid value
-double   currAsk   [];                                   // current calculated Ask value
-double   currMedian[];                                   // current calculated Median value
-double   prevMedian[];                                   // previous calculated Median value
+double   currBid    [];                                  // current calculated Bid value
+double   currAsk    [];                                  // current calculated Ask value
+double   currMedian [];                                  // current calculated Median value
+double   prevMedian [];                                  // previous calculated Median value
 
 bool     isRecording[];                                  // default: FALSE
 int      hSet       [];                                  // HistorySet handles
@@ -171,7 +174,7 @@ int onInit() {
       isRecording[I_USDX  ] =   USDX.Enabled; recordedSymbols +=   USDX.Enabled;
       isRecording[I_XAUI  ] =   XAUI.Enabled; recordedSymbols +=   XAUI.Enabled;
 
-      // record max. 7 instruments (enforces limit of nax. 64 open files per MQL module)
+      // record max. 7 instruments (enforces limit of max. 64 open files per MQL module)
       if (recordedSymbols > 7) {
          for (int i=ArraySize(isRecording)-1; i >= 0; i--) {
             if (isRecording[i]) {
