@@ -32,7 +32,7 @@ void onLibraryInit() {
  */
 string RatesToStr(double values[], string separator=", ") {
    if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("RatesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+      return(_EMPTY_STR(catch("RatesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (size == 0)
@@ -71,41 +71,6 @@ string RatesToStr(double values[], string separator=", ") {
  */
 string PricesToStr(double values[], string separator=", ") {
    return(RatesToStr(values, separator));
-}
-
-
-/**
- * Konvertiert ein Array mit Geldbeträgen in einen lesbaren String.
- *
- * @param  double values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String mit 2 Nachkommastellen je Wert oder Leerstring, falls ein Fehler auftrat
- */
-string MoneysToStr(double values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("MoneysToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(values);
-   if (ArraySize(values) == 0)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string strings[];
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStr(values[i], 2);
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
 }
 
 

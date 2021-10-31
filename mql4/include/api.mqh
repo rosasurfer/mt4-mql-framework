@@ -675,6 +675,7 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
+string   MoneysToStr(double &array[], string separator);;
 string   OperationTypesToStr(int &array[], string separator);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
 bool     OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int &oe[]);;
@@ -719,7 +720,6 @@ string   CharsToStr(int &array[], string separator);;
 string   DoublesToStr(double &array[], string separator);;
 string   DoublesToStrEx(double &array[], string separator, int digits/*=0..16*/);;
 string   IntsToStr(int &array[], string separator);;
-string   MoneysToStr(double &array[], string separator);;
 string   PricesToStr(double &array[], string separator);;
 string   RatesToStr(double &array[], string separator);;
 string   TicketsToStr.Lots(int &array[], string separator);;

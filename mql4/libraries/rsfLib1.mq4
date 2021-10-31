@@ -4619,6 +4619,40 @@ bool DoubleQuoteStrings(string &values[]) {
 
 
 /**
+ * Convert an array with money amounts to a human-readable string (with 2 digits per value).
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string MoneysToStr(double values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("MoneysToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = DoubleToStr(values[i], 2);
+      if (!StringLen(strings[i]))
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
  * Convert an array with operation types to a human-readable string.
  *
  * @param  int    values[]
@@ -4627,13 +4661,13 @@ bool DoubleQuoteStrings(string &values[]) {
  * @return string - human-readable string or an empty string in case of errors
  */
 string OperationTypesToStr(int values[], string separator = ", ") {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("OperationTypesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("OperationTypesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
 
    int size = ArraySize(values);
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")            // (string) NULL
+   if (separator == "0")               // (string) NULL
       separator = ", ";
 
    string strings[]; ArrayResize(strings, size);
