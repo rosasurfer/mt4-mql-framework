@@ -23,58 +23,6 @@ void onLibraryInit() {
 
 
 /**
- * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
- *
- * @param  double values[]
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string RatesToStr(double values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("RatesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(values);
-   if (size == 0)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string strings[];
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      if (!values[i]) strings[i] = "0";
-      else            strings[i] = NumberToStr(values[i], PriceFormat);
-
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
-}
-
-
-/**
- * Alias
- *
- * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
- *
- * @param  double values[]
- * @param  string separator - Separator (default: ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string PricesToStr(double values[], string separator=", ") {
-   return(RatesToStr(values, separator));
-}
-
-
-/**
  * Konvertiert ein Doubles-Array mit bis zu 3 Dimensionen in einen lesbaren String.
  *
  * @param  double values[]

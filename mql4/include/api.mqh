@@ -687,6 +687,8 @@ bool     OrdersClose(int &tickets[], int slippage, color markerColor, int oeFlag
 bool     OrdersCloseSameSymbol(int &tickets[], int slippage, color markerColor, int oeFlags, int &oes[][]);;
 int      OrdersHedge(int &tickets[], int slippage, int oeFlags, int &oes[][]);;
 bool     OrdersCloseHedged(int &tickets[], color markerColor, int oeFlags, int &oes[][]);;
+string   PricesToStr(double &array[], string separator);;
+string   RatesToStr(double &array[], string separator);;
 int      RegisterObject(string label);;
 bool     ReleaseLock(string mutexName);;
 int      RepositionLegend();;
@@ -720,8 +722,6 @@ string   WordToHexStr(int word);;
 string   CharsToStr(int &array[], string separator);;
 string   DoublesToStr(double &array[], string separator);;
 string   DoublesToStrEx(double &array[], string separator, int digits/*=0..16*/);;
-string   PricesToStr(double &array[], string separator);;
-string   RatesToStr(double &array[], string separator);;
 string   TicketsToStr.Lots(int &array[], string separator);;
 string   TicketsToStr.LotsSymbols(int &array[], string separator);;
 string   TicketsToStr.Position(int &array[]);;
