@@ -8,12 +8,18 @@ int   __InitFlags[];
 int __DeinitFlags[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
+
+
+/**
+ * Custom handler called in tester from core/library::init() to reset global variables before the next test.
+ */
+void onLibraryInit() {
+}
 
 
 /**
@@ -1023,56 +1029,3 @@ bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], i
    ArrayResize(rows.copy, 0);
    return(!catch("__SCT.SameOpenTimes(1)"));
 }
-
-
-/**
- * Gibt die Laufzeit des Terminals seit Programmstart in Millisekunden zurück.
- *
- * @return int - Millisekunden seit Programmstart
- */
-int GetTerminalRuntime() {
-   /*FILETIME*/  int ft[], iNull[]; InitializeByteBuffer(ft, FILETIME_size  ); InitializeByteBuffer(iNull, FILETIME_size);
-   /*SYSTEMTIME*/int st[];          InitializeByteBuffer(st, SYSTEMTIME_size);
-
-   int creationTime[2], currentTime[2], hProcess=GetCurrentProcess();
-
-   if (!GetProcessTimes(hProcess, ft, iNull, iNull, iNull)) return(catch("GetTerminalRuntime(1)->kernel32::GetProcessTimes()", ERR_WIN32_ERROR));
-   if (!RtlTimeToSecondsSince1970(ft, creationTime))        return(catch("GetTerminalRuntime(2)->kernel32::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
-   if (!FileTimeToSystemTime(ft, st))                       return(catch("GetTerminalRuntime(3)->kernel32::FileTimeToSystemTime()", ERR_WIN32_ERROR));
-   creationTime[1] = st_Milliseconds(st);
-
-   GetSystemTime(st);
-   if (!SystemTimeToFileTime(st, ft))                       return(catch("GetTerminalRuntime(4)->kernel32::SystemTimeToFileTime()", ERR_WIN32_ERROR));
-   if (!RtlTimeToSecondsSince1970(ft, currentTime))         return(catch("GetTerminalRuntime(5)->ntdll.dll::RtlTimeToSecondsSince1970()", ERR_WIN32_ERROR));
-   currentTime[1] = st_Milliseconds(st);
-
-   int secDiff  = currentTime[0] - creationTime[0];                  // Sekunden
-   int mSecDiff = currentTime[1] - creationTime[1];                  // Millisekunden
-   if (mSecDiff < 0)
-      mSecDiff += 1000;
-   int runtime  = secDiff * 1000 + mSecDiff;                         // Gesamtlaufzeit in Millisekunden
-
-   return(runtime);
-}
-
-
-/**
- * Custom handler called in tester from core/library::init() to reset global variables before the next test.
- */
-void onLibraryInit() {
-}
-
-
-#import "rsfMT4Expander.dll"
-   int  st_Milliseconds(/*SYSTEMTIME*/int st[]);
-
-#import "kernel32.dll"
-   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
-   int  GetCurrentProcess();
-   bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
-   void GetSystemTime(int lpSystemTime[]);
-   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
-
-#import "ntdll.dll"
-   bool RtlTimeToSecondsSince1970(int lpTime[], int lpElapsedSeconds[]);
-#import
