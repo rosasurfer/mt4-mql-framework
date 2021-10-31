@@ -55,7 +55,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   return(__CheckLocks());
+   return(CheckLocks());
 }
 
 
@@ -413,17 +413,17 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Clean up aquired locks. Issue a warning if an unreleased lock was found.
+ * Clean up aquired locks and issue a warning if an unreleased lock was found.
  *
  * @return int - error status
  *
  * @access private
  */
-int __CheckLocks() {
+int CheckLocks() {
    int error = NO_ERROR;
 
    for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
-      logWarn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
+      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
       if (!ReleaseLock(lock.names[i]))
          error = last_error;
    }
@@ -4598,6 +4598,27 @@ string DoubleToStrEx(double value, int digits) {
 
 
 /**
+ * Wrap values of a string array in double quote characters. Modifies the passed array. Not initialized array elements
+ * (string NULL pointers) are not modified.
+ *
+ * @param  string values[]
+ *
+ * @return bool - success status
+ */
+bool DoubleQuoteStrings(string &values[]) {
+   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+
+   int size = ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      if (!StrIsNull(values[i]))                                     // skip NULL pointers
+         values[i] = StringConcatenate("\"", values[i], "\"");
+   }
+   return(true);
+}
+
+
+/**
  * Handler for order related errors which occurred in one of the library's order functions.
  *
  * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is
@@ -7538,7 +7559,6 @@ void onLibraryInit() {
 
 
 #import "rsfLib2.ex4"
-   bool   DoubleQuoteStrings(string array[]);
    string DoublesToStr(double array[], string separator);
    string TicketsToStr.Lots(int array[], string separator);
 

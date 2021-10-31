@@ -258,6 +258,7 @@
 
    // other
 #import "rsfLib1.ex4"
+   bool     DoubleQuoteStrings(string &array[]);
    string   GetWindowsShortcutTarget(string lnkFile);
    int      WinExecWait(string cmdLine, int cmdShow);
 #import "rsfLib2.ex4"

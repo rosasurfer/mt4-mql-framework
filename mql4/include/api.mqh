@@ -606,6 +606,7 @@ int      DecreasePeriod(int period = 0);;
 bool     DeletePendingOrders(color markerColor = CLR_NONE);;
 int      DeleteRegisteredObjects();;
 bool     DoubleInArray(double &haystack[], double needle);;
+bool     DoubleQuoteStrings(string &array[]);;
 string   DoubleToStrEx(double value, int digits);;
 bool     EditFile(string filename);;
 bool     EditFiles(string &filenames[]);;
@@ -714,7 +715,6 @@ string   WordToHexStr(int word);;
 
 // libraries/rsfLib2.ex4
 string   CharsToStr(int &array[], string separator);;
-bool     DoubleQuoteStrings(string &array[]);;
 string   DoublesToStr(double &array[], string separator);;
 string   DoublesToStrEx(double &array[], string separator, int digits/*=0..16*/);;
 string   iBufferToStr(double &array[], string separator);;

@@ -17,27 +17,6 @@ int __DeinitFlags[];
 
 
 /**
- * Faßt die einzelnen Werte eines String-Arrays in doppelte Anführungszeichen ein. Nicht initialisierte Strings (NULL-Pointer) bleiben
- * unverändert.
- *
- * @param  string values[]
- *
- * @return bool - Erfolgsstatus
- */
-bool DoubleQuoteStrings(string &values[]) {
-   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
-
-   int size = ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      if (!StrIsNull(values[i]))                                     // NULL-Werte bleiben unverändert
-         values[i] = StringConcatenate("\"", values[i], "\"");
-   }
-   return(true);
-}
-
-
-/**
  * Konvertiert ein Array mit Kursen in einen mit dem aktuellen PriceFormat formatierten String.
  *
  * @param  double values[]
