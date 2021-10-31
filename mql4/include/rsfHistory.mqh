@@ -1,24 +1,28 @@
 /**
- * Functions for managing MT4 symbols, single history files and full history sets (nine timeframes).
+ * Functions for managing MT4 symbols, single history files and full history sets (1 set = 9 timeframes).
+ *
  *
  * Notes:
  * ------
- * With terminal builds > 509 the history file format changed. This is reflected by the format id in the history file headers.
- * In terminal builds <= 509 the field HISTORY_HEADER.barFormat is 400, for builds > 509 the field HISTORY_HEADER.barFormat is 401.
+ *  - The MQL4 language in terminal builds <= 509 imposes a limit of 16 open files per MQL module. This limit was extended to
+ *    64 open files per MQL module in terminal builds > 509. It means older terminals can manage at most 1 full history set
+ *    and newer terminals at most 7 full history sets. For some use cases these limits are still not sufficient. To overcome
+ *    it there are 3 fully identical history libraries, extending the limits for newer terminal builds to 21 full history
+ *    sets per MQL program.
  *
- *  @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
+ *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
+ *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".
+ *    Builds <= 509 can only read/write format "400". Builds > 509 can read both formats but write only format "401".
  *
- * A terminal supporting only the old format (builds <= 509) will delete history files in the new format on shutdown "if it
- * tries to access them". This means history for a symbol may exist in mixed formats. As long as the user doesn't switch to
- * a chart period with history in new format the terminal will keep these new format files untouched. If the user switches to
- * a period with history in new format an old terminal will delete that history on shutdown.
+ *  - If a terminal build <= 509 accesses history files in new format (401) it will delete those files on shutdown.
  *
- * A terminal supporting both formats (builds > 509) will automatically convert files in old format to the new format
- * "if it accessed them". This means as long as the user doesn't switch to a chart period with history in old format the
- * terminal will not convert those files.
+ *  - If a terminal build > 509 accesses history files in old format (400) it will convert them to the new format (401) except
+ *    offline history files for custom symbols. Such offline history files will not be converted.
+ *
+ *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  */
 #import "rsfHistory1.ex4"
-   // history set management (1 set manages 9 history files)
+   // history set management (1 set contains 9 history files)
    int  HistorySet1.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet1.Get    (string symbol, string server = "");
    bool HistorySet1.Close  (int hSet);
@@ -36,7 +40,7 @@
    bool HistoryFile1.AddTick  (int hFile, datetime time, double value, int flags = NULL);
 
 #import "rsfHistory2.ex4"
-   // history set management (1 set manages 9 history files)
+   // history set management (1 set contains 9 history files)
    int  HistorySet2.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet2.Get    (string symbol, string server = "");
    bool HistorySet2.Close  (int hSet);
@@ -54,7 +58,7 @@
    bool HistoryFile2.AddTick  (int hFile, datetime time, double value, int flags = NULL);
 
 #import "rsfHistory3.ex4"
-   // history set management (1 set manages 9 history files)
+   // history set management (1 set contains 9 history files)
    int  HistorySet3.Create (string symbol, string description, int digits, int format, string server = "");
    int  HistorySet3.Get    (string symbol, string server = "");
    bool HistorySet3.Close  (int hSet);
