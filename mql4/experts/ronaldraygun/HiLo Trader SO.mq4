@@ -4,13 +4,14 @@
  * Rewritten version of the concept published by FF user Ronald Raygun. Work-in-progress, don't use for real trading!
  *
  * Changes:
- *  - removed obsolete parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
- *  - merged StartFunction() and MainFunction() and restored regular start() function
+ *  - removed needless parts: activation, tick db, ECN distinction, signaling, animation, multi-symbol processing
+ *  - merged StartFunction() and MainFunction() and restored regular program flow
  *  - converted to and integrated rosasurfer framework
  *  - simplified and slimmed down everything
- *  - dropped obsolete input param MoveStopTo
- *  - dropped unused optimization files "All Settings", "All Permutation Settings" and "Master Copy"
- *  - dropped unused hourly optimization fields "CloseDistance" and "CloseSpread"
+ *  - optimizer:
+ *     removed unused files "All Settings", "All Permutation Settings" and "Master Copy"
+ *     removed unused hourly stat fields "CloseDistance" and "CloseSpread"
+ *     renamed TradeCloseShift() to FindCloseBar()
  *
  * @link    https://www.forexfactory.com/thread/post/3876758#post3876758                  [@rraygun: Old Dog with New Tricks]
  * @source  https://www.forexfactory.com/thread/post/3922031#post3922031                    [@stevegee58: last fixed version]
@@ -42,7 +43,7 @@ extern int    MaxSimultaneousTrades           = 10;         // max. number of al
 extern bool   ReverseTrades                   = false;      // reverse trades and switch takeprofit/stoploss (allows to separately optimize TP and SL)
 
 extern string ___3___________________________ = "=== Breakout configuration ===";
-extern int    InitialRange                    = 60;         // number of bars after Midnight defining the breakout range
+extern int    MinRangeBars                    = 60;         // min. required number of bars after Midnight before looking for new daily highs/lows
 
 extern string ___4___________________________ = "=== Optimization settings===";
 extern int    BarsToOptimize                  = 0;          // number of bars to use (0: all available bars)
@@ -113,18 +114,18 @@ int onTick() {
    }
 
    // optimization
-   static int lastOptimizationBars, LastCalcDay;
-   static string sLastOptimizationTime;
+   static int optimizedBars, LastCalcDay;
+   static string sOptimizedTime;
 
    if (TimeDayOfYear(Tick.time) != LastCalcDay) {
-      lastOptimizationBars  = Optimize(); if (!lastOptimizationBars) return(catch("onTick(2)"));
-      LastCalcDay           = TimeDayOfYear(Tick.time);
-      sLastOptimizationTime = TimeToStr(Tick.time, TIME_FULL);
+      optimizedBars  = Optimize(); if (!optimizedBars) return(last_error);
+      sOptimizedTime = TimeToStr(Tick.time, TIME_FULL);
+      LastCalcDay    = TimeDayOfYear(Tick.time);
    }
 
-   // determine day's start
-   int DayStart   = iBarShift(NULL, NULL, StrToTime("00:00"), false);
-   int RangeStart = DayStart - InitialRange;
+   // determine the day's startbar
+   int dayStartbar = iBarShift(NULL, NULL, StrToTime("00:00"), false);
+   int RangeStart  = dayStartbar - MinRangeBars;
 
    // determine current HiLo
    double HighPrice = High[iHighest(NULL, NULL, MODE_HIGH, RangeStart-1, 1)];
@@ -137,7 +138,7 @@ int onTick() {
 
    if (CurrentHour != TimeHour(Tick.time)) {
       string filename = WindowExpertName() +" "+ Symbol() +" optimization.csv";
-      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(catch("onTick(3)->FileOpen(\""+ filename +"\")"));
+      int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(catch("onTick(2)->FileOpen(\""+ filename +"\")"));
 
       while (!FileIsEnding(hFile)) {
          int    HourUsed         = StrToInteger(FileReadString(hFile));
@@ -175,19 +176,20 @@ int onTick() {
       if (OrderMagicNumber()==MagicNumber && OrderSymbol()==Symbol() && OrderType()<=OP_SELL) TradeCount++;
    }
 
+   // check for new signals
    string TradeTrigger = "None";
    if (!MaxSimultaneousTrades || TradeCount < MaxSimultaneousTrades) {
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger = "Open Long";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger = "Open Short";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger = "Open Short";
-      if (CurrentArraySizes >= MinimumSampleSize && DayStart > InitialRange && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger = "Open Long";
+      if (CurrentArraySizes >= MinimumSampleSize && dayStartbar > MinRangeBars && CurrentTradeStyle=="Breakout" && Close[Current] > HighPrice) TradeTrigger = "Open Long";
+      if (CurrentArraySizes >= MinimumSampleSize && dayStartbar > MinRangeBars && CurrentTradeStyle=="Counter"  && Close[Current] > HighPrice) TradeTrigger = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && dayStartbar > MinRangeBars && CurrentTradeStyle=="Breakout" && Close[Current] < LowPrice)  TradeTrigger = "Open Short";
+      if (CurrentArraySizes >= MinimumSampleSize && dayStartbar > MinRangeBars && CurrentTradeStyle=="Counter"  && Close[Current] < LowPrice)  TradeTrigger = "Open Long";
       if (ReverseTrades) {
          if      (TradeTrigger == "Open Long")  TradeTrigger = "Open Short";
          else if (TradeTrigger == "Open Short") TradeTrigger = "Open Long";
       }
    }
 
-   // process open positions
+   // manage existing positions
    for (i=OrdersTotal()-1; i >= 0; i--) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
@@ -224,7 +226,7 @@ int onTick() {
       }
    }
 
-   // process signals for new positions
+   // open new positions
    if (!TradesThisBar && (((EachTickMode && !TickCheck) || (!EachTickMode && (Bars!=OpenBarCount))))) {
       if (TradeTrigger == "Open Long") {
          if (UseStopLoss)   StopLossLevel   = Ask - StopLoss*Point;
@@ -232,6 +234,7 @@ int onTick() {
          if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point;
          else               TakeProfitLevel = 0;
 
+         //debug("onTick(0.1)  Buy   TP="+ TakeProfit +"  SL="+ StopLoss);
          OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "HiLo long", MagicNumber, 0, DodgerBlue);
          TradesThisBar++;
 
@@ -244,6 +247,7 @@ int onTick() {
          if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point;
          else               TakeProfitLevel = 0;
 
+         //debug("onTick(0.2)  Sell  TP="+ TakeProfit +"  SL="+ StopLoss);
          OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "HiLo short", MagicNumber, 0, DeepPink);
          TradesThisBar++;
 
@@ -254,19 +258,19 @@ int onTick() {
 
    if (!TradesThisBar && !EachTickMode) CloseBarCount = Bars;
 
-   Comment("Last optimization: ",     sLastOptimizationTime, "  (over ", lastOptimizationBars ," bars)", NL,
-           "Current hour: ",          CurrentHour,                                                       NL,
-           "Current TP: ",            CurrentHighTP,                                                     NL,
-           "Current win rate: ",      CurrentWinRate * 100, "% (", MinimumWinRate, ")",                  NL,
-           "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",                   NL,
-           "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")",         NL,
-           "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                           NL,
-           "Array lose: ",            CurrentArrayNum + 1,                                               NL,
-           "Total array: ",           CurrentArraySizes,                                                 NL,
-           "Total open trades: ",     TradeCount,                                                        NL,
-           "Trade style: ",           CurrentTradeStyle,                                                 NL,
+   Comment("Last optimization: ",     sOptimizedTime, "  (using ", optimizedBars, " bars)",      NL,
+           "Current hour: ",          CurrentHour,                                               NL,
+           "Current TP: ",            CurrentHighTP,                                             NL,
+           "Current win rate: ",      CurrentWinRate * 100, "% (", MinimumWinRate, ")",          NL,
+           "Current risk reward: ",   CurrentRiskReward, " (", MinimumRiskReward, ")",           NL,
+           "Current success score: ", CurrentSuccessScore * 100, " (", MinimumSuccessScore, ")", NL,
+           "Array win: ",             CurrentArraySizes - CurrentArrayNum - 1,                   NL,
+           "Array lose: ",            CurrentArrayNum + 1,                                       NL,
+           "Total array: ",           CurrentArraySizes,                                         NL,
+           "Total open trades: ",     TradeCount,                                                NL,
+           "Trade style: ",           CurrentTradeStyle,                                         NL,
            "Trade trigger: ",         TradeTrigger);
-   return(catch("onTick(4)"));
+   return(catch("onTick(3)"));
 }
 
 
@@ -318,62 +322,63 @@ double CalcTrailingStop(int ticket) {
  * @return int
  */
 int Optimize() {
+   for (int hour=0; hour < 24; hour++) {
+      string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv";
+      if (MQL.IsFile(filename)) FileDelete(filename);
+   }
    DeleteFile(WindowExpertName() +" "+ Symbol() +" optimization.csv");
 
-   int OptimizeBars = BarsToOptimize;
-   if (!OptimizeBars) OptimizeBars = Bars;
-   if (OptimizeBars > Bars) return(!catch("Optimize(1)  not enough bars", ERR_RUNTIME_ERROR));
+   int startbar = ifIntOr(BarsToOptimize, Bars-2);
+   if (startbar > Bars-2) return(!catch("Optimize(1)  not enough bars ("+ (startbar+2) +" required)", ERR_RUNTIME_ERROR));
 
-   int HighClose, LowClose;
-   double HighValue, LowValue, HighestValue, LowestValue;
+   double dayHigh, dayLow, mfa;
+   //int dayStartbar=startbar, rangeEndbar=startbar, closeBar;                            // original faulty logic
+   int dayStartbar=NULL, rangeEndbar=INT_MAX, closeBar;
 
-   int FBarStart     = OptimizeBars;
-   int DayStartShift = FBarStart;
-   int RangeEndShift = FBarStart;
-
-   for (int bar=DayStartShift; bar > 1; bar--) {
-      // determine if the bar is the daily start
+   for (int bar=startbar; bar > 1; bar--) {
+      // detect 1st bar after Midnight
       if (TimeDayOfYear(Time[bar]) != TimeDayOfYear(Time[bar+1])) {
-         DayStartShift = bar;
+         dayStartbar = bar;
       }
 
-      // find the end of the range and establish initial high and low
-      if (DayStartShift-bar == InitialRange) {
-         RangeEndShift = bar;
-         HighValue = High[iHighest(NULL, NULL, MODE_HIGH, DayStartShift-RangeEndShift, RangeEndShift)];
-         LowValue  =  Low[ iLowest(NULL, NULL, MODE_LOW,  DayStartShift-RangeEndShift, RangeEndShift)];
+      // detect endbar of the initial range and get the day's high/low
+      if (dayStartbar-bar == MinRangeBars) {
+         rangeEndbar = bar;
+         dayHigh = High[iHighest(NULL, NULL, MODE_HIGH, MinRangeBars, rangeEndbar)];
+         dayLow  =  Low[ iLowest(NULL, NULL, MODE_LOW,  MinRangeBars, rangeEndbar)];
       }
 
-      // determine subsequent high and low
-      if (DayStartShift > RangeEndShift) {
-         if (High[bar] > HighValue) {
-            HighClose    = MathMax(bar-MaximumBarShift, TradeCloseShift("Long", HighValue, bar) + 1);
-            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, bar-HighClose, HighClose)];
-            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", ((HighestValue-HighValue) / Point));
+      // process subsequent new highs/lows
+      if (dayStartbar > rangeEndbar) {
+         if (High[bar] > dayHigh) {
+            closeBar = MathMax(bar-MaximumBarShift, FindCloseBar("Long", dayHigh, bar)+1);
+            mfa      = High[iHighest(NULL, NULL, MODE_HIGH, bar-closeBar, closeBar)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", (mfa-dayHigh) / Point);
+            //debug("Optimize(0.1)  "+ TimeToStr(Time[dayStartbar], TIME_FULL) +" new high "+ NumberToStr(High[bar], PriceFormat) +"  SL="+ StopLoss +"  closeBar="+ ifString(closeBar==1, "0", TimeToStr(Time[closeBar], TIME_FULL)));
 
-            HighClose   = MathMax(bar-MaximumBarShift, TradeCloseShift("Short", HighValue, bar) + 1);
-            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, bar-HighClose, HighClose)];
-            WriteHourlyStats(TimeHour(Time[bar]), "Counter", ((HighValue-LowestValue) / Point));
-            HighValue   = High[bar];
+            closeBar = MathMax(bar-MaximumBarShift, FindCloseBar("Short", dayHigh, bar)+1);
+            mfa      = Low[iLowest(NULL, NULL, MODE_LOW, bar-closeBar, closeBar)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Counter", (dayHigh-mfa) / Point);
+            dayHigh  = High[bar];
          }
-         if (Low[bar] < LowValue) {
-            LowClose     = MathMax(bar - MaximumBarShift, TradeCloseShift("Long", LowValue, bar) + 1);
-            HighestValue = High[iHighest(NULL, NULL, MODE_HIGH, bar-LowClose, LowClose)];
-            WriteHourlyStats(TimeHour(Time[bar]), "Counter", ((HighestValue-LowValue) / Point));
+         if (Low[bar] < dayLow) {
+            closeBar = MathMax(bar - MaximumBarShift, FindCloseBar("Long", dayLow, bar)+1);
+            mfa      = High[iHighest(NULL, NULL, MODE_HIGH, bar-closeBar, closeBar)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Counter", (mfa-dayLow) / Point);
 
-            LowClose    = MathMax(bar-MaximumBarShift, TradeCloseShift("Short", LowValue, bar) + 1);
-            LowestValue = Low[iLowest(NULL, NULL, MODE_LOW, bar-LowClose, LowClose)];
-            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", ((LowValue-LowestValue) / Point));
-            LowValue    = Low[bar];
+            closeBar = MathMax(bar-MaximumBarShift, FindCloseBar("Short", dayLow, bar)+1);
+            mfa      = Low[iLowest(NULL, NULL, MODE_LOW, bar-closeBar, closeBar)];
+            WriteHourlyStats(TimeHour(Time[bar]), "Breakout", (dayLow-mfa) / Point);
+            dayLow   = Low[bar];
          }
       }
    }
 
    // determine the most profitable combination
-   for (int i=0; i <= 23; i++) {
-      if (!OptimizeTakeProfit(i)) return(NULL);
+   for (hour=0; hour < 24; hour++) {
+      if (!OptimizeTakeProfit(hour)) return(NULL);
    }
-   return(ifInt(catch("Optimize(2)"), 0, OptimizeBars));
+   return(ifInt(catch("Optimize(2)"), 0, startbar));
 }
 
 
@@ -392,8 +397,8 @@ bool OptimizeTakeProfit(int hour) {
       int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen(\""+ filename +"\")"));
 
       while (!FileIsEnding(hFile)) {
-         string TPMax      = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 1, TPMax))         break;
-         string FoundStyle = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 2, FoundStyle))    break;
+         string FoundStyle = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 1, FoundStyle)) break;
+         string TPMax      = FileReadString(hFile); if (!IsValidHourlyStatsField(hFile, filename, 2, TPMax))      break;
 
          if      (FoundStyle == "Breakout") BOTPArray[ArrayResize(BOTPArray, ArraySize(BOTPArray)+1)-1] = StrToDouble(TPMax);
          else if (FoundStyle == "Counter")  CTTPArray[ArrayResize(CTTPArray, ArraySize(CTTPArray)+1)-1] = StrToDouble(TPMax);
@@ -401,7 +406,7 @@ bool OptimizeTakeProfit(int hour) {
       }
       if (IsLastError()) return(false);
       FileClose(hFile);
-      FileDelete(filename);
+      //FileDelete(filename);
 
       if (ArraySize(BOTPArray) != 0) ArraySort(BOTPArray);
       if (ArraySize(CTTPArray) != 0) ArraySort(CTTPArray);
@@ -493,7 +498,7 @@ bool OptimizeTakeProfit(int hour) {
 string WriteHourlyStats(int hour, string TradeStyle, int TPMax) {
    int hFile = FileOpen(WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv", FILE_CSV|FILE_READ|FILE_WRITE, ';');
    FileSeek(hFile, 0, SEEK_END);
-   FileWrite(hFile, TPMax, TradeStyle);
+   FileWrite(hFile, TradeStyle, TPMax);
    FileClose(hFile);
 }
 
@@ -501,29 +506,17 @@ string WriteHourlyStats(int hour, string TradeStyle, int TPMax) {
 /**
  *
  */
-int TradeCloseShift(string Direction, double EntryPrice, int shift) {
-   double TargetPrice = 0;
+int FindCloseBar(string direction, double openPrice, int bar) {
+   double closePrice;
 
-   if (Direction == "Long") {
-      if (!ReverseTrades) TargetPrice = EntryPrice - StopLoss*Point;
-      else                TargetPrice = EntryPrice - TakeProfit*Point;
-   }
-   if (Direction == "Short") {
-      if (!ReverseTrades) TargetPrice = EntryPrice + StopLoss*Point;
-      else                TargetPrice = EntryPrice + TakeProfit*Point;
-   }
+   if      (direction == "Long")  closePrice = openPrice - ifDouble(ReverseTrades, TakeProfit, StopLoss)*Point;
+   else if (direction == "Short") closePrice = openPrice + ifDouble(ReverseTrades, TakeProfit, StopLoss)*Point;
+   else                           return(!catch("FindCloseBar(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   for (int bar=shift; bar > 0; bar--) {
-      if (Direction == "Long") {
-         if (High[bar] >= TargetPrice && Low[bar] <= TargetPrice) {
-            return(bar);
-         }
-      }
-      if (Direction == "Short") {
-         if (High[bar] >= TargetPrice && Low[bar] <= TargetPrice) {
-            return(bar);
-         }
-      }
+   while (bar > 0) {
+      if (High[bar] >= closePrice && Low[bar] <= closePrice)
+         return(bar);
+      bar--;
    }
    return(0);
 }
