@@ -200,12 +200,6 @@
 
 
    // other
-   int      SortTicketsChronological(int &tickets[]);
-   bool     SortOpenTickets(int &keys[][]);
-#import "rsfLib2.ex4"
-   bool     SortClosedTickets(int keys[][]);
-
-#import "rsfLib1.ex4"
    bool     IsRawSymbol(string symbol, string server = "");
    int      CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "");
 
@@ -223,6 +217,9 @@
    int      RegisterObject(string label);
    int      DeleteRegisteredObjects();
    int      RepositionLegend();
+
+   bool     SortOpenTickets(int &keys[][]);
+   int      SortTicketsChronological(int &tickets[]);
 
 
    // toString helpers
