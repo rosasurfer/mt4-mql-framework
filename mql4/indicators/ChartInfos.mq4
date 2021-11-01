@@ -4252,11 +4252,11 @@ string InputsToStr() {
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    string   StringsToStr(string array[], string separator);
-   string   TicketsToStr(int    array[], string separator);
+   string   TicketsToStr     (int array[], string separator);
+   string   TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
-   string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import
