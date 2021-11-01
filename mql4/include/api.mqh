@@ -549,7 +549,7 @@ bool     HistorySet3.Close  (int hSet);;
 bool     HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL);;
 
 
-// libraries/rsfLib1.ex4
+// libraries/rsfLib.ex4
 bool     AquireLock(string mutexName, bool wait);;
 bool     ArrayAddInt(int &array[], int value);;
 int      ArrayDropBool(bool &array[], bool value);;

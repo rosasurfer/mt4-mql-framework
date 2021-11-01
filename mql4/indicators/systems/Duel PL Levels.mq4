@@ -20,7 +20,7 @@ extern int    Draw.Width      = 1;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_BE_LONG          0                    // indicator buffer ids
 #define MODE_BE_SHORT         1

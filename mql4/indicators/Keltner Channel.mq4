@@ -34,7 +34,7 @@ extern int    Max.Bars        = 10000;                            // max. values
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 

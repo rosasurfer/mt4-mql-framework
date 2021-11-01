@@ -4,7 +4,7 @@
  *
  * @see  git commit deaf9a4 (2015.06.14 10:29:29 GMT)
  */
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
 
    // arrays
    bool     ArrayAddInt         (int    &array[],   int value);

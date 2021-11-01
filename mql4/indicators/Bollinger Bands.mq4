@@ -38,7 +38,7 @@ extern string Signal.SMS         = "on | off | auto*";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@ALMA.mqh>
 #include <functions/@Bands.mqh>
 #include <functions/ConfigureSignals.mqh>

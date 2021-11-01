@@ -18,7 +18,7 @@ extern int Stochastic.Periods = 13;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_separate_window
 #property indicator_minimum   0

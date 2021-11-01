@@ -61,7 +61,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>

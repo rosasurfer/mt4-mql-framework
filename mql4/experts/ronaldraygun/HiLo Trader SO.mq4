@@ -61,7 +61,7 @@ extern bool   OptimizeForSuccessScore         = true;       // max. success scor
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 int  TradeBar;
 int  TradesThisBar;

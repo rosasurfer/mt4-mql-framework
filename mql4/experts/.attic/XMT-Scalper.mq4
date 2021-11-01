@@ -96,7 +96,7 @@ extern bool     TakeProfitBug                   = true;                       //
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <rsfHistory.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/JoinStrings.mqh>
