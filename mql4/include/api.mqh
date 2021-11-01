@@ -719,6 +719,7 @@ string   StringPad(string input, int pad_length, string pad_string=" ", int pad_
 string   StringsToStr(string &array[], string separator);;
 double   SumDoubles(double &values[]);;
 string   TicketsToStr(int &array[], string separator);;
+string   TicketsToStr.Lots(int &array[], string separator);;
 string   TimesToStr(datetime &array[], string separator);;
 string   WaitForSingleObjectValueToStr(int value);;
 int      WinExecWait(string cmdLine, int cmdShow);;
@@ -726,7 +727,6 @@ string   WordToHexStr(int word);;
 
 
 // libraries/rsfLib2.ex4
-string   TicketsToStr.Lots(int &array[], string separator);;
 string   TicketsToStr.LotsSymbols(int &array[], string separator);;
 string   TicketsToStr.Position(int &array[]);;
 

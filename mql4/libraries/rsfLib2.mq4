@@ -8,10 +8,6 @@ int   __InitFlags[];
 int __DeinitFlags[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <functions/JoinInts.mqh>
-#include <functions/JoinDoubles.mqh>
-#include <functions/JoinDoublesEx.mqh>
-#include <functions/JoinStrings.mqh>
 #include <rsfLibs.mqh>
 
 
@@ -19,50 +15,6 @@ int __DeinitFlags[];
  * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
 void onLibraryInit() {
-}
-
-
-/**
- * Konvertiert ein Array mit Ordertickets in einen lesbaren String, der zusätzlich die Lotsize des jeweiligen Tickets enthält.
- *
- * @param  int    tickets[] - für Tickets ungültige Werte werden entsprechend dargestellt
- * @param  string separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string TicketsToStr.Lots(int tickets[], string separator=", ") {
-   if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(tickets);
-   if (!size)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string result="", sValue="";
-
-   OrderPush("TicketsToStr.Lots(2)");
-
-   for (int i=0; i < size; i++) {
-      if (tickets[i] > 0) {
-         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
-            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
-            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
-         }
-         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
-      }
-      else if (!tickets[i]) sValue = "(NULL)";
-      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
-
-      result = StringConcatenate(result, separator, sValue);
-   }
-
-   OrderPop("TicketsToStr.Lots(3)");
-
-   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
 }
 
 

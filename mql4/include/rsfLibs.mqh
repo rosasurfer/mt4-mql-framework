@@ -239,6 +239,7 @@
    string   RatesToStr      (double array[], string separator);
    string   StringsToStr    (string array[], string separator);
    string   TicketsToStr       (int array[], string separator);
+   string   TicketsToStr.Lots  (int array[], string separator);
    string   TimesToStr    (datetime array[], string separator);
 
    string   CharToHexStr(int chr);
@@ -249,7 +250,6 @@
 
 
 #import "rsfLib2.ex4"
-   string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);
    string   TicketsToStr.Position   (int array[]);
 

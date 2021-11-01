@@ -5174,6 +5174,46 @@ string PricesToStr(double values[], string separator = ", ") {
 
 
 /**
+ * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TicketsToStr.Lots(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   OrderPush("TicketsToStr.Lots(2)");
+   string result="", sValue="";
+
+   for (int i=0; i < size; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
+         }
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+      }
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   OrderPop("TicketsToStr.Lots(3)");
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
  * Convert a datetime array to a human-readable string.
  *
  * @param  datetime values[]
@@ -6569,7 +6609,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
 
    // tickets belong to multiple symbols
    // we are not in the Tester
-   if (IsLogDebug()) logDebug("OrdersClose(15)  closing "+ sizeOfTickets +" mixed positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersClose(15)  closing "+ sizeOfTickets +" mixed positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[], flatSymbols[]; ArrayResize(ticketsCopy, 0); ArrayResize(flatSymbols, 0);
@@ -6727,7 +6767,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    }
 
    // multiple close
-   if (IsLogDebug()) logDebug("OrdersCloseSameSymbol(16)  closing "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersCloseSameSymbol(16)  closing "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -6854,7 +6894,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
 
    if (EQ(totalLots, 0)) {
       // total position is already flat
-      if (IsLogDebug()) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets, NULL) +" are already flat");
+      if (IsLogDebug()) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets) +" are already flat");
 
       // set all CloseTime/ClosePrices to OpenTime/OpenPrice of the ticket opened last
       int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -6873,7 +6913,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    else {
       // total position is not flat
       OrderPop("OrdersHedge(16)");
-      if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets, NULL));
+      if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets));
       int closeTicket, totalDir=ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT), oe[];
 
       // if possible use OrderCloseEx() for hedging (reduces MarginRequired and cannot cause violation of TradeserverLimit)
@@ -7014,7 +7054,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
    }
    if (NE(lots, 0, 2)) return(_false(Order.HandleError("OrdersCloseHedged(13)  tickets don't form a flat position (total position: "+ DoubleToStr(lots, 2) +")", ERR_TOTAL_POSITION_NOT_FLAT, oeFlags, oes), OrderPop("OrdersCloseHedged(14)")));
 
-   if (IsLogDebug()) logDebug("OrdersCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -8146,9 +8186,6 @@ void onLibraryInit() {
    ArrayResize(lock.counters, 0);
 }
 
-
-#import "rsfLib2.ex4"
-   string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfMT4Expander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);
