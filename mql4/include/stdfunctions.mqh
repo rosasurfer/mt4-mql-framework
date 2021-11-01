@@ -7038,7 +7038,7 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);

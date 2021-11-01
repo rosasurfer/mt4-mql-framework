@@ -4383,7 +4383,7 @@ string InputsToStr() {
 }
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayDropInt          (int    &array[], int value);
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);

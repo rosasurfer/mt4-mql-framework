@@ -539,7 +539,7 @@ bool CheckErrors(string location, int error = NULL) {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    bool AquireLock(string mutexName, bool wait);
    bool ReleaseLock(string mutexName);
 

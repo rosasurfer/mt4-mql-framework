@@ -694,7 +694,7 @@ bool Tester.RecordEquity() {
 }
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    int    CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
    bool   IntInArray(int haystack[], int needle);
 

@@ -2,7 +2,7 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib1::GetCurrencyId()
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib::GetCurrencyId()
  *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // wird in MagicNumber nicht mehr verwendet
@@ -1295,7 +1295,7 @@ void DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);

@@ -24,7 +24,7 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
