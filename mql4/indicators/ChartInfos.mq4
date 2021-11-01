@@ -2165,7 +2165,6 @@ bool CustomPositions.ReadConfig() {
       ArrayPushString(positions.config.comments, "");
    }
 
-   //debug("CustomPositions.ReadConfig(0.3)  conf="+ DoublesToStr(positions.config, NULL));
    return(!catch("CustomPositions.ReadConfig(29)"));
 }
 
@@ -4236,10 +4235,12 @@ string InputsToStr() {
 
 #import "rsfLib1.ex4"
    bool     AquireLock(string mutexName, bool wait);
-   int      ArrayDropInt      (int    array[], int value);
-   int      ArrayInsertDoubles(double array[], int offset, double values[]);
-   int      ArrayPushDouble   (double array[], double value);
-   int      ArraySpliceInts   (int    array[], int offset, int length);
+   int      ArrayDropInt          (int    &array[], int value);
+   int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
+   int      ArrayInsertDoubles    (double &array[], int offset, double values[]);
+   int      ArrayPushDouble       (double &array[], double value);
+   int      ArraySpliceInts       (int    &array[], int offset, int length);
+   int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      DeleteRegisteredObjects();
    datetime FxtToServerTime(datetime fxtTime);
@@ -4254,12 +4255,8 @@ string InputsToStr() {
    string   TicketsToStr(int    array[], string separator);
 
 #import "rsfLib2.ex4"
-   int      ArrayInsertDoubleArray(double array[][], int offset, double values[]);
-   int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     SortClosedTickets(int keys[][]);
    bool     SortOpenTickets  (int keys[][]);
-
-   string   DoublesToStr(double array[], string separator);
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import

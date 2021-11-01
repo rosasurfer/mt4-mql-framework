@@ -35,6 +35,8 @@ int __DeinitFlags[];
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinBools.mqh>
+#include <functions/JoinDoubles.mqh>
+#include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
@@ -1606,6 +1608,44 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
 
 
 /**
+ * Fügt an einem Offset eines zwei-dimensionalen Double-Arrays ein anderes Double-Array ein.
+ *
+ * @param  _InOut_ double array[][] - zu vergrößerndes zwei-dimensionales Ausgangs-Array
+ * @param  _In_    int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefügt werden soll
+ * @param  _In_    double values[]  - einzufügendes Array (muß in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
+ *
+ * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
+ */
+int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
+   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   int array.dim1 = ArrayRange(array, 0);
+   int array.dim2 = ArrayRange(array, 1);
+   if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset: "+ offset, ERR_INVALID_PARAMETER));
+
+   // Ausgangsarray vergrößern
+   int newSize = array.dim1 + 1;
+   ArrayResize(array, newSize);
+
+   // Inhalt des Ausgangsarrays von offset nach hinten verschieben
+   int array.dim2.size = array.dim2 * DOUBLE_VALUE;
+   int src   = GetDoublesAddress(array) + offset * array.dim2.size;
+   int dest  =                               src + array.dim2.size;
+   int bytes =               (array.dim1-offset) * array.dim2.size;
+   CopyMemory(dest, src, bytes);
+
+   // Inhalt des anderen Arrays an den gewünschten Offset schreiben
+   dest  = src;
+   src   = GetDoublesAddress(values);
+   bytes = array.dim2.size;
+   CopyMemory(dest, src, bytes);
+
+   return(newSize);
+}
+
+
+/**
  * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
  * @param  bool array[]  - Ausgangs-Array
@@ -1712,6 +1752,79 @@ int ArrayInsertDoubles(double array[], int offset, double values[]) {
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
    ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
 
+   return(newSize);
+}
+
+
+/**
+ * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
+ *
+ * @param  _InOut_ string array[] - String-Array
+ * @param  _In_    int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  _In_    string value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
+ */
+int ArrayInsertString(string &array[], int offset, string value) {
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftString(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushString(array, value));
+
+   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
+   ArrayResize(tmp, 0);
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   return(size + 1);
+}
+
+
+/**
+ * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
+ *
+ * @param  _InOut_ string array[]  - Ausgangs-Array
+ * @param  _In_    int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
+ * @param  _In_    string values[] - einzufügende Elemente
+ *
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ */
+int ArrayInsertStrings(string &array[], int offset, string values[]) {
+   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeStringArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeStringArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   ArrayResize(tmp, 0);
    return(newSize);
 }
 
@@ -4620,7 +4733,251 @@ bool DoubleQuoteStrings(string &values[]) {
 
 
 /**
- * Convert an integer array (max. 3 dimensions) to a human-readable string.
+ * Store LFX_ORDER data in the library or restore it from data stored in the library.
+ *
+ * @param  _In_    bool   store    - processing direction: TRUE  = store passed parameters in the library
+ *                                                         FALSE = restore parameters from data in the library
+ * @param  _InOut_ int    orders[] - structs LFX_ORDER[]
+ * @param  _InOut_ int    iData [] - integer data
+ * @param  _InOut_ bool   bData [] - boolean data
+ * @param  _InOut_ double dData [] - double data
+ *
+ * @return int - number of copied LFX_ORDER structs or EMPTY (-1) in case of errors
+ */
+int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]) {
+   store = store!=0;
+
+   static int    static_orders[][LFX_ORDER_intSize];
+   static int    static_iData [][1];
+   static bool   static_bData [][3];
+   static double static_dData [][7];
+
+   if (store) {
+      ArrayResize(static_orders, 0);
+      ArrayResize(static_iData,  0);
+      ArrayResize(static_bData,  0);
+      ArrayResize(static_dData,  0);
+
+      if (ArrayRange(orders, 0) > 0) ArrayCopy(static_orders, orders);
+      if (ArrayRange(iData,  0) > 0) ArrayCopy(static_iData,  iData );
+      if (ArrayRange(bData,  0) > 0) ArrayCopy(static_bData,  bData );
+      if (ArrayRange(dData,  0) > 0) ArrayCopy(static_dData,  dData );
+
+      if (IsError(catch("ChartInfos.CopyLfxOrders(1)"))) return(EMPTY);
+   }
+   else {
+      ArrayResize(orders, 0);
+      ArrayResize(iData,  0);
+      ArrayResize(bData,  0);
+      ArrayResize(dData,  0);
+
+      if (ArrayRange(static_orders, 0) > 0) ArrayCopy(orders, static_orders);
+      if (ArrayRange(static_iData,  0) > 0) ArrayCopy(iData,  static_iData );
+      if (ArrayRange(static_bData,  0) > 0) ArrayCopy(bData,  static_bData );
+      if (ArrayRange(static_dData,  0) > 0) ArrayCopy(dData,  static_dData );
+
+      if (IsError(catch("ChartInfos.CopyLfxOrders(2)"))) return(EMPTY);
+   }
+
+   return(ArrayRange(orders, 0));
+}
+
+
+/**
+ * Convert an array of character values to a human-readable string.
+ *
+ * @param  int    values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string CharsToStr(int values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("CharsToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = StringConcatenate("'", CharToStr(values[i]), "'");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Convert a double array with max. 3 dimensions to a human-readable string.
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string DoublesToStr(double values[][], string separator = ", ") {
+   return(__DoublesToStr(values, values, separator));
+}
+
+
+/**
+ * Internal helper for DoublesToStr(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __DoublesToStr(double values2[][], double values3[][][], string separator) {
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoubles(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      double  values2.Y[]; ArrayResize( values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         sValues2.X[x] = DoublesToStr(values2.Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      double  values3.Z[]; ArrayResize( values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            sValues3.Y[y] = DoublesToStr(values3.Z, separator);
+         }
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert a double array with max. 3 dimensions to a human-readable string using a custom precision of up to 16 digits.
+ *
+ * @param  double values[]  - values to convert
+ * @param  string separator - separator (default: ", ")
+ * @param  int    digits    - number of decimal digits (0-16)
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string DoublesToStrEx(double values[][], string separator, int digits) {
+   return(__DoublesToStrEx(values, values, separator, digits));
+}
+
+
+/**
+ * Internal helper for DoublesToStrEx(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoublesEx(values2, digits, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      double  values2.Y[]; ArrayResize( values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         sValues2.X[x] = DoublesToStrEx(values2.Y, separator, digits);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      double  values3.Z[]; ArrayResize( values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            sValues3.Y[y] = DoublesToStrEx(values3.Z, separator, digits);
+         }
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert an integer array with max. 3 dimensions to a human-readable string.
  *
  * @param  int    values[]
  * @param  string separator - value separator (default: ", ")
@@ -4644,7 +5001,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
    int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
    string result = "";
 
-   // 1-dimensional
+   // 1-dimensional array
    if (dimensions == 1) {
       if (dim1 == 0)
          return("{}");
@@ -4652,45 +5009,45 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
    }
    else dim2 = ArrayRange(values2, 1);
 
-   // 2-dimensional
+   // 2-dimensional array
    if (dimensions == 2) {
-      string strValues2.X[]; ArrayResize(strValues2.X, dim1);
-      int       values2.Y[]; ArrayResize(   values2.Y, dim2);
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      int     values2.Y[]; ArrayResize( values2.Y, dim2);
 
       for (int x=0; x < dim1; x++) {
          for (int y=0; y < dim2; y++) {
             values2.Y[y] = values2[x][y];
          }
-         strValues2.X[x] = IntsToStr(values2.Y, separator);
+         sValues2.X[x] = IntsToStr(values2.Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStrings(strValues2.X, separator), "}");
-      ArrayResize(strValues2.X, 0);
-      ArrayResize(   values2.Y, 0);
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
       return(result);
    }
    else dim3 = ArrayRange(values3, 2);
 
-   // 3-dimensional
+   // 3-dimensional array
    if (dimensions == 3) {
-      string strValues3.X[]; ArrayResize(strValues3.X, dim1);
-      string strValues3.Y[]; ArrayResize(strValues3.Y, dim2);
-      int       values3.Z[]; ArrayResize(   values3.Z, dim3);
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      int     values3.Z[]; ArrayResize( values3.Z, dim3);
 
       for (x=0; x < dim1; x++) {
          for (y=0; y < dim2; y++) {
             for (int z=0; z < dim3; z++) {
                values3.Z[z] = values3[x][y][z];
             }
-            strValues3.Y[y] = IntsToStr(values3.Z, separator);
+            sValues3.Y[y] = IntsToStr(values3.Z, separator);
          }
-         strValues3.X[x] = StringConcatenate("{", JoinStrings(strValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(strValues3.X, separator), "}");
-      ArrayResize(strValues3.X, 0);
-      ArrayResize(strValues3.Y, 0);
-      ArrayResize(   values3.Z, 0);
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
       return(result);
    }
 
