@@ -808,6 +808,92 @@ int SortTicketsChronological(int &tickets[]) {
 
 
 /**
+ * Sortiert die übergebenen Ticketdaten nach {OpenTime, Ticket}.
+ *
+ * @param  _Inout_ int tickets[] - Array mit Ticketdaten
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
+   if (ArrayRange(tickets, 1) != 2) return(!catch("SortOpenTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+   int rows = ArrayRange(tickets, 0);
+   if (rows < 2)
+      return(true);                                                  // weniger als 2 Zeilen
+
+   // Zeilen nach OpenTime sortieren
+   ArraySort(tickets);
+
+   // Zeilen mit gleicher OpenTime zusätzlich nach Ticket sortieren
+   int openTime, lastOpenTime, ticket, sameOpenTimes[][2];
+   ArrayResize(sameOpenTimes, 1);
+
+   for (int i=0, n; i < rows; i++) {
+      openTime = tickets[i][0];
+      ticket   = tickets[i][1];
+
+      if (openTime == lastOpenTime) {
+         n++;
+         ArrayResize(sameOpenTimes, n+1);
+      }
+      else if (n > 0) {
+         // in sameOpenTimes[] angesammelte Zeilen von keys[] nach Ticket sortieren
+         if (!__SOT.SameOpenTimes(tickets, sameOpenTimes))
+            return(false);
+         ArrayResize(sameOpenTimes, 1);
+         n = 0;
+      }
+      sameOpenTimes[n][0] = ticket;
+      sameOpenTimes[n][1] = i;                                       // Originalposition der Zeile in keys[]
+
+      lastOpenTime = openTime;
+   }
+   if (n > 0) {
+      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
+      if (!__SOT.SameOpenTimes(tickets, sameOpenTimes))
+         return(false);
+      n = 0;
+   }
+   ArrayResize(sameOpenTimes, 0);
+
+   return(!catch("SortOpenTickets(2)"));
+}
+
+
+/**
+ * Internal helper for SortOpenTickets().
+ *
+ * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen sind gleich
+ * und müssen nicht umsortiert werden.
+ *
+ * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
+ * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @access private
+ */
+bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+   int rows.copy[][2]; ArrayResize(rows.copy, 0);
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+
+   // Zeilen nach Ticket sortieren
+   ArraySort(rows.copy);
+
+   int ticket, rows=ArrayRange(rowsToSort, 0);
+
+   // Originaldaten mit den sortierten Werten überschreiben
+   for (int i, n=0; n < rows; n++) {
+      i                = rowsToSort[n][1];
+      ticketData[i][1] = rows.copy [n][0];
+   }
+
+   ArrayResize(rows.copy, 0);
+   return(!catch("__SOT.SameOpenTimes(1)"));
+}
+
+
+/**
  * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
  *
  * @return int - Fehlerstatus

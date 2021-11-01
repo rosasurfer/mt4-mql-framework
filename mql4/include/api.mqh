@@ -711,6 +711,7 @@ int      SearchStringArray(string &haystack[], string needle);;
 int      SearchStringArrayI(string &haystack[], string needle);;
 datetime ServerToFxtTime(datetime serverTime);;
 datetime ServerToGmtTime(datetime serverTime);;
+bool     SortOpenTickets(int &keys[][]);;
 bool     SortStrings(string &values[]);;
 int      SortTicketsChronological(int &tickets[]);;
 bool     StringInArray(string &haystack[], string needle);;
