@@ -4817,6 +4817,40 @@ string PricesToStr(double values[], string separator = ", ") {
 
 
 /**
+ * Convert a datetime array to a human-readable string.
+ *
+ * @param  datetime values[]
+ * @param  string   separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TimesToStr(datetime values[], string separator=", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("TimesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")      // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      if      (values[i] <  0) strings[i] = "-1";
+      else if (values[i] == 0) strings[i] =  "0";
+      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
  * Handler for order related errors which occurred in one of the library's order functions.
  *
  * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is

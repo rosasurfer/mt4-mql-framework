@@ -192,41 +192,6 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
 
 
 /**
- * Konvertiert ein DateTime-Array in einen lesbaren String.
- *
- * @param  datetime values[]
- * @param  string   separator - Separator (default: NULL = ", ")
- *
- * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
- */
-string TimesToStr(datetime values[], string separator=", ") {
-   if (ArrayDimension(values) > 1)
-      return(_EMPTY_STR(catch("TimesToStr()  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int size = ArraySize(values);
-   if (ArraySize(values) == 0)
-      return("{}");
-
-   if (separator == "0")      // (string) NULL
-      separator = ", ";
-
-   string strings[];
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      if      (values[i] <  0) strings[i] = "-1";
-      else if (values[i] == 0) strings[i] =  "0";
-      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
-}
-
-
-/**
  * Konvertiert ein Char-Array in einen lesbaren String.
  *
  * @param  int    values[]
@@ -242,7 +207,7 @@ string CharsToStr(int values[], string separator=", ") {
    if (ArraySize(values) == 0)
       return("{}");
 
-   if (separator == "0")      // (string) NULL
+   if (separator == "0")               // (string) NULL
       separator = ", ";
 
    string strings[];
