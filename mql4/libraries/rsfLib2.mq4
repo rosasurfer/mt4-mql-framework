@@ -63,52 +63,6 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator=", ") {
 
 
 /**
- * Ermittelt die Gesamtposition der Tickets eines Arrays und gibt sie als einen lesbaren String zurück.
- *
- * @param  int tickets[]
- *
- * @return string - String mit Gesamtposition oder Leerstring, falls ein Fehler auftrat
- */
-string TicketsToStr.Position(int tickets[]) {
-   if (ArrayDimension(tickets) != 1)
-      return(_EMPTY_STR(catch("TicketsToStr.Position(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
-
-   int ticketsSize = ArraySize(tickets);
-   if (!ticketsSize)
-      return("(empty)");
-
-   double long, short, total, hedged;
-
-   OrderPush("TicketsToStr.Position(2)");
-
-   for (int i=0; i < ticketsSize; i++) {
-      if (tickets[i] > 0) {
-         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
-            if (IsLongOrderType(OrderType())) long  += OrderLots();
-            else                              short += OrderLots();
-         }
-         else GetLastError();
-      }
-   }
-
-   OrderPop("TicketsToStr.Position(3)");
-
-   long   = NormalizeDouble(long,  2);
-   short  = NormalizeDouble(short, 2);
-   total  = NormalizeDouble(long - short, 2);
-   hedged = MathMin(long, short);
-   bool isPosition = long || short;
-
-   string result = "";
-   if (!isPosition) result = "(none)";
-   else if (!total) result = "±"+ NumberToStr(long,  ".+")                                                          +" lots (hedged)";
-   else             result =      NumberToStr(total, ".+") + ifString(!hedged, "", " ±"+ NumberToStr(hedged, ".+")) +" lots";
-
-   return(result);
-}
-
-
-/**
  * Sortiert die übergebenen Ticketdaten nach {OpenTime, Ticket}.
  *
  * @param  int tickets[] - Array mit Ticketdaten
