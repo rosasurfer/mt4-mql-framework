@@ -2412,8 +2412,8 @@ bool StrIsPhoneNumber(string value) {
 /**
  * Fügt ein Element am Beginn eines String-Arrays an.
  *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  _InOut_ string array[] - String-Array
+ * @param  _In_    string value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
@@ -2425,8 +2425,8 @@ bool StrIsPhoneNumber(string value) {
  *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
-int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+int ArrayUnshiftString(string &array[], string value) {
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
