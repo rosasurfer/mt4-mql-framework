@@ -5214,6 +5214,50 @@ string TicketsToStr.Lots(int tickets[], string separator = ", ") {
 
 
 /**
+ * Resolve the total position size of all passed order tickets and convert them to a human-readable string.
+ *
+ * @param  int tickets[]
+ *
+ * @return string - string with total position sizes or an empty string in case of errors
+ */
+string TicketsToStr.Position(int tickets[]) {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.Position(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int ticketsSize = ArraySize(tickets);
+   if (!ticketsSize)
+      return("(empty)");
+
+   double longPosition, shortPosition, totalPosition, hedgedPosition;
+   OrderPush("TicketsToStr.Position(2)");
+
+   for (int i=0; i < ticketsSize; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if (IsLongOrderType(OrderType())) longPosition  += OrderLots();
+            else                              shortPosition += OrderLots();
+         }
+         else GetLastError();
+      }
+   }
+
+   OrderPop("TicketsToStr.Position(3)");
+
+   longPosition   = NormalizeDouble(longPosition,  2);
+   shortPosition  = NormalizeDouble(shortPosition, 2);
+   totalPosition  = NormalizeDouble(longPosition - shortPosition, 2);
+   hedgedPosition = MathMin(longPosition, shortPosition);
+   bool isPosition = longPosition || shortPosition;
+
+   string result = "";
+   if (!isPosition)         result = "(none)";
+   else if (!totalPosition) result = "±"+ NumberToStr(longPosition,  ".+")                                                                          +" lots (hedged)";
+   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ±"+ NumberToStr(hedgedPosition, ".+")) +" lots";
+
+   return(result);
+}
+
+
+/**
  * Convert a datetime array to a human-readable string.
  *
  * @param  datetime values[]
