@@ -5214,6 +5214,46 @@ string TicketsToStr.Lots(int tickets[], string separator = ", ") {
 
 
 /**
+ * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize and symbol.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TicketsToStr.LotsSymbols(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.LotsSymbols(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string result="", sValue="";
+   OrderPush("TicketsToStr.LotsSymbols(2)");
+
+   for (int i=0; i < size; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
+         }
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+      }
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   OrderPop("TicketsToStr.LotsSymbols(3)");
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
  * Resolve the total position size of all passed order tickets and convert them to a human-readable string.
  *
  * @param  int tickets[]
