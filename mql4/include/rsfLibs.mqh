@@ -226,36 +226,31 @@
 
 
    // toString helpers
-   string   DoubleToStrEx(double value, int digits/*=0..16*/);
-
-   string   BoolsToStr          (bool array[], string separator);
-   string   CharsToStr           (int array[], string separator);
-   string   DoublesToStr      (double array[], string separator);
-   string   DoublesToStrEx    (double array[], string separator, int digits/*=0..16*/);
-   string   IntsToStr            (int array[], string separator);
-   string   MoneysToStr       (double array[], string separator);
-   string   OperationTypesToStr  (int array[], string separator);
-   string   PricesToStr       (double array[], string separator);    // alias of RatesToStr()
-   string   RatesToStr        (double array[], string separator);
-   string   StringsToStr      (string array[], string separator);
-   string   TicketsToStr         (int array[], string separator);
-   string   TicketsToStr.Lots    (int array[], string separator);
-   string   TicketsToStr.Position(int array[]);
-   string   TimesToStr      (datetime array[], string separator);
-
    string   CharToHexStr(int chr);
+   string   DoubleToStrEx(double value, int digits/*=0..16*/);
    string   IntegerToBinaryStr(int integer);
    string   IntegerToHexStr(int decimal);
    string   WaitForSingleObjectValueToStr(int value);
    string   WordToHexStr(int word);
 
-
-#import "rsfLib2.ex4"
+   string   BoolsToStr             (bool array[], string separator);
+   string   CharsToStr              (int array[], string separator);
+   string   DoublesToStr         (double array[], string separator);
+   string   DoublesToStrEx       (double array[], string separator, int digits/*=0..16*/);
+   string   IntsToStr               (int array[], string separator);
+   string   MoneysToStr          (double array[], string separator);
+   string   OperationTypesToStr     (int array[], string separator);
+   string   PricesToStr          (double array[], string separator);    // alias of RatesToStr()
+   string   RatesToStr           (double array[], string separator);
+   string   StringsToStr         (string array[], string separator);
+   string   TicketsToStr            (int array[], string separator);
+   string   TicketsToStr.Lots       (int array[], string separator);
    string   TicketsToStr.LotsSymbols(int array[], string separator);
+   string   TicketsToStr.Position   (int array[]);
+   string   TimesToStr         (datetime array[], string separator);
 
 
    // other
-#import "rsfLib1.ex4"
    bool     DoubleQuoteStrings(string &array[]);
    string   GetWindowsShortcutTarget(string lnkFile);
    int      WinExecWait(string cmdLine, int cmdShow);
