@@ -4251,6 +4251,7 @@ string InputsToStr() {
    int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
+   bool     SortOpenTickets(int &keys[][]);
    string   StringsToStr      (string array[], string separator);
    string   TicketsToStr         (int array[], string separator);
    string   TicketsToStr.Lots    (int array[], string separator);
@@ -4258,5 +4259,4 @@ string InputsToStr() {
 
 #import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
-   bool     SortOpenTickets  (int keys[][]);
 #import

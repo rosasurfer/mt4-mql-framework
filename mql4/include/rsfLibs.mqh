@@ -200,10 +200,10 @@
 
 
    // other
-   int      SortTicketsChronological(int tickets[]);
+   int      SortTicketsChronological(int &tickets[]);
+   bool     SortOpenTickets(int &keys[][]);
 #import "rsfLib2.ex4"
    bool     SortClosedTickets(int keys[][]);
-   bool     SortOpenTickets(int keys[][]);
 
 #import "rsfLib1.ex4"
    bool     IsRawSymbol(string symbol, string server = "");
