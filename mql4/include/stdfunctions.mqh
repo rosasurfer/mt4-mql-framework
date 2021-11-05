@@ -4307,6 +4307,30 @@ bool StrContainsI(string value, string substring) {
 
 
 /**
+ * Whether a string contains at least one of the specified characters.
+ *
+ * @param  string value   - string to inspect
+ * @param  int    chars[] - character values
+ *
+ * @return bool
+ */
+bool StrContainsChars(string value, int chars[]) {
+   if (StringLen(value) > 0) {
+      int size = ArraySize(chars);
+      for (int i=0; i < size; i++) {
+         if (chars[i] < 0 || chars[i] > 255) {
+            return(!catch("StrContainsChars(1)  illegal character value chars["+ i +"]: "+ chars[i], ERR_INVALID_PARAMETER));
+         }
+         if (StringFind(value, CharToStr(chars[i])) >= 0) {
+            return(true);
+         }
+      }
+   }
+   return(false);
+}
+
+
+/**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
  * @param  string value  - zu durchsuchender String
@@ -4941,6 +4965,25 @@ bool IsStopOrderType(int value) {
  */
 bool IsLimitOrderType(int value) {
    return(value==OP_BUYLIMIT || value==OP_SELLLIMIT);
+}
+
+
+/**
+ * Whether the specified value is considered an absolute path.
+ *
+ * @param  string path
+ *
+ * @return bool
+ */
+bool IsAbsolutePath(string path) {
+   int len = StringLen(path);
+
+   if (len > 1) {
+      int chr = StringGetChar(path, 0);
+      if ((chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z'))
+         return(StringGetChar(path, 1) == ':');
+   }
+   return(false);
 }
 
 
@@ -6891,6 +6934,7 @@ void __DummyCalls() {
    ifStringOr(NULL, NULL);
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
+   IsAbsolutePath(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
@@ -6974,6 +7018,7 @@ void __DummyCalls() {
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
+   StrContainsChars(NULL, iNulls);
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
