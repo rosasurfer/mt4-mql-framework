@@ -109,7 +109,7 @@ bool EditFiles(string &filenames[]) {
       if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
       if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
-      if (IsFileA(filenames[i])) {
+      if (IsFile(filenames[i], MODE_OS)) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
             if (!StringLen(target))
@@ -669,7 +669,7 @@ string GetAccountServer() {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
                   fullTmpFilename = GetTerminalDataPathA() +"\\history\\"+ name +"\\"+ tmpFilename;
-                  if (IsFileA(fullTmpFilename)) {
+                  if (IsFile(fullTmpFilename, MODE_OS)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
                      break;
@@ -8174,7 +8174,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 
    // (1) "symgroups.raw" auf Existenz prüfen                        // Extra-Prüfung, da bei Read-only-Zugriff FileOpen[History]() bei nicht existierender
    string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
-   if (!MQL.IsFile(mqlFileName))
+   if (!IsFile(mqlFileName, MODE_MQL))
       return(0);
 
    // (2) Datei öffnen und Größe validieren
@@ -8325,7 +8325,7 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    }
 
    // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
-   if (!MQL.IsFile(fileName))                                        // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
+   if (!IsFile(fileName, MODE_MQL))                                  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       return(false);
 
    // Datei öffnen und Größe validieren

@@ -3568,7 +3568,7 @@ bool SaveStatus() {
    }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -3872,7 +3872,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";

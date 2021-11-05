@@ -69,7 +69,7 @@ int onStart() {
          size--; i--;
          continue;
       }
-      if (!IsFileA(files[i])) {
+      if (!IsFile(files[i], MODE_OS)) {
          // make sure the final directory exists
          int pos = Max(StrFindR(files[i], "/"), StrFindR(files[i], "\\"));
          if (pos == 0)          return(catch("onStart(4)  illegal filename in files["+ i +"]: "+ DoubleQuoteStr(files[i]), ERR_ILLEGAL_STATE));

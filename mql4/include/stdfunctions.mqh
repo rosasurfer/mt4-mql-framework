@@ -345,9 +345,9 @@ bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
-   if (!IsFileA(fullName)) {
+   if (!IsFile(fullName, MODE_OS)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
-      if (!IsFileA(fullName)) {
+      if (!IsFile(fullName, MODE_OS)) {
          if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
@@ -3193,6 +3193,29 @@ string UrlEncode(string value) {
 
 
 /**
+ * Whether the specified file exists.
+ *
+ * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
+ * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
+ *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
+ * @return bool
+ */
+bool IsFile(string path, int mode) {
+   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
+   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+
+   if (mode & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "/", path);
+   }
+   return(IsFileA(path, MODE_OS));
+}
+
+
+/**
  * Whether the specified directory exists.
  *
  * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
@@ -3209,7 +3232,7 @@ bool IsDirectory(string path, int mode) {
       string filesDirectory = GetMqlFilesPath();
       if (!StringLen(filesDirectory))
          return(false);
-      path = StringConcatenate(filesDirectory, "\\", path);
+      path = StringConcatenate(filesDirectory, "/", path);
    }
    return(IsDirectoryA(path, MODE_OS));
 }
@@ -3237,23 +3260,6 @@ bool CreateDirectory(string path, int flags) {
       flags &= ~MODE_MQL;
    }
    return(!CreateDirectoryA(path, flags|MODE_OS));
-}
-
-
-/**
- * Whether the specified file exists in the MQL "files" directory.
- *
- * @param  string filename - Filename relative to "files", may be a symbolic link. Supported directory separators are
- *                           forward and backward slash.
- * @return bool
- */
-bool MQL.IsFile(string filename) {
-   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-
-   string filesDirectory = GetMqlFilesPath();
-   if (!StringLen(filesDirectory))
-      return(false);
-   return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
 }
 
 
@@ -6030,7 +6036,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFileA(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_OS)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
@@ -6977,6 +6983,7 @@ void __DummyCalls() {
    IsEmptyValue(NULL);
    IsError(NULL);
    IsExpert();
+   IsFile(NULL, NULL);
    IsIndicator();
    IsInfinity(NULL);
    IsLastError();
@@ -7009,7 +7016,6 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleName();
    ModuleTypesToStr(NULL);
-   MQL.IsFile(NULL);
    Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
