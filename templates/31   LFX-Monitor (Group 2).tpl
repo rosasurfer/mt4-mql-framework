@@ -9903,7 +9903,7 @@ USDX.Enabled=1
 EURX.Enabled=1
 XAUI.Enabled=0
 Recording.Enabled=1
-Recording.HistoryDirectory=XTrade-Synthetic
+Recording.HistoryDirectory=history/XTrade-Synthetic
 Recording.HistoryFormat=400
 </inputs>
 </expert>

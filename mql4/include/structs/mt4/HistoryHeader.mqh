@@ -8,7 +8,7 @@
 #import "rsfMT4Expander.dll"
    // Getter
    int      hh_BarFormat      (/*HISTORY_HEADER*/int hh[]);                         int      hhs_BarFormat      (/*HISTORY_HEADER*/int hhs[], int i);
-   string   hh_Copyright      (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Copyright      (/*HISTORY_HEADER*/int hhs[], int i);
+   string   hh_Description    (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Description    (/*HISTORY_HEADER*/int hhs[], int i);
    string   hh_Symbol         (/*HISTORY_HEADER*/int hh[]);                         string   hhs_Symbol         (/*HISTORY_HEADER*/int hhs[], int i);
    int      hh_Period         (/*HISTORY_HEADER*/int hh[]);                         int      hhs_Period         (/*HISTORY_HEADER*/int hhs[], int i);
    int      hh_Timeframe      (/*HISTORY_HEADER*/int hh[]);                         int      hhs_Timeframe      (/*HISTORY_HEADER*/int hhs[], int i);
@@ -17,14 +17,14 @@
    datetime hh_LastSyncTime   (/*HISTORY_HEADER*/int hh[]);                         datetime hhs_LastSyncTime   (/*HISTORY_HEADER*/int hhs[], int i);
 
    // Setter
-   int      hh_SetBarFormat   (/*HISTORY_HEADER*/int hh[], int      format   );     int      hhs_SetBarFormat   (/*HISTORY_HEADER*/int hhs[], int i, int      format   );
-   string   hh_SetCopyright   (/*HISTORY_HEADER*/int hh[], string   copyright);     string   hhs_SetCopyright   (/*HISTORY_HEADER*/int hhs[], int i, string   copyright);
-   string   hh_SetSymbol      (/*HISTORY_HEADER*/int hh[], string   symbol   );     string   hhs_SetSymbol      (/*HISTORY_HEADER*/int hhs[], int i, string   symbol   );
-   int      hh_SetPeriod      (/*HISTORY_HEADER*/int hh[], int      period   );     int      hhs_SetPeriod      (/*HISTORY_HEADER*/int hhs[], int i, int      period   );
-   int      hh_SetTimeframe   (/*HISTORY_HEADER*/int hh[], int      timeframe);     int      hhs_SetTimeframe   (/*HISTORY_HEADER*/int hhs[], int i, int      timeframe);
-   int      hh_SetDigits      (/*HISTORY_HEADER*/int hh[], int      digits   );     int      hhs_SetDigits      (/*HISTORY_HEADER*/int hhs[], int i, int      digits   );
-   datetime hh_SetSyncMarker  (/*HISTORY_HEADER*/int hh[], datetime time     );     datetime hhs_SetSyncMarker  (/*HISTORY_HEADER*/int hhs[], int i, datetime time     );
-   datetime hh_SetLastSyncTime(/*HISTORY_HEADER*/int hh[], datetime time     );     datetime hhs_SetLastSyncTime(/*HISTORY_HEADER*/int hhs[], int i, datetime time     );
+   int      hh_SetBarFormat   (/*HISTORY_HEADER*/int hh[], int      format     );   int      hhs_SetBarFormat   (/*HISTORY_HEADER*/int hhs[], int i, int      format     );
+   string   hh_SetDescription (/*HISTORY_HEADER*/int hh[], string   description);   string   hhs_SetDescription (/*HISTORY_HEADER*/int hhs[], int i, string   description);
+   string   hh_SetSymbol      (/*HISTORY_HEADER*/int hh[], string   symbol     );   string   hhs_SetSymbol      (/*HISTORY_HEADER*/int hhs[], int i, string   symbol     );
+   int      hh_SetPeriod      (/*HISTORY_HEADER*/int hh[], int      period     );   int      hhs_SetPeriod      (/*HISTORY_HEADER*/int hhs[], int i, int      period     );
+   int      hh_SetTimeframe   (/*HISTORY_HEADER*/int hh[], int      timeframe  );   int      hhs_SetTimeframe   (/*HISTORY_HEADER*/int hhs[], int i, int      timeframe  );
+   int      hh_SetDigits      (/*HISTORY_HEADER*/int hh[], int      digits     );   int      hhs_SetDigits      (/*HISTORY_HEADER*/int hhs[], int i, int      digits     );
+   datetime hh_SetSyncMarker  (/*HISTORY_HEADER*/int hh[], datetime time       );   datetime hhs_SetSyncMarker  (/*HISTORY_HEADER*/int hhs[], int i, datetime time       );
+   datetime hh_SetLastSyncTime(/*HISTORY_HEADER*/int hh[], datetime time       );   datetime hhs_SetLastSyncTime(/*HISTORY_HEADER*/int hhs[], int i, datetime time       );
 #import
 
 
@@ -49,7 +49,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
    if (dimensions == 1) {
       // hh ist struct HISTORY_HEADER (eine Dimension)
       line = StringConcatenate("{format="      ,                   hh_BarFormat   (hh),
-                              ", copyright="   ,    DoubleQuoteStr(hh_Copyright   (hh)),
+                              ", copyright="   ,    DoubleQuoteStr(hh_Description (hh)),
                               ", symbol="      ,    DoubleQuoteStr(hh_Symbol      (hh)),
                               ", period="      , PeriodDescription(hh_Period      (hh)),
                               ", digits="      ,                   hh_Digits      (hh),
@@ -65,7 +65,7 @@ string HISTORY_HEADER.toStr(/*HISTORY_HEADER*/int hh[], bool outputDebug=false) 
 
       for (int i=0; i < size; i++) {
          line = StringConcatenate("[", i, "]={format="      ,                   hhs_BarFormat   (hh, i),
-                                           ", copyright="   ,    DoubleQuoteStr(hhs_Copyright   (hh, i)),
+                                           ", copyright="   ,    DoubleQuoteStr(hhs_Description (hh, i)),
                                            ", symbol="      ,    DoubleQuoteStr(hhs_Symbol      (hh, i)),
                                            ", period="      , PeriodDescription(hhs_Period      (hh, i)),
                                            ", digits="      ,                   hhs_Digits      (hh, i),

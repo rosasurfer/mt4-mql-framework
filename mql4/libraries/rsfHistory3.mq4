@@ -11,7 +11,7 @@
  *     int hSet = HistorySet3.Create(symbol, description, digits, format);
  *
  *  - How to sync rsfHistory{1-3}.mq4:
- *     search:  (HistoryFile|HistorySet)[1-3]\
+ *     search:  (HistoryFile|HistorySet)[1-3]\>
  *     replace: \1{1-3}
  *
  *
@@ -56,7 +56,7 @@ int      hs.hSet       [];                            // Set-Handle: größer 0 = 
 int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
 string   hs.symbolUpper[];                            // SYMBOL (Upper-Case)
-string   hs.copyright  [];                            // Copyright oder Beschreibung
+string   hs.description[];                            // Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
 string   hs.server     [];                            // Servername des Sets
 int      hs.hFile      [][9];                         // HistoryFile-Handles des Sets je Standard-Timeframe
@@ -136,27 +136,27 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
- * @param  string symbol    - Symbol
- * @param  string copyright - Copyright oder Beschreibung
- * @param  int    digits    - Digits der Datenreihe
- * @param  int    format    - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
- *                                                           401 - neues Datenformat (wie MetaTrader  > Build 509)
- * @param  string server    - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  string symbol      - Symbol
+ * @param  string description - Beschreibung
+ * @param  int    digits      - Digits der Datenreihe
+ * @param  int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
+ *                                                             401 - neues Datenformat (wie MetaTrader  > Build 509)
+ * @param  string server      - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  */
-int HistorySet3.Create(string symbol, string copyright, int digits, int format, string server="") {
+int HistorySet3.Create(string symbol, string description, int digits, int format, string server="") {
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet3.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet3.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet3.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (!StringLen(copyright)) {
-      copyright = "";                                                            // NULL-Pointer => Leerstring
+   if (!StringLen(description)) {
+      description = "";                                                          // NULL-Pointer => Leerstring
    }
-   else if (StringLen(copyright) > 63) {                                         // ein zu langer String wird gekürzt
-      logNotice("HistorySet3.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
-      copyright = StrLeft(copyright, 63);
+   else if (StringLen(description) > 63) {                                       // ein zu langer String wird gekürzt
+      logNotice("HistorySet3.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
+      description = StrLeft(description, 63);
    }
    if (digits < 0)                            return(!catch("HistorySet3.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet3.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
@@ -203,10 +203,10 @@ int HistorySet3.Create(string symbol, string copyright, int digits, int format, 
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
-   hh_SetBarFormat(hh, format   );
-   hh_SetCopyright(hh, copyright);
-   hh_SetSymbol   (hh, symbol   );
-   hh_SetDigits   (hh, digits   );
+   hh_SetBarFormat  (hh, format     );
+   hh_SetDescription(hh, description);
+   hh_SetSymbol     (hh, symbol     );
+   hh_SetDigits     (hh, digits     );
 
    for (i=0; i < sizeOfPeriods; i++) {
       baseName = symbol + periods[i] +".hst";
@@ -237,7 +237,7 @@ int HistorySet3.Create(string symbol, string copyright, int digits, int format, 
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
    hs.symbolUpper[iH] = symbolUpper;
-   hs.copyright  [iH] = copyright;
+   hs.description[iH] = description;
    hs.digits     [iH] = digits;
    hs.server     [iH] = server;
    hs.format     [iH] = format;
@@ -291,7 +291,7 @@ int HistorySet3.Get(string symbol, string server = "") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hf.symbol     [i];
          hs.symbolUpper[iH] = hf.symbolUpper[i];
-         hs.copyright  [iH] = hhs_Copyright(hf.header, i);
+         hs.description[iH] = hhs_Description(hf.header, i);
          hs.digits     [iH] = hf.digits     [i];
          hs.server     [iH] = hf.server     [i];
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
@@ -336,7 +336,7 @@ int HistorySet3.Get(string symbol, string server = "") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hh_Symbol   (hh);
          hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
-         hs.copyright  [iH] = hh_Copyright(hh);
+         hs.description[iH] = hh_Description(hh);
          hs.digits     [iH] = hh_Digits   (hh);
          hs.server     [iH] = server;
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
@@ -415,7 +415,7 @@ bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags=NULL) 
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
       if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
-         hFile = HistoryFile3.Open(hs.symbol[hSet], periods[i], hs.copyright[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
+         hFile = HistoryFile3.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
       }
@@ -426,34 +426,30 @@ bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags=NULL) 
 
 
 /**
- * Öffnet eine Historydatei im angegeben Access-Mode und gibt deren Handle zurück.
+ * Öffnet eine Historydatei im angegeben Access-Mode und gibt ihr Handle zurück.
  *
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
- * • Ist FILE_WRITE jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
+ * • Ist FILE_WRITE, jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
  *
- * @param  string symbol    - Symbol des Instruments
- * @param  int    timeframe - Timeframe der Zeitreihe
- * @param  string copyright - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
- * @param  int    digits    - Digits der Werte            (falls die Historydatei neu erstellt wird)
- * @param  int    format    - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
- * @param  int    mode      - Access-Mode: FILE_READ|FILE_WRITE
- * @param  string server    - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  string symbol            - Symbol des Instruments
+ * @param  int    timeframe         - Timeframe der Zeitreihe
+ * @param  string description       - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
+ * @param  int    digits            - Digits der Werte            (falls die Historydatei neu erstellt wird)
+ * @param  int    format            - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
+ * @param  int    mode              - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  string server [optional] - Serververzeichnis, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Dateihandle oder
  *               -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
  *               NULL, falls ein anderer Fehler auftrat
- *
- *
- * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
- *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 64 Dateien gleichzeitig offen gehalten werden.
  */
-int HistoryFile3.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
-   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile3.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile3.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile3.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+int HistoryFile3.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string server = "") {
+   if (!StringLen(symbol))                    return(!catch("HistoryFile3.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistoryFile3.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max. "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("HistoryFile3.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (timeframe <= 0)                        return(_NULL(catch("HistoryFile3.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER)));
-   if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile3.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+   if (timeframe <= 0)                        return(!catch("HistoryFile3.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER));
+   if (!(mode & (FILE_READ|FILE_WRITE)))      return(!catch("HistoryFile3.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
    mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
    bool read_only  = !(mode & FILE_WRITE);
    bool write_only = !(mode & FILE_READ);
@@ -462,64 +458,59 @@ int HistoryFile3.Open(string symbol, int timeframe, string copyright, int digits
    if (server == "0")      server = "";                                             // (string) NULL
    if (!StringLen(server)) server = GetAccountServer();
 
-
    // (1) Datei öffnen
-   string mqlHstDir   = "history\\"+ server +"\\";                                  // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir  = GetMqlFilesPath() +"\\"+ mqlHstDir;                         // Verzeichnisname für Win32-Dateifunktionen
+   string mqlHstDir   = server +"/";                                                // Verzeichnis für MQL-Dateifunktionen
+   string fullHstDir  = GetMqlFilesPath() +"/"+ mqlHstDir;                          // Verzeichnis für Win32-Dateifunktionen
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
-   // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
-   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir, MODE_OS)) return(_NULL(catch("HistoryFile3.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
-
-   int hFile;
+   // on write access make sure the directory exists
+   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_OS|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
 
    // (1.1) read-only                                                               // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
+   int hFile;
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       if (!MQL.IsFile(mqlFileName)) return(-1);                                     // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.2) read-write
    else if (read_write) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile3.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.3) write-only
    else if (write_only) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile3.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
-
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    int      bars=0, from.offset=-1, to.offset=-1, fileSize=FileSize(hFile), periodSecs=timeframe * MINUTES;
    datetime from.openTime=0, from.closeTime=0, from.nextCloseTime=0, to.openTime=0, to.closeTime=0, to.nextCloseTime=0;
 
-
    // (2) ggf. neuen HISTORY_HEADER schreiben
    if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
       // Parameter validieren
-      if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-      if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(_NULL(catch("HistoryFile3.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
-      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile3.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+      if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
+      if (StringLen(description) > 63) description = StrLeft(description, 63);      // ein zu langer String wird gekürzt
+      if (digits < 0)                          return(!catch("HistoryFile3.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (format!=400) /*&&*/ if (format!=401) return(!catch("HistoryFile3.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
 
-      hh_SetBarFormat(hh, format   );
-      hh_SetCopyright(hh, copyright);
-      hh_SetSymbol   (hh, symbol   );
-      hh_SetPeriod   (hh, timeframe);
-      hh_SetDigits   (hh, digits   );
+      hh_SetBarFormat  (hh, format     );
+      hh_SetDescription(hh, description);
+      hh_SetSymbol     (hh, symbol     );
+      hh_SetPeriod     (hh, timeframe  );
+      hh_SetDigits     (hh, digits     );
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER_intSize);
    }
-
 
    // (3.1) ggf. vorhandenen HISTORY_HEADER auslesen
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile3.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+         return(!catch("HistoryFile3.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
       // (3.2) ggf. Bar-Statistik auslesen
@@ -547,7 +538,6 @@ int HistoryFile3.Open(string symbol, int timeframe, string copyright, int digits
          }
       }
    }
-
 
    // (4) Daten zwischenspeichern
    if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
@@ -1453,7 +1443,7 @@ int ResizeSetArrays(int size) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
       ArrayResize(hs.symbolUpper, size);
-      ArrayResize(hs.copyright,   size);
+      ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
       ArrayResize(hs.server,      size);
       ArrayResize(hs.hFile,       size);
