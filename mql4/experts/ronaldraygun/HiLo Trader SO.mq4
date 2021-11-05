@@ -324,7 +324,7 @@ double CalcTrailingStop(int ticket) {
 int Optimize() {
    for (int hour=0; hour < 24; hour++) {
       string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv";
-      if (MQL.IsFile(filename)) FileDelete(filename);
+      if (IsFile(filename, MODE_MQL)) FileDelete(filename);
    }
    DeleteFile(WindowExpertName() +" "+ Symbol() +" optimization.csv");
 
@@ -393,7 +393,7 @@ bool OptimizeTakeProfit(int hour) {
 
    // read hourly stats
    string filename = WindowExpertName() +" "+ Symbol() +" stats "+ StrRight("0"+ hour, 2) +".csv";
-   if (MQL.IsFile(filename)) {
+   if (IsFile(filename, MODE_MQL)) {
       int hFile = FileOpen(filename, FILE_CSV|FILE_READ, ';'); if (hFile < 0) return(!catch("OptimizeTakeProfit(1)->FileOpen(\""+ filename +"\")"));
 
       while (!FileIsEnding(hFile)) {
@@ -526,7 +526,7 @@ int FindCloseBar(string direction, double openPrice, int bar) {
  * @return bool - success status
  */
 bool DeleteFile(string name) {
-   if (MQL.IsFile(name)) {
+   if (IsFile(name, MODE_MQL)) {
       FileDelete(name);
       return(!catch("DeleteFile(1)"));
    }

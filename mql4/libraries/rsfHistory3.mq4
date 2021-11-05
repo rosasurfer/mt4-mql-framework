@@ -213,7 +213,7 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, auf 0 zurücksetzen
+      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
          if (hFile <= 0) return(!catch("HistorySet3.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -313,7 +313,7 @@ int HistorySet3.Get(string symbol, string server = "") {
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, öffnen
+      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
          if (hFile <= 0) return(!catch("HistorySet3.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -466,10 +466,10 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    // on write access make sure the directory exists
    if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_OS|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
 
-   // (1.1) read-only                                                               // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
-   int hFile;
+   // (1.1) read-only
+   int hFile;                                                                       // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
-      if (!MQL.IsFile(mqlFileName)) return(-1);                                     // file not found
+      if (!IsFile(mqlFileName, MODE_MQL)) return(-1);                               // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
       if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }

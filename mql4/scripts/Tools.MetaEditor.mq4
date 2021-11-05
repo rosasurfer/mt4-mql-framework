@@ -17,7 +17,7 @@ int __DeinitFlags[];
  */
 int onStart() {
    string file = TerminalPath() +"\\metaeditor.exe";
-   if (!IsFileA(file))
+   if (!IsFile(file, MODE_OS))
       return(HandleScriptError("", "File not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
 
 

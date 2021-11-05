@@ -22,7 +22,7 @@ int onStart() {
    // make sure the file exist
    if (IsDirectory(filename, MODE_OS)) return(catch("onStart(1)  assumed config file is a directory: "+ DoubleQuoteStr(filename), ERR_FILE_IS_DIRECTORY));
 
-   if (!IsFileA(filename)) {
+   if (!IsFile(filename, MODE_OS)) {
       // make sure the final directory exists
       int pos = Max(StrFindR(filename, "/"), StrFindR(filename, "\\"));
       if (pos == 0)          return(catch("onStart(2)  illegal config filename "+ DoubleQuoteStr(filename), ERR_ILLEGAL_STATE));
