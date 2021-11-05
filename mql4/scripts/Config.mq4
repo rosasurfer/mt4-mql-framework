@@ -63,7 +63,7 @@ int onStart() {
    // make sure all files exist
    int size = ArraySize(files);
    for (int i=0; i < size; i++) {
-      if (IsDirectoryA(files[i], MODE_OS)) {
+      if (IsDirectory(files[i], MODE_OS)) {
          logError("onStart(3)  assumed config file is a directory, skipping "+ DoubleQuoteStr(files[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(files, i, 1);
          size--; i--;
