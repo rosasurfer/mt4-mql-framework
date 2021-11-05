@@ -3193,19 +3193,25 @@ string UrlEncode(string value) {
 
 
 /**
- * Whether the specified directory exists in the MQL "files\" directory.
+ * Whether the specified directory exists.
  *
- * @param  string dirname - Directory name relative to "files/", may be a symbolic link or a junction. Supported directory
- *                          separators are forward and backward slash.
+ * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
+ * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
+ *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
  * @return bool
  */
-bool MQL.IsDirectory(string dirname) {
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+bool IsDirectory(string path, int mode) {
+   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
+   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
 
-   string filesDirectory = GetMqlFilesPath();
-   if (!StringLen(filesDirectory))
-      return(false);
-   return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
+   if (mode & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "\\", path);
+   }
+   return(IsDirectoryA(path, MODE_OS));
 }
 
 
@@ -3217,7 +3223,7 @@ bool MQL.IsDirectory(string dirname) {
  * @return bool
  */
 bool MQL.IsFile(string filename) {
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
 
    string filesDirectory = GetMqlFilesPath();
    if (!StringLen(filesDirectory))
@@ -6939,6 +6945,7 @@ void __DummyCalls() {
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
+   IsDirectory(NULL, NULL);
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
@@ -6976,7 +6983,6 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleName();
    ModuleTypesToStr(NULL);
-   MQL.IsDirectory(NULL);
    MQL.IsFile(NULL);
    Mul(NULL, NULL);
    NameToColor(NULL);
