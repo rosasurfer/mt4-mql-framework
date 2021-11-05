@@ -9887,7 +9887,6 @@ name=LFX-Monitor
 flags=339
 window_num=0
 <inputs>
-Recording.Enabled=1
 AUDLFX.Enabled=0
 CADLFX.Enabled=0
 CHFLFX.Enabled=0
@@ -9903,6 +9902,9 @@ ZARFX7.Enabled=1
 USDX.Enabled=1
 EURX.Enabled=1
 XAUI.Enabled=0
+Recording.Enabled=1
+Recording.HistoryDirectory=XTrade-Synthetic
+Recording.HistoryFormat=400
 </inputs>
 </expert>
 period_flags=0
