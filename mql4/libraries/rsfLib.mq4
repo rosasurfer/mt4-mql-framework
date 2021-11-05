@@ -117,7 +117,7 @@ bool EditFiles(string &filenames[]) {
             filenames[i] = target;
          }
       }
-      else if (IsDirectoryA(filenames[i])) {
+      else if (IsDirectoryA(filenames[i], MODE_OS)) {
          logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--; i--;
@@ -7981,10 +7981,10 @@ string GetTempPath() {
  */
 string CreateTempFile(string path, string prefix="") {
    int len = StringLen(path);
-   if (!len)                   return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)      return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
+   if (!len)                            return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)               return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
    if (path!=".") /*&&*/ if (path!="..")
-      if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+      if (!IsDirectoryA(path, MODE_OS)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
    if (StrIsNull(prefix))
       prefix = "";

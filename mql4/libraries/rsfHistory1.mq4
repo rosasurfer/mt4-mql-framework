@@ -469,7 +469,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
-   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir)) return(_NULL(catch("HistoryFile1.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
+   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir, MODE_OS)) return(_NULL(catch("HistoryFile1.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
 
    int hFile;
 

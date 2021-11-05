@@ -74,7 +74,7 @@
    int      CreateDirectoryA(string path, int flags);
    string   GetFinalPathNameA(string name);
    string   GetReparsePointTargetA(string name);
-   bool     IsDirectoryA(string name);
+   bool     IsDirectoryA(string name, int mode);
    bool     IsFileA(string name);
    bool     IsFileOrDirectoryA(string name);
    bool     IsJunctionA(string name);

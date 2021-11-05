@@ -20,7 +20,7 @@ int onStart() {
    string filename = GetAccountConfigPath();
 
    // make sure the file exist
-   if (IsDirectoryA(filename)) return(catch("onStart(1)  assumed config file is a directory: "+ DoubleQuoteStr(filename), ERR_FILE_IS_DIRECTORY));
+   if (IsDirectoryA(filename, MODE_OS)) return(catch("onStart(1)  assumed config file is a directory: "+ DoubleQuoteStr(filename), ERR_FILE_IS_DIRECTORY));
 
    if (!IsFileA(filename)) {
       // make sure the final directory exists
