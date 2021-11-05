@@ -8,12 +8,12 @@
  *
  *
  * TODO:
- *  - process inputs Symbols.Suffix, Recording.HistoryDirectory
+ *  - process inputs Symbols.Suffix
  *  - better handling of ERR_SYMBOL_NOT_AVAILABLE (especially in context of onInitTemplate)
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
- *  - should the ticktimer rate be an input
- *  - document user requirements for "Recording.ServerName"
+ *  - should the ticktimer rate be an input?
+ *  - document user requirements for "Recording.HistoryDirectory"
  *  - test history format 401
  *  - check timezone requirements
  *  - check conflicting history formats and document it
@@ -150,7 +150,7 @@ int onInit() {
    if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
    recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
    if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(4)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
-   if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(5)  cannot create directory "+ DoubleQuoteStr(recordingDirectory), ERR_INVALID_INPUT_PARAMETER));
+   if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(5)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
    // Recording.HistoryFormat
    if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(6)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
    recordingFormat = Recording.HistoryFormat;
