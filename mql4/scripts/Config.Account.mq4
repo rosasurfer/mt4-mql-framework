@@ -28,7 +28,7 @@ int onStart() {
       if (pos == 0)          return(catch("onStart(2)  illegal config filename "+ DoubleQuoteStr(filename), ERR_ILLEGAL_STATE));
       if (pos > 0) {
          string dir = StrLeft(filename, pos);
-         int error = CreateDirectoryA(dir, MKDIR_PARENT);
+         int error = CreateDirectoryA(dir, MODE_MKPARENT);
          if (IsError(error)) return(catch("onStart(3)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
       }
       // create the file

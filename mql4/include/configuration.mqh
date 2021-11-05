@@ -684,7 +684,7 @@ bool WriteIniString(string fileName, string section, string key, string value) {
          string directory = StrLeftTo(name, "/", -1);
 
          if (directory!=name) /*&&*/ if (!IsDirectoryA(directory)) {
-            error = CreateDirectoryA(directory, MKDIR_PARENT);
+            error = CreateDirectoryA(directory, MODE_MKPARENT);
             if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
             return(WriteIniString(fileName, section, key, value));
          }

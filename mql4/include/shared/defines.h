@@ -225,7 +225,9 @@
 
 
 // file system related constants
-#define MKDIR_PARENT                            1        // create non-existing parent directories as needed => @see CreateDirectory()
+#define MODE_MQL                                0        // restrict file system operations to the MQL container (default)
+#define MODE_OS                                 1        // allow file system operations outside the MQL container
+#define MODE_MKPARENT                           2        // create non-existing parent directories as needed, @see CreateDirectory()
 
 
 // time constants
