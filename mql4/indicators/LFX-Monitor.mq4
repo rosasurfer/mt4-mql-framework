@@ -9,7 +9,7 @@
  *
  * TODO:
  *  - input validation
- *  - process inputs Symbols.Suffix, Recording.ServerName
+ *  - process inputs Symbols.Suffix, Recording.HistoryDirectory
  *  - better handling of ERR_SYMBOL_NOT_AVAILABLE (especially in context of onInitTemplate)
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
@@ -18,6 +18,7 @@
  *  - test history format 401
  *  - check timezone requirements
  *  - check conflicting history formats and document it
+ *  - document symbol requirements
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -44,10 +45,11 @@ extern bool   EURX.Enabled                    = true;
 extern bool   USDX.Enabled                    = true;
 extern string ___d___________________________ = "=== Synthetic Gold index ===";
 extern bool   XAUI.Enabled                    = true;
-extern string ___e___________________________ = "=== Other settings ===";
+extern string ___e___________________________ = "=== Recording settings ===";
 extern bool   Recording.Enabled               = false;                  // default: disabled
-extern string Recording.ServerName            = "Synthetic-History";    // name of the history directory to store recorded data
-extern int    Recording.HistoryFormat         = 401;                    // stored history format
+extern string Recording.HistoryDirectory      = "Synthetic-History";    // name of the history directory to store recorded data
+extern int    Recording.HistoryFormat         = 401;                    // created history format
+extern string ___f___________________________ = "=== Broker settings ===";
 extern string Broker.SymbolSuffix             = "";                     // symbol suffix for brokers with non-standard symbols
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,7 +101,8 @@ datetime staleLimit;                                     // time limit (server t
 
 int      hSet            [];                             // HistorySet handles
 bool     recordingEnabled[];                             // per symbol (default: FALSE)
-string   recordingServerName = "XTrade-Synthetic";       // default server name for storing recorded history
+string   recordingDirectory = "";                        // directory to store recorded history
+int      recordingFormat;                                // format of new history files: 400 | 401
 
 int AUDLFX.orders[][LFX_ORDER_intSize];                  // array of LFX orders
 int CADLFX.orders[][LFX_ORDER_intSize];
@@ -140,9 +143,13 @@ int    tickTimerId;                                      // id of the tick timer
  */
 int onInit() {
    // validate inputs
-   // Recording.ServerName
+   // Recording.HistoryDirectory
+   // TODO
+   recordingDirectory = Recording.HistoryDirectory;
+
    // Recording.HistoryFormat
    if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(1)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   recordingFormat = Recording.HistoryFormat;
    // Broker.SymbolSuffix
    symbolSuffix = StrTrim(Broker.SymbolSuffix);
    if (StringLen(symbolSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(2)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(symbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
@@ -459,7 +466,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 10);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-         string text = ifString(Recording.Enabled, "Recording to "+ recordingServerName, "Recording:  off");
+         string text = ifString(Recording.Enabled, "Recording to "+ recordingDirectory, "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
       RegisterObject(label);
    }
@@ -845,9 +852,9 @@ bool RecordIndices() {
             }
          }
          if (!hSet[i]) {
-            hSet[i] = HistorySet1.Get(symbols[i], recordingServerName);
+            hSet[i] = HistorySet1.Get(symbols[i], recordingDirectory);
             if (hSet[i] == -1)
-               hSet[i] = HistorySet1.Create(symbols[i], symbolLongName[i], symbolDigits[i], Recording.HistoryFormat, recordingServerName);
+               hSet[i] = HistorySet1.Create(symbols[i], symbolLongName[i], symbolDigits[i], recordingFormat, recordingDirectory);
             if (!hSet[i]) return(false);
          }
          if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false);
@@ -963,25 +970,26 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("AUDLFX.Enabled=",          BoolToStr(AUDLFX.Enabled),            ";"+ NL,
-                            "CADLFX.Enabled=",          BoolToStr(CADLFX.Enabled),            ";"+ NL,
-                            "CHFLFX.Enabled=",          BoolToStr(CHFLFX.Enabled),            ";"+ NL,
-                            "EURLFX.Enabled=",          BoolToStr(EURLFX.Enabled),            ";"+ NL,
-                            "GBPLFX.Enabled=",          BoolToStr(GBPLFX.Enabled),            ";"+ NL,
-                            "JPYLFX.Enabled=",          BoolToStr(JPYLFX.Enabled),            ";"+ NL,
-                            "NZDLFX.Enabled=",          BoolToStr(NZDLFX.Enabled),            ";"+ NL,
-                            "USDLFX.Enabled=",          BoolToStr(USDLFX.Enabled),            ";"+ NL,
-                            "NOKFX7.Enabled=",          BoolToStr(NOKFX7.Enabled),            ";"+ NL,
-                            "SEKFX7.Enabled=",          BoolToStr(SEKFX7.Enabled),            ";"+ NL,
-                            "SGDFX7.Enabled=",          BoolToStr(SGDFX7.Enabled),            ";"+ NL,
-                            "ZARFX7.Enabled=",          BoolToStr(ZARFX7.Enabled),            ";"+ NL,
-                            "EURX.Enabled=",            BoolToStr(EURX.Enabled),              ";"+ NL,
-                            "USDX.Enabled=",            BoolToStr(USDX.Enabled),              ";"+ NL,
-                            "XAUI.Enabled=",            BoolToStr(XAUI.Enabled),              ";"+ NL,
+   return(StringConcatenate("AUDLFX.Enabled=",             BoolToStr(AUDLFX.Enabled),                  ";"+ NL,
+                            "CADLFX.Enabled=",             BoolToStr(CADLFX.Enabled),                  ";"+ NL,
+                            "CHFLFX.Enabled=",             BoolToStr(CHFLFX.Enabled),                  ";"+ NL,
+                            "EURLFX.Enabled=",             BoolToStr(EURLFX.Enabled),                  ";"+ NL,
+                            "GBPLFX.Enabled=",             BoolToStr(GBPLFX.Enabled),                  ";"+ NL,
+                            "JPYLFX.Enabled=",             BoolToStr(JPYLFX.Enabled),                  ";"+ NL,
+                            "NZDLFX.Enabled=",             BoolToStr(NZDLFX.Enabled),                  ";"+ NL,
+                            "USDLFX.Enabled=",             BoolToStr(USDLFX.Enabled),                  ";"+ NL,
+                            "NOKFX7.Enabled=",             BoolToStr(NOKFX7.Enabled),                  ";"+ NL,
+                            "SEKFX7.Enabled=",             BoolToStr(SEKFX7.Enabled),                  ";"+ NL,
+                            "SGDFX7.Enabled=",             BoolToStr(SGDFX7.Enabled),                  ";"+ NL,
+                            "ZARFX7.Enabled=",             BoolToStr(ZARFX7.Enabled),                  ";"+ NL,
+                            "EURX.Enabled=",               BoolToStr(EURX.Enabled),                    ";"+ NL,
+                            "USDX.Enabled=",               BoolToStr(USDX.Enabled),                    ";"+ NL,
+                            "XAUI.Enabled=",               BoolToStr(XAUI.Enabled),                    ";"+ NL,
 
-                            "Recording.Enabled=",       BoolToStr(Recording.Enabled),         ";"+ NL,
-                            "Recording.ServerName=",    DoubleQuoteStr(Recording.ServerName), ";"+ NL,
-                            "Recording.HistoryFormat=", Recording.HistoryFormat,              ";"+ NL,
-                            "Broker.SymbolSuffix=",     DoubleQuoteStr(Broker.SymbolSuffix),  ";")
+                            "Recording.Enabled=",          BoolToStr(Recording.Enabled),               ";"+ NL,
+                            "Recording.HistoryDirectory=", DoubleQuoteStr(Recording.HistoryDirectory), ";"+ NL,
+                            "Recording.HistoryFormat=",    Recording.HistoryFormat,                    ";"+ NL,
+
+                            "Broker.SymbolSuffix=",        DoubleQuoteStr(Broker.SymbolSuffix),        ";")
    );
 }
