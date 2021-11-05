@@ -75,7 +75,7 @@ int onStart() {
          if (pos == 0)          return(catch("onStart(4)  illegal filename in files["+ i +"]: "+ DoubleQuoteStr(files[i]), ERR_ILLEGAL_STATE));
          if (pos > 0) {
             string dir = StrLeft(files[i], pos);
-            int error = CreateDirectoryA(dir, MODE_MKPARENT);
+            int error = CreateDirectoryA(dir, MODE_OS|MODE_MKPARENT);
             if (IsError(error)) return(catch("onStart(5)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
          }
          // create the file
