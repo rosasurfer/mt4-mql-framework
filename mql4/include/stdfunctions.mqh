@@ -3216,6 +3216,31 @@ bool IsDirectory(string path, int mode) {
 
 
 /**
+ * Create a directory.
+ *
+ * @param  string path  - directory path
+ * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
+ *                        MODE_OS:       allow the function to operate outside of the MQL sandbox
+ *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
+ *                                       otherwise create only the final directory and report an error if it exists
+ * @return bool - success status
+ */
+bool CreateDirectory(string path, int flags) {
+   if (!(~flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+
+   if (flags & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "\\", path);
+      flags &= ~MODE_MQL;
+   }
+   return(!CreateDirectoryA(path, flags|MODE_OS));
+}
+
+
+/**
  * Whether the specified file exists in the MQL "files" directory.
  *
  * @param  string filename - Filename relative to "files", may be a symbolic link. Supported directory separators are
@@ -6874,6 +6899,7 @@ void __DummyCalls() {
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
+   CreateDirectory(NULL, NULL);
    CreateLegendLabel();
    CreateString(NULL);
    DateTime(NULL);

@@ -125,6 +125,7 @@ string   ColorToRGBStr(color value);;
 string   ColorToStr(color value);;
 void     CopyMemory(int destination, int source, int bytes);;
 int      CountDecimals(double number);;
+bool     CreateDirectory(string path, int flags);;
 string   CreateLegendLabel();;
 string   CreateString(int length);;
 datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
