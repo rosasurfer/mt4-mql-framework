@@ -1,10 +1,23 @@
 /**
  * LFX Monitor
  *
- * Calculate various synthetic indexes and optionally record the index history. If linked to an LFX charting terminal the
+ * Calculates various synthetic indexes and optionally records the index history. If linked to an LFX charting terminal the
  * indicator can process trade limits of synthetic positions. For index descriptions see the following link:
  *
  * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
+ *
+ *
+ * TODO:
+ *  - input validation
+ *  - process inputs Symbols.Suffix, Recording.ServerName
+ *  - better handling of ERR_SYMBOL_NOT_AVAILABLE (especially in context of onInitTemplate)
+ *  - make use of all history libraries
+ *  - check display on different screen resolutions and consider additional auto-config values
+ *  - should the ticktimer rate be an input
+ *  - document user requirements for "Recording.ServerName"
+ *  - test history format 401
+ *  - check timezone requirements
+ *  - check conflicting history formats and document it
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -32,10 +45,10 @@ extern bool   USDX.Enabled                    = true;
 extern string ___d___________________________ = "=== Synthetic Gold index ===";
 extern bool   XAUI.Enabled                    = true;
 extern string ___e___________________________ = "=== Other settings ===";
-extern string Symbols.Suffix                  = "";                     // symbol suffix for brokers with non-standard symbols
 extern bool   Recording.Enabled               = false;                  // default: disabled
 extern string Recording.ServerName            = "Synthetic-History";    // name of the history directory to store recorded data
 extern int    Recording.HistoryFormat         = 401;                    // stored history format
+extern string Broker.SymbolSuffix             = "";                     // symbol suffix for brokers with non-standard symbols
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -68,25 +81,25 @@ extern int    Recording.HistoryFormat         = 401;                    // store
 #define I_USDX      13
 #define I_XAUI      14
 
+string   symbols          [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI" };
+string   symbolLongName   [] = { "LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
+int      symbolDigits     [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3     , 3      };
+double   symbolPipSize    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01   };
+string   symbolPriceFormat[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'" };
+string   symbolSuffix = "";                              // suffix for broker symbols
 
-string   symbols     [] = { "AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI" };
-string   longNames   [] = { "LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
-int      digits      [] = { 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3     , 3      };
-double   pipSizes    [] = { 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01   };
-string   priceFormats[] = { "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'" };
+bool     symbolEnabled[];                                // whether calculation is enabled (matches inputs *.Enabled)
+bool     isAvailable  [];                                // whether all quotes for calculation are available
+double   currBid      [];                                // current calculated Bid value
+double   currAsk      [];                                // current calculated Ask value
+double   currMedian   [];                                // current calculated Median value
+double   prevMedian   [];                                // previous calculated Median value
+bool     isStale      [];                                // whether some prices for calculation are stale (not current)
+datetime staleLimit;                                     // time limit (server time) for stale quotes determination
 
-bool     isEnabled  [];                                  // whether calculation is enabled (matches inputs *.Enabled)
-bool     isAvailable[];                                  // whether all prices for calculation are available
-bool     isStale    [];                                  // whether some prices for calculation are stale (not current)
-double   currBid    [];                                  // current calculated Bid value
-double   currAsk    [];                                  // current calculated Ask value
-double   currMedian [];                                  // current calculated Median value
-double   prevMedian [];                                  // previous calculated Median value
-
-bool     isRecording[];                                  // default: FALSE
-int      hSet       [];                                  // HistorySet handles
-string   serverName = "XTrade-Synthetic";                // default server name for storing recorded history
-datetime staleLimit;                                     // current time limit (server time) for stale quotes determination
+int      hSet            [];                             // HistorySet handles
+bool     recordingEnabled[];                             // per symbol (default: FALSE)
+string   recordingServerName = "XTrade-Synthetic";       // default server name for storing recorded history
 
 int AUDLFX.orders[][LFX_ORDER_intSize];                  // array of LFX orders
 int CADLFX.orders[][LFX_ORDER_intSize];
@@ -104,7 +117,7 @@ int   EURX.orders[][LFX_ORDER_intSize];
 int   USDX.orders[][LFX_ORDER_intSize];
 int   XAUI.orders[][LFX_ORDER_intSize];
 
-// text labels for various display elements
+// text labels for display elements
 string labels[];
 string labelTradeAccount = "";
 string labelAnimation    = "";                           // animated ticker
@@ -126,59 +139,67 @@ int    tickTimerId;                                      // id of the tick timer
  * @return int - error status
  */
 int onInit() {
+   // validate inputs
+   // Recording.ServerName
+   // Recording.HistoryFormat
+   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(1)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   // Broker.SymbolSuffix
+   symbolSuffix = StrTrim(Broker.SymbolSuffix);
+   if (StringLen(symbolSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(2)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(symbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
+
    // initialize array sizes
    int size = ArraySize(symbols);
-   ArrayResize(isEnabled,   size);
-   ArrayResize(isAvailable, size);
-   ArrayResize(isStale,     size); ArrayInitialize(isStale, true);
-   ArrayResize(currBid,     size);
-   ArrayResize(currAsk,     size);
-   ArrayResize(currMedian,  size);
-   ArrayResize(prevMedian,  size);
-   ArrayResize(isRecording, size);
-   ArrayResize(hSet,        size);
-   ArrayResize(labels,      size);
+   ArrayResize(symbolEnabled,    size);
+   ArrayResize(isAvailable,      size);
+   ArrayResize(isStale,          size); ArrayInitialize(isStale, true);
+   ArrayResize(currBid,          size);
+   ArrayResize(currAsk,          size);
+   ArrayResize(currMedian,       size);
+   ArrayResize(prevMedian,       size);
+   ArrayResize(recordingEnabled, size);
+   ArrayResize(hSet,             size);
+   ArrayResize(labels,           size);
 
    // process input parameters
-   isEnabled[I_AUDLFX] = AUDLFX.Enabled;
-   isEnabled[I_CADLFX] = CADLFX.Enabled;
-   isEnabled[I_CHFLFX] = CHFLFX.Enabled;
-   isEnabled[I_EURLFX] = EURLFX.Enabled;
-   isEnabled[I_GBPLFX] = GBPLFX.Enabled;
-   isEnabled[I_JPYLFX] = JPYLFX.Enabled;
-   isEnabled[I_NZDLFX] = NZDLFX.Enabled;
-   isEnabled[I_USDLFX] = USDLFX.Enabled;
-   isEnabled[I_NOKFX7] = NOKFX7.Enabled;
-   isEnabled[I_SEKFX7] = SEKFX7.Enabled;
-   isEnabled[I_SGDFX7] = SGDFX7.Enabled;
-   isEnabled[I_ZARFX7] = ZARFX7.Enabled;
-   isEnabled[I_EURX  ] =   EURX.Enabled;
-   isEnabled[I_USDX  ] =   USDX.Enabled;
-   isEnabled[I_XAUI  ] =   XAUI.Enabled;
+   symbolEnabled[I_AUDLFX] = AUDLFX.Enabled;
+   symbolEnabled[I_CADLFX] = CADLFX.Enabled;
+   symbolEnabled[I_CHFLFX] = CHFLFX.Enabled;
+   symbolEnabled[I_EURLFX] = EURLFX.Enabled;
+   symbolEnabled[I_GBPLFX] = GBPLFX.Enabled;
+   symbolEnabled[I_JPYLFX] = JPYLFX.Enabled;
+   symbolEnabled[I_NZDLFX] = NZDLFX.Enabled;
+   symbolEnabled[I_USDLFX] = USDLFX.Enabled;
+   symbolEnabled[I_NOKFX7] = NOKFX7.Enabled;
+   symbolEnabled[I_SEKFX7] = SEKFX7.Enabled;
+   symbolEnabled[I_SGDFX7] = SGDFX7.Enabled;
+   symbolEnabled[I_ZARFX7] = ZARFX7.Enabled;
+   symbolEnabled[I_EURX  ] =   EURX.Enabled;
+   symbolEnabled[I_USDX  ] =   USDX.Enabled;
+   symbolEnabled[I_XAUI  ] =   XAUI.Enabled;
 
    if (Recording.Enabled) {
       int recordedSymbols;
-      isRecording[I_AUDLFX] = AUDLFX.Enabled; recordedSymbols += AUDLFX.Enabled;
-      isRecording[I_CADLFX] = CADLFX.Enabled; recordedSymbols += CADLFX.Enabled;
-      isRecording[I_CHFLFX] = CHFLFX.Enabled; recordedSymbols += CHFLFX.Enabled;
-      isRecording[I_EURLFX] = EURLFX.Enabled; recordedSymbols += EURLFX.Enabled;
-      isRecording[I_GBPLFX] = GBPLFX.Enabled; recordedSymbols += GBPLFX.Enabled;
-      isRecording[I_JPYLFX] = JPYLFX.Enabled; recordedSymbols += JPYLFX.Enabled;
-      isRecording[I_NZDLFX] = NZDLFX.Enabled; recordedSymbols += NZDLFX.Enabled;
-      isRecording[I_USDLFX] = USDLFX.Enabled; recordedSymbols += USDLFX.Enabled;
-      isRecording[I_NOKFX7] = NOKFX7.Enabled; recordedSymbols += NOKFX7.Enabled;
-      isRecording[I_SEKFX7] = SEKFX7.Enabled; recordedSymbols += SEKFX7.Enabled;
-      isRecording[I_SGDFX7] = SGDFX7.Enabled; recordedSymbols += SGDFX7.Enabled;
-      isRecording[I_ZARFX7] = ZARFX7.Enabled; recordedSymbols += ZARFX7.Enabled;
-      isRecording[I_EURX  ] =   EURX.Enabled; recordedSymbols +=   EURX.Enabled;
-      isRecording[I_USDX  ] =   USDX.Enabled; recordedSymbols +=   USDX.Enabled;
-      isRecording[I_XAUI  ] =   XAUI.Enabled; recordedSymbols +=   XAUI.Enabled;
+      recordingEnabled[I_AUDLFX] = AUDLFX.Enabled; recordedSymbols += AUDLFX.Enabled;
+      recordingEnabled[I_CADLFX] = CADLFX.Enabled; recordedSymbols += CADLFX.Enabled;
+      recordingEnabled[I_CHFLFX] = CHFLFX.Enabled; recordedSymbols += CHFLFX.Enabled;
+      recordingEnabled[I_EURLFX] = EURLFX.Enabled; recordedSymbols += EURLFX.Enabled;
+      recordingEnabled[I_GBPLFX] = GBPLFX.Enabled; recordedSymbols += GBPLFX.Enabled;
+      recordingEnabled[I_JPYLFX] = JPYLFX.Enabled; recordedSymbols += JPYLFX.Enabled;
+      recordingEnabled[I_NZDLFX] = NZDLFX.Enabled; recordedSymbols += NZDLFX.Enabled;
+      recordingEnabled[I_USDLFX] = USDLFX.Enabled; recordedSymbols += USDLFX.Enabled;
+      recordingEnabled[I_NOKFX7] = NOKFX7.Enabled; recordedSymbols += NOKFX7.Enabled;
+      recordingEnabled[I_SEKFX7] = SEKFX7.Enabled; recordedSymbols += SEKFX7.Enabled;
+      recordingEnabled[I_SGDFX7] = SGDFX7.Enabled; recordedSymbols += SGDFX7.Enabled;
+      recordingEnabled[I_ZARFX7] = ZARFX7.Enabled; recordedSymbols += ZARFX7.Enabled;
+      recordingEnabled[I_EURX  ] =   EURX.Enabled; recordedSymbols +=   EURX.Enabled;
+      recordingEnabled[I_USDX  ] =   USDX.Enabled; recordedSymbols +=   USDX.Enabled;
+      recordingEnabled[I_XAUI  ] =   XAUI.Enabled; recordedSymbols +=   XAUI.Enabled;
 
       // record max. 7 instruments (enforces limit of max. 64 open files per MQL module)
       if (recordedSymbols > 7) {
-         for (int i=ArraySize(isRecording)-1; i >= 0; i--) {
-            if (isRecording[i]) {
-               isRecording[i] = false;
+         for (int i=ArraySize(recordingEnabled)-1; i >= 0; i--) {
+            if (recordingEnabled[i]) {
+               recordingEnabled[i] = false;
                recordedSymbols--;
                if (recordedSymbols <= 7)
                   break;
@@ -187,8 +208,9 @@ int onInit() {
       }
    }
 
-   // initialize the display
+   // initialize display options
    CreateLabels();
+   SetIndexLabel(0, NULL);
 
    // restore a previously stored status (including a set trade account)
    if (!RestoreRuntimeStatus())    return(last_error);
@@ -202,16 +224,13 @@ int onInit() {
 
    // setup the chart ticker
    if (!This.IsTesting()) /*&&*/ if (!StrStartsWithI(GetAccountServer(), "XTrade-")) {
-      int hWnd = __ExecutionContext[EC.hChart];
+      int hWnd         = __ExecutionContext[EC.hChart];
       int milliseconds = 500;
-      int timerId = SetupTickTimer(hWnd, milliseconds, NULL);
-      if (!timerId) return(catch("onInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
+      if (!timerId) return(catch("onInit(3)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-
-   // disable data in "Data" window
-   SetIndexLabel(0, NULL);
-   return(catch("onInit(3)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -440,7 +459,7 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 10);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-         string text = ifString(Recording.Enabled, "Recording to "+ serverName, "Recording:  off");
+         string text = ifString(Recording.Enabled, "Recording to "+ recordingServerName, "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
       RegisterObject(label);
    }
@@ -449,7 +468,7 @@ int CreateLabels() {
    // data rows
    yCoord += 16;
    for (int i=0; i < ArraySize(symbols); i++) {
-      fontColor = ifInt(isRecording[i], fontColor.recordingOn, fontColor.recordingOff);
+      fontColor = ifInt(recordingEnabled[i], fontColor.recordingOn, fontColor.recordingOff);
       counter++;
 
       // symbol
@@ -474,7 +493,7 @@ int CreateLabels() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE, 64);
          ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
-            text = ifString(!isEnabled[i], "off", "n/a");
+            text = ifString(!symbolEnabled[i], "off", "n/a");
          ObjectSetText(label, text, fontSize, fontName, fontColor.recordingOff);
          RegisterObject(label);
       }
@@ -716,24 +735,24 @@ bool CalculateIndices() {
 bool ProcessAllLimits() {
    // only check orders if the symbol's calculated price has changed
 
-   if (!isStale[I_AUDLFX]) if (!EQ(currMedian[I_AUDLFX], prevMedian[I_AUDLFX], digits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, currMedian[I_AUDLFX])) return(false);
-   if (!isStale[I_CADLFX]) if (!EQ(currMedian[I_CADLFX], prevMedian[I_CADLFX], digits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, currMedian[I_CADLFX])) return(false);
-   if (!isStale[I_CHFLFX]) if (!EQ(currMedian[I_CHFLFX], prevMedian[I_CHFLFX], digits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, currMedian[I_CHFLFX])) return(false);
-   if (!isStale[I_EURLFX]) if (!EQ(currMedian[I_EURLFX], prevMedian[I_EURLFX], digits[I_EURLFX])) if (!ProcessLimits(EURLFX.orders, currMedian[I_EURLFX])) return(false);
-   if (!isStale[I_GBPLFX]) if (!EQ(currMedian[I_GBPLFX], prevMedian[I_GBPLFX], digits[I_GBPLFX])) if (!ProcessLimits(GBPLFX.orders, currMedian[I_GBPLFX])) return(false);
-   if (!isStale[I_JPYLFX]) if (!EQ(currMedian[I_JPYLFX], prevMedian[I_JPYLFX], digits[I_JPYLFX])) if (!ProcessLimits(JPYLFX.orders, currMedian[I_JPYLFX])) return(false);
-   if (!isStale[I_NZDLFX]) if (!EQ(currMedian[I_NZDLFX], prevMedian[I_NZDLFX], digits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, currMedian[I_NZDLFX])) return(false);
-   if (!isStale[I_USDLFX]) if (!EQ(currMedian[I_USDLFX], prevMedian[I_USDLFX], digits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, currMedian[I_USDLFX])) return(false);
+   if (!isStale[I_AUDLFX]) if (!EQ(currMedian[I_AUDLFX], prevMedian[I_AUDLFX], symbolDigits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, currMedian[I_AUDLFX])) return(false);
+   if (!isStale[I_CADLFX]) if (!EQ(currMedian[I_CADLFX], prevMedian[I_CADLFX], symbolDigits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, currMedian[I_CADLFX])) return(false);
+   if (!isStale[I_CHFLFX]) if (!EQ(currMedian[I_CHFLFX], prevMedian[I_CHFLFX], symbolDigits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, currMedian[I_CHFLFX])) return(false);
+   if (!isStale[I_EURLFX]) if (!EQ(currMedian[I_EURLFX], prevMedian[I_EURLFX], symbolDigits[I_EURLFX])) if (!ProcessLimits(EURLFX.orders, currMedian[I_EURLFX])) return(false);
+   if (!isStale[I_GBPLFX]) if (!EQ(currMedian[I_GBPLFX], prevMedian[I_GBPLFX], symbolDigits[I_GBPLFX])) if (!ProcessLimits(GBPLFX.orders, currMedian[I_GBPLFX])) return(false);
+   if (!isStale[I_JPYLFX]) if (!EQ(currMedian[I_JPYLFX], prevMedian[I_JPYLFX], symbolDigits[I_JPYLFX])) if (!ProcessLimits(JPYLFX.orders, currMedian[I_JPYLFX])) return(false);
+   if (!isStale[I_NZDLFX]) if (!EQ(currMedian[I_NZDLFX], prevMedian[I_NZDLFX], symbolDigits[I_NZDLFX])) if (!ProcessLimits(NZDLFX.orders, currMedian[I_NZDLFX])) return(false);
+   if (!isStale[I_USDLFX]) if (!EQ(currMedian[I_USDLFX], prevMedian[I_USDLFX], symbolDigits[I_USDLFX])) if (!ProcessLimits(USDLFX.orders, currMedian[I_USDLFX])) return(false);
 
-   if (!isStale[I_NOKFX7]) if (!EQ(currMedian[I_NOKFX7], prevMedian[I_NOKFX7], digits[I_NOKFX7])) if (!ProcessLimits(NOKFX7.orders, currMedian[I_NOKFX7])) return(false);
-   if (!isStale[I_SEKFX7]) if (!EQ(currMedian[I_SEKFX7], prevMedian[I_SEKFX7], digits[I_SEKFX7])) if (!ProcessLimits(SEKFX7.orders, currMedian[I_SEKFX7])) return(false);
-   if (!isStale[I_SGDFX7]) if (!EQ(currMedian[I_SGDFX7], prevMedian[I_SGDFX7], digits[I_SGDFX7])) if (!ProcessLimits(SGDFX7.orders, currMedian[I_SGDFX7])) return(false);
-   if (!isStale[I_ZARFX7]) if (!EQ(currMedian[I_ZARFX7], prevMedian[I_ZARFX7], digits[I_ZARFX7])) if (!ProcessLimits(ZARFX7.orders, currMedian[I_ZARFX7])) return(false);
+   if (!isStale[I_NOKFX7]) if (!EQ(currMedian[I_NOKFX7], prevMedian[I_NOKFX7], symbolDigits[I_NOKFX7])) if (!ProcessLimits(NOKFX7.orders, currMedian[I_NOKFX7])) return(false);
+   if (!isStale[I_SEKFX7]) if (!EQ(currMedian[I_SEKFX7], prevMedian[I_SEKFX7], symbolDigits[I_SEKFX7])) if (!ProcessLimits(SEKFX7.orders, currMedian[I_SEKFX7])) return(false);
+   if (!isStale[I_SGDFX7]) if (!EQ(currMedian[I_SGDFX7], prevMedian[I_SGDFX7], symbolDigits[I_SGDFX7])) if (!ProcessLimits(SGDFX7.orders, currMedian[I_SGDFX7])) return(false);
+   if (!isStale[I_ZARFX7]) if (!EQ(currMedian[I_ZARFX7], prevMedian[I_ZARFX7], symbolDigits[I_ZARFX7])) if (!ProcessLimits(ZARFX7.orders, currMedian[I_ZARFX7])) return(false);
 
-   if (!isStale[I_EURX  ]) if (!EQ(currMedian[I_EURX  ], prevMedian[I_EURX  ], digits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   currMedian[I_EURX  ])) return(false);
-   if (!isStale[I_USDX  ]) if (!EQ(currMedian[I_USDX  ], prevMedian[I_USDX  ], digits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   currMedian[I_USDX  ])) return(false);
+   if (!isStale[I_EURX  ]) if (!EQ(currMedian[I_EURX  ], prevMedian[I_EURX  ], symbolDigits[I_EURX  ])) if (!ProcessLimits(EURX.orders,   currMedian[I_EURX  ])) return(false);
+   if (!isStale[I_USDX  ]) if (!EQ(currMedian[I_USDX  ], prevMedian[I_USDX  ], symbolDigits[I_USDX  ])) if (!ProcessLimits(USDX.orders,   currMedian[I_USDX  ])) return(false);
 
-   if (!isStale[I_XAUI  ]) if (!EQ(currMedian[I_XAUI  ], prevMedian[I_XAUI  ], digits[I_XAUI  ])) if (!ProcessLimits(XAUI.orders,   currMedian[I_XAUI  ])) return(false);
+   if (!isStale[I_XAUI  ]) if (!EQ(currMedian[I_XAUI  ], prevMedian[I_XAUI  ], symbolDigits[I_XAUI  ])) if (!ProcessLimits(XAUI.orders,   currMedian[I_XAUI  ])) return(false);
 
    return(true);
 }
@@ -784,12 +803,12 @@ bool UpdateIndexDisplay() {
    string sIndex="", sSpread="";
 
    for (int i=0; i < size; i++) {
-      if (isEnabled[i]) {
+      if (symbolEnabled[i]) {
          fontColor = fontColor.recordingOff;
          if (isAvailable[i]) {
-            sIndex  = NumberToStr(NormalizeDouble(currMedian[i], digits[i]), priceFormats[i]);
-            sSpread = "("+ DoubleToStr((currAsk[i]-currBid[i])/pipSizes[i], 1) +")";
-            if (isRecording[i]) /*&&*/ if (!isStale[i])
+            sIndex  = NumberToStr(NormalizeDouble(currMedian[i], symbolDigits[i]), symbolPriceFormat[i]);
+            sSpread = "("+ DoubleToStr((currAsk[i]-currBid[i])/symbolPipSize[i], 1) +")";
+            if (recordingEnabled[i]) /*&&*/ if (!isStale[i])
                fontColor = fontColor.recordingOn;
          }
          else {
@@ -814,21 +833,21 @@ bool RecordIndices() {
    int size = ArraySize(symbols);
 
    for (int i=0; i < size; i++) {
-      if (isRecording[i] && !isStale[i]) {
-         double value     = NormalizeDouble(currMedian[i], digits[i]);
+      if (recordingEnabled[i] && !isStale[i]) {
+         double value     = NormalizeDouble(currMedian[i], symbolDigits[i]);
          double lastValue = prevMedian[i];
 
          // Virtual ticks (about 120 each minute) are recorded only if the current price changed. Real ticks are always recorded.
          if (Tick.isVirtual) {
-            if (EQ(value, lastValue, digits[i])) {       // The first tick (lastValue==NULL) can't be tested and is always recorded.
+            if (EQ(value, lastValue, symbolDigits[i])) {       // The first tick (lastValue==NULL) can't be tested and is always recorded.
                //debug("RecordIndices(1)  Tick="+ Tick +"  skipping virtual "+ symbols[i] +" tick "+ NumberToStr(value, priceFormats[i]) +" (same value as last tick)");
                continue;
             }
          }
          if (!hSet[i]) {
-            hSet[i] = HistorySet1.Get(symbols[i], serverName);
+            hSet[i] = HistorySet1.Get(symbols[i], recordingServerName);
             if (hSet[i] == -1)
-               hSet[i] = HistorySet1.Create(symbols[i], longNames[i], digits[i], 400, serverName);     // format: 400
+               hSet[i] = HistorySet1.Create(symbols[i], symbolLongName[i], symbolDigits[i], Recording.HistoryFormat, recordingServerName);
             if (!hSet[i]) return(false);
          }
          if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false);
@@ -944,25 +963,25 @@ bool RestoreRuntimeStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Recording.Enabled=", BoolToStr(Recording.Enabled), ";", NL,
+   return(StringConcatenate("AUDLFX.Enabled=",          BoolToStr(AUDLFX.Enabled),            ";"+ NL,
+                            "CADLFX.Enabled=",          BoolToStr(CADLFX.Enabled),            ";"+ NL,
+                            "CHFLFX.Enabled=",          BoolToStr(CHFLFX.Enabled),            ";"+ NL,
+                            "EURLFX.Enabled=",          BoolToStr(EURLFX.Enabled),            ";"+ NL,
+                            "GBPLFX.Enabled=",          BoolToStr(GBPLFX.Enabled),            ";"+ NL,
+                            "JPYLFX.Enabled=",          BoolToStr(JPYLFX.Enabled),            ";"+ NL,
+                            "NZDLFX.Enabled=",          BoolToStr(NZDLFX.Enabled),            ";"+ NL,
+                            "USDLFX.Enabled=",          BoolToStr(USDLFX.Enabled),            ";"+ NL,
+                            "NOKFX7.Enabled=",          BoolToStr(NOKFX7.Enabled),            ";"+ NL,
+                            "SEKFX7.Enabled=",          BoolToStr(SEKFX7.Enabled),            ";"+ NL,
+                            "SGDFX7.Enabled=",          BoolToStr(SGDFX7.Enabled),            ";"+ NL,
+                            "ZARFX7.Enabled=",          BoolToStr(ZARFX7.Enabled),            ";"+ NL,
+                            "EURX.Enabled=",            BoolToStr(EURX.Enabled),              ";"+ NL,
+                            "USDX.Enabled=",            BoolToStr(USDX.Enabled),              ";"+ NL,
+                            "XAUI.Enabled=",            BoolToStr(XAUI.Enabled),              ";"+ NL,
 
-                            "AUDLFX.Enabled=",    BoolToStr(AUDLFX.Enabled),    ";", NL,
-                            "CADLFX.Enabled=",    BoolToStr(CADLFX.Enabled),    ";", NL,
-                            "CHFLFX.Enabled=",    BoolToStr(CHFLFX.Enabled),    ";", NL,
-                            "EURLFX.Enabled=",    BoolToStr(EURLFX.Enabled),    ";", NL,
-                            "GBPLFX.Enabled=",    BoolToStr(GBPLFX.Enabled),    ";", NL,
-                            "JPYLFX.Enabled=",    BoolToStr(JPYLFX.Enabled),    ";", NL,
-                            "NZDLFX.Enabled=",    BoolToStr(NZDLFX.Enabled),    ";", NL,
-                            "USDLFX.Enabled=",    BoolToStr(USDLFX.Enabled),    ";", NL,
-
-                            "NOKFX7.Enabled=",    BoolToStr(NOKFX7.Enabled),    ";", NL,
-                            "SEKFX7.Enabled=",    BoolToStr(SEKFX7.Enabled),    ";", NL,
-                            "SGDFX7.Enabled=",    BoolToStr(SGDFX7.Enabled),    ";", NL,
-                            "ZARFX7.Enabled=",    BoolToStr(ZARFX7.Enabled),    ";", NL,
-
-                            "EURX.Enabled=",      BoolToStr(EURX.Enabled),      ";", NL,
-                            "USDX.Enabled=",      BoolToStr(USDX.Enabled),      ";", NL,
-
-                            "XAUI.Enabled=",      BoolToStr(XAUI.Enabled),      ";")
+                            "Recording.Enabled=",       BoolToStr(Recording.Enabled),         ";"+ NL,
+                            "Recording.ServerName=",    DoubleQuoteStr(Recording.ServerName), ";"+ NL,
+                            "Recording.HistoryFormat=", Recording.HistoryFormat,              ";"+ NL,
+                            "Broker.SymbolSuffix=",     DoubleQuoteStr(Broker.SymbolSuffix),  ";")
    );
 }
