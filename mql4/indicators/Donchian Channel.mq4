@@ -95,7 +95,7 @@ int onTick() {
    }
 
 
-   // (1) synchronize buffers with a shifted offline chart
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);
