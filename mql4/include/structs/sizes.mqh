@@ -41,7 +41,7 @@
 
 #define EC.pid                               0     // All offsets must be in sync with the MT4Expander.
 #define EC.previousPid                       1
-#define EC.created                           2
+#define EC.started                           2
 #define EC.programType                       3
 #define EC.programCoreFunction              68
 #define EC.programInitReason                69
