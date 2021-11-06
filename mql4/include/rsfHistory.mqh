@@ -23,13 +23,13 @@
  */
 #import "rsfHistory1.ex4"
    // history set management (1 set contains 9 history files)
-   int  HistorySet1.Create (string symbol, string description, int digits, int format, string server = "");
-   int  HistorySet1.Get    (string symbol, string server = "");
+   int  HistorySet1.Create (string symbol, string description, int digits, int format, string directory = "");
+   int  HistorySet1.Get    (string symbol, string directory = "");
    bool HistorySet1.Close  (int hSet);
    bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL);
 
    // history file management
-   int  HistoryFile1.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");
+   int  HistoryFile1.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "");
    bool HistoryFile1.Close    (int hFile);
    int  HistoryFile1.FindBar  (int hFile, datetime time, bool lpBarExists[]);
    bool HistoryFile1.ReadBar  (int hFile, int offset, double bar[]);
@@ -41,13 +41,13 @@
 
 #import "rsfHistory2.ex4"
    // history set management (1 set contains 9 history files)
-   int  HistorySet2.Create (string symbol, string description, int digits, int format, string server = "");
-   int  HistorySet2.Get    (string symbol, string server = "");
+   int  HistorySet2.Create (string symbol, string description, int digits, int format, string directory = "");
+   int  HistorySet2.Get    (string symbol, string directory = "");
    bool HistorySet2.Close  (int hSet);
    bool HistorySet2.AddTick(int hSet, datetime time, double value, int flags = NULL);
 
    // history file management
-   int  HistoryFile2.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");
+   int  HistoryFile2.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "");
    bool HistoryFile2.Close    (int hFile);
    int  HistoryFile2.FindBar  (int hFile, datetime time, bool lpBarExists[]);
    bool HistoryFile2.ReadBar  (int hFile, int offset, double bar[]);
@@ -59,13 +59,13 @@
 
 #import "rsfHistory3.ex4"
    // history set management (1 set contains 9 history files)
-   int  HistorySet3.Create (string symbol, string description, int digits, int format, string server = "");
-   int  HistorySet3.Get    (string symbol, string server = "");
+   int  HistorySet3.Create (string symbol, string description, int digits, int format, string directory = "");
+   int  HistorySet3.Get    (string symbol, string directory = "");
    bool HistorySet3.Close  (int hSet);
    bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL);
 
    // history file management
-   int  HistoryFile3.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string server = "");
+   int  HistoryFile3.Open     (string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "");
    bool HistoryFile3.Close    (int hFile);
    int  HistoryFile3.FindBar  (int hFile, datetime time, bool lpBarExists[]);
    bool HistoryFile3.ReadBar  (int hFile, int offset, double bar[]);
