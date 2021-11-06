@@ -487,7 +487,7 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 190   );
+      ObjectSet    (label, OBJPROP_XDISTANCE, 203);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, animationChars[0], fontSize, fontName, fontColor);
       RegisterObject(label);
@@ -503,7 +503,10 @@ int CreateLabels() {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 10);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-         string text = ifString(Recording.Enabled, "Recording to "+ recordingDirectory, "Recording:  off");
+      string directory = recordingDirectory;
+      if (StrContains(directory, "/"))
+         directory = "../"+ StrRightFrom(directory, "/", -1);
+      string text = ifString(Recording.Enabled, "Recording to "+ directory, "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
       RegisterObject(label);
    }
