@@ -8,7 +8,6 @@
  *
  *
  * TODO:
- *  - better handling of ERR_SYMBOL_NOT_AVAILABLE (especially in context of onInitTemplate)
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
  *  - should the ticktimer rate be an input?
@@ -99,6 +98,7 @@ extern string Broker.SymbolSuffix             = "";                     // symbo
 string   brokerSuffix = "";                              // suffix for broker symbols
 string   brokerSymbols    [] = {"AUDUSD", "EURUSD", "GBPUSD", "NZDUSD", "USDCAD", "USDCHF", "USDJPY", "USDNOK", "USDSEK", "USDSGD", "USDZAR", "XAUUSD"};
 bool     isRequired       [];                            // whether a broker symbol is required for synthetic index calculation
+string   missingSymbols   [];                            // not subscribed broker symbols (not available in "Market Watch" window)
 
 string   syntheticSymbols [] = {"AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI"};
 string   symbolLongName   [] = {"LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
@@ -176,7 +176,7 @@ int onInit() {
    if (StringLen(brokerSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(7)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(Broker.SymbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
 
    // initialize global arrays
-   int sizeRequired=ArraySize(isRequired), sizeSynthetics=ArraySize(syntheticSymbols);
+   int sizeRequired=ArraySize(brokerSymbols), sizeSynthetics=ArraySize(syntheticSymbols);
    ArrayResize(isRequired,       sizeRequired  );
    ArrayResize(isEnabled,        sizeSynthetics);
    ArrayResize(isAvailable,      sizeSynthetics);
@@ -312,14 +312,15 @@ int onDeinit() {
 int onTick() {
    HandleCommands();                                        // process chart commands
 
+   ArrayResize(missingSymbols, 0);
    staleLimit = GetServerTime() - 10*MINUTES;               // exotic instruments may show rather large pauses between ticks
 
-   if (!CalculateIndexes())   return(last_error);
-   if (!ProcessAllLimits())   return(last_error);           // TODO: detect when monitored limits have been changed
-   if (!UpdateIndexDisplay()) return(last_error);
+   if (!CalculateIndexes()) return(last_error);
+   if (!ProcessAllLimits()) return(last_error);             // TODO: detect when monitored limits have been changed
+   if (!ShowStatus(NULL))   return(last_error);
 
    if (Recording.Enabled) {
-      if (!RecordIndexes())   return(last_error);
+      if (!RecordIndexes()) return(last_error);
    }
    return(last_error);
 }
@@ -580,7 +581,20 @@ bool GetMarketData(string symbol, double &median, double &bid, double &ask, bool
    median  = (bid + ask)/2;
    isStale = MarketInfo(symbol, MODE_TIME) < staleLimit;
 
-   //int error = GetLastError();
+   int error = GetLastError();
+   if (!error) return(true);
+
+   bid     = NULL;
+   ask     = NULL;
+   median  = NULL;
+   isStale = true;
+
+   if (error != ERR_SYMBOL_NOT_AVAILABLE)
+      return(!catch("GetMarketData(1)  symbol=\""+ symbol +"\"", error));
+
+   int size = ArraySize(missingSymbols);
+   ArrayResize(missingSymbols, size+1);
+   missingSymbols[size] = symbol;
    return(true);
 }
 
@@ -872,11 +886,14 @@ bool ProcessLimits(/*LFX_ORDER*/int orders[][], double price) {
 
 
 /**
- * Update the chart display.
+ * Display the current runtime status.
  *
- * @return bool - success status
+ * @param  int error [optional] - ignored
+ *
+ * @return int - success status or NULL (0) in case of errors
  */
-bool UpdateIndexDisplay() {
+int ShowStatus(int error = NO_ERROR) {
+   if (!__isChart) return(true);
    //if (!IsChartVisible()) return(true);          // TODO: update only if the chart is visible
 
    // animation
@@ -885,7 +902,7 @@ bool UpdateIndexDisplay() {
    ObjectSetText(labelAnimation, animationChars[Tick % chars], fontSize, fontName, fontColor);
 
    // calculated values
-   int    size = ArraySize(syntheticSymbols);
+   int size = ArraySize(syntheticSymbols);
    string sIndex="", sSpread="";
 
    for (int i=0; i < size; i++) {
@@ -905,7 +922,23 @@ bool UpdateIndexDisplay() {
          ObjectSetText(labels[i] +".spread", sSpread, fontSize, fontName, fontColor);
       }
    }
-   return(!catch("UpdateIndexDisplay(1)"));
+
+   // show missing broker symbols
+   static int lastMissingSymbols = 0;
+   size = ArraySize(missingSymbols);
+   if (size > 0) {
+      string msg = "";
+      for (i=0; i < size; i++) {
+         msg = StringConcatenate(msg, missingSymbols[i], ", ");
+      }
+      Comment(NL, NL, NL, NL, WindowExpertName(), "  => missing broker symbols: ", StrLeft(msg, -2));
+   }
+   else if (lastMissingSymbols > 0) {
+      Comment("");                                 // reset last comment but keep comments of other programs
+   }
+   lastMissingSymbols = size;
+
+   return(!catch("ShowStatus(1)"));
 }
 
 
