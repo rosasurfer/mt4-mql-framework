@@ -103,7 +103,7 @@ string   missingSymbols   [];                            // not subscribed broke
 
 string   syntheticSymbols [] = {"AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX"  , "USDX"  , "XAUI" };
 string   symbolLongName   [] = {"LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
-int      symbolDigits     [] = {5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3       , 3       , 3      };
+int      symbolDigits     [] = {5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3       , 3       , 2      };
 double   symbolPipSize    [] = {0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01    , 0.01    , 0.01   };
 string   symbolPriceFormat[] = {",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.2'", ",'R.2'", ",'R.2"};
 
@@ -886,23 +886,23 @@ int ShowStatus(int error = NO_ERROR) {
 
    // calculated values
    int size = ArraySize(syntheticSymbols);
-   string sIndex="", sSpread="";
+   string sQuote="", sSpread="";
 
    for (int i=0; i < size; i++) {
       if (isEnabled[i]) {
          fontColor = fontColor.recordingOff;
          if (isAvailable[i]) {
-            sIndex  = NumberToStr(NormalizeDouble(currMid[i], symbolDigits[i]), symbolPriceFormat[i]);
-            sSpread = "("+ DoubleToStr((currAsk[i]-currBid[i])/symbolPipSize[i], 1) +")";
+            sQuote  = NumberToStr(currMid[i], symbolPriceFormat[i]);
+            sSpread = "("+ SpreadToStr(i, (currAsk[i]-currBid[i])/symbolPipSize[i]) +")";
             if (Recording.Enabled && isEnabled[i] && !isStale[i]) {
                fontColor = fontColor.recordingOn;
             }
          }
          else {
-            sIndex  = "n/a";
+            sQuote  = "n/a";
             sSpread = " ";
          }
-         ObjectSetText(labels[i] +".quote",  sIndex,  fontSize, fontName, fontColor);
+         ObjectSetText(labels[i] +".quote",  sQuote,  fontSize, fontName, fontColor);
          ObjectSetText(labels[i] +".spread", sSpread, fontSize, fontName, fontColor);
       }
    }
@@ -1044,6 +1044,26 @@ string GetStoredTradeAccount() {
    if (StringLen(company) && accountNumber)
       result = company +":"+ accountNumber;
    return(ifString(catch("GetStoredTradeAccount(1)"), "", result));
+}
+
+
+/**
+ * Format a value representing a pip range of the specified symbol. Depending on the symbol's quote price and the value the
+ * returned string is in money or subpip notation.
+ *
+ * @param  int    index - synthetic instrument index
+ * @param  double value - price range in pip
+ *
+ * @return string
+ */
+string SpreadToStr(int index, double value) {
+   int    digits = symbolDigits[index];
+   double price  = currMid[index];
+   string result = "";
+
+   if (digits==2 && price >= 500) result = NumberToStr(value/100, "R.2");              // 123 pip => 1.23
+   else                           result = NumberToStr(value, "R."+ (digits & 1));     // 123 pip => 123 | 123.4
+   return(result);
 }
 
 
