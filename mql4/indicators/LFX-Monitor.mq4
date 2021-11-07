@@ -9,7 +9,6 @@
  *
  * TODO:
  *  - check display on different screen resolutions and consider additional auto-config values
- *  - check indicator buffer settings
  *  - improve cache flushing for the different timeframes
  *  - update input defaults
  *
@@ -66,6 +65,8 @@ extern string Broker.SymbolSuffix             = "";                     // symbo
 #include <structs/rsf/LFXOrder.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers      1                       // there's a minimum of 1 buffers
+#property indicator_color1       CLR_NONE
 
 #define I_AUDUSD     0                                   // broker symbol array indexes
 #define I_EURUSD     1
@@ -223,7 +224,7 @@ int onInit() {
 
    // initialize display options
    CreateLabels();
-   SetIndexLabel(0, NULL);
+   SetIndicatorOptions();
 
    // only online
    if (!This.IsTesting()) {
@@ -279,6 +280,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
+
    HandleCommands();                                        // process chart commands
 
    ArrayResize(missingSymbols, 0);
@@ -1064,6 +1067,16 @@ string SpreadToStr(int index, double value) {
    if (digits==2 && price >= 500) result = NumberToStr(value/100, "R.2");              // 123 pip => 1.23
    else                           result = NumberToStr(value, "R."+ (digits & 1));     // 123 pip => 123 | 123.4
    return(result);
+}
+
+
+/**
+ * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
+ * recompilation options must be set in start() to not be ignored.
+ */
+void SetIndicatorOptions() {
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexLabel(0, NULL);
 }
 
 
