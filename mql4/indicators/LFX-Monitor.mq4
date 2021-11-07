@@ -8,7 +8,6 @@
  *
  *
  * TODO:
- *  - spreads for USDX and XAUI
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
  *  - document user requirements for "Recording.HistoryDirectory"
@@ -821,8 +820,8 @@ bool CalculateIndexes() {
       if (isAvailable[I_XAUI]) {
          prevMid[I_XAUI] = currMid[I_XAUI];
          currMid[I_XAUI] = currMid[I_USDLFX] * xauusd;
-         currBid[I_XAUI] = 0;                   // TODO
-         currAsk[I_XAUI] = 0;                   // TODO
+         currBid[I_XAUI] = currBid[I_USDLFX] * xauusd_Bid;
+         currAsk[I_XAUI] = currAsk[I_USDLFX] * xauusd_Ask;
          isStale[I_XAUI] = isStale[I_USDLFX] || xauusd_stale;
       }
       else isStale[I_XAUI] = true;
