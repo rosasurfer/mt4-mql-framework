@@ -4,20 +4,20 @@
  * Calculates various synthetic indexes and optionally records the index history. If linked to an LFX charting terminal the
  * indicator can monitor and process order limits of synthetic positions. For index descriptions see the following link:
  *
- * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic#
+ * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
  *
  *
  * TODO:
+ *  - check trade account requirements: RestoreRuntimeStatus -> UpdateAccountDisplay -> RefreshLfxOrders
+ *  - check timezone requirements
+ *  - spreads for EURX, USDX and XAUI
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
  *  - should the ticktimer rate be an input?
  *  - document user requirements for "Recording.HistoryDirectory"
- *  - test history format 401
- *  - check timezone requirements
- *  - check trade account requirements: RestoreRuntimeStatus -> UpdateAccountDisplay -> RefreshLfxOrders
  *  - check conflicting history formats and document it
  *  - document symbol requirements
- *  - spreads for EURX, USDX and XAUI
+ *  - improve cache flushing for the different timeframes
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
