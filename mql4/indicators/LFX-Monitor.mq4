@@ -8,16 +8,17 @@
  *
  *
  * TODO:
- *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
- *  - document user requirements for "Recording.HistoryDirectory"
- *  - document handling of history formats
- *  - document symbol requirements
+ *  - check indicator buffer settings
  *  - improve cache flushing for the different timeframes
+ *  - update input defaults
  *
  *  - documentation
- *     document inputs
- *     timezone is required for detection of stale quotes
+ *     inputs
+ *     symbol requirements
+ *     requirements for "Recording.HistoryDirectory"
+ *     timezone requirement for detection of stale quotes
+ *     handling of history formats
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -116,7 +117,6 @@ bool     isStale    [];                                  // whether prices for c
 datetime staleLimit;                                     // time limit (server time) for stale quotes determination
 
 int      hSet            [];                             // HistorySet handles
-bool     recordingEnabled[];                             // per symbol (default: FALSE)
 string   recordingDirectory = "";                        // directory to store recorded history
 int      recordingFormat;                                // format of new history files: 400 | 401
 
@@ -179,17 +179,16 @@ int onInit() {
 
    // initialize global arrays
    int sizeRequired=ArraySize(brokerSymbols), sizeSynthetics=ArraySize(syntheticSymbols);
-   ArrayResize(isRequired,       sizeRequired  );
-   ArrayResize(isEnabled,        sizeSynthetics);
-   ArrayResize(isAvailable,      sizeSynthetics);
-   ArrayResize(isStale,          sizeSynthetics); ArrayInitialize(isStale, true);
-   ArrayResize(currBid,          sizeSynthetics);
-   ArrayResize(currAsk,          sizeSynthetics);
-   ArrayResize(currMid,          sizeSynthetics);
-   ArrayResize(prevMid,          sizeSynthetics);
-   ArrayResize(recordingEnabled, sizeSynthetics);
-   ArrayResize(hSet,             sizeSynthetics);
-   ArrayResize(labels,           sizeSynthetics);
+   ArrayResize(isRequired,  sizeRequired  );
+   ArrayResize(isEnabled,   sizeSynthetics);
+   ArrayResize(isAvailable, sizeSynthetics);
+   ArrayResize(isStale,     sizeSynthetics); ArrayInitialize(isStale, true);
+   ArrayResize(currBid,     sizeSynthetics);
+   ArrayResize(currAsk,     sizeSynthetics);
+   ArrayResize(currMid,     sizeSynthetics);
+   ArrayResize(prevMid,     sizeSynthetics);
+   ArrayResize(hSet,        sizeSynthetics);
+   ArrayResize(labels,      sizeSynthetics);
 
    // mark synthetic instruments to calculate
    isEnabled[I_AUDLFX] = AUDLFX.Enabled;
@@ -221,38 +220,6 @@ int onInit() {
    isRequired[I_USDSGD] = isEnabled[I_SGDFX7];
    isRequired[I_USDZAR] = isEnabled[I_ZARFX7];
    isRequired[I_XAUUSD] = isEnabled[I_XAUI  ];
-
-   // mark synthetic instruments to record
-   if (Recording.Enabled) {
-      int recordedSymbols;
-      recordingEnabled[I_AUDLFX] = AUDLFX.Enabled; recordedSymbols += AUDLFX.Enabled;
-      recordingEnabled[I_CADLFX] = CADLFX.Enabled; recordedSymbols += CADLFX.Enabled;
-      recordingEnabled[I_CHFLFX] = CHFLFX.Enabled; recordedSymbols += CHFLFX.Enabled;
-      recordingEnabled[I_EURLFX] = EURLFX.Enabled; recordedSymbols += EURLFX.Enabled;
-      recordingEnabled[I_GBPLFX] = GBPLFX.Enabled; recordedSymbols += GBPLFX.Enabled;
-      recordingEnabled[I_JPYLFX] = JPYLFX.Enabled; recordedSymbols += JPYLFX.Enabled;
-      recordingEnabled[I_NZDLFX] = NZDLFX.Enabled; recordedSymbols += NZDLFX.Enabled;
-      recordingEnabled[I_USDLFX] = USDLFX.Enabled; recordedSymbols += USDLFX.Enabled;
-      recordingEnabled[I_NOKFX7] = NOKFX7.Enabled; recordedSymbols += NOKFX7.Enabled;
-      recordingEnabled[I_SEKFX7] = SEKFX7.Enabled; recordedSymbols += SEKFX7.Enabled;
-      recordingEnabled[I_SGDFX7] = SGDFX7.Enabled; recordedSymbols += SGDFX7.Enabled;
-      recordingEnabled[I_ZARFX7] = ZARFX7.Enabled; recordedSymbols += ZARFX7.Enabled;
-      recordingEnabled[I_EURX  ] =   EURX.Enabled; recordedSymbols +=   EURX.Enabled;
-      recordingEnabled[I_USDX  ] =   USDX.Enabled; recordedSymbols +=   USDX.Enabled;
-      recordingEnabled[I_XAUI  ] =   XAUI.Enabled; recordedSymbols +=   XAUI.Enabled;
-
-      // record max. 7 instruments (enforces limit of max. 64 open files per MQL module)
-      if (recordedSymbols > 7) {
-         for (int i=ArraySize(recordingEnabled)-1; i >= 0; i--) {
-            if (recordingEnabled[i]) {
-               recordingEnabled[i] = false;
-               recordedSymbols--;
-               if (recordedSymbols <= 7)
-                  break;
-            }
-         }
-      }
-   }
 
    // initialize display options
    CreateLabels();
@@ -286,10 +253,13 @@ int onDeinit() {
    QC.StopChannels();
    StoreTradeAccount();
 
+   // close all open history sets
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
       if (hSet[i] != 0) {
-         if (!HistorySet1.Close(hSet[i])) return(ERR_RUNTIME_ERROR);
+         if      (i <  7) { if (!HistorySet1.Close(hSet[i])) return(ERR_RUNTIME_ERROR); }
+         else if (i < 13) { if (!HistorySet2.Close(hSet[i])) return(ERR_RUNTIME_ERROR); }
+         else             { if (!HistorySet3.Close(hSet[i])) return(ERR_RUNTIME_ERROR); }
          hSet[i] = NULL;
       }
    }
@@ -519,7 +489,7 @@ int CreateLabels() {
    // data rows
    yCoord += 16;
    for (int i=0; i < ArraySize(syntheticSymbols); i++) {
-      fontColor = ifInt(recordingEnabled[i], fontColor.recordingOn, fontColor.recordingOff);
+      fontColor = ifInt(isEnabled[i] && Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
       counter++;
 
       // symbol
@@ -924,8 +894,9 @@ int ShowStatus(int error = NO_ERROR) {
          if (isAvailable[i]) {
             sIndex  = NumberToStr(NormalizeDouble(currMid[i], symbolDigits[i]), symbolPriceFormat[i]);
             sSpread = "("+ DoubleToStr((currAsk[i]-currBid[i])/symbolPipSize[i], 1) +")";
-            if (recordingEnabled[i]) /*&&*/ if (!isStale[i])
+            if (Recording.Enabled && isEnabled[i] && !isStale[i]) {
                fontColor = fontColor.recordingOn;
+            }
          }
          else {
             sIndex  = "n/a";
@@ -965,7 +936,7 @@ bool RecordIndexes() {
    int size = ArraySize(syntheticSymbols);
 
    for (int i=0; i < size; i++) {
-      if (recordingEnabled[i] && !isStale[i]) {
+      if (isEnabled[i] && !isStale[i]) {
          double value     = NormalizeDouble(currMid[i], symbolDigits[i]);
          double lastValue = prevMid[i];
 
@@ -973,13 +944,21 @@ bool RecordIndexes() {
             if (EQ(value, lastValue, symbolDigits[i]))   // price changed. Real ticks are always recorded.
                continue;
          }
+
          if (!hSet[i]) {
-            hSet[i] = HistorySet1.Get(syntheticSymbols[i], recordingDirectory);
-            if (hSet[i] == -1)
-               hSet[i] = HistorySet1.Create(syntheticSymbols[i], symbolLongName[i], symbolDigits[i], recordingFormat, recordingDirectory);
+            if      (i <  7) hSet[i] = HistorySet1.Get(syntheticSymbols[i], recordingDirectory);
+            else if (i < 13) hSet[i] = HistorySet2.Get(syntheticSymbols[i], recordingDirectory);
+            else             hSet[i] = HistorySet3.Get(syntheticSymbols[i], recordingDirectory);
+            if (hSet[i] == -1) {
+               if      (i <  7) hSet[i] = HistorySet1.Create(syntheticSymbols[i], symbolLongName[i], symbolDigits[i], recordingFormat, recordingDirectory);
+               else if (i < 13) hSet[i] = HistorySet2.Create(syntheticSymbols[i], symbolLongName[i], symbolDigits[i], recordingFormat, recordingDirectory);
+               else             hSet[i] = HistorySet3.Create(syntheticSymbols[i], symbolLongName[i], symbolDigits[i], recordingFormat, recordingDirectory);
+            }
             if (!hSet[i]) return(false);
          }
-         if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false);
+         if      (i <  7) { if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
+         else if (i < 13) { if (!HistorySet2.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
+         else             { if (!HistorySet3.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
       }
    }
    return(true);
