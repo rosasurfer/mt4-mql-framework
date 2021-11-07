@@ -8,16 +8,16 @@
  *
  *
  * TODO:
- *  - spreads for EURX, USDX and XAUI
+ *  - spreads for USDX and XAUI
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
  *  - document user requirements for "Recording.HistoryDirectory"
  *  - document handling of history formats
  *  - document symbol requirements
  *  - improve cache flushing for the different timeframes
- *  - document inputs
  *
  *  - documentation
+ *     document inputs
  *     timezone is required for detection of stale quotes
  */
 #include <stddefines.mqh>
@@ -489,7 +489,7 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 203);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 202);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, animationChars[0], fontSize, fontName, fontColor);
       RegisterObject(label);
@@ -791,14 +791,14 @@ bool CalculateIndexes() {
    if (isEnabled[I_EURX]) {                                       // EURX = 34.38805726 * EURUSD^0.3155 * EURGBP^0.3056 * EURJPY^0.1891 * EURCHF^0.1113 * EURSEK^0.0785
       isAvailable[I_EURX] = (usdchf && usdjpy && usdsek && eurusd && gbpusd);
       if (isAvailable[I_EURX]) {
-         double eurchf = usdchf * eurusd;
-         double eurgbp = eurusd / gbpusd;
-         double eurjpy = usdjpy * eurusd;
-         double eursek = usdsek * eurusd;
+         double eurgbp = eurusd/gbpusd, eurgbp_Bid = eurusd_Bid/gbpusd_Bid, eurgbp_Ask = eurusd_Ask/gbpusd_Ask;
+         double eurjpy = eurusd*usdjpy, eurjpy_Bid = eurusd_Bid*usdjpy_Bid, eurjpy_Ask = eurusd_Ask*usdjpy_Ask;
+         double eurchf = eurusd*usdchf, eurchf_Bid = eurusd_Bid*usdchf_Bid, eurchf_Ask = eurusd_Ask*usdchf_Ask;
+         double eursek = eurusd*usdsek, eursek_Bid = eurusd_Bid*usdsek_Bid, eursek_Ask = eurusd_Ask*usdsek_Ask;
          prevMid[I_EURX] = currMid[I_EURX];
-         currMid[I_EURX] = 34.38805726 * MathPow(eurusd, 0.3155) * MathPow(eurgbp, 0.3056) * MathPow(eurjpy, 0.1891) * MathPow(eurchf, 0.1113) * MathPow(eursek, 0.0785);
-         currBid[I_EURX] = 0;                   // TODO
-         currAsk[I_EURX] = 0;                   // TODO
+         currMid[I_EURX] = 34.38805726 * MathPow(eurusd,     0.3155) * MathPow(eurgbp,     0.3056) * MathPow(eurjpy,     0.1891) * MathPow(eurchf,     0.1113) * MathPow(eursek,     0.0785);
+         currBid[I_EURX] = 34.38805726 * MathPow(eurusd_Bid, 0.3155) * MathPow(eurgbp_Bid, 0.3056) * MathPow(eurjpy_Bid, 0.1891) * MathPow(eurchf_Bid, 0.1113) * MathPow(eursek_Bid, 0.0785);
+         currAsk[I_EURX] = 34.38805726 * MathPow(eurusd_Ask, 0.3155) * MathPow(eurgbp_Ask, 0.3056) * MathPow(eurjpy_Ask, 0.1891) * MathPow(eurchf_Ask, 0.1113) * MathPow(eursek_Ask, 0.0785);
          isStale[I_EURX] = usdchf_stale || usdjpy_stale || usdsek_stale || eurusd_stale || gbpusd_stale;
       }
       else isStale[I_EURX] = true;
