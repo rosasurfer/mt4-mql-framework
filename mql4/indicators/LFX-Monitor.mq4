@@ -8,15 +8,17 @@
  *
  *
  * TODO:
- *  - check timezone requirements
  *  - spreads for EURX, USDX and XAUI
  *  - make use of all history libraries
  *  - check display on different screen resolutions and consider additional auto-config values
- *  - should the ticktimer rate be an input?
  *  - document user requirements for "Recording.HistoryDirectory"
- *  - check conflicting history formats and document it
+ *  - document handling of history formats
  *  - document symbol requirements
  *  - improve cache flushing for the different timeframes
+ *  - document inputs
+ *
+ *  - documentation
+ *     timezone is required for detection of stale quotes
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -167,6 +169,8 @@ int onInit() {
    recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
    if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(4)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
    if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(5)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
+   // Recording.Enabled
+   if (This.IsTesting()) Recording.Enabled = false;
    // Recording.HistoryFormat
    if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(6)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
    recordingFormat = Recording.HistoryFormat;
@@ -255,14 +259,15 @@ int onInit() {
    CreateLabels();
    SetIndexLabel(0, NULL);
 
-   // restore a configured trade account and and initialize order/limit monitoring
-   string accountId = GetStoredTradeAccount();
-   if (!InitTradeAccount(accountId)) return(last_error);
-   if (!UpdateAccountDisplay())      return(last_error);
-   if (!RefreshLfxOrders())          return(last_error);
-
-   // setup a chart ticker
+   // only online
    if (!This.IsTesting()) {
+      // restore a configured trade account and initialize order/limit monitoring
+      string accountId = GetStoredTradeAccount();
+      if (!InitTradeAccount(accountId)) return(last_error);
+      if (!UpdateAccountDisplay())      return(last_error);
+      if (!RefreshLfxOrders())          return(last_error);
+
+      // setup a chart ticker
       int hWnd         = __ExecutionContext[EC.hChart];
       int milliseconds = 500;
       int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
@@ -573,24 +578,29 @@ int CreateLabels() {
  * @return bool - success status
  */
 bool GetMarketData(string symbol, double &median, double &bid, double &ask, bool &isStale) {
+   static bool isTesting, done = false; if (!done) {
+      isTesting = This.IsTesting();
+      done = true;
+   }
+
    if (StringLen(brokerSuffix) > 0)
       symbol = StringConcatenate(symbol, brokerSuffix);
 
-   bid     = MarketInfo(symbol, MODE_BID);
-   ask     = MarketInfo(symbol, MODE_ASK);
-   median  = (bid + ask)/2;
-   isStale = MarketInfo(symbol, MODE_TIME) < staleLimit;
+   if (!isTesting || symbol==Symbol()) {
+      bid     = MarketInfo(symbol, MODE_BID);
+      ask     = MarketInfo(symbol, MODE_ASK);
+      median  = (bid + ask)/2;
+      isStale = MarketInfo(symbol, MODE_TIME) < staleLimit;
 
-   int error = GetLastError();
-   if (!error) return(true);
+      int error = GetLastError();
+      if (!error)                            return(true);
+      if (error != ERR_SYMBOL_NOT_AVAILABLE) return(!catch("GetMarketData(1)  symbol=\""+ symbol +"\"", error));
+   }
 
    bid     = NULL;
    ask     = NULL;
    median  = NULL;
    isStale = true;
-
-   if (error != ERR_SYMBOL_NOT_AVAILABLE)
-      return(!catch("GetMarketData(1)  symbol=\""+ symbol +"\"", error));
 
    int size = ArraySize(missingSymbols);
    ArrayResize(missingSymbols, size+1);
@@ -833,8 +843,9 @@ bool CalculateIndexes() {
  * @return bool - success status
  */
 bool ProcessAllLimits() {
-   // only check orders if the symbol's calculated price has changed
+   if (This.IsTesting()) return(true);
 
+   // only check orders if the symbol's calculated price has changed
    if (!isStale[I_AUDLFX]) if (!EQ(currMid[I_AUDLFX], prevMid[I_AUDLFX], symbolDigits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, currMid[I_AUDLFX])) return(false);
    if (!isStale[I_CADLFX]) if (!EQ(currMid[I_CADLFX], prevMid[I_CADLFX], symbolDigits[I_CADLFX])) if (!ProcessLimits(CADLFX.orders, currMid[I_CADLFX])) return(false);
    if (!isStale[I_CHFLFX]) if (!EQ(currMid[I_CHFLFX], prevMid[I_CHFLFX], symbolDigits[I_CHFLFX])) if (!ProcessLimits(CHFLFX.orders, currMid[I_CHFLFX])) return(false);
