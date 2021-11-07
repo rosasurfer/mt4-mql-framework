@@ -7,17 +7,16 @@
  */
 #import "rsfMT4Expander.dll"
    // Getter
-   string symbol_Name                 (/*SYMBOL*/int symbol[]);   string symbols_Name    (/*SYMBOL*/int symbols[], int i);
+   string symbol_Name                 (/*SYMBOL*/int symbol[]);   string symbols_Name (/*SYMBOL*/int symbols[], int i);
    string symbol_Description          (/*SYMBOL*/int symbol[]);
-   string symbol_Origin               (/*SYMBOL*/int symbol[]);
    string symbol_AltName              (/*SYMBOL*/int symbol[]);
    string symbol_BaseCurrency         (/*SYMBOL*/int symbol[]);
    int    symbol_Group                (/*SYMBOL*/int symbol[]);
    int    symbol_Digits               (/*SYMBOL*/int symbol[]);
    int    symbol_TradeMode            (/*SYMBOL*/int symbol[]);
    color  symbol_BackgroundColor      (/*SYMBOL*/int symbol[]);
-   int    symbol_ArrayKey             (/*SYMBOL*/int symbol[]);   int    symbols_ArrayKey(/*SYMBOL*/int symbols[], int i);
-   int    symbol_Id                   (/*SYMBOL*/int symbol[]);   int    symbols_Id      (/*SYMBOL*/int symbols[], int i);
+   int    symbol_Index                (/*SYMBOL*/int symbol[]);   int    symbols_Index(/*SYMBOL*/int symbols[], int i);
+   int    symbol_Id                   (/*SYMBOL*/int symbol[]);   int    symbols_Id   (/*SYMBOL*/int symbols[], int i);
    int    symbol_Spread               (/*SYMBOL*/int symbol[]);
    bool   symbol_SwapEnabled          (/*SYMBOL*/int symbol[]);
    int    symbol_SwapType             (/*SYMBOL*/int symbol[]);
