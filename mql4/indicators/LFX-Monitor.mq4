@@ -27,14 +27,14 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a___________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
+extern bool   USDLFX.Enabled                  = false;
 extern bool   AUDLFX.Enabled                  = false;
 extern bool   CADLFX.Enabled                  = false;
 extern bool   CHFLFX.Enabled                  = false;
 extern bool   EURLFX.Enabled                  = false;
 extern bool   GBPLFX.Enabled                  = false;
 extern bool   JPYLFX.Enabled                  = false;
-extern bool   NZDLFX.Enabled                  = false;
-extern bool   USDLFX.Enabled                  = false;
+extern bool   NZDLFX.Enabled                  = false;                  // in fact an FX7 index
 extern string ___b___________________________ = "=== Synthetic FX7 indexes ===";
 extern bool   NOKFX7.Enabled                  = false;
 extern bool   SEKFX7.Enabled                  = false;
