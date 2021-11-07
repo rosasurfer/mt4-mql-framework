@@ -8,16 +8,17 @@
  *
  *
  * TODO:
- *  - check display on different screen resolutions and consider additional auto-config values
+ *  - add auto-configuration
+ *  - check display on different screen resolutions
  *  - improve cache flushing for the different timeframes
- *  - update input defaults
  *
  *  - documentation
  *     inputs
+ *     auto-configuration
  *     symbol requirements
  *     requirements for "Recording.HistoryDirectory"
  *     timezone requirement for detection of stale quotes
- *     handling of history formats
+ *     handling of different history formats
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -26,24 +27,24 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a___________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
-extern bool   AUDLFX.Enabled                  = true;                   // default: all indexes enabled
-extern bool   CADLFX.Enabled                  = true;
-extern bool   CHFLFX.Enabled                  = true;
-extern bool   EURLFX.Enabled                  = true;
-extern bool   GBPLFX.Enabled                  = true;
-extern bool   JPYLFX.Enabled                  = true;
-extern bool   NZDLFX.Enabled                  = true;
-extern bool   USDLFX.Enabled                  = true;
+extern bool   AUDLFX.Enabled                  = false;
+extern bool   CADLFX.Enabled                  = false;
+extern bool   CHFLFX.Enabled                  = false;
+extern bool   EURLFX.Enabled                  = false;
+extern bool   GBPLFX.Enabled                  = false;
+extern bool   JPYLFX.Enabled                  = false;
+extern bool   NZDLFX.Enabled                  = false;
+extern bool   USDLFX.Enabled                  = false;
 extern string ___b___________________________ = "=== Synthetic FX7 indexes ===";
-extern bool   NOKFX7.Enabled                  = true;
-extern bool   SEKFX7.Enabled                  = true;
-extern bool   SGDFX7.Enabled                  = true;
-extern bool   ZARFX7.Enabled                  = true;
+extern bool   NOKFX7.Enabled                  = false;
+extern bool   SEKFX7.Enabled                  = false;
+extern bool   SGDFX7.Enabled                  = false;
+extern bool   ZARFX7.Enabled                  = false;
 extern string ___c___________________________ = "=== ICE indexes ===";
-extern bool   EURX.Enabled                    = true;
-extern bool   USDX.Enabled                    = true;
+extern bool   EURX.Enabled                    = false;
+extern bool   USDX.Enabled                    = false;
 extern string ___d___________________________ = "=== Synthetic Gold index ===";
-extern bool   XAUI.Enabled                    = true;
+extern bool   XAUI.Enabled                    = false;
 extern string ___e___________________________ = "=== Recording settings ===";
 extern bool   Recording.Enabled               = false;                  // default: disabled
 extern string Recording.HistoryDirectory      = "Synthetic-History";    // name of the history directory to store recorded data
