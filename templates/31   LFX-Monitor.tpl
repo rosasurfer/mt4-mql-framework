@@ -9907,6 +9907,7 @@ Recording.HistoryDirectory=history/XTrade-Synthetic
 Recording.HistoryFormat=400
 </inputs>
 </expert>
+color_0=4294967295
 period_flags=0
 show_data=0
 </indicator>
