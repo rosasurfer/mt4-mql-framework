@@ -100,11 +100,11 @@ string   brokerSymbols    [] = {"AUDUSD", "EURUSD", "GBPUSD", "NZDUSD", "USDCAD"
 bool     isRequired       [];                            // whether a broker symbol is required for synthetic index calculation
 string   missingSymbols   [];                            // not subscribed broker symbols (not available in "Market Watch" window)
 
-string   syntheticSymbols [] = {"AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX", "USDX", "XAUI"};
+string   syntheticSymbols [] = {"AUDLFX", "CADLFX", "CHFLFX", "EURLFX", "GBPLFX", "JPYLFX", "NZDLFX", "USDLFX", "NOKFX7", "SEKFX7", "SGDFX7", "ZARFX7", "EURX"  , "USDX"  , "XAUI" };
 string   symbolLongName   [] = {"LiteForex Australian Dollar index", "LiteForex Canadian Dollar index", "LiteForex Swiss Franc index", "LiteForex Euro index", "LiteForex Great Britain Pound index", "LiteForex Japanese Yen index", "LiteForex New Zealand Dollar index", "LiteForex US Dollar index", "Norwegian Krona vs Majors index", "Swedish Kronor vs Majors index", "Singapore Dollar vs Majors index", "South African Rand vs Majors index", "ICE Euro Futures index", "ICE US Dollar Futures index", "Gold vs Majors index" };
-int      symbolDigits     [] = {5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3     , 3     , 3     };
-double   symbolPipSize    [] = {0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01  , 0.01  , 0.01  };
-string   symbolPriceFormat[] = {"R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.4'"  , "R.2'", "R.2'", "R.2'"};
+int      symbolDigits     [] = {5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 5       , 3       , 3       , 3      };
+double   symbolPipSize    [] = {0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.0001  , 0.01    , 0.01    , 0.01   };
+string   symbolPriceFormat[] = {",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.4'", ",'R.2'", ",'R.2'", ",'R.2"};
 
 bool     isEnabled  [];                                  // whether calculation of a synthetic instrument is enabled (matches inputs *.Enabled)
 bool     isAvailable[];                                  // whether all quotes for instrument calculation are available
@@ -451,7 +451,9 @@ int CreateLabels() {
    else GetLastError();
 
    // index display
-   int counter = 10;                                     // a counter for creating unique labels (with at least 2 digits)
+   int yCoord  = 60;                                     // vertical display position
+   int counter = 10;                                     // a counter for creating unique labels with min. 2 digits
+
    // background rectangles
    string label = StringConcatenate(ProgramName(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
@@ -459,30 +461,31 @@ int CreateLabels() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, 7);
-      ObjectSet    (label, OBJPROP_YDISTANCE, 7);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, "g", 128, "Webdings", bgColor);
       RegisterObject(label);
    }
    else GetLastError();
 
    counter++;
+   yCoord += 74;
    label = StringConcatenate(ProgramName(), ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE,  7);
-      ObjectSet    (label, OBJPROP_YDISTANCE, 81);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 7);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, "g", 128, "Webdings", bgColor);
       RegisterObject(label);
    }
    else GetLastError();
 
-   int   yCoord    = 9;
    color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
 
    // animation
    counter++;
+   yCoord -= 72;
    label = StringConcatenate(ProgramName(), ".", counter, ".Header.animation");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
