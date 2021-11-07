@@ -45,10 +45,10 @@ int    hQC.TradeCmdReceiver;
  * @param  string accountId [optional] - account identifier in format "{account-company}:{account-number}"
  *                                       (default: the current account)
  *
- * @return bool - success status i.e. whether the new account data was successfully applied
+ * @return bool - whether the specified account was successfully applied
  */
 bool InitTradeAccount(string accountId = "") {
-   if (accountId == "0") accountId = "";                       // (string) NULL
+   if (IsLastError()) return(false);
 
    string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
    int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
@@ -61,9 +61,9 @@ bool InitTradeAccount(string accountId = "") {
 
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
-      _accountCompany = StrLeftTo(accountId, ":"); if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      _accountNumber = StrToInteger(sValue); if (!_accountNumber)                   return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))         return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
    }
    else {
       // use the current account and resolve a configured trade account

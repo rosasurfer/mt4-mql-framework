@@ -8,7 +8,6 @@
  *
  *
  * TODO:
- *  - check trade account requirements: RestoreRuntimeStatus -> UpdateAccountDisplay -> RefreshLfxOrders
  *  - check timezone requirements
  *  - spreads for EURX, USDX and XAUI
  *  - make use of all history libraries
@@ -256,15 +255,11 @@ int onInit() {
    CreateLabels();
    SetIndexLabel(0, NULL);
 
-   // restore trade account, calls UpdateAccountDisplay() + RefreshLfxOrders() on success
-   if (!RestoreRuntimeStatus())    return(last_error);
-
-   // if trade account was not yet set: initialize trade account and order/limit monitoring
-   if (!tradeAccount.number) {
-      if (!InitTradeAccount())     return(last_error);
-      if (!UpdateAccountDisplay()) return(last_error);
-      if (!RefreshLfxOrders())     return(last_error);
-   }
+   // restore a configured trade account and and initialize order/limit monitoring
+   string accountId = GetStoredTradeAccount();
+   if (!InitTradeAccount(accountId)) return(last_error);
+   if (!UpdateAccountDisplay())      return(last_error);
+   if (!RefreshLfxOrders())          return(last_error);
 
    // setup a chart ticker
    if (!This.IsTesting()) {
@@ -285,7 +280,7 @@ int onInit() {
  */
 int onDeinit() {
    QC.StopChannels();
-   StoreRuntimeStatus();
+   StoreTradeAccount();
 
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
@@ -392,6 +387,8 @@ bool EventListener_ChartCommand(string &commands[]) {
  * @return bool - success status
  */
 bool RefreshLfxOrders() {
+   if (IsLastError()) return(false);
+
    // read pending orders
    if (AUDLFX.Enabled) if (LFX.GetOrders(C_AUD, OF_PENDINGORDER|OF_PENDINGPOSITION, AUDLFX.orders) < 0) return(false);
    if (CADLFX.Enabled) if (LFX.GetOrders(C_CAD, OF_PENDINGORDER|OF_PENDINGPOSITION, CADLFX.orders) < 0) return(false);
@@ -982,6 +979,8 @@ bool RecordIndexes() {
  * @return bool - success status
  */
 bool UpdateAccountDisplay() {
+   if (IsLastError()) return(false);
+
    if (mode.extern) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
       ObjectSetText(labelTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
@@ -998,78 +997,61 @@ bool UpdateAccountDisplay() {
 
 
 /**
- * Store the runtime configuration in the chart window (init cycles and template reload) and in the chart (terminal restart).
- *
- * vars: string tradeAccount.company
- *       int    tradeAccount.number
+ * Store the current trade account (if any) in the chart and the chart window (to survive init cycles and/or terminal restart).
  *
  * @return bool - success status
  */
-bool StoreRuntimeStatus() {
-   // store company alias in chart window
+bool StoreTradeAccount() {
+   // account company id
    int    hWnd = __ExecutionContext[EC.hChart];
    string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
-   // store company alias in chart
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, tradeAccount.company);
 
-   // store account number in chart window
+   // account number
    key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
-   // store account number in chart
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ tradeAccount.number);
 
-   return(!catch("StoreRuntimeStatus(1)"));
+   return(!catch("StoreTradeAccount(1)"));
 }
 
 
 /**
- * Restore the runtime configuration from the chart and/or chart window.
+ * Retrieve a trade account stored in the chart or chart window.
  *
- * vars: string tradeAccount.company
- *       int    tradeAccount.number
- *
- * @return bool - success status
+ * @return string - trade account identifier or an empty string if no data was stored or in case of errors
  */
-bool RestoreRuntimeStatus() {
-   // lookup company alias in chart window
+string GetStoredTradeAccount() {
+   // account company id
    int hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName() +".runtime.tradeAccount.company";      // TODO: add program pid and manage keys globally
+   string key = ProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
-      if (ObjectFind(key) == 0) company = ObjectDescription(key);    // on failure lookup company alias in chart
+      if (ObjectFind(key) == 0) company = ObjectDescription(key);
    }
 
-   // lookup account number in chart window
-   key = ProgramName() +".runtime.tradeAccount.number";             // TODO: add program pid and manage keys globally
+   // account number
+   key = ProgramName() +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
-      if (ObjectFind(key) == 0)
-         accountNumber = StrToInteger(ObjectDescription(key));       // on failure lookup account number in chart
+      if (ObjectFind(key) == 0) accountNumber = StrToInteger(ObjectDescription(key));
    }
 
-   // restore account data
-   if (StringLen(company) && accountNumber) {
-      string oldCompany    = tradeAccount.company;
-      int oldAccountNumber = tradeAccount.number;
-
-      if (!InitTradeAccount(company +":"+ accountNumber)) return(false);
-      if (tradeAccount.company!=oldCompany || tradeAccount.number!=oldAccountNumber) {
-         if (!UpdateAccountDisplay())                     return(false);
-         if (!RefreshLfxOrders())                         return(false);
-      }
-   }
-   return(!catch("RestoreRuntimeStatus(1)"));
+   string result = "";
+   if (StringLen(company) && accountNumber)
+      result = company +":"+ accountNumber;
+   return(ifString(catch("GetStoredTradeAccount(1)"), "", result));
 }
 
 
