@@ -10,14 +10,15 @@
  * TODO:
  *  - check display on different screen resolutions
  *  - add display-related auto-configuration values
+ *  - move history libraries to MT4Expander
  *  - improve cache flushing for the different timeframes
  *
  *  - documentation
  *     inputs
  *     auto-configuration
  *     symbol requirements
+ *     timezone configuration for detection of stale quotes
  *     requirements for "Recording.HistoryDirectory"
- *     timezone requirement for detection of stale quotes
  *     handling of different history formats
  */
 #include <stddefines.mqh>
