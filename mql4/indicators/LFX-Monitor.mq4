@@ -9,7 +9,7 @@
  *
  * TODO:
  *  - check display on different screen resolutions
- *  - add additional display-related auto-configuration values
+ *  - add display-related auto-configuration values
  *  - improve cache flushing for the different timeframes
  *
  *  - documentation
@@ -21,7 +21,7 @@
  *     handling of different history formats
  */
 #include <stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -903,7 +903,6 @@ bool ProcessLimits(/*LFX_ORDER*/int orders[][], double price) {
  */
 int ShowStatus(int error = NO_ERROR) {
    if (!__isChart) return(true);
-   //if (!IsChartVisible()) return(true);          // TODO: update only if the chart is visible
 
    // animation
    int   chars     = ArraySize(animationChars);
