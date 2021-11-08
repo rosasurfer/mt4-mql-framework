@@ -8,8 +8,8 @@
  *
  *
  * TODO:
- *  - add auto-configuration
  *  - check display on different screen resolutions
+ *  - add additional display-related auto-configuration values
  *  - improve cache flushing for the different timeframes
  *
  *  - documentation
@@ -27,7 +27,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a___________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
-extern bool   USDLFX.Enabled                  = false;
+extern bool   USDLFX.Enabled                  = true;
 extern bool   AUDLFX.Enabled                  = false;
 extern bool   CADLFX.Enabled                  = false;
 extern bool   CHFLFX.Enabled                  = false;
@@ -46,7 +46,7 @@ extern bool   USDX.Enabled                    = false;
 extern string ___d___________________________ = "=== Synthetic Gold index ===";
 extern bool   XAUI.Enabled                    = false;
 extern string ___e___________________________ = "=== Recording settings ===";
-extern bool   Recording.Enabled               = false;                  // default: disabled
+extern bool   Recording.Enabled               = false;
 extern string Recording.HistoryDirectory      = "Synthetic-History";    // name of the history directory to store recorded data
 extern int    Recording.HistoryFormat         = 401;                    // created history format
 extern string ___f___________________________ = "=== Broker settings ===";
@@ -160,24 +160,46 @@ int    tickTimerId;                                      // id of the tick timer
  * @return int - error status
  */
 int onInit() {
+   // read auto-configuration
+   string indicator = StrTrim(ProgramName());
+   if (AutoConfiguration) {
+      AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
+      CADLFX.Enabled             = GetConfigBool  (indicator, "CADLFX.Enabled",             CADLFX.Enabled);
+      CHFLFX.Enabled             = GetConfigBool  (indicator, "CHFLFX.Enabled",             CHFLFX.Enabled);
+      EURLFX.Enabled             = GetConfigBool  (indicator, "EURLFX.Enabled",             EURLFX.Enabled);
+      GBPLFX.Enabled             = GetConfigBool  (indicator, "GBPLFX.Enabled",             GBPLFX.Enabled);
+      JPYLFX.Enabled             = GetConfigBool  (indicator, "JPYLFX.Enabled",             JPYLFX.Enabled);
+      NZDLFX.Enabled             = GetConfigBool  (indicator, "NZDLFX.Enabled",             NZDLFX.Enabled);
+      NOKFX7.Enabled             = GetConfigBool  (indicator, "NOKFX7.Enabled",             NOKFX7.Enabled);
+      SEKFX7.Enabled             = GetConfigBool  (indicator, "SEKFX7.Enabled",             SEKFX7.Enabled);
+      SGDFX7.Enabled             = GetConfigBool  (indicator, "SGDFX7.Enabled",             SGDFX7.Enabled);
+      ZARFX7.Enabled             = GetConfigBool  (indicator, "ZARFX7.Enabled",             ZARFX7.Enabled);
+      EURX.Enabled               = GetConfigBool  (indicator, "EURX.Enabled",               EURX.Enabled);
+      USDX.Enabled               = GetConfigBool  (indicator, "USDX.Enabled",               USDX.Enabled);
+      XAUI.Enabled               = GetConfigBool  (indicator, "XAUI.Enabled",               XAUI.Enabled);
+      Recording.Enabled          = GetConfigBool  (indicator, "Recording.Enabled",          Recording.Enabled);
+      Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
+      Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
+      Broker.SymbolSuffix        = GetConfigString(indicator, "Broker.SymbolSuffix",        Broker.SymbolSuffix);
+   }
+
    // validate inputs
-   // Recording.HistoryDirectory
-   recordingDirectory = StrTrim(Recording.HistoryDirectory);
-   if (recordingDirectory != Recording.HistoryDirectory)             return(catch("onInit(1)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not contain trailing white space)", ERR_INVALID_INPUT_PARAMETER));
-   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(2)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
-   int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-   if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
-   recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
-   if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(4)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
-   if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(5)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
    // Recording.Enabled
    if (This.IsTesting()) Recording.Enabled = false;
+   // Recording.HistoryDirectory
+   recordingDirectory = StrTrim(Recording.HistoryDirectory);
+   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
+   int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
+   if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(2)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
+   recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
+   if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
+   if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(4)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
    // Recording.HistoryFormat
-   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(6)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(5)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
    recordingFormat = Recording.HistoryFormat;
    // Broker.SymbolSuffix
    brokerSuffix = StrTrim(Broker.SymbolSuffix);
-   if (StringLen(brokerSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(7)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(Broker.SymbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
+   if (StringLen(brokerSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(6)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(Broker.SymbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
 
    // initialize global arrays
    int sizeRequired=ArraySize(brokerSymbols), sizeSynthetics=ArraySize(syntheticSymbols);
@@ -206,7 +228,7 @@ int onInit() {
    isEnabled[I_ZARFX7] = ZARFX7.Enabled;
    isEnabled[I_EURX  ] =   EURX.Enabled;
    isEnabled[I_USDX  ] =   USDX.Enabled;
-   isEnabled[I_XAUI  ] =   XAUI.Enabled;        // USDLFX is a requirement for all following indexes
+   isEnabled[I_XAUI  ] =   XAUI.Enabled;                 // USDLFX is a requirement for the following indexes
    isEnabled[I_USDLFX] = USDLFX.Enabled || AUDLFX.Enabled || CADLFX.Enabled || CHFLFX.Enabled || EURLFX.Enabled || GBPLFX.Enabled || JPYLFX.Enabled || NZDLFX.Enabled || NOKFX7.Enabled || SEKFX7.Enabled || SGDFX7.Enabled || ZARFX7.Enabled || XAUI.Enabled;
 
    // mark required broker symbols
@@ -237,12 +259,12 @@ int onInit() {
 
       // setup a chart ticker
       int hWnd         = __ExecutionContext[EC.hChart];
-      int milliseconds = 500;
+      int milliseconds = 500;                            // a virtual tick every 500 milliseconds
       int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
-      if (!timerId) return(catch("onInit(8)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!timerId) return(catch("onInit(7)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-   return(catch("onInit(9)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -1087,14 +1109,14 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("AUDLFX.Enabled=",             BoolToStr(AUDLFX.Enabled),                  ";"+ NL,
+   return(StringConcatenate("USDLFX.Enabled=",             BoolToStr(USDLFX.Enabled),                  ";"+ NL,
+                            "AUDLFX.Enabled=",             BoolToStr(AUDLFX.Enabled),                  ";"+ NL,
                             "CADLFX.Enabled=",             BoolToStr(CADLFX.Enabled),                  ";"+ NL,
                             "CHFLFX.Enabled=",             BoolToStr(CHFLFX.Enabled),                  ";"+ NL,
                             "EURLFX.Enabled=",             BoolToStr(EURLFX.Enabled),                  ";"+ NL,
                             "GBPLFX.Enabled=",             BoolToStr(GBPLFX.Enabled),                  ";"+ NL,
                             "JPYLFX.Enabled=",             BoolToStr(JPYLFX.Enabled),                  ";"+ NL,
                             "NZDLFX.Enabled=",             BoolToStr(NZDLFX.Enabled),                  ";"+ NL,
-                            "USDLFX.Enabled=",             BoolToStr(USDLFX.Enabled),                  ";"+ NL,
                             "NOKFX7.Enabled=",             BoolToStr(NOKFX7.Enabled),                  ";"+ NL,
                             "SEKFX7.Enabled=",             BoolToStr(SEKFX7.Enabled),                  ";"+ NL,
                             "SGDFX7.Enabled=",             BoolToStr(SGDFX7.Enabled),                  ";"+ NL,
