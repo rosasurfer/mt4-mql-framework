@@ -64,7 +64,7 @@ int    legendCorner     = CORNER_TOP_LEFT;
 int    legend_xDistance = 300;
 int    legend_yDistance = 3;
 string legendFontName   = "";                         // default: empty = menu font ("MS Sans Serif")
-int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds with the menu font
+int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds matches the menu font/size
 color  legendFontColor  = Black;
 
 string errorSound = "";                               // sound played when timeframe cycling is at min/max (default: none)
