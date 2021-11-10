@@ -8,8 +8,8 @@
  *
  *
  * TODO:
- *  - check display on different screen resolutions
  *  - add display-related auto-configuration values
+ *  - check display on full HD screen resolution
  *  - move history libraries to MT4Expander
  *  - improve cache flushing for the different timeframes
  *
@@ -43,7 +43,7 @@ extern bool   SGDFX7.Enabled                  = false;
 extern bool   ZARFX7.Enabled                  = false;
 extern string ___c___________________________ = "=== ICE indexes ===";
 extern bool   EURX.Enabled                    = false;
-extern bool   USDX.Enabled                    = false;
+extern bool   USDX.Enabled                    = true;
 extern string ___d___________________________ = "=== Synthetic Gold index ===";
 extern bool   XAUI.Enabled                    = false;
 extern string ___e___________________________ = "=== Recording settings ===";
@@ -434,8 +434,10 @@ bool RefreshLfxOrders() {
  * @return int - error status
  */
 int CreateLabels() {
+   string indicatorName = ProgramName();
+
    // trade account
-   labelTradeAccount = ProgramName() +".TradeAccount";
+   labelTradeAccount = indicatorName +".TradeAccount";
    if (ObjectFind(labelTradeAccount) == 0)
       ObjectDelete(labelTradeAccount);
    if (ObjectCreate(labelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
@@ -452,7 +454,7 @@ int CreateLabels() {
    int counter = 10;                                     // a counter for creating unique labels with min. 2 digits
 
    // background rectangles
-   string label = StringConcatenate(ProgramName(), ".", counter, ".Background");
+   string label = StringConcatenate(indicatorName, ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -466,7 +468,7 @@ int CreateLabels() {
 
    counter++;
    yCoord += 74;
-   label = StringConcatenate(ProgramName(), ".", counter, ".Background");
+   label = StringConcatenate(indicatorName, ".", counter, ".Background");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
@@ -483,12 +485,12 @@ int CreateLabels() {
    // animation
    counter++;
    yCoord -= 72;
-   label = StringConcatenate(ProgramName(), ".", counter, ".Header.animation");
+   label = StringConcatenate(indicatorName, ".", counter, ".Header.animation");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 202);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 10);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       ObjectSetText(label, animationChars[0], fontSize, fontName, fontColor);
       RegisterObject(label);
@@ -497,17 +499,14 @@ int CreateLabels() {
    else GetLastError();
 
    // recording status
-   label = StringConcatenate(ProgramName(), ".", counter, ".Recording.status");
+   label = StringConcatenate(indicatorName, ".", counter, ".Recording.status");
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 10);
+      ObjectSet    (label, OBJPROP_XDISTANCE, 30);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      string directory = recordingDirectory;
-      if (StrContains(directory, "/"))
-         directory = "../"+ StrRightFrom(directory, "/", -1);
-      string text = ifString(Recording.Enabled, "Recording to "+ directory, "Recording:  off");
+      string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
       ObjectSetText(label, text, fontSize, fontName, fontColor);
       RegisterObject(label);
    }
@@ -520,7 +519,7 @@ int CreateLabels() {
       counter++;
 
       // symbol
-      label = StringConcatenate(ProgramName(), ".", counter, ".", syntheticSymbols[i]);
+      label = StringConcatenate(indicatorName, ".", counter, ".", syntheticSymbols[i]);
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
