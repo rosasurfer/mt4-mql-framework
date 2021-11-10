@@ -8,8 +8,6 @@
  *
  *
  * TODO:
- *  - add display-related auto-configuration values
- *  - check display on full HD screen resolution
  *  - move history libraries to MT4Expander
  *  - improve cache flushing for the different timeframes
  *
@@ -122,6 +120,7 @@ datetime staleLimit;                                     // time limit (server t
 int      hSet            [];                             // HistorySet handles
 string   recordingDirectory = "";                        // directory to store recorded history
 int      recordingFormat;                                // format of new history files: 400 | 401
+int      tickTimerId;                                    // id of the tick timer registered for the chart
 
 int AUDLFX.orders[][LFX_ORDER_intSize];                  // array of LFX orders
 int CADLFX.orders[][LFX_ORDER_intSize];
@@ -139,21 +138,20 @@ int   EURX.orders[][LFX_ORDER_intSize];
 int   USDX.orders[][LFX_ORDER_intSize];
 int   XAUI.orders[][LFX_ORDER_intSize];
 
-// text labels for display elements
-string labels[];
-string labelTradeAccount = "";
-string labelAnimation    = "";                           // animated ticker
-string animationChars[]  = {"|", "/", "—", "\\"};
+// status display vars
+string statusLabels[];
+string statusLabelTradeAccount  = "";
+string statusLabelAnimation     = "";                    // animated ticker
+string animationChars[]         = {"|", "/", "—", "\\"};
 
-color  bgColor                = C'212,208,200';
-color  fontColor.recordingOn  = Blue;
-color  fontColor.recordingOff = Gray;
-color  fontColor.notAvailable = Red;
-string fontName               = "Tahoma";
-int    fontSize               = 8;
-
-int    tickTimerId;                                      // id of the tick timer registered for the chart
-
+int    status_xDistance         = 7;
+int    status_yDistance         = 60;
+color  statusBgColor            = C'212,208,200';
+color  statusFontColor.active   = Blue;
+color  statusFontColor.inactive = Gray;
+string statusFontName           = "Tahoma";
+int    statusFontSize           = 8;                     // 8 matches the menu font size
+int    statusLineHeight         = 15;
 
 /**
  * Initialization
@@ -164,6 +162,7 @@ int onInit() {
    // read auto-configuration
    string indicator = StrTrim(ProgramName());
    if (AutoConfiguration) {
+      // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
       CADLFX.Enabled             = GetConfigBool  (indicator, "CADLFX.Enabled",             CADLFX.Enabled);
       CHFLFX.Enabled             = GetConfigBool  (indicator, "CHFLFX.Enabled",             CHFLFX.Enabled);
@@ -182,6 +181,17 @@ int onInit() {
       Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
       Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
       Broker.SymbolSuffix        = GetConfigString(indicator, "Broker.SymbolSuffix",        Broker.SymbolSuffix);
+
+      // additional auto-config values for status display
+      int iValue; color cValue; string sValue;
+      iValue = GetConfigInt   (indicator, "Status.xDistance",          -1);                       status_xDistance         = ifInt(iValue >= 0, iValue, status_xDistance);
+      iValue = GetConfigInt   (indicator, "Status.yDistance",          -1);                       status_yDistance         = ifInt(iValue >= 0, iValue, status_yDistance);
+      cValue = GetConfigColor (indicator, "Status.BgColor",            statusBgColor);            statusBgColor            = cValue;
+      sValue = GetConfigString(indicator, "Status.FontName",           statusFontName);           statusFontName           = sValue;
+      iValue = GetConfigInt   (indicator, "Status.FontSize",           -1);                       statusFontSize           = ifInt(iValue > 0, iValue, statusFontSize);
+      cValue = GetConfigColor (indicator, "Status.FontColor.Active",   statusFontColor.active);   statusFontColor.active   = cValue;
+      cValue = GetConfigColor (indicator, "Status.FontColor.Inactive", statusFontColor.inactive); statusFontColor.inactive = cValue;
+      iValue = GetConfigInt   (indicator, "Status.LineHeight",         -1);                       statusLineHeight         = ifInt(iValue > 0, iValue, statusLineHeight);
    }
 
    // validate inputs
@@ -204,16 +214,16 @@ int onInit() {
 
    // initialize global arrays
    int sizeRequired=ArraySize(brokerSymbols), sizeSynthetics=ArraySize(syntheticSymbols);
-   ArrayResize(isRequired,  sizeRequired  );
-   ArrayResize(isEnabled,   sizeSynthetics);
-   ArrayResize(isAvailable, sizeSynthetics);
-   ArrayResize(isStale,     sizeSynthetics); ArrayInitialize(isStale, true);
-   ArrayResize(currBid,     sizeSynthetics);
-   ArrayResize(currAsk,     sizeSynthetics);
-   ArrayResize(currMid,     sizeSynthetics);
-   ArrayResize(prevMid,     sizeSynthetics);
-   ArrayResize(hSet,        sizeSynthetics);
-   ArrayResize(labels,      sizeSynthetics);
+   ArrayResize(isRequired,   sizeRequired  );
+   ArrayResize(isEnabled,    sizeSynthetics);
+   ArrayResize(isAvailable,  sizeSynthetics);
+   ArrayResize(isStale,      sizeSynthetics); ArrayInitialize(isStale, true);
+   ArrayResize(currBid,      sizeSynthetics);
+   ArrayResize(currAsk,      sizeSynthetics);
+   ArrayResize(currMid,      sizeSynthetics);
+   ArrayResize(prevMid,      sizeSynthetics);
+   ArrayResize(hSet,         sizeSynthetics);
+   ArrayResize(statusLabels, sizeSynthetics);
 
    // mark synthetic instruments to calculate
    isEnabled[I_AUDLFX] = AUDLFX.Enabled;
@@ -437,20 +447,21 @@ int CreateLabels() {
    string indicatorName = ProgramName();
 
    // trade account
-   labelTradeAccount = indicatorName +".TradeAccount";
-   if (ObjectFind(labelTradeAccount) == 0)
-      ObjectDelete(labelTradeAccount);
-   if (ObjectCreate(labelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (labelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (labelTradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (labelTradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(labelTradeAccount, " ", 1);
-      RegisterObject(labelTradeAccount);
+   statusLabelTradeAccount = indicatorName +".TradeAccount";
+   if (ObjectFind(statusLabelTradeAccount) == 0)
+      ObjectDelete(statusLabelTradeAccount);
+   if (ObjectCreate(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
+      ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
+      ObjectSetText(statusLabelTradeAccount, " ", 1);
+      RegisterObject(statusLabelTradeAccount);
    }
    else GetLastError();
 
    // index display
-   int yCoord  = 60;                                     // vertical display position
+   int xCoord  = status_xDistance;                       // horizontal display position
+   int yCoord  = status_yDistance;                       // vertical display position
    int counter = 10;                                     // a counter for creating unique labels with min. 2 digits
 
    // background rectangles
@@ -459,9 +470,9 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 7);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", bgColor);
+      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
       RegisterObject(label);
    }
    else GetLastError();
@@ -473,14 +484,14 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 7);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", bgColor);
+      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
       RegisterObject(label);
    }
    else GetLastError();
 
-   color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
+   color fontColor = ifInt(Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
 
    // animation
    counter++;
@@ -490,11 +501,11 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 10);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, animationChars[0], fontSize, fontName, fontColor);
+      ObjectSetText(label, animationChars[0], statusFontSize, statusFontName, fontColor);
       RegisterObject(label);
-      labelAnimation = label;
+      statusLabelAnimation = label;
    }
    else GetLastError();
 
@@ -504,18 +515,18 @@ int CreateLabels() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 30);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
       string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
-      ObjectSetText(label, text, fontSize, fontName, fontColor);
+      ObjectSetText(label, text, statusFontSize, statusFontName, fontColor);
       RegisterObject(label);
    }
    else GetLastError();
 
    // data rows
-   yCoord += 16;
+   yCoord += statusLineHeight + 1;
    for (int i=0; i < ArraySize(syntheticSymbols); i++) {
-      fontColor = ifInt(isEnabled[i] && Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
+      fontColor = ifInt(isEnabled[i] && Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
       counter++;
 
       // symbol
@@ -524,36 +535,36 @@ int CreateLabels() {
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 129          );
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
-         ObjectSetText(label, syntheticSymbols[i] +":", fontSize, fontName, fontColor);
+         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+         ObjectSetText(label, syntheticSymbols[i] +":", statusFontSize, statusFontName, fontColor);
          RegisterObject(label);
-         labels[i] = label;
+         statusLabels[i] = label;
       }
       else GetLastError();
 
       // price
-      label = StringConcatenate(labels[i], ".quote");
+      label = StringConcatenate(statusLabels[i], ".quote");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 64);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
+         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
             text = ifString(!isEnabled[i], "off", "n/a");
-         ObjectSetText(label, text, fontSize, fontName, fontColor.recordingOff);
+         ObjectSetText(label, text, statusFontSize, statusFontName, statusFontColor.inactive);
          RegisterObject(label);
       }
       else GetLastError();
 
       // spread
-      label = StringConcatenate(labels[i], ".spread");
+      label = StringConcatenate(statusLabels[i], ".spread");
       if (ObjectFind(label) == 0)
          ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 15);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*15);
+         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
          ObjectSetText(label, " ");
          RegisterObject(label);
       }
@@ -906,8 +917,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    // animation
    int   chars     = ArraySize(animationChars);
-   color fontColor = ifInt(Recording.Enabled, fontColor.recordingOn, fontColor.recordingOff);
-   ObjectSetText(labelAnimation, animationChars[Tick % chars], fontSize, fontName, fontColor);
+   color fontColor = ifInt(Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
+   ObjectSetText(statusLabelAnimation, animationChars[Tick % chars], statusFontSize, statusFontName, fontColor);
 
    // calculated values
    int size = ArraySize(syntheticSymbols);
@@ -915,20 +926,20 @@ int ShowStatus(int error = NO_ERROR) {
 
    for (int i=0; i < size; i++) {
       if (isEnabled[i]) {
-         fontColor = fontColor.recordingOff;
+         fontColor = statusFontColor.inactive;
          if (isAvailable[i]) {
             sQuote  = NumberToStr(currMid[i], symbolPriceFormat[i]);
             sSpread = "("+ SpreadToStr(i, (currAsk[i]-currBid[i])/symbolPipSize[i]) +")";
             if (Recording.Enabled && isEnabled[i] && !isStale[i]) {
-               fontColor = fontColor.recordingOn;
+               fontColor = statusFontColor.active;
             }
          }
          else {
             sQuote  = "n/a";
             sSpread = " ";
          }
-         ObjectSetText(labels[i] +".quote",  sQuote,  fontSize, fontName, fontColor);
-         ObjectSetText(labels[i] +".spread", sSpread, fontSize, fontName, fontColor);
+         ObjectSetText(statusLabels[i] +".quote",  sQuote,  statusFontSize, statusFontName, fontColor);
+         ObjectSetText(statusLabels[i] +".spread", sSpread, statusFontSize, statusFontName, fontColor);
       }
    }
 
@@ -1000,10 +1011,10 @@ bool UpdateAccountDisplay() {
 
    if (mode.extern) {
       string text = "Limits:  "+ tradeAccount.name +", "+ tradeAccount.company +", "+ tradeAccount.number +", "+ tradeAccount.currency;
-      ObjectSetText(labelTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
+      ObjectSetText(statusLabelTradeAccount, text, 8, "Arial Fett", ifInt(tradeAccount.type==ACCOUNT_TYPE_DEMO, LimeGreen, DarkOrange));
    }
    else {
-      ObjectSetText(labelTradeAccount, " ", 1);
+      ObjectSetText(statusLabelTradeAccount, " ", 1);
    }
 
    int error = GetLastError();
