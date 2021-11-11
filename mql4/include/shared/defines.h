@@ -224,8 +224,10 @@
 #define MODE_CEIL                               3        // normalize up to the next largest absolute value
 
 
-// file system related constants
-#define MKDIR_PARENT                            1        // create non-existing parent directories as needed => @see CreateDirectory()
+// file function flags
+#define MODE_MQL                                1        // restrict file system operations to the MQL sandbox
+#define MODE_OS                                 2        // allow file system operations outside of the MQL sandbox
+#define MODE_MKPARENT                           4        // create non-existing parent directories as needed, @see CreateDirectory()
 
 
 // time constants
@@ -328,8 +330,7 @@
 #define INIT_BARS_ON_HIST_UPDATE                4        //
 #define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
-#define INIT_AUTOCONFIG                        32        // setup auto-configuration
-#define INIT_NO_EXTERNAL_REPORTING             64        // always disable external test reporting (experts only)
+#define INIT_NO_EXTERNAL_REPORTING             32        // always disable external test reporting (experts only)
 
 
 // MT4 internal messages

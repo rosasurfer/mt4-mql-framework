@@ -113,7 +113,7 @@ int start() {
    __CoreFunction = CF_START;
 
    Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.Time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
+   Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ChangedBars    = -1;                                                       // in scripts not available
    UnchangedBars  = -1; ValidBars = UnchangedBars;                            // ...
@@ -121,11 +121,11 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 
-   if (!Tick.Time) {
+   if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                           // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          if (CheckErrors("start(3)", error)) return(last_error);              // nicht sicher detektiert werden kann
@@ -139,12 +139,13 @@ int start() {
    }
 
    // call the userland main function
-   onStart();
+   int uError = onStart();
+   if (uError && uError!=last_error) catch("start(5)", uError);
 
    // check errors
-   error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(5)", error);
+   int lError = GetLastError();
+   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(6)", lError);
    return(last_error);
 }
 

@@ -6,7 +6,7 @@ int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <win32api.mqh>
 
 
@@ -17,7 +17,7 @@ int __DeinitFlags[];
  */
 int onStart() {
    string file = TerminalPath() +"\\metaeditor.exe";
-   if (!IsFileA(file))
+   if (!IsFile(file, MODE_OS))
       return(HandleScriptError("", "File not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
 
 

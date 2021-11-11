@@ -36,7 +36,7 @@ extern string Signal.SMS            = "on | off | auto*";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
@@ -115,11 +115,11 @@ int onInit() {
 
    // (2) check BFX indicator and license for existence
    string indicatorFile = GetMqlDirectoryA() +"\\indicators\\"+ bfxName +".ex4";
-   if (!IsFileA(indicatorFile))   return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   if (!IsFile(indicatorFile, MODE_OS)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
    string section = "bankersfx.com", key = "CoreVolume.License";
    bfxLicense = GetConfigString(section, key);
-   if (!StringLen(bfxLicense))    return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   if (!StringLen(bfxLicense))          return(!catch("onInit(7)  missing configuration value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
 
 
    // (3) setup buffer management

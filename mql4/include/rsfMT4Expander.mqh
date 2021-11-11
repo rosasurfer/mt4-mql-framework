@@ -74,11 +74,11 @@
    int      CreateDirectoryA(string path, int flags);
    string   GetFinalPathNameA(string name);
    string   GetReparsePointTargetA(string name);
-   bool     IsDirectoryA(string name);
-   bool     IsFileA(string name);
-   bool     IsFileOrDirectoryA(string name);
-   bool     IsJunctionA(string name);
-   bool     IsSymlinkA(string name);
+   bool     IsDirectoryA(string path, int mode);
+   bool     IsFileA(string path, int mode);
+   bool     IsFileOrDirectoryA(string path);
+   bool     IsJunctionA(string path);
+   bool     IsSymlinkA(string path);
 
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
@@ -187,10 +187,7 @@
 
    // Error handlers for missing MQL handler implementations (if those events are used).
    bool     onBarOpen();
-   bool     onCommand(string data[]);
-
    void     DummyCalls();
-   bool     EventListener_ChartCommand(string &data[]);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

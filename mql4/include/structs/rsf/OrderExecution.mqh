@@ -86,7 +86,7 @@ double   oe.RemainingLots      (/*ORDER_EXECUTION*/int oe[]         ) {         
 
 int      oes.Error             (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.error          ]);                                      ORDER_EXECUTION.toStr(oe); }
 bool     oes.IsError           (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.error          ] != 0);                                 ORDER_EXECUTION.toStr(oe); }
-string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4));               ORDER_EXECUTION.toStr(oe); }
+string   oes.Symbol            (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.symbol)*4));               ORDER_EXECUTION.toStr(oe); }
 int      oes.Digits            (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.digits         ]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.StopDistance      (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.stopDistance   ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
 double   oes.FreezeDistance    (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.freezeDistance ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
@@ -104,7 +104,7 @@ double   oes.ClosePrice        (/*ORDER_EXECUTION*/int oe[][], int i) { int digi
 double   oes.Swap              (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.swap           ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 double   oes.Commission        (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.commission     ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
 double   oes.Profit            (/*ORDER_EXECUTION*/int oe[][], int i) {                               return(NormalizeDouble(oe[i][OE.profit         ]/100., 2));                             ORDER_EXECUTION.toStr(oe); }
-string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.comment)*4));              ORDER_EXECUTION.toStr(oe); }
+string   oes.Comment           (/*ORDER_EXECUTION*/int oe[][], int i) {                     return(GetStringA(GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.comment)*4));              ORDER_EXECUTION.toStr(oe); }
 int      oes.Duration          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.duration       ]);                                      ORDER_EXECUTION.toStr(oe); }
 int      oes.Requotes          (/*ORDER_EXECUTION*/int oe[][], int i) {                                               return(oe[i][OE.requotes       ]);                                      ORDER_EXECUTION.toStr(oe); }
 double   oes.Slippage          (/*ORDER_EXECUTION*/int oe[][], int i) { int digits=oes.Digits(oe, i); return(NormalizeDouble(oe[i][OE.slippage       ]/MathPow(10, digits & 1), digits & 1)); ORDER_EXECUTION.toStr(oe); }
@@ -165,7 +165,7 @@ string   oes.setSymbol         (/*ORDER_EXECUTION*/int  oe[][], int i, string   
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_EMPTY_STR(catch("oes.setSymbol(2)  too long parameter symbol: \""+ symbol +"\" (max "+ MAX_SYMBOL_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=symbol;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.symbol)*4;
+   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.symbol)*4;
    CopyMemory(dest, src, StringLen(symbol)+1);                       /*terminierendes <NUL> wird mitkopiert*/
    ArrayResize(array, 0);                                                                                                                                                            return(symbol    ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDigits         (/*ORDER_EXECUTION*/int &oe[][], int i, int      digits    ) { oe[i][OE.digits         ]  = digits;                                                   return(digits    ); ORDER_EXECUTION.toStr(oe); }
@@ -193,7 +193,7 @@ string   oes.setComment        (/*ORDER_EXECUTION*/int  oe[][], int i, string   
    if ( StringLen(comment) > MAX_ORDER_COMMENT_LENGTH) return(_EMPTY_STR(catch("oes.setComment()  too long parameter comment: \""+ comment +"\" (max "+ MAX_ORDER_COMMENT_LENGTH +" chars)"), ERR_INVALID_PARAMETER));
    string array[]; ArrayResize(array, 1); array[0]=comment;
    int src  = GetStringAddress(array[0]);
-   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION.intSize + OE.comment)*4;
+   int dest = GetIntsAddress(oe) + (i*ORDER_EXECUTION_intSize + OE.comment)*4;
    CopyMemory(dest, src, StringLen(comment)+1);                      /*terminierendes <NUL> wird mitkopiert*/
    ArrayResize(array, 0);                                                                                                                                                            return(comment   ); ORDER_EXECUTION.toStr(oe); }
 int      oes.setDuration       (/*ORDER_EXECUTION*/int &oe[][], int i, int      milliSec  ) { oe[i][OE.duration       ] = milliSec;                                                  return(milliSec  ); ORDER_EXECUTION.toStr(oe); }
@@ -213,7 +213,7 @@ double   oes.setRemainingLots  (/*ORDER_EXECUTION*/int &oe[][], int i, double   
 string ORDER_EXECUTION.toStr(/*ORDER_EXECUTION*/int oe[]) {
    int dimensions = ArrayDimension(oe);
    if (dimensions > 2)                                          return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(1)  too many dimensions of parameter oe: "+ dimensions, ERR_INVALID_PARAMETER)));
-   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION.intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
+   if (ArrayRange(oe, dimensions-1) != ORDER_EXECUTION_intSize) return(_EMPTY_STR(catch("ORDER_EXECUTION.toStr(2)  invalid size of parameter oe ("+ ArrayRange(oe, dimensions-1) +")", ERR_INVALID_PARAMETER)));
 
    int    digits, pipDigits;
    string priceFormat="", line="", lines[]; ArrayResize(lines, 0);

@@ -19,8 +19,7 @@
  */
 int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
-
-   if (error!=NO_ERROR) /*&&*/ if (IsExpert())
+   if (last_error && IsExpert())
       CheckErrors("SetLastError(1)");                             // update __STATUS_OFF in experts
    return(error);
 }
@@ -346,9 +345,9 @@ bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
-   if (!IsFileA(fullName)) {
+   if (!IsFile(fullName, MODE_OS)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
-      if (!IsFileA(fullName)) {
+      if (!IsFile(fullName, MODE_OS)) {
          if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
@@ -503,20 +502,6 @@ int ResetLastError() {
    int error = last_error;
    SetLastError(NO_ERROR);
    return(error);
-}
-
-
-/**
- * Check for received commands and call the respective handlers.
- *
- * @return bool - success status
- */
-bool HandleCommands() {
-   string commands[]; ArrayResize(commands, 0);
-   if (EventListener_ChartCommand(commands)) {
-      return(onCommand(commands));
-   }
-   return(true);
 }
 
 
@@ -2427,8 +2412,8 @@ bool StrIsPhoneNumber(string value) {
 /**
  * Fügt ein Element am Beginn eines String-Arrays an.
  *
- * @param  string array[] - String-Array
- * @param  string value   - hinzuzufügendes Element
+ * @param  _InOut_ string array[] - String-Array
+ * @param  _In_    string value   - hinzuzufügendes Element
  *
  * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
  *
@@ -2440,8 +2425,8 @@ bool StrIsPhoneNumber(string value) {
  *       grenzen aufgerufen wurde, nicht jedoch bei globaler Definition. Außerdem trat der Fehler nicht sofort, sondern erst
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
-int ArrayUnshiftString(string array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString()  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+int ArrayUnshiftString(string &array[], string value) {
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -3208,36 +3193,73 @@ string UrlEncode(string value) {
 
 
 /**
- * Whether the specified directory exists in the MQL "files\" directory.
+ * Whether the specified file exists.
  *
- * @param  string dirname - Directory name relative to "files/", may be a symbolic link or a junction. Supported directory
- *                          separators are forward and backward slash.
+ * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
+ * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
+ *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
  * @return bool
  */
-bool MQL.IsDirectory(string dirname) {
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+bool IsFile(string path, int mode) {
+   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
+   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
 
-   string filesDirectory = GetMqlFilesPath();
-   if (!StringLen(filesDirectory))
-      return(false);
-   return(IsDirectoryA(StringConcatenate(filesDirectory, "\\", dirname)));
+   if (mode & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "/", path);
+   }
+   return(IsFileA(path, MODE_OS));
 }
 
 
 /**
- * Whether the specified file exists in the MQL "files" directory.
+ * Whether the specified directory exists.
  *
- * @param  string filename - Filename relative to "files", may be a symbolic link. Supported directory separators are
- *                           forward and backward slash.
+ * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
+ * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
+ *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
  * @return bool
  */
-bool MQL.IsFile(string filename) {
-   // TODO: Prüfen, ob Scripte und Indikatoren im Tester tatsächlich auf "{terminal-directory}\tester\" zugreifen.
+bool IsDirectory(string path, int mode) {
+   // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
+   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
 
-   string filesDirectory = GetMqlFilesPath();
-   if (!StringLen(filesDirectory))
-      return(false);
-   return(IsFileA(StringConcatenate(filesDirectory, "\\", filename)));
+   if (mode & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "/", path);
+   }
+   return(IsDirectoryA(path, MODE_OS));
+}
+
+
+/**
+ * Create a directory.
+ *
+ * @param  string path  - directory path
+ * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
+ *                        MODE_OS:       allow the function to operate outside of the MQL sandbox
+ *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
+ *                                       otherwise create only the final directory and report an error if it exists
+ * @return bool - success status
+ */
+bool CreateDirectory(string path, int flags) {
+   if (!(~flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
+   if (!( flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+
+   if (flags & MODE_MQL && 1) {
+      string filesDirectory = GetMqlFilesPath();
+      if (!StringLen(filesDirectory))
+         return(false);
+      path = StringConcatenate(filesDirectory, "\\", path);
+      flags &= ~MODE_MQL;
+   }
+   return(!CreateDirectoryA(path, flags|MODE_OS));
 }
 
 
@@ -4322,6 +4344,30 @@ bool StrContainsI(string value, string substring) {
 
 
 /**
+ * Whether a string contains at least one of the specified characters.
+ *
+ * @param  string value   - string to inspect
+ * @param  int    chars[] - character values
+ *
+ * @return bool
+ */
+bool StrContainsChars(string value, int chars[]) {
+   if (StringLen(value) > 0) {
+      int size = ArraySize(chars);
+      for (int i=0; i < size; i++) {
+         if (chars[i] < 0 || chars[i] > 255) {
+            return(!catch("StrContainsChars(1)  illegal character value chars["+ i +"]: "+ chars[i], ERR_INVALID_PARAMETER));
+         }
+         if (StringFind(value, CharToStr(chars[i])) >= 0) {
+            return(true);
+         }
+      }
+   }
+   return(false);
+}
+
+
+/**
  * Durchsucht einen String vom Ende aus nach einem Substring und gibt dessen Position zurück.
  *
  * @param  string value  - zu durchsuchender String
@@ -4956,6 +5002,25 @@ bool IsStopOrderType(int value) {
  */
 bool IsLimitOrderType(int value) {
    return(value==OP_BUYLIMIT || value==OP_SELLLIMIT);
+}
+
+
+/**
+ * Whether the specified value is considered an absolute path.
+ *
+ * @param  string path
+ *
+ * @return bool
+ */
+bool IsAbsolutePath(string path) {
+   int len = StringLen(path);
+
+   if (len > 1) {
+      int chr = StringGetChar(path, 0);
+      if ((chr >= 'a' && chr <= 'z') || (chr >= 'A' && chr <= 'Z'))
+         return(StringGetChar(path, 1) == ':');
+   }
+   return(false);
 }
 
 
@@ -5971,7 +6036,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFileA(bash)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_OS)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
@@ -6840,6 +6905,7 @@ void __DummyCalls() {
    CompareDoubles(NULL, NULL);
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
+   CreateDirectory(NULL, NULL);
    CreateLegendLabel();
    CreateString(NULL);
    DateTime(NULL);
@@ -6882,7 +6948,6 @@ void __DummyCalls() {
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
-   HandleCommands();
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icChartInfos();
@@ -6907,15 +6972,18 @@ void __DummyCalls() {
    ifStringOr(NULL, NULL);
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
+   IsAbsolutePath(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
    IsCurrency(NULL);
    IsDemoFix();
+   IsDirectory(NULL, NULL);
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
    IsError(NULL);
    IsExpert();
+   IsFile(NULL, NULL);
    IsIndicator();
    IsInfinity(NULL);
    IsLastError();
@@ -6948,8 +7016,6 @@ void __DummyCalls() {
    Min(NULL, NULL);
    ModuleName();
    ModuleTypesToStr(NULL);
-   MQL.IsDirectory(NULL);
-   MQL.IsFile(NULL);
    Mul(NULL, NULL);
    NameToColor(NULL);
    NE(NULL, NULL);
@@ -6990,6 +7056,7 @@ void __DummyCalls() {
    StrCapitalize(NULL);
    StrCompareI(NULL, NULL);
    StrContains(NULL, NULL);
+   StrContainsChars(NULL, iNulls);
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
@@ -7054,10 +7121,7 @@ void __DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
-   bool     onBarOpen();
-   bool     onCommand(string data[]);
-
+#import "rsfLib.ex4"
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayPopInt(int array[]);
    int      ArrayPushInt(int array[], int value);
