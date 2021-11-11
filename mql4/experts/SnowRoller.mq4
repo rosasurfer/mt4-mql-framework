@@ -61,7 +61,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
@@ -4255,7 +4255,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [Common]
    string section = "Common";
@@ -4941,7 +4941,7 @@ bool SynchronizeStatus() {
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
-         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
+         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time: "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
 
       sequence.stop.event [i] = CreateEventId();
       sequence.stop.time  [i] = stopTime;

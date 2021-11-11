@@ -16,7 +16,7 @@ extern double StepMaximum = 0.2;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers  1

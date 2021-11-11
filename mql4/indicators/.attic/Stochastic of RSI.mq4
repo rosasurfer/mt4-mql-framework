@@ -38,7 +38,7 @@ extern int    Max.Bars                 = 10000;          // max. values to calcu
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_STOCH_MA1        Stochastic.MODE_MAIN       // indicator buffer ids
 #define MODE_STOCH_MA2        Stochastic.MODE_SIGNAL

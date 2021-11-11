@@ -36,7 +36,7 @@ extern int   Histogram.Style.Width = 2;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_MAIN             Fisher.MODE_MAIN              // indicator buffer ids
 #define MODE_SECTION          Fisher.MODE_SECTION

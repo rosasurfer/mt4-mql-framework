@@ -25,7 +25,7 @@ extern string StartDate              = "2019.01.01";        // Broketrader start
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>

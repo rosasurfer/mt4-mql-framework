@@ -17,7 +17,7 @@ extern string Dummy = "";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_OPEN             0
 #define MODE_LOW              1

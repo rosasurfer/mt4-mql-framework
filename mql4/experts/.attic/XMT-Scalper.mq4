@@ -96,7 +96,7 @@ extern bool     TakeProfitBug                   = true;                       //
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <rsfHistory.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/JoinStrings.mqh>
@@ -2199,7 +2199,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";
@@ -2509,7 +2509,7 @@ bool SaveStatus() {
    }
 
    string section="", file=GetStatusFilename(), separator="";
-   if (!IsFileA(file)) separator = CRLF;                             // an additional empty line as section separator
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                     // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());

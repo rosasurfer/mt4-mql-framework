@@ -14,18 +14,18 @@
  * Input parameters:
  * -----------------
  * • Sequence.ID:  Every new sequence gets a unique instance id assigned which - beneath others - affects magic order number
- *     generation. This way multiple grids (EA instances) can run in parallel even on the same symbol. Each instance logs its
- *     activities to a logfile named "{symbol}.Duel.{instance-id}.log") and writes status changes to a status file named
- *     "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file name. A sequence can be reloaded
- *     and fully restored from a status file. This enables the user to unload the EA on one machine (e.g. a laptop), move the
- *     file to another machine (e.g. a VPS or server) and to continue the sequence there by pointing the EA to the moved
- *     status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For new
- *     sequences the input field stays empty and sequence id and magic numbers are auto-generated.
+ *    generation. This way multiple grids (EA instances) can run in parallel even on the same symbol. Each instance logs its
+ *    activities to a logfile named "{symbol}.Duel.{instance-id}.log") and writes status changes to a status file named
+ *    "{symbol}.Duel.{instance-id}.set". In both cases the sequence id is part of the file name. A sequence can be reloaded
+ *    and fully restored from a status file. This enables the user to unload the EA on one machine (e.g. a laptop), move the
+ *    file to another machine (e.g. a VPS or server) and to continue the sequence there by pointing the EA to the moved
+ *    status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For new
+ *    sequences the input field stays empty and sequence id and magic numbers are auto-generated.
  *
  * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
- *     direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
- *     each other (one "long" and one "short" grid). A "long" grid consists of only Buy stop or limit orders, a "short" grid
- *     consists of only Sell stop or limit orders.
+ *    direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
+ *    each other (one "long" and one "short" grid). A "long" grid consists of only Buy stop or limit orders, a "short" grid
+ *    consists of only Sell stop or limit orders.
  *
  * • GridVolatility:
  *
@@ -36,7 +36,7 @@
  * - If "Martingale.Multiplier" is greater than "0" the EA trades on the losing side like a regular martingale system.
  *
  * @link  http://www.rosasurfer.com/.mt4/The%20Grid.mp4#                                                           [The Grid]
- * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel (I've looked at life from both sides now)]
+ * @link  https://www.youtube.com/watch?v=NTM_apWWcO0#                       [Duel - I've looked at life from both sides now]
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
@@ -66,7 +66,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
@@ -3568,7 +3568,7 @@ bool SaveStatus() {
    }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFileA(file)) separator = CRLF;                       // an empty line as additional section separator
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -3872,7 +3872,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";

@@ -1,5 +1,6 @@
 /**
- * Management of history files (one timeframe) and history sets (all 9 timeframes).
+ * Management of single history files (1 timeframe) and full history sets (9 timeframes).
+ *
  *
  * Usage examples
  * --------------
@@ -9,9 +10,29 @@
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet1.Create(symbol, description, digits, format);
  *
- * How to sync rsfHistory{1-3} versions:
- *   search:  (HistoryFile|HistorySet)[1-3]\.
- *   replace: \1{1-3}.
+ *  - How to sync rsfHistory{1-3}.mq4:
+ *     search:  (HistoryFile|HistorySet)[1-3]\>
+ *     replace: \1{1-3}
+ *
+ *
+ * Notes:
+ * ------
+ *  - The MQL4 language in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509
+ *    this limit was extended to 64 open files per MQL module. It means older terminals can manage max. 1 full history set
+ *    and newer terminals max. 7 full history sets per MQL module. For some use cases this is still not sufficient.
+ *    To overcome this limits there are 3 fully identical history libraries, extending the limits for newer terminal builds
+ *    to max. 21 full history sets per MQL program.
+ *
+ *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
+ *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".
+ *    Builds <= 509 can only read/write format "400". Builds > 509 can read both formats but write only format "401".
+ *
+ *  - If a terminal build <= 509 accesses history files in new format (401) it will delete those files on shutdown.
+ *
+ *  - If a terminal build > 509 accesses history files in old format (400) it will convert them to the new format (401) except
+ *    offline history files for custom symbols. Such offline history files will not be converted.
+ *
+ *  @see  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/mt4/HistoryHeader.h
  */
 #property library
 
@@ -20,7 +41,7 @@ int   __InitFlags[];
 int __DeinitFlags[];
 #include <core/library.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/mt4/HistoryHeader.mqh>
@@ -35,9 +56,9 @@ int      hs.hSet       [];                            // Set-Handle: größer 0 = 
 int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
 string   hs.symbolUpper[];                            // SYMBOL (Upper-Case)
-string   hs.copyright  [];                            // Copyright oder Beschreibung
+string   hs.description[];                            // Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
-string   hs.server     [];                            // Servername des Sets
+string   hs.directory  [];                            // Speicherverzeichnis des Sets
 int      hs.hFile      [][9];                         // HistoryFile-Handles des Sets je Standard-Timeframe
 int      hs.format     [];                            // Datenformat für neu zu erstellende HistoryFiles
 
@@ -57,7 +78,7 @@ string   hf.symbolUpper[];                            // SYMBOL (Upper-Case)
 int      hf.period     [];                            // Periode
 int      hf.periodSecs [];                            // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Woche)
 int      hf.digits     [];                            // Digits
-string   hf.server     [];                            // Servername der Datei
+string   hf.directory  [];                            // Speicherverzeichnis der Datei
 
 int      hf.stored.bars              [];              // Metadaten: Anzahl der gespeicherten Bars der Datei
 int      hf.stored.from.offset       [];              // Offset der ersten gespeicherten Bar der Datei
@@ -115,38 +136,37 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *
  * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
  *
- * @param  string symbol    - Symbol
- * @param  string copyright - Copyright oder Beschreibung
- * @param  int    digits    - Digits der Datenreihe
- * @param  int    format    - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
- *                                                           401 - neues Datenformat (wie MetaTrader  > Build 509)
- * @param  string server    - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  string symbol      - Symbol
+ * @param  string description - Beschreibung
+ * @param  int    digits      - Digits der Datenreihe
+ * @param  int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
+ *                                                             401 - neues Datenformat (wie MetaTrader  > Build 509)
+ * @param  string directory   - Verzeichnis, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
  */
-int HistorySet1.Create(string symbol, string copyright, int digits, int format, string server="") {
+int HistorySet1.Create(string symbol, string description, int digits, int format, string directory = "") {
    // Parametervalidierung
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (!StringLen(copyright)) {
-      copyright = "";                                                            // NULL-Pointer => Leerstring
+   if (!StringLen(description)) {
+      description = "";                                                          // NULL-Pointer => Leerstring
    }
-   else if (StringLen(copyright) > 63) {                                         // ein zu langer String wird gekürzt
-      logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(copyright) +" to 63 chars...");
-      copyright = StrLeft(copyright, 63);
+   else if (StringLen(description) > 63) {                                       // ein zu langer String wird gekürzt
+      logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
+      description = StrLeft(description, 63);
    }
    if (digits < 0)                            return(!catch("HistorySet1.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet1.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (server == "0")      server = "";                                          // (string) NULL
-   if (!StringLen(server)) server = GetAccountServer();
-
+   if (directory == "0")      directory = "";                                    // (string) NULL
+   if (!StringLen(directory)) directory = GetAccountServer();
 
    // (1) offene Set-Handles durchsuchen und Sets schließen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server)) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
          // wenn Symbol gefunden, Set schließen...
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
@@ -164,35 +184,33 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
       }
    }
 
-
    // (2) offene File-Handles durchsuchen und Dateien schließen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)){
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)){
          if (!HistoryFile1.Close(hf.hFile[i]))
             return(NULL);
       }
    }
 
-
    // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = GetMqlFilesPath()+"\\"+ mqlHstDir;               // Verzeichnisname für Win32-Dateifunktionen
+   string mqlHstDir  = directory +"/";                                  // Verzeichnis für MQL-Dateifunktionen
+   string fullHstDir = GetMqlFilesPath() +"/"+ mqlHstDir;               // Verzeichnis für Win32-Dateifunktionen
    string baseName="", mqlFileName="", fullFileName="";
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
-   hh_SetBarFormat(hh, format   );
-   hh_SetCopyright(hh, copyright);
-   hh_SetSymbol   (hh, symbol   );
-   hh_SetDigits   (hh, digits   );
+   hh_SetBarFormat  (hh, format     );
+   hh_SetDescription(hh, description);
+   hh_SetSymbol     (hh, symbol     );
+   hh_SetDigits     (hh, digits     );
 
    for (i=0; i < sizeOfPeriods; i++) {
       baseName = symbol + periods[i] +".hst";
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, auf 0 zurücksetzen
+      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
          if (hFile <= 0) return(!catch("HistorySet1.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -206,7 +224,6 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
    }
    ArrayResize(hh, 0);
 
-
    // (4) neues HistorySet erzeugen
    size = Max(ArraySize(hs.hSet), 1) + 1;                               // minSize=2: auf Index[0] kann kein gültiges Handle liegen
    ResizeSetArrays(size);
@@ -216,9 +233,9 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
    hs.symbolUpper[iH] = symbolUpper;
-   hs.copyright  [iH] = copyright;
+   hs.description[iH] = description;
    hs.digits     [iH] = digits;
-   hs.server     [iH] = server;
+   hs.directory  [iH] = directory;
    hs.format     [iH] = format;
 
    return(hSet);
@@ -233,26 +250,25 @@ int HistorySet1.Create(string symbol, string copyright, int digits, int format, 
  * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
  * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
  *
- * @param  string symbol - Symbol
- * @param  string server - Name des Serververzeichnisses, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  string symbol    - Symbol
+ * @param  string directory - Verzeichnis, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet1.Create() ein neues
  *                 Set erzeugt werden.
  *               • NULL, falls ein Fehler auftrat.
  */
-int HistorySet1.Get(string symbol, string server = "") {
+int HistorySet1.Get(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (server == "0")      server = "";                                 // (string) NULL
-   if (!StringLen(server)) server = GetAccountServer();
-
+   if (directory == "0")      directory = "";                           // (string) NULL
+   if (!StringLen(directory)) directory = GetAccountServer();
 
    // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.server[i], server))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory))
          return(hs.hSet[i]);
    }                                                                    // kein offenes Set-Handle gefunden
 
@@ -261,7 +277,7 @@ int HistorySet1.Get(string symbol, string server = "") {
    // (2) offene File-Handles durchsuchen
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.server[i], server)) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
          ResizeSetArrays(size);
          iH   = size-1;
@@ -270,19 +286,18 @@ int HistorySet1.Get(string symbol, string server = "") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hf.symbol     [i];
          hs.symbolUpper[iH] = hf.symbolUpper[i];
-         hs.copyright  [iH] = hhs_Copyright(hf.header, i);
+         hs.description[iH] = hhs_Description(hf.header, i);
          hs.digits     [iH] = hf.digits     [i];
-         hs.server     [iH] = hf.server     [i];
+         hs.directory  [iH] = hf.directory  [i];
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
 
          return(hSet);
       }
    }                                                                    // kein offenes File-Handle gefunden
 
-
    // (3) existierende HistoryFiles suchen
-   string mqlHstDir  = "history\\"+ server +"\\";                       // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir = GetMqlFilesPath() +"\\"+ mqlHstDir;              // Verzeichnisname für Win32-Dateifunktionen
+   string mqlHstDir  = directory +"/";                                  // Verzeichnis für MQL-Dateifunktionen
+   string fullHstDir = GetMqlFilesPath() +"/"+ mqlHstDir;               // Verzeichnis für Win32-Dateifunktionen
 
    string baseName="", mqlFileName="", fullFileName="";
    int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
@@ -292,7 +307,7 @@ int HistorySet1.Get(string symbol, string server = "") {
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFileA(fullFileName)) {                                      // wenn Datei existiert, öffnen
+      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
          if (hFile <= 0) return(!catch("HistorySet1.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -315,16 +330,15 @@ int HistorySet1.Get(string symbol, string server = "") {
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hh_Symbol   (hh);
          hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
-         hs.copyright  [iH] = hh_Copyright(hh);
+         hs.description[iH] = hh_Description(hh);
          hs.digits     [iH] = hh_Digits   (hh);
-         hs.server     [iH] = server;
+         hs.directory  [iH] = directory;
          hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
 
          ArrayResize(hh, 0);
          return(hSet);                                                  // Rückkehr nach der ersten ausgewerteten Datei
       }
    }
-
 
    if (!catch("HistorySet1.Get(6)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
       return(-1);
@@ -377,7 +391,7 @@ bool HistorySet1.Close(int hSet) {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags=NULL) {
+bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL) {
    // Validierung
    if (hSet <= 0)                     return(!catch("HistorySet1.AddTick(1)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
@@ -394,7 +408,7 @@ bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags=NULL) 
    for (int i=0; i < sizeOfPeriods; i++) {
       hFile = hs.hFile[hSet][i];
       if (!hFile) {                                                  // noch ungeöffnete Dateien öffnen
-         hFile = HistoryFile1.Open(hs.symbol[hSet], periods[i], hs.copyright[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.server[hSet]);
+         hFile = HistoryFile1.Open(hs.symbol[hSet], periods[i], hs.description[hSet], hs.digits[hSet], hs.format[hSet], FILE_READ|FILE_WRITE, hs.directory[hSet]);
          if (!hFile) return(false);
          hs.hFile[hSet][i] = hFile;
       }
@@ -405,100 +419,91 @@ bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags=NULL) 
 
 
 /**
- * Öffnet eine Historydatei im angegeben Access-Mode und gibt deren Handle zurück.
+ * Öffnet eine Historydatei im angegeben Access-Mode und gibt ihr Handle zurück.
  *
  * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
- * • Ist FILE_WRITE jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
+ * • Ist FILE_WRITE, jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
  *
- * @param  string symbol    - Symbol des Instruments
- * @param  int    timeframe - Timeframe der Zeitreihe
- * @param  string copyright - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
- * @param  int    digits    - Digits der Werte            (falls die Historydatei neu erstellt wird)
- * @param  int    format    - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
- * @param  int    mode      - Access-Mode: FILE_READ|FILE_WRITE
- * @param  string server    - Name des Serververzeichnisses, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
+ * @param  string symbol               - Symbol des Instruments
+ * @param  int    timeframe            - Timeframe der Zeitreihe
+ * @param  string description          - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
+ * @param  int    digits               - Digits der Werte            (falls die Historydatei neu erstellt wird)
+ * @param  int    format               - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
+ * @param  int    mode                 - Access-Mode: FILE_READ|FILE_WRITE
+ * @param  string directory [optional] - Verzeichnis, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
  *
  * @return int - Dateihandle oder
  *               -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
  *               NULL, falls ein anderer Fehler auftrat
- *
- *
- * NOTES: (1) Das Dateihandle kann nicht modul-übergreifend verwendet werden.
- *        (2) Mit den MQL-Dateifunktionen können je Modul maximal 64 Dateien gleichzeitig offen gehalten werden.
  */
-int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits, int format, int mode, string server="") {
-   if (!StringLen(symbol))                    return(_NULL(catch("HistoryFile1.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
-   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(_NULL(catch("HistoryFile1.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
-   if (StrContains(symbol, " "))              return(_NULL(catch("HistoryFile1.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
+int HistoryFile1.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "") {
+   if (!StringLen(symbol))                    return(!catch("HistoryFile1.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
+   if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistoryFile1.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max. "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
+   if (StrContains(symbol, " "))              return(!catch("HistoryFile1.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (timeframe <= 0)                        return(_NULL(catch("HistoryFile1.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER)));
-   if (!(mode & (FILE_READ|FILE_WRITE)))      return(_NULL(catch("HistoryFile1.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+   if (timeframe <= 0)                        return(!catch("HistoryFile1.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER));
+   if (!(mode & (FILE_READ|FILE_WRITE)))      return(!catch("HistoryFile1.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
    mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
    bool read_only  = !(mode & FILE_WRITE);
    bool write_only = !(mode & FILE_READ);
    bool read_write =  (mode & FILE_READ) && (mode & FILE_WRITE);
 
-   if (server == "0")      server = "";                                             // (string) NULL
-   if (!StringLen(server)) server = GetAccountServer();
-
+   if (directory == "0")      directory = "";                                       // (string) NULL
+   if (!StringLen(directory)) directory = GetAccountServer();
 
    // (1) Datei öffnen
-   string mqlHstDir   = "history\\"+ server +"\\";                                  // Verzeichnisname für MQL-Dateifunktionen
-   string fullHstDir  = GetMqlFilesPath() +"\\"+ mqlHstDir;                         // Verzeichnisname für Win32-Dateifunktionen
+   string mqlHstDir   = directory +"/";                                             // Verzeichnis für MQL-Dateifunktionen
+   string fullHstDir  = GetMqlFilesPath() +"/"+ mqlHstDir;                          // Verzeichnis für Win32-Dateifunktionen
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
-   // Schreibzugriffe werden nur auf ein existierendes Serververzeichnis erlaubt.
-   if (!read_only) /*&&*/ if (!IsDirectoryA(fullHstDir)) return(_NULL(catch("HistoryFile1.Open(6)  directory "+ DoubleQuoteStr(fullHstDir) +" doesn't exist ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR)));
+   // on write access make sure the directory exists
+   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_OS|MODE_MKPARENT)) return(!catch("HistoryFile1.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
 
-   int hFile;
-
-   // (1.1) read-only                                                               // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
+   // (1.1) read-only
+   int hFile;                                                                       // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
-      if (!MQL.IsFile(mqlFileName)) return(-1);                                     // file not found
+      if (!IsFile(mqlFileName, MODE_MQL)) return(-1);                               // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile1.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.2) read-write
    else if (read_write) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile1.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile1.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.3) write-only
    else if (write_only) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(_NULL(catch("HistoryFile1.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      if (hFile <= 0) return(!catch("HistoryFile1.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
-
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    int      bars=0, from.offset=-1, to.offset=-1, fileSize=FileSize(hFile), periodSecs=timeframe * MINUTES;
    datetime from.openTime=0, from.closeTime=0, from.nextCloseTime=0, to.openTime=0, to.closeTime=0, to.nextCloseTime=0;
 
-
    // (2) ggf. neuen HISTORY_HEADER schreiben
    if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
       // Parameter validieren
-      if (!StringLen(copyright))     copyright = "";                                // NULL-Pointer => Leerstring
-      if (StringLen(copyright) > 63) copyright = StrLeft(copyright, 63);            // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(_NULL(catch("HistoryFile1.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
-      if (format!=400) /*&&*/ if (format!=401) return(_NULL(catch("HistoryFile1.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER)));
+      if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
+      if (StringLen(description) > 63) description = StrLeft(description, 63);      // ein zu langer String wird gekürzt
+      if (digits < 0)                          return(!catch("HistoryFile1.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (format!=400) /*&&*/ if (format!=401) return(!catch("HistoryFile1.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
 
-      hh_SetBarFormat(hh, format   );
-      hh_SetCopyright(hh, copyright);
-      hh_SetSymbol   (hh, symbol   );
-      hh_SetPeriod   (hh, timeframe);
-      hh_SetDigits   (hh, digits   );
+      hh_SetBarFormat  (hh, format     );
+      hh_SetDescription(hh, description);
+      hh_SetSymbol     (hh, symbol     );
+      hh_SetPeriod     (hh, timeframe  );
+      hh_SetDigits     (hh, digits     );
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER_intSize);
    }
-
 
    // (3.1) ggf. vorhandenen HISTORY_HEADER auslesen
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(_NULL(catch("HistoryFile1.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+         return(!catch("HistoryFile1.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
       // (3.2) ggf. Bar-Statistik auslesen
@@ -527,7 +532,6 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
       }
    }
 
-
    // (4) Daten zwischenspeichern
    if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
       ResizeFileArrays(hFile+1);                                     // andererseits von FileOpen() wiederverwendetes Handle
@@ -545,7 +549,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string copyright, int digits
    hf.period                     [hFile]        = timeframe;
    hf.periodSecs                 [hFile]        = periodSecs;
    hf.digits                     [hFile]        = hh_Digits(hh);
-   hf.server                     [hFile]        = server;
+   hf.directory                  [hFile]        = directory;
 
    hf.stored.bars                [hFile]        = bars;                 // bei leerer History: 0
    hf.stored.from.offset         [hFile]        = from.offset;          // ...                -1
@@ -1038,7 +1042,7 @@ bool HistoryFile1.UpdateBar(int hFile, int offset, double value) {
  * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
  */
-bool HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags=NULL) {
+bool HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile1.InsertBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile1.InsertBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1070,7 +1074,7 @@ bool HistoryFile1.InsertBar(int hFile, int offset, double bar[], int flags=NULL)
  *
  * @access private
  */
-bool HistoryFile1.WriteLastStoredBar(int hFile, int flags=NULL) {
+bool HistoryFile1.WriteLastStoredBar(int hFile, int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile1.WriteLastStoredBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile1.WriteLastStoredBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1138,7 +1142,7 @@ bool HistoryFile1.WriteLastStoredBar(int hFile, int flags=NULL) {
  *
  * @access private
  */
-bool HistoryFile1.WriteBufferedBar(int hFile, int flags=NULL) {
+bool HistoryFile1.WriteBufferedBar(int hFile, int flags = NULL) {
    if (hFile <= 0)                      return(!catch("HistoryFile1.WriteBufferedBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile1.WriteBufferedBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1252,7 +1256,7 @@ bool HistoryFile1.MoveBars(int hFile, int fromOffset, int destOffset) {
  *
  * @return bool - Erfolgsstatus
  */
-bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags=NULL) {
+bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NULL) {
    if (hFile <= 0)                        return(!catch("HistoryFile1.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile))   return(!catch("HistoryFile1.AddTick(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1432,9 +1436,9 @@ int ResizeSetArrays(int size) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
       ArrayResize(hs.symbolUpper, size);
-      ArrayResize(hs.copyright,   size);
+      ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
-      ArrayResize(hs.server,      size);
+      ArrayResize(hs.directory,   size);
       ArrayResize(hs.hFile,       size);
       ArrayResize(hs.format,      size);
    }
@@ -1468,7 +1472,7 @@ int ResizeFileArrays(int size) {
       ArrayResize(hf.period,                      size);
       ArrayResize(hf.periodSecs,                  size);
       ArrayResize(hf.digits,                      size);
-      ArrayResize(hf.server,                      size);
+      ArrayResize(hf.directory,                   size);
 
       ArrayResize(hf.stored.bars,                 size);
       ArrayResize(hf.stored.from.offset,          size);

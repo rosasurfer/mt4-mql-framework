@@ -30,7 +30,7 @@ int __DeinitFlags[];
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>

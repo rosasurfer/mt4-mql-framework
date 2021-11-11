@@ -2,7 +2,7 @@
  *  Format der LFX-MagicNumber:
  *  ---------------------------
  *  Strategy-Id:  10 bit (Bit 23-32) => Bereich 101-1023
- *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib1::GetCurrencyId()
+ *  Currency-Id:   4 bit (Bit 19-22) => Bereich   1-15         entspricht rsfLib::GetCurrencyId()
  *  Units:         4 bit (Bit 15-18) => Bereich   1-15         Vielfaches von 0.1 von 1 bis 10           // wird in MagicNumber nicht mehr verwendet
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // wird in MagicNumber nicht mehr verwendet
@@ -45,10 +45,10 @@ int    hQC.TradeCmdReceiver;
  * @param  string accountId [optional] - account identifier in format "{account-company}:{account-number}"
  *                                       (default: the current account)
  *
- * @return bool - success status i.e. whether the new account data was successfully applied
+ * @return bool - whether the specified account was successfully applied
  */
 bool InitTradeAccount(string accountId = "") {
-   if (accountId == "0") accountId = "";                       // (string) NULL
+   if (IsLastError()) return(false);
 
    string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
    int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
@@ -61,9 +61,9 @@ bool InitTradeAccount(string accountId = "") {
 
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
-      _accountCompany = StrLeftTo(accountId, ":"); if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      _accountNumber = StrToInteger(sValue); if (!_accountNumber)                   return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))         return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
    }
    else {
       // use the current account and resolve a configured trade account
@@ -1295,7 +1295,7 @@ void DummyCalls() {
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    string ArrayPopString(string array[]);
    int    ArrayPushInts(int array[][], int values[]);
    int    ArraySetInts(int array[][], int i, int values[]);
