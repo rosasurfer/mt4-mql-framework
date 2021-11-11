@@ -39,9 +39,18 @@
  *
  * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
  *
- * • AutoConfiguration:  If enabled configuration settings found in the MetaTrader configuration files override settings in
- *    the indicator's input dialog.
+ * • AutoConfiguration:  If enabled configuration settings found in the MetaTrader framework configuration files override
+ *    settings in the indicator's input dialog. Additional auto-config settings not available in the input dialog:
  *
+ *    [LFX-Monitor]
+ *     Status.xDistance          = {int}                 ; horizontal offset from right in pixels
+ *     Status.yDistance          = {int}                 ; vertical offset from top in pixels
+ *     Status.BgColor            = {color}               ; background color (web color name, integer or RGB triplet)
+ *     Status.FontName           = {string}              ; font family
+ *     Status.FontSize           = {int}                 ; font size
+ *     Status.FontColor.Active   = {color}               ; font color of active indexes
+ *     Status.FontColor.Inactive = {color}               ; font color of inactive indexes
+ *     Status.LineHeight         = {int}                 ; line height
  *
  *
  * TODO:
