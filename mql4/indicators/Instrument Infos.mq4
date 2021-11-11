@@ -14,7 +14,7 @@ extern int Unitsize.TargetPerformance = 10;     // in percent
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_chart_window
 

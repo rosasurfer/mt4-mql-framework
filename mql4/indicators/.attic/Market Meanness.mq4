@@ -23,7 +23,7 @@ extern int   Max.Bars    = 10000;                           // max. values to ca
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_MAIN           MMI.MODE_MAIN                   // indicator buffer id
 

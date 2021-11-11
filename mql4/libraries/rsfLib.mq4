@@ -35,6 +35,9 @@ int __DeinitFlags[];
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinBools.mqh>
+#include <functions/JoinDoubles.mqh>
+#include <functions/JoinDoublesEx.mqh>
+#include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -55,7 +58,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   return(__CheckLocks());
+   return(CheckLocks());
 }
 
 
@@ -106,7 +109,7 @@ bool EditFiles(string &filenames[]) {
       if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
       if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
-      if (IsFileA(filenames[i])) {
+      if (IsFile(filenames[i], MODE_OS)) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
             if (!StringLen(target))
@@ -114,7 +117,7 @@ bool EditFiles(string &filenames[]) {
             filenames[i] = target;
          }
       }
-      else if (IsDirectoryA(filenames[i])) {
+      else if (IsDirectory(filenames[i], MODE_OS)) {
          logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--; i--;
@@ -413,17 +416,17 @@ bool ReleaseLock(string mutexName) {
 
 
 /**
- * Clean up aquired locks. Issue a warning if an unreleased lock was found.
+ * Clean up aquired locks and issue a warning if an unreleased lock was found.
  *
  * @return int - error status
  *
  * @access private
  */
-int __CheckLocks() {
+int CheckLocks() {
    int error = NO_ERROR;
 
    for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
-      logWarn("__CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
+      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
       if (!ReleaseLock(lock.names[i]))
          error = last_error;
    }
@@ -666,7 +669,7 @@ string GetAccountServer() {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
                   fullTmpFilename = GetTerminalDataPathA() +"\\history\\"+ name +"\\"+ tmpFilename;
-                  if (IsFileA(fullTmpFilename)) {
+                  if (IsFile(fullTmpFilename, MODE_OS)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
                      break;
@@ -801,6 +804,92 @@ int SortTicketsChronological(int &tickets[]) {
    }
 
    return(catch("SortTicketsChronological(3)", NULL, O_POP));
+}
+
+
+/**
+ * Sortiert die übergebenen Ticketdaten nach {OpenTime, Ticket}.
+ *
+ * @param  _Inout_ int tickets[] - Array mit Ticketdaten
+ *
+ * @return bool - Erfolgsstatus
+ */
+bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
+   if (ArrayRange(tickets, 1) != 2) return(!catch("SortOpenTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+
+   int rows = ArrayRange(tickets, 0);
+   if (rows < 2)
+      return(true);                                                  // weniger als 2 Zeilen
+
+   // Zeilen nach OpenTime sortieren
+   ArraySort(tickets);
+
+   // Zeilen mit gleicher OpenTime zusätzlich nach Ticket sortieren
+   int openTime, lastOpenTime, ticket, sameOpenTimes[][2];
+   ArrayResize(sameOpenTimes, 1);
+
+   for (int i=0, n; i < rows; i++) {
+      openTime = tickets[i][0];
+      ticket   = tickets[i][1];
+
+      if (openTime == lastOpenTime) {
+         n++;
+         ArrayResize(sameOpenTimes, n+1);
+      }
+      else if (n > 0) {
+         // in sameOpenTimes[] angesammelte Zeilen von keys[] nach Ticket sortieren
+         if (!__SOT.SameOpenTimes(tickets, sameOpenTimes))
+            return(false);
+         ArrayResize(sameOpenTimes, 1);
+         n = 0;
+      }
+      sameOpenTimes[n][0] = ticket;
+      sameOpenTimes[n][1] = i;                                       // Originalposition der Zeile in keys[]
+
+      lastOpenTime = openTime;
+   }
+   if (n > 0) {
+      // im letzten Schleifendurchlauf in sameOpenTimes[] angesammelte Zeilen müssen auch sortiert werden
+      if (!__SOT.SameOpenTimes(tickets, sameOpenTimes))
+         return(false);
+      n = 0;
+   }
+   ArrayResize(sameOpenTimes, 0);
+
+   return(!catch("SortOpenTickets(2)"));
+}
+
+
+/**
+ * Internal helper for SortOpenTickets().
+ *
+ * Sortiert die in rowsToSort[] angegebenen Zeilen des Datenarrays ticketData[] nach Ticket. Die OpenTime-Felder dieser Zeilen sind gleich
+ * und müssen nicht umsortiert werden.
+ *
+ * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
+ * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
+ *
+ * @return bool - Erfolgsstatus
+ *
+ * @access private
+ */
+bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSort[][/*{Ticket, i}*/]) {
+   int rows.copy[][2]; ArrayResize(rows.copy, 0);
+   ArrayCopy(rows.copy, rowsToSort);                                 // auf Kopie von rowsToSort[] arbeiten, um das übergebene Array nicht zu modifizieren
+
+   // Zeilen nach Ticket sortieren
+   ArraySort(rows.copy);
+
+   int ticket, rows=ArrayRange(rowsToSort, 0);
+
+   // Originaldaten mit den sortierten Werten überschreiben
+   for (int i, n=0; n < rows; n++) {
+      i                = rowsToSort[n][1];
+      ticketData[i][1] = rows.copy [n][0];
+   }
+
+   ArrayResize(rows.copy, 0);
+   return(!catch("__SOT.SameOpenTimes(1)"));
 }
 
 
@@ -1605,6 +1694,44 @@ int ArrayInsertDouble(double &array[], int offset, double value) {
 
 
 /**
+ * Fügt an einem Offset eines zwei-dimensionalen Double-Arrays ein anderes Double-Array ein.
+ *
+ * @param  _InOut_ double array[][] - zu vergrößerndes zwei-dimensionales Ausgangs-Array
+ * @param  _In_    int    offset    - Position im Ausgangs-Array, an dem das andere Array eingefügt werden soll
+ * @param  _In_    double values[]  - einzufügendes Array (muß in seiner ersten Dimension der zweiten Dimension des Ausgangsarrays entsprechen)
+ *
+ * @return int - neue Größe des Ausgangsarrays oder EMPTY (-1), falls ein Fehler auftrat
+ */
+int ArrayInsertDoubleArray(double &array[][], int offset, double values[]) {
+   if (ArrayDimension(array) != 2)         return(catch("ArrayInsertDoubleArray(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayDimension(values) != 1)        return(catch("ArrayInsertDoubleArray(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+   int array.dim1 = ArrayRange(array, 0);
+   int array.dim2 = ArrayRange(array, 1);
+   if (ArraySize(values) != array.dim2)    return(catch("ArrayInsertDoubleArray(3)  array size mis-match of parameters array and values: array["+ array.dim1 +"]["+ array.dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset < 0 || offset >= array.dim1) return(catch("ArrayInsertDoubleArray(4)  illegal parameter offset: "+ offset, ERR_INVALID_PARAMETER));
+
+   // Ausgangsarray vergrößern
+   int newSize = array.dim1 + 1;
+   ArrayResize(array, newSize);
+
+   // Inhalt des Ausgangsarrays von offset nach hinten verschieben
+   int array.dim2.size = array.dim2 * DOUBLE_VALUE;
+   int src   = GetDoublesAddress(array) + offset * array.dim2.size;
+   int dest  =                               src + array.dim2.size;
+   int bytes =               (array.dim1-offset) * array.dim2.size;
+   CopyMemory(dest, src, bytes);
+
+   // Inhalt des anderen Arrays an den gewünschten Offset schreiben
+   dest  = src;
+   src   = GetDoublesAddress(values);
+   bytes = array.dim2.size;
+   CopyMemory(dest, src, bytes);
+
+   return(newSize);
+}
+
+
+/**
  * Fügt in ein Bool-Array die Elemente eines anderen Bool-Arrays ein.
  *
  * @param  bool array[]  - Ausgangs-Array
@@ -1711,6 +1838,79 @@ int ArrayInsertDoubles(double array[], int offset, double values[]) {
    ArrayCopy(array, array, offset+sizeOfValues, offset, sizeOfArray-offset);     // Elemente nach Offset nach hinten schieben
    ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
 
+   return(newSize);
+}
+
+
+/**
+ * Fügt ein Element an der angegebenen Position eines String-Arrays ein.
+ *
+ * @param  _InOut_ string array[] - String-Array
+ * @param  _In_    int    offset  - Position, an dem das Element eingefügt werden soll
+ * @param  _In_    string value   - einzufügendes Element
+ *
+ * @return int - neue Größe des Arrays oder -1 (nEMPTY), falls ein Fehler auftrat
+ */
+int ArrayInsertString(string &array[], int offset, string value) {
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayInsertString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                return(_EMPTY(catch("ArrayInsertString(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
+   int size = ArraySize(array);
+   if (size < offset)             return(_EMPTY(catch("ArrayInsertString(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ size +")", ERR_INVALID_PARAMETER)));
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(ArrayUnshiftString(array, value));
+
+   // Einfügen am Ende des Arrays
+   if (offset == size)
+      return(ArrayPushString(array, value));
+
+   // Einfügen innerhalb des Arrays: ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, daher zusätzliche Kopie nötig
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, size-offset);                                // Kopie der Elemente hinterm Einfügepunkt machen
+   ArrayCopy(array, tmp, offset+1);                                              // Elemente hinterm Einfügepunkt nach hinten schieben (Quelle: die Kopie)
+   ArrayResize(tmp, 0);
+   array[offset] = value;                                                        // Lücke mit einzufügendem Wert füllen
+   return(size + 1);
+}
+
+
+/**
+ * Fügt in ein String-Array die Elemente eines anderen String-Arrays ein.
+ *
+ * @param  _InOut_ string array[]  - Ausgangs-Array
+ * @param  _In_    int    offset   - Position im Ausgangs-Array, an dem die Elemente eingefügt werden sollen
+ * @param  _In_    string values[] - einzufügende Elemente
+ *
+ * @return int - neue Größe des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ */
+int ArrayInsertStrings(string &array[], int offset, string values[]) {
+   if (ArrayDimension(array) > 1)  return(_EMPTY(catch("ArrayInsertStrings(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (offset < 0)                 return(_EMPTY(catch("ArrayInsertStrings(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
+   int sizeOfArray = ArraySize(array);
+   if (sizeOfArray < offset)       return(_EMPTY(catch("ArrayInsertStrings(3)  invalid parameter offset: "+ offset +" (sizeOf(array) = "+ sizeOfArray +")", ERR_INVALID_PARAMETER)));
+   if (ArrayDimension(values) > 1) return(_EMPTY(catch("ArrayInsertStrings(4)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   int sizeOfValues = ArraySize(values);
+
+   // Einfügen am Anfang des Arrays
+   if (offset == 0)
+      return(MergeStringArrays(values, array, array));
+
+   // Einfügen am Ende des Arrays
+   if (offset == sizeOfArray)
+      return(MergeStringArrays(array, values, array));
+
+   // Einfügen innerhalb des Arrays
+   int newSize = sizeOfArray + sizeOfValues;
+   ArrayResize(array, newSize);
+
+   // ArrayCopy() "zerstört" bei String-Arrays den sich überlappenden Bereich, wir müssen mit einer zusätzlichen Kopie arbeiten
+   string tmp[]; ArrayResize(tmp, 0);
+   ArrayCopy(tmp, array, 0, offset, sizeOfArray-offset);                         // Kopie der Elemente hinter dem Einfügepunkt erstellen
+   ArrayCopy(array, tmp, offset+sizeOfValues);                                   // Elemente hinter dem Einfügepunkt nach hinten schieben
+   ArrayCopy(array, values, offset);                                             // Lücke mit einzufügenden Werten überschreiben
+
+   ArrayResize(tmp, 0);
    return(newSize);
 }
 
@@ -2710,7 +2910,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
    while (!FileIsEnding(hFile)) {
       newLine = false;
       if (lineEnd) {                                                       // if the last loop reached EOF
-         newLine   = true;                                                 // mark start of a new line = BOL
+         newLine   = true;                                                 // mark begin of a new line = BOL
          blankLine = false;
          lineEnd   = false;
          fPointer  = FileTell(hFile);                                      // points to the start of the current line
@@ -2770,7 +2970,7 @@ int FileReadLines(string filename, string result[], bool skipEmptyLines = false)
 
    // check whether the end of file triggered ERR_END_OF_FILE
    int error = GetLastError();
-   if (error!=ERR_END_OF_FILE) /*&&*/ if (IsError(error)) {
+   if (error && error!=ERR_END_OF_FILE) {
       FileClose(hFile);
       if (hFileBin != 0)
          FileClose(hFileBin);
@@ -4598,6 +4798,626 @@ string DoubleToStrEx(double value, int digits) {
 
 
 /**
+ * Wrap values of a string array in double quote characters. Modifies the passed array. Not initialized array elements
+ * (string NULL pointers) are not modified.
+ *
+ * @param  string values[]
+ *
+ * @return bool - success status
+ */
+bool DoubleQuoteStrings(string &values[]) {
+   if (ArrayDimension(values) > 1) return(!catch("DoubleQuoteStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS));
+
+   int size = ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      if (!StrIsNull(values[i]))                                     // skip NULL pointers
+         values[i] = StringConcatenate("\"", values[i], "\"");
+   }
+   return(true);
+}
+
+
+/**
+ * Store LFX_ORDER data in the library or restore it from data stored in the library.
+ *
+ * @param  _In_    bool   store    - processing direction: TRUE  = store passed parameters in the library
+ *                                                         FALSE = restore parameters from data in the library
+ * @param  _InOut_ int    orders[] - structs LFX_ORDER[]
+ * @param  _InOut_ int    iData [] - integer data
+ * @param  _InOut_ bool   bData [] - boolean data
+ * @param  _InOut_ double dData [] - double data
+ *
+ * @return int - number of copied LFX_ORDER structs or EMPTY (-1) in case of errors
+ */
+int ChartInfos.CopyLfxOrders(bool store, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]) {
+   store = store!=0;
+
+   static int    static_orders[][LFX_ORDER_intSize];
+   static int    static_iData [][1];
+   static bool   static_bData [][3];
+   static double static_dData [][7];
+
+   if (store) {
+      ArrayResize(static_orders, 0);
+      ArrayResize(static_iData,  0);
+      ArrayResize(static_bData,  0);
+      ArrayResize(static_dData,  0);
+
+      if (ArrayRange(orders, 0) > 0) ArrayCopy(static_orders, orders);
+      if (ArrayRange(iData,  0) > 0) ArrayCopy(static_iData,  iData );
+      if (ArrayRange(bData,  0) > 0) ArrayCopy(static_bData,  bData );
+      if (ArrayRange(dData,  0) > 0) ArrayCopy(static_dData,  dData );
+
+      if (IsError(catch("ChartInfos.CopyLfxOrders(1)"))) return(EMPTY);
+   }
+   else {
+      ArrayResize(orders, 0);
+      ArrayResize(iData,  0);
+      ArrayResize(bData,  0);
+      ArrayResize(dData,  0);
+
+      if (ArrayRange(static_orders, 0) > 0) ArrayCopy(orders, static_orders);
+      if (ArrayRange(static_iData,  0) > 0) ArrayCopy(iData,  static_iData );
+      if (ArrayRange(static_bData,  0) > 0) ArrayCopy(bData,  static_bData );
+      if (ArrayRange(static_dData,  0) > 0) ArrayCopy(dData,  static_dData );
+
+      if (IsError(catch("ChartInfos.CopyLfxOrders(2)"))) return(EMPTY);
+   }
+
+   return(ArrayRange(orders, 0));
+}
+
+
+/**
+ * Convert an array of character values to a human-readable string.
+ *
+ * @param  int    values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string CharsToStr(int values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("CharsToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = StringConcatenate("'", CharToStr(values[i]), "'");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Convert a double array with max. 3 dimensions to a human-readable string.
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string DoublesToStr(double values[][], string separator = ", ") {
+   return(__DoublesToStr(values, values, separator));
+}
+
+
+/**
+ * Internal helper for DoublesToStr(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __DoublesToStr(double values2[][], double values3[][][], string separator) {
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoubles(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      double  values2.Y[]; ArrayResize( values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         sValues2.X[x] = DoublesToStr(values2.Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      double  values3.Z[]; ArrayResize( values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            sValues3.Y[y] = DoublesToStr(values3.Z, separator);
+         }
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__DoublesToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert a double array with max. 3 dimensions to a human-readable string using a custom precision of up to 16 digits.
+ *
+ * @param  double values[]  - values to convert
+ * @param  string separator - separator (default: ", ")
+ * @param  int    digits    - number of decimal digits (0-16)
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string DoublesToStrEx(double values[][], string separator, int digits) {
+   return(__DoublesToStrEx(values, values, separator, digits));
+}
+
+
+/**
+ * Internal helper for DoublesToStrEx(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __DoublesToStrEx(double values2[][], double values3[][][], string separator, int digits) {
+   if (digits < 0 || digits > 16) return(_EMPTY_STR(catch("__DoublesToStrEx(1)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinDoublesEx(values2, digits, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      double  values2.Y[]; ArrayResize( values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         sValues2.X[x] = DoublesToStrEx(values2.Y, separator, digits);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      double  values3.Z[]; ArrayResize( values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            sValues3.Y[y] = DoublesToStrEx(values3.Z, separator, digits);
+         }
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__DoublesToStrEx(2)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert an integer array with max. 3 dimensions to a human-readable string.
+ *
+ * @param  int    values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string IntsToStr(int values[][], string separator = ", ") {
+   return(__IntsToStr(values, values, separator));
+}
+
+
+/**
+ * Internal helper for IntsToStr(), works around the compiler's dimension check.
+ *
+ * @access private
+ */
+string __IntsToStr(int values2[][], int values3[][][], string separator) {
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   int dimensions=ArrayDimension(values2), dim1=ArrayRange(values2, 0), dim2, dim3;
+   string result = "";
+
+   // 1-dimensional array
+   if (dimensions == 1) {
+      if (dim1 == 0)
+         return("{}");
+      return(StringConcatenate("{", JoinInts(values2, separator), "}"));
+   }
+   else dim2 = ArrayRange(values2, 1);
+
+   // 2-dimensional array
+   if (dimensions == 2) {
+      string sValues2.X[]; ArrayResize(sValues2.X, dim1);
+      int     values2.Y[]; ArrayResize( values2.Y, dim2);
+
+      for (int x=0; x < dim1; x++) {
+         for (int y=0; y < dim2; y++) {
+            values2.Y[y] = values2[x][y];
+         }
+         sValues2.X[x] = IntsToStr(values2.Y, separator);
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      ArrayResize(sValues2.X, 0);
+      ArrayResize( values2.Y, 0);
+      return(result);
+   }
+   else dim3 = ArrayRange(values3, 2);
+
+   // 3-dimensional array
+   if (dimensions == 3) {
+      string sValues3.X[]; ArrayResize(sValues3.X, dim1);
+      string sValues3.Y[]; ArrayResize(sValues3.Y, dim2);
+      int     values3.Z[]; ArrayResize( values3.Z, dim3);
+
+      for (x=0; x < dim1; x++) {
+         for (y=0; y < dim2; y++) {
+            for (int z=0; z < dim3; z++) {
+               values3.Z[z] = values3[x][y][z];
+            }
+            sValues3.Y[y] = IntsToStr(values3.Z, separator);
+         }
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+      }
+
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      ArrayResize(sValues3.X, 0);
+      ArrayResize(sValues3.Y, 0);
+      ArrayResize( values3.Z, 0);
+      return(result);
+   }
+
+   return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAYS)));
+}
+
+
+/**
+ * Convert an array with money amounts to a human-readable string (with 2 digits per value).
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string MoneysToStr(double values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("MoneysToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = DoubleToStr(values[i], 2);
+      if (!StringLen(strings[i]))
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Convert an array with operation types to a human-readable string.
+ *
+ * @param  int    values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string OperationTypesToStr(int values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("OperationTypesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[]; ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      strings[i] = OperationTypeToStr(values[i]);
+      if (!StringLen(strings[i]))
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Convert an array with price quotes to a human-readable string (formatted with the current PriceFormat).
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string RatesToStr(double values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("RatesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (size == 0)
+      return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      if (!values[i]) strings[i] = "0";
+      else            strings[i] = NumberToStr(values[i], PriceFormat);
+
+      if (!StringLen(strings[i]))
+         return("");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
+ * Alias of RatesToStr()
+ *
+ * Convert an array with price quotes to a human-readable string (formatted with the current PriceFormat).
+ *
+ * @param  double values[]
+ * @param  string separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string PricesToStr(double values[], string separator = ", ") {
+   return(RatesToStr(values, separator));
+}
+
+
+/**
+ * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TicketsToStr.Lots(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.Lots(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   OrderPush("TicketsToStr.Lots(2)");
+   string result="", sValue="";
+
+   for (int i=0; i < size; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"));
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"));
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
+         }
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+      }
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   OrderPop("TicketsToStr.Lots(3)");
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
+ * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize and symbol.
+ *
+ * @param  int    tickets[]
+ * @param  string separator - separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TicketsToStr.LotsSymbols(int tickets[], string separator = ", ") {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.LotsSymbols(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(tickets);
+   if (!size) return("{}");
+
+   if (separator == "0")               // (string) NULL
+      separator = ", ";
+
+   string result="", sValue="";
+   OrderPush("TicketsToStr.LotsSymbols(2)");
+
+   for (int i=0; i < size; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if      (IsLongOrderType(OrderType()))  sValue = StringConcatenate("#", tickets[i], ":+", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else if (IsShortOrderType(OrderType())) sValue = StringConcatenate("#", tickets[i], ":-", NumberToStr(OrderLots(), ".1+"), OrderSymbol());
+            else                                    sValue = StringConcatenate("#", tickets[i], ":none");
+         }
+         else                                       sValue = StringConcatenate("(unknown ticket #", tickets[i], ")");
+      }
+      else if (!tickets[i]) sValue = "(NULL)";
+      else                  sValue = StringConcatenate("(invalid ticket #", tickets[i], ")");
+
+      result = StringConcatenate(result, separator, sValue);
+   }
+
+   OrderPop("TicketsToStr.LotsSymbols(3)");
+   return(StringConcatenate("{", StrSubstr(result, StringLen(separator)), "}"));
+}
+
+
+/**
+ * Resolve the total position size of all passed order tickets and convert them to a human-readable string.
+ *
+ * @param  int tickets[]
+ *
+ * @return string - string with total position sizes or an empty string in case of errors
+ */
+string TicketsToStr.Position(int tickets[]) {
+   if (ArrayDimension(tickets) != 1) return(_EMPTY_STR(catch("TicketsToStr.Position(1)  illegal dimensions of parameter tickets: "+ ArrayDimension(tickets), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int ticketsSize = ArraySize(tickets);
+   if (!ticketsSize)
+      return("(empty)");
+
+   double longPosition, shortPosition, totalPosition, hedgedPosition;
+   OrderPush("TicketsToStr.Position(2)");
+
+   for (int i=0; i < ticketsSize; i++) {
+      if (tickets[i] > 0) {
+         if (OrderSelect(tickets[i], SELECT_BY_TICKET)) {
+            if (IsLongOrderType(OrderType())) longPosition  += OrderLots();
+            else                              shortPosition += OrderLots();
+         }
+         else GetLastError();
+      }
+   }
+
+   OrderPop("TicketsToStr.Position(3)");
+
+   longPosition   = NormalizeDouble(longPosition,  2);
+   shortPosition  = NormalizeDouble(shortPosition, 2);
+   totalPosition  = NormalizeDouble(longPosition - shortPosition, 2);
+   hedgedPosition = MathMin(longPosition, shortPosition);
+   bool isPosition = longPosition || shortPosition;
+
+   string result = "";
+   if (!isPosition)         result = "(none)";
+   else if (!totalPosition) result = "±"+ NumberToStr(longPosition,  ".+")                                                                          +" lots (hedged)";
+   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ±"+ NumberToStr(hedgedPosition, ".+")) +" lots";
+
+   return(result);
+}
+
+
+/**
+ * Convert a datetime array to a human-readable string.
+ *
+ * @param  datetime values[]
+ * @param  string   separator - value separator (default: ", ")
+ *
+ * @return string - human-readable string or an empty string in case of errors
+ */
+string TimesToStr(datetime values[], string separator=", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("TimesToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   int size = ArraySize(values);
+   if (ArraySize(values) == 0)
+      return("{}");
+
+   if (separator == "0")      // (string) NULL
+      separator = ", ";
+
+   string strings[];
+   ArrayResize(strings, size);
+
+   for (int i=0; i < size; i++) {
+      if      (values[i] <  0) strings[i] = "-1";
+      else if (values[i] == 0) strings[i] =  "0";
+      else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
+   }
+
+   string joined = JoinStrings(strings, separator);
+   if (!StringLen(joined))
+      return("");
+   return(StringConcatenate("{", joined, "}"));
+}
+
+
+/**
  * Handler for order related errors which occurred in one of the library's order functions.
  *
  * The error is always set in the passed struct ORDER_EXECUTION. After the passed execution flags determine how the error is
@@ -5959,7 +6779,7 @@ bool OrdersClose(int tickets[], int slippage, color markerColor, int oeFlags, in
 
    // tickets belong to multiple symbols
    // we are not in the Tester
-   if (IsLogDebug()) logDebug("OrdersClose(15)  closing "+ sizeOfTickets +" mixed positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersClose(15)  closing "+ sizeOfTickets +" mixed positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[], flatSymbols[]; ArrayResize(ticketsCopy, 0); ArrayResize(flatSymbols, 0);
@@ -6117,7 +6937,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
    }
 
    // multiple close
-   if (IsLogDebug()) logDebug("OrdersCloseSameSymbol(16)  closing "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersCloseSameSymbol(16)  closing "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -6244,7 +7064,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
 
    if (EQ(totalLots, 0)) {
       // total position is already flat
-      if (IsLogDebug()) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets, NULL) +" are already flat");
+      if (IsLogDebug()) logDebug("OrdersHedge(13)  "+ sizeOfTickets +" "+ symbol +" positions "+ TicketsToStr.Lots(tickets) +" are already flat");
 
       // set all CloseTime/ClosePrices to OpenTime/OpenPrice of the ticket opened last
       int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -6263,7 +7083,7 @@ int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    else {
       // total position is not flat
       OrderPop("OrdersHedge(16)");
-      if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets, NULL));
+      if (IsLogDebug()) logDebug("OrdersHedge(17)  hedging "+ sizeOfTickets +" "+ symbol +" position"+ ifString(sizeOfTickets==1, " ", "s ") + TicketsToStr.Lots(tickets));
       int closeTicket, totalDir=ifInt(GT(totalLots, 0), OP_LONG, OP_SHORT), oe[];
 
       // if possible use OrderCloseEx() for hedging (reduces MarginRequired and cannot cause violation of TradeserverLimit)
@@ -6404,7 +7224,7 @@ bool OrdersCloseHedged(int tickets[], color markerColor, int oeFlags, int oes[][
    }
    if (NE(lots, 0, 2)) return(_false(Order.HandleError("OrdersCloseHedged(13)  tickets don't form a flat position (total position: "+ DoubleToStr(lots, 2) +")", ERR_TOTAL_POSITION_NOT_FLAT, oeFlags, oes), OrderPop("OrdersCloseHedged(14)")));
 
-   if (IsLogDebug()) logDebug("OrdersCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets, NULL));
+   if (IsLogDebug()) logDebug("OrdersCloseHedged(15)  closing "+ sizeOfTickets +" hedged "+ OrderSymbol() +" positions "+ TicketsToStr.Lots(tickets));
 
    // continue with a modifyable copy of tickets[]
    int ticketsCopy[]; ArrayResize(ticketsCopy, 0);
@@ -7161,10 +7981,10 @@ string GetTempPath() {
  */
 string CreateTempFile(string path, string prefix="") {
    int len = StringLen(path);
-   if (!len)                   return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)      return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
+   if (!len)                           return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)              return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
    if (path!=".") /*&&*/ if (path!="..")
-      if (!IsDirectoryA(path)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+      if (!IsDirectory(path, MODE_OS)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
    if (StrIsNull(prefix))
       prefix = "";
@@ -7354,7 +8174,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 
    // (1) "symgroups.raw" auf Existenz prüfen                        // Extra-Prüfung, da bei Read-only-Zugriff FileOpen[History]() bei nicht existierender
    string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
-   if (!MQL.IsFile(mqlFileName))
+   if (!IsFile(mqlFileName, MODE_MQL))
       return(0);
 
    // (2) Datei öffnen und Größe validieren
@@ -7505,7 +8325,7 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    }
 
    // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
-   if (!MQL.IsFile(fileName))                                        // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
+   if (!IsFile(fileName, MODE_MQL))                                  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       return(false);
 
    // Datei öffnen und Größe validieren
@@ -7536,11 +8356,6 @@ void onLibraryInit() {
    ArrayResize(lock.counters, 0);
 }
 
-
-#import "rsfLib2.ex4"
-   bool   DoubleQuoteStrings(string array[]);
-   string DoublesToStr(double array[], string separator);
-   string TicketsToStr.Lots(int array[], string separator);
 
 #import "rsfMT4Expander.dll"
    int    GetIniKeysA(string fileName, string section, int buffer[], int bufferSize);

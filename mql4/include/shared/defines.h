@@ -224,8 +224,10 @@
 #define MODE_CEIL                               3        // normalize up to the next largest absolute value
 
 
-// file system related constants
-#define MKDIR_PARENT                            1        // create non-existing parent directories as needed => @see CreateDirectory()
+// file function flags
+#define MODE_MQL                                1        // restrict file system operations to the MQL sandbox
+#define MODE_OS                                 2        // allow file system operations outside of the MQL sandbox
+#define MODE_MKPARENT                           4        // create non-existing parent directories as needed, @see CreateDirectory()
 
 
 // time constants

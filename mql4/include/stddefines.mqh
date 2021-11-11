@@ -6,7 +6,7 @@
 #include <mqldefines.mqh>                                         // to be increased. Using 32KB has always been sufficient.
 #include <win32defines.mqh>                                       //
 #include <structs/sizes.mqh>                                      //  @see  https://docs.mql4.com/basis/variables/local#stack
-                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation#
+                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // aktueller ExecutionContext

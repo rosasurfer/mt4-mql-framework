@@ -19,7 +19,7 @@ extern string Close.Comments     = "";          // Kommentare:   kommagetrennt, 
 
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 string orderSymbols [];
 int    orderTickets [];

@@ -49,7 +49,7 @@ extern int    Max.Bars       = 10000;                    // max. values to calcu
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #define MODE_MAIN             FDI.MODE_MAIN
 #define MODE_UPPER            1                          // indicator buffer ids

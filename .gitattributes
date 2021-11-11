@@ -45,15 +45,11 @@ hotkeys.ini       text eol=crlf
 
 
 # Gitgub Linguist overrides
-config/server/*   linguist-vendored
-config/symbols/*  linguist-generated
-etc/doc/*         linguist-documentation
-etc/fonts/*       linguist-vendored
-etc/icons/*       linguist-vendored
-etc/windows/*     linguist-vendored
-mql4/files/*      linguist-generated
-profiles/*        linguist-generated
-sounds/*          linguist-vendored
-templates/*       linguist-generated
+etc/doc/**        linguist-detectable=false
+etc/windows/**    linguist-detectable=false
+mql4/files/**     linguist-detectable=false
+profiles/**       linguist-detectable=false
+sounds/**         linguist-detectable=false
+templates/**      linguist-detectable=false
 *.mqh             linguist-language=MQL4
-*.tpl             linguist-generated
+

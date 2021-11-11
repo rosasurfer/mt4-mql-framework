@@ -42,7 +42,7 @@ extern bool   Signal.onBreakout.SMS          = false;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/IsBarOpen.mqh>
 
