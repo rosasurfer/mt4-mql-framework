@@ -7,17 +7,53 @@
  * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
  *
  *
- * TODO:
- *  - move history libraries to MT4Expander
- *  - improve cache flushing for the different timeframes
+ * Input parameters:
+ * -----------------
+ * • USDLFX.Enabled:  Whether calculation of the USDLFX index is enabled.
+ * • AUDLFX.Enabled:  Whether calculation of the AUDLFX index is enabled.
+ * • CADLFX.Enabled:  Whether calculation of the CADLFX index is enabled.
+ * • CHFLFX.Enabled:  Whether calculation of the CHFLFX index is enabled.
+ * • EURLFX.Enabled:  Whether calculation of the EURLFX index is enabled.
+ * • GBPLFX.Enabled:  Whether calculation of the GBPLFX index is enabled.
+ * • JPYLFX.Enabled:  Whether calculation of the JPYLFX index is enabled.
+ * • NZDLFX.Enabled:  Whether calculation of the NZDLFX index is enabled.
  *
+ * • NOKFX7.Enabled:  Whether calculation of the NOKFX7 index is enabled.
+ * • SEKFX7.Enabled:  Whether calculation of the SEKFX7 index is enabled.
+ * • SGDFX7.Enabled:  Whether calculation of the SGDFX7 index is enabled.
+ * • ZARFX7.Enabled:  Whether calculation of the ZARFX7 index is enabled.
+ *
+ * • EURX.Enabled:  Whether calculation of the ICE EURX index is enabled.
+ * • USDX.Enabled:  Whether calculation of the ICE USDX index is enabled.
+ *
+ * • XAUI.Enabled:  Whether calculation of the Gold index is enabled.
+ *
+ * • Recording.Enabled:  Whether recording of active indexes is enabled.
+ *
+ * • Recording.HistoryDirectory:  Name of the history directory to store recorded data. Must be a located in the "MQL4/files"
+ *    directory. If the directory doesn't exist it is created. The name may contain subdirectories and supports both forward
+ *    and backward slashes.
+ *
+ * • Recording.HistoryFormat:  Created history format if an history file doesn't yet exist. If an history file already exists
+ *    it's re-used (in any format) and the format is not changed.
+ *
+ * • Broker.SymbolSuffix:  Symbol suffix for brokers with non-standard symbols.
+ *
+ * • AutoConfiguration:  If enabled configuration settings found in the MetaTrader configuration files override settings in
+ *    the indicator's input dialog.
+ *
+ *
+ *
+ * TODO:
  *  - documentation
- *     inputs
  *     auto-configuration
  *     symbol requirements
  *     timezone configuration for detection of stale quotes
  *     requirements for "Recording.HistoryDirectory"
  *     handling of different history formats
+ *
+ *  - improve cache flushing for the different timeframes
+ *  - move history libraries to MT4Expander
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
