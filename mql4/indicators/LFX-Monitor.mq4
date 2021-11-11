@@ -4,7 +4,8 @@
  * Calculates various synthetic indexes and optionally records the index history. If linked to an LFX charting terminal the
  * indicator can monitor and process order limits of synthetic positions. For index descriptions see the following link:
  *
- * @link  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
+ * @see  https://github.com/rosasurfer/mt4-tools/tree/master/app/lib/synthetic
+ * @see  https://www.forexfactory.com/thread/post/13783504#post13783504
  *
  *
  * Input parameters:
@@ -28,7 +29,8 @@
  *
  * • XAUI.Enabled:  Whether calculation of the Gold index is enabled.
  *
- * • Recording.Enabled:  Whether recording of active indexes is enabled.
+ * • Recording.Enabled:  Whether recording of active indexes is enabled. If FALSE indexes active indexes are only calculated
+ *    and displayed.
  *
  * • Recording.HistoryDirectory:  Name of the history directory to store recorded data. Must be a located in the "MQL4/files"
  *    directory. If the directory doesn't exist it is created. The name may contain subdirectories and supports both forward
