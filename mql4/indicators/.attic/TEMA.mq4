@@ -29,7 +29,7 @@ extern int    Max.Bars        = 10000;                   // max. values to calcu
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_TEMA             MovingAverage.MODE_MA

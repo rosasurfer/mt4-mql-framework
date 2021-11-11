@@ -15,7 +15,7 @@ extern int Periods = 32;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   1

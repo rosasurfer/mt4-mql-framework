@@ -4,16 +4,16 @@
  * Draws bars of higher timeframes on the chart. The active timeframe can be changed with the scripts "SuperBars.TimeframeUp"
  * and "SuperBars.TimeframeDown".
  *
- * With input parameter "AutoConfiguration" enabled (default) inputs found in the external framework configuration have
- * precedence over manual inputs. Additional external configuration settings (no manual inputs):
+ * With input parameter "AutoConfiguration" enabled (default) inputs found in the MetaTrader framework configuration override
+ * manual inputs. Additional auto-config settings:
  *
  * [SuperBars]
  *  Legend.Corner                = {int}              ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
  *  Legend.xDistance             = {int}              ; offset in pixels
  *  Legend.yDistance             = {int}              ; offset in pixels
- *  Legend.FontName              = {string}           ; font family
+ *  Legend.FontName              = {string}           ; font name
  *  Legend.FontSize              = {int}              ; font size
- *  Legend.FontColor             = {color}            ; font color (web color name or integer triplet)
+ *  Legend.FontColor             = {color}            ; font color (web color name, integer or RGB triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
  *  MaxBars.H1                   = {int}              ; max. number of H1 superbars (performance, default: all)
  *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
@@ -24,7 +24,7 @@
  *  - doesn't work on offline charts
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_TIMEZONE, INIT_AUTOCONFIG};
+int   __InitFlags[] = {INIT_TIMEZONE};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -40,7 +40,8 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
@@ -63,7 +64,7 @@ int    legendCorner     = CORNER_TOP_LEFT;
 int    legend_xDistance = 300;
 int    legend_yDistance = 3;
 string legendFontName   = "";                         // default: empty = menu font ("MS Sans Serif")
-int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds with the menu font
+int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds matches the menu font/size
 color  legendFontColor  = Black;
 
 string errorSound = "";                               // sound played when timeframe cycling is at min/max (default: none)
@@ -75,7 +76,7 @@ string errorSound = "";                               // sound played when timef
  * @return int - error status
  */
 int onInit() {
-   string indicator = WindowExpertName();
+   string indicator = StrTrim(ProgramName());
 
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -84,7 +85,7 @@ int onInit() {
    if (UnchangedBars.Color == 0xFF000000) UnchangedBars.Color = CLR_NONE;
    if (CloseMarker.Color   == 0xFF000000) CloseMarker.Color   = CLR_NONE;
    if (ETH.Color           == 0xFF000000) ETH.Color           = CLR_NONE;
-   if (__isAutoConfig) {
+   if (AutoConfiguration) {
       UpBars.Color        = GetConfigColor(indicator, "UpBars.Color",        UpBars.Color);
       DownBars.Color      = GetConfigColor(indicator, "DownBars.Color",      DownBars.Color);
       UnchangedBars.Color = GetConfigColor(indicator, "UnchangedBars.Color", UnchangedBars.Color);
@@ -93,7 +94,7 @@ int onInit() {
    }
    // ETH.Symbols
    string values[], sValue = StrTrim(ETH.Symbols);
-   if (__isAutoConfig) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
    if (StringLen(sValue) > 0) {
       int size = Explode(StrToLower(sValue), ",", values, NULL);
       for (int i=0; i < size; i++) {
@@ -171,6 +172,34 @@ bool onCommand(string commands[]) {
 
 
 /**
+ * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
+ *
+ * @param  _InOut_ string &commands[] - array to add received commands to
+ *
+ * @return bool
+ */
+bool EventListener_ChartCommand(string &commands[]) {
+   if (!__isChart) return(false);
+
+   static string label="", mutex=""; if (!StringLen(label)) {
+      label = ProgramName() +".command";
+      mutex = "mutex."+ label;
+   }
+
+   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
+   if (ObjectFind(label) == 0) {
+      // now aquire the lock for read-write access
+      if (AquireLock(mutex, true)) {
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
+   }
+   return(false);
+}
+
+
+/**
  * Change the currently active superbars timeframe.
  *
  * @param  int direction - direction to change: STF_UP | STF_DOWN
@@ -178,8 +207,6 @@ bool onCommand(string commands[]) {
  * @return bool - success status
  */
 bool SwitchSuperTimeframe(int direction) {
-   bool reset = false;
-
    if (direction == STF_DOWN) {
       switch (superTimeframe) {
          case  INT_MIN:

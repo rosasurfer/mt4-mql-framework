@@ -35,7 +35,7 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids

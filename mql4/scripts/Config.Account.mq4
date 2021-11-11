@@ -6,7 +6,7 @@ int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <win32api.mqh>
 
 
@@ -20,15 +20,15 @@ int onStart() {
    string filename = GetAccountConfigPath();
 
    // make sure the file exist
-   if (IsDirectoryA(filename)) return(catch("onStart(1)  assumed config file is a directory: "+ DoubleQuoteStr(filename), ERR_FILE_IS_DIRECTORY));
+   if (IsDirectory(filename, MODE_OS)) return(catch("onStart(1)  assumed config file is a directory: "+ DoubleQuoteStr(filename), ERR_FILE_IS_DIRECTORY));
 
-   if (!IsFileA(filename)) {
+   if (!IsFile(filename, MODE_OS)) {
       // make sure the final directory exists
       int pos = Max(StrFindR(filename, "/"), StrFindR(filename, "\\"));
       if (pos == 0)          return(catch("onStart(2)  illegal config filename "+ DoubleQuoteStr(filename), ERR_ILLEGAL_STATE));
       if (pos > 0) {
          string dir = StrLeft(filename, pos);
-         int error = CreateDirectoryA(dir, MKDIR_PARENT);
+         int error = CreateDirectoryA(dir, MODE_OS|MODE_MKPARENT);
          if (IsError(error)) return(catch("onStart(3)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
       }
       // create the file

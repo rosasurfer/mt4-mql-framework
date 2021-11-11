@@ -96,8 +96,9 @@ extern bool     TakeProfitBug                   = true;                       //
 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <rsfHistory.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -887,7 +888,7 @@ bool onRealPositionClose(int i) {
  */
 bool onVirtualPositionClose(int i) {
    // update order log
-   virt.closeTime[i] = Tick.Time;
+   virt.closeTime[i] = Tick.time;
    virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
 
    if (IsLogDebug()) {
@@ -1137,7 +1138,7 @@ bool OpenVirtualOrder(int signal) {
    string comment    = "XMT."+ sequence.name;
 
    if (IsPendingOrderType(type)) { pendingType = type; pendingPrice = price;                       }
-   else                          { openType    = type; openPrice    = price; openTime = Tick.Time; }
+   else                          { openType    = type; openPrice    = price; openTime = Tick.time; }
    if (!Orders.AddVirtualTicket(ticket, NULL, lots, pendingType, pendingPrice, openType, openTime, openPrice, NULL, NULL, stopLoss, takeProfit, commission, NULL)) return(false);
 
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
@@ -1972,9 +1973,9 @@ bool Orders.RemoveRealTicket(int ticket) {
 
 
 /**
- * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
+ * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
  *
- * @param  _Out_ string &commands[] - array to store received commands
+ * @param  _InOut_ string &commands[] - array to add the received command to
  *
  * @return bool
  */
@@ -2198,7 +2199,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";
@@ -2508,7 +2509,7 @@ bool SaveStatus() {
    }
 
    string section="", file=GetStatusFilename(), separator="";
-   if (!IsFileA(file)) separator = CRLF;                             // an additional empty line as section separator
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                     // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
@@ -3214,69 +3215,69 @@ bool RecordMetrics() {
    // real metrics
    if (metrics.enabled[METRIC_RC1] && success) {               // cumulative PL in pip w/o commission
       value   = real.totalPip + metrics.hShift[METRIC_RC1];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.Time, value, flags);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC1], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_RC2] && success) {               // cumulative PL in pip with commission
       value   = real.totalPipNet + metrics.hShift[METRIC_RC2];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.Time, value, flags);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC2], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_RC3] && success) {               // cumulative PL in money w/o commission
       value   = real.totalPl + metrics.hShift[METRIC_RC3];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.Time, value, flags);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC3], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_RC4] && success) {               // cumulative PL in money with commission
       value   = real.totalPlNet + metrics.hShift[METRIC_RC4];
-      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC4], Tick.Time, value, flags);
+      success = HistorySet1.AddTick(metrics.hSet[METRIC_RC4], Tick.time, value, flags);
    }
  //if (metrics.enabled[METRIC_RD1] && success) {               // daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.Time, value, flags);
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD1], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD2] && success) {               // daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD2], Tick.Time, value, flags);
+ //   success = HistorySet1.AddTick(metrics.hSet[METRIC_RD2], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD3] && success) {               // daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.Time, value, flags);
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD3], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_RD4] && success) {               // daily PL in money with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD4], Tick.Time, value, flags);
+ //   success = HistorySet2.AddTick(metrics.hSet[METRIC_RD4], Tick.time, value, flags);
  //}
 
    // virtual metrics
    if (metrics.enabled[METRIC_VC1] && success) {               // cumulative PL in pip w/o commission
       value   = virt.totalPip + metrics.hShift[METRIC_VC1];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.Time, value, flags);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC1], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_VC2] && success) {               // cumulative PL in pip with commission
       value   = virt.totalPipNet + metrics.hShift[METRIC_VC2];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.Time, value, flags);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC2], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_VC3] && success) {               // cumulative PL in money w/o commission
       value   = virt.totalPl + metrics.hShift[METRIC_VC3];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.Time, value, flags);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC3], Tick.time, value, flags);
    }
    if (metrics.enabled[METRIC_VC4] && success) {               // cumulative PL in money with commission
       value   = virt.totalPlNet + metrics.hShift[METRIC_VC4];
-      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC4], Tick.Time, value, flags);
+      success = HistorySet2.AddTick(metrics.hSet[METRIC_VC4], Tick.time, value, flags);
    }
  //if (metrics.enabled[METRIC_VD1] && success) {               // daily PL in pip w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.Time, value, flags);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD1], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD2] && success) {               // daily PL in pip with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.Time, value, flags);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD2], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD3] && success) {               // daily PL in money w/o commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.Time, value, flags);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD3], Tick.time, value, flags);
  //}
  //if (metrics.enabled[METRIC_VD4] && success) {               // daily PL in money with commission
  //   value   = AccountEquity()-AccountCredit();
- //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD4], Tick.Time, value, flags);
+ //   success = HistorySet3.AddTick(metrics.hSet[METRIC_VD4], Tick.time, value, flags);
  //}
    return(success);
 }

@@ -61,7 +61,8 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfHistory.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
 #include <functions/JoinStrings.mqh>
@@ -956,7 +957,7 @@ bool HandleNetworkErrors() {
             return(!catch("HandleNetworkErrors(1)  "+ sequence.name +" in status "+ StatusToStr(sequence.status) +" not yet implemented", ERR_NOT_IMPLEMENTED));
 
          if (sequence.status == STATUS_PROGRESSING) {
-            if (Tick.Time >= nextRetry) {
+            if (Tick.time >= nextRetry) {
                retries++;
                return(true);
             }
@@ -1334,7 +1335,7 @@ bool StopSequence(int signal) {
 
       // close open orders
       double stopPrice;
-      int level, oeFlags, oes[][ORDER_EXECUTION.intSize], slippage = 10;    // point
+      int level, oeFlags, oes[][ORDER_EXECUTION_intSize], slippage = 10;    // point
       int pendingLimits[], openPositions[], sizeOfTickets = ArraySize(orders.ticket);
       ArrayResize(pendingLimits, 0);
       ArrayResize(openPositions, 0);
@@ -2181,9 +2182,9 @@ string UpdateStatus.StopLossMsg(int i) {
 
 
 /**
- * Whether a chart command was sent to the expert. If the case, the command is retrieved and returned.
+ * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
  *
- * @param  _Out_ string &commands[] - array to store received commands
+ * @param  _InOut_ string &commands[] - array to add the received command to
  *
  * @return bool
  */
@@ -2677,9 +2678,9 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
       if (NE(gridbase, orders.gridbase[i], Digits)) {
          static int lastTrailed = 0;
 
-         if (/*IsTesting() ||*/Tick.Time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+         if (/*IsTesting() ||*/Tick.time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
-            lastTrailed = Tick.Time;
+            lastTrailed = Tick.time;
             if (saveStatusMode != SAVESTATUS_SKIP) saveStatus = true;
 
             if (IsLimitOrderType(type)) {                                  // on a limit order the sequence level increased
@@ -4254,7 +4255,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFilename();
-   if (!IsFileA(file)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [Common]
    string section = "Common";
@@ -4940,7 +4941,7 @@ bool SynchronizeStatus() {
    if (sequence.status == STATUS_STOPPING) {
       i = ArraySize(sequence.stop.event) - 1;
       if (sequence.stop.time[i] != 0)
-         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time = "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
+         return(!catch("SynchronizeStatus(9)  "+ sequence.name +" unexpected sequence.stop.time: "+ IntsToStr(sequence.stop.time, NULL), ERR_RUNTIME_ERROR));
 
       sequence.stop.event [i] = CreateEventId();
       sequence.stop.time  [i] = stopTime;
@@ -6051,7 +6052,7 @@ int SetLastNetworkError(int oe[]) {
       retries = 0;
    }
    else {
-      datetime now = Tick.Time + Ceil(duration/1000.);            // assumed current server time (may lag real time)
+      datetime now = Tick.time + Ceil(duration/1000.);            // assumed current server time (may lag real time)
       int pauses[6]; if (!pauses[0]) {
          pauses[0] =  5*SECONDS;
          pauses[1] = 30*SECONDS;

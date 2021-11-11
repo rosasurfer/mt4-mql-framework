@@ -14,7 +14,7 @@ int __DeinitFlags[];
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <rsfHistory.mqh>
 
 #property indicator_chart_window
@@ -57,7 +57,7 @@ int onDeinit() {
  */
 int onTick() {
    // skip old ticks (e.g. during session break or weekend)
-   bool isStale = (Tick.Time < GetServerTime()-2*MINUTES);
+   bool isStale = (Tick.time < GetServerTime()-2*MINUTES);
    if (isStale) return(last_error);
 
    if (!CollectAccountData()) return(last_error);

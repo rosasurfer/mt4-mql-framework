@@ -23,7 +23,7 @@ extern string Signal.SMS         = "on | off | auto*";
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>

@@ -83,9 +83,6 @@ int init() {
          if (CheckErrors("init(9)", error)) return(last_error);
       if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
-   if (initFlags & INIT_AUTOCONFIG && 1) {                           // initialize auto configuration
-      __isAutoConfig = AutoConfiguration;
-   }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
 
@@ -182,7 +179,7 @@ bool InitGlobals() {
    PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
    Tick           = __ExecutionContext[EC.ticks       ];
-   Tick.Time      = __ExecutionContext[EC.currTickTime];
+   Tick.time      = __ExecutionContext[EC.currTickTime];
 
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity
@@ -215,9 +212,9 @@ int start() {
    }
 
    Tick++;                                                                          // einfacher Zähler, der konkrete Werte hat keine Bedeutung
-   Tick.Time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
-   if (!Tick.Time) {
+   if (!Tick.time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
@@ -363,18 +360,18 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.Time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(9)")) return(last_error);
    }
 
    // call the userland main function
-   error = onTick();
-   if (error && error!=last_error) SetLastError(error);
+   int uError = onTick();
+   if (uError && uError!=last_error) catch("start(10)", uError);
 
    // check errors
-   error = GetLastError();
-   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(10)", error);
+   int lError = GetLastError();
+   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(11)", lError);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
@@ -539,38 +536,10 @@ bool CheckErrors(string location, int error = NULL) {
 }
 
 
-/**
- * Whether a chart command was sent to the indicator. If so, the command is retrieved and stored.
- *
- * @param  _Out_ string &commands[] - array to store received commands in
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
-}
-
-
 // --------------------------------------------------------------------------------------------------------------------------------------------------
 
 
-#import "rsfLib1.ex4"
+#import "rsfLib.ex4"
    bool AquireLock(string mutexName, bool wait);
    bool ReleaseLock(string mutexName);
 

@@ -13,7 +13,7 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   2
@@ -95,7 +95,7 @@ int onTick() {
    }
 
 
-   // (1) synchronize buffers with a shifted offline chart
+   // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);

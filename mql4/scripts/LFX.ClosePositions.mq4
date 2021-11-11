@@ -24,7 +24,7 @@ extern string LFX.Labels = "";                           // Label_1 [, Label_n [
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <functions/JoinStrings.mqh>
-#include <rsfLibs.mqh>
+#include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
@@ -143,7 +143,7 @@ int onStart() {
       int   slippage    = 1;
       color markerColor = CLR_NONE;
       int   oeFlags     = NULL;
-      int   oes[][ORDER_EXECUTION.intSize];
+      int   oes[][ORDER_EXECUTION_intSize];
       if (!OrdersClose(position, slippage, markerColor, oeFlags, oes)) return(ERR_RUNTIME_ERROR);
 
 
