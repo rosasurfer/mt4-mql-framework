@@ -47,50 +47,50 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID                     = "";                         // instance id in the range of 1000-9999
-extern string   TradingMode                     = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";   // shortcuts: "R | V | VC | VM"
+extern string   Sequence.ID                    = "";                         // instance id in the range of 1000-9999
+extern string   TradingMode                    = "Regular* | Virtual | Virtual-Copier | Virtual-Mirror";   // shortcuts: "R | V | VC | VM"
 
-extern string   ___a___________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
-extern int      EntryIndicator                  = 1;                          // entry signal indicator for price channel calculation
-extern int      IndicatorTimeframe              = PERIOD_M1;                  // entry indicator timeframe
-extern int      IndicatorPeriods                = 3;                          // entry indicator bar periods
-extern double   BollingerBands.Deviation        = 2.0;                        // standard deviations
-extern double   Envelopes.Deviation             = 0.07;                       // in percent
+extern string   ___a__________________________ = "=== Entry indicator: 1=MovingAverage, 2=BollingerBands, 3=Envelopes ===";
+extern int      EntryIndicator                 = 1;                          // entry signal indicator for price channel calculation
+extern int      IndicatorTimeframe             = PERIOD_M1;                  // entry indicator timeframe
+extern int      IndicatorPeriods               = 3;                          // entry indicator bar periods
+extern double   BollingerBands.Deviation       = 2.0;                        // standard deviations
+extern double   Envelopes.Deviation            = 0.07;                       // in percent
 
-extern string   ___b___________________________ = "=== Entry bar size conditions ================";
-extern bool     UseSpreadMultiplier             = true;                       // use spread multiplier or fixed min. bar size
-extern double   SpreadMultiplier                = 12.5;                       // min. bar size = SpreadMultiplier * avgSpread
-extern double   MinBarSize                      = 18;                         // min. bar size in {pip}
+extern string   ___b__________________________ = "=== Entry bar size conditions ================";
+extern bool     UseSpreadMultiplier            = true;                       // use spread multiplier or fixed min. bar size
+extern double   SpreadMultiplier               = 12.5;                       // min. bar size = SpreadMultiplier * avgSpread
+extern double   MinBarSize                     = 18;                         // min. bar size in {pip}
 
-extern string   ___c___________________________ = "=== Signal settings ========================";
-extern double   BreakoutReversal                = 0.0;                        // required price reversal in {pip} (0: counter-trend trading w/o reversal)
-extern double   MaxSpread                       = 2.0;                        // max. acceptable current and average spread in {pip}
-extern bool     ReverseSignals                  = false;                      // Buy => Sell, Sell => Buy
+extern string   ___c__________________________ = "=== Signal settings ========================";
+extern double   BreakoutReversal               = 0.0;                        // required price reversal in {pip} (0: counter-trend trading w/o reversal)
+extern double   MaxSpread                      = 2.0;                        // max. acceptable current and average spread in {pip}
+extern bool     ReverseSignals                 = false;                      // Buy => Sell, Sell => Buy
 
-extern string   ___d___________________________ = "=== Money management ===================";
-extern bool     UseMoneyManagement              = true;                       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
-extern double   Risk                            = 2;                          // percent of equity to risk with each trade
-extern double   ManualLotsize                   = 0.01;                       // fix position to use if "MoneyManagement" is FALSE
+extern string   ___d__________________________ = "=== Money management ===================";
+extern bool     UseMoneyManagement             = true;                       // TRUE: calculate lots dynamically; FALSE: use "ManualLotsize"
+extern double   Risk                           = 2;                          // percent of equity to risk with each trade
+extern double   ManualLotsize                  = 0.01;                       // fix position to use if "MoneyManagement" is FALSE
 
-extern string   ___e___________________________ = "=== Trade settings ========================";
-extern double   TakeProfit                      = 10;                         // TP in {pip}
-extern double   StopLoss                        = 6;                          // SL in {pip}
-extern double   TrailEntryStep                  = 1;                          // trail entry limits every {pip}
-extern double   TrailExitStart                  = 0;                          // start trailing exit limits after {pip} in profit
-extern double   TrailExitStep                   = 2;                          // trail exit limits every {pip} in profit
-extern double   StopOnTotalProfit               = 0.00;                       // stop on overall profit in {money} (0: no stop on any profits)
-extern double   StopOnTotalLoss                 = 0.00;                       // stop on overall loss in {money} (0: no stop on any losses)
-extern double   MaxSlippage                     = 0.3;                        // max. acceptable slippage in {pip}
-extern datetime Sessionbreak.StartTime          = D'1970.01.01 23:56:00';     // server time (the date part is ignored)
-extern datetime Sessionbreak.EndTime            = D'1970.01.01 00:02:10';     // server time (the date part is ignored)
+extern string   ___e__________________________ = "=== Trade settings ========================";
+extern double   TakeProfit                     = 10;                         // TP in {pip}
+extern double   StopLoss                       = 6;                          // SL in {pip}
+extern double   TrailEntryStep                 = 1;                          // trail entry limits every {pip}
+extern double   TrailExitStart                 = 0;                          // start trailing exit limits after {pip} in profit
+extern double   TrailExitStep                  = 2;                          // trail exit limits every {pip} in profit
+extern double   StopOnTotalProfit              = 0.00;                       // stop on overall profit in {money} (0: no stop on any profits)
+extern double   StopOnTotalLoss                = 0.00;                       // stop on overall loss in {money} (0: no stop on any losses)
+extern double   MaxSlippage                    = 0.3;                        // max. acceptable slippage in {pip}
+extern datetime Sessionbreak.StartTime         = D'1970.01.01 23:56:00';     // server time (the date part is ignored)
+extern datetime Sessionbreak.EndTime           = D'1970.01.01 00:02:10';     // server time (the date part is ignored)
 
-extern string   ___f___________________________ = "=== Reporting ============================";
-extern bool     RecordPerformanceMetrics        = false;                      // whether to enable recording of performance metrics
-extern string   MetricsServerDirectory          = "{name} | {path} | auto*";  // history server directory to store performance metrics (auto: apply an existing configuration)
+extern string   ___f__________________________ = "=== Reporting ============================";
+extern bool     RecordPerformanceMetrics       = false;                      // whether to enable recording of performance metrics
+extern string   MetricsServerDirectory         = "{name} | {path} | auto*";  // history server directory to store performance metrics (auto: apply an existing configuration)
 
-extern string   ___g___________________________ = "=== Bugs ================================";
-extern bool     ChannelBug                      = false;                      // whether to enable the erroneous "Capella" calculation of the breakout channel (for comparison only)
-extern bool     TakeProfitBug                   = true;                       // whether to enable the erroneous "Capella" calculation of TakeProfit targets (for comparison only)
+extern string   ___g__________________________ = "=== Bugs ================================";
+extern bool     ChannelBug                     = false;                      // whether to enable the erroneous "Capella" calculation of the breakout channel (for comparison only)
+extern bool     TakeProfitBug                  = true;                       // whether to enable the erroneous "Capella" calculation of TakeProfit targets (for comparison only)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

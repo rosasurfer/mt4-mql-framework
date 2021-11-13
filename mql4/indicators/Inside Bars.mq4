@@ -12,7 +12,7 @@ int __DeinitFlags[];
 
 extern string Timeframes         = "D1";                 // one or more comma-separated timeframes to analyze
 extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all available)
-extern string __a___________________________;
+extern string ___a__________________________;
 
 extern string Signal.onInsideBar = "on | off | auto*";
 extern string Signal.Sound       = "on | off | auto*";

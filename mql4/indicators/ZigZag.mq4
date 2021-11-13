@@ -13,14 +13,15 @@
  *
  *
  * TODO:
- *  - visible buffer for mid channel?
  *  - process input ShowStopChannelSegments
+ *  - visible buffer for mid channel?
  *  - reorganize inputs: ZigZag.* | Donchian.*
  *  - rename UpperChannel.Color to Donchian.UpperBand.Color
  *  - add signal onZigZagBreakout (rename all breakout vars to crossing)
  *  - onReversal = onLeg?
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
+ *  - after init cycle the period stepper forgets current values
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - add auto-configuration
  *  - restore default values (type, hide channel and trail)
@@ -33,30 +34,30 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods             = 36;                    // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type                = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened
-extern int    ZigZag.Width               = 1;
-extern color  ZigZag.Color               = Blue;
+extern int    ZigZag.Periods                 = 36;                    // 12 lookback periods of the Donchian channel
+extern string ZigZag.Type                    = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened
+extern int    ZigZag.Width                   = 1;
+extern color  ZigZag.Color                   = Blue;
 
-extern bool   ShowZigZagTrail            = true;                  // display the channel crossings forming a ZigZag leg
-extern bool   ShowDonchianChannel        = false;                 // display the full Donchian channel
-extern bool   ShowStopChannelSegments    = true;                  // display the stop segments of the Donchian channel
-extern bool   ShowAllChannelCrossings    = true;                  // display all channel crossings
-extern bool   ShowFirstCrossingPerBar    = true;                  // whether to display the first or the last crossing per bar
-extern color  UpperChannel.Color         = DodgerBlue;
-extern color  LowerChannel.Color         = Magenta;
+extern bool   ShowZigZagTrail                = true;                  // display the channel crossings forming a ZigZag leg
+extern bool   ShowDonchianChannel            = false;                 // display the full Donchian channel
+extern bool   ShowStopChannelSegments        = true;                  // display the stop segments of the Donchian channel
+extern bool   ShowAllChannelCrossings        = true;                  // display all channel crossings
+extern bool   ShowFirstCrossingPerBar        = true;                  // whether to display the first or the last crossing per bar
+extern color  UpperChannel.Color             = DodgerBlue;
+extern color  LowerChannel.Color             = Magenta;
 
-extern int    Semaphores.WingDingsSymbol = 108;                   // a medium dot
-extern int    Crossings.WingDingsSymbol  = 161;                   // a small circle
-extern int    PeriodStepper.StepSize     = 0;                     // enable the period stepper with the specified stepsize
-extern int    Max.Bars                   = 10000;                 // max. values to calculate (-1: all available)
+extern int    Semaphores.WingDingsSymbol     = 108;                   // a medium dot
+extern int    Crossings.WingDingsSymbol      = 161;                   // a small circle
+extern int    PeriodStepper.StepSize         = 0;                     // enable the period stepper with the specified stepsize
+extern int    Max.Bars                       = 10000;                 // max. values to calculate (-1: all available)
 
-extern string __1___________________________ = "=== Signaling of new ZigZag reversals ===";
-extern bool   Signal.onReversal          = false;
-extern bool   Signal.onReversal.Sound    = true;
-extern bool   Signal.onReversal.Popup    = false;
-extern bool   Signal.onReversal.Mail     = false;
-extern bool   Signal.onReversal.SMS      = false;
+extern string ___a__________________________ = "=== Signaling of new ZigZag reversals ===";
+extern bool   Signal.onReversal              = false;
+extern bool   Signal.onReversal.Sound        = true;
+extern bool   Signal.onReversal.Popup        = false;
+extern bool   Signal.onReversal.Mail         = false;
+extern bool   Signal.onReversal.SMS          = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
