@@ -13,25 +13,25 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string __1___________________________ = "=== MA 1 =====================================";
+extern string ___a__________________________ = "=== MA 1 =====================================";
 extern bool   UseMA1                         = true;
 extern int    MA1.Periods                    = 9;
 extern string MA1.Method                     = "SMA | LWMA | EMA* | SMMA";
 extern string MA1.AppliedPrice               = "Open | High | Low | Close | Median* | Typical | Weighted";
 
-extern string __2___________________________ = "=== MA 2 =====================================";
+extern string ___b__________________________ = "=== MA 2 =====================================";
 extern bool   UseMA2                         = true;
 extern int    MA2.Periods                    = 36;
 extern string MA2.Method                     = "SMA | LWMA | EMA* | SMMA";
 extern string MA2.AppliedPrice               = "Open | High | Low | Close | Median* | Typical | Weighted";
 
-extern string __3___________________________ = "=== MA 3 =====================================";
+extern string ___c__________________________ = "=== MA 3 =====================================";
 extern bool   UseMA3                         = true;
 extern int    MA3.Periods                    = 144;
 extern string MA3.Method                     = "SMA | LWMA | EMA* | SMMA";
 extern string MA3.AppliedPrice               = "Open | High | Low | Close | Median* | Typical | Weighted";
 
-extern string __4___________________________ = "=== Signaling ================================";
+extern string ___d__________________________ = "=== Signaling ================================";
 extern bool   Signal.onBreakout              = false;
 extern bool   Signal.onBreakout.Sound        = true;
 extern bool   Signal.onBreakout.Popup        = true;

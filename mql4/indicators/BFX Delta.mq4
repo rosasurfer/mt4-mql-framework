@@ -24,7 +24,7 @@ extern color  Histogram.Color.Short = Red;
 extern int    Histogram.Style.Width = 2;
 
 extern int    Max.Bars              = 10000;                   // max. values to calculate (-1: all available)
-extern string __a___________________________;
+extern string ___a__________________________;
 
 extern int    Signal.Level          = 20;
 extern string Signal.onLevelCross   = "on | off | auto*";
