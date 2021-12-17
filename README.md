@@ -31,6 +31,20 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1352/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1352
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1352/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1351/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Terminal build 1351
         </a>
