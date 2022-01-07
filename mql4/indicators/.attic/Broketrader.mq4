@@ -28,7 +28,7 @@ extern bool   FillSections           = true;
 extern int    SMA.DrawWidth          = 2;
 extern string StartDate              = "yyyy.mm.dd";        // start date of calculated values
 extern int    Max.Bars               = 10000;               // max. values to calculate (-1: all available)
-extern string __a___________________________;
+extern string ___a__________________________;
 
 extern string Signal.onReversal      = "on | off | auto*";
 extern string Signal.Sound           = "on | off | auto*";
