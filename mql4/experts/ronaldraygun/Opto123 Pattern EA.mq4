@@ -4,51 +4,61 @@
  * A simplified, streamlined and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun. The trading
  * logic is unchanged.
  *
- *
  * @source  https://www.forexfactory.com/thread/post/4090801#post4090801                            [Opto123 Pattern EA v1.0]
  */
+#include <stddefines.mqh>
+int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
+int __DeinitFlags[];
+
+////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
+
+extern string ___a__________________________ = "=== Main Settings ===";
+extern int    MagicNumber                    = 0;
+extern int    PipBuffer                      = 0;
+extern double Lots                           = 0;
+extern bool   MoneyManagement                = false;
+extern int    Risk                           = 0;
+extern int    Slippage                       = 5;
+extern bool   UseStopLoss                    = true;
+extern int    StopLoss                       = 100;
+extern bool   UseTakeProfit                  = false;
+extern int    TakeProfit                     = 60;
+extern bool   UseTrailingStop                = false;
+extern int    TrailingStop                   = 30;
+extern bool   MoveStopOnce                   = false;
+extern int    MoveStopWhenPrice              = 50;
+
+extern string ___b__________________________ = "=== ZigZag Settings ===";
+extern int    ExtDepth                       = 2;
+extern int    ExtDeviation                   = 1;
+extern int    ExtBackstep                    = 1;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <core/expert.mqh>
+#include <stdfunctions.mqh>
+#include <rsfLib.mqh>
+
 #define SIGNAL_NONE        0
 #define SIGNAL_BUY         1
 #define SIGNAL_SELL        2
 #define SIGNAL_CLOSEBUY    3
 #define SIGNAL_CLOSESELL   4
 
-extern string Remark1           = "== Main Settings ==";
-extern int    MagicNumber       = 0;
-extern int    PipBuffer         = 0;
-extern double Lots              = 0;
-extern bool   MoneyManagement   = false;
-extern int    Risk              = 0;
-extern int    Slippage          = 5;
-extern bool   UseStopLoss       = true;
-extern int    StopLoss          = 100;
-extern bool   UseTakeProfit     = false;
-extern int    TakeProfit        = 60;
-extern bool   UseTrailingStop   = false;
-extern int    TrailingStop      = 30;
-extern bool   MoveStopOnce      = false;
-extern int    MoveStopWhenPrice = 50;
-extern string Remark2           = "== Zig Zag Settings ==";
-extern int    ExtDepth          = 2;
-extern int    ExtDeviation      = 1;
-extern int    ExtBackstep       = 1;
-
 int BrokerMultiplier = 1;
 
 
 /**
- * Initialization
+ * Initialization preprocessing.
  *
  * @return int - error status
  */
-int init() {
+int onInit() {
    if (Digits==3 || Digits==5) BrokerMultiplier = 10;
 
-   if (MoneyManagement && (Risk < 1 || Risk > 100)) {
-      Comment("Invalid Risk Value.");
-      return(1);
-   }
-   return(0);
+   if (MoneyManagement && (Risk < 1 || Risk > 100))
+      return(catch("onInit(1)", ERR_INVALID_INPUT_PARAMETER));
+   return(catch("onInit(2)"));
 }
 
 
@@ -57,7 +67,7 @@ int init() {
  *
  * @return int - error status
  */
-int start() {
+int onTick() {
    // get ZigZag values and check entry signals
    double ZZ1, ZZ2, ZZ3;
    int PointShift1 = 1;
@@ -186,7 +196,7 @@ int start() {
          OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Sell", MagicNumber, 0, DeepPink);
       }
    }
-   return(0);
+   return(catch("onTick(1)"));
 }
 
 
