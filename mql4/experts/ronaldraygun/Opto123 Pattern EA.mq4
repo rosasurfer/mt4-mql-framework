@@ -1,11 +1,11 @@
 /**
  * Opto123 Pattern EA
  *
- * This is a simplified, streamlined and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun.
- * The trading logic is unchanged.
+ * A simplified, streamlined and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun. The trading
+ * logic is unchanged.
  *
  *
- * @source  https://www.forexfactory.com/thread/post/4090801#post4090801                                    [Opto123 EA v1.0]
+ * @source  https://www.forexfactory.com/thread/post/4090801#post4090801                            [Opto123 Pattern EA v1.0]
  */
 #define SIGNAL_NONE        0
 #define SIGNAL_BUY         1
@@ -33,7 +33,7 @@ extern int    ExtDepth          = 2;
 extern int    ExtDeviation      = 1;
 extern int    ExtBackstep       = 1;
 
-double BrokerMultiplier = 1;
+int BrokerMultiplier = 1;
 
 
 /**
