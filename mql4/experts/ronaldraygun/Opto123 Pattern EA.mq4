@@ -29,9 +29,9 @@ extern bool   MoveStopOnce                   = false;
 extern int    MoveStopWhenPrice              = 50;
 
 extern string ___b__________________________ = "=== ZigZag Settings ===";
-extern int    ExtDepth                       = 2;
-extern int    ExtDeviation                   = 1;
-extern int    ExtBackstep                    = 1;
+extern int    ZigZag.Depth                   = 2;
+extern int    ZigZag.Deviation               = 1;
+extern int    ZigZag.Backstep                = 1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,13 +39,14 @@ extern int    ExtBackstep                    = 1;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 
-#define SIGNAL_NONE        0
-#define SIGNAL_BUY         1
-#define SIGNAL_SELL        2
-#define SIGNAL_CLOSEBUY    3
-#define SIGNAL_CLOSESELL   4
+#define SIGNAL_BUY      1
+#define SIGNAL_SELL     2
 
-int BrokerMultiplier = 1;
+#define MODE_SEMAPHORE  0
+
+string signalToStr[]    = {"-", "Buy", "Sell"};
+string zigzagIndicator  = "ZigZag.orig";
+int    BrokerMultiplier = 1;
 
 
 /**
@@ -68,84 +69,10 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   // get ZigZag values and check entry signals
-   double ZZ1, ZZ2, ZZ3;
-   int PointShift1 = 1;
-   string ConfirmedPoint = "Not Found";
-   string PointShiftDirection = "None";
-
-   while (ConfirmedPoint != "Found") {
-      ZZ1 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift1);
-
-      if (High[PointShift1]==ZZ1 || Low[PointShift1]==ZZ1) {
-         ConfirmedPoint = "Found";
-
-         if (High[PointShift1] == ZZ1) {
-            PointShiftDirection = "High";
-            break;
-         }
-         if (Low[PointShift1] == ZZ1) {
-            PointShiftDirection = "Low";
-            break;
-         }
-      }
-      PointShift1++;
-   }
-
-   int PointShift2 = PointShift1;
-   string ConfirmedPoint2 = "Not Found";
-
-   while (ConfirmedPoint2 != "Found") {
-      ZZ2 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift2);
-
-      if (High[PointShift2]==ZZ2 && PointShiftDirection=="Low") {
-         ConfirmedPoint2 = "Found";
-         break;
-      }
-      if (Low[PointShift2]==ZZ2 && PointShiftDirection=="High") {
-         ConfirmedPoint2 = "Found";
-         break;
-      }
-      PointShift2++;
-   }
-
-   int PointShift3 = PointShift2;
-   string ConfirmedPoint3 = "Not Found";
-
-   while (ConfirmedPoint3 != "Found") {
-      ZZ3 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift3);
-
-      if (High[PointShift3]==ZZ3 && PointShiftDirection=="High") {
-         ConfirmedPoint3 = "Found";
-         break;
-      }
-      if (Low[PointShift3]==ZZ3 && PointShiftDirection=="Low") {
-         ConfirmedPoint3 = "Found";
-         break;
-      }
-      PointShift3++;
-   }
-
-   ZZ1 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift1);
-   ZZ2 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift2);
-   ZZ3 = iCustom(NULL, NULL, "ZigZag", ExtDepth, ExtDeviation, ExtBackstep, 0, PointShift3);
-
-   double LongEntry, ShortEntry;
-   if (ZZ3 < ZZ2 && ZZ2 > ZZ1 && ZZ1 > ZZ3) LongEntry  = ZZ2 + PipBuffer*Point;
-   if (ZZ3 > ZZ2 && ZZ2 < ZZ1 && ZZ1 < ZZ3) ShortEntry = ZZ2 - PipBuffer*Point;
-
-   string TradeTrigger = "None";
-   if (Open[0] < LongEntry  && Close[0] >= LongEntry ) TradeTrigger = "Open Long";
-   if (Open[0] > ShortEntry && Close[0] <= ShortEntry) TradeTrigger = "Open Short";
-
-   Comment("Long Entry: ",    LongEntry,  "\n",
-           "Short Entry: ",   ShortEntry, "\n",
-           "Trade Trigger: ", TradeTrigger);
-
    // manage open positions
    double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
-   int orders = OrdersTotal();
    bool isOpenPosition = false;
+   int orders = OrdersTotal();
 
    for (int i=0; i < orders; i ++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
@@ -177,23 +104,57 @@ int onTick() {
       }
    }
 
-   // open new positions
+   // check entry signals and open new positions
    if (!isOpenPosition) {
-      int signal = SIGNAL_NONE;
-      if (TradeTrigger == "Open Long")  signal = SIGNAL_BUY;
-      if (TradeTrigger == "Open Short") signal = SIGNAL_SELL;
+      // get ZigZag values
+      double zz1, zz2, zz3, longEntryLevel, shortEntryLevel;
+      int bar=1, type, signal;
 
-      if (MoneyManagement) Lots = MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*BrokerMultiplier*100) / (Ask*MarketInfo(Symbol(), MODE_LOTSIZE)*MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
-
-      if (signal == SIGNAL_BUY) {
-         if (UseStopLoss)   StopLossLevel   = Ask -   StopLoss*Point; else StopLossLevel   = 0;
-         if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point; else TakeProfitLevel = 0;
-         OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Buy", MagicNumber, 0, DodgerBlue);
+      while (true) {
+         zz1 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
+         if (zz1 == High[bar]) { type = MODE_HIGH; break; }
+         if (zz1 ==  Low[bar]) { type = MODE_LOW;  break; }
+         bar++;
       }
-      if (signal == SIGNAL_SELL) {
-         if (UseStopLoss)   StopLossLevel   = Bid +   StopLoss*Point; else StopLossLevel   = 0;
-         if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point; else TakeProfitLevel = 0;
-         OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Sell", MagicNumber, 0, DeepPink);
+      bar++;
+      while (true) {
+         zz2 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
+         if (zz2 == High[bar] && type==MODE_LOW ) break;
+         if (zz2 ==  Low[bar] && type==MODE_HIGH) break;
+         bar++;
+      }
+      bar++;
+      while (true) {
+         zz3 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
+         if (zz3 == High[bar] && type==MODE_HIGH) break;
+         if (zz3 ==  Low[bar] && type==MODE_LOW ) break;
+         bar++;
+      }
+
+      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) longEntryLevel  = zz2 + PipBuffer*Point;
+      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) shortEntryLevel = zz2 - PipBuffer*Point;
+
+      if (Open[0] < longEntryLevel  && Close[0] >= longEntryLevel ) signal = SIGNAL_BUY;
+      if (Open[0] > shortEntryLevel && Close[0] <= shortEntryLevel) signal = SIGNAL_SELL;
+
+      Comment("Long Entry: ",  longEntryLevel,  NL,
+              "Short Entry: ", shortEntryLevel, NL,
+              "Signal: ",      signalToStr[signal]);
+
+      // open new positions
+      if (signal != NULL) {
+         if (MoneyManagement) Lots = MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*BrokerMultiplier*100) / (Ask*MarketInfo(Symbol(), MODE_LOTSIZE)*MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
+
+         if (signal == SIGNAL_BUY) {
+            if (UseStopLoss)   StopLossLevel   = Ask -   StopLoss*Point; else StopLossLevel   = 0;
+            if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point; else TakeProfitLevel = 0;
+            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Buy", MagicNumber, 0, DodgerBlue);
+         }
+         if (signal == SIGNAL_SELL) {
+            if (UseStopLoss)   StopLossLevel   = Bid +   StopLoss*Point; else StopLossLevel   = 0;
+            if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point; else TakeProfitLevel = 0;
+            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Sell", MagicNumber, 0, DeepPink);
+         }
       }
    }
    return(catch("onTick(1)"));
