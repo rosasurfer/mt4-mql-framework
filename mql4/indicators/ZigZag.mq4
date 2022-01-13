@@ -40,7 +40,7 @@ extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
 
 extern bool   ShowZigZagTrail                = true;                  // display the channel crossings forming a ZigZag leg
-extern bool   ShowDonchianChannel            = false;                 // display the full Donchian channel
+extern bool   ShowDonchianChannel            = true;                  // display the full Donchian channel
 extern bool   ShowStopChannelSegments        = true;                  // display the stop segments of the Donchian channel
 extern bool   ShowAllChannelCrossings        = true;                  // display all channel crossings
 extern bool   ShowFirstCrossingPerBar        = true;                  // whether to display the first or the last crossing per bar
