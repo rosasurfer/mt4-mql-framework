@@ -1,8 +1,8 @@
 /**
  * Opto123 Pattern EA
  *
- * A simplified, streamlined and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun. The trading
- * logic is unchanged.
+ * A simplified and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun. The trading logic is
+ * unchanged.
  *
  * @source  https://www.forexfactory.com/thread/post/4090801#post4090801                            [Opto123 Pattern EA v1.0]
  */
@@ -12,26 +12,20 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a__________________________ = "=== Main Settings ===";
-extern int    MagicNumber                    = 0;
+extern string ___a__________________________ = "=== Signal settings ===";
+extern int    ZigZag.Depth                   = 12;
+extern int    ZigZag.Deviation               = 5;
+extern int    ZigZag.Backstep                = 3;
 extern int    PipBuffer                      = 0;
-extern double Lots                           = 0;
-extern bool   MoneyManagement                = false;
-extern int    Risk                           = 0;
-extern int    Slippage                       = 5;
-extern bool   UseStopLoss                    = true;
-extern int    StopLoss                       = 100;
-extern bool   UseTakeProfit                  = false;
-extern int    TakeProfit                     = 60;
-extern bool   UseTrailingStop                = false;
-extern int    TrailingStop                   = 30;
-extern bool   MoveStopOnce                   = false;
-extern int    MoveStopWhenPrice              = 50;
 
-extern string ___b__________________________ = "=== ZigZag Settings ===";
-extern int    ZigZag.Depth                   = 2;
-extern int    ZigZag.Deviation               = 1;
-extern int    ZigZag.Backstep                = 1;
+extern string ___b__________________________ = "=== Trade settings ===";
+extern double Lots                           = 0.1;
+extern int    StopLoss                       = 10;    // in pip
+extern int    TakeProfit                     = 0;     // in pip         6.0
+extern int    TrailingStop                   = 0;     // in pip         3.0
+extern int    BreakevenStopWhenProfit        = 0;     // in pip         5.0
+extern int    MagicNumber                    = 0;
+extern int    Slippage                       = 5;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,21 +40,6 @@ extern int    ZigZag.Backstep                = 1;
 
 string signalToStr[]    = {"-", "Buy", "Sell"};
 string zigzagIndicator  = "ZigZag.orig";
-int    BrokerMultiplier = 1;
-
-
-/**
- * Initialization preprocessing.
- *
- * @return int - error status
- */
-int onInit() {
-   if (Digits==3 || Digits==5) BrokerMultiplier = 10;
-
-   if (MoneyManagement && (Risk < 1 || Risk > 100))
-      return(catch("onInit(1)", ERR_INVALID_INPUT_PARAMETER));
-   return(catch("onInit(2)"));
-}
 
 
 /**
@@ -70,7 +49,7 @@ int onInit() {
  */
 int onTick() {
    // manage open positions
-   double StopLossLevel, TakeProfitLevel, PotentialStopLoss, BEven, TrailStop;
+   double PotentialStopLoss, BEven, TrailStop;
    bool isOpenPosition = false;
    int orders = OrdersTotal();
 
@@ -107,53 +86,53 @@ int onTick() {
    // check entry signals and open new positions
    if (!isOpenPosition) {
       // get ZigZag values
-      double zz1, zz2, zz3, longEntryLevel, shortEntryLevel;
+      double zz1, zz2, zz3, signalLevelLong, signalLevelShort;
       int bar=1, type, signal;
 
       while (true) {
          zz1 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (zz1 == High[bar]) { type = MODE_HIGH; break; }
-         if (zz1 ==  Low[bar]) { type = MODE_LOW;  break; }
+         if (EQ(zz1, High[bar])) { type = MODE_HIGH; break; }
+         if (EQ(zz1,  Low[bar])) { type = MODE_LOW;  break; }
          bar++;
       }
       bar++;
       while (true) {
          zz2 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (zz2 == High[bar] && type==MODE_LOW ) break;
-         if (zz2 ==  Low[bar] && type==MODE_HIGH) break;
+         if (EQ(zz2, High[bar]) && type==MODE_LOW ) break;
+         if (EQ(zz2,  Low[bar]) && type==MODE_HIGH) break;
          bar++;
       }
       bar++;
       while (true) {
          zz3 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (zz3 == High[bar] && type==MODE_HIGH) break;
-         if (zz3 ==  Low[bar] && type==MODE_LOW ) break;
+         if (EQ(zz3, High[bar]) && type==MODE_HIGH) break;
+         if (EQ(zz3,  Low[bar]) && type==MODE_LOW ) break;
          bar++;
       }
 
-      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) longEntryLevel  = zz2 + PipBuffer*Point;
-      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) shortEntryLevel = zz2 - PipBuffer*Point;
+      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) signalLevelLong  = zz2 + PipBuffer*Point;
+      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) signalLevelShort = zz2 - PipBuffer*Point;
 
-      if (Open[0] < longEntryLevel  && Close[0] >= longEntryLevel ) signal = SIGNAL_BUY;
-      if (Open[0] > shortEntryLevel && Close[0] <= shortEntryLevel) signal = SIGNAL_SELL;
+      if (Open[0] < signalLevelLong  && Close[0] >= signalLevelLong)  signal = SIGNAL_BUY;
+      if (Open[0] > signalLevelShort && Close[0] <= signalLevelShort) signal = SIGNAL_SELL;
 
-      Comment("Long Entry: ",  longEntryLevel,  NL,
-              "Short Entry: ", shortEntryLevel, NL,
-              "Signal: ",      signalToStr[signal]);
+      Comment(NL, NL, NL,
+              "Signal level long: ",  ifString(!signalLevelLong,  "-", NumberToStr(signalLevelLong,  PriceFormat)), NL,
+              "Signal level short: ", ifString(!signalLevelShort, "-", NumberToStr(signalLevelShort, PriceFormat)), NL,
+              "Signal: ",             signalToStr[signal]);
 
       // open new positions
       if (signal != NULL) {
-         if (MoneyManagement) Lots = MathFloor((AccountFreeMargin()*AccountLeverage()*Risk*Point*BrokerMultiplier*100) / (Ask*MarketInfo(Symbol(), MODE_LOTSIZE)*MarketInfo(Symbol(), MODE_MINLOT))) * MarketInfo(Symbol(), MODE_MINLOT);
-
+         double sl, tp;
          if (signal == SIGNAL_BUY) {
-            if (UseStopLoss)   StopLossLevel   = Ask -   StopLoss*Point; else StopLossLevel   = 0;
-            if (UseTakeProfit) TakeProfitLevel = Ask + TakeProfit*Point; else TakeProfitLevel = 0;
-            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Buy", MagicNumber, 0, DodgerBlue);
+            if (StopLoss   > 0) sl = Ask -   StopLoss*Pip;
+            if (TakeProfit > 0) tp = Ask + TakeProfit*Pip;
+            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, sl, tp, "Opto123 Buy", MagicNumber, 0, DodgerBlue);
          }
          if (signal == SIGNAL_SELL) {
-            if (UseStopLoss)   StopLossLevel   = Bid +   StopLoss*Point; else StopLossLevel   = 0;
-            if (UseTakeProfit) TakeProfitLevel = Bid - TakeProfit*Point; else TakeProfitLevel = 0;
-            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, StopLossLevel, TakeProfitLevel, "Opto123 Sell", MagicNumber, 0, DeepPink);
+            if (StopLoss   > 0) sl = Bid +   StopLoss*Pip;
+            if (TakeProfit > 0) tp = Bid - TakeProfit*Pip;
+            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, sl, tp, "Opto123 Sell", MagicNumber, 0, DeepPink);
          }
       }
    }
@@ -165,16 +144,16 @@ int onTick() {
  * @return double
  */
 double CalcBreakEven(int ticket) {
-   if (MoveStopOnce && MoveStopWhenPrice) {
+   if (BreakevenStopWhenProfit > 0) {
       OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
       if (OrderType() == OP_BUY) {
-         if (Bid-OrderOpenPrice() >= MoveStopWhenPrice*Point) {
+         if (Bid-OrderOpenPrice() >= BreakevenStopWhenProfit*Pip) {
             return(OrderOpenPrice());
          }
       }
       else if (OrderType() == OP_SELL) {
-         if (OrderOpenPrice()-Ask >= MoveStopWhenPrice*Point) {
+         if (OrderOpenPrice()-Ask >= BreakevenStopWhenProfit*Pip) {
             return(OrderOpenPrice());
          }
       }
@@ -187,17 +166,17 @@ double CalcBreakEven(int ticket) {
  * @return double
  */
 double CalcTrailingStop(int ticket) {
-   if (UseTrailingStop && TrailingStop) {
+   if (TrailingStop > 0) {
       OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
 
       if (OrderType() == OP_BUY) {
-         if (Bid-OrderOpenPrice() > TrailingStop*Point) {
-            return(Bid - TrailingStop*Point);
+         if (Bid-OrderOpenPrice() > TrailingStop*Pip) {
+            return(Bid - TrailingStop*Pip);
          }
       }
       else if (OrderType() == OP_SELL) {
-         if (OrderOpenPrice()-Ask > TrailingStop*Point) {
-            return(Ask + TrailingStop*Point);
+         if (OrderOpenPrice()-Ask > TrailingStop*Pip) {
+            return(Ask + TrailingStop*Pip);
          }
       }
    }
