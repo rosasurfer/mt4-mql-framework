@@ -49,37 +49,28 @@ string zigzagIndicator  = "ZigZag.orig";
  */
 int onTick() {
    // manage open positions
-   double PotentialStopLoss, BEven, TrailStop;
+   double tp, sl;
    bool isOpenPosition = false;
    int orders = OrdersTotal();
 
    for (int i=0; i < orders; i ++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderType() > OP_SELL || OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
-      isOpenPosition = true;
+      if (OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
 
       // long
       if (OrderType() == OP_BUY) {
-         PotentialStopLoss = OrderStopLoss();
-         BEven             = CalcBreakEven(OrderTicket());
-         TrailStop         = CalcTrailingStop(OrderTicket());
-
-         if (BEven     > PotentialStopLoss && BEven)     PotentialStopLoss = BEven;
-         if (TrailStop > PotentialStopLoss && TrailStop) PotentialStopLoss = TrailStop;
-
-         if (PotentialStopLoss != OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, MediumSeaGreen);
+         isOpenPosition = true;
+         sl = CalcStopLoss();
+         tp = CalcTakeProfit();
+         if (NE(OrderStopLoss(), sl) || NE(OrderTakeProfit(), tp)) OrderModify(OrderTicket(), OrderOpenPrice(), sl, tp, 0, Red);
       }
 
       // short
-      else {
-         PotentialStopLoss = OrderStopLoss();
-         BEven             = CalcBreakEven(OrderTicket());
-         TrailStop         = CalcTrailingStop(OrderTicket());
-
-         if ((BEven     < PotentialStopLoss && BEven)     || !PotentialStopLoss) PotentialStopLoss = BEven;
-         if ((TrailStop < PotentialStopLoss && TrailStop) || !PotentialStopLoss) PotentialStopLoss = TrailStop;
-
-         if (PotentialStopLoss != OrderStopLoss() || !OrderStopLoss()) OrderModify(OrderTicket(), OrderOpenPrice(), PotentialStopLoss, OrderTakeProfit(), 0, DarkOrange);
+      else if (OrderType() == OP_SELL) {
+         isOpenPosition = true;
+         sl = CalcStopLoss();
+         tp = CalcTakeProfit();
+         if (NE(OrderStopLoss(), sl) || NE(OrderTakeProfit(), tp)) OrderModify(OrderTicket(), OrderOpenPrice(), sl, tp, 0, Red);
       }
    }
 
@@ -123,16 +114,15 @@ int onTick() {
 
       // open new positions
       if (signal != NULL) {
-         double sl, tp;
          if (signal == SIGNAL_BUY) {
-            if (StopLoss   > 0) sl = Ask -   StopLoss*Pip;
-            if (TakeProfit > 0) tp = Ask + TakeProfit*Pip;
-            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, sl, tp, "Opto123 Buy", MagicNumber, 0, DodgerBlue);
+            sl = NormalizeDouble(ifDouble(!StopLoss,   0, Ask -   StopLoss*Pip), Digits);
+            tp = NormalizeDouble(ifDouble(!TakeProfit, 0, Ask + TakeProfit*Pip), Digits);
+            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, sl, tp, "Opto123 Buy", MagicNumber, 0, Blue);
          }
          if (signal == SIGNAL_SELL) {
-            if (StopLoss   > 0) sl = Bid +   StopLoss*Pip;
-            if (TakeProfit > 0) tp = Bid - TakeProfit*Pip;
-            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, sl, tp, "Opto123 Sell", MagicNumber, 0, DeepPink);
+            sl = NormalizeDouble(ifDouble(!StopLoss,   0, Bid +   StopLoss*Pip), Digits);
+            tp = NormalizeDouble(ifDouble(!TakeProfit, 0, Bid - TakeProfit*Pip), Digits);
+            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, sl, tp, "Opto123 Sell", MagicNumber, 0, Red);
          }
       }
    }
@@ -143,42 +133,61 @@ int onTick() {
 /**
  * @return double
  */
-double CalcBreakEven(int ticket) {
-   if (BreakevenStopWhenProfit > 0) {
-      OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
+double CalcStopLoss() {
+   double sl;
 
-      if (OrderType() == OP_BUY) {
+   if (OrderType() == OP_BUY) {
+      sl = 0;
+      if (StopLoss > 0) {
+         sl = MathMax(sl, OrderOpenPrice() - StopLoss*Pip);
+      }
+      if (BreakevenStopWhenProfit > 0) {
          if (Bid-OrderOpenPrice() >= BreakevenStopWhenProfit*Pip) {
-            return(OrderOpenPrice());
+            sl = MathMax(sl, OrderOpenPrice());
          }
       }
-      else if (OrderType() == OP_SELL) {
-         if (OrderOpenPrice()-Ask >= BreakevenStopWhenProfit*Pip) {
-            return(OrderOpenPrice());
+      if (TrailingStop > 0) {
+         if (Bid-OrderOpenPrice() > TrailingStop*Pip) {
+            sl = MathMax(sl, Bid - TrailingStop*Pip);
          }
       }
    }
-   return(NULL);
+
+   else if (OrderType() == OP_SELL) {
+      sl = INT_MAX;
+      if (StopLoss > 0) {
+         sl = MathMin(sl, OrderOpenPrice() + StopLoss*Pip);
+      }
+      if (BreakevenStopWhenProfit > 0) {
+         if (OrderOpenPrice()-Ask >= BreakevenStopWhenProfit*Pip) {
+            sl = MathMin(sl, OrderOpenPrice());
+         }
+      }
+      if (TrailingStop > 0) {
+         if (OrderOpenPrice()-Ask > TrailingStop*Pip) {
+            sl = MathMin(sl, Ask + TrailingStop*Pip);
+         }
+      }
+      if (EQ(sl, INT_MAX)) sl = 0;
+   }
+
+   return(NormalizeDouble(sl, Digits));
 }
 
 
 /**
  * @return double
  */
-double CalcTrailingStop(int ticket) {
-   if (TrailingStop > 0) {
-      OrderSelect(ticket, SELECT_BY_TICKET, MODE_TRADES);
+double CalcTakeProfit() {
+   double tp = 0;
 
+   if (TakeProfit > 0) {
       if (OrderType() == OP_BUY) {
-         if (Bid-OrderOpenPrice() > TrailingStop*Pip) {
-            return(Bid - TrailingStop*Pip);
-         }
+         tp = OrderOpenPrice() + TakeProfit*Pip;
       }
       else if (OrderType() == OP_SELL) {
-         if (OrderOpenPrice()-Ask > TrailingStop*Pip) {
-            return(Ask + TrailingStop*Pip);
-         }
+         tp = OrderOpenPrice() - TakeProfit*Pip;
       }
    }
-   return(NULL);
+   return(NormalizeDouble(tp, Digits));
 }
