@@ -16,16 +16,15 @@ extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Depth                   = 12;
 extern int    ZigZag.Deviation               = 5;
 extern int    ZigZag.Backstep                = 3;
-extern int    PipBuffer                      = 0;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
-extern int    StopLoss                       = 10;    // in pip
-extern int    TakeProfit                     = 0;     // in pip         6.0
-extern int    TrailingStop                   = 0;     // in pip         3.0
-extern int    BreakevenStopWhenProfit        = 0;     // in pip         5.0
-extern int    MagicNumber                    = 0;
-extern int    Slippage                       = 5;
+extern int    StopLoss                       = 10;       // in pip            if enabled: 10
+extern int    TakeProfit                     = 0;        // in pip            if enabled:  6
+extern int    TrailingStop                   = 0;        // in pip            if enabled:  3
+extern int    BreakevenStopWhenProfit        = 0;        // in pip            if enabled:  5
+extern int    MagicNumber                    = 12345;
+extern int    Slippage                       = 5;        // in point
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,7 +55,9 @@ int onTick() {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
       if (OrderType() > OP_SELL || OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
       isOpenPosition = true;
-      OrderModifyEx(OrderTicket(), OrderOpenPrice(), CalcStopLoss(), CalcTakeProfit(), NULL, Red, NULL, oe);
+      double sl = CalcStopLoss();
+      double tp = CalcTakeProfit();
+      if (NE(OrderStopLoss(), sl) || NE(OrderTakeProfit(), tp)) OrderModifyEx(OrderTicket(), OrderOpenPrice(), sl, tp, NULL, Red, NULL, oe);
    }
 
    // check entry signals and open new positions
@@ -86,8 +87,8 @@ int onTick() {
          bar++;
       }
 
-      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) signalLevelLong  = zz2 + PipBuffer*Point;
-      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) signalLevelShort = zz2 - PipBuffer*Point;
+      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) signalLevelLong  = zz2;
+      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) signalLevelShort = zz2;
 
       if (Open[0] < signalLevelLong  && Close[0] >= signalLevelLong)  signal = SIGNAL_BUY;
       if (Open[0] > signalLevelShort && Close[0] <= signalLevelShort) signal = SIGNAL_SELL;
