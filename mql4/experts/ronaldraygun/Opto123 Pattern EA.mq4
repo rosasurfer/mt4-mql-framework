@@ -49,29 +49,14 @@ string zigzagIndicator  = "ZigZag.orig";
  */
 int onTick() {
    // manage open positions
-   double tp, sl;
    bool isOpenPosition = false;
-   int orders = OrdersTotal();
+   int orders = OrdersTotal(), oe[];
 
    for (int i=0; i < orders; i ++) {
       OrderSelect(i, SELECT_BY_POS, MODE_TRADES);
-      if (OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
-
-      // long
-      if (OrderType() == OP_BUY) {
-         isOpenPosition = true;
-         sl = CalcStopLoss();
-         tp = CalcTakeProfit();
-         if (NE(OrderStopLoss(), sl) || NE(OrderTakeProfit(), tp)) OrderModify(OrderTicket(), OrderOpenPrice(), sl, tp, 0, Red);
-      }
-
-      // short
-      else if (OrderType() == OP_SELL) {
-         isOpenPosition = true;
-         sl = CalcStopLoss();
-         tp = CalcTakeProfit();
-         if (NE(OrderStopLoss(), sl) || NE(OrderTakeProfit(), tp)) OrderModify(OrderTicket(), OrderOpenPrice(), sl, tp, 0, Red);
-      }
+      if (OrderType() > OP_SELL || OrderSymbol()!=Symbol() || OrderMagicNumber()!=MagicNumber) continue;
+      isOpenPosition = true;
+      OrderModifyEx(OrderTicket(), OrderOpenPrice(), CalcStopLoss(), CalcTakeProfit(), NULL, Red, NULL, oe);
    }
 
    // check entry signals and open new positions
@@ -114,16 +99,9 @@ int onTick() {
 
       // open new positions
       if (signal != NULL) {
-         if (signal == SIGNAL_BUY) {
-            sl = NormalizeDouble(ifDouble(!StopLoss,   0, Ask -   StopLoss*Pip), Digits);
-            tp = NormalizeDouble(ifDouble(!TakeProfit, 0, Ask + TakeProfit*Pip), Digits);
-            OrderSend(Symbol(), OP_BUY, Lots, Ask, Slippage, sl, tp, "Opto123 Buy", MagicNumber, 0, Blue);
-         }
-         if (signal == SIGNAL_SELL) {
-            sl = NormalizeDouble(ifDouble(!StopLoss,   0, Bid +   StopLoss*Pip), Digits);
-            tp = NormalizeDouble(ifDouble(!TakeProfit, 0, Bid - TakeProfit*Pip), Digits);
-            OrderSend(Symbol(), OP_SELL, Lots, Bid, Slippage, sl, tp, "Opto123 Sell", MagicNumber, 0, Red);
-         }
+         type      = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
+         color clr = ifInt(signal==SIGNAL_BUY, Blue, Red);
+         OrderSendEx(Symbol(), type,  Lots, NULL, Slippage, NULL, NULL, "Opto123 "+ OrderTypeDescription(type), MagicNumber, NULL, clr, NULL, oe);
       }
    }
    return(catch("onTick(1)"));
