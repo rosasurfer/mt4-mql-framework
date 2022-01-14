@@ -24,7 +24,6 @@ extern int    TakeProfit                     = 0;        // in pip            if
 extern int    TrailingStop                   = 0;        // in pip            if enabled:  3
 extern int    BreakevenStopWhenProfit        = 0;        // in pip            if enabled:  5
 extern int    MagicNumber                    = 12345;
-extern int    Slippage                       = 5;        // in point
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -39,6 +38,7 @@ extern int    Slippage                       = 5;        // in point
 
 string signalToStr[]    = {"-", "Buy", "Sell"};
 string zigzagIndicator  = "ZigZag.orig";
+int    slippage         = 5;                    // in point
 
 
 /**
@@ -102,7 +102,7 @@ int onTick() {
       if (signal != NULL) {
          type      = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
          color clr = ifInt(signal==SIGNAL_BUY, Blue, Red);
-         OrderSendEx(Symbol(), type,  Lots, NULL, Slippage, NULL, NULL, "Opto123 "+ OrderTypeDescription(type), MagicNumber, NULL, clr, NULL, oe);
+         OrderSendEx(Symbol(), type,  Lots, NULL, slippage, NULL, NULL, "Opto123 "+ OrderTypeDescription(type), MagicNumber, NULL, clr, NULL, oe);
       }
    }
    return(catch("onTick(1)"));
