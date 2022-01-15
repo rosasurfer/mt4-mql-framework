@@ -9930,8 +9930,8 @@ ShowDonchianChannel=1
 ShowStopChannelSegments=0
 ShowAllChannelCrossings=1
 ShowFirstCrossingPerBar=1
-UpperChannel.Color=16748574
-LowerChannel.Color=16711935
+Donchian.UpperBand.Color=16748574
+Donchian.LowerBand.Color=16711935
 </inputs>
 </expert>
 style_2=2

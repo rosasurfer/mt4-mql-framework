@@ -1,22 +1,22 @@
 /**
- * ZigZag indicator with non-repainting price reversals suitable for automation
+ * A ZigZag indicator with non-repainting price reversals suitable for automation.
  *
  *
  * The ZigZag indicator provided by MetaQuotes is of little use. The algorithm is seriously flawed and the implementation
  * performes badly. Furthermore the indicator repaints past ZigZag points and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
- * the direction changed the reversal point will not change anymore. Similar to the MetaQuotes version the indicator uses a
- * Donchian channel for determining reversals but draws vertical line segments if a large bar crosses both upper and lower
- * channel band. Additionally it can display the trail of a ZigZag leg as it developes over time. The indicator supports
- * reversal signaling.
+ * the ZigZag direction changed the reversal point will not change anymore. Similar to the MetaQuotes version the indicator
+ * uses a Donchian channel for determining reversals but this indicator draws vertical line segments if a large bar crosses
+ * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developed over
+ * time. The indicator supports signaling of new reversals.
  *
  *
  * TODO:
+ *  - the reversal buffer is not updated for the unfinished leg
  *  - process input ShowStopChannelSegments
  *  - visible buffer for mid channel?
  *  - reorganize inputs: ZigZag.* | Donchian.*
- *  - rename UpperChannel.Color to Donchian.UpperBand.Color
  *  - add signal onZigZagBreakout (rename all breakout vars to crossing)
  *  - onReversal = onLeg?
  *  - fix positioning bug of multiple legends
@@ -34,25 +34,25 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods                 = 36;                    // 12 lookback periods of the Donchian channel
-extern string ZigZag.Type                    = "Line | Semaphores*";  // a ZigZag line or reversal points, may be shortened
+extern int    ZigZag.Periods                 = 36;                    // lookback periods of the Donchian channel
+extern string ZigZag.Type                    = "Line | Semaphores*";  // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
 
 extern bool   ShowZigZagTrail                = true;                  // display the channel crossings forming a ZigZag leg
 extern bool   ShowDonchianChannel            = true;                  // display the full Donchian channel
        bool   ShowStopChannelSegments        = true;                  // display the stop segments of the Donchian channel
+extern bool   ShowFirstChannelCrossingPerBar = true;                  // whether to display the first or the last crossing per bar
 extern bool   ShowAllChannelCrossings        = true;                  // display all channel crossings
-extern bool   ShowFirstCrossingPerBar        = true;                  // whether to display the first or the last crossing per bar
-extern color  UpperChannel.Color             = DodgerBlue;
-extern color  LowerChannel.Color             = Magenta;
+extern color  Donchian.UpperBand.Color       = DodgerBlue;
+extern color  Donchian.LowerBand.Color       = Magenta;
 
 extern int    Semaphores.WingDingsSymbol     = 108;                   // a medium dot
 extern int    Crossings.WingDingsSymbol      = 161;                   // a small circle
 extern int    PeriodStepper.StepSize         = 0;                     // enable the period stepper with the specified stepsize
 extern int    Max.Bars                       = 10000;                 // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling of new ZigZag reversals ===";
+extern string ___a__________________________ = "=== Signaling of ZigZag reversals ===";
 extern bool   Signal.onReversal              = false;
 extern bool   Signal.onReversal.Sound        = true;
 extern bool   Signal.onReversal.Popup        = false;
@@ -74,16 +74,16 @@ extern bool   Signal.onReversal.SMS          = false;
 #define MODE_SEMAPHORE_CLOSE       ZigZag.MODE_SEMAPHORE_CLOSE //  1: semaphore close price
 #define MODE_UPPER_BAND_VISIBLE    ZigZag.MODE_UPPER_BAND      //  2: visible upper channel band segments
 #define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
-#define MODE_UPPER_BREAKOUT        4                           //  4: upper channel breakouts (start or end point)
-#define MODE_LOWER_BREAKOUT        5                           //  5: lower channel breakouts (start or end point)
-#define MODE_REVERSAL              6                           //  6: ZigZag leg reversal bar
-#define MODE_COMBINED_TREND        7                           //  7: combined MODE_TREND + MODE_WAITING buffers
-#define MODE_UPPER_BAND            8                           //  8: full upper channel band
-#define MODE_LOWER_BAND            9                           //  9: full lower channel band
-#define MODE_UPPER_BREAKOUT_START  10                          // 10: start point of upper breakouts
-#define MODE_UPPER_BREAKOUT_END    11                          // 11: end point of upper breakouts
-#define MODE_LOWER_BREAKOUT_START  12                          // 12: start point of lower breakouts
-#define MODE_LOWER_BREAKOUT_END    13                          // 13: end point of lower breakouts
+#define MODE_UPPER_BREAKOUT        ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
+#define MODE_LOWER_BREAKOUT        ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
+#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  6: combined MODE_TREND + MODE_WAITING buffers
+#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  7: ZigZag leg reversal bar
+#define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
+#define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
+#define MODE_UPPER_BREAKOUT_START  10                          // 10: start point of upper channel crossings
+#define MODE_UPPER_BREAKOUT_END    11                          // 11: end point of upper channel crossings
+#define MODE_LOWER_BREAKOUT_START  12                          // 12: start point of lower channel crossings
+#define MODE_LOWER_BREAKOUT_END    13                          // 13: end point of lower channel crossings
 #define MODE_TREND                 14                          // 14: known trend
 #define MODE_WAITING               15                          // 15: not yet known trend
 
@@ -191,9 +191,9 @@ int onInit() {
    // PeriodStepper.StepSize
    if (PeriodStepper.StepSize < 0)       return(catch("onInit(9)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (ZigZag.Color       == 0xFF000000) ZigZag.Color       = CLR_NONE;
-   if (UpperChannel.Color == 0xFF000000) UpperChannel.Color = CLR_NONE;
-   if (LowerChannel.Color == 0xFF000000) LowerChannel.Color = CLR_NONE;
+   if (ZigZag.Color             == 0xFF000000) ZigZag.Color       = CLR_NONE;
+   if (Donchian.UpperBand.Color == 0xFF000000) Donchian.UpperBand.Color = CLR_NONE;
+   if (Donchian.LowerBand.Color == 0xFF000000) Donchian.LowerBand.Color = CLR_NONE;
 
    // signaling
    signalReversal       = Signal.onReversal;                      // reset global vars (possible account change)
@@ -421,7 +421,7 @@ int onTick() {
 
       // populate breakout marker buffers
       if (ShowAllChannelCrossings || (ShowZigZagTrail && !waiting[bar])) {
-         if (ShowFirstCrossingPerBar) {
+         if (ShowFirstChannelCrossingPerBar) {
             upperBreakout[bar] = upperBreakoutStart[bar];
             lowerBreakout[bar] = lowerBreakoutStart[bar];
          }
@@ -799,8 +799,8 @@ void SetIndicatorOptions() {
    SetIndexBuffer(MODE_LOWER_BAND_VISIBLE, lowerBandVisible); SetIndexEmptyValue(MODE_LOWER_BAND_VISIBLE, 0); SetIndexLabel(MODE_LOWER_BAND_VISIBLE, indicatorName +" lower band");
    SetIndexBuffer(MODE_UPPER_BREAKOUT,     upperBreakout   ); SetIndexEmptyValue(MODE_UPPER_BREAKOUT,     0); SetIndexLabel(MODE_UPPER_BREAKOUT,     indicatorName +" breakout up");
    SetIndexBuffer(MODE_LOWER_BREAKOUT,     lowerBreakout   ); SetIndexEmptyValue(MODE_LOWER_BREAKOUT,     0); SetIndexLabel(MODE_LOWER_BREAKOUT,     indicatorName +" breakout down");
-   SetIndexBuffer(MODE_REVERSAL,           reversal        ); SetIndexEmptyValue(MODE_REVERSAL,          -1); SetIndexLabel(MODE_REVERSAL,           indicatorName +" reversal bar");
    SetIndexBuffer(MODE_COMBINED_TREND,     combinedTrend   ); SetIndexEmptyValue(MODE_COMBINED_TREND,     0); SetIndexLabel(MODE_COMBINED_TREND,     indicatorName +" trend");
+   SetIndexBuffer(MODE_REVERSAL,           reversal        ); SetIndexEmptyValue(MODE_REVERSAL,          -1); SetIndexLabel(MODE_REVERSAL,           indicatorName +" reversal bar");
 
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
@@ -809,15 +809,15 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, Semaphores.WingDingsSymbol);
 
    drawType = ifInt(ShowDonchianChannel || ShowStopChannelSegments, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, UpperChannel.Color);
-   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, LowerChannel.Color);
+   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color);
+   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color);
 
    drawType = ifInt(ShowAllChannelCrossings || ShowZigZagTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, UpperChannel.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Crossings.WingDingsSymbol);
-   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, LowerChannel.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Crossings.WingDingsSymbol);
+   SetIndexStyle(MODE_UPPER_BREAKOUT, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color); SetIndexArrow(MODE_UPPER_BREAKOUT, Crossings.WingDingsSymbol);
+   SetIndexStyle(MODE_LOWER_BREAKOUT, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color); SetIndexArrow(MODE_LOWER_BREAKOUT, Crossings.WingDingsSymbol);
 
-   SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
+   SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
 }
 
 
@@ -827,26 +827,26 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",             ZigZag.Periods,                     ";"+ NL,
-                            "ZigZag.Type=",                DoubleQuoteStr(ZigZag.Type),        ";"+ NL,
-                            "ZigZag.Width=",               ZigZag.Width,                       ";"+ NL,
-                            "ZigZag.Color=",               ColorToStr(ZigZag.Color),           ";"+ NL,
-                            "ShowZigZagTrail=",            BoolToStr(ShowZigZagTrail),         ";"+ NL,
-                            "ShowDonchianChannel=",        BoolToStr(ShowDonchianChannel),     ";"+ NL,
-                            "ShowStopChannelSegments=",    BoolToStr(ShowStopChannelSegments), ";"+ NL,
-                            "ShowAllChannelCrossings=",    BoolToStr(ShowAllChannelCrossings), ";"+ NL,
-                            "ShowFirstCrossingPerBar=",    BoolToStr(ShowFirstCrossingPerBar), ";"+ NL,
-                            "UpperChannel.Color=",         ColorToStr(UpperChannel.Color),     ";"+ NL,
-                            "LowerChannel.Color=",         ColorToStr(LowerChannel.Color),     ";"+ NL,
-                            "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,         ";"+ NL,
-                            "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,          ";"+ NL,
-                            "PeriodStepper.StepSize=",     PeriodStepper.StepSize,             ";"+ NL,
-                            "Max.Bars=",                   Max.Bars,                           ";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",                 ZigZag.Periods,                            ";"+ NL,
+                            "ZigZag.Type=",                    DoubleQuoteStr(ZigZag.Type),               ";"+ NL,
+                            "ZigZag.Width=",                   ZigZag.Width,                              ";"+ NL,
+                            "ZigZag.Color=",                   ColorToStr(ZigZag.Color),                  ";"+ NL,
+                            "ShowZigZagTrail=",                BoolToStr(ShowZigZagTrail),                ";"+ NL,
+                            "ShowDonchianChannel=",            BoolToStr(ShowDonchianChannel),            ";"+ NL,
+                          //"ShowStopChannelSegments=",        BoolToStr(ShowStopChannelSegments),        ";"+ NL,
+                            "ShowFirstChannelCrossingPerBar=", BoolToStr(ShowFirstChannelCrossingPerBar), ";"+ NL,
+                            "ShowAllChannelCrossings=",        BoolToStr(ShowAllChannelCrossings),        ";"+ NL,
+                            "Donchian.UpperBand.Color=",       ColorToStr(Donchian.UpperBand.Color),      ";"+ NL,
+                            "Donchian.LowerBand.Color=",       ColorToStr(Donchian.LowerBand.Color),      ";"+ NL,
+                            "Semaphores.WingDingsSymbol=",     Semaphores.WingDingsSymbol,                ";"+ NL,
+                            "Crossings.WingDingsSymbol=",      Crossings.WingDingsSymbol,                 ";"+ NL,
+                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                    ";"+ NL,
+                            "Max.Bars=",                       Max.Bars,                                  ";"+ NL,
 
-                            "Signal.onReversal=",          BoolToStr(Signal.onReversal),       ";"+ NL,
-                            "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound), ";"+ NL,
-                            "Signal.onReversal.Popup=",    BoolToStr(Signal.onReversal.Popup), ";"+ NL,
-                            "Signal.onReversal.Mail=",     BoolToStr(Signal.onReversal.Mail),  ";"+ NL,
-                            "Signal.onReversal.SMS=",      BoolToStr(Signal.onReversal.SMS),   ";")
+                            "Signal.onReversal=",              BoolToStr(Signal.onReversal),              ";"+ NL,
+                            "Signal.onReversal.Sound=",        BoolToStr(Signal.onReversal.Sound),        ";"+ NL,
+                            "Signal.onReversal.Popup=",        BoolToStr(Signal.onReversal.Popup),        ";"+ NL,
+                            "Signal.onReversal.Mail=",         BoolToStr(Signal.onReversal.Mail),         ";"+ NL,
+                            "Signal.onReversal.SMS=",          BoolToStr(Signal.onReversal.SMS),          ";")
    );
 }

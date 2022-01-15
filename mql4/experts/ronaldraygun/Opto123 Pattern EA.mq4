@@ -13,9 +13,9 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== Signal settings ===";
-extern int    ZigZag.Depth                   = 12;
-extern int    ZigZag.Deviation               = 5;
-extern int    ZigZag.Backstep                = 3;
+extern int    ZigZag.Periods                 = 12;
+       int    ZigZag.Deviation               = 5;
+       int    ZigZag.Backstep                = 3;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
@@ -62,45 +62,28 @@ int onTick() {
 
    // check entry signals and open new positions
    if (!isOpenPosition) {
-      // get ZigZag values
-      double zz1, zz2, zz3, signalLevelLong, signalLevelShort;
-      int bar=1, type, signal;
+      // find the last 3 ZigZag semaphores
+      int s1Bar, s2Bar, s3Bar, s2Type, signal, iNull;
+      if (!FindNextZigzagSemaphore(    0, s1Bar, iNull))  return(last_error);
+      if (!FindNextZigzagSemaphore(s1Bar, s2Bar, s2Type)) return(last_error);
+      if (!FindNextZigzagSemaphore(s2Bar, s3Bar, iNull))  return(last_error);
 
-      while (true) {
-         zz1 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (EQ(zz1, High[bar])) { type = MODE_HIGH; break; }
-         if (EQ(zz1,  Low[bar])) { type = MODE_LOW;  break; }
-         bar++;
+      // check entry signals (always against s2 level)
+      if (s2Type == MODE_HIGH) {
+         if (Low[s1Bar] > Low[s3Bar] && Bid > High[s2Bar]) signal = SIGNAL_BUY;
       }
-      bar++;
-      while (true) {
-         zz2 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (EQ(zz2, High[bar]) && type==MODE_LOW ) break;
-         if (EQ(zz2,  Low[bar]) && type==MODE_HIGH) break;
-         bar++;
+      else {
+         if (High[s1Bar] < High[s3Bar] && Bid < Low[s2Bar]) signal = SIGNAL_SELL;
       }
-      bar++;
-      while (true) {
-         zz3 = iCustom(NULL, NULL, zigzagIndicator, ZigZag.Depth, ZigZag.Deviation, ZigZag.Backstep, MODE_SEMAPHORE, bar);
-         if (EQ(zz3, High[bar]) && type==MODE_HIGH) break;
-         if (EQ(zz3,  Low[bar]) && type==MODE_LOW ) break;
-         bar++;
-      }
-
-      if (zz3 < zz2 && zz2 > zz1 && zz1 > zz3) signalLevelLong  = zz2;
-      if (zz3 > zz2 && zz2 < zz1 && zz1 < zz3) signalLevelShort = zz2;
-
-      if (Open[0] < signalLevelLong  && Close[0] >= signalLevelLong)  signal = SIGNAL_BUY;
-      if (Open[0] > signalLevelShort && Close[0] <= signalLevelShort) signal = SIGNAL_SELL;
 
       Comment(NL, NL, NL,
-              "Signal level long: ",  ifString(!signalLevelLong,  "-", NumberToStr(signalLevelLong,  PriceFormat)), NL,
-              "Signal level short: ", ifString(!signalLevelShort, "-", NumberToStr(signalLevelShort, PriceFormat)), NL,
+              "Signal level long: ",  ifString(s2Type==MODE_HIGH &&  Low[s1Bar] >  Low[s3Bar], NumberToStr(High[s2Bar], PriceFormat), "-"), NL,
+              "Signal level short: ", ifString(s2Type==MODE_LOW  && High[s1Bar] < High[s3Bar], NumberToStr( Low[s2Bar], PriceFormat), "-"), NL,
               "Signal: ",             signalToStr[signal]);
 
       // open new positions
       if (signal != NULL) {
-         type      = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
+         int type = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
          color clr = ifInt(signal==SIGNAL_BUY, Blue, Red);
          OrderSendEx(Symbol(), type,  Lots, NULL, slippage, NULL, NULL, "Opto123 "+ OrderTypeDescription(type), MagicNumber, NULL, clr, NULL, oe);
       }
@@ -169,4 +152,26 @@ double CalcTakeProfit() {
       }
    }
    return(NormalizeDouble(tp, Digits));
+}
+
+
+/**
+ * Find the next ZigZag semaphore starting from the specified bar offset.
+ *
+ * @param  _In_  int  startbar - startbar to search from
+ * @param  _Out_ int &offset   - offset of the found ZigZag semaphore
+ * @param  _Out_ int &type     - type of the found semaphore: MODE_HIGH|MODE_LOW
+ *
+ * @return bool - success status
+ */
+bool FindNextZigzagSemaphore(int bar, int &offset, int &type) {
+   int trend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND, bar));
+   if (!trend) return(false);
+
+   int absTrend = Abs(trend);
+   offset = bar + (absTrend % 100000) + (absTrend / 100000);
+   type   = ifInt(trend < 0, MODE_HIGH, MODE_LOW);
+
+   debug("FindNextZigzagSemaphore(1)  Tick="+ Tick +"  bar="+ bar +"  trend="+ trend +"  semaphore["+ offset +"]="+ TimeToStr(Time[offset], TIME_DATE|TIME_MINUTES) +"  "+ PriceTypeDescription(type));
+   return(true);
 }
