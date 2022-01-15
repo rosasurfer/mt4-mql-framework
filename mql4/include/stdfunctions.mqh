@@ -6205,24 +6205,24 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "ALMA",
-                          maPeriods,                                       // int    MA.Periods
-                          maAppliedPrice,                                  // string MA.AppliedPrice
-                          distributionOffset,                              // double Distribution.Offset
-                          distributionSigma,                               // double Distribution.Sigma
+                          maPeriods,                        // int    MA.Periods
+                          maAppliedPrice,                   // string MA.AppliedPrice
+                          distributionOffset,               // double Distribution.Offset
+                          distributionSigma,                // double Distribution.Sigma
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6233,7 +6233,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
       logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6250,15 +6250,15 @@ bool icChartInfos() {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    iCustom(NULL, NULL, "ChartInfos",
-           "off",                                                          // string Track.Orders
-           false,                                                          // bool   Offline.Ticker
-           "",                                                             // string ____________________
-           "off",                                                          // string Signal.Sound
-           "off",                                                          // string Signal.Mail
-           "off",                                                          // string Signal.SMS
-           "",                                                             // string ____________________
-           false,                                                          // bool   AutoConfiguration
-           lpSuperContext,                                                 // int    __lpSuperContext
+           "off",                                           // string Track.Orders
+           false,                                           // bool   Offline.Ticker
+           "",                                              // string ____________________
+           "off",                                           // string Signal.Sound
+           "off",                                           // string Signal.Mail
+           "off",                                           // string Signal.SMS
+           "",                                              // string ____________________
+           false,                                           // bool   AutoConfiguration
+           lpSuperContext,                                  // int    __lpSuperContext
 
            0, 0);
 
@@ -6269,7 +6269,7 @@ bool icChartInfos() {
       logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(true);
    return(!SetLastError(error));
@@ -6290,19 +6290,19 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "FATL",
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6313,7 +6313,7 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
       logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6335,22 +6335,22 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "HalfTrend",
-                          periods,                                         // int    Periods
+                          periods,                          // int    Periods
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          CLR_NONE,                                        // color  Color.Channel
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          CLR_NONE,                         // color  Color.Channel
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6361,7 +6361,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
       logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6385,23 +6385,23 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Jurik Moving Average",
-                          periods,                                         // int    Periods
-                          phase,                                           // int    Phase
-                          appliedPrice,                                    // string AppliedPrice
+                          periods,                          // int    Periods
+                          phase,                            // int    Phase
+                          appliedPrice,                     // string AppliedPrice
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6412,7 +6412,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
       logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6439,28 +6439,28 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "MACD",
-                          fastMaPeriods,                                   // int    Fast.MA.Periods
-                          fastMaMethod,                                    // string Fast.MA.Method
-                          fastMaAppliedPrice,                              // string Fast.MA.AppliedPrice
+                          fastMaPeriods,                    // int    Fast.MA.Periods
+                          fastMaMethod,                     // string Fast.MA.Method
+                          fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
 
-                          slowMaPeriods,                                   // int    Slow.MA.Periods
-                          slowMaMethod,                                    // string Slow.MA.Method
-                          slowMaAppliedPrice,                              // string Slow.MA.AppliedPrice
+                          slowMaPeriods,                    // int    Slow.MA.Periods
+                          slowMaMethod,                     // string Slow.MA.Method
+                          slowMaAppliedPrice,               // string Slow.MA.AppliedPrice
 
-                          Blue,                                            // color  MainLine.Color
-                          1,                                               // int    MainLine.Width
-                          Green,                                           // color  Histogram.Color.Upper
-                          Red,                                             // color  Histogram.Color.Lower
-                          2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string _____________________
-                          "off",                                           // string Signal.onZeroCross
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string _____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  MainLine.Color
+                          1,                                // int    MainLine.Width
+                          Green,                            // color  Histogram.Color.Upper
+                          Red,                              // color  Histogram.Color.Lower
+                          2,                                // int    Histogram.Style.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string _____________________
+                          "off",                            // string Signal.onZeroCross
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string _____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6471,7 +6471,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
       logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6495,23 +6495,23 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Moving Average",
-                          maPeriods,                                       // int    MA.Periods
-                          maMethod,                                        // string MA.Method
-                          maAppliedPrice,                                  // string MA.AppliedPrice
+                          maPeriods,                        // int    MA.Periods
+                          maMethod,                         // string MA.Method
+                          maAppliedPrice,                   // string MA.AppliedPrice
 
-                          Blue,                                            // color  Color.UpTrend
-                          Blue,                                            // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          0,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Blue,                             // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          0,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6522,7 +6522,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
       logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6545,22 +6545,22 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
-                          cycleLength,                                     // int    Cycle.Length
-                          appliedPrice,                                    // string AppliedPrice
+                          cycleLength,                      // int    Cycle.Length
+                          appliedPrice,                     // string AppliedPrice
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Dot",                                           // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Dot",                            // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6571,7 +6571,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
       logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6594,18 +6594,18 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, ".attic/RSI",
-                          periods,                                         // int    RSI.Periods
-                          appliedPrice,                                    // string RSI.AppliedPrice
+                          periods,                          // int    RSI.Periods
+                          appliedPrice,                     // string RSI.AppliedPrice
 
-                          Blue,                                            // color  MainLine.Color
-                          1,                                               // int    MainLine.Width
-                          Blue,                                            // color  Histogram.Color.Upper
-                          Red,                                             // color  Histogram.Color.Lower
-                          0,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string _____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  MainLine.Color
+                          1,                                // int    MainLine.Width
+                          Blue,                             // color  Histogram.Color.Upper
+                          Red,                              // color  Histogram.Color.Lower
+                          0,                                // int    Histogram.Style.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string _____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6616,7 +6616,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
       logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6637,19 +6637,19 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "SATL",
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6660,7 +6660,7 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
       logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6683,22 +6683,22 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Ehlers 2-Pole-SuperSmoother",
-                          periods,                                         // int    Periods
-                          appliedPrice,                                    // string AppliedPrice
+                          periods,                          // int    Periods
+                          appliedPrice,                     // string AppliedPrice
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6709,7 +6709,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
       logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6732,24 +6732,24 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "SuperTrend",
-                          atrPeriods,                                      // int    ATR.Periods
-                          smaPeriods,                                      // int    SMA.Periods
+                          atrPeriods,                       // int    ATR.Periods
+                          smaPeriods,                       // int    SMA.Periods
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          CLR_NONE,                                        // color  Color.Channel
-                          CLR_NONE,                                        // color  Color.MovingAverage
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          CLR_NONE,                         // color  Color.Channel
+                          CLR_NONE,                         // color  Color.MovingAverage
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6760,7 +6760,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
       logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6783,22 +6783,22 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "TriEMA",
-                          periods,                                         // int    MA.Periods
-                          appliedPrice,                                    // string MA.AppliedPrice
+                          periods,                          // int    MA.Periods
+                          appliedPrice,                     // string MA.AppliedPrice
 
-                          Blue,                                            // color  Color.UpTrend
-                          Red,                                             // color  Color.DownTrend
-                          "Line",                                          // string Draw.Type
-                          1,                                               // int    Draw.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string ____________________
-                          "off",                                           // string Signal.onTrendChange
-                          "off",                                           // string Signal.Sound
-                          "off",                                           // string Signal.Mail
-                          "off",                                           // string Signal.SMS
-                          "",                                              // string ____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  Color.UpTrend
+                          Red,                              // color  Color.DownTrend
+                          "Line",                           // string Draw.Type
+                          1,                                // int    Draw.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          "off",                            // string Signal.onTrendChange
+                          "off",                            // string Signal.Sound
+                          "off",                            // string Signal.Mail
+                          "off",                            // string Signal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6809,7 +6809,7 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
       logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6832,18 +6832,18 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "Trix",
-                          periods,                                         // int    EMA.Periods
-                          appliedPrice,                                    // string EMA.AppliedPrice
+                          periods,                          // int    EMA.Periods
+                          appliedPrice,                     // string EMA.AppliedPrice
 
-                          Blue,                                            // color  MainLine.Color
-                          1,                                               // int    MainLine.Width
-                          Green,                                           // color  Histogram.Color.Upper
-                          Red,                                             // color  Histogram.Color.Lower
-                          2,                                               // int    Histogram.Style.Width
-                          -1,                                              // int    Max.Bars
-                          "",                                              // string _____________________
-                          false,                                           // bool   AutoConfiguration
-                          lpSuperContext,                                  // int    __lpSuperContext
+                          Blue,                             // color  MainLine.Color
+                          1,                                // int    MainLine.Width
+                          Green,                            // color  Histogram.Color.Upper
+                          Red,                              // color  Histogram.Color.Lower
+                          2,                                // int    Histogram.Style.Width
+                          -1,                               // int    Max.Bars
+                          "",                               // string _____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
 
                           iBuffer, iBar);
 
@@ -6854,7 +6854,66 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
       logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
    }
 
-   error = __ExecutionContext[EC.mqlError];                                // TODO: synchronize execution contexts
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
+   if (!error)
+      return(value);
+   return(!SetLastError(error));
+}
+
+
+/**
+ * Load the custom "ZigZag" indicator and return a value.
+ *
+ * @param  int  timeframe                      - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int  periods                        - indicator parameter
+ * @param  bool calcFirstChannelCrossingPerBar - indicator parameter
+ * @param  bool calcAllChannelCrossings        - indicator parameter
+ * @param  int  iBuffer                        - indicator buffer index of the value to return
+ * @param  int  iBar                           - bar index of the value to return
+ *
+ * @return double - indicator value or NULL in case of errors
+ */
+double icZigZag(int timeframe, int periods, bool calcFirstChannelCrossingPerBar, bool calcAllChannelCrossings, int iBuffer, int iBar) {
+   static int lpSuperContext = 0; if (!lpSuperContext)
+      lpSuperContext = GetIntsAddress(__ExecutionContext);
+
+   double value = iCustom(NULL, timeframe, "ZigZag",
+                          periods,                          // int    ZigZag.Periods
+                          "Line",                           // string ZigZag.Type
+                          0,                                // int    ZigZag.Width
+                          Blue,                             // color  ZigZag.Color
+
+                          false,                            // bool   ShowZigZagTrail
+                          false,                            // bool   ShowDonchianChannel
+                          calcFirstChannelCrossingPerBar,   // bool   ShowFirstChannelCrossingPerBar
+                          calcAllChannelCrossings,          // bool   ShowAllChannelCrossings
+                          DodgerBlue,                       // color  Donchian.UpperBand.Color
+                          DodgerBlue,                       // color  Donchian.LowerBand.Color
+
+                          108,                              // int    Semaphores.WingDingsSymbol
+                          161,                              // int    Crossings.WingDingsSymbol
+                          0,                                // int    PeriodStepper.StepSize
+                          -1,                               // int    Max.Bars
+                          "",                               // string ____________________
+                          false,                            // bool   Signal.onReversal
+                          false,                            // bool   Signal.onReversal.Sound
+                          false,                            // bool   Signal.onReversal.Popup
+                          false,                            // bool   Signal.onReversal.Mail
+                          false,                            // bool   Signal.onReversal.SMS
+                          "",                               // string ____________________
+                          false,                            // bool   AutoConfiguration
+                          lpSuperContext,                   // int    __lpSuperContext
+
+                          iBuffer, iBar);
+
+   int error = GetLastError();
+   if (error != NO_ERROR) {
+      if (error != ERS_HISTORY_UPDATE)
+         return(!catch("icZigZag(1)", error));
+      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+   }
+
+   error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
    if (!error)
       return(value);
    return(!SetLastError(error));
@@ -6963,6 +7022,7 @@ void __DummyCalls() {
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
+   icZigZag(NULL, NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifDoubleOr(NULL, NULL);

@@ -344,6 +344,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define ZigZag.MODE_UPPER_CROSS           4     // ZigZag upper channel band crossing
 #define ZigZag.MODE_LOWER_CROSS           5     // ZigZag lower channel band crossing
 #define ZigZag.MODE_TREND                 6     // ZigZag trend (combined trend and waiting buffers)
+#define ZigZag.MODE_REVERSAL              7     // ZigZag leg reversal bar
 
 
 // sorting modes, see ArraySort()
