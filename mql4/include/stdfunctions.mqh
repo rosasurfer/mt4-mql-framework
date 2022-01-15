@@ -6878,12 +6878,14 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "ZigZag",
+                          "",                               // string ____________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
                           0,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
                           false,                            // bool   ZigZag.ShowTrail
 
+                          "",                               // string ____________________
                           false,                            // bool   Donchian.ShowFullChannel
                           false,                            // bool   Donchian.ShowStopSegments
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
@@ -6891,16 +6893,19 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
                           DodgerBlue,                       // color  Donchian.UpperBand.Color
                           DodgerBlue,                       // color  Donchian.LowerBand.Color
 
+                          "",                               // string ____________________
                           108,                              // int    Semaphores.WingDingsSymbol
                           161,                              // int    Crossings.WingDingsSymbol
                           0,                                // int    PeriodStepper.StepSize
                           -1,                               // int    Max.Bars
+
                           "",                               // string ____________________
                           false,                            // bool   Signal.onReversal
                           false,                            // bool   Signal.onReversal.Sound
                           false,                            // bool   Signal.onReversal.Popup
                           false,                            // bool   Signal.onReversal.Mail
                           false,                            // bool   Signal.onReversal.SMS
+
                           "",                               // string ____________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
