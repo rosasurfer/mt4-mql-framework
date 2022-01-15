@@ -6864,16 +6864,16 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
 /**
  * Load the custom "ZigZag" indicator and return a value.
  *
- * @param  int  timeframe                      - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int  periods                        - indicator parameter
- * @param  bool calcFirstChannelCrossingPerBar - indicator parameter
- * @param  bool calcAllChannelCrossings        - indicator parameter
- * @param  int  iBuffer                        - indicator buffer index of the value to return
- * @param  int  iBar                           - bar index of the value to return
+ * @param  int  timeframe               - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int  periods                 - indicator parameter
+ * @param  bool calcAllChannelCrossings - indicator parameter
+ * @param  bool markFirstCrossing       - indicator parameter
+ * @param  int  iBuffer                 - indicator buffer index of the value to return
+ * @param  int  iBar                    - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icZigZag(int timeframe, int periods, bool calcFirstChannelCrossingPerBar, bool calcAllChannelCrossings, int iBuffer, int iBar) {
+double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool markFirstCrossing, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6882,11 +6882,12 @@ double icZigZag(int timeframe, int periods, bool calcFirstChannelCrossingPerBar,
                           "Line",                           // string ZigZag.Type
                           0,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
+                          false,                            // bool   ZigZag.ShowTrail
 
-                          false,                            // bool   ShowZigZagTrail
-                          false,                            // bool   ShowDonchianChannel
-                          calcFirstChannelCrossingPerBar,   // bool   ShowFirstChannelCrossingPerBar
-                          calcAllChannelCrossings,          // bool   ShowAllChannelCrossings
+                          false,                            // bool   Donchian.ShowFullChannel
+                          false,                            // bool   Donchian.ShowStopSegments
+                          calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
+                          markFirstCrossing,                // bool   Donchian.MarkFirstCrossing
                           DodgerBlue,                       // color  Donchian.UpperBand.Color
                           DodgerBlue,                       // color  Donchian.LowerBand.Color
 

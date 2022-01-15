@@ -14,8 +14,6 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== Signal settings ===";
 extern int    ZigZag.Periods                 = 12;
-       int    ZigZag.Deviation               = 5;
-       int    ZigZag.Backstep                = 3;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
@@ -36,9 +34,8 @@ extern int    MagicNumber                    = 12345;
 
 #define MODE_SEMAPHORE  0
 
-string signalToStr[]    = {"-", "Buy", "Sell"};
-string zigzagIndicator  = "ZigZag.orig";
-int    slippage         = 5;                    // in point
+string signalToStr[] = {"-", "Buy", "Sell"};
+int    slippage      = 5;                    // in point
 
 
 /**
