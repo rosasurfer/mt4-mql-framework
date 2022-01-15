@@ -33,25 +33,28 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 36;                    // lookback periods of the Donchian channel
 extern string ZigZag.Type                    = "Line | Semaphores*";  // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
-extern bool   ZigZag.ShowTrail               = true;                  // whether to display the trail of the ZigZag leg
+extern bool   ZigZag.ShowTrail               = true;                  // whether to display the trail of the ZigZag legs
 
+extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowFullChannel       = true;                  // whether to display the full Donchian channel
-extern bool   Donchian.ShowStopSegments      = true;                  // whether to display only stop segments of the Donchian channel
+extern bool   Donchian.ShowStopSegments      = false;                 // whether to display only stop segments of the Donchian channel
 extern bool   Donchian.ShowAllCrossings      = true;                  // whether to display all channel crossings or only crossings exceeding the former High/Low
 extern bool   Donchian.MarkFirstCrossing     = true;                  // whether to mark the first or the last channel crossing price inside a bar
 extern color  Donchian.UpperBand.Color       = DodgerBlue;
 extern color  Donchian.LowerBand.Color       = Magenta;
 
+extern string ___c__________________________ = "=== Other ===";
 extern int    Semaphores.WingDingsSymbol     = 108;                   // a medium dot
 extern int    Crossings.WingDingsSymbol      = 161;                   // a small circle
 extern int    PeriodStepper.StepSize         = 0;                     // enable the period stepper with the specified stepsize
 extern int    Max.Bars                       = 10000;                 // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling of ZigZag reversals ===";
+extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onReversal              = false;
 extern bool   Signal.onReversal.Sound        = true;
 extern bool   Signal.onReversal.Popup        = false;
