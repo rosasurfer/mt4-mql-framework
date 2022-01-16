@@ -1,8 +1,7 @@
 /**
  * Opto123 Pattern EA
  *
- * A simplified and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun. The trading logic is
- * unchanged.
+ * A simplified and fixed version of the original 123 Pattern EA v1.0 published by Ronald Raygun.
  *
  * @source  https://www.forexfactory.com/thread/post/4090801#post4090801                            [Opto123 Pattern EA v1.0]
  */
@@ -17,10 +16,10 @@ extern int    ZigZag.Periods                 = 12;
 
 extern string ___b__________________________ = "=== Trade settings ===";
 extern double Lots                           = 0.1;
-extern int    StopLoss                       = 10;       // in pip            if enabled: 10
-extern int    TakeProfit                     = 0;        // in pip            if enabled:  6
-extern int    TrailingStop                   = 0;        // in pip            if enabled:  3
-extern int    BreakevenStopWhenProfit        = 0;        // in pip            if enabled:  5
+extern int    StopLoss                       = 10;       // in pip
+extern int    TakeProfit                     = 15;       // in pip
+extern int    TrailingStop                   = 0;        // in pip, if enabled: 3
+extern int    BreakevenStopWhenProfit        = 0;        // in pip, if enabled: 5
 extern int    MagicNumber                    = 12345;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -61,9 +60,9 @@ int onTick() {
    if (!isOpenPosition) {
       // find the last 3 ZigZag semaphores
       int s1Bar, s2Bar, s3Bar, s2Type, signal, iNull;
-      if (!FindNextZigzagSemaphore(    0, s1Bar, iNull))  return(last_error);
-      if (!FindNextZigzagSemaphore(s1Bar, s2Bar, s2Type)) return(last_error);
-      if (!FindNextZigzagSemaphore(s2Bar, s3Bar, iNull))  return(last_error);
+      if (!FindNextSemaphore(    0, s1Bar, iNull))  return(last_error);
+      if (!FindNextSemaphore(s1Bar, s2Bar, s2Type)) return(last_error);
+      if (!FindNextSemaphore(s2Bar, s3Bar, iNull))  return(last_error);
 
       // check entry signals (always against s2 level)
       if (s2Type == MODE_HIGH) {
@@ -80,7 +79,7 @@ int onTick() {
 
       // open new positions
       if (signal != NULL) {
-         int type = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
+         int type  = ifInt(signal==SIGNAL_BUY, OP_BUY, OP_SELL);
          color clr = ifInt(signal==SIGNAL_BUY, Blue, Red);
          OrderSendEx(Symbol(), type,  Lots, NULL, slippage, NULL, NULL, "Opto123 "+ OrderTypeDescription(type), MagicNumber, NULL, clr, NULL, oe);
       }
@@ -161,7 +160,7 @@ double CalcTakeProfit() {
  *
  * @return bool - success status
  */
-bool FindNextZigzagSemaphore(int bar, int &offset, int &type) {
+bool FindNextSemaphore(int bar, int &offset, int &type) {
    int trend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND, bar));
    if (!trend) return(false);
 
@@ -169,6 +168,6 @@ bool FindNextZigzagSemaphore(int bar, int &offset, int &type) {
    offset = bar + (absTrend % 100000) + (absTrend / 100000);
    type   = ifInt(trend < 0, MODE_HIGH, MODE_LOW);
 
-   debug("FindNextZigzagSemaphore(1)  Tick="+ Tick +"  bar="+ bar +"  trend="+ trend +"  semaphore["+ offset +"]="+ TimeToStr(Time[offset], TIME_DATE|TIME_MINUTES) +"  "+ PriceTypeDescription(type));
+   debug("FindNextSemaphore(1)  Tick="+ Tick +"  bar="+ bar +"  trend="+ trend +"  semaphore["+ offset +"]="+ TimeToStr(Time[offset], TIME_DATE|TIME_MINUTES) +"  "+ PriceTypeDescription(type));
    return(true);
 }
