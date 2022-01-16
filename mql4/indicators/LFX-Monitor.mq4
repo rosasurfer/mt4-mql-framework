@@ -73,31 +73,31 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string ___a___________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
-extern bool   USDLFX.Enabled                  = true;
-extern bool   AUDLFX.Enabled                  = false;
-extern bool   CADLFX.Enabled                  = false;
-extern bool   CHFLFX.Enabled                  = false;
-extern bool   EURLFX.Enabled                  = false;
-extern bool   GBPLFX.Enabled                  = false;
-extern bool   JPYLFX.Enabled                  = false;
-extern bool   NZDLFX.Enabled                  = false;                  // in fact an FX7 index
-extern string ___b___________________________ = "=== Synthetic FX7 indexes ===";
-extern bool   NOKFX7.Enabled                  = false;
-extern bool   SEKFX7.Enabled                  = false;
-extern bool   SGDFX7.Enabled                  = false;
-extern bool   ZARFX7.Enabled                  = false;
-extern string ___c___________________________ = "=== ICE indexes ===";
-extern bool   EURX.Enabled                    = false;
-extern bool   USDX.Enabled                    = true;
-extern string ___d___________________________ = "=== Synthetic Gold index ===";
-extern bool   XAUI.Enabled                    = false;
-extern string ___e___________________________ = "=== Recording settings ===";
-extern bool   Recording.Enabled               = false;
-extern string Recording.HistoryDirectory      = "Synthetic-History";    // name of the history directory to store recorded data
-extern int    Recording.HistoryFormat         = 401;                    // created history format
-extern string ___f___________________________ = "=== Broker settings ===";
-extern string Broker.SymbolSuffix             = "";                     // symbol suffix for brokers with non-standard symbols
+extern string ___a__________________________ = "=== Synthetic FX6 indexes (LiteForex) ===";
+extern bool   USDLFX.Enabled                 = true;
+extern bool   AUDLFX.Enabled                 = false;
+extern bool   CADLFX.Enabled                 = false;
+extern bool   CHFLFX.Enabled                 = false;
+extern bool   EURLFX.Enabled                 = false;
+extern bool   GBPLFX.Enabled                 = false;
+extern bool   JPYLFX.Enabled                 = false;
+extern bool   NZDLFX.Enabled                 = false;                  // in fact an FX7 index
+extern string ___b__________________________ = "=== Synthetic FX7 indexes ===";
+extern bool   NOKFX7.Enabled                 = false;
+extern bool   SEKFX7.Enabled                 = false;
+extern bool   SGDFX7.Enabled                 = false;
+extern bool   ZARFX7.Enabled                 = false;
+extern string ___c__________________________ = "=== ICE indexes ===";
+extern bool   EURX.Enabled                   = false;
+extern bool   USDX.Enabled                   = true;
+extern string ___d__________________________ = "=== Synthetic Gold index ===";
+extern bool   XAUI.Enabled                   = false;
+extern string ___e__________________________ = "=== Recording settings ===";
+extern bool   Recording.Enabled              = false;
+extern string Recording.HistoryDirectory     = "Synthetic-History";    // name of the history directory to store recorded data
+extern int    Recording.HistoryFormat        = 401;                    // created history format
+extern string ___f__________________________ = "=== Broker settings ===";
+extern string Broker.SymbolSuffix            = "";                     // symbol suffix for brokers with non-standard symbols
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 

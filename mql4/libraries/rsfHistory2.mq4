@@ -904,8 +904,8 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
       FileWriteInteger(hFile, 0       );     // int:    spread
       FileWriteInteger(hFile, 0       );     // uint64: real_volume
       FileWriteInteger(hFile, 0       );
-   }
-   FileFlush(hFile);                         // doesn't update last-modified timestamp even if the file size changes
+   }                                         // doesn't update last-modified timestamp even if the file size changes
+   FileFlush(hFile);                         // @see  https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-flushviewoffile
 
    datetime closeTime=hf.lastStoredBar.closeTime[hFile], nextCloseTime=hf.lastStoredBar.nextCloseTime[hFile];
 
@@ -1114,8 +1114,8 @@ bool HistoryFile2.WriteLastStoredBar(int hFile, int flags = NULL) {
       FileWriteInteger(hFile, 0);                                                            // int:    spread
       FileWriteInteger(hFile, 0);                                                            // uint64: volume
       FileWriteInteger(hFile, 0);
-   }
-   FileFlush(hFile);                                        // doesn't update last-modified timestamp even if the file size changes
+   }                                         // doesn't update last-modified timestamp even if the file size changes
+   FileFlush(hFile);                         // @see  https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-flushviewoffile
 
    // Die Bar existierte bereits in der History, die Metadaten ändern sich nicht.
 
