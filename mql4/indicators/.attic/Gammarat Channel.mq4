@@ -22,12 +22,12 @@ extern string MA.AppliedPrice  = "Open | High | Low | Close | Median | Typical |
 extern double Bands.Deviations = 2.5;
 extern color  Bands.Color      = LightSkyBlue;
 extern int    Bands.LineWidth  = 3;
-extern string __a___________________________;
+extern string ___a__________________________;
 
 extern bool   RepaintingMode   = true;             // toggle repainting mode (a full recalculation is way too slow when disabled)
 extern bool   MarkReversals    = true;
 extern int    Max.Bars         = 5000;             // max. values to calculate (-1: all available)
-extern string __b___________________________;
+extern string ___b__________________________;
 
 extern bool   AlertsOn         = false;
 
