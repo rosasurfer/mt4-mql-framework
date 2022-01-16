@@ -81,7 +81,7 @@ extern bool   Signal.onReversal.SMS          = false;
 #define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
 #define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
 #define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: ZigZag leg reversal
-#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_TREND + MODE_WAITING buffers
+#define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
 #define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
 #define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
 #define MODE_UPPER_CROSS_ENTRY     10                          // 10: entry point of an upper channel crossing
@@ -110,7 +110,7 @@ int       framework_buffers = 8;                               // buffers manage
 #property indicator_color6    indicator_color4                 // lower channel crossings (entry or exit points)
 #property indicator_width6    0                                //
 
-#property indicator_color7    CLR_NONE                         // combined MODE_TREND + MODE_WAITING buffers
+#property indicator_color7    CLR_NONE                         // combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
 #property indicator_color8    CLR_NONE                         // ZigZag leg reversal bar
 
 double   semaphoreOpen   [];                                   // ZigZag semaphores (open prices of a vertical line segment)
