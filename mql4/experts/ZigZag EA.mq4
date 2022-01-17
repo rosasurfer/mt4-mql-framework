@@ -1,5 +1,12 @@
 /**
- * ZigZag EA
+ * Turtle Trader
+ *
+ *
+ * TODO:
+ *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
+ *  - configuration/start at a specific time of day
+ *  - TakeProfit in {money|percent|pip}
+ *  - make slippage an input parameter
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
