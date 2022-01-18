@@ -107,7 +107,6 @@ extern string Broker.SymbolSuffix            = "";                     // symbol
 #include <rsfHistory.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <structs/rsf/LFXOrder.mqh>

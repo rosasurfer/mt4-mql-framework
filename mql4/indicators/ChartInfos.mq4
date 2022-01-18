@@ -42,7 +42,6 @@ extern string Signal.SMS     = "on | off | auto*";
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
 #include <scriptrunner.mqh>

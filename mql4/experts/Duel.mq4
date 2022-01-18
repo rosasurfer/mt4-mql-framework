@@ -68,7 +68,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         105                    // unique strategy id from 101-1023 (10 bit)

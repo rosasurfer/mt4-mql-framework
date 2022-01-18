@@ -43,7 +43,6 @@ int __DeinitFlags[];
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/mt4/HistoryHeader.mqh>
 
 

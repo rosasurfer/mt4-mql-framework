@@ -31,7 +31,6 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
 
