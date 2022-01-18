@@ -3,6 +3,7 @@
  *
  *
  * TODO:
+ *  - write journal every day and stop manual trading
  *  - deploy to server to run unattended
  *  - track full PL (min/max/current)
  *  - every instance needs to track its PL curve
