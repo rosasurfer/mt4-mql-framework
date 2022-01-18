@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - write journal every day and stop manual trading
  *  - deploy to server to run unattended
  *  - track full PL (min/max/current)
  *  - every instance needs to track its PL curve
@@ -12,6 +11,7 @@
  *
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() dosn't log slippage
+ *  - EquityRecorder receives no ticks during market-closed times and produces gaps
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - configuration/start at a specific time of day
  *  - make slippage an input parameter
@@ -30,7 +30,6 @@ extern double Lots           = 0.1;
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define SIGNAL_LONG  1

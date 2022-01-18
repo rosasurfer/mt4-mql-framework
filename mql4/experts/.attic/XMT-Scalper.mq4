@@ -99,7 +99,6 @@ extern bool     TakeProfitBug                  = true;                       // 
 #include <rsfLib.mqh>
 #include <rsfHistory.mqh>
 #include <functions/HandleCommands.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID                  106        // unique strategy id from 101-1023 (10 bit)

@@ -668,6 +668,19 @@ bool WaitForTicket(int ticket, bool select = false) {
 
 
 /**
+ * Concatenate the values of a string array using the specified separator.
+ *
+ * @param  string values[]             - string array
+ * @param  string separator [optional] - separator (default: ", ")
+ *
+ * @return string - concatenated string or an empty string in case of errors
+ */
+string JoinStrings(string values[], string separator = ", ") {
+   return(JoinStringsEx(values, separator));
+}
+
+
+/**
  * Return the current symbol's pip value for the specified lot amount.
  *
  * @param  double lots           [optional] - lot amount (default: 1 lot)
@@ -7068,6 +7081,7 @@ void __DummyCalls() {
    IsSuperContext();
    IsTicket(NULL);
    IsVisualModeFix();
+   JoinStrings(sNulls);
    LE(NULL, NULL);
    LocalTimeFormat(NULL, NULL);
    LoglevelDescription(NULL);
@@ -7205,6 +7219,7 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
+   string   JoinStringsEx(string values[], string separator);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);

@@ -202,6 +202,7 @@ bool     IsStopOrderType(int value);;
 bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
+string   JoinStrings(string &values[], string separator = ", ");;
 bool     LE(double double1, double double2, int digits = 8);;
 string   LocalTimeFormat(datetime timestamp, string format);;
 string   LoglevelDescription(int level);;                      // also implemented in MT4Expander
@@ -342,7 +343,6 @@ string   JoinBools(bool &values[], string separator = ", ");;
 string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
-string   JoinStrings(string &values[], string separator = ", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 
 
@@ -679,6 +679,7 @@ bool     IsReverseIndexedDoubleArray(double &array[]);;
 bool     IsReverseIndexedIntArray(int &array[]);;
 bool     IsReverseIndexedStringArray(string &array[]);;
 bool     IsTemporaryTradeError(int error);;
+string   JoinStringsEx(string &values[], string separator = ", ");;
 int      MergeBoolArrays(bool &array1[], bool &array2[], bool &merged[]);;
 int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[]);;
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
