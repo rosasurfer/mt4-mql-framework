@@ -3,9 +3,16 @@
  *
  *
  * TODO:
+ *  - deploy to server to run unattended
+ *  - track full PL (min/max/current)
+ *  - every instance needs to track its PL curve
+ *  - track slippage
+ *  - TakeProfit in {percent|pip}
+ *
+ *  - ToggleOpenOrders() works only after ToggleHistory()
+ *  - ChartInfos::onPositionOpen() dosn't log slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - configuration/start at a specific time of day
- *  - TakeProfit in {money|percent|pip}
  *  - make slippage an input parameter
  */
 #include <stddefines.mqh>
