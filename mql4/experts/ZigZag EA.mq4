@@ -10,7 +10,7 @@
  *  - TakeProfit in {percent|pip}
  *
  *  - ToggleOpenOrders() works only after ToggleHistory()
- *  - ChartInfos::onPositionOpen() dosn't log slippage
+ *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - EquityRecorder receives no ticks during market-closed times and produces gaps
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - configuration/start at a specific time of day
