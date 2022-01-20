@@ -6,12 +6,12 @@
  *  - build script for all .ex4 files after deployment
  *  - EquityRecorder stopped working
  *  - EquityRecorder receives no ticks during market-closed times and produces gaps
- *  - ZigZag reversals during the same large bar produce wrong trend buffer values
- *  - the EA skips/looses some signals
+ *  - double ZigZag reversals during a large bars are not recognized and ignored
  *  - track full PL (min/max/current)
  *  - every instance needs to track its PL curve
  *  - track slippage
  *  - TakeProfit in {percent|pip}
+ *  - input option to pick-up the last signal on start
  *
  *  - delete old/dead screen sockets on restart
  *  - ToggleOpenOrders() works only after ToggleHistory()
