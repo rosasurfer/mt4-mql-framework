@@ -1,7 +1,13 @@
 /**
  * EquityRecorder
  *
- * Records the current account's equity curve. The actual value is adjusted for duplicated trading costs (fees and spreads).
+ *
+ * Records the current account's equity curve.
+ * The recorded value is adjusted for inflated transaction costs (doubled spreads and fees).
+ *
+ *
+ * TODO:
+ *  - document both equity curves
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -9,6 +15,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern string Recording.HistoryDirectory = "Synthetic-History";      // name of the directory to store recorded data
+extern int    Recording.HistoryFormat    = 401;                      // written history format: 400 | 401
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -18,18 +26,75 @@ int __DeinitFlags[];
 #include <rsfHistory.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers      0
+#property indicator_buffers      1              // there's a minimum of 1 buffer
 #property indicator_color1       CLR_NONE
 
-#define I_ACCOUNT                0                                   // index of the adjusted equity value
-#define I_ACCOUNT_PLUS_ASSETS    1                                   // index of the adjusted equity value plus external assets
+#define I_EQUITY_ACCOUNT         0              // equity values
+#define I_EQUITY_ACCOUNT_EXT     1              // equity values plus external assets (if configured for the account)
 
-double currentEquity[2];                                             // current equity values
-double prevEquity   [2];                                             // previous equity values
-int    hHstSet      [2];                                             // HistorySet handles
+bool     isOpenPosition;                        // whether we have any open positions
+datetime lastTickTime;                          // last tick time of all symbols with open positions
+double   currEquity[2];                         // current equity values
+double   prevEquity[2];                         // previous equity values
+int      hSet      [2];                         // HistorySet handles
 
-string symbolSuffixes    [] = { ".EA"                           , ".EX"                                                 };
-string symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {AccountNumber} equity plus external assets" };
+string symbolSuffixes    [] = {".EA"                               , ".EX"                                                    };
+string symbolDescriptions[] = {"Equity of account {account-number}", "Equity of account {account-number} plus external assets"};
+
+string recordingDirectory = "";                 // directory to store data
+int    recordingFormat;                         // format of new history files: 400 | 401
+int    tickTimerId;                             // id of the tick timer registered for the chart
+
+string indicatorName = "";
+string legendLabel   = "";
+
+
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
+int onInit() {
+   // read auto-configuration
+   string indicator = StrTrim(ProgramName());
+   if (AutoConfiguration) {
+      Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
+      Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
+   }
+
+   // validate inputs
+   // Recording.HistoryDirectory
+   recordingDirectory = StrTrim(Recording.HistoryDirectory);
+   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not an allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
+   int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
+   if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(2)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
+   recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
+   if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
+   if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(4)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
+   // Recording.HistoryFormat
+   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(5)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   recordingFormat = Recording.HistoryFormat;
+
+   // setup a chart ticker (online only)
+   if (!This.IsTesting()) {
+      int hWnd         = __ExecutionContext[EC.hChart];
+      int milliseconds = 1000;                           // a virtual tick every second (1000 milliseconds)
+      int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
+      if (!timerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      tickTimerId = timerId;
+   }
+
+   // indicator labels and display options
+   if (!IsSuperContext()) {
+       legendLabel = CreateLegendLabel();
+       RegisterObject(legendLabel);
+   }
+   indicatorName = StrTrim(ProgramName());
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
+   SetIndexLabel(0, NULL);
+
+   return(catch("onInit(7)"));
+}
 
 
 /**
@@ -38,15 +103,21 @@ string symbolDescriptions[] = { "Account {AccountNumber} equity", "Account {Acco
  * @return int - error status
  */
 int onDeinit() {
-   int size = ArraySize(hHstSet);
+   // close open history sets
+   int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
-      if (hHstSet[i] != 0) {
-         int tmp = hHstSet[i];
-         hHstSet[i] = NULL;
+      if (hSet[i] != 0) {
+         int tmp = hSet[i]; hSet[i] = NULL;
          if (!HistorySet1.Close(tmp)) return(ERR_RUNTIME_ERROR);
       }
    }
-   return(catch("onDeinit(1)"));
+
+   // uninstall the chart ticker
+   if (tickTimerId > NULL) {
+      int id = tickTimerId; tickTimerId = NULL;
+      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+   }
+   return(catch("onDeinit(2)"));
 }
 
 
@@ -56,13 +127,19 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   // skip old ticks (e.g. during session break or weekend)
-   bool isStale = (Tick.time < GetServerTime()-2*MINUTES);
-   if (isStale) return(last_error);
+   if (!CollectData()) return(last_error);
+   if (!RecordData())  return(last_error);
 
-   if (!CollectAccountData()) return(last_error);
-   if (!RecordAccountData())  return(last_error);
-
+   if (!IsSuperContext()) {
+      if (NE(currEquity[0], prevEquity[0], 2)) {
+         ObjectSetText(legendLabel, indicatorName +"   "+ DoubleToStr(currEquity[0], 2), 9, "Arial Fett", Blue);
+         int error = GetLastError();
+         if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
+            return(catch("onTick(1)", error));
+      }
+   }
+   prevEquity[0] = currEquity[0];
+   prevEquity[1] = currEquity[1];
    return(last_error);
 }
 
@@ -72,7 +149,7 @@ int onTick() {
  *
  * @return bool - success status
  */
-bool CollectAccountData() {
+bool CollectData() {
    string symbols      []; ArrayResize(symbols,       0);            // symbols with open positions
    double symbolProfits[]; ArrayResize(symbolProfits, 0);            // each symbol's total PL
 
@@ -119,6 +196,7 @@ bool CollectAccountData() {
       ArrayResize(profits,     n);
       orders = n;
    }
+   isOpenPosition = (n > 0);
 
    // determine each symbol's PL
    int symbolsSize = ArraySize(symbols);
@@ -126,19 +204,19 @@ bool CollectAccountData() {
 
    for (i=0; i < symbolsSize; i++) {
       symbolProfits[i] = CalculateProfit(symbols[i], i, symbolsIdx, tickets, types, lots, openPrices, commissions, swaps, profits);
-      if (IsEmptyValue(symbolProfits[i]))
-         return(false);
+      if (IsEmptyValue(symbolProfits[i])) return(false);
       symbolProfits[i] = NormalizeDouble(symbolProfits[i], 2);
+      lastTickTime     = Max(lastTickTime, MarketInfo(symbols[i], MODE_TIME));
    }
 
    // calculate resulting equity values
    double fullPL         = SumDoubles(symbolProfits);
    double externalAssets = GetExternalAssets(); if (IsEmptyValue(externalAssets)) return(false);
 
-   currentEquity[I_ACCOUNT            ] = NormalizeDouble(AccountBalance()         + fullPL,         2);
-   currentEquity[I_ACCOUNT_PLUS_ASSETS] = NormalizeDouble(currentEquity[I_ACCOUNT] + externalAssets, 2);
+   currEquity[I_EQUITY_ACCOUNT    ] = NormalizeDouble(AccountBalance()             + fullPL,         2);
+   currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(currEquity[I_EQUITY_ACCOUNT] + externalAssets, 2);
 
-   return(!catch("CollectAccountData(3)"));
+   return(!catch("CollectData(1)"));
 }
 
 
@@ -178,7 +256,7 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
    double pipSize    = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
    double spreadPips = MarketInfo(symbol, MODE_SPREAD)/MathPow(10, digits & 1);  // spread in pip
 
-   // resolve the constant PL of a hedged volume
+   // resolve the constant PL of a hedged position
    if (longPosition && shortPosition) {
       hedgedLots     = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLots;
@@ -239,7 +317,7 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
       pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
       hedgedProfit = pipDistance * pipValue;
 
-      // without directional volume return the PL of the hedged volume only
+      // without directional position return PL of the hedged position only
       if (!totalPosition) {
          fullProfit = NormalizeDouble(hedgedProfit, 2);
          return(ifDouble(!catch("CalculateProfit(3)"), fullProfit, EMPTY_VALUE));
@@ -305,38 +383,42 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
  *
  * @return bool - success status
  */
-bool RecordAccountData() {
-   if (IsTesting())
-      return(true);
+bool RecordData() {
+   if (IsTesting()) return(true);
 
-   datetime now.fxt = GetFxtTime();
-   int      size    = ArraySize(hHstSet);
+   datetime now = TimeFXT();
+   int dow = TimeDayOfWeekEx(now);
 
+   if (dow==SATURDAY || dow==SUNDAY) {
+      if (!isOpenPosition || !prevEquity[0])              return(_true(debug("RecordData(0.1)  no open position or no previous equity value, skipping tick "+ Tick)));
+      bool isStale = (lastTickTime < GetServerTime()-2*MINUTES);
+      if (isStale && EQ(currEquity[0], prevEquity[0], 2)) return(_true(debug("RecordData(0.2)  open weekend position but stale equity value, skipping tick "+ Tick)));
+   }
+
+   int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
-      double tickValue     = currentEquity[i];
-      double lastTickValue = prevEquity   [i];
-
-      // record virtual ticks only if the equity value changed
-      if (Tick.isVirtual) {
-         if (!lastTickValue || EQ(tickValue, lastTickValue, 2)) continue;
-      }
-
-      if (!hHstSet[i]) {
+      if (!hSet[i]) {
          string symbol      = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
-         string description = StrReplace(symbolDescriptions[i], "{AccountNumber}", GetAccountNumber());
-         int    digits      = 2;
-         int    format      = 400;
-         string server      = "XTrade-Synthetic";
+         string description = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
 
-         hHstSet[i] = HistorySet1.Get(symbol, server);
-         if (hHstSet[i] == -1)
-            hHstSet[i] = HistorySet1.Create(symbol, description, digits, format, server);
-         if (!hHstSet[i]) return(false);
+         hSet[i] = HistorySet1.Get(symbol, recordingDirectory);
+         if (hSet[i] == -1)
+            hSet[i] = HistorySet1.Create(symbol, description, 2, recordingFormat, recordingDirectory);
+         if (!hSet[i]) return(false);
       }
-
-      if (!HistorySet1.AddTick(hHstSet[i], now.fxt, tickValue, NULL)) return(false);
-
-      prevEquity[i] = tickValue;
+      if (!HistorySet1.AddTick(hSet[i], now, currEquity[i], NULL)) return(false);
    }
    return(true);
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Recording.HistoryDirectory=", DoubleQuoteStr(Recording.HistoryDirectory), ";", NL,
+                            "Recording.HistoryFormat=",    Recording.HistoryFormat,                    ";")
+   );
 }
