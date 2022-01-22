@@ -3,14 +3,15 @@
  *
  *
  * TODO:
- *  - build script for all .ex4 files after deployment
  *  - EquityRecorder stopped working
  *  - EquityRecorder receives no ticks during market-closed times and produces gaps
- *  - double ZigZag reversals during a large bars are not recognized and ignored
- *  - track full PL (min/max/current)
  *  - every instance needs to track its PL curve
- *  - track slippage
+ *  - track full PL (min/max/current)
  *  - TakeProfit in {percent|pip}
+ *
+ *  - double ZigZag reversals during a large bars are not recognized and ignored
+ *  - build script for all .ex4 files after deployment
+ *  - track slippage
  *  - input option to pick-up the last signal on start
  *
  *  - delete old/dead screen sockets on restart
