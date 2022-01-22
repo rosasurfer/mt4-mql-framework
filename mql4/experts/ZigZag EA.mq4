@@ -3,9 +3,7 @@
  *
  *
  * TODO:
- *  - EquityRecorder stopped working
- *  - EquityRecorder receives no ticks during market-closed times and produces gaps
- *  - every instance needs to track its PL curve
+ *  - every EA instance needs to track its PL curve
  *  - track full PL (min/max/current)
  *  - TakeProfit in {percent|pip}
  *
