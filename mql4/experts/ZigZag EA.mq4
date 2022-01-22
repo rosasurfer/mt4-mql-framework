@@ -7,7 +7,7 @@
  *  - track full PL (min/max/current)
  *  - TakeProfit in {percent|pip}
  *
- *  - double ZigZag reversals during a large bars are not recognized and ignored
+ *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - build script for all .ex4 files after deployment
  *  - track slippage
  *  - input option to pick-up the last signal on start

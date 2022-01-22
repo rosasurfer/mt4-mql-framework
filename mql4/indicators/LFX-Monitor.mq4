@@ -253,12 +253,13 @@ int onInit() {
    recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
    if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
    if (!CreateDirectory(recordingDirectory, MODE_MQL|MODE_MKPARENT)) return(catch("onInit(4)  cannot create directory "+ DoubleQuoteStr(Recording.HistoryDirectory), ERR_INVALID_INPUT_PARAMETER));
+   if (!IsFile(recordingDirectory +"/symbols.raw", MODE_MQL))           logNotice("onInit(5)  \""+ recordingDirectory +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
    // Recording.HistoryFormat
-   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(5)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(6)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
    recordingFormat = Recording.HistoryFormat;
    // Broker.SymbolSuffix
    brokerSuffix = StrTrim(Broker.SymbolSuffix);
-   if (StringLen(brokerSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(6)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(Broker.SymbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
+   if (StringLen(brokerSuffix) > MAX_SYMBOL_LENGTH-1)                return(catch("onInit(7)  invalid input parameter Broker.SymbolSuffix: "+ DoubleQuoteStr(Broker.SymbolSuffix) +" (max. "+ (MAX_SYMBOL_LENGTH-1) +" chars)", ERR_INVALID_INPUT_PARAMETER));
 
    // initialize global arrays
    int sizeRequired=ArraySize(brokerSymbols), sizeSynthetics=ArraySize(syntheticSymbols);
@@ -320,10 +321,10 @@ int onInit() {
       int hWnd         = __ExecutionContext[EC.hChart];
       int milliseconds = 500;                            // a virtual tick every 500 milliseconds
       int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
-      if (!timerId) return(catch("onInit(7)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      if (!timerId) return(catch("onInit(8)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
