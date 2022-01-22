@@ -176,7 +176,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
       ObjectSetText(label, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
-      if (IsError(error)) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)  // on ObjectDrag or opened "Properties" dialog
+      if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
          return(catch("@Trend.UpdateLegend(1)", error));
    }
 
