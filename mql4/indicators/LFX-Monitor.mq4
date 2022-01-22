@@ -94,8 +94,8 @@ extern string ___d__________________________ = "=== Synthetic Gold index ===";
 extern bool   XAUI.Enabled                   = false;
 extern string ___e__________________________ = "=== Recording settings ===";
 extern bool   Recording.Enabled              = false;
-extern string Recording.HistoryDirectory     = "Synthetic-History";    // name of the history directory to store recorded data
-extern int    Recording.HistoryFormat        = 401;                    // created history format
+extern string Recording.HistoryDirectory     = "Synthetic-History";    // name of the directory to store recorded data
+extern int    Recording.HistoryFormat        = 401;                    // written history format
 extern string ___f__________________________ = "=== Broker settings ===";
 extern string Broker.SymbolSuffix            = "";                     // symbol suffix for brokers with non-standard symbols
 
@@ -112,7 +112,7 @@ extern string Broker.SymbolSuffix            = "";                     // symbol
 #include <structs/rsf/LFXOrder.mqh>
 
 #property indicator_chart_window
-#property indicator_buffers      1                       // there's a minimum of 1 buffers
+#property indicator_buffers      1                       // there's a minimum of 1 buffer
 #property indicator_color1       CLR_NONE
 
 #define I_AUDUSD     0                                   // broker symbol array indexes
@@ -164,7 +164,7 @@ double   prevMid    [];                                  // previous calculated 
 bool     isStale    [];                                  // whether prices for calculation are stale (not updated anymore)
 datetime staleLimit;                                     // time limit (server time) for stale quotes determination
 
-int      hSet            [];                             // HistorySet handles
+int      hSet[];                                         // HistorySet handles
 string   recordingDirectory = "";                        // directory to store recorded history
 int      recordingFormat;                                // format of new history files: 400 | 401
 int      tickTimerId;                                    // id of the tick timer registered for the chart
@@ -199,6 +199,7 @@ color  statusFontColor.inactive = Gray;
 string statusFontName           = "Tahoma";
 int    statusFontSize           = 8;                     // 8 matches the menu font size
 int    statusLineHeight         = 15;
+
 
 /**
  * Initialization
@@ -246,7 +247,7 @@ int onInit() {
    if (This.IsTesting()) Recording.Enabled = false;
    // Recording.HistoryDirectory
    recordingDirectory = StrTrim(Recording.HistoryDirectory);
-   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
+   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not an allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
    int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
    if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(2)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
    recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
@@ -1015,7 +1016,7 @@ int ShowStatus(int error = NO_ERROR) {
  * @return bool - success status
  */
 bool RecordIndexes() {
-   datetime nowFXT = GetFxtTime();
+   datetime now = GetFxtTime();
    int size = ArraySize(syntheticSymbols);
 
    for (int i=0; i < size; i++) {
@@ -1023,9 +1024,8 @@ bool RecordIndexes() {
          double value     = NormalizeDouble(currMid[i], symbolDigits[i]);
          double lastValue = prevMid[i];
 
-         if (Tick.isVirtual) {                           // Virtual ticks (there are many) are recorded only if the calculated
-            if (EQ(value, lastValue, symbolDigits[i]))   // price changed. Real ticks are always recorded.
-               continue;
+         if (Tick.isVirtual) {                                    // Virtual ticks (there are plenty) are recorded only if the
+            if (EQ(value, lastValue, symbolDigits[i])) continue;  // resulting price changed. Real ticks are always recorded.
          }
 
          if (!hSet[i]) {
@@ -1039,9 +1039,9 @@ bool RecordIndexes() {
             }
             if (!hSet[i]) return(false);
          }
-         if      (i <  7) { if (!HistorySet1.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
-         else if (i < 13) { if (!HistorySet2.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
-         else             { if (!HistorySet3.AddTick(hSet[i], nowFXT, value, NULL)) return(false); }
+         if      (i <  7) { if (!HistorySet1.AddTick(hSet[i], now, value, NULL)) return(false); }
+         else if (i < 13) { if (!HistorySet2.AddTick(hSet[i], now, value, NULL)) return(false); }
+         else             { if (!HistorySet3.AddTick(hSet[i], now, value, NULL)) return(false); }
       }
    }
    return(true);

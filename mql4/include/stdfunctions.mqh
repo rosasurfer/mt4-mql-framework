@@ -3943,9 +3943,9 @@ datetime TimeServer() {
 
 
 /**
- * Gibt die aktuelle GMT-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit).
+ * Return the trade server's current time in GMT. In tester the time is modeled accordingly.
  *
- * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - trade server time in GMT or NULL in case of errors
  */
 datetime TimeGMT() {
    datetime gmt;
@@ -3963,9 +3963,11 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die aktuelle FXT-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit).
+ * Return the trade server's current time in FXT. In tester the time is modeled accordingly.
  *
- * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - trade server time in FXT or NULL in case of errors
+ *
+ * @see  GetFxtTime() to return the system's FXT time in tester
  */
 datetime TimeFXT() {
    datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
@@ -3975,9 +3977,11 @@ datetime TimeFXT() {
 
 
 /**
- * Gibt die aktuelle FXT-Zeit des Systems zurück (auch im Tester).
+ * Return the current system time in FXT (also in tester).
  *
- * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - system time in FXT or NULL in case of errors
+ *
+ * @see  TimeFXT() to return the modeled FXT time in tester
  */
 datetime GetFxtTime() {
    datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
