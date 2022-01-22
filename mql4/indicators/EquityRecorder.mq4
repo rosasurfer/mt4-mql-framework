@@ -391,9 +391,9 @@ bool RecordData() {
    int dow = TimeDayOfWeekEx(now);
 
    if (dow==SATURDAY || dow==SUNDAY) {
-      if (!isOpenPosition || !prevEquity[0])              return(_true(debug("RecordData(0.1)  no open position or no previous equity value, skipping tick "+ Tick)));
+      if (!isOpenPosition || !prevEquity[0])              return(true);
       bool isStale = (lastTickTime < GetServerTime()-2*MINUTES);
-      if (isStale && EQ(currEquity[0], prevEquity[0], 2)) return(_true(debug("RecordData(0.2)  open weekend position but stale equity value, skipping tick "+ Tick)));
+      if (isStale && EQ(currEquity[0], prevEquity[0], 2)) return(true);
    }
 
    int size = ArraySize(hSet);
