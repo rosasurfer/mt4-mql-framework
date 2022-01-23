@@ -25,8 +25,13 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    ZigZag.Periods = 40;
-extern double Lots           = 0.1;
+extern string Sequence.ID                    = "";       // instance to load from a file (id between 1000-9999)
+
+extern string ___a__________________________ = "=== Signal settings ========================";
+extern int    ZigZag.Periods                 = 40;
+
+extern string ___b__________________________ = "=== Trade settings ========================";
+extern double Lots                           = 0.1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,14 +40,30 @@ extern double Lots           = 0.1;
 #include <rsfLib.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define SIGNAL_LONG  1
-#define SIGNAL_SHORT 2
+#define STRATEGY_ID         107              // unique strategy id between 101-1023 (10 bit)
 
+#define STATUS_UNDEFINED      0              // sequence status values
+#define STATUS_WAITING        1
+#define STATUS_PROGRESSING    2
+#define STATUS_STOPPED        3
+
+#define SIGNAL_LONG           1
+#define SIGNAL_SHORT          2
+
+// sequence data
+int      sequence.id;
+datetime sequence.created;
+int      sequence.status;
+string   sequence.name = "";                 // "ZigZag.{sequence-id}"
+
+
+
+// --------------------------------------------------------------------------------------------------------------------------
 int ticket;
 int lastSignal;
 
 int magicNumber = 12345;
-int slippage    = 2;       // point
+int slippage    = 2;                // in point
 
 
 /**
