@@ -3,6 +3,8 @@
  *
  *
  * TODO:
+ *  - add sequence initialization
+ *  - store closed positions in history
  *  - every instance needs to track its PL curve
  *  - TakeProfit in {percent|pip}
  *
