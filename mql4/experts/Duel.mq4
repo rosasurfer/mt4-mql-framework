@@ -2841,7 +2841,7 @@ bool ValidateInputs.SID() {
 
 /**
  * Validate the input parameters. Parameters may have been entered through the input dialog, read from a status file or
- * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called only from onInitUser(),
+ * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
  * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid

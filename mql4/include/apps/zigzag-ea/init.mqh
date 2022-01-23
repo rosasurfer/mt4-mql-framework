@@ -12,6 +12,117 @@ int onInit() {
 
 
 /**
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off". There was an input
+ * dialog.
+ *
+ * @return int - error status
+ */
+int onInitUser() {
+   // check for and validate a specified sequence id
+   if (ValidateInputs.SID()) {
+      RestoreSequence();                                       // a valid sequence id was specified
+   }
+   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+      if (ValidateInputs()) {
+         sequence.id = CreateSequenceId();
+         Sequence.ID = sequence.id;
+         sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.status  = STATUS_WAITING;
+         SS.All();
+         logInfo("onInitUser(1)  sequence "+ sequence.id +" created");
+         SaveStatus();
+      }
+   }
+   //else {}                                                   // an invalid sequence id was specified
+   return(last_error);
+}
+
+
+/**
+ * Called after the input parameters were changed through the input dialog.
+ *
+ * @return int - error status
+ */
+int onInitParameters() {
+   if (!ValidateInputs()) {
+      RestoreInputs();
+      return(last_error);
+   }
+   SaveStatus();
+   return(last_error);
+}
+
+
+/**
+ * Called after the chart timeframe has changed. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTimeframeChange() {
+   RestoreInputs();
+   return(NO_ERROR);
+}
+
+
+/**
+ * Called after the chart symbol has changed. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitSymbolChange() {
+   return(catch("onInitSymbolChange(1)", ERR_ILLEGAL_STATE));
+}
+
+
+/**
+ * Called after the expert was loaded by a chart template. Also at terminal start. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitTemplate() {
+   // restore sequence id from the chart
+   if (FindSequenceId()) {                                  // on success a sequence id was restored
+      if (RestoreSequence()) {
+         SS.All();
+         logInfo("onInitTemplate(1)  "+ sequence.id +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
+}
+
+
+/**
+ * Called after the expert was recompiled. There was no input dialog.
+ *
+ * @return int - error status
+ */
+int onInitRecompile() {                                     // same requirements as for onInitTemplate()
+   // restore sequence id from the chart
+   if (FindSequenceId()) {
+      if (RestoreSequence()) {
+         SS.All();
+         logInfo("onInitRecompile(1)  "+ sequence.id +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+      }
+   }
+   return(last_error);
+}
+
+
+/**
+ * Initialization postprocessing. Not called if the reason-specific init handler returned with an error.
+ *
+ * @return int - error status
+ */
+int afterInit() {
+   bool sequenceWasStarted = (openTicket || ArrayRange(history, 0));
+   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+
+   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
+   return(catch("afterInit(1)"));
+}
+
+
+/**
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from onInit() only.
  *
