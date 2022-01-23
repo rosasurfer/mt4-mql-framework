@@ -62,14 +62,14 @@ double   sequence.maxProfit;                 // max. observed total profit:   0.
 double   sequence.maxDrawdown;               // max. observed total drawdown: -n...0
 
 // order data
-int      openTicket;                         // one open position
-int      openType;                           //
-datetime openTime;                           //
-double   openPrice;                          //
-double   openSwap;                           //
-double   openCommission;                     //
-double   openProfit;                         //
-double   history[][23];                      // multiple closed positions
+int      open.ticket;                        // one open position
+int      open.type;                          //
+datetime open.time;                          //
+double   open.price;                         //
+double   open.swap;                          //
+double   open.commission;                    //
+double   open.profit;                        //
+double   closed.history[][23];               // multiple closed positions
 
 // cache vars to speed-up ShowStatus()
 string   sSequenceTotalPL     = "";
@@ -98,7 +98,7 @@ int onTick() {
    else if (sequence.status == STATUS_PROGRESSING) {
       if (UpdateStatus()) {                              // update order status and PL
          if      (IsStopSignal()) StopSequence();
-         else if (isSignal)       ReverseSequence();
+         else if (isSignal)       ReverseSequence(signal);
       }
    }
    else if (sequence.status == STATUS_STOPPED) {}        // nothing to do
@@ -178,13 +178,13 @@ bool StartSequence(int direction) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store position data
-   openTicket     = ticket;
-   openType       = oe.Type      (oe);
-   openTime       = oe.OpenTime  (oe);
-   openPrice      = oe.OpenPrice (oe);
-   openSwap       = oe.Swap      (oe);
-   openCommission = oe.Commission(oe);
-   openProfit     = oe.Profit    (oe);
+   open.ticket     = ticket;
+   open.type       = oe.Type      (oe);
+   open.time       = oe.OpenTime  (oe);
+   open.price      = oe.OpenPrice (oe);
+   open.swap       = oe.Swap      (oe);
+   open.commission = oe.Commission(oe);
+   open.profit     = oe.Profit    (oe);
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
    return(SaveStatus());
@@ -194,31 +194,35 @@ bool StartSequence(int direction) {
 /**
  * Reverse a progressing sequence.
  *
+ * @param  int direction - new trade direction to continue with
+ *
  * @return bool - success status
  */
-bool ReverseSequence() {
-   if (last_error != NULL)                    return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+bool ReverseSequence(int direction) {
+   if (last_error != NULL)                      return(false);
+   if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   int lastDirection = ifInt(open.type==OP_BUY, D_LONG, D_SHORT);
+   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence into the same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
 
    // close open position
-   int lastDirection = ifInt(openType==OP_BUY, D_LONG, D_SHORT);
    int oe[], oeFlags;
-   if (!OrderCloseEx(openTicket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+   if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
-   openTicket     = NULL;
-   openType       = NULL;
-   openTime       = NULL;
-   openPrice      = NULL;
-   openSwap       = NULL;
-   openCommission = NULL;
-   openProfit     = NULL;                          // TODO: add closed position to history
+   open.ticket     = NULL;
+   open.type       = NULL;
+   open.time       = NULL;
+   open.price      = NULL;
+   open.swap       = NULL;
+   open.commission = NULL;
+   open.profit     = NULL;                         // TODO: add closed position to history
 
    sequence.openPL   = 0;                          // update total PL numbers
    sequence.closedPL = NormalizeDouble(sequence.closedPL + oe.Swap(oe) + oe.Commission(oe) + oe.Profit(oe), 2);
    sequence.totalPL  = sequence.closedPL;
 
    // open new position
-   int      type        = ifInt(lastDirection==D_LONG, OP_SELL, OP_BUY);
+   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
@@ -230,15 +234,15 @@ bool ReverseSequence() {
    int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
-   openTicket     = ticket;
-   openType       = oe.Type      (oe);
-   openTime       = oe.OpenTime  (oe);
-   openPrice      = oe.OpenPrice (oe);
-   openSwap       = oe.Swap      (oe);
-   openCommission = oe.Commission(oe);
-   openProfit     = oe.Profit    (oe);
+   open.ticket     = ticket;
+   open.type       = oe.Type      (oe);
+   open.time       = oe.OpenTime  (oe);
+   open.price      = oe.OpenPrice (oe);
+   open.swap       = oe.Swap      (oe);
+   open.commission = oe.Commission(oe);
+   open.profit     = oe.Profit    (oe);
 
-   sequence.openPL      = NormalizeDouble(openSwap + openCommission + openProfit, 2);
+   sequence.openPL      = NormalizeDouble(open.swap + open.commission + open.profit, 2);
    sequence.totalPL     = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
    sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
    sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
@@ -275,15 +279,15 @@ bool StopSequence() {
       if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping...");
 
       int oe[], oeFlags;
-      if (!OrderCloseEx(openTicket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
-      openTicket     = NULL;
-      openType       = NULL;
-      openTime       = NULL;
-      openPrice      = NULL;
-      openSwap       = NULL;
-      openCommission = NULL;
-      openProfit     = NULL;                       // TODO: add closed position to history
+      open.ticket     = NULL;
+      open.type       = NULL;
+      open.time       = NULL;
+      open.price      = NULL;
+      open.swap       = NULL;
+      open.commission = NULL;
+      open.profit     = NULL;                       // TODO: add closed position to history
 
       sequence.openPL      = 0;                    // update total PL numbers
       sequence.closedPL    = NormalizeDouble(sequence.closedPL + oe.Swap(oe) + oe.Commission(oe) + oe.Profit(oe), 2);
@@ -306,15 +310,15 @@ bool StopSequence() {
  * @return bool - success status
  */
 bool UpdateStatus() {
-   if (last_error != NULL)                           return(false);
-   if (sequence.status != STATUS_PROGRESSING)        return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (!SelectTicket(openTicket, "UpdateStatus(2)")) return(false);
+   if (last_error != NULL)                            return(false);
+   if (sequence.status != STATUS_PROGRESSING)         return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
 
-   openSwap       = OrderSwap();
-   openCommission = OrderCommission();
-   openProfit     = OrderProfit();
+   open.swap       = OrderSwap();
+   open.commission = OrderCommission();
+   open.profit     = OrderProfit();
 
-   sequence.openPL  = NormalizeDouble(openSwap + openCommission + openProfit, 2);
+   sequence.openPL  = NormalizeDouble(open.swap + open.commission + open.profit, 2);
    sequence.totalPL = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
 
    if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
@@ -561,7 +565,7 @@ bool ValidateInputs.SID() {
 bool ValidateInputs() {
    if (IsLastError()) return(false);
    bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programmatic inputs
-   bool sequenceWasStarted = (openTicket || ArrayRange(history, 0)); // whether the sequence was already started
+   bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
 
    // Sequence.ID
    if (isParameterChange) {
@@ -684,9 +688,9 @@ void SS.TotalPL() {
    if (!__isChart) return;
 
    // not before a position was opened
-   if (!openTicket && !ArrayRange(history, 0)) sSequenceTotalPL = "-";
-   else if (ShowProfitInPercent)               sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-   else                                        sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+   if (!open.ticket && !ArrayRange(closed.history, 0)) sSequenceTotalPL = "-";
+   else if (ShowProfitInPercent)                       sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+   else                                                sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
 }
 
 
@@ -721,7 +725,7 @@ void SS.PLStats() {
    if (!__isChart) return;
 
    // not before a position was opened
-   if (!openTicket && !ArrayRange(history, 0)) {
+   if (!open.ticket && !ArrayRange(closed.history, 0)) {
       sSequencePlStats = "";
    }
    else {
