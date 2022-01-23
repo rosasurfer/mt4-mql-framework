@@ -2242,7 +2242,7 @@ bool IsOrderClosedBySL() {
 /**
  * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are "AND" combined.
  *
- * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled start condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a fulfilled start condition
  *
  * @return bool
  */

@@ -800,7 +800,7 @@ int ShowTradeHistory() {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of the fulfilled start condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a fulfilled start condition
  *
  * @return bool
  */
