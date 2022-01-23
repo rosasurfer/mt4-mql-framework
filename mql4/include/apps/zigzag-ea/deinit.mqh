@@ -32,7 +32,7 @@ int onDeinitUndefined() {
    if (IsTesting()) {
       if (!last_error) {
          if (sequence.status == STATUS_PROGRESSING) {
-            logDebug("onDeinitUndefined(1)  "+ sequence.id +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
+            logDebug("onDeinitUndefined(1)  "+ sequence.name +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
          }
          SaveStatus();
       }
@@ -56,7 +56,7 @@ int onDeinitUndefined() {
 int onDeinitChartClose() {
    if (!IsTesting()) {
       if (sequence.status != STATUS_STOPPED) {
-         logInfo("onDeinitChartClose(1)  "+ sequence.id +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+         logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
       }
    }
    return(NO_ERROR);
@@ -72,7 +72,7 @@ int onDeinitChartClose() {
 int onDeinitTemplate() {
    if (!IsTesting()) {
       if (sequence.status != STATUS_STOPPED) {
-         logInfo("onDeinitTemplate(1)  "+ sequence.id +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+         logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
       }
    }
    return(NO_ERROR);
@@ -86,7 +86,7 @@ int onDeinitTemplate() {
  */
 int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitRemove(1)  "+ sequence.id +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    RemoveSequenceData();                                             // remove the sequence data stored in the chart
    return(NO_ERROR);
@@ -100,7 +100,7 @@ int onDeinitRemove() {
  */
 int onDeinitClose() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitClose(1)  "+ sequence.id +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
 }

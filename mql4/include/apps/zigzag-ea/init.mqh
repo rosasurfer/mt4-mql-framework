@@ -29,7 +29,7 @@ int onInitUser() {
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
          SS.All();
-         logInfo("onInitUser(1)  sequence "+ sequence.id +" created");
+         logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
       }
    }
@@ -84,7 +84,7 @@ int onInitTemplate() {
    if (FindSequenceId()) {                                  // on success a sequence id was restored
       if (RestoreSequence()) {
          SS.All();
-         logInfo("onInitTemplate(1)  "+ sequence.id +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
       }
    }
    return(last_error);
@@ -101,7 +101,7 @@ int onInitRecompile() {                                     // same requirements
    if (FindSequenceId()) {
       if (RestoreSequence()) {
          SS.All();
-         logInfo("onInitRecompile(1)  "+ sequence.id +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
       }
    }
    return(last_error);
