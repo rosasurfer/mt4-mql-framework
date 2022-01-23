@@ -3,7 +3,7 @@
  *
  * @return int - error status
  *
- * @see  "mql4/experts/ZigZag Trader.mq4"
+ * @see  "mql4/experts/ZigZag EA.mq4"
  */
 int onInit() {
    CreateStatusBox();

@@ -1,5 +1,5 @@
 /**
- * ZigZag Trader
+ * ZigZag EA
  *
  *
  * TODO:
@@ -65,8 +65,8 @@ int lastSignal;
 int magicNumber = 12345;
 int slippage    = 2;                         // in point
 
-#include <apps/zigzag-trader/init.mqh>
-#include <apps/zigzag-trader/deinit.mqh>
+#include <apps/zigzag-ea/init.mqh>
+#include <apps/zigzag-ea/deinit.mqh>
 
 
 /**
