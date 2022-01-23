@@ -815,7 +815,7 @@ bool DeleteInsideBars(int timeframe) {
       if (StrStartsWith(labels[i], prefix)) {
          if (!ObjectDelete(labels[i])) {
             int error = GetLastError();
-            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", ifIntOr(error, ERR_RUNTIME_ERROR)));
+            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", intOr(error, ERR_RUNTIME_ERROR)));
          }
          ArraySpliceStrings(labels, i, 1);
       }

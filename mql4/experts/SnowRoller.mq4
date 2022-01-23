@@ -868,11 +868,11 @@ int CreateSequenceId() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
+   int x[]={2, 101, 165}, y=62, fontSize=75, sizeofX=ArraySize(x);
    color  bgColor = C'248,248,248';                            // that's chart background color
    string label = "";
 
-   for (int i=0; i < rectangles; i++) {
+   for (int i=0; i < sizeofX; i++) {
       label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
@@ -3708,7 +3708,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
    else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
-   error = ifIntOr(catch("ShowStatus(3)"), error);
+   error = intOr(catch("ShowStatus(3)"), error);
    isRecursion = false;
    return(error);
 }

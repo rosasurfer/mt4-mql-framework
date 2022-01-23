@@ -1577,7 +1577,7 @@ bool ReadOrderLog() {
    // all closed positions
    int orders = OrdersHistoryTotal();
    for (int i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("ReadOrderLog(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("ReadOrderLog(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       if (OrderMagicNumber() != orderMagicNumber) continue;
       if (OrderType() > OP_SELL)                  continue;
       if (OrderSymbol() != Symbol())              continue;
@@ -1589,7 +1589,7 @@ bool ReadOrderLog() {
    // all open orders
    orders = OrdersTotal();
    for (i=0; i < orders; i++) {
-      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("ReadOrderLog(2)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("ReadOrderLog(2)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       if (OrderMagicNumber() != orderMagicNumber) continue;
       if (OrderSymbol() != Symbol())              continue;
 
@@ -2056,7 +2056,7 @@ int CreateSequenceId() {
       // test for uniqueness against open orders
       int openOrders = OrdersTotal();
       for (int i=0; i < openOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)  "+ sequence.name, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)  "+ sequence.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -2067,7 +2067,7 @@ int CreateSequenceId() {
       // test for uniqueness against closed orders
       int closedOrders = OrdersHistoryTotal();
       for (i=0; i < closedOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)  "+ sequence.name, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)  "+ sequence.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -2087,7 +2087,7 @@ int CreateSequenceId() {
  */
 int CalculateMagicNumber(int sequenceId = NULL) {
    if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
-   int id = ifIntOr(sequenceId, sequence.id);
+   int id = intOr(sequenceId, sequence.id);
    if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                                 //  101-1023 (10 bit)
@@ -2710,7 +2710,7 @@ int ShowStatus(int error = NO_ERROR) {
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
 
-   error = ifIntOr(catch("ShowStatus(1)"), error);
+   error = intOr(catch("ShowStatus(1)"), error);
    isRecursion = false;
    return(error);
 }

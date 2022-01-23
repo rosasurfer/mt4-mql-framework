@@ -1252,14 +1252,14 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Inlined integer OR statement. Returns a first value or an alternative if the first value evaluates to NULL.
+ * Inlined integer OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  int value
  * @param  int altValue
  *
  * @return int
  */
-int ifIntOr(int value, int altValue) {
+int intOr(int value, int altValue) {
    if (value != NULL)
       return(value);
    return(altValue);
@@ -1267,14 +1267,14 @@ int ifIntOr(int value, int altValue) {
 
 
 /**
- * Inlined double OR statement. Returns a first value or an alternative value if the first value evaluates to NULL.
+ * Inlined double OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  double value
  * @param  double altValue
  *
  * @return double
  */
-double ifDoubleOr(double value, double altValue) {
+double doubleOr(double value, double altValue) {
    if (value != NULL)
       return(value);
    return(altValue);
@@ -1282,14 +1282,14 @@ double ifDoubleOr(double value, double altValue) {
 
 
 /**
- * Inlined string OR statement. Returns a first value or an alternative value if the first value evaluates to empty.
+ * Inlined string OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to empty.
  *
  * @param  string value
  * @param  string altValue
  *
  * @return string
  */
-string ifStringOr(string value, string altValue) {
+string stringOr(string value, string altValue) {
    if (StringLen(value) > 0)
       return(value);
    return(altValue);
@@ -6192,7 +6192,7 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    if (!lotstep) {
       int error = GetLastError();
-      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifIntOr(error, ERR_INVALID_MARKET_DATA))));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_INVALID_MARKET_DATA))));
    }
 
    switch (mode) {
@@ -6994,6 +6994,7 @@ void __DummyCalls() {
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
+   doubleOr(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
    EnumChildWindows(NULL);
@@ -7048,13 +7049,11 @@ void __DummyCalls() {
    icZigZag(NULL, NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
-   ifDoubleOr(NULL, NULL);
    ifInt(NULL, NULL, NULL);
-   ifIntOr(NULL, NULL);
    ifString(NULL, NULL, NULL);
-   ifStringOr(NULL, NULL);
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
+   intOr(NULL, NULL);
    IsAbsolutePath(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
@@ -7144,6 +7143,7 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
+   stringOr(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
