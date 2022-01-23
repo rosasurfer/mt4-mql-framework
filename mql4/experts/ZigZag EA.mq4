@@ -52,6 +52,7 @@ extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absol
 // sequence data
 int      sequence.id;
 datetime sequence.created;
+string   sequence.name;
 int      sequence.status;
 double   sequence.startEquity;               //
 double   sequence.openPL;                    // PL of all open positions (incl. commissions and swaps)
@@ -86,37 +87,44 @@ string   sSequencePlStats     = "";
  * @return int - error status
  */
 int onTick() {
+   if (!sequence.status) return(ERR_ILLEGAL_STATE);
+
    int signal;
+   bool isSignal = IsZigZagSignal(signal);
 
    if (sequence.status == STATUS_WAITING) {
-      if (IsZigZagSignal(signal))         StartSequence(signal);
+      if (isSignal) StartSequence(signal);
    }
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (UpdateStatus()) {                                          // update order status and PL
-         if      (IsStopSignal())         StopSequence();
-         else if (IsZigZagSignal(signal)) ReverseSequence();
+      if (UpdateStatus()) {                              // update order status and PL
+         if      (IsStopSignal()) StopSequence();
+         else if (isSignal)       ReverseSequence();
       }
    }
+   else if (sequence.status == STATUS_STOPPED) {}        // nothing to do
+
    return(catch("onTick(1)"));
 }
 
 
 /**
- * Whether a ZigZag reversal occurred for a waiting sequence.
+ * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of the occurred reversal
+ * @param  _Out_ int &signal - variable receiving the identifier of an occurred reversal
  *
  * @return bool
  */
 bool IsZigZagSignal(int &signal) {
+   if (last_error != NULL) return(false);
    signal = NULL;
-   if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
    int trend, reversal;
    if (!GetZigZagData(0, trend, reversal)) return(false);
 
    if (Abs(trend) == reversal) {
       signal = ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT);
+
+      if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -148,11 +156,11 @@ bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
  */
 bool StartSequence(int direction) {
    if (last_error != NULL)                      return(false);
-   if (sequence.status != STATUS_WAITING)       return(!catch("StartSequence(1)  "+ sequence.id +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("StartSequence(2)  "+ sequence.id +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   if (sequence.status != STATUS_WAITING)       return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
    SetLogfile(GetLogFilename());                               // flush the log on start
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.id +" starting...");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting...");
    sequence.status = STATUS_PROGRESSING;
 
    // open new position
@@ -178,7 +186,7 @@ bool StartSequence(int direction) {
    openCommission = oe.Commission(oe);
    openProfit     = oe.Profit    (oe);
 
-   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.id +" sequence started");
+   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
    return(SaveStatus());
 }
 
@@ -190,7 +198,7 @@ bool StartSequence(int direction) {
  */
 bool ReverseSequence() {
    if (last_error != NULL)                    return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("ReverseSequence(1)  "+ sequence.id +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    // close open position
    int lastDirection = ifInt(openType==OP_BUY, D_LONG, D_SHORT);
@@ -248,7 +256,7 @@ bool ReverseSequence() {
  */
 bool IsStopSignal() {
    if (last_error != NULL)                    return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.id +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    return(false);
 }
@@ -261,10 +269,10 @@ bool IsStopSignal() {
  */
 bool StopSequence() {
    if (last_error != NULL)                                                     return(false);
-   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.id +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {    // a progressing sequence has an open position to close
-      if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.id +" stopping...");
+      if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping...");
 
       int oe[], oeFlags;
       if (!OrderCloseEx(openTicket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
@@ -287,7 +295,7 @@ bool StopSequence() {
    }
    sequence.status = STATUS_STOPPED;
 
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.id +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    return(SaveStatus());
 }
 
@@ -299,7 +307,7 @@ bool StopSequence() {
  */
 bool UpdateStatus() {
    if (last_error != NULL)                           return(false);
-   if (sequence.status != STATUS_PROGRESSING)        return(!catch("UpdateStatus(1)  "+ sequence.id +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (sequence.status != STATUS_PROGRESSING)        return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (!SelectTicket(openTicket, "UpdateStatus(2)")) return(false);
 
    openSwap       = OrderSwap();
@@ -324,9 +332,9 @@ bool UpdateStatus() {
  * @return int - magic number or NULL in case of errors
  */
 int CalculateMagicNumber(int sequenceId = NULL) {
-   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.id +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
+   if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = intOr(sequenceId, sequence.id);
-   if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.id +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              //  101-1023 (10 bit)
    int sequence = id;                                       // 1000-9999 (14 bit)
@@ -353,7 +361,7 @@ int CreateSequenceId() {
       // test for uniqueness against open orders
       int openOrders = OrdersTotal();
       for (int i=0; i < openOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)  "+ sequence.id, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) return(!catch("CreateSequenceId(1)  "+ sequence.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -364,7 +372,7 @@ int CreateSequenceId() {
       // test for uniqueness against closed orders
       int closedOrders = OrdersHistoryTotal();
       for (i=0; i < closedOrders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)  "+ sequence.id, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) return(!catch("CreateSequenceId(2)  "+ sequence.name, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
          if (OrderMagicNumber() == magicNumber) {
             magicNumber = NULL;
             break;
@@ -397,7 +405,7 @@ string GetLogFilename() {
  */
 string GetStatusFilename(bool relative = false) {
    relative = relative!=0;
-   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.id +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
+   if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets\\" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"\\";
@@ -425,7 +433,7 @@ string StatusDescription(int status) {
       case STATUS_PROGRESSING: return("progressing");
       case STATUS_STOPPED    : return("stopped"    );
    }
-   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.id +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+   return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -480,6 +488,7 @@ bool     prev.ShowProfitInPercent;
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
 datetime prev.sequence.created;
+string   prev.sequence.name;
 int      prev.sequence.status;
 
 
@@ -498,6 +507,7 @@ void BackupInputs() {
    // backup runtime variables affected by changing input parameters
    prev.sequence.id      = sequence.id;
    prev.sequence.created = sequence.created;
+   prev.sequence.name    = sequence.name;
    prev.sequence.status  = sequence.status;
 }
 
@@ -516,6 +526,7 @@ void RestoreInputs() {
    // restore runtime variables
    sequence.id      = prev.sequence.id;
    sequence.created = prev.sequence.created;
+   sequence.name    = prev.sequence.name;
    sequence.status  = prev.sequence.status;
 }
 
@@ -535,6 +546,7 @@ bool ValidateInputs.SID() {
 
    sequence.id = iValue;
    Sequence.ID = sequence.id;
+   SS.SequenceName();
    return(true);
 }
 
@@ -557,21 +569,21 @@ bool ValidateInputs() {
       if (sValue == "") {                                            // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
       }
-      else if (sValue != prev.Sequence.ID)                           return(!onInputError("ValidateInputs(1)  "+ sequence.id +" switching to another sequence is not supported (unload the EA first)"));
+      else if (sValue != prev.Sequence.ID)                           return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
    } //else                                                          // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
 
    // ZigZag.Periods
    if (isParameterChange && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(2)  "+ sequence.id +" cannot change parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
+      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(2)  "+ sequence.name +" cannot change parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (ZigZag.Periods < 2)                                           return(!onInputError("ValidateInputs(3)  "+ sequence.id +" invalid parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                                           return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isParameterChange && NE(Lots, prev.Lots)) {
-      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(4)  "+ sequence.id +" cannot change parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
+      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (LT(Lots, 0))                                                  return(!onInputError("ValidateInputs(5)  "+ sequence.id +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                                return(!onInputError("ValidateInputs(6)  "+ sequence.id +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                                return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    return(!catch("ValidateInputs(7)"));
 }
@@ -594,7 +606,7 @@ int onInputError(string message) {
 
 
 /**
- * Store the current sequence id in the chart (for new templates, terminal restart, recompilation etc).
+ * Store the current sequence id in the chart (for template changes, terminal restart, recompilation etc).
  *
  * @return bool - success status
  */
@@ -605,9 +617,9 @@ bool StoreSequenceId() {
 
 
 /**
- * Find and restore a sequence id found in the chart (for new templates, terminal restart, recompilation etc).
+ * Restore a sequence id found in the chart (for template changes, terminal restart, recompilation etc).
  *
- * @return bool - whether a sequence id was found and successfully restored
+ * @return bool - whether a sequence id was successfully restored
  */
 bool FindSequenceId() {
    string sValue = "";
@@ -618,6 +630,7 @@ bool FindSequenceId() {
          if (iValue > 0) {
             sequence.id = iValue;
             Sequence.ID = sequence.id;
+            SS.SequenceName();
             return(true);
          }
       }
@@ -647,11 +660,20 @@ bool RemoveSequenceData() {
  */
 void SS.All() {
    if (__isChart) {
+      SS.SequenceName();
       SS.TotalPL();
       SS.MaxDrawdown();
       SS.MaxProfit();
       SS.PLStats();
    }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the sequence name.
+ */
+void SS.SequenceName() {
+   sequence.name = "Z."+ sequence.id;
 }
 
 
@@ -735,12 +757,12 @@ int ShowStatus(int error = NO_ERROR) {
    string sStatus="", sError="";
 
    switch (sequence.status) {
-      case NULL:               sStatus = "not initialized";                               break;
-      case STATUS_WAITING:     sStatus = StringConcatenate(sequence.id, "  waiting");     break;
-      case STATUS_PROGRESSING: sStatus = StringConcatenate(sequence.id, "  progressing"); break;
-      case STATUS_STOPPED:     sStatus = StringConcatenate(sequence.id, "  stopped");     break;
+      case NULL:               sStatus = "not initialized";                                 break;
+      case STATUS_WAITING:     sStatus = StringConcatenate(sequence.name, "  waiting");     break;
+      case STATUS_PROGRESSING: sStatus = StringConcatenate(sequence.name, "  progressing"); break;
+      case STATUS_STOPPED:     sStatus = StringConcatenate(sequence.name, "  stopped");     break;
       default:
-         return(catch("ShowStatus(1)  "+ sequence.id +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
+         return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
