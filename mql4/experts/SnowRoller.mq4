@@ -860,8 +860,8 @@ int CreateSequenceId() {
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
- * afterInit().
+ * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
+ * Called from afterInit() only.
  *
  * @return int - error status
  */
