@@ -42,8 +42,7 @@ extern double Lots                           = 0.1;
 
 #define STRATEGY_ID         107              // unique strategy id between 101-1023 (10 bit)
 
-#define STATUS_UNDEFINED      0              // sequence status values
-#define STATUS_WAITING        1
+#define STATUS_WAITING        1              // sequence status values
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
 
@@ -56,14 +55,18 @@ datetime sequence.created;
 int      sequence.status;
 string   sequence.name = "";                 // "ZigZag.{sequence-id}"
 
+// cache vars to speed-up ShowStatus()
+string   sSequenceTotalPL = "";
+string   sSequencePlStats = "";
 
-
-// --------------------------------------------------------------------------------------------------------------------------
+// --- old ------------------------------------------------------------------------------------------------------------------
 int ticket;
 int lastSignal;
-
 int magicNumber = 12345;
 int slippage    = 2;                         // in point
+
+#include <apps/zigzag-trader/init.mqh>
+#include <apps/zigzag-trader/deinit.mqh>
 
 
 /**
@@ -122,4 +125,46 @@ bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
+}
+
+
+/**
+ * Display the current runtime status.
+ *
+ * @param  int error [optional] - error to display (default: none)
+ *
+ * @return int - the same error or the current error status if no error was specified
+ */
+int ShowStatus(int error = NO_ERROR) {
+   if (!__isChart) return(error);
+
+   static bool isRecursion = false;                   // to prevent recursive calls a specified error is displayed only once
+   if (error != 0) {
+      if (isRecursion) return(error);
+      isRecursion = true;
+   }
+   string sStatus="", sError="";
+
+   switch (sequence.status) {
+      case NULL:               sStatus = "not initialized";                               break;
+      case STATUS_WAITING:     sStatus = StringConcatenate(sequence.id, "  waiting");     break;
+      case STATUS_PROGRESSING: sStatus = StringConcatenate(sequence.id, "  progressing"); break;
+      case STATUS_STOPPED:     sStatus = StringConcatenate(sequence.id, "  stopped");     break;
+      default:
+         return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status: "+ sequence.status, ERR_ILLEGAL_STATE));
+   }
+   if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
+
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                  NL,
+                                                                                            NL,
+                                  "Profit:    ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
+   );
+
+   // 3 lines margin-top for instrument and indicator legends
+   Comment(NL, NL, NL, text);
+   if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   error = ifIntOr(catch("ShowStatus(2)"), error);
+   isRecursion = false;
+   return(error);
 }
