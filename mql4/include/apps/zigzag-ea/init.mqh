@@ -114,7 +114,7 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
-   bool sequenceWasStarted = (openTicket || ArrayRange(history, 0));
+   bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
    StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
@@ -131,7 +131,7 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 114}, y=48, fontSize=115, sizeofX=ArraySize(x);
+   int x[]={2, 114}, y=46, fontSize=115, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
