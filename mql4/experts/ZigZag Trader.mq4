@@ -1,5 +1,5 @@
 /**
- * ZigZag EA
+ * ZigZag Trader
  *
  *
  * TODO:
@@ -63,7 +63,7 @@ int ticket;
 int lastSignal;
 
 int magicNumber = 12345;
-int slippage    = 2;                // in point
+int slippage    = 2;                         // in point
 
 
 /**
