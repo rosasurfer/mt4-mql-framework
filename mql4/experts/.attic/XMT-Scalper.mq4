@@ -101,7 +101,7 @@ extern bool     TakeProfitBug                  = true;                       // 
 #include <functions/HandleCommands.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID                  106        // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID                  106        // unique strategy id between 101-1023 (10 bit)
 
 #define TRADINGMODE_REGULAR            1
 #define TRADINGMODE_VIRTUAL            2

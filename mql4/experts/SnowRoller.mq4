@@ -68,7 +68,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
-#define STRATEGY_ID  103                           // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID  103                           // unique strategy id between 101-1023 (10 bit)
 
 // --- sequence data -----------------------
 int      sequence.id;

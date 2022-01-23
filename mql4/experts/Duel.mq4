@@ -70,7 +70,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #include <functions/HandleCommands.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID         105                    // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID         105                    // unique strategy id between 101-1023 (10 bit)
 
 #define STATUS_UNDEFINED      0                    // sequence status values
 #define STATUS_WAITING        1
