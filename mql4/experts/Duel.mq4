@@ -1198,7 +1198,7 @@ bool StopSequence(int signal) {
 
    sequence.status    = STATUS_STOPPED;
    sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
-   sequence.stopPrice = ifDoubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
+   sequence.stopPrice = doubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 
    // update stop conditions
@@ -4285,7 +4285,7 @@ int ShowStatus(int error = NO_ERROR) {
    }
    ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
 
-   error = ifIntOr(catch("ShowStatus(2)"), error);
+   error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
 }
@@ -4585,7 +4585,7 @@ bool MakeScreenshot(string comment = "") {
 
    if (WindowScreenShot(filename, width, height, startbar, chartScale, barMode))
       return(true);
-   return(!logError("MakeScreenshot(1)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));    // don't terminate the program
+   return(!logError("MakeScreenshot(1)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));    // don't terminate the program
 }
 
 

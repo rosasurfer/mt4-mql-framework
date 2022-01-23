@@ -59,6 +59,7 @@ string   sequence.name = "";                 // "ZigZag.{sequence-id}"
 string   sSequenceTotalPL = "";
 string   sSequencePlStats = "";
 
+
 // --- old ------------------------------------------------------------------------------------------------------------------
 int ticket;
 int lastSignal;
@@ -164,7 +165,7 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, text);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   error = ifIntOr(catch("ShowStatus(2)"), error);
+   error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
 }

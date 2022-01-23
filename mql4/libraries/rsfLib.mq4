@@ -8021,19 +8021,19 @@ bool IsRawSymbol(string symbol, string server = "") {
    string mqlFileName = "history\\"+ server +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
    // validate the file size
    int fileSize = FileSize(hFile);
    if (!fileSize)                   { FileClose(hFile); return(false); }
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
 
    // read all symbols
    int symbolsCount = fileSize/SYMBOL_size;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
    int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
    error = GetLastError();
-   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
    // check for the specified symbol
    bool found = false;
@@ -8179,10 +8179,10 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    // (2) Datei öffnen und Größe validieren
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR))));
+   if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_GROUP_size != 0) {
-      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
    if (!fileSize) { FileClose(hFile); return(0); }                   // Eine leere Datei wird akzeptiert. Eigentlich muß sie immer 32 * SYMBOL_GROUP_size groß sein,
                                                                      // doch im Moment der Erstellung (von jemand anderem) kann sie vorübergehend 0 Bytes groß sein.
@@ -8191,7 +8191,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))));
+   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
 
    return(fileSize/SYMBOL_GROUP_size);
 }
@@ -8217,10 +8217,10 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_size != 0) {
-      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
    int symbolsSize=fileSize/SYMBOL_size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -8229,7 +8229,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
       // (1.2) vorhandene Symbole einlesen
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
       // (1.3) sicherstellen, daß das neue Symbol noch nicht existiert und größte Symbol-ID finden
       for (int i=0; i < symbolsSize; i++) {
@@ -8257,7 +8257,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
@@ -8289,14 +8289,14 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";
    int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
    // Daten schreiben
    int arraySize = ArraySize(sgs.copy);
    int ints = FileWriteArray(hFile, sgs.copy, 0, arraySize);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    ArrayResize(sgs.copy, 0);
    return(true);
@@ -8330,10 +8330,10 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Datei öffnen und Größe validieren
    int hFile = FileOpen(fileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize != SYMBOL_size) {
-      FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // Datei in das übergebene Symbol einlesen
@@ -8341,7 +8341,7 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    int ints = FileReadArray(hFile, symbol, 0, fileSize/4);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
