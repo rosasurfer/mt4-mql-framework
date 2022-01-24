@@ -170,7 +170,9 @@ bool StartSequence(int direction) {
 
    SetLogfile(GetLogFilename());                               // flush the log on start
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting...");
-   sequence.status = STATUS_PROGRESSING;
+
+   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+   sequence.status      = STATUS_PROGRESSING;
 
    // open new position
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
@@ -194,6 +196,14 @@ bool StartSequence(int direction) {
    open.swap       = oe.Swap      (oe);
    open.commission = oe.Commission(oe);
    open.profit     = oe.Profit    (oe);
+
+   // update PL numbers
+   sequence.openPL      = NormalizeDouble(open.swap + open.commission + open.profit, 2);
+   sequence.totalPL     = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
+   sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
+   sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
+   SS.TotalPL();
+   SS.PLStats();
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
    return(SaveStatus());
@@ -226,7 +236,7 @@ bool ReverseSequence(int direction) {
    open.commission = NULL;
    open.profit     = NULL;                         // TODO: add closed position to history
 
-   sequence.openPL   = 0;                          // update total PL numbers
+   sequence.openPL   = 0;                          // update PL numbers
    sequence.closedPL = NormalizeDouble(sequence.closedPL + oe.Swap(oe) + oe.Commission(oe) + oe.Profit(oe), 2);
    sequence.totalPL  = sequence.closedPL;
 
@@ -251,13 +261,14 @@ bool ReverseSequence(int direction) {
    open.commission = oe.Commission(oe);
    open.profit     = oe.Profit    (oe);
 
+   // update PL numbers
    sequence.openPL      = NormalizeDouble(open.swap + open.commission + open.profit, 2);
    sequence.totalPL     = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
    sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
    sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
-
    SS.TotalPL();
    SS.PLStats();
+
    return(SaveStatus());
 }
 
@@ -330,8 +341,8 @@ bool UpdateStatus() {
    sequence.openPL  = NormalizeDouble(open.swap + open.commission + open.profit, 2);
    sequence.totalPL = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
 
-   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.MaxProfit();   }
-   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.MaxDrawdown(); }
+   if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.PLStats(); }
+   else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.PLStats(); }
 
    return(!catch("UpdateStatus(3)"));
 }
@@ -675,8 +686,6 @@ void SS.All() {
    if (__isChart) {
       SS.SequenceName();
       SS.TotalPL();
-      SS.MaxDrawdown();
-      SS.MaxProfit();
       SS.PLStats();
    }
 }
@@ -694,36 +703,12 @@ void SS.SequenceName() {
  * ShowStatus: Update the string representation of "sequence.totalPL".
  */
 void SS.TotalPL() {
-   if (!__isChart) return;
-
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(closed.history, 0)) sSequenceTotalPL = "-";
-   else if (ShowProfitInPercent)                       sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-   else                                                sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.maxDrawdown".
- */
-void SS.MaxDrawdown() {
-   if (!__isChart) return;
-
-   if (ShowProfitInPercent) sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
-   SS.PLStats();
-}
-
-
-/**
- * ShowStatus: Update the string representation of "sequence.maxProfit".
- */
-void SS.MaxProfit() {
-   if (!__isChart) return;
-
-   if (ShowProfitInPercent) sSequenceMaxProfit = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-   else                     sSequenceMaxProfit = NumberToStr(sequence.maxProfit, "+.2");
-   SS.PLStats();
+   if (__isChart) {
+      // not before a position was opened
+      if (!open.ticket && !ArrayRange(closed.history, 0)) sSequenceTotalPL = "-";
+      else if (ShowProfitInPercent)                       sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+      else                                                sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+   }
 }
 
 
@@ -731,23 +716,23 @@ void SS.MaxProfit() {
  * ShowStatus: Update the string representaton of the PL statistics.
  */
 void SS.PLStats() {
-   if (!__isChart) return;
-
-   // not before a position was opened
-   if (!open.ticket && !ArrayRange(closed.history, 0)) {
-      sSequencePlStats = "";
-   }
-   else {
-      string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
-      if (ShowProfitInPercent) {
-         sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-         sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+   if (__isChart) {
+      // not before a position was opened
+      if (!open.ticket && !ArrayRange(closed.history, 0)) {
+         sSequencePlStats = "";
       }
       else {
-         sSequenceMaxProfit   = NumberToStr(sequence.maxProfit, "+.2");
-         sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+         string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
+         if (ShowProfitInPercent) {
+            sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
+            sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+         }
+         else {
+            sSequenceMaxProfit   = NumberToStr(sequence.maxProfit, "+.2");
+            sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+         }
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
       }
-      sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
    }
 }
 
@@ -779,9 +764,9 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                  NL,
-                                                                                            NL,
-                                  "Profit:    ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                NL,
+                                                                                          NL,
+                                  "Profit:   ", sSequenceTotalPL, "  ", sSequencePlStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
