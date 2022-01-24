@@ -118,25 +118,34 @@ bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
+   static int lastSignal;
    int trend, reversal;
+
    if (!GetZigZagData(0, trend, reversal)) return(false);
 
    if (Abs(trend) == reversal) {
-      signal = ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT);
-
-      if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      return(true);
+      if (trend > 0) {
+         if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+      }
+      else {
+         if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
+      }
+      if (signal != NULL) {
+         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         lastSignal = signal;
+         return(true);
+      }
    }
    return(false);
 }
 
 
 /**
- * Get the data of the last ZigZag semaphore preceding the specified bar.
+ * Get trend data of the ZigZag indicator at the specified bar offset.
  *
- * @param  _In_  int startbar       - startbar to look for the next semaphore
- * @param  _Out_ int &combinedTrend - combined trend value at the startbar offset
- * @param  _Out_ int &reversal      - reversal bar value at the startbar offset
+ * @param  _In_  int bar            - bar offset
+ * @param  _Out_ int &combinedTrend - combined trend value at the bar offset
+ * @param  _Out_ int &reversal      - reversal bar value at the bar offset
  *
  * @return bool - success status
  */
