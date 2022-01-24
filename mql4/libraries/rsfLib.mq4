@@ -5744,8 +5744,8 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string symbol      = oe.Symbol(oe);
    string sComment    = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid        = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk        = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid        = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk        = NumberToStr(oe.Ask(oe), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
@@ -5787,8 +5787,8 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
    string symbol   = oe.Symbol(oe);
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid     = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk     = NumberToStr(oe.Ask(oe), priceFormat);
    string sComment = oe.Comment(oe);
       if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
 
@@ -5822,8 +5822,8 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string symbol   = oe.Symbol(oe);
    string sComment = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid     = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk     = NumberToStr(oe.Ask(oe), priceFormat);
    string sSD      = "";
    if (NE(oe.StopDistance(oe), 0)) sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
@@ -6071,7 +6071,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
    string sSL     = ""; if (NE(stopLoss,   prevStopLoss))   sSL    = ", sl="+ NumberToStr(prevStopLoss, priceFormat) +" => "+ NumberToStr(stopLoss, priceFormat);
    string sTP     = ""; if (NE(takeProfit, prevTakeProfit)) sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
    string sSD     = ""; if (NE(oe.StopDistance(oe), 0))     sSD    = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -6312,7 +6312,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
  * @return string
  */
 string OrderCloseEx.SuccessMsg(int oe[]) {
-   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
+   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4[, remainder: #2 Buy 0.1 GBPUSD] (market: Bid/Ask) after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6322,6 +6322,8 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
    string sPrice      = NumberToStr(oe.ClosePrice(oe), priceFormat);
+   string sBid        = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk        = NumberToStr(oe.Ask(oe), priceFormat);
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
@@ -6334,8 +6336,8 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    int remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment + ifString(!remainder, "", " partially") +" at "+ sPrice;
 
-   if (remainder != 0)
-      message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
+   if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
+                       message = message +" (market: "+ sBid +"/"+ sAsk +")";
 
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -6370,7 +6372,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
    string sTP = ""; if (NE(oe.TakeProfit  (oe), 0)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
    string sSD = ""; if (NE(oe.StopDistance(oe), 0)) sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -7450,7 +7452,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    string sSL     = ""; if (NE(oe.StopLoss    (oe), 0, digits)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
    string sTP     = ""; if (NE(oe.TakeProfit  (oe), 0, digits)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
    string sSD     = ""; if (NE(oe.StopDistance(oe), 0))         sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
