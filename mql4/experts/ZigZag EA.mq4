@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - fix runtime errors
  *  - store closed positions in history
  *  - track PL curve per instance
  *  - TakeProfit in {percent|pip}
@@ -54,7 +53,7 @@ extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absol
 // sequence data
 int      sequence.id;
 datetime sequence.created;
-string   sequence.name;
+string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquity;               //
 double   sequence.openPL;                    // PL of all open positions (incl. commissions and swaps)
@@ -499,7 +498,7 @@ bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: input Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +", var sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
 
-   debug("SaveStatus(2)", ERR_NOT_IMPLEMENTED);
+   logInfo("SaveStatus(2)", ERR_NOT_IMPLEMENTED);
    return(true);
 }
 
@@ -514,7 +513,7 @@ bool     prev.ShowProfitInPercent;
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
 datetime prev.sequence.created;
-string   prev.sequence.name;
+string   prev.sequence.name = "";
 int      prev.sequence.status;
 
 
@@ -586,7 +585,7 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programmatic inputs
+   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programatic input
    bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
 
    // Sequence.ID
