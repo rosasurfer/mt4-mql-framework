@@ -3,20 +3,22 @@
  *
  *
  * TODO:
+ *  - fix runtime errors
  *  - store closed positions in history
  *  - track PL curve per instance
  *  - TakeProfit in {percent|pip}
+ *  - permanent performance tracking of all variants and symbols
+ *  - configuration/start at a specific time of day (spread definition)
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
- *  - build script for all .ex4 files after deployment
  *  - track slippage
+ *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
  *
- *  - delete old/dead screen sockets on restart
+ *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
- *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
- *  - configuration/start at a specific time of day
+ *  - delete old/dead screen sockets on restart
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
