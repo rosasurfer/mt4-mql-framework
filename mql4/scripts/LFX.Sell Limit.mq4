@@ -21,7 +21,6 @@ extern double StopLossPrice;
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <rsfLib.mqh>
 
 #include <MT4iQuickChannel.mqh>

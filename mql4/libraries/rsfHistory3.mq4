@@ -43,7 +43,6 @@ int __DeinitFlags[];
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/mt4/HistoryHeader.mqh>
 
 
@@ -212,7 +211,7 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
 
       if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
-         if (hFile <= 0) return(!catch("HistorySet3.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet3.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
          hh_SetPeriod(hh, periods[i]);
          FileWriteArray(hFile, hh, 0, ArraySize(hh));                   // neuen HISTORY_HEADER schreiben
@@ -309,7 +308,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
 
       if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
-         if (hFile <= 0) return(!catch("HistorySet3.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (hFile <= 0) return(!catch("HistorySet3.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
          fileSize = FileSize(hFile);                                    // Datei geöffnet
          if (fileSize < HISTORY_HEADER_size) {
@@ -464,19 +463,19 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
       if (!IsFile(mqlFileName, MODE_MQL)) return(-1);                               // file not found
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.2) read-write
    else if (read_write) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // (1.3) write-only
    else if (write_only) {
       hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
@@ -503,7 +502,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    else if (read_only || fileSize > 0) {
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(!catch("HistoryFile3.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         return(!catch("HistoryFile3.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
       // (3.2) ggf. Bar-Statistik auslesen

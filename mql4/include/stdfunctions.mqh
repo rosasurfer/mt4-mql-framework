@@ -668,6 +668,19 @@ bool WaitForTicket(int ticket, bool select = false) {
 
 
 /**
+ * Concatenate the values of a string array using the specified separator.
+ *
+ * @param  string values[]             - string array
+ * @param  string separator [optional] - separator (default: ", ")
+ *
+ * @return string - concatenated string or an empty string in case of errors
+ */
+string JoinStrings(string values[], string separator = ", ") {
+   return(JoinStringsEx(values, separator));
+}
+
+
+/**
  * Return the current symbol's pip value for the specified lot amount.
  *
  * @param  double lots           [optional] - lot amount (default: 1 lot)
@@ -687,7 +700,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          return(0);
       }
       if (!tickSize) {
-         if (!suppressErrors) catch("PipValue(2)  illegal MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA);
+         if (!suppressErrors) catch("PipValue(2)  illegal MarketInfo(MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
          return(0);
       }
    }
@@ -704,7 +717,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
             return(0);
          }
          if (!staticTickValue) {
-            if (!suppressErrors) catch("PipValue(4)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
+            if (!suppressErrors) catch("PipValue(4)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
             return(0);
          }
          isConstant = true;
@@ -732,7 +745,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
          return(0);
       }
       if (!dynamicTickValue) {
-         if (!suppressErrors) catch("PipValue(6)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
+         if (!suppressErrors) catch("PipValue(6)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
          return(0);
       }
       return(Pip/tickSize * dynamicTickValue * lots);
@@ -769,7 +782,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       return(0);
    }
    if (!dynamicTickValue) {
-      if (!suppressErrors) catch("PipValue(9)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValue(9)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
@@ -802,29 +815,29 @@ double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
    double tickSize = MarketInfo(symbol, MODE_TICKSIZE);              // schlägt fehl, wenn kein Tick vorhanden ist
    int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
    if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-      if (!suppressErrors) catch("PipValueEx(1)", error);
+      if (!suppressErrors) catch("PipValueEx(1)  symbol="+ symbol, error);
       return(0);
    }
    if (!tickSize) {
-      if (!suppressErrors) catch("PipValueEx(2)  illegal MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(2)  illegal MarketInfo("+ symbol +", MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    double tickValue = MarketInfo(symbol, MODE_TICKVALUE);            // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
    error = GetLastError();
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValueEx(3)", error);
+      if (!suppressErrors) catch("PipValueEx(3)  symbol="+ symbol, error);
       return(0);
    }
    if (!tickValue) {
-      if (!suppressErrors) catch("PipValueEx(4)  illegal MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch("PipValueEx(4)  illegal MarketInfo("+ symbol +", MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    int digits = MarketInfo(symbol, MODE_DIGITS);                     // TODO: !!! digits ist u.U. falsch gesetzt !!!
    error = GetLastError();
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValueEx(5)", error);
+      if (!suppressErrors) catch("PipValueEx(5)  symbol="+ symbol, error);
       return(0);
    }
 
@@ -1239,14 +1252,14 @@ string ifString(bool condition, string thenValue, string elseValue) {
 
 
 /**
- * Inlined integer OR statement. Returns a first value or an alternative if the first value evaluates to NULL.
+ * Inlined integer OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  int value
  * @param  int altValue
  *
  * @return int
  */
-int ifIntOr(int value, int altValue) {
+int intOr(int value, int altValue) {
    if (value != NULL)
       return(value);
    return(altValue);
@@ -1254,14 +1267,14 @@ int ifIntOr(int value, int altValue) {
 
 
 /**
- * Inlined double OR statement. Returns a first value or an alternative value if the first value evaluates to NULL.
+ * Inlined double OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to NULL.
  *
  * @param  double value
  * @param  double altValue
  *
  * @return double
  */
-double ifDoubleOr(double value, double altValue) {
+double doubleOr(double value, double altValue) {
    if (value != NULL)
       return(value);
    return(altValue);
@@ -1269,14 +1282,14 @@ double ifDoubleOr(double value, double altValue) {
 
 
 /**
- * Inlined string OR statement. Returns a first value or an alternative value if the first value evaluates to empty.
+ * Inlined string OR statement. Returns the first parameter or the second parameter if the first parameter evaluates to empty.
  *
  * @param  string value
  * @param  string altValue
  *
  * @return string
  */
-string ifStringOr(string value, string altValue) {
+string stringOr(string value, string altValue) {
    if (StringLen(value) > 0)
       return(value);
    return(altValue);
@@ -3930,9 +3943,9 @@ datetime TimeServer() {
 
 
 /**
- * Gibt die aktuelle GMT-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit).
+ * Return the trade server's current time in GMT. In tester the time is modeled accordingly.
  *
- * @return datetime - GMT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - trade server time in GMT or NULL in case of errors
  */
 datetime TimeGMT() {
    datetime gmt;
@@ -3950,9 +3963,11 @@ datetime TimeGMT() {
 
 
 /**
- * Gibt die aktuelle FXT-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit).
+ * Return the trade server's current time in FXT. In tester the time is modeled accordingly.
  *
- * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - trade server time in FXT or NULL in case of errors
+ *
+ * @see  GetFxtTime() to return the system's FXT time in tester
  */
 datetime TimeFXT() {
    datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
@@ -3962,9 +3977,11 @@ datetime TimeFXT() {
 
 
 /**
- * Gibt die aktuelle FXT-Zeit des Systems zurück (auch im Tester).
+ * Return the current system time in FXT (also in tester).
  *
- * @return datetime - FXT-Zeit oder NULL, falls ein Fehler auftrat
+ * @return datetime - system time in FXT or NULL in case of errors
+ *
+ * @see  TimeFXT() to return the modeled FXT time in tester
  */
 datetime GetFxtTime() {
    datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
@@ -6175,7 +6192,7 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    if (!lotstep) {
       int error = GetLastError();
-      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", ifIntOr(error, ERR_INVALID_MARKET_DATA))));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_INVALID_MARKET_DATA))));
    }
 
    switch (mode) {
@@ -6977,6 +6994,7 @@ void __DummyCalls() {
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
+   doubleOr(NULL, NULL);
    DoubleToStrMorePrecision(NULL, NULL);
    DummyCalls();
    EnumChildWindows(NULL);
@@ -7031,13 +7049,11 @@ void __DummyCalls() {
    icZigZag(NULL, NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
-   ifDoubleOr(NULL, NULL);
    ifInt(NULL, NULL, NULL);
-   ifIntOr(NULL, NULL);
    ifString(NULL, NULL, NULL);
-   ifStringOr(NULL, NULL);
    InitReasonDescription(NULL);
    IntegerToHexString(NULL);
+   intOr(NULL, NULL);
    IsAbsolutePath(NULL);
    IsAccountConfigKey(NULL, NULL);
    IsConfigKey(NULL, NULL);
@@ -7068,6 +7084,7 @@ void __DummyCalls() {
    IsSuperContext();
    IsTicket(NULL);
    IsVisualModeFix();
+   JoinStrings(sNulls);
    LE(NULL, NULL);
    LocalTimeFormat(NULL, NULL);
    LoglevelDescription(NULL);
@@ -7126,6 +7143,7 @@ void __DummyCalls() {
    StrContainsI(NULL, NULL);
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
+   stringOr(NULL, NULL);
    StrIsDigit(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
@@ -7205,6 +7223,7 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
+   string   JoinStringsEx(string values[], string separator);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);

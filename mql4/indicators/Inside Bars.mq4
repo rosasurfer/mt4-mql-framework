@@ -31,7 +31,6 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/JoinStrings.mqh>
 
 #property indicator_chart_window
 
@@ -816,7 +815,7 @@ bool DeleteInsideBars(int timeframe) {
       if (StrStartsWith(labels[i], prefix)) {
          if (!ObjectDelete(labels[i])) {
             int error = GetLastError();
-            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", ifIntOr(error, ERR_RUNTIME_ERROR)));
+            if (error != ERR_OBJECT_DOES_NOT_EXIST) return(!catch("DeleteInsideBars(2)->ObjectDelete(label="+ DoubleQuoteStr(labels[i]) +")", intOr(error, ERR_RUNTIME_ERROR)));
          }
          ArraySpliceStrings(labels, i, 1);
       }
