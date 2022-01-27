@@ -5,9 +5,10 @@
  * TODO:
  *  - store closed positions in history
  *  - track PL curve per instance
+ *  - normalize resulting PL metrics for different accounts/unit sizes
  *  - TakeProfit in {percent|pip}
- *  - permanent performance tracking of all variants and symbols
- *  - configuration/start at a specific time of day (spread definition)
+ *  - permanent performance tracking of all variants on all symbols
+ *  - configuration/start/stop at a specific time of day
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - track slippage
@@ -50,6 +51,18 @@ extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absol
 #define SIGNAL_LONG            D_LONG        // 1
 #define SIGNAL_SHORT          D_SHORT        // 2
 
+#define H_IDX_TICKET                0        // order history indexes
+#define H_IDX_LOTS                  1
+#define H_IDX_OPENTYPE              2
+#define H_IDX_OPENTIME              3
+#define H_IDX_OPENPRICE             4
+#define H_IDX_CLOSETIME             5
+#define H_IDX_CLOSEPRICE            6
+#define H_IDX_SWAP                  7
+#define H_IDX_COMMISSION            8
+#define H_IDX_PROFIT                9
+#define H_IDX_TOTALPROFIT          10
+
 // sequence data
 int      sequence.id;
 datetime sequence.created;
@@ -70,7 +83,7 @@ double   open.price;                         //
 double   open.swap;                          //
 double   open.commission;                    //
 double   open.profit;                        //
-double   closed.history[][23];               // multiple closed positions
+double   closed.history[][11];               // multiple closed positions
 
 // cache vars to speed-up ShowStatus()
 string   sSequenceTotalPL     = "";
