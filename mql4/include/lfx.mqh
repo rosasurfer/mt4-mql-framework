@@ -7,7 +7,7 @@
  *  Instance-ID:  10 bit (Bit  5-14) => Bereich   1-1023
  *  Counter:       4 bit (Bit  1-4 ) => Bereich   1-15                                                   // wird in MagicNumber nicht mehr verwendet
  */
-#define STRATEGY_ID               102                          // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID               102                          // unique strategy id between 101-1023 (10 bit)
 
 #define NO_LIMIT_TRIGGERED         -1                          // Limitkontrolle
 #define OPEN_LIMIT_TRIGGERED        1

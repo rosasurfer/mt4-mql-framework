@@ -38,7 +38,6 @@ int __DeinitFlags[];
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
 #include <functions/JoinInts.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 
@@ -131,7 +130,7 @@ bool EditFiles(string &filenames[]) {
 
    if (StringLen(editor) > 0) {
       // use configured editor
-      string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
+      string cmd = editor +" \""+ JoinStringsEx(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
       if (result < 32) return(!catch("EditFiles(5)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
@@ -3411,7 +3410,7 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
          sValues2_X[x] = BoolsToStr(values2_Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues2_X, separator), "}");
       ArrayResize(sValues2_X, 0);
       ArrayResize( values2_Y, 0);
       return(result);
@@ -3432,10 +3431,10 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
             }
             sValues3_Y[y] = BoolsToStr(values3_Z, separator);
          }
-         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
+         sValues3_X[x] = StringConcatenate("{", JoinStringsEx(sValues3_Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues3_X, separator), "}");
       ArrayResize(sValues3_X, 0);
       ArrayResize(sValues3_Y, 0);
       ArrayResize( values3_Z, 0);
@@ -3476,7 +3475,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
       ArrayCopy(copy, values2);
       DoubleQuoteStrings(copy);
 
-      result = StringConcatenate("{", JoinStrings(copy, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(copy, separator), "}");
       ArrayResize(copy, 0);
       return(result);
    }
@@ -3495,7 +3494,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
          sValues2_X[x] = StringsToStr(values2_Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues2_X, separator), "}");
       ArrayResize(sValues2_X, 0);
       ArrayResize( values2_Y, 0);
       return(result);
@@ -3516,10 +3515,10 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
             }
             sValues3_Y[y] = StringsToStr(values3_Z, separator);
          }
-         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
+         sValues3_X[x] = StringConcatenate("{", JoinStringsEx(sValues3_Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues3_X, separator), "}");
       ArrayResize(sValues3_X, 0);
       ArrayResize(sValues3_Y, 0);
       ArrayResize( values3_Z, 0);
@@ -4894,7 +4893,7 @@ string CharsToStr(int values[], string separator = ", ") {
       strings[i] = StringConcatenate("'", CharToStr(values[i]), "'");
    }
 
-   string joined = JoinStrings(strings, separator);
+   string joined = JoinStringsEx(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -4946,7 +4945,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
          sValues2.X[x] = DoublesToStr(values2.Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -4966,10 +4965,10 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
             }
             sValues3.Y[y] = DoublesToStr(values3.Z, separator);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5028,7 +5027,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
          sValues2.X[x] = DoublesToStrEx(values2.Y, separator, digits);
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -5048,10 +5047,10 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
             }
             sValues3.Y[y] = DoublesToStrEx(values3.Z, separator, digits);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5107,7 +5106,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
          sValues2.X[x] = IntsToStr(values2.Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -5127,10 +5126,10 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
             }
             sValues3.Y[y] = IntsToStr(values3.Z, separator);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5168,7 +5167,7 @@ string MoneysToStr(double values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStrings(strings, separator);
+   string joined = JoinStringsEx(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5201,7 +5200,7 @@ string OperationTypesToStr(int values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStrings(strings, separator);
+   string joined = JoinStringsEx(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5237,7 +5236,7 @@ string RatesToStr(double values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStrings(strings, separator);
+   string joined = JoinStringsEx(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5410,7 +5409,7 @@ string TimesToStr(datetime values[], string separator=", ") {
       else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
    }
 
-   string joined = JoinStrings(strings, separator);
+   string joined = JoinStringsEx(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5745,8 +5744,8 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string symbol      = oe.Symbol(oe);
    string sComment    = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice      = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid        = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk        = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid        = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk        = NumberToStr(oe.Ask(oe), priceFormat);
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
@@ -5788,8 +5787,8 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
    string sLots    = NumberToStr(oe.Lots(oe), ".+");
    string symbol   = oe.Symbol(oe);
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid     = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk     = NumberToStr(oe.Ask(oe), priceFormat);
    string sComment = oe.Comment(oe);
       if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
 
@@ -5823,8 +5822,8 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    string symbol   = oe.Symbol(oe);
    string sComment = oe.Comment(oe); if (StringLen(sComment) > 0) sComment = " \""+ sComment +"\"";
    string sPrice   = NumberToStr(oe.OpenPrice(oe), priceFormat);
-   string sBid     = NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat);
-   string sAsk     = NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat);
+   string sBid     = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk     = NumberToStr(oe.Ask(oe), priceFormat);
    string sSD      = "";
    if (NE(oe.StopDistance(oe), 0)) sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
@@ -6072,7 +6071,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
    string sSL     = ""; if (NE(stopLoss,   prevStopLoss))   sSL    = ", sl="+ NumberToStr(prevStopLoss, priceFormat) +" => "+ NumberToStr(stopLoss, priceFormat);
    string sTP     = ""; if (NE(takeProfit, prevTakeProfit)) sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
    string sSD     = ""; if (NE(oe.StopDistance(oe), 0))     sSD    = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -6313,7 +6312,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
  * @return string
  */
 string OrderCloseEx.SuccessMsg(int oe[]) {
-   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4, remainder: #2 Buy 0.1 GBPUSD after 0.123 s and 1 requote (2.8 pip slippage)
+   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4[, remainder: #2 Buy 0.1 GBPUSD] (market: Bid/Ask) after 0.123 s and 1 requote (2.8 pip slippage)
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6323,6 +6322,8 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    string sLots       = NumberToStr(oe.Lots(oe), ".+");
    string symbol      = oe.Symbol(oe);
    string sPrice      = NumberToStr(oe.ClosePrice(oe), priceFormat);
+   string sBid        = NumberToStr(oe.Bid(oe), priceFormat);
+   string sAsk        = NumberToStr(oe.Ask(oe), priceFormat);
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
@@ -6335,8 +6336,8 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    int remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment + ifString(!remainder, "", " partially") +" at "+ sPrice;
 
-   if (remainder != 0)
-      message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
+   if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
+                       message = message +" (market: "+ sBid +"/"+ sAsk +")";
 
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -6371,7 +6372,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
    string sTP = ""; if (NE(oe.TakeProfit  (oe), 0)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
    string sSD = ""; if (NE(oe.StopDistance(oe), 0)) sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
 
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -7451,7 +7452,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    string sSL     = ""; if (NE(oe.StopLoss    (oe), 0, digits)) sSL = ", sl="+ NumberToStr(oe.StopLoss  (oe), priceFormat);
    string sTP     = ""; if (NE(oe.TakeProfit  (oe), 0, digits)) sTP = ", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
    string sSD     = ""; if (NE(oe.StopDistance(oe), 0))         sSD = ", stop distance="+ NumberToStr(oe.StopDistance(oe), ".+") +" pip";
-   string sMarket = "(market: "+ NumberToStr(MarketInfo(symbol, MODE_BID), priceFormat) +"/"+ NumberToStr(MarketInfo(symbol, MODE_ASK), priceFormat) + sSD +")";
+   string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
    if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
@@ -8022,19 +8023,19 @@ bool IsRawSymbol(string symbol, string server = "") {
    string mqlFileName = "history\\"+ server +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
    // validate the file size
    int fileSize = FileSize(hFile);
    if (!fileSize)                   { FileClose(hFile); return(false); }
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
 
    // read all symbols
    int symbolsCount = fileSize/SYMBOL_size;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
    int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
    error = GetLastError();
-   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
    // check for the specified symbol
    bool found = false;
@@ -8180,10 +8181,10 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    // (2) Datei öffnen und Größe validieren
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR))));
+   if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_GROUP_size != 0) {
-      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
    }
    if (!fileSize) { FileClose(hFile); return(0); }                   // Eine leere Datei wird akzeptiert. Eigentlich muß sie immer 32 * SYMBOL_GROUP_size groß sein,
                                                                      // doch im Moment der Erstellung (von jemand anderem) kann sie vorübergehend 0 Bytes groß sein.
@@ -8192,7 +8193,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))));
+   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
 
    return(fileSize/SYMBOL_GROUP_size);
 }
@@ -8218,10 +8219,10 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_size != 0) {
-      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile); return(!catch("InsertRawSymbol(4)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
    int symbolsSize=fileSize/SYMBOL_size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -8230,7 +8231,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
       // (1.2) vorhandene Symbole einlesen
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(5)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
       // (1.3) sicherstellen, daß das neue Symbol noch nicht existiert und größte Symbol-ID finden
       for (int i=0; i < symbolsSize; i++) {
@@ -8258,7 +8259,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(10)  error writing SYMBOL[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
 }
@@ -8290,14 +8291,14 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";
    int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
    // Daten schreiben
    int arraySize = ArraySize(sgs.copy);
    int ints = FileWriteArray(hFile, sgs.copy, 0, arraySize);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    ArrayResize(sgs.copy, 0);
    return(true);
@@ -8331,10 +8332,10 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Datei öffnen und Größe validieren
    int hFile = FileOpen(fileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
-   if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || hFile <= 0)       return(!catch("SetRawSymbolTemplate(2)->FileOpen(\""+ fileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    int fileSize = FileSize(hFile);
    if (fileSize != SYMBOL_size) {
-      FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", ifIntOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile);                    return(!catch("SetRawSymbolTemplate(3)  invalid size "+ fileSize +" of \""+ fileName +"\" (not a SYMBOL size)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
 
    // Datei in das übergebene Symbol einlesen
@@ -8342,9 +8343,34 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    int ints = FileReadArray(hFile, symbol, 0, fileSize/4);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", ifIntOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
+}
+
+
+/**
+ * Concatenate the values of a string array using the specified separator.
+ *
+ * @param  string values[]             - string array
+ * @param  string separator [optional] - separator (default: ", ")
+ *
+ * @return string - concatenated string or an empty string in case of errors
+ */
+string JoinStringsEx(string values[], string separator = ", ") {
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinStringsEx(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+
+   string result = "";
+   int size = ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      if (StrIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
+      else                      result = StringConcatenate(result, values[i], separator);
+   }
+   if (size > 0)
+      result = StrLeft(result, -StringLen(separator));
+
+   return(result);
 }
 
 

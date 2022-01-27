@@ -65,11 +65,10 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
-#include <functions/JoinStrings.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
-#define STRATEGY_ID  103                           // unique strategy id from 101-1023 (10 bit)
+#define STRATEGY_ID  103                           // unique strategy id between 101-1023 (10 bit)
 
 // --- sequence data -----------------------
 int      sequence.id;
@@ -861,19 +860,19 @@ int CreateSequenceId() {
 
 
 /**
- * Create the status display box. It consists of overlapping rectangles made of char "g" font "Webdings". Called only from
- * afterInit().
+ * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
+ * Called from afterInit() only.
  *
  * @return int - error status
  */
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 101, 165}, y=62, fontSize=75, rectangles=ArraySize(x);
+   int x[]={2, 101, 165}, y=62, fontSize=75, sizeofX=ArraySize(x);
    color  bgColor = C'248,248,248';                            // that's chart background color
    string label = "";
 
-   for (int i=0; i < rectangles; i++) {
+   for (int i=0; i < sizeofX; i++) {
       label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) != 0) {
          ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
@@ -2243,7 +2242,7 @@ bool IsOrderClosedBySL() {
 /**
  * Whether a start or resume condition is satisfied for a waiting sequence. Price and time conditions are "AND" combined.
  *
- * @param  _Out_ int signal - variable receiving the signal identifier of the fulfilled start condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a fulfilled start condition
  *
  * @return bool
  */
@@ -3709,7 +3708,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
    else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
 
-   error = ifIntOr(catch("ShowStatus(3)"), error);
+   error = intOr(catch("ShowStatus(3)"), error);
    isRecursion = false;
    return(error);
 }
