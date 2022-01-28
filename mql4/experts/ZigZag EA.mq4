@@ -3,9 +3,9 @@
  *
  *
  * TODO:
+ *  - TakeProfit in {percent|pip}
  *  - track PL curve per instance
  *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - TakeProfit in {percent|pip}
  *  - permanent performance tracking of all variants on all symbols
  *  - configuration/start/stop at a specific time of day
  *
@@ -822,4 +822,19 @@ int ShowStatus(int error = NO_ERROR) {
    error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
+}
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Sequence.ID=",         DoubleQuoteStr(Sequence.ID),    ";", NL,
+                            "ZigZag.Periods=",      ZigZag.Periods,                 ";", NL,
+                            "Lots=",                NumberToStr(Lots, ".1+"),       ";", NL,
+                            "Slippage=",            Slippage,                       ";", NL,
+                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent), ";")
+   );
 }
