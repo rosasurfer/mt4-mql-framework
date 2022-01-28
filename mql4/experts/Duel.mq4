@@ -3242,7 +3242,7 @@ int History.AddRecord(int direction, int index, int cycle, double gridbase, date
    }
    else return(!catch("History.AddRecord(4)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   return(!catch("Orders.AddRecord(5)"));
+   return(!catch("History.AddRecord(5)"));
 }
 
 
