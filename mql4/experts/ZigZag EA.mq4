@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - store closed positions in history
  *  - track PL curve per instance
  *  - normalize resulting PL metrics for different accounts/unit sizes
  *  - TakeProfit in {percent|pip}
@@ -51,17 +50,19 @@ extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absol
 #define SIGNAL_LONG            D_LONG        // 1
 #define SIGNAL_SHORT          D_SHORT        // 2
 
-#define H_IDX_TICKET                0        // order history indexes
-#define H_IDX_LOTS                  1
-#define H_IDX_OPENTYPE              2
-#define H_IDX_OPENTIME              3
-#define H_IDX_OPENPRICE             4
-#define H_IDX_CLOSETIME             5
-#define H_IDX_CLOSEPRICE            6
-#define H_IDX_SWAP                  7
-#define H_IDX_COMMISSION            8
-#define H_IDX_PROFIT                9
-#define H_IDX_TOTALPROFIT          10
+#define H_IDX_SIGNAL                0        // order history indexes
+#define H_IDX_TICKET                1
+#define H_IDX_LOTS                  2
+#define H_IDX_OPENTYPE              3
+#define H_IDX_OPENTIME              4
+#define H_IDX_OPENPRICE             5
+#define H_IDX_CLOSETIME             6
+#define H_IDX_CLOSEPRICE            7
+#define H_IDX_SLIPPAGE              8
+#define H_IDX_SWAP                  9
+#define H_IDX_COMMISSION           10
+#define H_IDX_PROFIT               11
+#define H_IDX_TOTALPROFIT          12
 
 // sequence data
 int      sequence.id;
@@ -76,14 +77,16 @@ double   sequence.maxProfit;                 // max. observed total profit:   0.
 double   sequence.maxDrawdown;               // max. observed total drawdown: -n...0
 
 // order data
-int      open.ticket;                        // one open position
+int      open.signal;                        // one open position
+int      open.ticket;                        //
 int      open.type;                          //
 datetime open.time;                          //
 double   open.price;                         //
+double   open.slippage;                      //
 double   open.swap;                          //
 double   open.commission;                    //
 double   open.profit;                        //
-double   closed.history[][11];               // multiple closed positions
+double   closed.history[][13];               // multiple closed positions
 
 // cache vars to speed-up ShowStatus()
 string   sSequenceTotalPL     = "";
@@ -203,10 +206,12 @@ bool StartSequence(int direction) {
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store position data
+   open.signal     = direction;
    open.ticket     = ticket;
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
    open.price      = oe.OpenPrice (oe);
+   open.slippage   = oe.Slippage  (oe);
    open.swap       = oe.Swap      (oe);
    open.commission = oe.Commission(oe);
    open.profit     = oe.Profit    (oe);
@@ -236,23 +241,12 @@ bool ReverseSequence(int direction) {
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    int lastDirection = ifInt(open.type==OP_BUY, D_LONG, D_SHORT);
-   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence into the same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
+   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence to the same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
 
    // close open position
-   int oe[], oeFlags;
+   int oeFlags, oe[];
    if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-
-   open.ticket     = NULL;
-   open.type       = NULL;
-   open.time       = NULL;
-   open.price      = NULL;
-   open.swap       = NULL;
-   open.commission = NULL;
-   open.profit     = NULL;                         // TODO: add closed position to history
-
-   sequence.openPL   = 0;                          // update PL numbers
-   sequence.closedPL = NormalizeDouble(sequence.closedPL + oe.Swap(oe) + oe.Commission(oe) + oe.Profit(oe), 2);
-   sequence.totalPL  = sequence.closedPL;
+   if (!ArchiveClosedPosition(open.signal, open.slippage, oe))            return(false);
 
    // open new position
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
@@ -264,13 +258,13 @@ bool ReverseSequence(int direction) {
    int      magicNumber = CalculateMagicNumber();
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
-   int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
-   if (!ticket) return(!SetLastError(oe.Error(oe)));
-
-   open.ticket     = ticket;
+   if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+   open.signal     = direction;
+   open.ticket     = oe.Ticket    (oe);
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
    open.price      = oe.OpenPrice (oe);
+   open.slippage   = oe.Slippage  (oe);
    open.swap       = oe.Swap      (oe);
    open.commission = oe.Commission(oe);
    open.profit     = oe.Profit    (oe);
@@ -284,6 +278,54 @@ bool ReverseSequence(int direction) {
    SS.PLStats();
 
    return(SaveStatus());
+}
+
+
+/**
+ * Add the specified closed position data to the local history and reset open position data.
+ *
+ * @param int    openSignal   - signal which triggered opening of the now closed position
+ * @param double openSlippage - opening slippage of the now closed position
+ * @param int    oe[]         - order details of the now closed position
+ *
+ * @return bool - success status
+ */
+bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
+   if (last_error != NULL)                    return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   int i = ArrayRange(closed.history, 0);
+   ArrayResize(closed.history, i + 1);
+
+   closed.history[i][H_IDX_SIGNAL     ] = openSignal;
+   closed.history[i][H_IDX_TICKET     ] = oe.Ticket    (oe);
+   closed.history[i][H_IDX_LOTS       ] = oe.Lots      (oe);
+   closed.history[i][H_IDX_OPENTYPE   ] = oe.Type      (oe);
+   closed.history[i][H_IDX_OPENTIME   ] = oe.OpenTime  (oe);
+   closed.history[i][H_IDX_OPENPRICE  ] = oe.OpenPrice (oe);
+   closed.history[i][H_IDX_CLOSETIME  ] = oe.CloseTime (oe);
+   closed.history[i][H_IDX_CLOSEPRICE ] = oe.ClosePrice(oe);
+   closed.history[i][H_IDX_SLIPPAGE   ] = NormalizeDouble(openSlippage + oe.Slippage(oe), Digits);
+   closed.history[i][H_IDX_SWAP       ] = oe.Swap      (oe);
+   closed.history[i][H_IDX_COMMISSION ] = oe.Commission(oe);
+   closed.history[i][H_IDX_PROFIT     ] = oe.Profit    (oe);
+   closed.history[i][H_IDX_TOTALPROFIT] = NormalizeDouble(closed.history[i][H_IDX_SWAP] + closed.history[i][H_IDX_COMMISSION] + closed.history[i][H_IDX_PROFIT], 2);
+
+   open.signal     = NULL;
+   open.ticket     = NULL;
+   open.type       = NULL;
+   open.time       = NULL;
+   open.price      = NULL;
+   open.slippage   = NULL;
+   open.swap       = NULL;
+   open.commission = NULL;
+   open.profit     = NULL;
+
+   sequence.openPL   = 0;
+   sequence.closedPL = NormalizeDouble(sequence.closedPL + closed.history[i][H_IDX_TOTALPROFIT], 2);
+   sequence.totalPL  = sequence.closedPL;
+
+   return(!catch("ArchiveClosedPosition(2)"));
 }
 
 
@@ -312,20 +354,10 @@ bool StopSequence() {
    if (sequence.status == STATUS_PROGRESSING) {    // a progressing sequence has an open position to close
       if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping...");
 
-      int oe[], oeFlags;
+      int oeFlags, oe[];
       if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.signal, open.slippage, oe))            return(false);
 
-      open.ticket     = NULL;
-      open.type       = NULL;
-      open.time       = NULL;
-      open.price      = NULL;
-      open.swap       = NULL;
-      open.commission = NULL;
-      open.profit     = NULL;                       // TODO: add closed position to history
-
-      sequence.openPL      = 0;                    // update total PL numbers
-      sequence.closedPL    = NormalizeDouble(sequence.closedPL + oe.Swap(oe) + oe.Commission(oe) + oe.Profit(oe), 2);
-      sequence.totalPL     = sequence.closedPL;
       sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
       sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
       SS.TotalPL();

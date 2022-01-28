@@ -1,5 +1,5 @@
 /**
- * WARNING: This code is unfinished work-in-progress. Use it only in demo accounts.
+ * !!! This code is unfinished work-in-progress. Use it only in demo accounts !!!
  *
  *
  * XMT-Scalper revisited
