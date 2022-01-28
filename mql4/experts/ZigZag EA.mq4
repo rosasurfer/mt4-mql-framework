@@ -4,10 +4,11 @@
  *
  * TODO:
  *  - TakeProfit in {percent|pip}
+ *  - configuration/start/stop at a specific time of day
+ *  - read/write status file
  *  - track PL curve per instance
  *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - permanent performance tracking of all variants on all symbols
- *  - configuration/start/stop at a specific time of day
+ *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - track slippage
@@ -17,6 +18,7 @@
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
+ *  - ChartInfos::CostumPosition() for/excluding a specific strategy
  *  - delete old/dead screen sockets on restart
  */
 #include <stddefines.mqh>
