@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - TakeProfit in {money|percent|pip}
- *     define stop condition
  *     display stop condition
  *     monitor stop condition
  *
@@ -49,19 +48,19 @@ extern bool   ShowProfitInPercent = true;                      // whether PL is 
 #include <rsfLib.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107        // unique strategy id between 101-1023 (10 bit)
+#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
 
-#define STATUS_WAITING              1        // sequence status values
+#define STATUS_WAITING              1           // sequence status values
 #define STATUS_PROGRESSING          2
 #define STATUS_STOPPED              3
 
-#define D_LONG   TRADE_DIRECTION_LONG        // 1
-#define D_SHORT TRADE_DIRECTION_SHORT        // 2
+#define D_LONG   TRADE_DIRECTION_LONG           // 1
+#define D_SHORT TRADE_DIRECTION_SHORT           // 2
 
-#define SIGNAL_LONG            D_LONG        // 1
-#define SIGNAL_SHORT          D_SHORT        // 2
+#define SIGNAL_LONG            D_LONG           // 1
+#define SIGNAL_SHORT          D_SHORT           // 2
 
-#define H_IDX_SIGNAL                0        // order history indexes
+#define H_IDX_SIGNAL                0           // order history indexes
 #define H_IDX_TICKET                1
 #define H_IDX_LOTS                  2
 #define H_IDX_OPENTYPE              3
@@ -75,7 +74,7 @@ extern bool   ShowProfitInPercent = true;                      // whether PL is 
 #define H_IDX_PROFIT               11
 #define H_IDX_TOTALPROFIT          12
 
-#define TP_TYPE_MONEY               1        // TakeProfit types
+#define TP_TYPE_MONEY               1           // TakeProfit types
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
@@ -84,24 +83,38 @@ int      sequence.id;
 datetime sequence.created;
 string   sequence.name = "";
 int      sequence.status;
-double   sequence.startEquity;               //
-double   sequence.openPL;                    // PL of all open positions (incl. commissions and swaps)
-double   sequence.closedPL;                  // PL of all closed positions (incl. commissions and swaps)
-double   sequence.totalPL;                   // total PL of the sequence: openPL + closedPL
-double   sequence.maxProfit;                 // max. observed total profit:   0...+n
-double   sequence.maxDrawdown;               // max. observed total drawdown: -n...0
+double   sequence.startEquity;                  //
+double   sequence.openPL;                       // PL of all open positions (incl. commissions and swaps)
+double   sequence.closedPL;                     // PL of all closed positions (incl. commissions and swaps)
+double   sequence.totalPL;                      // total PL of the sequence: openPL + closedPL
+double   sequence.maxProfit;                    // max. observed total profit:   0...+n
+double   sequence.maxDrawdown;                  // max. observed total drawdown: -n...0
 
 // order data
-int      open.signal;                        // one open position
-int      open.ticket;                        //
-int      open.type;                          //
-datetime open.time;                          //
-double   open.price;                         //
-double   open.slippage;                      //
-double   open.swap;                          //
-double   open.commission;                    //
-double   open.profit;                        //
-double   closed.history[][13];               // multiple closed positions
+int      open.signal;                           // one open position
+int      open.ticket;                           //
+int      open.type;                             //
+datetime open.time;                             //
+double   open.price;                            //
+double   open.slippage;                         //
+double   open.swap;                             //
+double   open.commission;                       //
+double   open.profit;                           //
+double   closed.history[][13];                  // multiple closed positions
+
+// stop conditions ("OR" combined)
+bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
+double   stop.profitAbs.value;
+string   stop.profitAbs.description = "";
+
+bool     stop.profitPct.condition;              // whether a takeprofit condition in percent is active
+double   stop.profitPct.value;
+double   stop.profitPct.absValue    = INT_MAX;
+string   stop.profitPct.description = "";
+
+bool     stop.profitPip.condition;              // whether a takeprofit condition in pip is active
+double   stop.profitPip.value;
+string   stop.profitPip.description = "";
 
 // cache vars to speed-up ShowStatus()
 string   sSequenceTotalPL     = "";
@@ -581,6 +594,17 @@ datetime prev.sequence.created;
 string   prev.sequence.name = "";
 int      prev.sequence.status;
 
+bool     prev.stop.profitAbs.condition;
+double   prev.stop.profitAbs.value;
+string   prev.stop.profitAbs.description = "";
+bool     prev.stop.profitPct.condition;
+double   prev.stop.profitPct.value;
+double   prev.stop.profitPct.absValue;
+string   prev.stop.profitPct.description = "";
+bool     prev.stop.profitPip.condition;
+double   prev.stop.profitPip.value;
+string   prev.stop.profitPip.description = "";
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
@@ -597,10 +621,21 @@ void BackupInputs() {
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
    // backup runtime variables affected by changing input parameters
-   prev.sequence.id      = sequence.id;
-   prev.sequence.created = sequence.created;
-   prev.sequence.name    = sequence.name;
-   prev.sequence.status  = sequence.status;
+   prev.sequence.id                = sequence.id;
+   prev.sequence.created           = sequence.created;
+   prev.sequence.name              = sequence.name;
+   prev.sequence.status            = sequence.status;
+
+   prev.stop.profitAbs.condition   = stop.profitAbs.condition;
+   prev.stop.profitAbs.value       = stop.profitAbs.value;
+   prev.stop.profitAbs.description = stop.profitAbs.description;
+   prev.stop.profitPct.condition   = stop.profitPct.condition;
+   prev.stop.profitPct.value       = stop.profitPct.value;
+   prev.stop.profitPct.absValue    = stop.profitPct.absValue;
+   prev.stop.profitPct.description = stop.profitPct.description;
+   prev.stop.profitPip.condition   = stop.profitPip.condition;
+   prev.stop.profitPip.value       = stop.profitPip.value;
+   prev.stop.profitPip.description = stop.profitPip.description;
 }
 
 
@@ -618,10 +653,21 @@ void RestoreInputs() {
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
    // restore runtime variables
-   sequence.id      = prev.sequence.id;
-   sequence.created = prev.sequence.created;
-   sequence.name    = prev.sequence.name;
-   sequence.status  = prev.sequence.status;
+   sequence.id                = prev.sequence.id;
+   sequence.created           = prev.sequence.created;
+   sequence.name              = prev.sequence.name;
+   sequence.status            = prev.sequence.status;
+
+   stop.profitAbs.condition   = prev.stop.profitAbs.condition;
+   stop.profitAbs.value       = prev.stop.profitAbs.value;
+   stop.profitAbs.description = prev.stop.profitAbs.description;
+   stop.profitPct.condition   = prev.stop.profitPct.condition;
+   stop.profitPct.value       = prev.stop.profitPct.value;
+   stop.profitPct.absValue    = prev.stop.profitPct.absValue;
+   stop.profitPct.description = prev.stop.profitPct.description;
+   stop.profitPip.condition   = prev.stop.profitPip.condition;
+   stop.profitPip.value       = prev.stop.profitPip.value;
+   stop.profitPip.description = prev.stop.profitPip.description;
 }
 
 
@@ -685,18 +731,44 @@ bool ValidateInputs() {
    // TakeProfit.Type
    sValue = StrToLower(TakeProfit.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL);
+      int size = Explode(sValues[0], "|", sValues, NULL), type;
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("money",   sValue)) sValue = "money";
-   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(7)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent", sValue)) sValue = "percent";
-   else if (StrStartsWith("pip",     sValue)) sValue = "pip";
-   else                                                              return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
-   TakeProfit.Type = sValue;
+   if      (StrStartsWith("money",   sValue)) { TakeProfit.Type = "money";   type = TP_TYPE_MONEY;   }
+   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StrStartsWith("percent", sValue)) { TakeProfit.Type = "percent"; type = TP_TYPE_PERCENT; }
+   else if (StrStartsWith("pip",     sValue)) { TakeProfit.Type = "pip";     type = TP_TYPE_PIP;     }
+   else                                                              return(!onInputError("ValidateInputs(9)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   stop.profitAbs.condition   = false;
+   stop.profitAbs.description = "";
+   stop.profitPct.condition   = false;
+   stop.profitPct.description = "";
+   stop.profitPip.condition   = false;
+   stop.profitPip.description = "";
 
-   return(!catch("ValidateInputs(9)"));
+   switch (type) {
+      case TP_TYPE_MONEY:
+         stop.profitAbs.condition   = true;
+         stop.profitAbs.value       = NormalizeDouble(TakeProfit, 2);
+         stop.profitAbs.description = "profit("+ DoubleToStr(stop.profitAbs.value, 2) +")";
+         break;
+
+      case TP_TYPE_PERCENT:
+         stop.profitPct.condition   = true;
+         stop.profitPct.value       = TakeProfit;
+         stop.profitPct.absValue    = INT_MAX;
+         stop.profitPct.description = "profit("+ NumberToStr(stop.profitPct.value, ".+") +"%)";
+         break;
+
+      case TP_TYPE_PIP:
+         stop.profitPip.condition   = true;
+         stop.profitPip.value       = NormalizeDouble(TakeProfit, 1);
+         stop.profitPip.description = "profit("+ DoubleToStr(stop.profitPip.value, Digits % 2) +" pip)";
+         break;
+   }
+
+   return(!catch("ValidateInputs(10)"));
 }
 
 
