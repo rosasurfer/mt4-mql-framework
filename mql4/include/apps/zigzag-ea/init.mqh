@@ -21,6 +21,7 @@ int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
       RestoreSequence();                                       // a valid sequence id was specified
+      SS.All();
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
@@ -48,6 +49,7 @@ int onInitParameters() {
       RestoreInputs();
       return(last_error);
    }
+   SS.All();
    SaveStatus();
    return(last_error);
 }
