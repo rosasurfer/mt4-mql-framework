@@ -912,11 +912,9 @@ bool IsStopSignal(int &signal) {
 double stop.profitPct.AbsValue() {
    if (stop.profitPct.condition) {
       if (stop.profitPct.absValue == INT_MAX) {
-         if (!sequence.startEquity) {
-            double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(stop.profitPct.value/100 * equity);
-         }
-         return(stop.profitPct.value/100 * sequence.startEquity);
+         double startEquity = sequence.startEquity;
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         return(stop.profitPct.value/100 * startEquity);
       }
    }
    return(stop.profitPct.absValue);
@@ -931,11 +929,9 @@ double stop.profitPct.AbsValue() {
 double stop.lossPct.AbsValue() {
    if (stop.lossPct.condition) {
       if (stop.lossPct.absValue == INT_MIN) {
-         if (!sequence.startEquity) {
-            double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(stop.lossPct.value/100 * equity);
-         }
-         return(stop.lossPct.value/100 * sequence.startEquity);
+         double startEquity = sequence.startEquity;
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         return(stop.lossPct.value/100 * startEquity);
       }
    }
    return(stop.lossPct.absValue);
