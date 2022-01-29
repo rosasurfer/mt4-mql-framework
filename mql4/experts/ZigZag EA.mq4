@@ -3,9 +3,6 @@
  *
  *
  * TODO:
- *  - TakeProfit in {money|percent}
- *     monitor stop condition
- *
  *  - start/stop and breaks at specific times of the day
  *  - implement stop condition "pip"
  *  - read/write status file
@@ -57,8 +54,9 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define D_LONG   TRADE_DIRECTION_LONG           // 1
 #define D_SHORT TRADE_DIRECTION_SHORT           // 2
 
-#define SIGNAL_LONG            D_LONG           // 1
-#define SIGNAL_SHORT          D_SHORT           // 2
+#define SIGNAL_ENTRY_LONG      D_LONG           // 1
+#define SIGNAL_ENTRY_SHORT    D_SHORT           // 2
+#define SIGNAL_TAKEPROFIT           3
 
 #define H_IDX_SIGNAL                0           // order history indexes
 #define H_IDX_TICKET                1
@@ -136,19 +134,19 @@ string   sSequencePlStats     = "";
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   int signal;
-   bool isSignal = IsZigZagSignal(signal);
+   int zigzagSignal, stopSignal;
+   bool isZigzagSignal = IsZigZagSignal(zigzagSignal);
 
    if (sequence.status == STATUS_WAITING) {
-      if (isSignal) StartSequence(signal);
+      if (isZigzagSignal) StartSequence(zigzagSignal);
    }
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (UpdateStatus()) {                              // update order status and PL
-         if      (IsStopSignal()) StopSequence();
-         else if (isSignal)       ReverseSequence(signal);
+      if (UpdateStatus()) {                                             // update order status and PL
+         if (IsStopSignal(stopSignal)) StopSequence(stopSignal);
+         else if (isZigzagSignal)      ReverseSequence(zigzagSignal);
       }
    }
-   else if (sequence.status == STATUS_STOPPED) {}        // nothing to do
+   else if (sequence.status == STATUS_STOPPED) {}                       // nothing to do
 
    return(catch("onTick(1)"));
 }
@@ -157,7 +155,7 @@ int onTick() {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of an occurred reversal
+ * @param  _Out_ int &signal - variable receiving the signal identifier of an occurred reversal
  *
  * @return bool
  */
@@ -172,13 +170,13 @@ bool IsZigZagSignal(int &signal) {
 
    if (Abs(trend) == reversal) {
       if (trend > 0) {
-         if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
+         if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
       }
       else {
-         if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
+         if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
       }
       if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          lastSignal = signal;
          return(true);
       }
@@ -362,22 +360,70 @@ bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
+ * @param  _Out_ int &signal - variable receiving the signal identifier of a fulfilled stop condition
+ *
  * @return bool
  */
-bool IsStopSignal() {
+bool IsStopSignal(int &signal) {
+   signal = NULL;
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+
+   // stop.profitAbs: -------------------------------------------------------------------------------------------------------
+   if (stop.profitAbs.condition) {
+      if (sequence.totalPL >= stop.profitAbs.value) {
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         signal = SIGNAL_TAKEPROFIT;
+         return(true);
+      }
+   }
+
+   // stop.profitPct: -------------------------------------------------------------------------------------------------------
+   if (stop.profitPct.condition) {
+      if (stop.profitPct.absValue == INT_MAX)
+         stop.profitPct.absValue = stop.profitPct.AbsValue();
+
+      if (sequence.totalPL >= stop.profitPct.absValue) {
+         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         signal = SIGNAL_TAKEPROFIT;
+         return(true);
+      }
+   }
+
+   // stop.profitPip: -------------------------------------------------------------------------------------------------------
+   if (stop.profitPip.condition) {
+      return(!catch("IsStopSignal(4)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
+   }
 
    return(false);
 }
 
 
 /**
- * Stop a waiting or progressing sequence. Closes open positions (if any).
+ * Return the absolute value of a percentage type TakeProfit condition.
+ *
+ * @return double - absolute value or INT_MAX if no percentage TakeProfit was configured
+ */
+double stop.profitPct.AbsValue() {
+   if (stop.profitPct.condition) {
+      if (stop.profitPct.absValue == INT_MAX) {
+         double startEquity = sequence.startEquity;
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         return(stop.profitPct.value/100 * startEquity);
+      }
+   }
+   return(stop.profitPct.absValue);
+}
+
+
+/**
+ * Stop a waiting or progressing sequence. Close open positions (if any).
+ *
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
  *
  * @return bool - success status
  */
-bool StopSequence() {
+bool StopSequence(int signal) {
    if (last_error != NULL)                                                     return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
