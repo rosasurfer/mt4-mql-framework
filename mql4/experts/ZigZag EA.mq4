@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - TakeProfit in {money|percent|pip}
- *     display stop condition
  *     monitor stop condition
  *
  *
@@ -12,6 +11,7 @@
  *  - read/write status file
  *  - track PL curve per instance
  *  - normalize resulting PL metrics for different accounts/unit sizes
+ *  - reverse trading option
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
@@ -31,15 +31,15 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";                        // instance to load from a status file (id between 1000-9999)
+extern string Sequence.ID         = "";                              // instance to load from a status file (id between 1000-9999)
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
-extern double TakeProfit          = 2;                         // TP value
-extern string TakeProfit.Type     = "money | percent* | pip";  // may be shortened
-extern int    Slippage            = 2;                         // in point
+extern double TakeProfit          = 0;                               // TP value
+extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
+extern int    Slippage            = 2;                               // in point
 
-extern bool   ShowProfitInPercent = true;                      // whether PL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent = true;                            // whether PL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -117,13 +117,12 @@ double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
 // cache vars to speed-up ShowStatus()
+string   sLots                = "";
+string   sStopConditions      = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
-
-// other
-string   takeprofitFormats[] = {".1+", "R.2", ".1+", "R.1"};
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -735,7 +734,8 @@ bool ValidateInputs() {
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("money",   sValue)) { TakeProfit.Type = "money";   type = TP_TYPE_MONEY;   }
+   if      (StrStartsWith("off",     sValue)) { TakeProfit.Type = "off";     type = NULL;            }
+   else if (StrStartsWith("money",   sValue)) { TakeProfit.Type = "money";   type = TP_TYPE_MONEY;   }
    else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent", sValue)) { TakeProfit.Type = "percent"; type = TP_TYPE_PERCENT; }
    else if (StrStartsWith("pip",     sValue)) { TakeProfit.Type = "pip";     type = TP_TYPE_PIP;     }
@@ -764,7 +764,7 @@ bool ValidateInputs() {
       case TP_TYPE_PIP:
          stop.profitPip.condition   = true;
          stop.profitPip.value       = NormalizeDouble(TakeProfit, 1);
-         stop.profitPip.description = "profit("+ DoubleToStr(stop.profitPip.value, Digits % 2) +" pip)";
+         stop.profitPip.description = "profit("+ NumberToStr(stop.profitPip.value, ".+") +" pip)";
          break;
    }
 
@@ -844,6 +844,8 @@ bool RemoveSequenceData() {
 void SS.All() {
    if (__isChart) {
       SS.SequenceName();
+      SS.Lots();
+      SS.StopConditions();
       SS.TotalPL();
       SS.PLStats();
    }
@@ -855,6 +857,38 @@ void SS.All() {
  */
 void SS.SequenceName() {
    sequence.name = "Z."+ sequence.id;
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the lotsize.
+ */
+void SS.Lots() {
+   if (__isChart) {
+      sLots = NumberToStr(Lots, ".+");
+   }
+}
+
+
+/**
+ * ShowStatus: Update the string representation of the configured stop conditions.
+ */
+void SS.StopConditions() {
+   if (__isChart) {
+      string sValue = "";
+
+      if (stop.profitAbs.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
+      }
+      if (stop.profitPct.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
+      }
+      if (stop.profitPip.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPip.condition, "@", "!") + stop.profitPip.description;
+      }
+      if (sValue == "") sStopConditions = "-";
+      else              sStopConditions = sValue;
+   }
 }
 
 
@@ -923,9 +957,11 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                NL,
-                                                                                          NL,
-                                  "Profit:   ", sSequenceTotalPL, "  ", sSequencePlStats, NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                 NL,
+                                                                                           NL,
+                                  "Lots:      ", sLots,                                    NL,
+                                  "Stop:     ",  sStopConditions,                          NL,
+                                  "Profit:   ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
