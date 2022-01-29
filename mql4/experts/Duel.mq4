@@ -2651,7 +2651,7 @@ bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-// backed-up global var which may be affected by input parameter changes
+// backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
 datetime prev.sequence.created;
 bool     prev.sequence.isTest;
@@ -2712,7 +2712,7 @@ void BackupInputs() {
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
 
-   // backup global vars which may be affected by input parameter changes
+   // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
    prev.sequence.isTest            = sequence.isTest;
@@ -2973,10 +2973,9 @@ bool ValidateInputs() {
             if      (key == "@bid") stop.price.type = PRICE_BID;
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            stop.price.description = exprs[i];
+            expr = NumberToStr(stop.price.value, PriceFormat);
+            if (StrEndsWith(expr, "'0")) expr = StrLeft(expr, -2);       // cut "'0" for improved readability
+            stop.price.description = StrSubstr(key, 1) +"("+ expr +")";
             stop.price.condition   = true;
          }
 
@@ -2989,18 +2988,16 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
-               stop.profitPct.description = "";
-               stop.profitAbs.description = exprs[i];
+               stop.profitAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
                stop.profitAbs.condition   = true;
+               stop.profitPct.description = "";
             }
             else {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
-               stop.profitAbs.description = "";
-               stop.profitPct.description = exprs[i];
+               stop.profitPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
                stop.profitPct.condition   = true;
+               stop.profitAbs.description = "";
             }
          }
 
@@ -3013,18 +3010,16 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
-               stop.lossPct.description = "";
-               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
                stop.lossAbs.condition   = true;
+               stop.lossPct.description = "";
             }
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
-               stop.lossAbs.description = "";
-               stop.lossPct.description = exprs[i];
+               stop.lossPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.condition   = true;
+               stop.lossAbs.description = "";
             }
          }
          else                                                            return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (unknown condition key)"));
