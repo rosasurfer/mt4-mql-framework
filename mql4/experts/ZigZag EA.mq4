@@ -3,16 +3,16 @@
  *
  *
  * TODO:
- *  - TakeProfit in {money|percent|pip}
+ *  - TakeProfit in {money|percent}
  *     monitor stop condition
  *
- *
- *  - configuration/start/stop at a specific time of day
+ *  - start/stop and breaks at specific times of the day
+ *  - implement stop condition "pip"
  *  - read/write status file
- *  - track PL curve per instance
+ *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
  *  - reverse trading option
- *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
+ *  - track PL curve per live instance
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - track slippage
@@ -22,8 +22,8 @@
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
- *  - ChartInfos::CostumPosition() for/excluding a specific strategy
- *  - delete old/dead screen sockets on restart
+ *  - ChartInfos::CostumPosition() including/excluding a specific strategy
+ *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
@@ -116,7 +116,7 @@ bool     stop.profitPip.condition;              // whether a takeprofit conditio
 double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
-// cache vars to speed-up ShowStatus()
+// caching vars to speed-up ShowStatus()
 string   sLots                = "";
 string   sStopConditions      = "";
 string   sSequenceTotalPL     = "";
