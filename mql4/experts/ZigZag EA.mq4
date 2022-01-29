@@ -3,7 +3,12 @@
  *
  *
  * TODO:
- *  - TakeProfit in {percent|pip}
+ *  - TakeProfit in {money|percent|pip}
+ *     define stop condition
+ *     display stop condition
+ *     monitor stop condition
+ *
+ *
  *  - configuration/start/stop at a specific time of day
  *  - read/write status file
  *  - track PL curve per instance
@@ -27,11 +32,15 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";      // instance to load from a status file (id between 1000-9999)
+extern string Sequence.ID         = "";                        // instance to load from a status file (id between 1000-9999)
 extern int    ZigZag.Periods      = 40;
+
 extern double Lots                = 0.1;
-extern int    Slippage            = 2;       // in point
-extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absolute or percentage value
+extern double TakeProfit          = 2;                         // TP value
+extern string TakeProfit.Type     = "money | percent* | pip";  // may be shortened
+extern int    Slippage            = 2;                         // in point
+
+extern bool   ShowProfitInPercent = true;                      // whether PL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -66,6 +75,10 @@ extern bool   ShowProfitInPercent = true;    // whether PL is displayed as absol
 #define H_IDX_PROFIT               11
 #define H_IDX_TOTALPROFIT          12
 
+#define TP_TYPE_MONEY               1        // TakeProfit types
+#define TP_TYPE_PERCENT             2
+#define TP_TYPE_PIP                 3
+
 // sequence data
 int      sequence.id;
 datetime sequence.created;
@@ -95,6 +108,9 @@ string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
+
+// other
+string   takeprofitFormats[] = {".1+", "R.2", ".1+", "R.1"};
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -554,6 +570,8 @@ bool SaveStatus() {
 string   prev.Sequence.ID = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
+double   prev.TakeProfit;
+string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
 bool     prev.ShowProfitInPercent;
 
@@ -573,6 +591,8 @@ void BackupInputs() {
    prev.Sequence.ID         = StringConcatenate(Sequence.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
+   prev.TakeProfit          = TakeProfit;
+   prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.Slippage            = Slippage;
    prev.ShowProfitInPercent = ShowProfitInPercent;
 
@@ -592,6 +612,8 @@ void RestoreInputs() {
    Sequence.ID         = prev.Sequence.ID;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
+   TakeProfit          = prev.TakeProfit;
+   TakeProfit.Type     = prev.TakeProfit.Type;
    Slippage            = prev.Slippage;
    ShowProfitInPercent = prev.ShowProfitInPercent;
 
@@ -637,12 +659,12 @@ bool ValidateInputs() {
 
    // Sequence.ID
    if (isParameterChange) {
-      string sValue = StrTrim(Sequence.ID);
+      string sValues[], sValue=StrTrim(Sequence.ID);
       if (sValue == "") {                                            // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
       }
       else if (sValue != prev.Sequence.ID)                           return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   } //else                                                          // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
+   } //else                                                          // onInitUser(): the id is empty (a new sequence) or already validated (an existing sequence is reloaded)
 
    // ZigZag.Periods
    if (isParameterChange && ZigZag.Periods!=prev.ZigZag.Periods) {
@@ -657,7 +679,24 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                                return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   return(!catch("ValidateInputs(7)"));
+   // TakeProfit
+   if (LT(TakeProfit, 0))                                            return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid parameter TakeProfit: "+ NumberToStr(TakeProfit, ".1+") +" (too small)"));
+
+   // TakeProfit.Type
+   sValue = StrToLower(TakeProfit.Type);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if      (StrStartsWith("money",   sValue)) sValue = "money";
+   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(7)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StrStartsWith("percent", sValue)) sValue = "percent";
+   else if (StrStartsWith("pip",     sValue)) sValue = "pip";
+   else                                                              return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   TakeProfit.Type = sValue;
+
+   return(!catch("ValidateInputs(9)"));
 }
 
 
@@ -833,10 +872,12 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Sequence.ID=",         DoubleQuoteStr(Sequence.ID),    ";", NL,
-                            "ZigZag.Periods=",      ZigZag.Periods,                 ";", NL,
-                            "Lots=",                NumberToStr(Lots, ".1+"),       ";", NL,
-                            "Slippage=",            Slippage,                       ";", NL,
-                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent), ";")
+   return(StringConcatenate("Sequence.ID=",         DoubleQuoteStr(Sequence.ID),     ";", NL,
+                            "ZigZag.Periods=",      ZigZag.Periods,                  ";", NL,
+                            "Lots=",                NumberToStr(Lots, ".1+"),        ";", NL,
+                            "TakeProfit=",          NumberToStr(TakeProfit, ".1+"),  ";", NL,
+                            "TakeProfit.Type=",     DoubleQuoteStr(TakeProfit.Type), ";", NL,
+                            "Slippage=",            Slippage,                        ";", NL,
+                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),  ";")
    );
 }
