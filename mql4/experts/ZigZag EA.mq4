@@ -122,6 +122,10 @@ string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
 
+// debug settings                                  // configurable via framework config, see afterInit()
+bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
+bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
+
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
 
@@ -442,7 +446,13 @@ bool StopSequence(int signal) {
    sequence.status = STATUS_STOPPED;
 
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
-   return(SaveStatus());
+   SaveStatus();
+
+   if (IsTesting()) {                              // pause or stop the tester according to the debug configuration
+      if (!IsVisualMode())       Tester.Stop ("StopSequence(4)");
+      else if (test.onStopPause) Tester.Pause("StopSequence(5)");
+   }
+   return(!catch("StopSequence(6)"));
 }
 
 

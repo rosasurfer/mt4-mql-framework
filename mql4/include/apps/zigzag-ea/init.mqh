@@ -119,6 +119,12 @@ int afterInit() {
    bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
+   if (IsTesting()) {
+      string section      = StrTrim(ProgramName()) +".Tester";
+      test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
+      test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
+   }
+
    StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }

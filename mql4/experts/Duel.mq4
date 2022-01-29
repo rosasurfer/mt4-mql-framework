@@ -224,7 +224,7 @@ string   stop.lossPct.description = "";
 datetime sessionbreak.starttime;                   // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 
-// cache vars to speed-up ShowStatus()
+// caching vars to speed-up ShowStatus()
 string   sGridParameters  = "";
 string   sGridVolatility  = "";
 string   sStopConditions  = "";
@@ -240,7 +240,7 @@ string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeStatus = true;               // whether to minimize status file writing in tester
+bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
