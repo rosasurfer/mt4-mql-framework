@@ -19,7 +19,7 @@
 
 
 // start/stop signal types
-#define SIGNAL_PRICETIME            1           // a price, time or combined price-time condition
+#define SIGNAL_PRICE_TIME           1           // a price and/or time condition
 #define SIGNAL_TREND                2
 #define SIGNAL_TAKEPROFIT           3
 #define SIGNAL_STOPLOSS             4

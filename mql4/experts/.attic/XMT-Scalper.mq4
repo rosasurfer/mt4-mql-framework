@@ -1353,7 +1353,7 @@ bool CheckRealTargets() {
       }
    }
    if (targetReached) {
-      if (IsLogNotice()) logNotice("CheckRealTargets(1)  "+ sequence.name +" stop condition "+ DoubleQuoteStr(sCondition) +" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("CheckRealTargets(1)  "+ sequence.name +" stop condition "+ DoubleQuoteStr(sCondition) +" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       CloseRealOrders();
    }
    return(targetReached);
