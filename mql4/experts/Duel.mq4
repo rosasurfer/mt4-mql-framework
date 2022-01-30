@@ -77,7 +77,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
 
-#define SIGNAL_PRICETIME      1                    // a price and/or time condition
+#define SIGNAL_PRICE_TIME     1                    // a price and/or time condition
 #define SIGNAL_TREND          2
 #define SIGNAL_TAKEPROFIT     3
 #define SIGNAL_STOPLOSS       4
@@ -800,7 +800,7 @@ int ShowTradeHistory() {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a fulfilled start condition
+ * @param  _Out_ int &signal - variable receiving the identifier of the satisfied condition
  *
  * @return bool
  */
@@ -826,7 +826,7 @@ bool IsStartSignal(int &signal) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a fulfilled stop condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of the satisfied condition
  *
  * @return bool
  */
@@ -836,7 +836,7 @@ bool IsStopSignal(int &signal) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    string message = "";
 
-   // stop.price: fulfilled when current price touches or crossses the limit-------------------------------------------------
+   // stop.price: satisfied when current price touches or crossses the limit-------------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
       double price;
@@ -852,8 +852,8 @@ bool IsStopSignal(int &signal) {
       stop.price.lastValue = price;
 
       if (triggered) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         signal = SIGNAL_PRICETIME;
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         signal = SIGNAL_PRICE_TIME;
          return(true);
       }
    }
@@ -861,7 +861,7 @@ bool IsStopSignal(int &signal) {
    // stop.profitAbs: -------------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -873,7 +873,7 @@ bool IsStopSignal(int &signal) {
          stop.profitPct.absValue = stop.profitPct.AbsValue();
 
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -882,7 +882,7 @@ bool IsStopSignal(int &signal) {
    // stop.lossAbs: ---------------------------------------------------------------------------------------------------------
    if (stop.lossAbs.condition) {
       if (sequence.totalPL <= stop.lossAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -894,7 +894,7 @@ bool IsStopSignal(int &signal) {
          stop.lossPct.absValue = stop.lossPct.AbsValue();
 
       if (sequence.totalPL <= stop.lossPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -1199,7 +1199,7 @@ bool StopSequence(int signal) {
 
    // update stop conditions
    switch (signal) {
-      case SIGNAL_PRICETIME:
+      case SIGNAL_PRICE_TIME:
          stop.price.condition = false;
          break;
 

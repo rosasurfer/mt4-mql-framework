@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - start/stop/breaks at specific times of the day
+ *  - stop/break at specific times of the day
  *  - implement stop condition "pip"
  *  - read/write status file
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
@@ -64,9 +64,10 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define D_LONG   TRADE_DIRECTION_LONG           // 1
 #define D_SHORT TRADE_DIRECTION_SHORT           // 2
 
-#define SIGNAL_ENTRY_LONG      D_LONG           // 1
+#define SIGNAL_ENTRY_LONG      D_LONG           // 1 start/stop/resume signal types
 #define SIGNAL_ENTRY_SHORT    D_SHORT           // 2
-#define SIGNAL_TAKEPROFIT           3
+#define SIGNAL_PRICE_TIME           3           // a price and/or time condition
+#define SIGNAL_TAKEPROFIT           4
 
 #define H_IDX_SIGNAL                0           // order history indexes
 #define H_IDX_TICKET                1
@@ -157,11 +158,13 @@ bool     test.optimizeStatus = true;               // whether to reduce status f
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   int zigzagSignal, stopSignal;
+   int zigzagSignal, startSignal, stopSignal;
    bool isZigzagSignal = IsZigZagSignal(zigzagSignal);
 
    if (sequence.status == STATUS_WAITING) {
-      if (isZigzagSignal) StartSequence(zigzagSignal);
+      if (IsStartSignal(startSignal)) {
+         if (isZigzagSignal) StartSequence(zigzagSignal);
+      }
    }
    else if (sequence.status == STATUS_PROGRESSING) {
       if (UpdateStatus()) {                                             // update order status and PL
@@ -178,7 +181,7 @@ int onTick() {
 /**
  * Whether a new ZigZag reversal occurred.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of an occurred reversal
+ * @param  _Out_ int &signal - variable receiving the identifier of an occurred reversal
  *
  * @return bool
  */
@@ -221,6 +224,38 @@ bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
+}
+
+
+/**
+ * Whether a start condition is satisfied for a waiting sequence.
+ *
+ * @param  _Out_ int &signal - variable receiving the identifier of the satisfied condition
+ *
+ * @return bool
+ */
+bool IsStartSignal(int &signal) {
+   signal = NULL;
+   if (last_error || sequence.status!=STATUS_WAITING) return(false);
+
+   // start.time
+   if (start.time.condition) {
+      if (TimeCurrentEx("IsStartSignal(1)") < start.time.value)
+         return(false);
+
+      if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      signal               = SIGNAL_PRICE_TIME;
+      start.time.condition = false;
+      SS.StartStopConditions();
+      return(true);
+   }
+
+   // no start condition is a valid signal before first start only
+   if (!open.ticket && !ArrayRange(closed.history, 0)) {
+      signal = NULL;
+      return(true);
+   }
+   return(false);
 }
 
 
@@ -383,7 +418,7 @@ bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a fulfilled stop condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of the satisfied condition
  *
  * @return bool
  */
@@ -395,7 +430,7 @@ bool IsStopSignal(int &signal) {
    // stop.profitAbs: -------------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -407,7 +442,7 @@ bool IsStopSignal(int &signal) {
          stop.profitPct.absValue = stop.profitPct.AbsValue();
 
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
