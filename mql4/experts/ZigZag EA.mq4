@@ -12,6 +12,7 @@
  *  - track PL curve per live instance
  *
  *  - double ZigZag reversals during large bars are not recognized and ignored
+ *  - improve parsing of start.time.condition
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
@@ -40,6 +41,7 @@ extern string Sequence.ID         = "";                              // instance
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
+extern string StartConditions     = "";                              // @time(datetime)
 extern double TakeProfit          = 0;                               // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
 extern int    Slippage            = 2;                               // in point
@@ -108,6 +110,11 @@ double   open.commission;                       //
 double   open.profit;                           //
 double   closed.history[][13];                  // multiple closed positions
 
+// start conditions
+bool     start.time.condition;
+datetime start.time.value;
+string   start.time.description = "";
+
 // stop conditions ("OR" combined)
 bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
 double   stop.profitAbs.value;
@@ -129,6 +136,9 @@ string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
+
+// other
+string tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
@@ -646,6 +656,7 @@ bool SaveStatus() {
 string   prev.Sequence.ID = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
+string   prev.StartConditions = "";
 double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
@@ -656,6 +667,10 @@ int      prev.sequence.id;
 datetime prev.sequence.created;
 string   prev.sequence.name = "";
 int      prev.sequence.status;
+
+bool     prev.start.time.condition;
+datetime prev.start.time.value;
+string   prev.start.time.description = "";
 
 bool     prev.stop.profitAbs.condition;
 double   prev.stop.profitAbs.value;
@@ -678,6 +693,7 @@ void BackupInputs() {
    prev.Sequence.ID         = StringConcatenate(Sequence.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
+   prev.StartConditions     = StringConcatenate(StartConditions, "");
    prev.TakeProfit          = TakeProfit;
    prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.Slippage            = Slippage;
@@ -688,6 +704,10 @@ void BackupInputs() {
    prev.sequence.created           = sequence.created;
    prev.sequence.name              = sequence.name;
    prev.sequence.status            = sequence.status;
+
+   prev.start.time.condition       = start.time.condition;
+   prev.start.time.value           = start.time.value;
+   prev.start.time.description     = start.time.description;
 
    prev.stop.profitAbs.condition   = stop.profitAbs.condition;
    prev.stop.profitAbs.value       = stop.profitAbs.value;
@@ -710,6 +730,7 @@ void RestoreInputs() {
    Sequence.ID         = prev.Sequence.ID;
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
+   StartConditions     = prev.StartConditions;
    TakeProfit          = prev.TakeProfit;
    TakeProfit.Type     = prev.TakeProfit.Type;
    Slippage            = prev.Slippage;
@@ -720,6 +741,10 @@ void RestoreInputs() {
    sequence.created           = prev.sequence.created;
    sequence.name              = prev.sequence.name;
    sequence.status            = prev.sequence.status;
+
+   start.time.condition       = prev.start.time.condition;
+   start.time.value           = prev.start.time.value;
+   start.time.description     = prev.start.time.description;
 
    stop.profitAbs.condition   = prev.stop.profitAbs.condition;
    stop.profitAbs.value       = prev.stop.profitAbs.value;
@@ -763,30 +788,64 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programatic input
+   bool isInitParameters   = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programatic input
+   bool isInitUser         = (ProgramInitReason()==IR_USER);
+   bool isInitTemplate     = (ProgramInitReason()==IR_TEMPLATE);
    bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
 
    // Sequence.ID
-   if (isParameterChange) {
+   if (isInitParameters) {
       string sValues[], sValue=StrTrim(Sequence.ID);
-      if (sValue == "") {                                            // the id was deleted or not yet set, re-apply the internal id
+      if (sValue == "") {                                         // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
       }
-      else if (sValue != prev.Sequence.ID)                           return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   } //else                                                          // onInitUser(): the id is empty (a new sequence) or already validated (an existing sequence is reloaded)
+      else if (sValue != prev.Sequence.ID)                        return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
+   }
 
    // ZigZag.Periods
-   if (isParameterChange && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(2)  "+ sequence.name +" cannot change parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
+   if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
+      if (sequenceWasStarted)                                     return(!onInputError("ValidateInputs(2)  "+ sequence.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (ZigZag.Periods < 2)                                           return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                                        return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
-   if (isParameterChange && NE(Lots, prev.Lots)) {
-      if (sequenceWasStarted)                                        return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
+   if (isInitParameters && NE(Lots, prev.Lots)) {
+      if (sequenceWasStarted)                                     return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change input parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (LT(Lots, 0))                                                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                                return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                               return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                             return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+
+   // StartConditions: @time(datetime)
+   if (!isInitParameters || StartConditions!=prev.StartConditions) {
+      start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
+
+      string exprs[], expr="", key="";                            // split conditions
+      int sizeOfExprs = Explode(StartConditions, "|", exprs, NULL), iValue, time, sizeOfElems;
+
+      for (int i=0; i < sizeOfExprs; i++) {                       // validate each expression
+         expr = StrTrim(exprs[i]);
+         if (!StringLen(expr))              continue;
+         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         key = StrTrim(sValues[0]);
+         sValue = StrTrim(StrLeft(sValues[1], -1));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+
+         if (key == "@time") {
+            if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            // TODO: validation of @time is not sufficient
+            start.time.value       = time;
+            start.time.description = "time("+ TimeToStr(time) +")";
+            start.time.condition   = true;
+         }
+         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+      }
+   }
 
    // TakeProfit (nothing to do)
    // TakeProfit.Type
@@ -796,12 +855,12 @@ bool ValidateInputs() {
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("off",     sValue)) { TakeProfit.Type = "off";     type = NULL;            }
-   else if (StrStartsWith("money",   sValue)) { TakeProfit.Type = "money";   type = TP_TYPE_MONEY;   }
-   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(7)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent", sValue)) { TakeProfit.Type = "percent"; type = TP_TYPE_PERCENT; }
-   else if (StrStartsWith("pip",     sValue)) { TakeProfit.Type = "pip";     type = TP_TYPE_PIP;     }
-   else                                                              return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   if      (StrStartsWith("off",     sValue)) type = NULL;
+   else if (StrStartsWith("money",   sValue)) type = TP_TYPE_MONEY;
+   else if (StringLen(sValue) < 2)                                return(!onInputError("ValidateInputs(14)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StrStartsWith("percent", sValue)) type = TP_TYPE_PERCENT;
+   else if (StrStartsWith("pip",     sValue)) type = TP_TYPE_PIP;
+   else                                                           return(!onInputError("ValidateInputs(15)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
@@ -829,8 +888,9 @@ bool ValidateInputs() {
          stop.profitPip.description = "profit("+ NumberToStr(stop.profitPip.value, ".+") +" pip)";
          break;
    }
+   TakeProfit.Type = tpTypeDescriptions[type];
 
-   return(!catch("ValidateInputs(9)"));
+   return(!catch("ValidateInputs(16)"));
 }
 
 
@@ -1045,9 +1105,44 @@ string InputsToStr() {
    return(StringConcatenate("Sequence.ID=",         DoubleQuoteStr(Sequence.ID),     ";", NL,
                             "ZigZag.Periods=",      ZigZag.Periods,                  ";", NL,
                             "Lots=",                NumberToStr(Lots, ".1+"),        ";", NL,
+                            "StartConditions=",     DoubleQuoteStr(StartConditions), ";", NL,
                             "TakeProfit=",          NumberToStr(TakeProfit, ".1+"),  ";", NL,
                             "TakeProfit.Type=",     DoubleQuoteStr(TakeProfit.Type), ";", NL,
                             "Slippage=",            Slippage,                        ";", NL,
                             "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),  ";")
    );
+   int iNulls[];
+   ParseTime(NULL, NULL, iNulls);
+}
+
+
+/**
+ * Parse the string representation of a date or time.
+ *
+ * @param  _In_  string value    - string to parse
+ * @param  _In_  int    flags    - supported or requird date/time formats
+ * @param  _Out_ int   &result[] - array receiving the parsed elements
+ *
+ * @return bool - success status
+ */
+bool ParseTime(string value, int flags, int &result[]) {
+   return(NaT);
+
+   //D'1980.07.19 12:30:27'
+   //D'1980.07.19 12:30'
+   //D'01.01.2004'
+   //D'12:30:27'
+   //D'12:30'
+
+   //DATEFORMAT_YYYYMMDD
+   //DATEFORMAT_DDMMYYYY
+   //DATEFORMAT_OPTIONAL
+   //DATEFORMAT_OPTIONAL_YEAR
+   //DATEFORMAT_OPTIONAL_MONTH
+   //DATEFORMAT_OPTIONAL_DAY
+   //DATEFORMAT_SINGLE_DIGITS
+
+   //TIMEFORMAT_OPTIONAL
+   //TIMEFORMAT_OPTIONAL_SECONDS
+   //TIMEFORMAT_SINGLE_DIGITS
 }
