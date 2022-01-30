@@ -131,6 +131,7 @@ string   stop.profitPip.description = "";
 
 // caching vars to speed-up ShowStatus()
 string   sLots                = "";
+string   sStartConditions     = "";
 string   sStopConditions      = "";
 string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
@@ -967,7 +968,7 @@ void SS.All() {
    if (__isChart) {
       SS.SequenceName();
       SS.Lots();
-      SS.StopConditions();
+      SS.StartStopConditions();
       SS.TotalPL();
       SS.PLStats();
    }
@@ -993,12 +994,20 @@ void SS.Lots() {
 
 
 /**
- * ShowStatus: Update the string representation of the configured stop conditions.
+ * ShowStatus: Update the string representation of the configured start/stop conditions.
  */
-void SS.StopConditions() {
+void SS.StartStopConditions() {
    if (__isChart) {
+      // start conditions
       string sValue = "";
+      if (start.time.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
+      }
+      if (sValue == "") sStartConditions = "-";
+      else              sStartConditions = sValue;
 
+      // stop conditions
+      sValue = "";
       if (stop.profitAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
       }
@@ -1082,6 +1091,7 @@ int ShowStatus(int error = NO_ERROR) {
    string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                 NL,
                                                                                            NL,
                                   "Lots:      ", sLots,                                    NL,
+                                  "Start:    ",  sStartConditions,                         NL,
                                   "Stop:     ",  sStopConditions,                          NL,
                                   "Profit:   ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
    );
