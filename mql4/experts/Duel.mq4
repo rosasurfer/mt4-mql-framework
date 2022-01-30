@@ -2844,11 +2844,13 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
-   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));   // whether the sequence was already started
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);         // whether we validate manual or programatic input
+   bool isInitUser       = (ProgramInitReason()==IR_USER);
+   bool isInitTemplate   = (ProgramInitReason()==IR_TEMPLATE);
+   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
 
    // Sequence.ID
-   if (isParameterChange) {
+   if (isInitParameters) {
       string sValues[], sValue = StrTrim(Sequence.ID);
       if (sValue == "") {                                                // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
@@ -2865,7 +2867,7 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (iValue == -1)                                                     return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
-   if (isParameterChange && iValue!=prev.sequence.direction) {
+   if (isInitParameters && iValue!=prev.sequence.direction) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change parameter GridDirection of already started sequence"));
    }
    sequence.direction = iValue;
@@ -2874,7 +2876,7 @@ bool ValidateInputs() {
    GridDirection = TradeDirectionDescription(sequence.direction);
 
    // GridVolatility
-   if (isParameterChange && !StrCompareI(GridVolatility, prev.GridVolatility)) {
+   if (isInitParameters && !StrCompareI(GridVolatility, prev.GridVolatility)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change parameter GridVolatility of already started sequence"));
    }
    sValue = StrTrim(GridVolatility);
@@ -2892,7 +2894,7 @@ bool ValidateInputs() {
    }
 
    // GridSize
-   if (isParameterChange && !StrCompare(GridSize, prev.GridSize)) {
+   if (isInitParameters && !StrCompare(GridSize, prev.GridSize)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change parameter GridSize of already started sequence"));
    }
    sValue = StrTrim(GridSize);
@@ -2908,7 +2910,7 @@ bool ValidateInputs() {
    if (!sequenceWasStarted) sequence.gridsize = dValue;
 
    // UnitSize
-   if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
+   if (isInitParameters && NE(UnitSize, prev.UnitSize)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" cannot change parameter UnitSize of already started sequence"));
    }
    if (LT(UnitSize, 0))                                                  return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
@@ -2919,14 +2921,14 @@ bool ValidateInputs() {
    if (MaxUnits < 1)                                                     return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxUnits: "+ MaxUnits));
 
    // Pyramid.Multiplier
-   if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
+   if (isInitParameters && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(15)  "+ sequence.name +" cannot change parameter Pyramid.Multiplier of already started sequence"));
    }
    if (Pyramid.Multiplier < 0)                                           return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
-   if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
+   if (isInitParameters && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(17)  "+ sequence.name +" cannot change parameter Martingale.Multiplier of already started sequence"));
    }
    if (Martingale.Multiplier < 0)                                        return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
@@ -2934,8 +2936,7 @@ bool ValidateInputs() {
 
    // StopConditions, "OR" combined: @[bid|ask|price](double) | @[profit|loss](double[%])
    // -----------------------------------------------------------------------------------
-   // conditions are applied and re-enabled on change only
-   if (!isParameterChange || StopConditions!=prev.StopConditions) {
+   if (!isInitParameters || StopConditions!=prev.StopConditions) {       // on initParameters conditions are re-enabled on change only
       stop.price.condition     = false;
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
@@ -3852,8 +3853,8 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of a sequence and restore all internal variables. Called only from RestoreSequence().
- * Only a syntactic variables check is performed (i.e. type match). Logical validation happens in ValidateInputs().
+ * Read the status file of a sequence and restore internal variables. Called only from RestoreSequence().
+ * Only syntactical validation is performed (i.e. type match). Logical validation happens in ValidateInputs().
  *
  * @return bool - success status
  */

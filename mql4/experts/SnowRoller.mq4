@@ -6113,17 +6113,20 @@ bool ValidateInputs.SID() {
 
 
 /**
- * Validate input parameters. Parameters may have been entered through the input dialog or deserialized and applied
- * programmatically by the terminal (e.g. at terminal restart).
+ * Validate the input parameters. Parameters may have been entered through the input dialog, read from a status file or
+ * deserialized and applied programmatically by the terminal (e.g. at terminal restart). Called from onInitUser(),
+ * onInitParameters() or onInitTemplate().
  *
  * @return bool - whether input parameters are valid
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isParameterChange = (ProgramInitReason()==IR_PARAMETERS); // otherwise inputs have been applied programmatically
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);  // whether we validate manual or programatic input
+   bool isInitUser       = (ProgramInitReason()==IR_USER);
+   bool isInitTemplate   = (ProgramInitReason()==IR_TEMPLATE);
 
    // Sequence.ID
-   if (isParameterChange) {
+   if (isInitParameters) {
       if (sequence.status == STATUS_UNDEFINED) {
          if (Sequence.ID != prev.Sequence.ID)                     return(!onInputError("ValidateInputs(1)  switching to another sequence is not supported. Unload the EA first."));
       }
@@ -6142,7 +6145,7 @@ bool ValidateInputs() {
    if      (StrStartsWith("long",  sValue)) sValue = "Long";
    else if (StrStartsWith("short", sValue)) sValue = "Short";
    else                                                           return(!onInputError("ValidateInputs(4)  invalid GridDirection "+ DoubleQuoteStr(GridDirection)));
-   if (isParameterChange && !StrCompareI(sValue, prev.GridDirection)) {
+   if (isInitParameters && !StrCompareI(sValue, prev.GridDirection)) {
       if (ArraySize(sequence.start.event) > 0)                    return(!onInputError("ValidateInputs(5)  cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence"));
    }
    sequence.direction = StrToTradeDirection(sValue);
@@ -6150,14 +6153,14 @@ bool ValidateInputs() {
    SS.SequenceName();
 
    // GridSize
-   if (isParameterChange) {
+   if (isInitParameters) {
       if (GridSize != prev.GridSize)
          if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(6)  cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (GridSize < 1)                                              return(!onInputError("ValidateInputs(7)  invalid GridSize: "+ GridSize));
 
    // UnitSize
-   if (isParameterChange) {
+   if (isInitParameters) {
       if (UnitSize != prev.UnitSize)
          if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(8)  cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
@@ -6197,9 +6200,8 @@ bool ValidateInputs() {
 
    // StartConditions, "AND" combined: @trend(<indicator>:<timeframe>:<params>) & @[bid|ask|price](double) & @time(datetime)
    // ----------------------------------------------------------------------------------------------------------------------
-   // conditions are applied and re-enabled on change only
-   if (!isParameterChange || StartConditions!=prev.StartConditions) {
-      start.conditions      = false;
+   if (!isInitParameters || StartConditions!=prev.StartConditions) {
+      start.conditions      = false;                              // on initParameters conditions are re-enabled on change only
       start.trend.condition = false;
       start.price.condition = false;
       start.time.condition  = false;
@@ -6210,7 +6212,7 @@ bool ValidateInputs() {
 
       // parse and validate each expression
       for (int i=0; i < sizeOfExprs; i++) {
-         start.conditions = false;                                // make sure in case of errors start.conditions is disabled
+         start.conditions = false;                                // on each iteration make sure that in case of errors start.conditions is disabled
 
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
@@ -6283,9 +6285,8 @@ bool ValidateInputs() {
 
    // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](1.33) | @time(12:00) | @[profit|loss](double[%])
    // -------------------------------------------------------------------------------------------------------------------------------------------
-   // conditions are applied and re-enabled on change only
-   if (!isParameterChange || StopConditions!=prev.StopConditions) {
-      stop.trend.condition     = false;
+   if (!isInitParameters || StopConditions!=prev.StopConditions) {
+      stop.trend.condition     = false;                           // on initParameters conditions are re-enabled on change only
       stop.price.condition     = false;
       stop.time.condition      = false;
       stop.profitAbs.condition = false;
@@ -6424,7 +6425,7 @@ bool ValidateInputs() {
    AutoRestart = StrCapitalize(sValue);
 
    // StartLevel
-   if (isParameterChange) {
+   if (isInitParameters) {
       if (StartLevel != prev.StartLevel)
          if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(55)  cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence"));
    }

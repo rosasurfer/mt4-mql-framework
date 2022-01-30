@@ -2620,10 +2620,10 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *
  * Format:
  * -------
- *  {value} = 2014[.01[.15 [W|12:34[:56]]]]        oder
- *  {value} = (This|Last)(Day|Week|Month|Year)     oder
- *  {value} = Today                                • Synonym für ThisDay
- *  {value} = Yesterday                            • Synonym für LastDay
+ *  {value} = 2014[.01[.15 [W|12:34[:56]]]]    oder
+ *  {value} = (This|Last)(Day|Week|Month|Year) oder
+ *  {value} = Today                            • Synonym für ThisDay
+ *  {value} = Yesterday                        • Synonym für LastDay
  */
 datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
    string   value.orig=value, values[], sYY, sMM, sDD, sTime, sHH, sII, sSS;
