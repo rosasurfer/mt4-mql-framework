@@ -66,7 +66,7 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 
 #define SIGNAL_ENTRY_LONG      D_LONG           // 1 start/stop/resume signal types
 #define SIGNAL_ENTRY_SHORT    D_SHORT           // 2
-#define SIGNAL_PRICE_TIME           3           // a price and/or time condition
+#define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
 #define H_IDX_SIGNAL                0           // order history indexes
@@ -244,7 +244,7 @@ bool IsStartSignal(int &signal) {
          return(false);
 
       if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      signal               = SIGNAL_PRICE_TIME;
+      signal               = SIGNAL_TIME;
       start.time.condition = false;
       SS.StartStopConditions();
       return(true);
