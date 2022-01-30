@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - start/stop and breaks at specific times of the day
+ *  - start/stop/breaks at specific times of the day
  *  - implement stop condition "pip"
  *  - read/write status file
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
@@ -15,12 +15,17 @@
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
+ *  - improve handling of network outages (price and/or trade connection)
+ *  - remove input Slippage and handle it dynamically (via framework config)
+ *     https://www.mql5.com/en/forum/120795
  *
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
+ *  - ChartInfos::CostumPosition() weekend timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy
  *  - on restart delete dead screen sockets
+ *  - rsfLib improve slippage log messages
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
@@ -780,9 +785,7 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                                return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // TakeProfit
-   if (LT(TakeProfit, 0))                                            return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid parameter TakeProfit: "+ NumberToStr(TakeProfit, ".1+") +" (too small)"));
-
+   // TakeProfit (nothing to do)
    // TakeProfit.Type
    sValue = StrToLower(TakeProfit.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -792,10 +795,10 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("off",     sValue)) { TakeProfit.Type = "off";     type = NULL;            }
    else if (StrStartsWith("money",   sValue)) { TakeProfit.Type = "money";   type = TP_TYPE_MONEY;   }
-   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StringLen(sValue) < 2)                                   return(!onInputError("ValidateInputs(7)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent", sValue)) { TakeProfit.Type = "percent"; type = TP_TYPE_PERCENT; }
    else if (StrStartsWith("pip",     sValue)) { TakeProfit.Type = "pip";     type = TP_TYPE_PIP;     }
-   else                                                              return(!onInputError("ValidateInputs(9)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
+   else                                                              return(!onInputError("ValidateInputs(8)  invalid parameter TakeProfit.Type "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
@@ -824,7 +827,7 @@ bool ValidateInputs() {
          break;
    }
 
-   return(!catch("ValidateInputs(10)"));
+   return(!catch("ValidateInputs(9)"));
 }
 
 

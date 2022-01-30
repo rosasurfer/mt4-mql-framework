@@ -56,7 +56,7 @@ extern int      MaxUnits               = 15;                                  //
 extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
 
-extern string   StopConditions         = "";                                  // @[bid|ask|price](double) | @[profit|loss](double[%])
+extern string   StopConditions         = "";                                  // @[bid|ask|price](double) | @profit(double[%]) | @loss(double[%])
 extern bool     ShowProfitInPercent    = false;                               // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';              // server time, the date part is ignored
