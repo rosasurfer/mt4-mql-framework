@@ -16,16 +16,19 @@
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
  *  - improve handling of network outages (price and/or trade connection)
- *  - remove input Slippage and handle it dynamically (via framework config)
+ *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
+ *     https://www.mql5.com/en/forum/289014#comment_9296322
+ *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
+ *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
- *  - ChartInfos::CostumPosition() weekend timespans don't work
+ *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy
  *  - on restart delete dead screen sockets
- *  - rsfLib improve slippage log messages
+ *  - rsfLib improve slippage log messages to: opened #457310567 Sell 0.05 BTCUSD "ZZ.5475" at 38'103.96 (slippage: -16.50, market: 38'120.46/38'136.55) after 0.203 s
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
