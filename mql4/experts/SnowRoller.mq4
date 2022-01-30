@@ -6281,8 +6281,8 @@ bool ValidateInputs() {
       }
    }
 
-   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](1.33) | @time(12:00) | @profit(1.23[%]) | @loss(2.34[%])
-   // ---------------------------------------------------------------------------------------------------------------------------------------------------
+   // StopConditions, "OR" combined: @trend(<indicator>:<timeframe>:<params>) | @[bid|ask|price](1.33) | @time(12:00) | @[profit|loss](double[%])
+   // -------------------------------------------------------------------------------------------------------------------------------------------
    // conditions are applied and re-enabled on change only
    if (!isParameterChange || StopConditions!=prev.StopConditions) {
       stop.trend.condition     = false;
