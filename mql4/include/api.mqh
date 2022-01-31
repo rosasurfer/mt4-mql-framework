@@ -208,7 +208,7 @@ string   LoglevelDescription(int level);;                      // also implement
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
 string   MaMethodToStr(int method);;
-double   MarketInfoEx(string symbol, int type);;
+double   MarketInfoEx(string symbol, int type, int &error, string location = "");;
 string   MarketInfoTypeToStr(int type);;
 int      MarketWatch.Symbols();;
 double   MathDiv(double a, double b, double onZero = 0);;
