@@ -21,6 +21,7 @@ int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
       RestoreSequence();                                       // a valid sequence id was specified
+      SS.All();
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
@@ -48,6 +49,7 @@ int onInitParameters() {
       RestoreInputs();
       return(last_error);
    }
+   SS.All();
    SaveStatus();
    return(last_error);
 }
@@ -116,6 +118,12 @@ int onInitRecompile() {                                     // same requirements
 int afterInit() {
    bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+
+   if (IsTesting()) {
+      string section      = "Tester."+ StrTrim(ProgramName());
+      test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
+      test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
+   }
 
    StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));

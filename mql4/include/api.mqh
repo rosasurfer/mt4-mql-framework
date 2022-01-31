@@ -208,6 +208,8 @@ string   LoglevelDescription(int level);;                      // also implement
 bool     LT(double double1, double double2, int digits = 8);;
 string   MaMethodDescription(int method, bool strict = true);;
 string   MaMethodToStr(int method);;
+double   MarketInfoEx(string symbol, int type, int &error, string location = "");;
+string   MarketInfoTypeToStr(int type);;
 int      MarketWatch.Symbols();;
 double   MathDiv(double a, double b, double onZero = 0);;
 double   MathModFix(double a, double b);;
@@ -236,7 +238,7 @@ int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
 string   PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=false);;
 double   PipValue(double lots=1.0, bool suppressErrors=false);;
-double   PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false);;
+double   PipValueEx(string symbol, double lots, int &error, string location = "");;
 bool     PlaySoundEx(string soundfile);;
 string   Pluralize(int count, string singular="", string plural="s");;
 string   PriceTypeDescription(int type);;

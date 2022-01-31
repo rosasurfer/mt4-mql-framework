@@ -118,19 +118,19 @@ double  N_INF;                                                    // -1.#INF: ne
 #define UR_CLOSE                    UNINITREASON_CLOSE
 
 
-// Account-Types
+// account types
 #define ACCOUNT_TYPE_DEMO           1
 #define ACCOUNT_TYPE_REAL           2
 
 
-// Time-Flags, siehe TimeToStr()
+// TimeToStr() flags
 #define TIME_DATE                   1
 #define TIME_MINUTES                2
 #define TIME_SECONDS                4
 #define TIME_FULL                   7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
-// Timeframe-Identifier
+// timeframe identifier
 #define PERIOD_M1                   1           // 1 Minute
 #define PERIOD_M5                   5           // 5 Minuten
 #define PERIOD_M15                 15           // 15 Minuten
