@@ -239,23 +239,25 @@ bool CollectData() {
  */
 double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[]) {
    double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, vtmProfit, pipValue, pipDistance;
-   int    ticketsSize = ArraySize(tickets);
+   int error, ticketsSize = ArraySize(tickets);
 
    // resolve the symbol's total position: hedged volume (constant PL) + directional volume (variable PL)
    for (int i=0; i < ticketsSize; i++) {
       if (symbolsIdx[i] != index) continue;
 
-      if (types[i] == OP_BUY) longPosition  += lots[i];                          // add-up total volume per market direction
+      if (types[i] == OP_BUY) longPosition  += lots[i];              // add-up total volume per market direction
       else                    shortPosition += lots[i];
    }
    longPosition  = NormalizeDouble(longPosition,  2);
    shortPosition = NormalizeDouble(shortPosition, 2);
    totalPosition = NormalizeDouble(longPosition-shortPosition, 2);
 
-   int    digits     = MarketInfo(symbol, MODE_DIGITS);                          // TODO: digits may be erroneous
+   // TODO: digits may be erroneous
+   int    digits     = MarketInfoEx(symbol, MODE_DIGITS, error, "CalculateProfit(1)"); if (error != NULL) return(EMPTY_VALUE);
    int    pipDigits  = digits & (~1);
    double pipSize    = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
-   double spreadPips = MarketInfo(symbol, MODE_SPREAD)/MathPow(10, digits & 1);  // spread in pip
+   double spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "CalculateProfit(2)"); if (error != NULL) return(EMPTY_VALUE);
+   double spreadPips = spread/MathPow(10, digits & 1);               // spread in pip
 
    // resolve the constant PL of a hedged position
    if (longPosition && shortPosition) {
@@ -310,18 +312,18 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
             }
          }
       }
-      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("CalculateProfit(1)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
-      if (remainingShort != 0) return(_EMPTY_VALUE(catch("CalculateProfit(2)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("CalculateProfit(3)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingShort != 0) return(_EMPTY_VALUE(catch("CalculateProfit(4)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
 
       // calculate BE distance and the resulting PL
-      pipValue     = PipValueEx(symbol, hedgedLots, "CalculateProfit(3)"); if (!pipValue) return(EMPTY_VALUE);
+      pipValue     = PipValueEx(symbol, hedgedLots, "CalculateProfit(5)"); if (!pipValue) return(EMPTY_VALUE);
       pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
       hedgedProfit = pipDistance * pipValue;
 
       // without directional position return PL of the hedged position only
       if (!totalPosition) {
          fullProfit = NormalizeDouble(hedgedProfit, 2);
-         return(ifDouble(!catch("CalculateProfit(4)"), fullProfit, EMPTY_VALUE));
+         return(ifDouble(!catch("CalculateProfit(6)"), fullProfit, EMPTY_VALUE));
       }
    }
 
@@ -344,10 +346,10 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
       }
       // add the PL value of half of the spread
       pipDistance = spreadPips/2;
-      pipValue    = PipValueEx(symbol, totalPosition, "CalculateProfit(5)"); if (!pipValue) return(EMPTY_VALUE);
+      pipValue    = PipValueEx(symbol, totalPosition, "CalculateProfit(7)"); if (!pipValue) return(EMPTY_VALUE);
       vtmProfit   = pipDistance * pipValue;
       fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
-      return(ifDouble(!catch("CalculateProfit(6)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("CalculateProfit(8)"), fullProfit, EMPTY_VALUE));
    }
 
    // calculate PL of a short position (if any)
@@ -369,13 +371,13 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
       }
       // add the PL value of half of the spread
       pipDistance = spreadPips/2;
-      pipValue    = PipValueEx(symbol, totalPosition, "CalculateProfit(7)"); if (!pipValue) return(EMPTY_VALUE);
+      pipValue    = PipValueEx(symbol, totalPosition, "CalculateProfit(9)"); if (!pipValue) return(EMPTY_VALUE);
       vtmProfit   = pipDistance * pipValue;
       fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
-      return(ifDouble(!catch("CalculateProfit(8)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("CalculateProfit(10)"), fullProfit, EMPTY_VALUE));
    }
 
-   return(_EMPTY_VALUE(catch("CalculateProfit(9)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY_VALUE(catch("CalculateProfit(11)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
