@@ -807,37 +807,35 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
  *
  * @return double - PipValue oder 0, falls ein Fehler auftrat
  */
-double PipValueEx(string symbol, double lots=1.0, bool suppressErrors=false) {
+double PipValueEx(string symbol, double lots, string location, bool suppressErrors = false) {
    suppressErrors = suppressErrors!=0;
-   if (symbol == Symbol())
-      return(PipValue(lots, suppressErrors));
 
    double tickSize = MarketInfo(symbol, MODE_TICKSIZE);              // schlägt fehl, wenn kein Tick vorhanden ist
    int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
    if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-      if (!suppressErrors) catch("PipValueEx(1)  symbol="+ symbol, error);
+      if (!suppressErrors) catch(location +"->PipValueEx(1)  symbol="+ symbol, error);
       return(0);
    }
    if (!tickSize) {
-      if (!suppressErrors) catch("PipValueEx(2)  illegal MarketInfo("+ symbol +", MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch(location +"->PipValueEx(2)  illegal MarketInfo("+ symbol +", MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    double tickValue = MarketInfo(symbol, MODE_TICKVALUE);            // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
    error = GetLastError();
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValueEx(3)  symbol="+ symbol, error);
+      if (!suppressErrors) catch(location +"->PipValueEx(3)  symbol="+ symbol, error);
       return(0);
    }
    if (!tickValue) {
-      if (!suppressErrors) catch("PipValueEx(4)  illegal MarketInfo("+ symbol +", MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
+      if (!suppressErrors) catch(location +"->PipValueEx(4)  illegal MarketInfo("+ symbol +", MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
       return(0);
    }
 
    int digits = MarketInfo(symbol, MODE_DIGITS);                     // TODO: !!! digits ist u.U. falsch gesetzt !!!
    error = GetLastError();
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValueEx(5)  symbol="+ symbol, error);
+      if (!suppressErrors) catch(location +"->PipValueEx(5)  symbol="+ symbol, error);
       return(0);
    }
 
@@ -7114,7 +7112,7 @@ void __DummyCalls() {
    PeriodFlagToStr(NULL);
    PipToStr(NULL);
    PipValue();
-   PipValueEx(NULL);
+   PipValueEx(NULL, NULL, NULL);
    PlaySoundEx(NULL);
    Pluralize(NULL);
    PriceTypeDescription(NULL);
