@@ -2666,21 +2666,27 @@ int SumInts(int values[]) {
 
 
 /**
- * Replacement for the built-in function MarketInfo() with better error handling.
+ * Replacement for the built-in function MarketInfo() with better error handling. In case of errors the error is returned
+ * and optionally logged.
  *
- * @param  string symbol - symbol (must be subscribed to in the MarketWatch window)
- * @param  int    type   - identifier of the MarketInfo data to query
- *
- * @return double - result or EMPTY_VALUE in case of errors
+ * @param  _In_  string symbol              - symbol (must be subscribed to in the MarketWatch window)
+ * @param  _In_  int    type                - identifier of the MarketInfo data to query
+ * @param  _Out_ int    &error              - variable receiving the error status
+ * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
+ *                                            if specified errors are logged
+ *                                            if not specified errors are not logged (default)
+ * @return double - result or NULL (0) in case of errors (check parameter 'error')
  */
-double MarketInfoEx(string symbol, int type) {
+double MarketInfoEx(string symbol, int type, int &error, string location = "") {
    double value = MarketInfo(symbol, type);
 
-   int error = GetLastError();
+   error = GetLastError();
    if (!error) return(value);
 
-   debug("MarketInfoEx(1)  symbol="+ symbol +"  type="+ MarketInfoTypeToStr(type), error);
-   return(EMPTY_VALUE);
+   if (location != "") {
+      if (IsLogDebug()) logDebug("MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +")", error);
+   }
+   return(NULL);
 }
 
 
@@ -7151,7 +7157,7 @@ void __DummyCalls() {
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
-   MarketInfoEx(NULL, NULL);
+   MarketInfoEx(NULL, NULL, iNull);
    MarketInfoTypeToStr(NULL);
    MarketWatch.Symbols();
    MathDiv(NULL, NULL);
