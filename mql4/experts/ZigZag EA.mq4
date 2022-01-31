@@ -3,14 +3,17 @@
  *
  *
  * TODO:
- *  - stop/break at specific times of the day
- *  - implement stop condition "pip"
+ *  - EquityRecorder::PipValueEx(4)  illegal MarketInfo(MODE_TICKVALUE=0)  [ERR_INVALID_MARKET_DATA]
+ *  - stop condition "time"
+ *  - stop condition "pip"
  *  - read/write status file
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
  *  - reverse trading option
+ *  - trade breaks for specific day times
  *  - track PL curve per live instance
  *
+ *  - merge IsStartSignalSignal() and IsZigzagSignal() and fix loglevel
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - improve parsing of start.time.condition
  *  - track slippage
@@ -23,6 +26,7 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *
+ *  - permanent spread logging to separate logfile
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -159,7 +163,7 @@ int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
    int zigzagSignal, startSignal, stopSignal;
-   bool isZigzagSignal = IsZigZagSignal(zigzagSignal);
+   bool isZigzagSignal = IsZigzagSignal(zigzagSignal);
 
    if (sequence.status == STATUS_WAITING) {
       if (IsStartSignal(startSignal)) {
@@ -185,14 +189,14 @@ int onTick() {
  *
  * @return bool
  */
-bool IsZigZagSignal(int &signal) {
+bool IsZigzagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
    static int lastSignal;
    int trend, reversal;
 
-   if (!GetZigZagData(0, trend, reversal)) return(false);
+   if (!GetZigzagData(0, trend, reversal)) return(false);
 
    if (Abs(trend) == reversal) {
       if (trend > 0) {
@@ -202,7 +206,7 @@ bool IsZigZagSignal(int &signal) {
          if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
       }
       if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogInfo()) logInfo("IsZigzagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          lastSignal = signal;
          return(true);
       }
@@ -220,7 +224,7 @@ bool IsZigZagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigzagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
