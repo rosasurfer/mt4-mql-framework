@@ -8,11 +8,11 @@
  *  - read/write status file
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - reverse trading option
+ *  - reverse trading option, named "ZR.*"
  *  - trade breaks for specific day times
  *  - track PL curve per live instance
  *
- *  - merge IsStartSignalSignal() and IsZigzagSignal() and fix loglevel
+ *  - merge IsStartSignalSignal() and IsZigzagSignal() and fix loglevel of signals
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - improve parsing of start.time.condition
  *  - track slippage
@@ -25,7 +25,7 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *
- *  - permanent spread logging to separate logfile
+ *  - permanent spread logging to a separate logfile
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -1017,7 +1017,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the sequence name.
  */
 void SS.SequenceName() {
-   sequence.name = "Z."+ sequence.id;
+   sequence.name = "ZZ."+ sequence.id;
 }
 
 
