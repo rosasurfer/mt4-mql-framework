@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - EquityRecorder::PipValueEx(4)  illegal MarketInfo(MODE_TICKVALUE=0)  [ERR_INVALID_MARKET_DATA]
  *  - stop condition "time"
  *  - stop condition "pip"
  *  - read/write status file
