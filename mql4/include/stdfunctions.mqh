@@ -799,44 +799,34 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Gibt den PipValue eines beliebigen Symbols für die angegebene Lotsize zurück.
+ * Return a symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
  *
- * @param  string symbol         - Symbol
- * @param  double lots           - Lotsize (default: 1 lot)
- * @param  bool   suppressErrors - ob Laufzeitfehler unterdrückt werden sollen (default: nein)
+ * @param  _In_  string symbol              - symbol
+ * @param  _In_  double lots                - lot amount
+ * @param  _Out_ int    &error              - variable receiving the error status
+ * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
+ *                                            if specified errors are logged
+ *                                            if not specified errors are not logged (default)
  *
- * @return double - PipValue oder 0, falls ein Fehler auftrat
+ * @return double - pip value or NULL (0) in case of errors, check parameter 'error'
  */
-double PipValueEx(string symbol, double lots, string location, bool suppressErrors = false) {
-   suppressErrors = suppressErrors!=0;
-
-   double tickSize = MarketInfo(symbol, MODE_TICKSIZE);              // schlägt fehl, wenn kein Tick vorhanden ist
-   int error = GetLastError();                                       // - Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-   if (error != NO_ERROR) {                                          // - ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-      if (!suppressErrors) catch(location +"->PipValueEx(1)  symbol="+ symbol, error);
-      return(0);
-   }
-   if (!tickSize) {
-      if (!suppressErrors) catch(location +"->PipValueEx(2)  illegal MarketInfo("+ symbol +", MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
-      return(0);
-   }
-
-   double tickValue = MarketInfo(symbol, MODE_TICKVALUE);            // TODO: wenn QuoteCurrency == AccountCurrency, ist dies nur ein einziges Mal notwendig
-   error = GetLastError();
+double PipValueEx(string symbol, double lots, int &error, string location = "") {
+   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, location);
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch(location +"->PipValueEx(3)  symbol="+ symbol, error);
-      return(0);
-   }
-   if (!tickValue) {
-      if (!suppressErrors) catch(location +"->PipValueEx(4)  illegal MarketInfo("+ symbol +", MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
-      return(0);
+      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(1)", error);
+      return(NULL);
    }
 
-   int digits = MarketInfo(symbol, MODE_DIGITS);                     // TODO: !!! digits ist u.U. falsch gesetzt !!!
-   error = GetLastError();
+   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, location);  // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch(location +"->PipValueEx(5)  symbol="+ symbol, error);
-      return(0);
+      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(2)", error);
+      return(NULL);
+   }
+
+   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, location);           // TODO: the returned digits may be wrong
+   if (error != NO_ERROR) {
+      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(3)", error);
+      return(NULL);
    }
 
    int    pipDigits = digits & (~1);
@@ -2666,25 +2656,33 @@ int SumInts(int values[]) {
 
 
 /**
- * Replacement for the built-in function MarketInfo() with better error handling. In case of errors the error is returned
- * and optionally logged.
+ * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
- * @param  _In_  string symbol              - symbol (must be subscribed to in the MarketWatch window)
+ * @param  _In_  string symbol              - symbol
  * @param  _In_  int    type                - identifier of the MarketInfo data to query
  * @param  _Out_ int    &error              - variable receiving the error status
  * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
  *                                            if specified errors are logged
  *                                            if not specified errors are not logged (default)
- * @return double - result or NULL (0) in case of errors (check parameter 'error')
+ *
+ * @return double - result of the MarketInfo() call or NULL (0) in case of errors, check parameter 'error'
  */
 double MarketInfoEx(string symbol, int type, int &error, string location = "") {
    double value = MarketInfo(symbol, type);
 
    error = GetLastError();
+   if (!error) {
+      switch (type) {
+         case MODE_TICKSIZE:
+         case MODE_TICKVALUE:
+            if (!value) error = ERR_INVALID_MARKET_DATA;
+            break;
+      }
+   }
    if (!error) return(value);
 
    if (location != "") {
-      if (IsLogDebug()) logDebug("MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +")", error);
+      if (IsLogDebug()) logDebug(location +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    }
    return(NULL);
 }
@@ -7182,7 +7180,7 @@ void __DummyCalls() {
    PeriodFlagToStr(NULL);
    PipToStr(NULL);
    PipValue();
-   PipValueEx(NULL, NULL, NULL);
+   PipValueEx(NULL, NULL, iNull);
    PlaySoundEx(NULL);
    Pluralize(NULL);
    PriceTypeDescription(NULL);
