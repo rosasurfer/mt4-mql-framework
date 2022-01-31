@@ -2664,6 +2664,68 @@ int SumInts(int values[]) {
    return(sum);
 }
 
+
+/**
+ * Replacement for the built-in function MarketInfo() with better error handling.
+ *
+ * @param  string symbol - symbol (must be subscribed to in the MarketWatch window)
+ * @param  int    type   - identifier of the MarketInfo data to query
+ *
+ * @return double - result or EMPTY_VALUE in case of errors
+ */
+double MarketInfoEx(string symbol, int type) {
+   double value = MarketInfo(symbol, type);
+
+   int error = GetLastError();
+   if (!error) return(value);
+
+   debug("MarketInfoEx(1)  symbol="+ symbol +"  type="+ MarketInfoTypeToStr(type), error);
+   return(EMPTY_VALUE);
+}
+
+
+/**
+ * Return a human-readable representation of a MarketInfo data identifier.
+ *
+ * @param  int type - MarketInfo() data type
+ *
+ * @return string
+ */
+string MarketInfoTypeToStr(int type) {
+   switch (type) {
+      case MODE_LOW              : return("MODE_LOW");
+      case MODE_HIGH             : return("MODE_HIGH");
+      case MODE_TIME             : return("MODE_TIME");
+      case MODE_BID              : return("MODE_BID");
+      case MODE_ASK              : return("MODE_ASK");
+      case MODE_POINT            : return("MODE_POINT");
+      case MODE_DIGITS           : return("MODE_DIGITS");
+      case MODE_SPREAD           : return("MODE_SPREAD");
+      case MODE_STOPLEVEL        : return("MODE_STOPLEVEL");
+      case MODE_LOTSIZE          : return("MODE_LOTSIZE");
+      case MODE_TICKVALUE        : return("MODE_TICKVALUE");
+      case MODE_TICKSIZE         : return("MODE_TICKSIZE");
+      case MODE_SWAPLONG         : return("MODE_SWAPLONG");
+      case MODE_SWAPSHORT        : return("MODE_SWAPSHORT");
+      case MODE_STARTING         : return("MODE_STARTING");
+      case MODE_EXPIRATION       : return("MODE_EXPIRATION");
+      case MODE_TRADEALLOWED     : return("MODE_TRADEALLOWED");
+      case MODE_MINLOT           : return("MODE_MINLOT");
+      case MODE_LOTSTEP          : return("MODE_LOTSTEP");
+      case MODE_MAXLOT           : return("MODE_MAXLOT");
+      case MODE_SWAPTYPE         : return("MODE_SWAPTYPE");
+      case MODE_PROFITCALCMODE   : return("MODE_PROFITCALCMODE");
+      case MODE_MARGINCALCMODE   : return("MODE_MARGINCALCMODE");
+      case MODE_MARGININIT       : return("MODE_MARGININIT");
+      case MODE_MARGINMAINTENANCE: return("MODE_MARGINMAINTENANCE");
+      case MODE_MARGINHEDGED     : return("MODE_MARGINHEDGED");
+      case MODE_MARGINREQUIRED   : return("MODE_MARGINREQUIRED");
+      case MODE_FREEZELEVEL      : return("MODE_FREEZELEVEL");
+   }
+   return(""+ type);
+}
+
+
 /**
  * Dump major global vars and available MarketInfo() data to the system debugger.
  *
@@ -7089,6 +7151,8 @@ void __DummyCalls() {
    LT(NULL, NULL);
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
+   MarketInfoEx(NULL, NULL);
+   MarketInfoTypeToStr(NULL);
    MarketWatch.Symbols();
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
