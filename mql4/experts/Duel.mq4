@@ -56,7 +56,7 @@ extern int      MaxUnits               = 15;                                  //
 extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
 
-extern string   StopConditions         = "";                                  // @[bid|ask|price](double) | @[profit|loss](double[%])
+extern string   StopConditions         = "";                                  // @[bid|ask|price](double) | @profit(double[%]) | @loss(double[%])
 extern bool     ShowProfitInPercent    = false;                               // whether PL is displayed as absolute or percentage value
 
 extern datetime Sessionbreak.StartTime = D'1970.01.01 23:56:00';              // server time, the date part is ignored
@@ -77,7 +77,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define STATUS_PROGRESSING    2
 #define STATUS_STOPPED        3
 
-#define SIGNAL_PRICETIME      1                    // a price and/or time condition
+#define SIGNAL_PRICE_TIME     1                    // a price and/or time condition
 #define SIGNAL_TREND          2
 #define SIGNAL_TAKEPROFIT     3
 #define SIGNAL_STOPLOSS       4
@@ -224,7 +224,7 @@ string   stop.lossPct.description = "";
 datetime sessionbreak.starttime;                   // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 
-// cache vars to speed-up ShowStatus()
+// caching vars to speed-up ShowStatus()
 string   sGridParameters  = "";
 string   sGridVolatility  = "";
 string   sStopConditions  = "";
@@ -240,7 +240,7 @@ string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
 bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeStatus = true;               // whether to minimize status file writing in tester
+bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -800,7 +800,7 @@ int ShowTradeHistory() {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of a fulfilled start condition
+ * @param  _Out_ int &signal - variable receiving the identifier of the satisfied condition
  *
  * @return bool
  */
@@ -826,7 +826,7 @@ bool IsStartSignal(int &signal) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of a fulfilled stop condition
+ * @param  _Out_ int &signal - variable receiving the signal identifier of the satisfied condition
  *
  * @return bool
  */
@@ -836,7 +836,7 @@ bool IsStopSignal(int &signal) {
    if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    string message = "";
 
-   // stop.price: fulfilled when current price touches or crossses the limit-------------------------------------------------
+   // stop.price: satisfied when current price touches or crossses the limit-------------------------------------------------
    if (stop.price.condition) {
       bool triggered = false;
       double price;
@@ -852,8 +852,8 @@ bool IsStopSignal(int &signal) {
       stop.price.lastValue = price;
 
       if (triggered) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         signal = SIGNAL_PRICETIME;
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.price.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         signal = SIGNAL_PRICE_TIME;
          return(true);
       }
    }
@@ -861,7 +861,7 @@ bool IsStopSignal(int &signal) {
    // stop.profitAbs: -------------------------------------------------------------------------------------------------------
    if (stop.profitAbs.condition) {
       if (sequence.totalPL >= stop.profitAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -873,7 +873,7 @@ bool IsStopSignal(int &signal) {
          stop.profitPct.absValue = stop.profitPct.AbsValue();
 
       if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TAKEPROFIT;
          return(true);
       }
@@ -882,7 +882,7 @@ bool IsStopSignal(int &signal) {
    // stop.lossAbs: ---------------------------------------------------------------------------------------------------------
    if (stop.lossAbs.condition) {
       if (sequence.totalPL <= stop.lossAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -894,7 +894,7 @@ bool IsStopSignal(int &signal) {
          stop.lossPct.absValue = stop.lossPct.AbsValue();
 
       if (sequence.totalPL <= stop.lossPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" fulfilled (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_STOPLOSS;
          return(true);
       }
@@ -912,11 +912,9 @@ bool IsStopSignal(int &signal) {
 double stop.profitPct.AbsValue() {
    if (stop.profitPct.condition) {
       if (stop.profitPct.absValue == INT_MAX) {
-         if (!sequence.startEquity) {
-            double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(stop.profitPct.value/100 * equity);
-         }
-         return(stop.profitPct.value/100 * sequence.startEquity);
+         double startEquity = sequence.startEquity;
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         return(stop.profitPct.value/100 * startEquity);
       }
    }
    return(stop.profitPct.absValue);
@@ -931,11 +929,9 @@ double stop.profitPct.AbsValue() {
 double stop.lossPct.AbsValue() {
    if (stop.lossPct.condition) {
       if (stop.lossPct.absValue == INT_MIN) {
-         if (!sequence.startEquity) {
-            double equity = AccountEquity() - AccountCredit() + GetExternalAssets();
-            return(stop.lossPct.value/100 * equity);
-         }
-         return(stop.lossPct.value/100 * sequence.startEquity);
+         double startEquity = sequence.startEquity;
+         if (!startEquity) startEquity = AccountEquity() - AccountCredit() + GetExternalAssets();
+         return(stop.lossPct.value/100 * startEquity);
       }
    }
    return(stop.lossPct.absValue);
@@ -1203,7 +1199,7 @@ bool StopSequence(int signal) {
 
    // update stop conditions
    switch (signal) {
-      case SIGNAL_PRICETIME:
+      case SIGNAL_PRICE_TIME:
          stop.price.condition = false;
          break;
 
@@ -2651,7 +2647,7 @@ bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-// backed-up global var which may be affected by input parameter changes
+// backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
 datetime prev.sequence.created;
 bool     prev.sequence.isTest;
@@ -2712,7 +2708,7 @@ void BackupInputs() {
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
 
-   // backup global vars which may be affected by input parameter changes
+   // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
    prev.sequence.isTest            = sequence.isTest;
@@ -2848,11 +2844,13 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isParameterChange  = (ProgramInitReason()==IR_PARAMETERS);                  // whether we validate manual or programmatic inputs
-   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));   // whether the sequence was already started
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);         // whether we validate manual or programatic input
+   bool isInitUser       = (ProgramInitReason()==IR_USER);
+   bool isInitTemplate   = (ProgramInitReason()==IR_TEMPLATE);
+   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
 
    // Sequence.ID
-   if (isParameterChange) {
+   if (isInitParameters) {
       string sValues[], sValue = StrTrim(Sequence.ID);
       if (sValue == "") {                                                // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
@@ -2869,7 +2867,7 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    int iValue = StrToTradeDirection(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (iValue == -1)                                                     return(!onInputError("ValidateInputs(2)  "+ sequence.name +" invalid parameter GridDirection: "+ DoubleQuoteStr(GridDirection)));
-   if (isParameterChange && iValue!=prev.sequence.direction) {
+   if (isInitParameters && iValue!=prev.sequence.direction) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(3)  "+ sequence.name +" cannot change parameter GridDirection of already started sequence"));
    }
    sequence.direction = iValue;
@@ -2878,7 +2876,7 @@ bool ValidateInputs() {
    GridDirection = TradeDirectionDescription(sequence.direction);
 
    // GridVolatility
-   if (isParameterChange && !StrCompareI(GridVolatility, prev.GridVolatility)) {
+   if (isInitParameters && !StrCompareI(GridVolatility, prev.GridVolatility)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change parameter GridVolatility of already started sequence"));
    }
    sValue = StrTrim(GridVolatility);
@@ -2896,7 +2894,7 @@ bool ValidateInputs() {
    }
 
    // GridSize
-   if (isParameterChange && !StrCompare(GridSize, prev.GridSize)) {
+   if (isInitParameters && !StrCompare(GridSize, prev.GridSize)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change parameter GridSize of already started sequence"));
    }
    sValue = StrTrim(GridSize);
@@ -2912,7 +2910,7 @@ bool ValidateInputs() {
    if (!sequenceWasStarted) sequence.gridsize = dValue;
 
    // UnitSize
-   if (isParameterChange && NE(UnitSize, prev.UnitSize)) {
+   if (isInitParameters && NE(UnitSize, prev.UnitSize)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(10)  "+ sequence.name +" cannot change parameter UnitSize of already started sequence"));
    }
    if (LT(UnitSize, 0))                                                  return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
@@ -2923,14 +2921,14 @@ bool ValidateInputs() {
    if (MaxUnits < 1)                                                     return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxUnits: "+ MaxUnits));
 
    // Pyramid.Multiplier
-   if (isParameterChange && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
+   if (isInitParameters && NE(Pyramid.Multiplier, prev.Pyramid.Multiplier)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(15)  "+ sequence.name +" cannot change parameter Pyramid.Multiplier of already started sequence"));
    }
    if (Pyramid.Multiplier < 0)                                           return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter Pyramid.Multiplier: "+ NumberToStr(Pyramid.Multiplier, ".1+")));
    sequence.pyramidEnabled = (Pyramid.Multiplier > 0);
 
    // Martingale.Multiplier
-   if (isParameterChange && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
+   if (isInitParameters && NE(Martingale.Multiplier, prev.Martingale.Multiplier)) {
       if (sequenceWasStarted)                                            return(!onInputError("ValidateInputs(17)  "+ sequence.name +" cannot change parameter Martingale.Multiplier of already started sequence"));
    }
    if (Martingale.Multiplier < 0)                                        return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid parameter Martingale.Multiplier: "+ NumberToStr(Martingale.Multiplier, ".1+")));
@@ -2938,8 +2936,7 @@ bool ValidateInputs() {
 
    // StopConditions, "OR" combined: @[bid|ask|price](double) | @[profit|loss](double[%])
    // -----------------------------------------------------------------------------------
-   // conditions are applied and re-enabled on change only
-   if (!isParameterChange || StopConditions!=prev.StopConditions) {
+   if (!isInitParameters || StopConditions!=prev.StopConditions) {       // on initParameters conditions are re-enabled on change only
       stop.price.condition     = false;
       stop.profitAbs.condition = false;
       stop.profitPct.condition = false;
@@ -2973,10 +2970,9 @@ bool ValidateInputs() {
             if      (key == "@bid") stop.price.type = PRICE_BID;
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            stop.price.description = exprs[i];
+            expr = NumberToStr(stop.price.value, PriceFormat);
+            if (StrEndsWith(expr, "'0")) expr = StrLeft(expr, -2);       // cut "'0" for improved readability
+            stop.price.description = StrSubstr(key, 1) +"("+ expr +")";
             stop.price.condition   = true;
          }
 
@@ -2989,18 +2985,16 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
-               stop.profitPct.description = "";
-               stop.profitAbs.description = exprs[i];
+               stop.profitAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
                stop.profitAbs.condition   = true;
+               stop.profitPct.description = "";
             }
             else {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
-               stop.profitAbs.description = "";
-               stop.profitPct.description = exprs[i];
+               stop.profitPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
                stop.profitPct.condition   = true;
+               stop.profitAbs.description = "";
             }
          }
 
@@ -3013,18 +3007,16 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
-               stop.lossPct.description = "";
-               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
                stop.lossAbs.condition   = true;
+               stop.lossPct.description = "";
             }
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
-               stop.lossAbs.description = "";
-               stop.lossPct.description = exprs[i];
+               stop.lossPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.condition   = true;
+               stop.lossAbs.description = "";
             }
          }
          else                                                            return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (unknown condition key)"));
@@ -3242,7 +3234,7 @@ int History.AddRecord(int direction, int index, int cycle, double gridbase, date
    }
    else return(!catch("History.AddRecord(4)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   return(!catch("Orders.AddRecord(5)"));
+   return(!catch("History.AddRecord(5)"));
 }
 
 
@@ -3861,8 +3853,8 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of a sequence and restore all internal variables. Called only from RestoreSequence().
- * Only a syntactic variables check is performed (i.e. type match). Logical validation happens in ValidateInputs().
+ * Read the status file of a sequence and restore internal variables. Called only from RestoreSequence().
+ * Only syntactical validation is performed (i.e. type match). Logical validation happens in ValidateInputs().
  *
  * @return bool - success status
  */

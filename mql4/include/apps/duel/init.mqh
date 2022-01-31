@@ -166,7 +166,7 @@ int afterInit() {
    if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
    if (IsTesting()) {                                       // read test configuration
-      string section = ProgramName() +".Tester";
+      string section      = "Tester."+ StrTrim(ProgramName());
       test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }

@@ -134,7 +134,7 @@ int afterInit() {
 
    if (IsTesting()) {
       // initialize tester configuration
-      section = section +".Tester";
+      section = "Tester."+ section;
       test.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
       test.onStopPause         = GetConfigBool(section, "OnStopPause",         false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
