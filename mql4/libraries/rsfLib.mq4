@@ -5733,7 +5733,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
  * @return string
  */
 string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
-   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask) after 0.345 s and 1 requote (2.8 pip slippage)
+   // opened #1 Buy 0.5 GBPUSD "SR.1234.+1" at 1.5524'8 (instead of 1.5522'0), sl=1.5500'0, tp=1.5600'0 (slippage: -2.8 pip, market: Bid/Ask) after 0.345 s and 1 requote
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -5749,19 +5749,18 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    string sSlippage   = "";
       double slippage = oe.Slippage(oe);
       if (NE(slippage, 0, digits)) { sPrice    = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_SELL, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
-         if (slippage > 0)           sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
-         else                        sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
+         sSlippage = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
       }
    string message = "opened #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice;
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
-                                 message = message +" (market: "+ sBid +"/"+ sAsk +")";
+                                 message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
    }
-   return(message + sSlippage);
+   return(message);
 }
 
 
@@ -6312,7 +6311,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
  * @return string
  */
 string OrderCloseEx.SuccessMsg(int oe[]) {
-   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4[, remainder: #2 Buy 0.1 GBPUSD] (market: Bid/Ask) after 0.123 s and 1 requote (2.8 pip slippage)
+   // closed #1 Buy 0.6 GBPUSD "SR.1234.+2" [partially] at 1.5534'4[, remainder: #2 Buy 0.1 GBPUSD] ([slippage: -2.8 pip, ]market: Bid/Ask) after 0.123 s and 1 requote
 
    int    digits      = oe.Digits(oe);
    int    pipDigits   = digits & (~1);
@@ -6327,24 +6326,24 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    string comment     = oe.Comment(oe);
       if (StringLen(comment) > 0) comment = " \""+ comment +"\"";
    string sSlippage   = "";
-      double slippage = oe.Slippage(oe);
-      if (NE(slippage, 0, digits)) {
-         sPrice = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
-         if (slippage > 0) sSlippage = " ("+ DoubleToStr(slippage, digits & 1) +" pip slippage)";
-         else              sSlippage = " ("+ DoubleToStr(-slippage, digits & 1) +" pip positive slippage)";
-      }
+
+   double slippage = oe.Slippage(oe);
+   if (NE(slippage, 0, digits)) {
+      sPrice = sPrice +" (instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat) +")";
+      sSlippage = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
+   }
    int remainder = oe.RemainingTicket(oe);
    string message = "closed #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment + ifString(!remainder, "", " partially") +" at "+ sPrice;
 
    if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
-                       message = message +" (market: "+ sBid +"/"+ sAsk +")";
+                       message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
 
    if (!This.IsTesting()) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
    }
-   return(message + sSlippage);
+   return(message);
 }
 
 
