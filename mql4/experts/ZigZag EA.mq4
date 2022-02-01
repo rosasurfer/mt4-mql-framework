@@ -8,7 +8,7 @@
  *  - read/write status file
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - reverse trading option, named "ZR.*"
+ *  - reverse trading option
  *  - trade breaks for specific day times
  *  - track PL curve per live instance
  *
@@ -286,7 +286,7 @@ bool StartSequence(int direction) {
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    datetime expires     = NULL;
-   string   comment     = "ZigZag."+ sequence.id;
+   string   comment     = "ZigZag."+ sequence.name;
    int      magicNumber = CalculateMagicNumber();
    color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL, oe[];
@@ -343,7 +343,7 @@ bool ReverseSequence(int direction) {
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    datetime expires     = NULL;
-   string   comment     = "ZigZag."+ sequence.id;
+   string   comment     = "ZigZag."+ sequence.name;
    int      magicNumber = CalculateMagicNumber();
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
@@ -1017,7 +1017,7 @@ void SS.All() {
  * ShowStatus: Update the string representation of the sequence name.
  */
 void SS.SequenceName() {
-   sequence.name = "ZZ."+ sequence.id;
+   sequence.name = "Z."+ sequence.id;
 }
 
 
