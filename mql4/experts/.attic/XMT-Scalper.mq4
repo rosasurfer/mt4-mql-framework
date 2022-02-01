@@ -805,7 +805,7 @@ bool onRealPositionOpen(int i) {
    real.profit    [i] = OrderProfit();
 
    if (IsLogDebug()) {
-      // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was filled[ at 1.5457'2] (market: Bid/Ask[, 0.3 pip [positive ]slippage])
+      // #1 Stop Sell 0.1 GBPUSD at 1.5457'2[ "comment"] was filled[ at 1.5457'2] ([slippage: +0.3 pip, ]market: Bid/Ask)
       int    pendingType  = real.pendingType [i];
       double pendingPrice = real.pendingPrice[i];
 
@@ -813,15 +813,15 @@ bool onRealPositionOpen(int i) {
       string sPendingPrice = NumberToStr(pendingPrice, PriceFormat);
       string sComment      = ""; if (StringLen(OrderComment()) > 0) sComment = " "+ DoubleQuoteStr(OrderComment());
       string message       = "#"+ OrderTicket() +" "+ sType +" "+ NumberToStr(OrderLots(), ".+") +" "+ Symbol() +" at "+ sPendingPrice + sComment +" was filled";
+      string sSlippage     = "";
 
-      string sSlippage = "";
       if (NE(OrderOpenPrice(), pendingPrice, Digits)) {
-         double slippage = NormalizeDouble((pendingPrice-OrderOpenPrice())/Pip, 1); if (OrderType() == OP_SELL) slippage = -slippage;
-            if (slippage > 0) sSlippage = ", "+ DoubleToStr(slippage, Digits & 1) +" pip positive slippage";
-            else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
+         double slippage = NormalizeDouble((pendingPrice-OrderOpenPrice())/Pip, 1);
+         if (OrderType() == OP_SELL) slippage = -slippage;
+         sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
          message = message +" at "+ NumberToStr(OrderOpenPrice(), PriceFormat);
       }
-      logDebug("onRealPositionOpen(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
+      logDebug("onRealPositionOpen(1)  "+ sequence.name +" "+ message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
    if (IsTesting()) {

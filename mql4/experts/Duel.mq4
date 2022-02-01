@@ -1541,7 +1541,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &gridError, d
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.OrderFillMsg(int direction, int i) {
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was filled[ at 1.5457'2] (market: Bid/Ask[, 0.3 pip [positive ]slippage])
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3") was filled[ at 1.5457'2] ([slippage: -0.3 pip, ]market: Bid/Ask)
    int ticket, level, pendingType;
    double lots, pendingPrice, openPrice;
 
@@ -1571,11 +1571,10 @@ string UpdateStatus.OrderFillMsg(int direction, int i) {
    string sSlippage = "";
    if (NE(openPrice, pendingPrice, Digits)) {
       double slippage = NormalizeDouble((pendingPrice-openPrice)/Pip, 1); if (direction == D_SHORT) slippage = -slippage;
-         if (slippage > 0) sSlippage = ", "+ DoubleToStr(slippage, Digits & 1) +" pip positive slippage";
-         else              sSlippage = ", "+ DoubleToStr(-slippage, Digits & 1) +" pip slippage";
+      sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
       message = message +" at "+ NumberToStr(openPrice, PriceFormat);
    }
-   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sSlippage +")");
+   return(message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 }
 
 

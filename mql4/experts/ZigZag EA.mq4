@@ -12,7 +12,7 @@
  *  - track PL curve per live instance
  *  - calculate and display TakeProfit level
  *
- *  - merge IsStartSignalSignal() and IsZigzagSignal() and fix loglevel of signals
+ *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of signals
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - improve parsing of start.time.condition
  *  - track slippage
@@ -33,7 +33,7 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy
  *  - on restart delete dead screen sockets
- *  - rsfLib improve slippage log messages to: opened #457310567 Sell 0.05 BTCUSD "ZZ.5475" at 38'103.96 (slippage: -16.50, market: 38'120.46/38'136.55) after 0.203 s
+ *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
