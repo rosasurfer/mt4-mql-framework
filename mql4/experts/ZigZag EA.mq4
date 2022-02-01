@@ -3,9 +3,6 @@
  *
  *
  * TODO:
- *  - stop condition "time"
- *     process
- *
  *  - read/write status file
  *  - stop condition "pip"
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
@@ -172,8 +169,9 @@ int onTick() {
    bool isZigzagSignal = IsZigzagSignal(zigzagSignal);
 
    if (sequence.status == STATUS_WAITING) {
-      if (IsStartSignal(startSignal)) {
-         if (isZigzagSignal) StartSequence(zigzagSignal);
+      if      (IsStopSignal(stopSignal)) StopSequence(stopSignal);
+      else if (IsStartSignal(startSignal)) {
+         if (isZigzagSignal)             StartSequence(zigzagSignal);
       }
    }
    else if (sequence.status == STATUS_PROGRESSING) {
@@ -434,35 +432,44 @@ bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
  */
 bool IsStopSignal(int &signal) {
    signal = NULL;
-   if (last_error != NULL)                    return(false);
-   if (sequence.status != STATUS_PROGRESSING) return(!catch("IsStopSignal(1)  "+ sequence.name +" cannot check stop signal of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (last_error || (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING)) return(false);
 
-   // stop.profitAbs: -------------------------------------------------------------------------------------------------------
-   if (stop.profitAbs.condition) {
-      if (sequence.totalPL >= stop.profitAbs.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         signal = SIGNAL_TAKEPROFIT;
+   // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
+   if (stop.time.condition) {
+      if (TimeCurrentEx("IsStopSignal(1)") >= stop.time.value) {
+         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         signal = SIGNAL_TIME;
          return(true);
       }
    }
 
-   // stop.profitPct: -------------------------------------------------------------------------------------------------------
-   if (stop.profitPct.condition) {
-      if (stop.profitPct.absValue == INT_MAX)
-         stop.profitPct.absValue = stop.profitPct.AbsValue();
+   if (sequence.status == STATUS_PROGRESSING) {
+      // stop.profitAbs: ----------------------------------------------------------------------------------------------------
+      if (stop.profitAbs.condition) {
+         if (sequence.totalPL >= stop.profitAbs.value) {
+            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            signal = SIGNAL_TAKEPROFIT;
+            return(true);
+         }
+      }
 
-      if (sequence.totalPL >= stop.profitPct.absValue) {
-         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         signal = SIGNAL_TAKEPROFIT;
-         return(true);
+      // stop.profitPct: ----------------------------------------------------------------------------------------------------
+      if (stop.profitPct.condition) {
+         if (stop.profitPct.absValue == INT_MAX)
+            stop.profitPct.absValue = stop.profitPct.AbsValue();
+
+         if (sequence.totalPL >= stop.profitPct.absValue) {
+            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            signal = SIGNAL_TAKEPROFIT;
+            return(true);
+         }
+      }
+
+      // stop.profitPip: ----------------------------------------------------------------------------------------------------
+      if (stop.profitPip.condition) {
+         return(!catch("IsStopSignal(5)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
       }
    }
-
-   // stop.profitPip: -------------------------------------------------------------------------------------------------------
-   if (stop.profitPip.condition) {
-      return(!catch("IsStopSignal(4)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
-   }
-
    return(false);
 }
 
@@ -508,15 +515,32 @@ bool StopSequence(int signal) {
       SS.PLStats();
    }
    sequence.status = STATUS_STOPPED;
-
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+
+   // update stop conditions
+   switch (signal) {
+      case SIGNAL_TIME:
+         stop.time.condition = false;
+         break;
+
+      case SIGNAL_TAKEPROFIT:
+         stop.profitAbs.condition = false;
+         stop.profitPct.condition = false;
+         stop.profitPip.condition = false;
+         break;
+
+      case NULL:                                                     // explicit (manual) stop or end of test
+         break;
+
+      default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   }
    SaveStatus();
 
    if (IsTesting()) {                              // pause or stop the tester according to the debug configuration
-      if (!IsVisualMode())       Tester.Stop ("StopSequence(4)");
-      else if (test.onStopPause) Tester.Pause("StopSequence(5)");
+      if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
+      else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
-   return(!catch("StopSequence(6)"));
+   return(!catch("StopSequence(7)"));
 }
 
 
