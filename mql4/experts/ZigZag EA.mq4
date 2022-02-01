@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - read/write status file
+ *  - read status file
  *  - stop condition "pip"
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
@@ -684,6 +684,155 @@ string StatusDescription(int status) {
 
 
 /**
+ * Write the current sequence status to a file.
+ *
+ * @return bool - success status
+ */
+bool SaveStatus() {
+   if (last_error != NULL)                       return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: input Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +", var sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
+
+   // in tester skip most status file writes, except at creation, sequence stop and test end
+   if (IsTesting() && test.optimizeStatus) {
+      static bool saved = false;
+      if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
+      saved = true;
+   }
+
+   string section="", separator="", file=GetStatusFilename();
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                // an empty line as additional section separator
+
+   // [General]
+   section = "General";
+   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Symbol",  Symbol());
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+
+   // [Inputs]
+   section = "Inputs";
+   WriteIniString(file, section, "Sequence.ID",                 /*string*/ Sequence.ID);
+   WriteIniString(file, section, "ZigZag.Periods",              /*int   */ ZigZag.Periods);
+   WriteIniString(file, section, "Lots",                        /*double*/ NumberToStr(Lots, ".+"));
+   WriteIniString(file, section, "StartConditions",             /*string*/ SaveStatus.ConditionsToStr(sStartConditions));   // contains only active conditions
+   WriteIniString(file, section, "StopConditions",              /*string*/ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
+   WriteIniString(file, section, "TakeProfit",                  /*double*/ NumberToStr(TakeProfit, ".+"));
+   WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
+   WriteIniString(file, section, "Slippage",                    /*int   */ Slippage);
+   WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent + separator);
+
+   // [Runtime status]
+   section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
+   EmptyIniSectionA(file, section);                             // orphaned status file records the section is emptied before writing to it.
+
+   // sequence data
+   WriteIniString(file, section, "sequence.id",                 /*int     */ sequence.id);
+   WriteIniString(file, section, "sequence.created",            /*datetime*/ sequence.created + GmtTimeFormat(sequence.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "sequence.name",               /*string  */ sequence.name);
+   WriteIniString(file, section, "sequence.status",             /*int     */ sequence.status);
+   WriteIniString(file, section, "sequence.startEquity",        /*double  */ DoubleToStr(sequence.startEquity, 2));
+   WriteIniString(file, section, "sequence.openPL",             /*double  */ DoubleToStr(sequence.openPL, 2));
+   WriteIniString(file, section, "sequence.closedPL",           /*double  */ DoubleToStr(sequence.closedPL, 2));
+   WriteIniString(file, section, "sequence.totalPL",            /*double  */ DoubleToStr(sequence.totalPL, 2));
+   WriteIniString(file, section, "sequence.maxProfit",          /*double  */ DoubleToStr(sequence.maxProfit, 2));
+   WriteIniString(file, section, "sequence.maxDrawdown",        /*double  */ DoubleToStr(sequence.maxDrawdown, 2) + CRLF);
+
+   // open order data
+   WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
+   WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
+   WriteIniString(file, section, "open.type",                   /*int     */ open.type);
+   WriteIniString(file, section, "open.time",                   /*datetime*/ open.time);
+   WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, 1));
+   WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
+   WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
+   WriteIniString(file, section, "open.profit",                 /*double  */ DoubleToStr(open.profit, 2) + CRLF);
+
+   // closed order data
+   int size = ArrayRange(closed.history, 0);
+   for (int i=0; i < size; i++) {
+      WriteIniString(file, section, "closed.history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
+   }
+
+   // start/stop conditions
+   WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
+   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
+
+   WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
+   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
+
+   WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
+   WriteIniString(file, section, "stop.profitAbs.value",        /*double  */ DoubleToStr(stop.profitAbs.value, 2));
+   WriteIniString(file, section, "stop.profitAbs.description",  /*string  */ stop.profitAbs.description);
+   WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
+   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".+"));
+   WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
+   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description + CRLF);
+   WriteIniString(file, section, "stop.profitPip.condition",    /*bool    */ stop.profitPip.condition);
+   WriteIniString(file, section, "stop.profitPip.value",        /*double  */ DoubleToStr(stop.profitPip.value, 1));
+   WriteIniString(file, section, "stop.profitPip.description",  /*string  */ stop.profitPip.description + CRLF);
+
+   return(!catch("SaveStatus(2)"));
+}
+
+
+/**
+ * Return a string representation of only active start/stop conditions to be stored by SaveStatus().
+ *
+ * @param  string sConditions - active and inactive conditions
+ *
+ * @param  string - active conditions
+ */
+string SaveStatus.ConditionsToStr(string sConditions) {
+   sConditions = StrTrim(sConditions);
+   if (!StringLen(sConditions) || sConditions=="-") return("");
+
+   string values[], expr="", result="";
+   int size = Explode(sConditions, "|", values, NULL);
+
+   for (int i=0; i < size; i++) {
+      expr = StrTrim(values[i]);
+      if (!StringLen(expr))              continue;              // skip empty conditions
+      if (StringGetChar(expr, 0) == '!') continue;              // skip disabled conditions
+      result = StringConcatenate(result, " | ", expr);
+   }
+   if (StringLen(result) > 0) {
+      result = StrRight(result, -3);
+   }
+   return(result);
+}
+
+
+/**
+ * Return a string representation of a history record to be stored by SaveStatus().
+ *
+ * @param  int index - index of the history record
+ *
+ * @return string - string representation or an empty string in case of errors
+ */
+string SaveStatus.HistoryToStr(int index) {
+   // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,profit,totalProfit
+
+   int      signal      = closed.history[index][H_IDX_SIGNAL     ];
+   int      ticket      = closed.history[index][H_IDX_TICKET     ];
+   double   lots        = closed.history[index][H_IDX_LOTS       ];
+   int      openType    = closed.history[index][H_IDX_OPENTYPE   ];
+   datetime openTime    = closed.history[index][H_IDX_OPENTIME   ];
+   double   openPrice   = closed.history[index][H_IDX_OPENPRICE  ];
+   datetime closeTime   = closed.history[index][H_IDX_CLOSETIME  ];
+   double   closePrice  = closed.history[index][H_IDX_CLOSEPRICE ];
+   double   slippage    = closed.history[index][H_IDX_SLIPPAGE   ];
+   double   swap        = closed.history[index][H_IDX_SWAP       ];
+   double   commission  = closed.history[index][H_IDX_COMMISSION ];
+   double   profit      = closed.history[index][H_IDX_PROFIT     ];
+   double   totalProfit = closed.history[index][H_IDX_TOTALPROFIT];
+
+   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2), ",", DoubleToStr(totalProfit, 2)));
+}
+
+
+/**
  * Restore the internal state of the EA from a status file. Requires 'sequence.id' to be set.
  *
  * @return bool - success status
@@ -707,20 +856,6 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    return(!catch("ReadStatus(2)", ERR_NOT_IMPLEMENTED));
-}
-
-
-/**
- * Write the current sequence status to a file.
- *
- * @return bool - success status
- */
-bool SaveStatus() {
-   if (last_error != NULL)                       return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: input Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +", var sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
-
-   logInfo("SaveStatus(2)", ERR_NOT_IMPLEMENTED);
-   return(true);
 }
 
 

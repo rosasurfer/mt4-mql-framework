@@ -2500,7 +2500,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
-   // In tester skip updating the status file except at the first call and at test end.
+   // in tester skip most status file writes, except at creation and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
@@ -2554,8 +2554,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);  // conditional section separator
 
    section = "Runtime status";
-   // On deletion of pending orders the number of stored order records decreases. To prevent orphaned order records in the
-   // status file the section is emptied before writing to it.
+   // On deletion of pending orders the number of stored order records decreases. To prevent orphaned status file
+   // records the section is emptied before writing to it.
    EmptyIniSectionA(file, section);
 
    int size = ArraySize(real.ticket);

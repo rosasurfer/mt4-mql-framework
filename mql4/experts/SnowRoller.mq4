@@ -4031,7 +4031,7 @@ bool SaveStatus() {
    if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
+   // in tester skip most status file writes, except at creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
