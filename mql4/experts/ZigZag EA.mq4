@@ -4,8 +4,11 @@
  *
  * TODO:
  *  - stop condition "time"
- *  - stop condition "pip"
+ *     display
+ *     process
+ *
  *  - read/write status file
+ *  - stop condition "pip"
  *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
  *  - normalize resulting PL metrics for different accounts/unit sizes
  *  - reverse trading option
@@ -45,6 +48,7 @@ extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
 extern string StartConditions     = "";                              // @time(datetime)
+extern string StopConditions      = "";                              // @time(datetime)
 extern double TakeProfit          = 0;                               // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
 extern int    Slippage            = 2;                               // in point
@@ -115,11 +119,15 @@ double   open.profit;                           //
 double   closed.history[][13];                  // multiple closed positions
 
 // start conditions
-bool     start.time.condition;
+bool     start.time.condition;                  // whether a time condition is active
 datetime start.time.value;
 string   start.time.description = "";
 
 // stop conditions ("OR" combined)
+bool     stop.time.condition;                   // whether a time condition is active
+datetime stop.time.value;
+string   stop.time.description = "";
+
 bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
 double   stop.profitAbs.value;
 string   stop.profitAbs.description = "";
@@ -696,6 +704,7 @@ string   prev.Sequence.ID = "";
 int      prev.ZigZag.Periods;
 double   prev.Lots;
 string   prev.StartConditions = "";
+string   prev.StopConditions = "";
 double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
@@ -711,6 +720,9 @@ bool     prev.start.time.condition;
 datetime prev.start.time.value;
 string   prev.start.time.description = "";
 
+bool     prev.stop.time.condition;
+datetime prev.stop.time.value;
+string   prev.stop.time.description = "";
 bool     prev.stop.profitAbs.condition;
 double   prev.stop.profitAbs.value;
 string   prev.stop.profitAbs.description = "";
@@ -733,6 +745,7 @@ void BackupInputs() {
    prev.ZigZag.Periods      = ZigZag.Periods;
    prev.Lots                = Lots;
    prev.StartConditions     = StringConcatenate(StartConditions, "");
+   prev.StopConditions      = StringConcatenate(StopConditions, "");
    prev.TakeProfit          = TakeProfit;
    prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.Slippage            = Slippage;
@@ -748,6 +761,9 @@ void BackupInputs() {
    prev.start.time.value           = start.time.value;
    prev.start.time.description     = start.time.description;
 
+   prev.stop.time.condition        = stop.time.condition;
+   prev.stop.time.value            = stop.time.value;
+   prev.stop.time.description      = stop.time.description;
    prev.stop.profitAbs.condition   = stop.profitAbs.condition;
    prev.stop.profitAbs.value       = stop.profitAbs.value;
    prev.stop.profitAbs.description = stop.profitAbs.description;
@@ -770,6 +786,7 @@ void RestoreInputs() {
    ZigZag.Periods      = prev.ZigZag.Periods;
    Lots                = prev.Lots;
    StartConditions     = prev.StartConditions;
+   StopConditions      = prev.StopConditions;
    TakeProfit          = prev.TakeProfit;
    TakeProfit.Type     = prev.TakeProfit.Type;
    Slippage            = prev.Slippage;
@@ -785,6 +802,9 @@ void RestoreInputs() {
    start.time.value           = prev.start.time.value;
    start.time.description     = prev.start.time.description;
 
+   stop.time.condition        = prev.stop.time.condition;
+   stop.time.value            = prev.stop.time.value;
+   stop.time.description      = prev.stop.time.description;
    stop.profitAbs.condition   = prev.stop.profitAbs.condition;
    stop.profitAbs.value       = prev.stop.profitAbs.value;
    stop.profitAbs.description = prev.stop.profitAbs.description;
@@ -883,6 +903,37 @@ bool ValidateInputs() {
             start.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+      }
+   }
+
+   // StopConditions: @time(datetime)
+   if (!isInitParameters || StartConditions!=prev.StartConditions) {
+      start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
+
+      sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);    // split conditions
+
+      for (i=0; i < sizeOfExprs; i++) {                           // validate each expression
+         expr = StrTrim(exprs[i]);
+         if (!StringLen(expr))              continue;
+         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         key = StrTrim(sValues[0]);
+         sValue = StrTrim(StrLeft(sValues[1], -1));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+
+         if (key == "@time") {
+            if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+            time = StrToTime(sValue);
+            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            // TODO: validation of @time is not sufficient
+            stop.time.value       = time;
+            stop.time.description = "time("+ TimeToStr(time) +")";
+            stop.time.condition   = true;
+         }
+         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
       }
    }
 
@@ -1154,6 +1205,7 @@ string InputsToStr() {
                             "ZigZag.Periods=",      ZigZag.Periods,                  ";", NL,
                             "Lots=",                NumberToStr(Lots, ".1+"),        ";", NL,
                             "StartConditions=",     DoubleQuoteStr(StartConditions), ";", NL,
+                            "StopConditions=",      DoubleQuoteStr(StopConditions),  ";", NL,
                             "TakeProfit=",          NumberToStr(TakeProfit, ".1+"),  ";", NL,
                             "TakeProfit.Type=",     DoubleQuoteStr(TakeProfit.Type), ";", NL,
                             "Slippage=",            Slippage,                        ";", NL,
