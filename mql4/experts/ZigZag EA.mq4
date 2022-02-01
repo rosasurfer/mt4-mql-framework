@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - stop condition "time"
- *     display
  *     process
  *
  *  - read/write status file
@@ -1097,6 +1096,9 @@ void SS.StartStopConditions() {
 
       // stop conditions
       sValue = "";
+      if (stop.time.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+      }
       if (stop.profitAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
       }
