@@ -3550,7 +3550,7 @@ bool SaveStatus() {
    if (IsLastError())                            return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +"  sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
 
-   // in tester skip updating the status file on most calls (except at creation, after sequence stop and at test end)
+   // in tester skip most status file writes, except at creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -3585,7 +3585,7 @@ bool SaveStatus() {
 
    // [Runtime status]
    section = "Runtime status";            // On deletion of pending orders the number of stored order records decreases. To prevent
-   EmptyIniSectionA(file, section);       // orphaned records in the status file the section is emptied before writing to it.
+   EmptyIniSectionA(file, section);       // orphaned status file records the section is emptied before writing to it.
 
    // sequence data
    WriteIniString(file, section, "sequence.id",                 /*int     */ sequence.id);
