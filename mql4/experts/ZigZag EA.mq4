@@ -10,6 +10,7 @@
  *  - reverse trading option
  *  - trade breaks for specific day times
  *  - track PL curve per live instance
+ *  - calculate and display TakeProfit level
  *
  *  - merge IsStartSignalSignal() and IsZigzagSignal() and fix loglevel of signals
  *  - double ZigZag reversals during large bars are not recognized and ignored
@@ -23,6 +24,7 @@
  *     https://www.mql5.com/en/forum/289014#comment_9296322
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
+ *  - merge inputs TakeProfit and StopConditions
  *
  *  - permanent spread logging to a separate logfile
  *  - build script for all .ex4 files after deployment
