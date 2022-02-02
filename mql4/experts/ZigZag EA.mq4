@@ -3,6 +3,7 @@
  *
  *
  * TODO:
+ *  - add testing flag to log and status file
  *  - read status file
  *  - permanent performance tracking of all variants on all symbols
  *  - stop condition "pip"
@@ -114,7 +115,7 @@ double   open.slippage;                         //
 double   open.swap;                             //
 double   open.commission;                       //
 double   open.profit;                           //
-double   closed.history[][13];                  // multiple closed positions
+double   history[][13];                         // multiple closed positions
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -261,7 +262,7 @@ bool IsStartSignal(int &signal) {
    }
 
    // no start condition is a valid signal before first start only
-   if (!open.ticket && !ArrayRange(closed.history, 0)) {
+   if (!open.ticket && !ArrayRange(history, 0)) {
       signal = NULL;
       return(true);
    }
@@ -390,22 +391,22 @@ bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   int i = ArrayRange(closed.history, 0);
-   ArrayResize(closed.history, i + 1);
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i + 1);
 
-   closed.history[i][H_IDX_SIGNAL     ] = openSignal;
-   closed.history[i][H_IDX_TICKET     ] = oe.Ticket    (oe);
-   closed.history[i][H_IDX_LOTS       ] = oe.Lots      (oe);
-   closed.history[i][H_IDX_OPENTYPE   ] = oe.Type      (oe);
-   closed.history[i][H_IDX_OPENTIME   ] = oe.OpenTime  (oe);
-   closed.history[i][H_IDX_OPENPRICE  ] = oe.OpenPrice (oe);
-   closed.history[i][H_IDX_CLOSETIME  ] = oe.CloseTime (oe);
-   closed.history[i][H_IDX_CLOSEPRICE ] = oe.ClosePrice(oe);
-   closed.history[i][H_IDX_SLIPPAGE   ] = NormalizeDouble(openSlippage + oe.Slippage(oe), Digits);
-   closed.history[i][H_IDX_SWAP       ] = oe.Swap      (oe);
-   closed.history[i][H_IDX_COMMISSION ] = oe.Commission(oe);
-   closed.history[i][H_IDX_PROFIT     ] = oe.Profit    (oe);
-   closed.history[i][H_IDX_TOTALPROFIT] = NormalizeDouble(closed.history[i][H_IDX_SWAP] + closed.history[i][H_IDX_COMMISSION] + closed.history[i][H_IDX_PROFIT], 2);
+   history[i][H_IDX_SIGNAL     ] = openSignal;
+   history[i][H_IDX_TICKET     ] = oe.Ticket    (oe);
+   history[i][H_IDX_LOTS       ] = oe.Lots      (oe);
+   history[i][H_IDX_OPENTYPE   ] = oe.Type      (oe);
+   history[i][H_IDX_OPENTIME   ] = oe.OpenTime  (oe);
+   history[i][H_IDX_OPENPRICE  ] = oe.OpenPrice (oe);
+   history[i][H_IDX_CLOSETIME  ] = oe.CloseTime (oe);
+   history[i][H_IDX_CLOSEPRICE ] = oe.ClosePrice(oe);
+   history[i][H_IDX_SLIPPAGE   ] = NormalizeDouble(openSlippage + oe.Slippage(oe), Digits);
+   history[i][H_IDX_SWAP       ] = oe.Swap      (oe);
+   history[i][H_IDX_COMMISSION ] = oe.Commission(oe);
+   history[i][H_IDX_PROFIT     ] = oe.Profit    (oe);
+   history[i][H_IDX_TOTALPROFIT] = NormalizeDouble(history[i][H_IDX_SWAP] + history[i][H_IDX_COMMISSION] + history[i][H_IDX_PROFIT], 2);
 
    open.signal     = NULL;
    open.ticket     = NULL;
@@ -418,7 +419,7 @@ bool ArchiveClosedPosition(int openSignal, double openSlippage, int oe[]) {
    open.profit     = NULL;
 
    sequence.openPL   = 0;
-   sequence.closedPL = NormalizeDouble(sequence.closedPL + closed.history[i][H_IDX_TOTALPROFIT], 2);
+   sequence.closedPL = NormalizeDouble(sequence.closedPL + history[i][H_IDX_TOTALPROFIT], 2);
    sequence.totalPL  = sequence.closedPL;
 
    return(!catch("ArchiveClosedPosition(2)"));
@@ -748,7 +749,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.profit",                 /*double  */ DoubleToStr(open.profit, 2) + CRLF);
 
    // closed order data
-   int size = ArrayRange(closed.history, 0);
+   int size = ArrayRange(history, 0);
    for (int i=0; i < size; i++) {
       WriteIniString(file, section, "closed.history."+ i, SaveStatus.HistoryToStr(i) + ifString(i+1 < size, "", CRLF));
    }
@@ -768,7 +769,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
    WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".+"));
    WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
-   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description + CRLF);
+   WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description);
    WriteIniString(file, section, "stop.profitPip.condition",    /*bool    */ stop.profitPip.condition);
    WriteIniString(file, section, "stop.profitPip.value",        /*double  */ DoubleToStr(stop.profitPip.value, 1));
    WriteIniString(file, section, "stop.profitPip.description",  /*string  */ stop.profitPip.description + CRLF);
@@ -814,19 +815,19 @@ string SaveStatus.ConditionsToStr(string sConditions) {
 string SaveStatus.HistoryToStr(int index) {
    // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,profit,totalProfit
 
-   int      signal      = closed.history[index][H_IDX_SIGNAL     ];
-   int      ticket      = closed.history[index][H_IDX_TICKET     ];
-   double   lots        = closed.history[index][H_IDX_LOTS       ];
-   int      openType    = closed.history[index][H_IDX_OPENTYPE   ];
-   datetime openTime    = closed.history[index][H_IDX_OPENTIME   ];
-   double   openPrice   = closed.history[index][H_IDX_OPENPRICE  ];
-   datetime closeTime   = closed.history[index][H_IDX_CLOSETIME  ];
-   double   closePrice  = closed.history[index][H_IDX_CLOSEPRICE ];
-   double   slippage    = closed.history[index][H_IDX_SLIPPAGE   ];
-   double   swap        = closed.history[index][H_IDX_SWAP       ];
-   double   commission  = closed.history[index][H_IDX_COMMISSION ];
-   double   profit      = closed.history[index][H_IDX_PROFIT     ];
-   double   totalProfit = closed.history[index][H_IDX_TOTALPROFIT];
+   int      signal      = history[index][H_IDX_SIGNAL     ];
+   int      ticket      = history[index][H_IDX_TICKET     ];
+   double   lots        = history[index][H_IDX_LOTS       ];
+   int      openType    = history[index][H_IDX_OPENTYPE   ];
+   datetime openTime    = history[index][H_IDX_OPENTIME   ];
+   double   openPrice   = history[index][H_IDX_OPENPRICE  ];
+   datetime closeTime   = history[index][H_IDX_CLOSETIME  ];
+   double   closePrice  = history[index][H_IDX_CLOSEPRICE ];
+   double   slippage    = history[index][H_IDX_SLIPPAGE   ];
+   double   swap        = history[index][H_IDX_SWAP       ];
+   double   commission  = history[index][H_IDX_COMMISSION ];
+   double   profit      = history[index][H_IDX_PROFIT     ];
+   double   totalProfit = history[index][H_IDX_TOTALPROFIT];
 
    return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2), ",", DoubleToStr(totalProfit, 2)));
 }
@@ -1010,7 +1011,7 @@ bool ValidateInputs() {
    bool isInitParameters   = (ProgramInitReason()==IR_PARAMETERS);   // whether we validate manual or programatic input
    bool isInitUser         = (ProgramInitReason()==IR_USER);
    bool isInitTemplate     = (ProgramInitReason()==IR_TEMPLATE);
-   bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
+   bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
 
    // Sequence.ID
    if (isInitParameters) {
@@ -1281,9 +1282,9 @@ void SS.StartStopConditions() {
 void SS.TotalPL() {
    if (__isChart) {
       // not before a position was opened
-      if (!open.ticket && !ArrayRange(closed.history, 0)) sSequenceTotalPL = "-";
-      else if (ShowProfitInPercent)                       sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-      else                                                sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+      if (!open.ticket && !ArrayRange(history, 0)) sSequenceTotalPL = "-";
+      else if (ShowProfitInPercent)                sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
+      else                                         sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
    }
 }
 
@@ -1294,7 +1295,7 @@ void SS.TotalPL() {
 void SS.PLStats() {
    if (__isChart) {
       // not before a position was opened
-      if (!open.ticket && !ArrayRange(closed.history, 0)) {
+      if (!open.ticket && !ArrayRange(history, 0)) {
          sSequencePlStats = "";
       }
       else {
