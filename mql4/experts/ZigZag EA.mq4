@@ -4,10 +4,10 @@
  *
  * TODO:
  *  - read status file
+ *  - permanent performance tracking of all variants on all symbols
  *  - stop condition "pip"
- *  - permanent performance tracking of all variants (ZZ, ZR) on all symbols
+ *  - reverse trading option "ZigZag.R"
  *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - reverse trading option
  *  - trade breaks for specific day times
  *  - track PL curve per live instance
  *  - calculate and display TakeProfit level
