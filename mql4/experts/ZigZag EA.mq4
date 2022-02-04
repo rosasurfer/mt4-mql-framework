@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - add flag isTest to log file
  *  - read status file
  *  - permanent performance tracking of all variants on all symbols
  *  - stop condition "pip"
