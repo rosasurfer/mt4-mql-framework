@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - add testing flag to log and status file
+ *  - add flag isTest to log file
  *  - read status file
  *  - permanent performance tracking of all variants on all symbols
  *  - stop condition "pip"
@@ -42,7 +42,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";                              // instance to load from a status file (id between 1000-9999)
+extern string Sequence.ID         = "";                              // instance to load from a status file, format /T?[0-9]{4}/
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
@@ -96,6 +96,7 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 // sequence data
 int      sequence.id;
 datetime sequence.created;
+bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquity;                  //
@@ -691,7 +692,7 @@ string StatusDescription(int status) {
  */
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: input Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +", var sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
 
    // in tester skip most status file writes, except at creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
@@ -728,6 +729,7 @@ bool SaveStatus() {
    // sequence data
    WriteIniString(file, section, "sequence.id",                 /*int     */ sequence.id);
    WriteIniString(file, section, "sequence.created",            /*datetime*/ sequence.created + GmtTimeFormat(sequence.created, " (%a, %Y.%m.%d %H:%M:%S)"));
+   WriteIniString(file, section, "sequence.isTest",             /*bool    */ sequence.isTest);
    WriteIniString(file, section, "sequence.name",               /*string  */ sequence.name);
    WriteIniString(file, section, "sequence.status",             /*int     */ sequence.status);
    WriteIniString(file, section, "sequence.startEquity",        /*double  */ DoubleToStr(sequence.startEquity, 2));
@@ -860,6 +862,17 @@ bool ReadStatus() {
 }
 
 
+/**
+ * Whether the current sequence was created in the tester. Considers the fact that a test sequence can be loaded into an
+ * online chart after the test (for visualization).
+ *
+ * @return bool
+ */
+bool IsTestSequence() {
+   return(sequence.isTest || IsTesting());
+}
+
+
 // backed-up input parameters
 string   prev.Sequence.ID = "";
 int      prev.ZigZag.Periods;
@@ -874,6 +887,7 @@ bool     prev.ShowProfitInPercent;
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
 datetime prev.sequence.created;
+bool     prev.sequence.isTest;
 string   prev.sequence.name = "";
 int      prev.sequence.status;
 
@@ -915,6 +929,7 @@ void BackupInputs() {
    // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
+   prev.sequence.isTest            = sequence.isTest;
    prev.sequence.name              = sequence.name;
    prev.sequence.status            = sequence.status;
 
@@ -956,6 +971,7 @@ void RestoreInputs() {
    // restore runtime variables
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
+   sequence.isTest            = prev.sequence.isTest;
    sequence.name              = prev.sequence.name;
    sequence.status            = prev.sequence.status;
 
@@ -980,20 +996,24 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (id between 1000-9999). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4}/). Called only from onInitUser().
  *
- * @return bool - whether an id was successfully restored (the status file is not checked)
+ * @return bool - whether the id was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
    if (!StringLen(sValue)) return(false);
 
+   if (StrStartsWith(sValue, "T")) {
+      sequence.isTest = true;
+      sValue = StrSubstr(sValue, 1);
+   }
    if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
    if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 
    sequence.id = iValue;
-   Sequence.ID = sequence.id;
+   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
    SS.SequenceName();
    return(true);
 }
@@ -1020,7 +1040,7 @@ bool ValidateInputs() {
          Sequence.ID = prev.Sequence.ID;
       }
       else if (sValue != prev.Sequence.ID)                        return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   }
+   } //else                                                       // the id was validated in ValidateInputs.SID()
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
@@ -1181,11 +1201,18 @@ bool FindSequenceId() {
    string sValue = "";
 
    if (Chart.RestoreString(ProgramName() +".Sequence.ID", sValue)) {
+      bool isTest = false;
+
+      if (StrStartsWith(sValue, "T")) {
+         isTest = true;
+         sValue = StrSubstr(sValue, 1);
+      }
       if (StrIsDigit(sValue)) {
          int iValue = StrToInteger(sValue);
          if (iValue > 0) {
-            sequence.id = iValue;
-            Sequence.ID = sequence.id;
+            sequence.id     = iValue;
+            sequence.isTest = isTest;
+            Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
             SS.SequenceName();
             return(true);
          }

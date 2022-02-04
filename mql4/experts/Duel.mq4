@@ -44,7 +44,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string   Sequence.ID            = "";                                  // instance to load from a file, format /T?[1-9][0-9]{3}/
+extern string   Sequence.ID            = "";                                  // instance to load from a file, format /T?[0-9]{4}/
 
 extern string   GridDirection          = "Long | Short | Both*";              //
 extern string   GridVolatility         = "{percent}";                         // drawdown on a price move of 'VolatilityRange' to the losing side
@@ -114,7 +114,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 // sequence data
 int      sequence.id;                              //
 datetime sequence.created;                         //
-bool     sequence.isTest;                          // whether the sequence is a test (e.g. loaded into an online chart)
+bool     sequence.isTest;                          // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence-id}"
 int      sequence.cycle;                           // start/stop cycle: 1...+n
 int      sequence.status;                          //
@@ -2621,7 +2621,7 @@ bool Grid.AddPendingOrder(int direction, int level) {
 
 
 /**
- * Whether the current sequence was created in the tester. Considers the fact that a test sequence may be loaded into an
+ * Whether the current sequence was created in the tester. Considers the fact that a test sequence can be loaded into an
  * online chart after the test (for visualization).
  *
  * @return bool
@@ -2811,7 +2811,7 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?[1-9][0-9]{3}/). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4}/). Called only from onInitUser().
  *
  * @return bool - whether input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
  */
@@ -2819,7 +2819,7 @@ bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
    if (!StringLen(sValue)) return(false);
 
-   if (StrStartsWithI(sValue, "T")) {
+   if (StrStartsWith(sValue, "T")) {
       sequence.isTest = true;
       sValue = StrTrim(StrSubstr(sValue, 1));
    }
@@ -2843,9 +2843,9 @@ bool ValidateInputs.SID() {
  */
 bool ValidateInputs() {
    if (IsLastError()) return(false);
-   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);         // whether we validate manual or programatic input
-   bool isInitUser       = (ProgramInitReason()==IR_USER);
-   bool isInitTemplate   = (ProgramInitReason()==IR_TEMPLATE);
+   bool isInitParameters   = (ProgramInitReason()==IR_PARAMETERS);      // whether we validate manual or programatic input
+   bool isInitUser         = (ProgramInitReason()==IR_USER);
+   bool isInitTemplate     = (ProgramInitReason()==IR_TEMPLATE);
    bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
 
    // Sequence.ID
@@ -2855,7 +2855,7 @@ bool ValidateInputs() {
          Sequence.ID = prev.Sequence.ID;
       }
       else if (sValue != prev.Sequence.ID)                               return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   } //else                                                              // onInitUser(): the id is empty (a new sequence) or validated (an existing sequence is reloaded)
+   } //else                                                              // the id was validated in ValidateInputs.SID()
 
    // GridDirection
    sValue = GridDirection;
@@ -3548,7 +3548,7 @@ double iADR() {
  */
 bool SaveStatus() {
    if (IsLastError())                            return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +"  sequence.id="+ sequence.id, ERR_ILLEGAL_STATE));
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
 
    // in tester skip most status file writes, except at creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
@@ -4153,6 +4153,7 @@ bool FindSequenceId() {
             sequence.id     = iValue;
             sequence.isTest = isTest;
             Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
+            SS.SequenceName();
             return(true);
          }
       }

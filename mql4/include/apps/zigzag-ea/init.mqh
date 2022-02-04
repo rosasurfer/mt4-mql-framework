@@ -25,11 +25,11 @@ int onInitUser() {
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
-         sequence.id = CreateSequenceId();
-         Sequence.ID = sequence.id;
+         sequence.isTest  = IsTesting();
+         sequence.id      = CreateSequenceId();
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
-         SS.All();
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
       }
