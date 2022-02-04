@@ -75,7 +75,7 @@ int      sequence.id;
 int      sequence.cycle;                           // counter of restarted sequences if AutoRestart is not "Off"
 string   sequence.name = "";                       // "L.1234" | "S.5678"
 datetime sequence.created;
-bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into an online chart)
+bool     sequence.isTest;                          // whether the sequence is a test (which can be loaded into an online chart)
 double   sequence.unitsize;                        // lots per gridlevel
 int      sequence.direction;
 int      sequence.status;
@@ -1078,10 +1078,11 @@ bool StoreChartStatus() {
  */
 bool RestoreChartStatus() {
    string label = ProgramName() +".runtime.Sequence.ID", sValue="";
+   bool isTest = false;
 
    if (Chart.RestoreString(label, sValue)) {
       if (StrStartsWith(sValue, "T")) {
-         sequence.isTest = true;
+         isTest = true;
          sValue = StrSubstr(sValue, 1);
       }
       int iValue = StrToInteger(sValue);
@@ -1090,8 +1091,10 @@ bool RestoreChartStatus() {
       }
       else {
          sequence.id     = iValue;
-         Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+         Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
+         sequence.isTest = isTest;
          sequence.status = STATUS_WAITING;
+         SS.SequenceName();
       }
       return(iValue != 0);
    }
@@ -6136,7 +6139,7 @@ bool ValidateInputs() {
    else if (!StringLen(Sequence.ID)) {                            // status must be STATUS_UNDEFINED (sequence.id = 0)
       if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
    }
-   else {}                                                        // Sequence.ID was validated in ValidateInputs.SID()
+   else {}                                                        // the id was validated in ValidateInputs.SID()
 
    // GridDirection
    string sValues[], sValue=StrToLower(StrTrim(GridDirection));
