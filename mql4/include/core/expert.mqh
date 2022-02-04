@@ -124,7 +124,9 @@ int init() {
    if (IsTesting()) {                     // log MarketInfo() data
       if (IsLogInfo()) {
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ Tester.GetMarketInfo();
-         logInfo(StrRepeat(":", StringLen(msg)));
+         string separator = StrRepeat(":", StringLen(msg));
+         if (IsTesting()) separator = "::: TEST :::"+ StrRight(separator, -12);
+         logInfo(separator);
          logInfo(msg);
       }
       tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
