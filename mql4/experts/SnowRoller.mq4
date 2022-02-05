@@ -75,7 +75,7 @@ int      sequence.id;
 int      sequence.cycle;                           // counter of restarted sequences if AutoRestart is not "Off"
 string   sequence.name = "";                       // "L.1234" | "S.5678"
 datetime sequence.created;
-bool     sequence.isTest;                          // whether the sequence is/was a test (a finished test can be loaded into an online chart)
+bool     sequence.isTest;                          // whether the sequence is a test (which can be loaded into an online chart)
 double   sequence.unitsize;                        // lots per gridlevel
 int      sequence.direction;
 int      sequence.status;
@@ -1078,10 +1078,11 @@ bool StoreChartStatus() {
  */
 bool RestoreChartStatus() {
    string label = ProgramName() +".runtime.Sequence.ID", sValue="";
+   bool isTest = false;
 
    if (Chart.RestoreString(label, sValue)) {
       if (StrStartsWith(sValue, "T")) {
-         sequence.isTest = true;
+         isTest = true;
          sValue = StrSubstr(sValue, 1);
       }
       int iValue = StrToInteger(sValue);
@@ -1090,8 +1091,10 @@ bool RestoreChartStatus() {
       }
       else {
          sequence.id     = iValue;
-         Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+         Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
+         sequence.isTest = isTest;
          sequence.status = STATUS_WAITING;
+         SS.SequenceName();
       }
       return(iValue != 0);
    }
@@ -2105,22 +2108,21 @@ string UpdateStatus.OrderCancelledMsg(int i) {
  * @return string
  */
 string UpdateStatus.OrderFillMsg(int i) {
-   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was filled[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   // #1 Stop Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17") was filled [at 1.5457'2 ]([slippage: 0.3 pip, ]market: Bid/Ask)
    string sType         = OperationTypeDescription(orders.pendingType[i]);
    string sPendingPrice = NumberToStr(orders.pendingPrice[i], PriceFormat);
    string comment       = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message       = "#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sPendingPrice +" (\""+ comment +"\") was filled";
+   string sSlippage     = "";
 
    if (NE(orders.pendingPrice[i], orders.openPrice[i], Digits)) {
+      message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat);
       double slippage = (orders.openPrice[i] - orders.pendingPrice[i])/Pip;
-         if (orders.type[i] == OP_SELL)
-            slippage = -slippage;
-      string sSlippage = "";
-      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
-      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(orders.openPrice[i], PriceFormat) +" ("+ sSlippage +")";
+         if (orders.type[i] == OP_SELL) slippage = -slippage;
+         slippage = -slippage;
+      sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
    }
-   return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+   return(message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 }
 
 
@@ -2157,25 +2159,24 @@ string UpdateStatus.PositionCloseMsg(int i) {
  * @return string
  */
 string UpdateStatus.StopLossMsg(int i) {
-   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), stoploss 1.5457'2 was executed[ at 1.5457'2 (0.3 pip [positive ]slippage)]
+   // [magic ticket ]#1 Sell 0.1 GBPUSD at 1.5457'2 ("SR.8692.+17"), stoploss 1.5457'2 was executed [at 1.5457'2 ]([slippage: +0.3 pip, ]market: Bid/Ask)
    string sMagic     = ifString(orders.ticket[i]==-1, "magic ticket ", "");
    string sType      = OperationTypeDescription(orders.type[i]);
    string sOpenPrice = NumberToStr(orders.openPrice[i], PriceFormat);
    string sStopLoss  = NumberToStr(orders.stopLoss[i], PriceFormat);
    string comment    = "SR."+ sequence.id +"."+ NumberToStr(orders.level[i], "+.");
    string message    = sMagic +"#"+ orders.ticket[i] +" "+ sType +" "+ NumberToStr(sequence.unitsize, ".+") +" "+ Symbol() +" at "+ sOpenPrice +" (\""+ comment +"\"), stoploss "+ sStopLoss +" was executed";
+   string sSlippage  = "";
 
    if (NE(orders.closePrice[i], orders.stopLoss[i], Digits)) {
+      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat);
       double slippage = (orders.stopLoss[i] - orders.closePrice[i])/Pip;
-         if (orders.type[i] == OP_SELL)
-            slippage = -slippage;
-      string sSlippage = "";
-      if (slippage > 0) sSlippage = DoubleToStr(slippage, Digits & 1) +" pip slippage";
-      else              sSlippage = DoubleToStr(-slippage, Digits & 1) +" pip positive slippage";
-      message = message +" at "+ NumberToStr(orders.closePrice[i], PriceFormat) +" ("+ sSlippage +")";
+         if (orders.type[i] == OP_SELL) slippage = -slippage;
+         slippage = -slippage;
+      sSlippage = "slippage: "+ NumberToStr(slippage, "+."+ (Digits & 1)) +" pip, ";
    }
 
-   message = message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
+   message = message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")";
    return(message);
 }
 
@@ -4033,7 +4034,7 @@ bool SaveStatus() {
    if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // In tester skip updating the status file on most calls; except at the first one, after sequence stop and at test end.
+   // in tester skip most status file writes, except at creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -4231,7 +4232,7 @@ string SaveStatus.OrderToStr(int index) {
 
 
 /**
- * Restore the internal state of the EA from a status file.
+ * Restore the internal state of the EA from a status file. Requires 'sequence.id' and 'sequence.isTest' to be set.
  *
  * @return bool - success status
  */
@@ -4245,16 +4246,16 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of the current sequence and restore all internal variables. Part of RestoreSequence().
+ * Read the status file of a sequence and restore inputs and runtime variables. Called only from RestoreSequence().
  *
  * @return bool - success status
  */
 bool ReadStatus() {
    if (IsLastError()) return(false);
-   if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [Common]
    string section = "Common";
@@ -4265,16 +4266,16 @@ bool ReadStatus() {
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");
 
    string sAccountRequired = GetAccountCompany() +":"+ GetAccountNumber();
-   if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (sSymbol  != Symbol())         return(!catch("ReadStatus(4)  symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sAccount != sAccountRequired) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match "+ DoubleQuoteStr(sAccount) +"/"+ DoubleQuoteStr(sAccountRequired) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sSymbol  != Symbol())         return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match "+ DoubleQuoteStr(sSymbol) +"/"+ DoubleQuoteStr(Symbol()) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    string sValue = sSequenceId;
    if (StrLeft(sValue, 1) == "T") {
       sequence.isTest = true;
       sValue = StrSubstr(sValue, 1);
    }
-   if (sValue != ""+ sequence.id)    return(!catch("ReadStatus(5)  invalid or missing Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sValue != ""+ sequence.id)    return(!catch("ReadStatus(5)  "+ sequence.name +" invalid or missing Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sequence.ID = sSequenceId;
-   if (sGridDirection == "")         return(!catch("ReadStatus(6)  invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (sGridDirection == "")         return(!catch("ReadStatus(6)  "+ sequence.name +" invalid or missing GridDirection "+ DoubleQuoteStr(sGridDirection) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridDirection = sGridDirection;
    ShowProfitInPercent = StrToBool(sShowProfitInPercent);
 
@@ -4318,21 +4319,21 @@ bool ReadStatus() {
 
    sequence.cycle++;
    sValue = StrTrim(StrLeftTo(sCreated, "("));
-   if (!StrIsDigit(sValue))                 return(!catch("ReadStatus(7)  invalid or missing creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sValue))                 return(!catch("ReadStatus(7)  "+ sequence.name +" invalid or missing creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.created = StrToInteger(sValue);
-   if (!sequence.created)                   return(!catch("ReadStatus(8)  invalid creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsDigit(sGridSize))              return(!catch("ReadStatus(9)  invalid or missing GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!sequence.created)                   return(!catch("ReadStatus(8)  "+ sequence.name +" invalid creation timestamp "+ DoubleQuoteStr(sCreated) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sGridSize))              return(!catch("ReadStatus(9)  "+ sequence.name +" invalid or missing GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    GridSize = StrToInteger(sGridSize);
-   if (!StringLen(sUnitSize))               return(!catch("ReadStatus(10)  invalid or missing UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StringLen(sUnitSize))               return(!catch("ReadStatus(10)  "+ sequence.name +" invalid or missing UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    UnitSize = sUnitSize;
-   if (!StrIsDigit(sStartLevel))            return(!catch("ReadStatus(11)  invalid or missing StartLevel "+ DoubleQuoteStr(sStartLevel) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sStartLevel))            return(!catch("ReadStatus(11)  "+ sequence.name +" invalid or missing StartLevel "+ DoubleQuoteStr(sStartLevel) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    StartConditions = sStartConditions;
    StopConditions  = sStopConditions;
    AutoRestart     = sAutoRestart;
    StartLevel      = StrToInteger(sStartLevel);
-   if (!StrIsDigit(sSessionbreakStartTime)) return(!catch("ReadStatus(12)  invalid or missing Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sSessionbreakStartTime)) return(!catch("ReadStatus(12)  "+ sequence.name +" invalid or missing Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);          // TODO: convert input to string and validate
-   if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(13)  invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(13)  "+ sequence.name +" invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);              // TODO: convert input to string and validate
 
    string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting",  "");     // bool    rt.sessionbreak.waiting=1
@@ -4350,41 +4351,41 @@ bool ReadStatus() {
 
    sessionbreak.waiting = StrToBool(sSessionbreakWaiting);
 
-   if (!StrIsNumeric(sStartEquity))         return(!catch("ReadStatus(14)  invalid or missing sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sStartEquity))         return(!catch("ReadStatus(14)  "+ sequence.name +" invalid or missing sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.startEquity = StrToDouble(sStartEquity);
-   if (LT(sequence.startEquity, 0))         return(!catch("ReadStatus(15)  illegal sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sUnitSize))            return(!catch("ReadStatus(16)  invalid or missing sequence.unitsize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (LT(sequence.startEquity, 0))         return(!catch("ReadStatus(15)  "+ sequence.name +" illegal sequence.startEquity "+ DoubleQuoteStr(sStartEquity) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sUnitSize))            return(!catch("ReadStatus(16)  "+ sequence.name +" invalid or missing sequence.unitsize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.unitsize = StrToDouble(sUnitSize);
-   if (LT(sequence.unitsize, 0))            return(!catch("ReadStatus(17)  illegal sequence.unitsize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
-   if (!StrIsNumeric(sMaxProfit))           return(!catch("ReadStatus(18)  invalid or missing sequence.maxProfit "+ DoubleQuoteStr(sMaxProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (LT(sequence.unitsize, 0))            return(!catch("ReadStatus(17)  "+ sequence.name +" illegal sequence.unitsize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sMaxProfit))           return(!catch("ReadStatus(18)  "+ sequence.name +" invalid or missing sequence.maxProfit "+ DoubleQuoteStr(sMaxProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.maxProfit = StrToDouble(sMaxProfit);
-   if (!StrIsNumeric(sMaxDrawdown))         return(!catch("ReadStatus(19)  invalid or missing sequence.maxDrawdown "+ DoubleQuoteStr(sMaxDrawdown) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsNumeric(sMaxDrawdown))         return(!catch("ReadStatus(19)  "+ sequence.name +" invalid or missing sequence.maxDrawdown "+ DoubleQuoteStr(sMaxDrawdown) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    sequence.maxDrawdown = StrToDouble(sMaxDrawdown);
    bool success = ReadStatus.ParseStartStop(sStarts, sequence.start.event, sequence.start.time, sequence.start.price, sequence.start.profit);
-   if (!success)                            return(!catch("ReadStatus(20)  invalid or missing sequence.starts "+ DoubleQuoteStr(sStarts) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(20)  "+ sequence.name +" invalid or missing sequence.starts "+ DoubleQuoteStr(sStarts) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseStartStop(sStops, sequence.stop.event, sequence.stop.time, sequence.stop.price, sequence.stop.profit);
-   if (!success)                            return(!catch("ReadStatus(21)  invalid or missing sequence.stops "+ DoubleQuoteStr(sStops) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(21)  "+ sequence.name +" invalid or missing sequence.stops "+ DoubleQuoteStr(sStops) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (ArraySize(sequence.start.event) != ArraySize(sequence.stop.event))
-                                            return(!catch("ReadStatus(22)  sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +"/sizeOf(sequence.stops)="+ ArraySize(sequence.stop.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+                                            return(!catch("ReadStatus(22)  "+ sequence.name +" sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +"/sizeOf(sequence.stops)="+ ArraySize(sequence.stop.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!sequence.start.event[0]) {
-      if (sequence.stop.event[0] != 0)      return(!catch("ReadStatus(23)  sequence.start.event[0]="+ sequence.start.event[0] +"/sequence.stop.event[0]="+ sequence.stop.event[0] +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+      if (sequence.stop.event[0] != 0)      return(!catch("ReadStatus(23)  "+ sequence.name +" sequence.start.event[0]="+ sequence.start.event[0] +"/sequence.stop.event[0]="+ sequence.stop.event[0] +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
       ArrayResize(sequence.start.event,  0); ArrayResize(sequence.stop.event,  0);
       ArrayResize(sequence.start.time,   0); ArrayResize(sequence.stop.time,   0);
       ArrayResize(sequence.start.price,  0); ArrayResize(sequence.stop.price,  0);
       ArrayResize(sequence.start.profit, 0); ArrayResize(sequence.stop.profit, 0);
    }
    success = ReadStatus.ParseGridBase(sGridBase);
-   if (!success)                            return(!catch("ReadStatus(24)  invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(24)  "+ sequence.name +" invalid or missing gridbase history "+ DoubleQuoteStr(sGridBase) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (_bool(ArraySize(gridbase.event)) != _bool(ArraySize(sequence.start.event)))
-                                            return(!catch("ReadStatus(25)  sizeOf(gridbase)="+ ArraySize(gridbase.event) +"/sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+                                            return(!catch("ReadStatus(25)  "+ sequence.name +" sizeOf(gridbase)="+ ArraySize(gridbase.event) +"/sizeOf(sequence.starts)="+ ArraySize(sequence.start.event) +" mis-match in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseMissedLevels(sMissedLevels);
-   if (!success)                            return(!catch("ReadStatus(26)  invalid missed gridlevels "+ DoubleQuoteStr(sMissedLevels) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(26)  "+ sequence.name +" invalid missed gridlevels "+ DoubleQuoteStr(sMissedLevels) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sPendingOrders, ignorePendingOrders);
-   if (!success)                            return(!catch("ReadStatus(27)  invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(27)  "+ sequence.name +" invalid ignored pending orders "+ DoubleQuoteStr(sPendingOrders) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sOpenPositions, ignoreOpenPositions);
-   if (!success)                            return(!catch("ReadStatus(28)  invalid ignored open positions "+ DoubleQuoteStr(sOpenPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(28)  "+ sequence.name +" invalid ignored open positions "+ DoubleQuoteStr(sOpenPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    success = ReadStatus.ParseTickets(sClosedPositions, ignoreClosedPositions);
-   if (!success)                            return(!catch("ReadStatus(29)  invalid ignored closed positions "+ DoubleQuoteStr(sClosedPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!success)                            return(!catch("ReadStatus(29)  "+ sequence.name +" invalid ignored closed positions "+ DoubleQuoteStr(sClosedPositions) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
    string orderKeys[], sOrder="";
    size = ReadStatusOrders(file, section, orderKeys); if (size < 0) return(false);
@@ -4392,7 +4393,7 @@ bool ReadStatus() {
    for (i=0; i < size; i++) {
       sOrder = GetIniStringA(file, section, orderKeys[i], "");    // mixed[] rt.order.123=292836120,-1,1477.94,5,1575468000,1476.84,1,67,1575469086,1476.84,68,1575470978,1477.94,1477.94,1,0.00,-0.22,-3.97
       success = ReadStatus.ParseOrder(sOrder);
-      if (!success) return(!catch("ReadStatus(30)  invalid order record in status file "+ DoubleQuoteStr(file) + NL + orderKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
+      if (!success) return(!catch("ReadStatus(30)  "+ sequence.name +" invalid order record in status file "+ DoubleQuoteStr(file) + NL + orderKeys[i] +"="+ sOrder, ERR_INVALID_FILE_FORMAT));
    }
    return(!catch("ReadStatus(31)"));
 }
@@ -6138,7 +6139,7 @@ bool ValidateInputs() {
    else if (!StringLen(Sequence.ID)) {                            // status must be STATUS_UNDEFINED (sequence.id = 0)
       if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
    }
-   else {}                                                        // Sequence.ID was validated in ValidateInputs.SID()
+   else {}                                                        // the id was validated in ValidateInputs.SID()
 
    // GridDirection
    string sValues[], sValue=StrToLower(StrTrim(GridDirection));

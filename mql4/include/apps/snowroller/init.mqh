@@ -18,13 +18,12 @@ int onInitUser() {
          if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))                        // TODO: this must be Confirm() only
             return(SetLastError(ERR_CANCELLED_BY_USER));
 
+         sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
-         Sequence.ID      = ifString(IsTestSequence(), "T", "") + sequence.id;
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.cycle   = 1;
          sequence.created = Max(TimeCurrentEx(), TimeServer());
-         sequence.isTest  = IsTesting();
          sequence.status  = STATUS_WAITING;
-         SS.SequenceName();
          SaveStatus();
 
          if (IsLogDebug()) {

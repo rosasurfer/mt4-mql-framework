@@ -1,9 +1,30 @@
 /**
- * Called before input parameters change.
+ * Deinitialization
  *
  * @return int - error status
  *
  * @see  "mql4/experts/ZigZag EA.mq4"
+ */
+int onDeinit() {
+   if (IsTesting()) {
+      if (!last_error && sequence.status!=STATUS_STOPPED) {
+         bool success = true;
+         if (sequence.status == STATUS_PROGRESSING) {
+            success = UpdateStatus();
+         }
+         if (success) StopSequence(NULL);
+         ShowStatus();
+      }
+      return(last_error);
+   }
+   return(NO_ERROR);
+}
+
+
+/**
+ * Called before input parameters change.
+ *
+ * @return int - error status
  */
 int onDeinitParameters() {
    BackupInputs();
@@ -23,26 +44,6 @@ int onDeinitChartChange() {
 
 
 /**
- * Called if a test finished regularily, i.e. the test period ended.
- * Called if a test prematurely stopped because of a margin stopout (enforced by the tester).
- *
- * @return int - error status
- */
-int onDeinitUndefined() {
-   if (IsTesting()) {
-      if (!last_error) {
-         if (sequence.status == STATUS_PROGRESSING) {
-            logDebug("onDeinitUndefined(1)  "+ sequence.name +" test stopped in status "+ DoubleQuoteStr(StatusDescription(sequence.status)));
-         }
-         SaveStatus();
-      }
-      return(last_error);
-   }
-   return(catch("onDeinitUndefined(2)", ERR_UNDEFINED_STATE));    // never encountered, do what the Expander would do
-}
-
-
-/**
  * Online: Called in terminal builds <= 509 when a new chart template is applied.
  *         Called when the chart profile changes.
  *         Called when the chart is closed.
@@ -54,10 +55,8 @@ int onDeinitUndefined() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   if (!IsTesting()) {
-      if (sequence.status != STATUS_STOPPED) {
-         logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
-      }
+   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+      logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
 }
@@ -70,10 +69,8 @@ int onDeinitChartClose() {
  * @return int - error status
  */
 int onDeinitTemplate() {
-   if (!IsTesting()) {
-      if (sequence.status != STATUS_STOPPED) {
-         logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
-      }
+   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+      logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
 }
@@ -86,7 +83,7 @@ int onDeinitTemplate() {
  */
 int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    RemoveSequenceData();                                             // remove the sequence data stored in the chart
    return(NO_ERROR);
@@ -100,7 +97,7 @@ int onDeinitRemove() {
  */
 int onDeinitClose() {
    if (sequence.status != STATUS_STOPPED) {
-      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+      logInfo("onDeinitClose(1)  "+ sequence.name +" terminal shutdown in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
 }

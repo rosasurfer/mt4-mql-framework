@@ -28,10 +28,10 @@ int onInitUser() {
    }
    else if (StrTrim(Sequence.ID) == "") {                            // no sequence id was specified
       if (ValidateInputs()) {
+         sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
-         Sequence.ID      = sequence.id;
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
-         sequence.isTest  = IsTesting(); SS.SequenceName();
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {

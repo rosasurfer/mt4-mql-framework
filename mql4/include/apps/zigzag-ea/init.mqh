@@ -25,11 +25,11 @@ int onInitUser() {
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
-         sequence.id = CreateSequenceId();
-         Sequence.ID = sequence.id;
+         sequence.isTest  = IsTesting();
+         sequence.id      = CreateSequenceId();
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = Max(TimeCurrentEx(), TimeServer());
          sequence.status  = STATUS_WAITING;
-         SS.All();
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
       }
@@ -116,16 +116,15 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
-   bool sequenceWasStarted = (open.ticket || ArrayRange(closed.history, 0));
-   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+   if (IsTesting() || !IsTestSequence()) {
+      bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
+      if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
-   if (IsTesting()) {
       string section      = "Tester."+ StrTrim(ProgramName());
-      test.onStopPause    = GetConfigBool(section, "OnStopPause",   false);
+      test.onStopPause    = GetConfigBool(section, "OnStopPause",    true);
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
-
-   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
+   StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }
 
