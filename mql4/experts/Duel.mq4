@@ -87,29 +87,29 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define D_SHORT               TRADE_DIRECTION_SHORT
 #define D_BOTH                TRADE_DIRECTION_BOTH
 
-#define H_IDX_CYCLE           0                    // order history indexes
-#define H_IDX_STARTTIME       1
-#define H_IDX_STARTPRICE      2
-#define H_IDX_GRIDBASE        3                    // TODO: reposition gridbase the next time history gets extended
-#define H_IDX_STOPTIME        4
-#define H_IDX_STOPPRICE       5
-#define H_IDX_TOTALPROFIT     6
-#define H_IDX_MAXPROFIT       7
-#define H_IDX_MAXDRAWDOWN     8
-#define H_IDX_TICKET          9
-#define H_IDX_LEVEL          10
-#define H_IDX_LOTS           11
-#define H_IDX_PENDINGTYPE    12
-#define H_IDX_PENDINGTIME    13
-#define H_IDX_PENDINGPRICE   14
-#define H_IDX_OPENTYPE       15
-#define H_IDX_OPENTIME       16
-#define H_IDX_OPENPRICE      17
-#define H_IDX_CLOSETIME      18
-#define H_IDX_CLOSEPRICE     19
-#define H_IDX_SWAP           20
-#define H_IDX_COMMISSION     21
-#define H_IDX_PROFIT         22
+#define HI_CYCLE              0                    // order history indexes
+#define HI_STARTTIME          1
+#define HI_STARTPRICE         2
+#define HI_GRIDBASE           3                    // TODO: reposition gridbase the next time history gets extended
+#define HI_STOPTIME           4
+#define HI_STOPPRICE          5
+#define HI_TOTALPROFIT        6
+#define HI_MAXPROFIT          7
+#define HI_MAXDRAWDOWN        8
+#define HI_TICKET             9
+#define HI_LEVEL             10
+#define HI_LOTS              11
+#define HI_PENDINGTYPE       12
+#define HI_PENDINGTIME       13
+#define HI_PENDINGPRICE      14
+#define HI_OPENTYPE          15
+#define HI_OPENTIME          16
+#define HI_OPENPRICE         17
+#define HI_CLOSETIME         18
+#define HI_CLOSEPRICE        19
+#define HI_SWAP              20
+#define HI_COMMISSION        21
+#define HI_PROFIT            22
 
 // sequence data
 int      sequence.id;                              //
@@ -708,28 +708,28 @@ int ShowTradeHistory() {
    // process long trades of archived cycles
    orders = ArrayRange(long.history, 0);
    for (i=0; i < orders; i++) {
-      if (!long.history[i][H_IDX_CLOSETIME])               continue;    // skip open tickets     (should never happen)
-      if (long.history[i][H_IDX_OPENTYPE] == OP_UNDEFINED) continue;    // skip cancelled orders (should never happen)
+      if (!long.history[i][HI_CLOSETIME])               continue;       // skip open tickets     (should never happen)
+      if (long.history[i][HI_OPENTYPE] == OP_UNDEFINED) continue;       // skip cancelled orders (should never happen)
 
-      sOpenPrice  = NumberToStr(long.history[i][H_IDX_OPENPRICE ], PriceFormat);
-      sClosePrice = NumberToStr(long.history[i][H_IDX_CLOSEPRICE], PriceFormat);
-      text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.history[i][H_IDX_LEVEL], "+.");
+      sOpenPrice  = NumberToStr(long.history[i][HI_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(long.history[i][HI_CLOSEPRICE], PriceFormat);
+      text        = "Duel.L."+ sequence.id +"."+ NumberToStr(long.history[i][HI_LEVEL], "+.");
 
       // open marker
-      openLabel = StringConcatenate("#", _int(long.history[i][H_IDX_TICKET]), " buy ", NumberToStr(long.history[i][H_IDX_LOTS], ".1+"), " at ", sOpenPrice);
+      openLabel = StringConcatenate("#", _int(long.history[i][HI_TICKET]), " buy ", NumberToStr(long.history[i][HI_LOTS], ".1+"), " at ", sOpenPrice);
       if (ObjectFind(openLabel) == 0)
          ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][H_IDX_OPENTIME], long.history[i][H_IDX_OPENPRICE])) {
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE])) {
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
          ObjectSetText(openLabel, text);
       }
 
       // trend line
-      lineLabel = StringConcatenate("#", _int(long.history[i][H_IDX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      lineLabel = StringConcatenate("#", _int(long.history[i][HI_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
       if (ObjectFind(lineLabel) == 0)
          ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][H_IDX_OPENTIME], long.history[i][H_IDX_OPENPRICE], long.history[i][H_IDX_CLOSETIME], long.history[i][H_IDX_CLOSEPRICE])) {
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE], long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE])) {
          ObjectSet(lineLabel, OBJPROP_RAY,   false);
          ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
@@ -740,7 +740,7 @@ int ShowTradeHistory() {
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
       if (ObjectFind(closeLabel) == 0)
          ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][H_IDX_CLOSETIME], long.history[i][H_IDX_CLOSEPRICE])) {
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE])) {
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
          ObjectSetText(closeLabel, text);
@@ -751,28 +751,28 @@ int ShowTradeHistory() {
    // process short trades of archived cycles
    orders = ArrayRange(short.history, 0);
    for (i=0; i < orders; i++) {
-      if (!short.history[i][H_IDX_CLOSETIME])               continue;  // skip open tickets     (should never happen)
-      if (short.history[i][H_IDX_OPENTYPE] == OP_UNDEFINED) continue;  // skip cancelled orders (should never happen)
+      if (!short.history[i][HI_CLOSETIME])               continue;     // skip open tickets     (should never happen)
+      if (short.history[i][HI_OPENTYPE] == OP_UNDEFINED) continue;     // skip cancelled orders (should never happen)
 
-      sOpenPrice  = NumberToStr(short.history[i][H_IDX_OPENPRICE ], PriceFormat);
-      sClosePrice = NumberToStr(short.history[i][H_IDX_CLOSEPRICE], PriceFormat);
-      text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.history[i][H_IDX_LEVEL], "+.");
+      sOpenPrice  = NumberToStr(short.history[i][HI_OPENPRICE ], PriceFormat);
+      sClosePrice = NumberToStr(short.history[i][HI_CLOSEPRICE], PriceFormat);
+      text        = "Duel.S."+ sequence.id +"."+ NumberToStr(short.history[i][HI_LEVEL], "+.");
 
       // open marker
-      openLabel = StringConcatenate("#", _int(short.history[i][H_IDX_TICKET]), " buy ", NumberToStr(short.history[i][H_IDX_LOTS], ".1+"), " at ", sOpenPrice);
+      openLabel = StringConcatenate("#", _int(short.history[i][HI_TICKET]), " buy ", NumberToStr(short.history[i][HI_LOTS], ".1+"), " at ", sOpenPrice);
       if (ObjectFind(openLabel) == 0)
          ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][H_IDX_OPENTIME], short.history[i][H_IDX_OPENPRICE])) {
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE])) {
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
          ObjectSetText(openLabel, text);
       }
 
       // trend line
-      lineLabel = StringConcatenate("#", _int(short.history[i][H_IDX_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
+      lineLabel = StringConcatenate("#", _int(short.history[i][HI_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
       if (ObjectFind(lineLabel) == 0)
          ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][H_IDX_OPENTIME], short.history[i][H_IDX_OPENPRICE], short.history[i][H_IDX_CLOSETIME], short.history[i][H_IDX_CLOSEPRICE])) {
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE], short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE])) {
          ObjectSet(lineLabel, OBJPROP_RAY,   false);
          ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(lineLabel, OBJPROP_COLOR, Red);
@@ -783,7 +783,7 @@ int ShowTradeHistory() {
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
       if (ObjectFind(closeLabel) == 0)
          ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][H_IDX_CLOSETIME], short.history[i][H_IDX_CLOSEPRICE])) {
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE])) {
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
          ObjectSetText(closeLabel, text);
@@ -1125,14 +1125,14 @@ bool RestorePositions(double history[][], double &openPrice) {
    int size = ArrayRange(history, 0);
    if (!size) return(!catch("RestorePositions(2)  "+ sequence.name +" cannot restore last cycle (empty history)", ERR_ILLEGAL_STATE));
 
-   int lastCycle = history[size-1][H_IDX_CYCLE];
+   int lastCycle = history[size-1][HI_CYCLE];
    double price=0, lots=0, sumPrice=0, sumLots=0;
 
    for (int i=0; i < size; i++) {
-      if (history[i][H_IDX_CYCLE] == lastCycle) {
-         int direction = ifInt(history[i][H_IDX_OPENTYPE]==OP_BUY, D_LONG, D_SHORT);
+      if (history[i][HI_CYCLE] == lastCycle) {
+         int direction = ifInt(history[i][HI_OPENTYPE]==OP_BUY, D_LONG, D_SHORT);
 
-         if (!Grid.AddPosition(direction, history[i][H_IDX_LEVEL], price, lots)) return(false);
+         if (!Grid.AddPosition(direction, history[i][HI_LEVEL], price, lots)) return(false);
          sumPrice += lots * price;
          sumLots  += lots;
       }
@@ -3176,60 +3176,60 @@ int History.AddRecord(int direction, int index, int cycle, double gridbase, date
    if (direction == D_LONG) {
       int size = ArrayRange(long.history, 0);
       if (index >= size) ArrayResize(long.history, index+1);
-      if (long.history[index][H_IDX_CYCLE] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite long.history[] record, cycle="+ long.history[index][H_IDX_CYCLE] +", ticket #"+ long.history[index][H_IDX_TICKET] +")", ERR_INVALID_PARAMETER));
+      if (long.history[index][HI_CYCLE] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite long.history[] record, cycle="+ long.history[index][HI_CYCLE] +", ticket #"+ long.history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-      long.history[index][H_IDX_CYCLE       ] = cycle;
-      long.history[index][H_IDX_STARTTIME   ] = startTime;
-      long.history[index][H_IDX_STARTPRICE  ] = startPrice;
-      long.history[index][H_IDX_GRIDBASE    ] = gridbase;
-      long.history[index][H_IDX_STOPTIME    ] = stopTime;
-      long.history[index][H_IDX_STOPPRICE   ] = stopPrice;
-      long.history[index][H_IDX_TOTALPROFIT ] = totalProfit;
-      long.history[index][H_IDX_MAXPROFIT   ] = maxProfit;
-      long.history[index][H_IDX_MAXDRAWDOWN ] = maxDrawdown;
-      long.history[index][H_IDX_TICKET      ] = ticket;
-      long.history[index][H_IDX_LEVEL       ] = level;
-      long.history[index][H_IDX_LOTS        ] = lots;
-      long.history[index][H_IDX_PENDINGTYPE ] = pendingType;
-      long.history[index][H_IDX_PENDINGTIME ] = pendingTime;
-      long.history[index][H_IDX_PENDINGPRICE] = pendingPrice;
-      long.history[index][H_IDX_OPENTYPE    ] = openType;
-      long.history[index][H_IDX_OPENTIME    ] = openTime;
-      long.history[index][H_IDX_OPENPRICE   ] = openPrice;
-      long.history[index][H_IDX_CLOSETIME   ] = closeTime;
-      long.history[index][H_IDX_CLOSEPRICE  ] = closePrice;
-      long.history[index][H_IDX_SWAP        ] = swap;
-      long.history[index][H_IDX_COMMISSION  ] = commission;
-      long.history[index][H_IDX_PROFIT      ] = profit;
+      long.history[index][HI_CYCLE       ] = cycle;
+      long.history[index][HI_STARTTIME   ] = startTime;
+      long.history[index][HI_STARTPRICE  ] = startPrice;
+      long.history[index][HI_GRIDBASE    ] = gridbase;
+      long.history[index][HI_STOPTIME    ] = stopTime;
+      long.history[index][HI_STOPPRICE   ] = stopPrice;
+      long.history[index][HI_TOTALPROFIT ] = totalProfit;
+      long.history[index][HI_MAXPROFIT   ] = maxProfit;
+      long.history[index][HI_MAXDRAWDOWN ] = maxDrawdown;
+      long.history[index][HI_TICKET      ] = ticket;
+      long.history[index][HI_LEVEL       ] = level;
+      long.history[index][HI_LOTS        ] = lots;
+      long.history[index][HI_PENDINGTYPE ] = pendingType;
+      long.history[index][HI_PENDINGTIME ] = pendingTime;
+      long.history[index][HI_PENDINGPRICE] = pendingPrice;
+      long.history[index][HI_OPENTYPE    ] = openType;
+      long.history[index][HI_OPENTIME    ] = openTime;
+      long.history[index][HI_OPENPRICE   ] = openPrice;
+      long.history[index][HI_CLOSETIME   ] = closeTime;
+      long.history[index][HI_CLOSEPRICE  ] = closePrice;
+      long.history[index][HI_SWAP        ] = swap;
+      long.history[index][HI_COMMISSION  ] = commission;
+      long.history[index][HI_PROFIT      ] = profit;
    }
    else if (direction == D_SHORT) {
       size = ArrayRange(short.history, 0);
       if (index >= size) ArrayResize(short.history, index+1);
-      if (short.history[index][H_IDX_CYCLE] != 0) return(!catch("History.AddRecord(3)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite short.history[] record, cycle="+ short.history[index][H_IDX_CYCLE] +", ticket #"+ short.history[index][H_IDX_TICKET] +")", ERR_INVALID_PARAMETER));
+      if (short.history[index][HI_CYCLE] != 0) return(!catch("History.AddRecord(3)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite short.history[] record, cycle="+ short.history[index][HI_CYCLE] +", ticket #"+ short.history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-      short.history[index][H_IDX_CYCLE       ] = cycle;
-      short.history[index][H_IDX_STARTTIME   ] = startTime;
-      short.history[index][H_IDX_STARTPRICE  ] = startPrice;
-      short.history[index][H_IDX_GRIDBASE    ] = gridbase;
-      short.history[index][H_IDX_STOPTIME    ] = stopTime;
-      short.history[index][H_IDX_STOPPRICE   ] = stopPrice;
-      short.history[index][H_IDX_TOTALPROFIT ] = totalProfit;
-      short.history[index][H_IDX_MAXPROFIT   ] = maxProfit;
-      short.history[index][H_IDX_MAXDRAWDOWN ] = maxDrawdown;
-      short.history[index][H_IDX_TICKET      ] = ticket;
-      short.history[index][H_IDX_LEVEL       ] = level;
-      short.history[index][H_IDX_LOTS        ] = lots;
-      short.history[index][H_IDX_PENDINGTYPE ] = pendingType;
-      short.history[index][H_IDX_PENDINGTIME ] = pendingTime;
-      short.history[index][H_IDX_PENDINGPRICE] = pendingPrice;
-      short.history[index][H_IDX_OPENTYPE    ] = openType;
-      short.history[index][H_IDX_OPENTIME    ] = openTime;
-      short.history[index][H_IDX_OPENPRICE   ] = openPrice;
-      short.history[index][H_IDX_CLOSETIME   ] = closeTime;
-      short.history[index][H_IDX_CLOSEPRICE  ] = closePrice;
-      short.history[index][H_IDX_SWAP        ] = swap;
-      short.history[index][H_IDX_COMMISSION  ] = commission;
-      short.history[index][H_IDX_PROFIT      ] = profit;
+      short.history[index][HI_CYCLE       ] = cycle;
+      short.history[index][HI_STARTTIME   ] = startTime;
+      short.history[index][HI_STARTPRICE  ] = startPrice;
+      short.history[index][HI_GRIDBASE    ] = gridbase;
+      short.history[index][HI_STOPTIME    ] = stopTime;
+      short.history[index][HI_STOPPRICE   ] = stopPrice;
+      short.history[index][HI_TOTALPROFIT ] = totalProfit;
+      short.history[index][HI_MAXPROFIT   ] = maxProfit;
+      short.history[index][HI_MAXDRAWDOWN ] = maxDrawdown;
+      short.history[index][HI_TICKET      ] = ticket;
+      short.history[index][HI_LEVEL       ] = level;
+      short.history[index][HI_LOTS        ] = lots;
+      short.history[index][HI_PENDINGTYPE ] = pendingType;
+      short.history[index][HI_PENDINGTIME ] = pendingTime;
+      short.history[index][HI_PENDINGPRICE] = pendingPrice;
+      short.history[index][HI_OPENTYPE    ] = openType;
+      short.history[index][HI_OPENTIME    ] = openTime;
+      short.history[index][HI_OPENPRICE   ] = openPrice;
+      short.history[index][HI_CLOSETIME   ] = closeTime;
+      short.history[index][HI_CLOSEPRICE  ] = closePrice;
+      short.history[index][HI_SWAP        ] = swap;
+      short.history[index][HI_COMMISSION  ] = commission;
+      short.history[index][HI_PROFIT      ] = profit;
    }
    else return(!catch("History.AddRecord(4)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
@@ -3321,29 +3321,29 @@ bool ArchiveStoppedSequence() {
       ArrayResize(long.history, historySize + ordersSize);
 
       for (int i=0; i < ordersSize; i++) {
-         long.history[historySize+i][H_IDX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
-         long.history[historySize+i][H_IDX_STARTTIME   ] = sequence.startTime;     //
-         long.history[historySize+i][H_IDX_STARTPRICE  ] = sequence.startPrice;    //
-         long.history[historySize+i][H_IDX_GRIDBASE    ] = sequence.gridbase;      //
-         long.history[historySize+i][H_IDX_STOPTIME    ] = sequence.stopTime;      //
-         long.history[historySize+i][H_IDX_STOPPRICE   ] = sequence.stopPrice;     //
-         long.history[historySize+i][H_IDX_TOTALPROFIT ] = sequence.totalPL;       //
-         long.history[historySize+i][H_IDX_MAXPROFIT   ] = sequence.maxProfit;     //
-         long.history[historySize+i][H_IDX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
-         long.history[historySize+i][H_IDX_TICKET      ] = long.ticket      [i];
-         long.history[historySize+i][H_IDX_LEVEL       ] = long.level       [i];
-         long.history[historySize+i][H_IDX_LOTS        ] = long.lots        [i];
-         long.history[historySize+i][H_IDX_PENDINGTYPE ] = long.pendingType [i];
-         long.history[historySize+i][H_IDX_PENDINGTIME ] = long.pendingTime [i];
-         long.history[historySize+i][H_IDX_PENDINGPRICE] = long.pendingPrice[i];
-         long.history[historySize+i][H_IDX_OPENTYPE    ] = long.openType    [i];
-         long.history[historySize+i][H_IDX_OPENTIME    ] = long.openTime    [i];
-         long.history[historySize+i][H_IDX_OPENPRICE   ] = long.openPrice   [i];
-         long.history[historySize+i][H_IDX_CLOSETIME   ] = long.closeTime   [i];
-         long.history[historySize+i][H_IDX_CLOSEPRICE  ] = long.closePrice  [i];
-         long.history[historySize+i][H_IDX_SWAP        ] = long.swap        [i];
-         long.history[historySize+i][H_IDX_COMMISSION  ] = long.commission  [i];
-         long.history[historySize+i][H_IDX_PROFIT      ] = long.profit      [i];
+         long.history[historySize+i][HI_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         long.history[historySize+i][HI_STARTTIME   ] = sequence.startTime;     //
+         long.history[historySize+i][HI_STARTPRICE  ] = sequence.startPrice;    //
+         long.history[historySize+i][HI_GRIDBASE    ] = sequence.gridbase;      //
+         long.history[historySize+i][HI_STOPTIME    ] = sequence.stopTime;      //
+         long.history[historySize+i][HI_STOPPRICE   ] = sequence.stopPrice;     //
+         long.history[historySize+i][HI_TOTALPROFIT ] = sequence.totalPL;       //
+         long.history[historySize+i][HI_MAXPROFIT   ] = sequence.maxProfit;     //
+         long.history[historySize+i][HI_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
+         long.history[historySize+i][HI_TICKET      ] = long.ticket      [i];
+         long.history[historySize+i][HI_LEVEL       ] = long.level       [i];
+         long.history[historySize+i][HI_LOTS        ] = long.lots        [i];
+         long.history[historySize+i][HI_PENDINGTYPE ] = long.pendingType [i];
+         long.history[historySize+i][HI_PENDINGTIME ] = long.pendingTime [i];
+         long.history[historySize+i][HI_PENDINGPRICE] = long.pendingPrice[i];
+         long.history[historySize+i][HI_OPENTYPE    ] = long.openType    [i];
+         long.history[historySize+i][HI_OPENTIME    ] = long.openTime    [i];
+         long.history[historySize+i][HI_OPENPRICE   ] = long.openPrice   [i];
+         long.history[historySize+i][HI_CLOSETIME   ] = long.closeTime   [i];
+         long.history[historySize+i][HI_CLOSEPRICE  ] = long.closePrice  [i];
+         long.history[historySize+i][HI_SWAP        ] = long.swap        [i];
+         long.history[historySize+i][HI_COMMISSION  ] = long.commission  [i];
+         long.history[historySize+i][HI_PROFIT      ] = long.profit      [i];
       }
       ArrayResize(long.ticket,       0);
       ArrayResize(long.level,        0);
@@ -3368,29 +3368,29 @@ bool ArchiveStoppedSequence() {
       ArrayResize(short.history, historySize + ordersSize);
 
       for (i=0; i < ordersSize; i++) {
-         short.history[historySize+i][H_IDX_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
-         short.history[historySize+i][H_IDX_STARTTIME   ] = sequence.startTime;     //
-         short.history[historySize+i][H_IDX_STARTPRICE  ] = sequence.startPrice;    //
-         short.history[historySize+i][H_IDX_GRIDBASE    ] = sequence.gridbase;      //
-         short.history[historySize+i][H_IDX_STOPTIME    ] = sequence.stopTime;      //
-         short.history[historySize+i][H_IDX_STOPPRICE   ] = sequence.stopPrice;     //
-         short.history[historySize+i][H_IDX_TOTALPROFIT ] = sequence.totalPL;       //
-         short.history[historySize+i][H_IDX_MAXPROFIT   ] = sequence.maxProfit;     //
-         short.history[historySize+i][H_IDX_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
-         short.history[historySize+i][H_IDX_TICKET      ] = short.ticket      [i];
-         short.history[historySize+i][H_IDX_LEVEL       ] = short.level       [i];
-         short.history[historySize+i][H_IDX_LOTS        ] = short.lots        [i];
-         short.history[historySize+i][H_IDX_PENDINGTYPE ] = short.pendingType [i];
-         short.history[historySize+i][H_IDX_PENDINGTIME ] = short.pendingTime [i];
-         short.history[historySize+i][H_IDX_PENDINGPRICE] = short.pendingPrice[i];
-         short.history[historySize+i][H_IDX_OPENTYPE    ] = short.openType    [i];
-         short.history[historySize+i][H_IDX_OPENTIME    ] = short.openTime    [i];
-         short.history[historySize+i][H_IDX_OPENPRICE   ] = short.openPrice   [i];
-         short.history[historySize+i][H_IDX_CLOSETIME   ] = short.closeTime   [i];
-         short.history[historySize+i][H_IDX_CLOSEPRICE  ] = short.closePrice  [i];
-         short.history[historySize+i][H_IDX_SWAP        ] = short.swap        [i];
-         short.history[historySize+i][H_IDX_COMMISSION  ] = short.commission  [i];
-         short.history[historySize+i][H_IDX_PROFIT      ] = short.profit      [i];
+         short.history[historySize+i][HI_CYCLE       ] = sequence.cycle;         // for simplicity sequence data is duplicated
+         short.history[historySize+i][HI_STARTTIME   ] = sequence.startTime;     //
+         short.history[historySize+i][HI_STARTPRICE  ] = sequence.startPrice;    //
+         short.history[historySize+i][HI_GRIDBASE    ] = sequence.gridbase;      //
+         short.history[historySize+i][HI_STOPTIME    ] = sequence.stopTime;      //
+         short.history[historySize+i][HI_STOPPRICE   ] = sequence.stopPrice;     //
+         short.history[historySize+i][HI_TOTALPROFIT ] = sequence.totalPL;       //
+         short.history[historySize+i][HI_MAXPROFIT   ] = sequence.maxProfit;     //
+         short.history[historySize+i][HI_MAXDRAWDOWN ] = sequence.maxDrawdown;   //
+         short.history[historySize+i][HI_TICKET      ] = short.ticket      [i];
+         short.history[historySize+i][HI_LEVEL       ] = short.level       [i];
+         short.history[historySize+i][HI_LOTS        ] = short.lots        [i];
+         short.history[historySize+i][HI_PENDINGTYPE ] = short.pendingType [i];
+         short.history[historySize+i][HI_PENDINGTIME ] = short.pendingTime [i];
+         short.history[historySize+i][HI_PENDINGPRICE] = short.pendingPrice[i];
+         short.history[historySize+i][HI_OPENTYPE    ] = short.openType    [i];
+         short.history[historySize+i][HI_OPENTIME    ] = short.openTime    [i];
+         short.history[historySize+i][HI_OPENPRICE   ] = short.openPrice   [i];
+         short.history[historySize+i][HI_CLOSETIME   ] = short.closeTime   [i];
+         short.history[historySize+i][HI_CLOSEPRICE  ] = short.closePrice  [i];
+         short.history[historySize+i][HI_SWAP        ] = short.swap        [i];
+         short.history[historySize+i][HI_COMMISSION  ] = short.commission  [i];
+         short.history[historySize+i][HI_PROFIT      ] = short.profit      [i];
       }
       ArrayResize(short.ticket,       0);
       ArrayResize(short.level,        0);
@@ -3782,54 +3782,54 @@ string SaveStatus.HistoryToStr(int direction, int index) {
    // result: cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
 
    if (direction == D_LONG) {
-      cycle        = long.history[index][H_IDX_CYCLE       ];
-      startTime    = long.history[index][H_IDX_STARTTIME   ];
-      startPrice   = long.history[index][H_IDX_STARTPRICE  ];
-      gridbase     = long.history[index][H_IDX_GRIDBASE    ];
-      stopTime     = long.history[index][H_IDX_STOPTIME    ];
-      stopPrice    = long.history[index][H_IDX_STOPPRICE   ];
-      totalProfit  = long.history[index][H_IDX_TOTALPROFIT ];
-      maxProfit    = long.history[index][H_IDX_MAXPROFIT   ];
-      maxDrawdown  = long.history[index][H_IDX_MAXDRAWDOWN ];
-      ticket       = long.history[index][H_IDX_TICKET      ];
-      level        = long.history[index][H_IDX_LEVEL       ];
-      lots         = long.history[index][H_IDX_LOTS        ];
-      pendingType  = long.history[index][H_IDX_PENDINGTYPE ];
-      pendingTime  = long.history[index][H_IDX_PENDINGTIME ];
-      pendingPrice = long.history[index][H_IDX_PENDINGPRICE];
-      openType     = long.history[index][H_IDX_OPENTYPE    ];
-      openTime     = long.history[index][H_IDX_OPENTIME    ];
-      openPrice    = long.history[index][H_IDX_OPENPRICE   ];
-      closeTime    = long.history[index][H_IDX_CLOSETIME   ];
-      closePrice   = long.history[index][H_IDX_CLOSEPRICE  ];
-      swap         = long.history[index][H_IDX_SWAP        ];
-      commission   = long.history[index][H_IDX_COMMISSION  ];
-      profit       = long.history[index][H_IDX_PROFIT      ];
+      cycle        = long.history[index][HI_CYCLE       ];
+      startTime    = long.history[index][HI_STARTTIME   ];
+      startPrice   = long.history[index][HI_STARTPRICE  ];
+      gridbase     = long.history[index][HI_GRIDBASE    ];
+      stopTime     = long.history[index][HI_STOPTIME    ];
+      stopPrice    = long.history[index][HI_STOPPRICE   ];
+      totalProfit  = long.history[index][HI_TOTALPROFIT ];
+      maxProfit    = long.history[index][HI_MAXPROFIT   ];
+      maxDrawdown  = long.history[index][HI_MAXDRAWDOWN ];
+      ticket       = long.history[index][HI_TICKET      ];
+      level        = long.history[index][HI_LEVEL       ];
+      lots         = long.history[index][HI_LOTS        ];
+      pendingType  = long.history[index][HI_PENDINGTYPE ];
+      pendingTime  = long.history[index][HI_PENDINGTIME ];
+      pendingPrice = long.history[index][HI_PENDINGPRICE];
+      openType     = long.history[index][HI_OPENTYPE    ];
+      openTime     = long.history[index][HI_OPENTIME    ];
+      openPrice    = long.history[index][HI_OPENPRICE   ];
+      closeTime    = long.history[index][HI_CLOSETIME   ];
+      closePrice   = long.history[index][HI_CLOSEPRICE  ];
+      swap         = long.history[index][HI_SWAP        ];
+      commission   = long.history[index][HI_COMMISSION  ];
+      profit       = long.history[index][HI_PROFIT      ];
    }
    else if (direction == D_SHORT) {
-      cycle        = short.history[index][H_IDX_CYCLE       ];
-      startTime    = short.history[index][H_IDX_STARTTIME   ];
-      startPrice   = short.history[index][H_IDX_STARTPRICE  ];
-      gridbase     = short.history[index][H_IDX_GRIDBASE    ];
-      stopTime     = short.history[index][H_IDX_STOPTIME    ];
-      stopPrice    = short.history[index][H_IDX_STOPPRICE   ];
-      totalProfit  = short.history[index][H_IDX_TOTALPROFIT ];
-      maxProfit    = short.history[index][H_IDX_MAXPROFIT   ];
-      maxDrawdown  = short.history[index][H_IDX_MAXDRAWDOWN ];
-      ticket       = short.history[index][H_IDX_TICKET      ];
-      level        = short.history[index][H_IDX_LEVEL       ];
-      lots         = short.history[index][H_IDX_LOTS        ];
-      pendingType  = short.history[index][H_IDX_PENDINGTYPE ];
-      pendingTime  = short.history[index][H_IDX_PENDINGTIME ];
-      pendingPrice = short.history[index][H_IDX_PENDINGPRICE];
-      openType     = short.history[index][H_IDX_OPENTYPE    ];
-      openTime     = short.history[index][H_IDX_OPENTIME    ];
-      openPrice    = short.history[index][H_IDX_OPENPRICE   ];
-      closeTime    = short.history[index][H_IDX_CLOSETIME   ];
-      closePrice   = short.history[index][H_IDX_CLOSEPRICE  ];
-      swap         = short.history[index][H_IDX_SWAP        ];
-      commission   = short.history[index][H_IDX_COMMISSION  ];
-      profit       = short.history[index][H_IDX_PROFIT      ];
+      cycle        = short.history[index][HI_CYCLE       ];
+      startTime    = short.history[index][HI_STARTTIME   ];
+      startPrice   = short.history[index][HI_STARTPRICE  ];
+      gridbase     = short.history[index][HI_GRIDBASE    ];
+      stopTime     = short.history[index][HI_STOPTIME    ];
+      stopPrice    = short.history[index][HI_STOPPRICE   ];
+      totalProfit  = short.history[index][HI_TOTALPROFIT ];
+      maxProfit    = short.history[index][HI_MAXPROFIT   ];
+      maxDrawdown  = short.history[index][HI_MAXDRAWDOWN ];
+      ticket       = short.history[index][HI_TICKET      ];
+      level        = short.history[index][HI_LEVEL       ];
+      lots         = short.history[index][HI_LOTS        ];
+      pendingType  = short.history[index][HI_PENDINGTYPE ];
+      pendingTime  = short.history[index][HI_PENDINGTIME ];
+      pendingPrice = short.history[index][HI_PENDINGPRICE];
+      openType     = short.history[index][HI_OPENTYPE    ];
+      openTime     = short.history[index][HI_OPENTIME    ];
+      openPrice    = short.history[index][HI_OPENPRICE   ];
+      closeTime    = short.history[index][HI_CLOSETIME   ];
+      closePrice   = short.history[index][HI_CLOSEPRICE  ];
+      swap         = short.history[index][HI_SWAP        ];
+      commission   = short.history[index][HI_COMMISSION  ];
+      profit       = short.history[index][HI_PROFIT      ];
    }
    else return(_EMPTY_STR(catch("SaveStatus.HistoryToStr(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
@@ -4093,29 +4093,29 @@ bool ReadStatus.ParseOrder(string key, string value) {
       int index = StrToInteger(sId);
       if (Explode(value, ",", values, NULL) != ArrayRange(long.history, 1)) return(!catch("ReadStatus.ParseOrder(5)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-      int      cycle        = StrToInteger(values[H_IDX_CYCLE       ]);
-      datetime startTime    = StrToInteger(values[H_IDX_STARTTIME   ]);
-      double   startPrice   =  StrToDouble(values[H_IDX_STARTPRICE  ]);
-      double   gridbase     =  StrToDouble(values[H_IDX_GRIDBASE    ]);
-      datetime stopTime     = StrToInteger(values[H_IDX_STOPTIME    ]);
-      double   stopPrice    =  StrToDouble(values[H_IDX_STOPPRICE   ]);
-      double   totalProfit  =  StrToDouble(values[H_IDX_TOTALPROFIT ]);
-      double   maxProfit    =  StrToDouble(values[H_IDX_MAXPROFIT   ]);
-      double   maxDrawdown  =  StrToDouble(values[H_IDX_MAXDRAWDOWN ]);
-               ticket       = StrToInteger(values[H_IDX_TICKET      ]);
-               level        = StrToInteger(values[H_IDX_LEVEL       ]);
-               lots         =  StrToDouble(values[H_IDX_LOTS        ]);
-               pendingType  = StrToInteger(values[H_IDX_PENDINGTYPE ]);
-               pendingTime  = StrToInteger(values[H_IDX_PENDINGTIME ]);
-               pendingPrice =  StrToDouble(values[H_IDX_PENDINGPRICE]);
-               openType     = StrToInteger(values[H_IDX_OPENTYPE    ]);
-               openTime     = StrToInteger(values[H_IDX_OPENTIME    ]);
-               openPrice    =  StrToDouble(values[H_IDX_OPENPRICE   ]);
-               closeTime    = StrToInteger(values[H_IDX_CLOSETIME   ]);
-               closePrice   =  StrToDouble(values[H_IDX_CLOSEPRICE  ]);
-               swap         =  StrToDouble(values[H_IDX_SWAP        ]);
-               commission   =  StrToDouble(values[H_IDX_COMMISSION  ]);
-               profit       =  StrToDouble(values[H_IDX_PROFIT      ]);
+      int      cycle        = StrToInteger(values[HI_CYCLE       ]);
+      datetime startTime    = StrToInteger(values[HI_STARTTIME   ]);
+      double   startPrice   =  StrToDouble(values[HI_STARTPRICE  ]);
+      double   gridbase     =  StrToDouble(values[HI_GRIDBASE    ]);
+      datetime stopTime     = StrToInteger(values[HI_STOPTIME    ]);
+      double   stopPrice    =  StrToDouble(values[HI_STOPPRICE   ]);
+      double   totalProfit  =  StrToDouble(values[HI_TOTALPROFIT ]);
+      double   maxProfit    =  StrToDouble(values[HI_MAXPROFIT   ]);
+      double   maxDrawdown  =  StrToDouble(values[HI_MAXDRAWDOWN ]);
+               ticket       = StrToInteger(values[HI_TICKET      ]);
+               level        = StrToInteger(values[HI_LEVEL       ]);
+               lots         =  StrToDouble(values[HI_LOTS        ]);
+               pendingType  = StrToInteger(values[HI_PENDINGTYPE ]);
+               pendingTime  = StrToInteger(values[HI_PENDINGTIME ]);
+               pendingPrice =  StrToDouble(values[HI_PENDINGPRICE]);
+               openType     = StrToInteger(values[HI_OPENTYPE    ]);
+               openTime     = StrToInteger(values[HI_OPENTIME    ]);
+               openPrice    =  StrToDouble(values[HI_OPENPRICE   ]);
+               closeTime    = StrToInteger(values[HI_CLOSETIME   ]);
+               closePrice   =  StrToDouble(values[HI_CLOSEPRICE  ]);
+               swap         =  StrToDouble(values[HI_SWAP        ]);
+               commission   =  StrToDouble(values[HI_COMMISSION  ]);
+               profit       =  StrToDouble(values[HI_PROFIT      ]);
       return(History.AddRecord(direction, index, cycle, gridbase, startTime, startPrice, stopTime, stopPrice, totalProfit, maxProfit, maxDrawdown, ticket, level, lots, pendingType, pendingTime, pendingPrice, openType, openTime, openPrice, closeTime, closePrice, swap, commission, profit));
    }
 }
@@ -4434,12 +4434,12 @@ void SS.CycleStats() {
    int size=ArrayRange(history, 0), lastCycle=0;
 
    for (int i=0; i < size; i++) {
-      int cycle = history[i][H_IDX_CYCLE];
+      int cycle = history[i][HI_CYCLE];
 
       if (cycle != lastCycle) {
-         double totalPL     = history[i][H_IDX_TOTALPROFIT];
-         double maxProfit   = history[i][H_IDX_MAXPROFIT  ];
-         double maxDrawdown = history[i][H_IDX_MAXDRAWDOWN];
+         double totalPL     = history[i][HI_TOTALPROFIT];
+         double maxProfit   = history[i][HI_MAXPROFIT  ];
+         double maxDrawdown = history[i][HI_MAXDRAWDOWN];
 
          if (ShowProfitInPercent) {
             sTotalPL     = NumberToStr(MathDiv(totalPL,     sequence.startEquity) * 100, "+.2") +"%";
