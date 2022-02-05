@@ -526,32 +526,32 @@ bool IsTicket(int ticket) {
 /**
  * Select a ticket.
  *
- * @param  int    ticket                      - ticket id
- * @param  string id                          - identifier of a potential error message
+ * @param  int    ticket                      - ticket
+ * @param  string location                    - location identifier of a potential error message
  * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
  * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
- *                                              (default: yes on pushTicket=TRUE, no on pushTicket=FALSE)
+ *                                              (default: yes if pushTicket=TRUE, no if pushTicket=FALSE)
  * @return bool - success status
  */
-bool SelectTicket(int ticket, string id, bool pushTicket=false, bool onErrorPopTicket=false) {
+bool SelectTicket(int ticket, string location, bool pushTicket=false, bool onErrorPopTicket=false) {
    pushTicket       = pushTicket!=0;
    onErrorPopTicket = onErrorPopTicket!=0;
 
    if (pushTicket) {
-      if (!OrderPush(id)) return(false);
+      if (!OrderPush(location +"->SelectTicket(1)")) return(false);
       onErrorPopTicket = true;
    }
 
    if (OrderSelect(ticket, SELECT_BY_TICKET))
-      return(true);                             // success
+      return(true);                                   // success
 
-   if (onErrorPopTicket)                        // error
-      if (!OrderPop(id)) return(false);
+   if (onErrorPopTicket)                              // error
+      if (!OrderPop(location +"->SelectTicket(2)")) return(false);
 
    int error = GetLastError();
    if (!error)
       error = ERR_INVALID_TICKET;
-   return(!catch(id +"->SelectTicket()   ticket="+ ticket, error));
+   return(!catch(location +"->SelectTicket(3)   ticket="+ ticket, error));
 }
 
 
