@@ -1488,7 +1488,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &gridError, d
          else if (isClosed) {                                     // the order was unexpectedly cancelled
             closeTimes[i] = OrderCloseTime();
             gridError = true;
-            if (IsError(UpdateStatus.OnGridError("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i, error), error))) return(false);
+            if (IsError(UpdateStatus.onOrderChange("UpdateStatus(5)  "+ sequence.name +" "+ UpdateStatus.OrderCancelledMsg(direction, i, error), error))) return(false);
          }
       }
 
@@ -1506,7 +1506,7 @@ bool UpdateStatus.Direction(int direction, bool &gridChanged, bool &gridError, d
             closePrices[i] = OrderClosePrice();
             closedPL += swaps[i] + commissions[i] + profits[i];   // update closed PL
             gridError = true;
-            if (IsError(UpdateStatus.OnGridError("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i, error), error))) return(false);
+            if (IsError(UpdateStatus.onOrderChange("UpdateStatus(6)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(direction, i, error), error))) return(false);
          }
       }
    }
@@ -1693,8 +1693,8 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
  *
  * @return int - the same error
  */
-int UpdateStatus.OnGridError(string message, int error) {
-   if (!IsTesting()) logError(message, error);        // onTick() will stop the sequence and halt the EA
+int UpdateStatus.onOrderChange(string message, int error) {
+   if (!IsTesting()) logError(message, error);
    else if (!error)  logDebug(message, error);
    else              catch(message, error);
    return(error);
@@ -3852,7 +3852,7 @@ bool RestoreSequence() {
 
 
 /**
- * Read the status file of a sequence and restore internal variables. Called only from RestoreSequence().
+ * Read the status file of a sequence and restore inputs and runtime variables. Called only from RestoreSequence().
  * Only syntactical validation is performed (i.e. type match). Logical validation happens in ValidateInputs().
  *
  * @return bool - success status
@@ -3866,8 +3866,8 @@ bool ReadStatus() {
 
    // [General]
    section = "General";
-   string sAccount = GetIniStringA(file, section, "Account", "");                                     // string Account = ICMarkets:12345678
-   string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                                     // string Symbol  = EURUSD
+   string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
+   string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
@@ -4091,8 +4091,8 @@ bool ReadStatus.ParseOrder(string key, string value) {
       // [long|short].history.i=cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
       string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))        return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
       int index = StrToInteger(sId);
-
       if (Explode(value, ",", values, NULL) != ArrayRange(long.history, 1)) return(!catch("ReadStatus.ParseOrder(5)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
+
       int      cycle        = StrToInteger(values[H_IDX_CYCLE       ]);
       datetime startTime    = StrToInteger(values[H_IDX_STARTTIME   ]);
       double   startPrice   =  StrToDouble(values[H_IDX_STARTPRICE  ]);

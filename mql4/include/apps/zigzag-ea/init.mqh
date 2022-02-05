@@ -116,16 +116,15 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
-   bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
-   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+   if (IsTesting() || !IsTestSequence()) {
+      bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
+      if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
-   if (IsTesting()) {
       string section      = "Tester."+ StrTrim(ProgramName());
       test.onStopPause    = GetConfigBool(section, "OnStopPause",    true);
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
-
-   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
+   StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }
 

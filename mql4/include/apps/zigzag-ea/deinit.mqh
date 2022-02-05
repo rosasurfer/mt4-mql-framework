@@ -8,8 +8,12 @@
 int onDeinit() {
    if (IsTesting()) {
       if (!last_error && sequence.status!=STATUS_STOPPED) {
-         if (IsLogInfo()) logInfo("onDeinit(1)  "+ sequence.name +" test stopped in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
-         SaveStatus();
+         bool success = true;
+         if (sequence.status == STATUS_PROGRESSING) {
+            success = UpdateStatus();
+         }
+         if (success) StopSequence(NULL);
+         ShowStatus();
       }
       return(last_error);
    }
