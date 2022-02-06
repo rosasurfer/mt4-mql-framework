@@ -708,6 +708,16 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   return("ZigZag."+ sequence.id);
+}
+
+
+/**
  * Return the full name of the instance logfile.
  *
  * @return string - filename or an empty string in case of errors

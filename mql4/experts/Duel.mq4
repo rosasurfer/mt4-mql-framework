@@ -1818,6 +1818,16 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   return("Duel."+ sequence.id);
+}
+
+
+/**
  * Generate a unique magic order number for the sequence.
  *
  * @param  int level - gridlevel

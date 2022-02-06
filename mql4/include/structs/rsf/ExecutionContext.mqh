@@ -76,8 +76,6 @@
    int      ec_TestTicks          (int ec[]);
    double   ec_TestSpread         (int ec[]);
    int      ec_TestTradeDirections(int ec[]);
-   int      ec_TestReportId       (int ec[]);
-   string   ec_TestReportSymbol   (int ec[]);
    bool     ec_Testing            (int ec[]);
    bool     ec_VisualMode         (int ec[]);
    bool     ec_Optimization       (int ec[]);
