@@ -389,9 +389,9 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
 
-   error = catch("deinit(1)");                                          // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   error = catch("deinit(2)");                                          // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
       return(error|last_error|LeaveContext(__ExecutionContext));
@@ -413,15 +413,14 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();       break;     //
                                                                         //
          default:                                                       //
-            CheckErrors("deinit(2)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(3)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             return(last_error|LeaveContext(__ExecutionContext));        //
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
    if (!This.IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(3)");
-   return(last_error|LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
 }
 
 

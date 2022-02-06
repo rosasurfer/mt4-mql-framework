@@ -239,12 +239,12 @@ bool     metrics.initialized;                   // whether metrics metadata has 
 string   metrics.server = "XTrade-Testresults";
 int      metrics.format = 400;
 
-bool     metrics.enabled    [16];               // whether a specific metric is currently activated
-string   metrics.symbol     [16];               // the symbol of a metric
-string   metrics.description[16];               // the description of a metric
-int      metrics.digits     [16];               // the digits value of a metric
-bool     metrics.symbolOK   [16];               // whether the "symbols.raw" checkup of a metric was done
-int      metrics.hSet       [16];               // the HistorySet handle of a metric
+bool     metrics.enabled    [16];               // whether a specific metric is enabled
+string   metrics.symbol     [16];               // symbol of a metric
+string   metrics.description[16];               // description of a metric
+int      metrics.digits     [16];               // digits value of a metric
+bool     metrics.symbolOK   [16];               // whether "symbols.raw" checkup of a metric was done
+int      metrics.hSet       [16];               // HistorySet handle of a metric
 double   metrics.hShift     [16];               // horizontal shift added to the history of a metric to prevent negative values
 
 // vars to speed-up status messages

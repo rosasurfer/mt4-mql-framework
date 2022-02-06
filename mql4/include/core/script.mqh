@@ -162,16 +162,15 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
 
-   error = catch("deinit(1)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   error = catch("deinit(2)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    if (!error) error = onDeinit();                    // preprocessing hook
    if (!error) error = afterDeinit();                 // postprocessing hook
    if (!This.IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(2)");
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(3)") + LeaveContext(__ExecutionContext));
 }
 
 
