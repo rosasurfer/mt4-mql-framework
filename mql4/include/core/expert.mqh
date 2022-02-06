@@ -2,7 +2,7 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.RecordEquity      = false;      // whether to record performance graphs
+extern bool     EA.RecordEquity      = false;      // whether to generate performance graphs
 extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
 
 extern datetime Test.StartTime       = 0;          // time to start a test
@@ -16,15 +16,18 @@ int     __CoreFunction = NULL;                     // currently executed MQL cor
 double  __rates[][6];                              // current price series
 int     __tickTimerId;                             // timer id for virtual ticks
 
-// test metadata
-bool   test.initialized       = false;
-double test.startEquity       = 0;
-string test.reportServer      = "XTrade-Testresults";
-int    test.reportId          = 0;
-string test.reportSymbol      = "";
-string test.reportDescription = "";
-double test.equityValue       = 0;                 // default: AccountEquity()-AccountCredit(), may be overridden
-int    test.hEquitySet        = 0;                 // handle of the equity's history set
+// test management
+bool   test.initialized = false;
+
+// equity recorder
+string erec.hstDirectory = "XTrade-Testresults";
+int    erec.hstFormat    = 400;
+int    test.reportId     = 0;                      // increasing counter, used for composition of erec.symbol and by Test_SaveReport()
+string erec.symbol       = "";
+string erec.symbolDescr  = "";
+int    erec.hSet         = 0;                      // history set handle
+double erec.startEquity  = 0;                      // equity start value
+double erec.value        = 0;                      // current equity value, default: AccountEquity()-AccountCredit()
 
 
 /**
@@ -131,7 +134,7 @@ int init() {
          logInfo(separator);
          logInfo(msg);
       }
-      test.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+      erec.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
@@ -378,56 +381,57 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (!error) {
-      error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
 
-      if (IsTesting()) {
-         if (test.hEquitySet != 0) {
-            int tmp = test.hEquitySet;
-            test.hEquitySet = NULL;
-            if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
-         }
-         if (EA.ExternalReporting) {
-            datetime time = MarketInfo(Symbol(), MODE_TIME);
-            Test_StopReporting(__ExecutionContext, time, Bars);
-         }
-      }
+   error = catch("deinit(2)");                     // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
-      // reset the virtual tick timer
-      if (__tickTimerId != NULL) {
-         tmp = __tickTimerId; __tickTimerId = NULL;
-         if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
-      }
-
-      // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
-      //
-      if (!error) error = onDeinit();                                         // preprocessing hook
-      if (!error) {                                                           //
-         switch (UninitializeReason()) {                                      //
-            case UR_PARAMETERS : error = onDeinitParameters();    break;      // reason-specific handlers
-            case UR_CHARTCHANGE: error = onDeinitChartChange();   break;      //
-            case UR_ACCOUNT    : error = onDeinitAccountChange(); break;      //
-            case UR_CHARTCLOSE : error = onDeinitChartClose();    break;      //
-            case UR_UNDEFINED  : error = onDeinitUndefined();     break;      //
-            case UR_REMOVE     : error = onDeinitRemove();        break;      //
-            case UR_RECOMPILE  : error = onDeinitRecompile();     break;      //
-            // terminal builds > 509                                          //
-            case UR_TEMPLATE   : error = onDeinitTemplate();      break;      //
-            case UR_INITFAILED : error = onDeinitFailed();        break;      //
-            case UR_CLOSE      : error = onDeinitClose();         break;      //
-                                                                              //
-            default:                                                          //
-               error = ERR_ILLEGAL_STATE;                                     //
-               catch("deinit(4)  unknown UninitializeReason: "+ UninitializeReason(), error);
-         }                                                                    //
-      }                                                                       //
-      if (!error) error = afterDeinit();                                      // postprocessing hook
+   // remove a virtual ticker
+   if (__tickTimerId != NULL) {
+      int tmp = __tickTimerId;
+      __tickTimerId = NULL;
+      if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
+
+   // close an equity recorder's history set
+   if (erec.hSet != 0) {
+      tmp = erec.hSet;
+      erec.hSet = NULL;
+      if (!HistorySet1.Close(tmp)) return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
+   }
+
+   // stop external reporting
+   if (EA.ExternalReporting) {
+      datetime time = MarketInfo(Symbol(), MODE_TIME);
+      Test_StopReporting(__ExecutionContext, time, Bars);
+   }
+
+   // Execute user-specific deinit() handlers. Execution stops if a handler returns with an error.
+   //
+   if (!error) error = onDeinit();                                      // preprocessing hook
+   if (!error) {                                                        //
+      switch (UninitializeReason()) {                                   //
+         case UR_PARAMETERS : error = onDeinitParameters();    break;   // reason-specific handlers
+         case UR_CHARTCHANGE: error = onDeinitChartChange();   break;   //
+         case UR_ACCOUNT    : error = onDeinitAccountChange(); break;   //
+         case UR_CHARTCLOSE : error = onDeinitChartClose();    break;   //
+         case UR_UNDEFINED  : error = onDeinitUndefined();     break;   //
+         case UR_REMOVE     : error = onDeinitRemove();        break;   //
+         case UR_RECOMPILE  : error = onDeinitRecompile();     break;   //
+         // terminal builds > 509                                       //
+         case UR_TEMPLATE   : error = onDeinitTemplate();      break;   //
+         case UR_INITFAILED : error = onDeinitFailed();        break;   //
+         case UR_CLOSE      : error = onDeinitClose();         break;   //
+                                                                        //
+         default:                                                       //
+            error = ERR_ILLEGAL_STATE;                                  //
+            catch("deinit(5)  unknown UninitializeReason: "+ UninitializeReason(), error);
+      }                                                                 //
+   }                                                                    //
+   if (!error) error = afterDeinit();                                   // postprocessing hook
 
    if (!IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(5)");
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(6)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -541,7 +545,7 @@ bool CheckErrors(string location, int error = NULL) {
 
 
 /**
- * Called at the first tick of a test. Initializes the equity recorder and external reporting.
+ * Called at the first tick of a test. Initializes equity recorder and external reporting.
  *
  * @return bool - success status
  */
@@ -558,7 +562,7 @@ bool InitTest() {
       string marginCurrency = AccountCurrency();
 
       // open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ test.reportServer +"\\symbols.raw";
+      string mqlFileName = "history\\"+ erec.hstDirectory +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)                              return(!catch("InitTest(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
@@ -596,12 +600,12 @@ bool InitTest() {
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
-      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.reportServer) < 0)
+      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, erec.hstDirectory) < 0)
          return(false);
 
-      test.reportId          = id;
-      test.reportSymbol      = symbol;
-      test.reportDescription = description;
+      test.reportId    = id;
+      erec.symbol      = symbol;
+      erec.symbolDescr = description;
    }
    else {
       EA.RecordEquity = false;
@@ -610,7 +614,7 @@ bool InitTest() {
    // initialize external reporting
    if (EA.ExternalReporting && IsTesting()) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_InitReporting(__ExecutionContext, time, Bars, test.reportId, test.reportSymbol);
+      Test_InitReporting(__ExecutionContext, time, Bars, test.reportId, erec.symbol);
    }
    else {
       EA.ExternalReporting = false;
@@ -678,23 +682,16 @@ bool Test.RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!test.hEquitySet) {
+   if (!erec.hSet) {
       // open HistorySet
-      string symbol      = test.reportSymbol;
-      string description = test.reportDescription;
-      int    digits      = 2;
-      int    format      = 400;
-      string server      = test.reportServer;
-
-      // create HistorySet
-      test.hEquitySet = HistorySet1.Create(symbol, description, digits, format, server);
-      if (!test.hEquitySet) return(false);
+      erec.hSet = HistorySet1.Create(erec.symbol, erec.symbolDescr, 2, erec.hstFormat, erec.hstDirectory);
+      if (!erec.hSet) return(false);
    }
 
-   if (!test.equityValue) double value = AccountEquity()-AccountCredit();
-   else                          value = test.equityValue;
+   if (!erec.value) double value = AccountEquity()-AccountCredit();
+   else                    value = erec.value;
 
-   return(HistorySet1.AddTick(test.hEquitySet, Tick.time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(erec.hSet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 
