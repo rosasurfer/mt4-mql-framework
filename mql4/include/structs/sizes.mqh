@@ -74,8 +74,8 @@
 #define EC.testing                         179
 #define EC.visualMode                      180
 #define EC.optimization                    181
-#define EC.extReporting                    182
-#define EC.recordEquity                    183
+#define EC.eaExternalReporting             182
+#define EC.eaRecordEquity                  183
 #define EC.mqlError                        184
 #define EC.dllError                        185
 #define EC.dllWarning                      187

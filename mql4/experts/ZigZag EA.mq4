@@ -6,6 +6,8 @@
  *  - equity curve of live instance
  *     total PL in money
  *
+ *     - EA.RecordEquity is used only in tester
+ *
  *  - virtual equity curve of all variants on all symbols
  *     ZigZag + Reverse
  *     daily PL in pip
