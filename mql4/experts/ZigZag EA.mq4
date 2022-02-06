@@ -3,12 +3,11 @@
  *
  *
  * TODO:
- *  - equity curve of live instance
+ *  - equity graph of live instance
+ *     enable EA.RecordEquity for online and tester usage
  *     total PL in money
  *
- *     - EA.RecordEquity is used only in tester
- *
- *  - virtual equity curve of all variants on all symbols
+ *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
  *     daily PL in pip
  *     total PL in pip

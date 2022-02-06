@@ -2,18 +2,19 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.RecordEquity      = false;
-extern bool     EA.ExternalReporting = false;
-extern datetime Test.StartTime       = 0;                            // time to start a test
-extern double   Test.StartPrice      = 0;                            // price to start a test
+extern bool     EA.RecordEquity      = false;      // whether to record performance graphs
+extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
+
+extern datetime Test.StartTime       = 0;          // time to start a test
+extern double   Test.StartPrice      = 0;          // price to start a test
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;                                       // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
-double  __rates[][6];                                                // current price series
-int     __tickTimerId;                                               // timer id for virtual ticks
+int     __CoreFunction = NULL;                     // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+double  __rates[][6];                              // current price series
+int     __tickTimerId;                             // timer id for virtual ticks
 
 // test metadata
 bool   test.initialized       = false;
@@ -22,8 +23,8 @@ string test.reportServer      = "XTrade-Testresults";
 int    test.reportId          = 0;
 string test.reportSymbol      = "";
 string test.reportDescription = "";
-double test.equityValue       = 0;                                   // default: AccountEquity()-AccountCredit(), may be overridden
-int    test.hEquitySet        = 0;                                   // handle of the equity's history set
+double test.equityValue       = 0;                 // default: AccountEquity()-AccountCredit(), may be overridden
+int    test.hEquitySet        = 0;                 // handle of the equity's history set
 
 
 /**
@@ -32,7 +33,7 @@ int    test.hEquitySet        = 0;                                   // handle o
  * @return int - error status
  */
 int init() {
-   if (__STATUS_OFF) {                                               // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
+   if (__STATUS_OFF) {                                         // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason != ERR_TERMINAL_INIT_FAILURE)
          ShowStatus(__STATUS_OFF.reason);
       return(__STATUS_OFF.reason);
@@ -53,26 +54,26 @@ int init() {
       return(last_error);
    }
 
-   if (__CoreFunction == NULL) {                                     // init() is called by the terminal
-      __CoreFunction = CF_INIT;                                      // TODO: ??? does this work in experts ???
+   if (__CoreFunction == NULL) {                               // init() is called by the terminal
+      __CoreFunction = CF_INIT;                                // TODO: ??? does this work in experts ???
       prev_error   = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
+   int hChart = NULL; if (!IsTesting() || IsVisualMode())      // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
    if (EA.ExternalReporting && initFlags & INIT_NO_EXTERNAL_REPORTING) {
-      EA.ExternalReporting = false;                                  // the input must be reset before SyncMainContext_init()
+      EA.ExternalReporting = false;                            // the input must be reset before SyncMainContext_init()
    }
    int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.ExternalReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
-   if (!error) error = GetLastError();                               // detect a DLL exception
+   if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
       last_error          = error;
-      __STATUS_OFF        = true;                                    // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
-      __STATUS_OFF.reason = last_error;                              // is undefined. We must not trigger loading of MQL libraries and return asap.
+      __STATUS_OFF        = true;                              // If SyncMainContext_init() failed the content of the EXECUTION_CONTEXT
+      __STATUS_OFF.reason = last_error;                        // is undefined. We must not trigger loading of MQL libraries and return asap.
       __CoreFunction      = NULL;
       return(last_error);
    }
@@ -86,10 +87,10 @@ int init() {
       if (!StringLen(GetServerTimezone()))  return(_last_error(CheckErrors("init(4)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
-      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet
+      double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);   // fails if there is no tick yet
       error = GetLastError();
-      if (IsError(error)) {                                          // symbol not yet subscribed (start, account/template change), it may appear later
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)                      // synthetic symbol in offline chart
+      if (IsError(error)) {                                    // symbol not yet subscribed (start, account/template change), it may appear later
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)                // synthetic symbol in offline chart
             return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
@@ -100,12 +101,12 @@ int init() {
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
       if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
-   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
+   if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}           // not yet implemented
 
    // enable experts if they are disabled
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
-      error = Toolbar.Experts(true);                                 // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
+      error = Toolbar.Experts(true);                           // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
 
@@ -122,7 +123,7 @@ int init() {
    int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
-   if (IsTesting()) {                                                // log MarketInfo() data
+   if (IsTesting()) {                                          // log MarketInfo() data
       if (IsLogInfo()) {
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ GetMarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
@@ -132,7 +133,7 @@ int init() {
       }
       test.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
-   else if (UninitializeReason() != UR_CHARTCHANGE) {                // log account infos (this becomes the first regular online log entry)
+   else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
          msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
@@ -140,7 +141,7 @@ int init() {
       }
    }
 
-   if (UninitializeReason() != UR_CHARTCHANGE) {                     // log input parameters
+   if (UninitializeReason() != UR_CHARTCHANGE) {               // log input parameters
       if (IsLogDebug()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
@@ -661,7 +662,7 @@ string GetMarketInfo() {
 
 
 /**
- * Record the test's equity graph.
+ * Record a test's equity graph.
  *
  * @return bool - success status
  */
