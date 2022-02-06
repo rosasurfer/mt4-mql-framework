@@ -16,18 +16,21 @@ int     __CoreFunction = NULL;                     // currently executed MQL cor
 double  __rates[][6];                              // current price series
 int     __tickTimerId;                             // timer id for virtual ticks
 
+// instance data
+int    instanceId;                                 // used for composition of metrics symbol and by Test_SaveReport()
+
+// performance tracking
+bool   tracker.initialized  = false;
+string tracker.hstDirectory = "XTrade-Testresults";
+int    tracker.hstFormat    = 400;
+string tracker.symbol       = "";
+string tracker.symbolDescr  = "";
+int    tracker.hSet;                               // history set handle
+double tracker.startEquity;                        // equity start value
+double tracker.currEquity;                         // current equity value, default: AccountEquity()-AccountCredit()
+
 // test management
 bool   test.initialized = false;
-
-// equity recorder
-string erec.hstDirectory = "XTrade-Testresults";
-int    erec.hstFormat    = 400;
-int    test.reportId     = 0;                      // increasing counter, used for composition of erec.symbol and by Test_SaveReport()
-string erec.symbol       = "";
-string erec.symbolDescr  = "";
-int    erec.hSet         = 0;                      // history set handle
-double erec.startEquity  = 0;                      // equity start value
-double erec.value        = 0;                      // current equity value, default: AccountEquity()-AccountCredit()
 
 
 /**
@@ -134,7 +137,7 @@ int init() {
          logInfo(separator);
          logInfo(msg);
       }
-      erec.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+      tracker.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
@@ -338,24 +341,29 @@ int start() {
       if (CheckErrors("start(6)")) return(last_error);
    }
 
+   // initialize performance tracking
+   if (!tracker.initialized) {
+      if (!InitPerformanceTracking()) return(_last_error(CheckErrors("start(7)")));
+   }
+
    // initialize configured tester tasks
    if (!test.initialized) /*&&*/ if (IsTesting()) {
-      if (!InitTest()) return(_last_error(CheckErrors("start(7)")));
+      if (!InitTest()) return(_last_error(CheckErrors("start(8)")));
    }
 
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) catch("start(8)", error);
+   if (error && error!=last_error) catch("start(9)", error);
 
    // record equity if configured
    if (EA.RecordEquity) {
-      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(9)")));
+      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(10)")));
    }
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(10)", error)));
+      return(_last_error(CheckErrors("start(11)", error)));
    return(ShowStatus(NO_ERROR));
 }
 
@@ -392,10 +400,10 @@ int deinit() {
       if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
-   // close an equity recorder's history set
-   if (erec.hSet != 0) {
-      tmp = erec.hSet;
-      erec.hSet = NULL;
+   // close a performance tracker's history set
+   if (tracker.hSet != 0) {
+      tmp = tracker.hSet;
+      tracker.hSet = NULL;
       if (!HistorySet1.Close(tmp)) return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
    }
 
@@ -545,14 +553,13 @@ bool CheckErrors(string location, int error = NULL) {
 
 
 /**
- * Called at the first tick of a test. Initializes equity recorder and external reporting.
+ * Called at the first tick. Initializes performance tracking.
  *
  * @return bool - success status
  */
-bool InitTest() {
-   // initialize recording of the equity graph
-   if (EA.RecordEquity && IsTesting() && !IsOptimization()) {
-      // create a new report symbol
+bool InitPerformanceTracking() {
+   if (EA.RecordEquity && (!IsTesting() || !IsOptimization())) {
+      // create a new symbol
       int    id             = 0;
       string symbol         = "";
       string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
@@ -562,13 +569,13 @@ bool InitTest() {
       string marginCurrency = AccountCurrency();
 
       // open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ erec.hstDirectory +"\\symbols.raw";
+      string mqlFileName = "history\\"+ tracker.hstDirectory +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("InitTest(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                              return(!catch("InitPerformanceTracking(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("InitTest(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("InitPerformanceTracking(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -576,7 +583,7 @@ bool InitTest() {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("InitTest(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("InitPerformanceTracking(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
@@ -600,21 +607,30 @@ bool InitTest() {
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
-      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, erec.hstDirectory) < 0)
-         return(false);
+      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tracker.hstDirectory) < 0) return(false);
 
-      test.reportId    = id;
-      erec.symbol      = symbol;
-      erec.symbolDescr = description;
+      instanceId          = id;
+      tracker.symbol      = symbol;
+      tracker.symbolDescr = description;
    }
    else {
       EA.RecordEquity = false;
    }
 
-   // initialize external reporting
+   tracker.initialized = true;
+   return(true);
+}
+
+
+/**
+ * Called at the first tick of a test. Initializes external reporting.
+ *
+ * @return bool - success status
+ */
+bool InitTest() {
    if (EA.ExternalReporting && IsTesting()) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_InitReporting(__ExecutionContext, time, Bars, test.reportId, erec.symbol);
+      Test_InitReporting(__ExecutionContext, time, Bars, instanceId, tracker.symbol);
    }
    else {
       EA.ExternalReporting = false;
@@ -682,16 +698,16 @@ bool Test.RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!erec.hSet) {
+   if (!tracker.hSet) {
       // open HistorySet
-      erec.hSet = HistorySet1.Create(erec.symbol, erec.symbolDescr, 2, erec.hstFormat, erec.hstDirectory);
-      if (!erec.hSet) return(false);
+      tracker.hSet = HistorySet1.Create(tracker.symbol, tracker.symbolDescr, 2, tracker.hstFormat, tracker.hstDirectory);
+      if (!tracker.hSet) return(false);
    }
 
-   if (!erec.value) double value = AccountEquity()-AccountCredit();
-   else                    value = erec.value;
+   if (!tracker.currEquity) double value = AccountEquity()-AccountCredit();
+   else                            value = tracker.currEquity;
 
-   return(HistorySet1.AddTick(erec.hSet, Tick.time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(tracker.hSet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 
