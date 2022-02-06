@@ -3,12 +3,19 @@
  *
  *
  * TODO:
- *  - performance tracking of all variants on all symbols
- *  - stop condition "pip"
+ *  - equity curve of live instance
+ *     total PL in money
+ *
+ *  - virtual equity curve of all variants on all symbols
+ *     ZigZag + Reverse
+ *     daily PL in pip
+ *     total PL in pip
+ *
+ *  - normalize metrics for different account/unit sizes
+ *
  *  - reverse trading option "ZigZag.R"
- *  - normalize resulting PL metrics for different accounts/unit sizes
+ *  - stop condition "pip"
  *  - trade breaks for specific day times
- *  - track PL curve per live instance
  *  - calculate and display TakeProfit level
  *
  *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals

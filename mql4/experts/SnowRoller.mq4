@@ -316,7 +316,7 @@ int onTick() {
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  "+ sequence.name +" illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
    // update equity for equity recorder
-   if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
+   if (EA.RecordEquity) test.equityValue = sequence.startEquity + sequence.totalPL;
 
    return(last_error);
 }
@@ -607,11 +607,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !tester.startEquity) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !test.startEquity) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = tester.startEquity;
+      result = test.startEquity;
    }
 
    if (!catch("CalculateStartEquity(1)"))
@@ -5453,7 +5453,7 @@ bool UpdateProfitTargets() {
  */
 bool ShowProfitTargets() {
    if (IsLastError())       return(false);
-   if (!sequence.breakeven) return(true);       // BE is not calculated if tester.showBreakeven = Off
+   if (!sequence.breakeven) return(true);       // BE is not calculated if test.showBreakeven = Off
 
    datetime time = TimeCurrent(); time -= time % MINUTES;
    string label = "arrow_"+ time;

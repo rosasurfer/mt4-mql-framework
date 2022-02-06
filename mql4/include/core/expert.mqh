@@ -2,10 +2,10 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.RecordEquity   = false;
-extern bool     EA.CreateReport   = false;
-extern datetime Tester.StartTime  = 0;                               // time to start a test
-extern double   Tester.StartPrice = 0;                               // price to start a test
+extern bool     EA.RecordEquity = false;
+extern bool     EA.CreateReport = false;
+extern datetime Test.StartTime  = 0;                                 // time to start a test
+extern double   Test.StartPrice = 0;                                 // price to start a test
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #include <functions/InitializeByteBuffer.mqh>
@@ -16,13 +16,13 @@ double  __rates[][6];                                                // current 
 int     __tickTimerId;                                               // timer id for virtual ticks
 
 // test metadata
-double tester.startEquity       = 0;
-string tester.reportServer      = "XTrade-Testresults";
-int    tester.reportId          = 0;
-string tester.reportSymbol      = "";
-string tester.reportDescription = "";
-double tester.equityValue       = 0;                                 // default: AccountEquity()-AccountCredit(), may be overridden
-int    tester.hEquitySet        = 0;                                 // handle of the equity's history set
+double test.startEquity       = 0;
+string test.reportServer      = "XTrade-Testresults";
+int    test.reportId          = 0;
+string test.reportSymbol      = "";
+string test.reportDescription = "";
+double test.equityValue       = 0;                                   // default: AccountEquity()-AccountCredit(), may be overridden
+int    test.hEquitySet        = 0;                                   // handle of the equity's history set
 
 
 /**
@@ -123,13 +123,13 @@ int init() {
 
    if (IsTesting()) {                     // log MarketInfo() data
       if (IsLogInfo()) {
-         string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ Tester.GetMarketInfo();
+         string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ GetMarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
          if (IsTesting()) separator = "::: TEST :::"+ StrRight(separator, -12);
          logInfo(separator);
          logInfo(msg);
       }
-      tester.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+      test.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {
       // log account infos (this becomes the first regular online log entry)
@@ -146,10 +146,10 @@ int init() {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
             sInputs = StringConcatenate(sInputs,
-               ifString(!EA.RecordEquity,   "", NL +"EA.RecordEquity=TRUE"                                            +";"),
-               ifString(!EA.CreateReport,   "", NL +"EA.CreateReport=TRUE"                                            +";"),
-               ifString(!Tester.StartTime,  "", NL +"Tester.StartTime="+ TimeToStr(Tester.StartTime, TIME_FULL)       +";"),
-               ifString(!Tester.StartPrice, "", NL +"Tester.StartPrice="+ NumberToStr(Tester.StartPrice, PriceFormat) +";"));
+               ifString(!EA.RecordEquity, "", NL +"EA.RecordEquity=TRUE"                                        +";"),
+               ifString(!EA.CreateReport, "", NL +"EA.CreateReport=TRUE"                                        +";"),
+               ifString(!Test.StartTime,  "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
+               ifString(!Test.StartPrice, "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
             logDebug(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
          }
       }
@@ -287,32 +287,32 @@ int start() {
 
    // tester: wait until the configured start time/price is reached
    if (IsTesting()) {
-      if (Tester.StartTime != 0) {
-         static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Tester.StartTime, TIME_FULL);
-         if (Tick.time < Tester.StartTime) {
+      if (Test.StartTime != 0) {
+         static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Test.StartTime, TIME_FULL);
+         if (Tick.time < Test.StartTime) {
             Comment(NL, NL, NL, "Tester: starting at ", startTime);
             return(last_error);
          }
-         Tester.StartTime = 0;
+         Test.StartTime = 0;
       }
-      if (Tester.StartPrice != 0) {
-         static string startPrice=""; if (!StringLen(startPrice)) startPrice = NumberToStr(Tester.StartPrice, PriceFormat);
-         static double tester.lastPrice; if (!tester.lastPrice) {
-            tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
+      if (Test.StartPrice != 0) {
+         static string startPrice=""; if (!StringLen(startPrice)) startPrice = NumberToStr(Test.StartPrice, PriceFormat);
+         static double test.lastPrice; if (!test.lastPrice) {
+            test.lastPrice = Bid;
+            Comment(NL, NL, NL, "Test: starting at ", startPrice);
             return(last_error);
          }
-         if (LT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (LT(Bid, Tester.StartPrice)) {
-            tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
+         if (LT(test.lastPrice, Test.StartPrice)) /*&&*/ if (LT(Bid, Test.StartPrice)) {
+            test.lastPrice = Bid;
+            Comment(NL, NL, NL, "Test: starting at ", startPrice);
             return(last_error);
          }
-         if (GT(tester.lastPrice, Tester.StartPrice)) /*&&*/ if (GT(Bid, Tester.StartPrice)) {
-            tester.lastPrice = Bid;
-            Comment(NL, NL, NL, "Tester: starting at ", startPrice);
+         if (GT(test.lastPrice, Test.StartPrice)) /*&&*/ if (GT(Bid, Test.StartPrice)) {
+            test.lastPrice = Bid;
+            Comment(NL, NL, NL, "Test: starting at ", startPrice);
             return(last_error);
          }
-         Tester.StartPrice = 0;
+         Test.StartPrice = 0;
       }
    }
 
@@ -338,7 +338,7 @@ int start() {
    // initialize test reporting if configured
    if (IsTesting()) {
       static bool test.initialized = false; if (!test.initialized) {
-         if (!Tester.InitReporting()) return(_last_error(CheckErrors("start(7)")));
+         if (!Test.InitReporting()) return(_last_error(CheckErrors("start(7)")));
          test.initialized = true;
       }
    }
@@ -385,9 +385,9 @@ int deinit() {
       error = catch("deinit(1)");                                             // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
       if (IsTesting()) {
-         if (tester.hEquitySet != 0) {
-            int tmp = tester.hEquitySet;
-            tester.hEquitySet = NULL;
+         if (test.hEquitySet != 0) {
+            int tmp = test.hEquitySet;
+            test.hEquitySet = NULL;
             if (!HistorySet1.Close(tmp)) return(_last_error(CheckErrors("deinit(2)"))|LeaveContext(__ExecutionContext));
          }
          if (EA.CreateReport) {
@@ -548,7 +548,7 @@ bool CheckErrors(string location, int error = NULL) {
  *
  * @return bool - success status
  */
-bool Tester.InitReporting() {
+bool Test.InitReporting() {
    if (!IsTesting())
       return(false);
 
@@ -564,13 +564,13 @@ bool Tester.InitReporting() {
       string marginCurrency = AccountCurrency();
 
       // open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ tester.reportServer +"\\symbols.raw";
+      string mqlFileName = "history\\"+ test.reportServer +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("Tester.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                              return(!catch("Test.InitReporting(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
       int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("Tester.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("Test.InitReporting(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
       int symbolsSize = fileSize/SYMBOL_size;
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -578,7 +578,7 @@ bool Tester.InitReporting() {
          // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Tester.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("Test.InitReporting(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
       }
       FileClose(hFile);
 
@@ -602,18 +602,18 @@ bool Tester.InitReporting() {
       description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
 
       // create symbol
-      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tester.reportServer) < 0)
+      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, test.reportServer) < 0)
          return(false);
 
-      tester.reportId          = id;
-      tester.reportSymbol      = symbol;
-      tester.reportDescription = description;
+      test.reportId          = id;
+      test.reportSymbol      = symbol;
+      test.reportDescription = description;
    }
 
    // prepare the Expander to collect data for external reporting
    if (EA.CreateReport) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_StartReporting(__ExecutionContext, time, Bars, tester.reportId, tester.reportSymbol);
+      Test_StartReporting(__ExecutionContext, time, Bars, test.reportId, test.reportSymbol);
    }
    return(true);
 }
@@ -624,7 +624,7 @@ bool Tester.InitReporting() {
  *
  * @return string - MarketInfo() data or an empty string in case of errors
  */
-string Tester.GetMarketInfo() {
+string GetMarketInfo() {
    string message = "";
 
    datetime time           = MarketInfo(Symbol(), MODE_TIME);                  message = message + "Time="        + GmtTimeFormat(time, "%a, %d.%m.%Y %H:%M") +";";
@@ -653,7 +653,7 @@ string Tester.GetMarketInfo() {
    double   swapLong       = MarketInfo(Symbol(), MODE_SWAPLONG );
    double   swapShort      = MarketInfo(Symbol(), MODE_SWAPSHORT);             message = message +" Swap="        + ifString(swapLong||swapShort, NumberToStr(swapLong, ".+") +"/"+ NumberToStr(swapShort, ".+"), "0")                        +";";
 
-   if (!catch("Tester.GetMarketInfo(1)"))
+   if (!catch("GetMarketInfo(1)"))
       return(message);
    return("");
 }
@@ -676,23 +676,23 @@ bool Tester.RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!tester.hEquitySet) {
+   if (!test.hEquitySet) {
       // open HistorySet
-      string symbol      = tester.reportSymbol;
-      string description = tester.reportDescription;
+      string symbol      = test.reportSymbol;
+      string description = test.reportDescription;
       int    digits      = 2;
       int    format      = 400;
-      string server      = tester.reportServer;
+      string server      = test.reportServer;
 
       // create HistorySet
-      tester.hEquitySet = HistorySet1.Create(symbol, description, digits, format, server);
-      if (!tester.hEquitySet) return(false);
+      test.hEquitySet = HistorySet1.Create(symbol, description, digits, format, server);
+      if (!test.hEquitySet) return(false);
    }
 
-   if (!tester.equityValue) double value = AccountEquity()-AccountCredit();
-   else                            value = tester.equityValue;
+   if (!test.equityValue) double value = AccountEquity()-AccountCredit();
+   else                          value = test.equityValue;
 
-   return(HistorySet1.AddTick(tester.hEquitySet, Tick.time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(test.hEquitySet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 

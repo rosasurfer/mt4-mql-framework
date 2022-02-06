@@ -85,8 +85,8 @@ extern datetime Sessionbreak.StartTime         = D'1970.01.01 23:56:00';     // 
 extern datetime Sessionbreak.EndTime           = D'1970.01.01 00:02:10';     // server time (the date part is ignored)
 
 extern string   ___f__________________________ = "=== Reporting ============================";
-extern bool     RecordPerformanceMetrics       = false;                      // whether to enable recording of performance metrics
-extern string   MetricsServerDirectory         = "{name} | {path} | auto*";  // history server directory to store performance metrics (auto: apply an existing configuration)
+extern bool     Metrics.RecordPerformance      = false;                      // whether to enable recording of performance metrics
+extern string   Metrics.ServerDirectory        = "{name} | {path} | auto*";  // history server directory to store performance metrics (auto: apply an existing configuration)
 
 extern string   ___g__________________________ = "=== Bugs ================================";
 extern bool     ChannelBug                     = false;                      // whether to enable the erroneous "Capella" calculation of the breakout channel (for comparison only)
@@ -114,7 +114,7 @@ extern bool     TakeProfitBug                  = true;                       // 
 #define SIGNAL_LONG                    1
 #define SIGNAL_SHORT                   2
 
-// system performance metrics
+// performance metrics
 #define METRIC_RC1                     0        // real: cumulative PL in pip w/o commission
 #define METRIC_RC2                     1        // real: cumulative PL in pip with commission
 #define METRIC_RC3                     2        // real: cumulative PL in money w/o commission
@@ -278,7 +278,7 @@ int onTick() {
    else                                    onTick.VirtualTrading();
 
    // record metrics if configured
-   if (RecordPerformanceMetrics) {
+   if (Metrics.RecordPerformance) {
       if (!IsTesting() || !IsOptimization()) {
          RecordMetrics();
       }
@@ -2210,43 +2210,43 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceId               = GetIniStringA(file, section, "Sequence.ID",              "");    // string   Sequence.ID              = 1234
-   string sTradingMode              = GetIniStringA(file, section, "TradingMode",              "");    // string   TradingMode              = Regular
+   string sSequenceId               = GetIniStringA(file, section, "Sequence.ID",               "");   // string   Sequence.ID               = 1234
+   string sTradingMode              = GetIniStringA(file, section, "TradingMode",               "");   // string   TradingMode               = Regular
 
-   string sEntryIndicator           = GetIniStringA(file, section, "EntryIndicator",           "");    // int      EntryIndicator           = 1
-   string sIndicatorTimeframe       = GetIniStringA(file, section, "IndicatorTimeframe",       "");    // int      IndicatorTimeframe       = 1
-   string sIndicatorPeriods         = GetIniStringA(file, section, "IndicatorPeriods",         "");    // int      IndicatorPeriods         = 3
-   string sBollingerBandsDeviation  = GetIniStringA(file, section, "BollingerBands.Deviation", "");    // double   BollingerBands.Deviation = 2.0
-   string sEnvelopesDeviation       = GetIniStringA(file, section, "Envelopes.Deviation",      "");    // double   Envelopes.Deviation      = 0.07
+   string sEntryIndicator           = GetIniStringA(file, section, "EntryIndicator",            "");   // int      EntryIndicator            = 1
+   string sIndicatorTimeframe       = GetIniStringA(file, section, "IndicatorTimeframe",        "");   // int      IndicatorTimeframe        = 1
+   string sIndicatorPeriods         = GetIniStringA(file, section, "IndicatorPeriods",          "");   // int      IndicatorPeriods          = 3
+   string sBollingerBandsDeviation  = GetIniStringA(file, section, "BollingerBands.Deviation",  "");   // double   BollingerBands.Deviation  = 2.0
+   string sEnvelopesDeviation       = GetIniStringA(file, section, "Envelopes.Deviation",       "");   // double   Envelopes.Deviation       = 0.07
 
-   string sUseSpreadMultiplier      = GetIniStringA(file, section, "UseSpreadMultiplier",      "");    // bool     UseSpreadMultiplier      = 1
-   string sSpreadMultiplier         = GetIniStringA(file, section, "SpreadMultiplier",         "");    // double   SpreadMultiplier         = 12.5
-   string sMinBarSize               = GetIniStringA(file, section, "MinBarSize",               "");    // double   MinBarSize               = 18.0
+   string sUseSpreadMultiplier      = GetIniStringA(file, section, "UseSpreadMultiplier",       "");   // bool     UseSpreadMultiplier       = 1
+   string sSpreadMultiplier         = GetIniStringA(file, section, "SpreadMultiplier",          "");   // double   SpreadMultiplier          = 12.5
+   string sMinBarSize               = GetIniStringA(file, section, "MinBarSize",                "");   // double   MinBarSize                = 18.0
 
-   string sBreakoutReversal         = GetIniStringA(file, section, "BreakoutReversal",         "");    // double   BreakoutReversal         = 0.0
-   string sMaxSpread                = GetIniStringA(file, section, "MaxSpread",                "");    // double   MaxSpread                = 2.0
-   string sReverseSignals           = GetIniStringA(file, section, "ReverseSignals",           "");    // bool     ReverseSignals           = 0
+   string sBreakoutReversal         = GetIniStringA(file, section, "BreakoutReversal",          "");   // double   BreakoutReversal          = 0.0
+   string sMaxSpread                = GetIniStringA(file, section, "MaxSpread",                 "");   // double   MaxSpread                 = 2.0
+   string sReverseSignals           = GetIniStringA(file, section, "ReverseSignals",            "");   // bool     ReverseSignals            = 0
 
-   string sUseMoneyManagement       = GetIniStringA(file, section, "UseMoneyManagement",       "");    // bool     UseMoneyManagement       = 1
-   string sRisk                     = GetIniStringA(file, section, "Risk",                     "");    // double   Risk                     = 2.0
-   string sManualLotsize            = GetIniStringA(file, section, "ManualLotsize",            "");    // double   ManualLotsize            = 0.01
+   string sUseMoneyManagement       = GetIniStringA(file, section, "UseMoneyManagement",        "");   // bool     UseMoneyManagement        = 1
+   string sRisk                     = GetIniStringA(file, section, "Risk",                      "");   // double   Risk                      = 2.0
+   string sManualLotsize            = GetIniStringA(file, section, "ManualLotsize",             "");   // double   ManualLotsize             = 0.01
 
-   string sTakeProfit               = GetIniStringA(file, section, "TakeProfit",               "");    // double   TakeProfit               = 10.0
-   string sStopLoss                 = GetIniStringA(file, section, "StopLoss",                 "");    // double   StopLoss                 = 6.0
-   string sTrailEntryStep           = GetIniStringA(file, section, "TrailEntryStep",           "");    // double   TrailEntryStep           = 1.0
-   string sTrailExitStart           = GetIniStringA(file, section, "TrailExitStart",           "");    // double   TrailExitStart           = 0.0
-   string sTrailExitStep            = GetIniStringA(file, section, "TrailExitStep",            "");    // double   TrailExitStep            = 2.0
-   string sMaxSlippage              = GetIniStringA(file, section, "MaxSlippage",              "");    // double   MaxSlippage              = 0.3
-   string sStopOnTotalProfit        = GetIniStringA(file, section, "StopOnTotalProfit",        "");    // double   StopOnTotalProfit        = 0.0
-   string sStopOnTotalLoss          = GetIniStringA(file, section, "StopOnTotalLoss",          "");    // double   StopOnTotalLoss          = 0.0
-   string sSessionbreakStartTime    = GetIniStringA(file, section, "Sessionbreak.StartTime",   "");    // datetime Sessionbreak.StartTime   = 86160
-   string sSessionbreakEndTime      = GetIniStringA(file, section, "Sessionbreak.EndTime",     "");    // datetime Sessionbreak.EndTime     = 3730
+   string sTakeProfit               = GetIniStringA(file, section, "TakeProfit",                "");   // double   TakeProfit                = 10.0
+   string sStopLoss                 = GetIniStringA(file, section, "StopLoss",                  "");   // double   StopLoss                  = 6.0
+   string sTrailEntryStep           = GetIniStringA(file, section, "TrailEntryStep",            "");   // double   TrailEntryStep            = 1.0
+   string sTrailExitStart           = GetIniStringA(file, section, "TrailExitStart",            "");   // double   TrailExitStart            = 0.0
+   string sTrailExitStep            = GetIniStringA(file, section, "TrailExitStep",             "");   // double   TrailExitStep             = 2.0
+   string sMaxSlippage              = GetIniStringA(file, section, "MaxSlippage",               "");   // double   MaxSlippage               = 0.3
+   string sStopOnTotalProfit        = GetIniStringA(file, section, "StopOnTotalProfit",         "");   // double   StopOnTotalProfit         = 0.0
+   string sStopOnTotalLoss          = GetIniStringA(file, section, "StopOnTotalLoss",           "");   // double   StopOnTotalLoss           = 0.0
+   string sSessionbreakStartTime    = GetIniStringA(file, section, "Sessionbreak.StartTime",    "");   // datetime Sessionbreak.StartTime    = 86160
+   string sSessionbreakEndTime      = GetIniStringA(file, section, "Sessionbreak.EndTime",      "");   // datetime Sessionbreak.EndTime      = 3730
 
-   string sRecordPerformanceMetrics = GetIniStringA(file, section, "RecordPerformanceMetrics", "");    // bool     RecordPerformanceMetrics = 0
-   string sMetricsServerDirectory   = GetIniStringA(file, section, "MetricsServerDirectory",   "");    // string   MetricsServerDirectory   = auto
+   string sMetricsRecordPerformance = GetIniStringA(file, section, "Metrics.RecordPerformance", "");   // bool     Metrics.RecordPerformance = 0
+   string sMetricsServerDirectory   = GetIniStringA(file, section, "Metrics.ServerDirectory",   "");   // string   Metrics.ServerDirectory   = auto
 
-   string sChannelBug               = GetIniStringA(file, section, "ChannelBug",               "");    // bool     ChannelBug               = 0
-   string sTakeProfitBug            = GetIniStringA(file, section, "TakeProfitBug",            "");    // bool     TakeProfitBug            = 1
+   string sChannelBug               = GetIniStringA(file, section, "ChannelBug",                "");   // bool     ChannelBug                = 0
+   string sTakeProfitBug            = GetIniStringA(file, section, "TakeProfitBug",             "");   // bool     TakeProfitBug             = 1
 
    if (sSequenceId != ""+ sequence.id)          return(!catch("ReadStatus(5)  "+ sequence.name +" invalid Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sequence.ID = sSequenceId;
@@ -2297,8 +2297,8 @@ bool ReadStatus() {
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
    if (!StrIsDigit(sSessionbreakEndTime))       return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
-   RecordPerformanceMetrics = StrToBool(sRecordPerformanceMetrics);
-   MetricsServerDirectory = sMetricsServerDirectory;
+   Metrics.RecordPerformance = StrToBool(sMetricsRecordPerformance);
+   Metrics.ServerDirectory = sMetricsServerDirectory;
    ChannelBug = StrToBool(sChannelBug);
    TakeProfitBug = StrToBool(sTakeProfitBug);
 
@@ -2508,50 +2508,50 @@ bool SaveStatus() {
    }
 
    string section="", file=GetStatusFilename(), separator="";
-   if (!IsFile(file, MODE_OS)) separator = CRLF;                     // an additional empty line as section separator
+   if (!IsFile(file, MODE_OS)) separator = CRLF;                                             // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
-   WriteIniString(file, section, "Symbol",  Symbol() + separator);   // conditional section separator
+   WriteIniString(file, section, "Symbol",  Symbol() + separator);                           // conditional section separator
 
    section = "Inputs";
-   WriteIniString(file, section, "Sequence.ID",              sequence.id);
-   WriteIniString(file, section, "TradingMode",              TradingMode);
+   WriteIniString(file, section, "Sequence.ID",               sequence.id);
+   WriteIniString(file, section, "TradingMode",               TradingMode);
 
-   WriteIniString(file, section, "EntryIndicator",           EntryIndicator);
-   WriteIniString(file, section, "IndicatorTimeframe",       IndicatorTimeframe);
-   WriteIniString(file, section, "IndicatorPeriods",         IndicatorPeriods);
-   WriteIniString(file, section, "BollingerBands.Deviation", NumberToStr(BollingerBands.Deviation, ".1+"));
-   WriteIniString(file, section, "Envelopes.Deviation",      NumberToStr(Envelopes.Deviation, ".1+"));
+   WriteIniString(file, section, "EntryIndicator",            EntryIndicator);
+   WriteIniString(file, section, "IndicatorTimeframe",        IndicatorTimeframe);
+   WriteIniString(file, section, "IndicatorPeriods",          IndicatorPeriods);
+   WriteIniString(file, section, "BollingerBands.Deviation",  NumberToStr(BollingerBands.Deviation, ".1+"));
+   WriteIniString(file, section, "Envelopes.Deviation",       NumberToStr(Envelopes.Deviation, ".1+"));
 
-   WriteIniString(file, section, "UseSpreadMultiplier",      UseSpreadMultiplier);
-   WriteIniString(file, section, "SpreadMultiplier",         NumberToStr(SpreadMultiplier, ".1+"));
-   WriteIniString(file, section, "MinBarSize",               DoubleToStr(MinBarSize, 1));
+   WriteIniString(file, section, "UseSpreadMultiplier",       UseSpreadMultiplier);
+   WriteIniString(file, section, "SpreadMultiplier",          NumberToStr(SpreadMultiplier, ".1+"));
+   WriteIniString(file, section, "MinBarSize",                DoubleToStr(MinBarSize, 1));
 
-   WriteIniString(file, section, "BreakoutReversal",         DoubleToStr(BreakoutReversal, 1));
-   WriteIniString(file, section, "MaxSpread",                DoubleToStr(MaxSpread, 1));
-   WriteIniString(file, section, "ReverseSignals",           ReverseSignals);
+   WriteIniString(file, section, "BreakoutReversal",          DoubleToStr(BreakoutReversal, 1));
+   WriteIniString(file, section, "MaxSpread",                 DoubleToStr(MaxSpread, 1));
+   WriteIniString(file, section, "ReverseSignals",            ReverseSignals);
 
-   WriteIniString(file, section, "UseMoneyManagement",       UseMoneyManagement);
-   WriteIniString(file, section, "Risk",                     NumberToStr(Risk, ".1+"));
-   WriteIniString(file, section, "ManualLotsize",            NumberToStr(ManualLotsize, ".1+"));
+   WriteIniString(file, section, "UseMoneyManagement",        UseMoneyManagement);
+   WriteIniString(file, section, "Risk",                      NumberToStr(Risk, ".1+"));
+   WriteIniString(file, section, "ManualLotsize",             NumberToStr(ManualLotsize, ".1+"));
 
-   WriteIniString(file, section, "TakeProfit",               DoubleToStr(TakeProfit, 1));
-   WriteIniString(file, section, "StopLoss",                 DoubleToStr(StopLoss, 1));
-   WriteIniString(file, section, "TrailEntryStep",           DoubleToStr(TrailEntryStep, 1));
-   WriteIniString(file, section, "TrailExitStart",           DoubleToStr(TrailExitStart, 1));
-   WriteIniString(file, section, "TrailExitStep",            DoubleToStr(TrailExitStep, 1));
-   WriteIniString(file, section, "MaxSlippage",              DoubleToStr(MaxSlippage, 1));
-   WriteIniString(file, section, "StopOnTotalProfit",        DoubleToStr(StopOnTotalProfit, 2));
-   WriteIniString(file, section, "StopOnTotalLoss",          DoubleToStr(StopOnTotalLoss, 2));
-   WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
-   WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
+   WriteIniString(file, section, "TakeProfit",                DoubleToStr(TakeProfit, 1));
+   WriteIniString(file, section, "StopLoss",                  DoubleToStr(StopLoss, 1));
+   WriteIniString(file, section, "TrailEntryStep",            DoubleToStr(TrailEntryStep, 1));
+   WriteIniString(file, section, "TrailExitStart",            DoubleToStr(TrailExitStart, 1));
+   WriteIniString(file, section, "TrailExitStep",             DoubleToStr(TrailExitStep, 1));
+   WriteIniString(file, section, "MaxSlippage",               DoubleToStr(MaxSlippage, 1));
+   WriteIniString(file, section, "StopOnTotalProfit",         DoubleToStr(StopOnTotalProfit, 2));
+   WriteIniString(file, section, "StopOnTotalLoss",           DoubleToStr(StopOnTotalLoss, 2));
+   WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime);
+   WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime);
 
-   WriteIniString(file, section, "RecordPerformanceMetrics", RecordPerformanceMetrics);
-   WriteIniString(file, section, "MetricsServerDirectory",   MetricsServerDirectory);
+   WriteIniString(file, section, "Metrics.RecordPerformance", Metrics.RecordPerformance);
+   WriteIniString(file, section, "Metrics.ServerDirectory",   Metrics.ServerDirectory);
 
-   WriteIniString(file, section, "ChannelBug",               ChannelBug);
-   WriteIniString(file, section, "TakeProfitBug",            TakeProfitBug + separator);  // conditional section separator
+   WriteIniString(file, section, "ChannelBug",                ChannelBug);
+   WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug + separator);    // conditional section separator
 
    section = "Runtime status";
    // On deletion of pending orders the number of stored order records decreases. To prevent orphaned status file
@@ -2819,8 +2819,8 @@ double   prev.StopOnTotalLoss;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-bool     prev.RecordPerformanceMetrics;
-string   prev.MetricsServerDirectory = "";
+bool     prev.Metrics.RecordPerformance;
+string   prev.Metrics.ServerDirectory = "";
 
 bool     prev.ChannelBug;
 bool     prev.TakeProfitBug;
@@ -2832,43 +2832,43 @@ bool     prev.TakeProfitBug;
  */
 void BackupInputs() {
    // backed-up values are also accessed in ValidateInputs()
-   prev.Sequence.ID              = StringConcatenate(Sequence.ID, "");     // string inputs are references to internal C literals
-   prev.TradingMode              = StringConcatenate(TradingMode, "");     // and must be copied to break the reference
+   prev.Sequence.ID               = StringConcatenate(Sequence.ID, "");    // string inputs are references to internal C literals
+   prev.TradingMode               = StringConcatenate(TradingMode, "");    // and must be copied to break the reference
 
-   prev.EntryIndicator           = EntryIndicator;
-   prev.IndicatorTimeframe       = IndicatorTimeframe;
-   prev.IndicatorPeriods         = IndicatorPeriods;
-   prev.BollingerBands.Deviation = BollingerBands.Deviation;
-   prev.Envelopes.Deviation      = Envelopes.Deviation;
+   prev.EntryIndicator            = EntryIndicator;
+   prev.IndicatorTimeframe        = IndicatorTimeframe;
+   prev.IndicatorPeriods          = IndicatorPeriods;
+   prev.BollingerBands.Deviation  = BollingerBands.Deviation;
+   prev.Envelopes.Deviation       = Envelopes.Deviation;
 
-   prev.UseSpreadMultiplier      = UseSpreadMultiplier;
-   prev.SpreadMultiplier         = SpreadMultiplier;
-   prev.MinBarSize               = MinBarSize;
+   prev.UseSpreadMultiplier       = UseSpreadMultiplier;
+   prev.SpreadMultiplier          = SpreadMultiplier;
+   prev.MinBarSize                = MinBarSize;
 
-   prev.BreakoutReversal         = BreakoutReversal;
-   prev.MaxSpread                = MaxSpread;
-   prev.ReverseSignals           = ReverseSignals;
+   prev.BreakoutReversal          = BreakoutReversal;
+   prev.MaxSpread                 = MaxSpread;
+   prev.ReverseSignals            = ReverseSignals;
 
-   prev.UseMoneyManagement       = UseMoneyManagement;
-   prev.Risk                     = Risk;
-   prev.ManualLotsize            = ManualLotsize;
+   prev.UseMoneyManagement        = UseMoneyManagement;
+   prev.Risk                      = Risk;
+   prev.ManualLotsize             = ManualLotsize;
 
-   prev.TakeProfit               = TakeProfit;
-   prev.StopLoss                 = StopLoss;
-   prev.TrailEntryStep           = TrailEntryStep;
-   prev.TrailExitStart           = TrailExitStart;
-   prev.TrailExitStep            = TrailExitStep;
-   prev.MaxSlippage              = MaxSlippage;
-   prev.StopOnTotalProfit        = StopOnTotalProfit;
-   prev.StopOnTotalLoss          = StopOnTotalLoss;
-   prev.Sessionbreak.StartTime   = Sessionbreak.StartTime;
-   prev.Sessionbreak.EndTime     = Sessionbreak.EndTime;
+   prev.TakeProfit                = TakeProfit;
+   prev.StopLoss                  = StopLoss;
+   prev.TrailEntryStep            = TrailEntryStep;
+   prev.TrailExitStart            = TrailExitStart;
+   prev.TrailExitStep             = TrailExitStep;
+   prev.MaxSlippage               = MaxSlippage;
+   prev.StopOnTotalProfit         = StopOnTotalProfit;
+   prev.StopOnTotalLoss           = StopOnTotalLoss;
+   prev.Sessionbreak.StartTime    = Sessionbreak.StartTime;
+   prev.Sessionbreak.EndTime      = Sessionbreak.EndTime;
 
-   prev.RecordPerformanceMetrics = RecordPerformanceMetrics;
-   prev.MetricsServerDirectory   = MetricsServerDirectory;
+   prev.Metrics.RecordPerformance = Metrics.RecordPerformance;
+   prev.Metrics.ServerDirectory   = StringConcatenate(Metrics.ServerDirectory, "");
 
-   prev.ChannelBug               = ChannelBug;
-   prev.TakeProfitBug            = TakeProfitBug;
+   prev.ChannelBug                = ChannelBug;
+   prev.TakeProfitBug             = TakeProfitBug;
 }
 
 
@@ -2876,43 +2876,43 @@ void BackupInputs() {
  * Restore backed-up input parameters. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
-   Sequence.ID              = prev.Sequence.ID;
-   TradingMode              = prev.TradingMode;
+   Sequence.ID               = prev.Sequence.ID;
+   TradingMode               = prev.TradingMode;
 
-   EntryIndicator           = prev.EntryIndicator;
-   IndicatorTimeframe       = prev.IndicatorTimeframe;
-   IndicatorPeriods         = prev.IndicatorPeriods;
-   BollingerBands.Deviation = prev.BollingerBands.Deviation;
-   Envelopes.Deviation      = prev.Envelopes.Deviation;
+   EntryIndicator            = prev.EntryIndicator;
+   IndicatorTimeframe        = prev.IndicatorTimeframe;
+   IndicatorPeriods          = prev.IndicatorPeriods;
+   BollingerBands.Deviation  = prev.BollingerBands.Deviation;
+   Envelopes.Deviation       = prev.Envelopes.Deviation;
 
-   UseSpreadMultiplier      = prev.UseSpreadMultiplier;
-   SpreadMultiplier         = prev.SpreadMultiplier;
-   MinBarSize               = prev.MinBarSize;
+   UseSpreadMultiplier       = prev.UseSpreadMultiplier;
+   SpreadMultiplier          = prev.SpreadMultiplier;
+   MinBarSize                = prev.MinBarSize;
 
-   BreakoutReversal         = prev.BreakoutReversal;
-   MaxSpread                = prev.MaxSpread;
-   ReverseSignals           = prev.ReverseSignals;
+   BreakoutReversal          = prev.BreakoutReversal;
+   MaxSpread                 = prev.MaxSpread;
+   ReverseSignals            = prev.ReverseSignals;
 
-   UseMoneyManagement       = prev.UseMoneyManagement;
-   Risk                     = prev.Risk;
-   ManualLotsize            = prev.ManualLotsize;
+   UseMoneyManagement        = prev.UseMoneyManagement;
+   Risk                      = prev.Risk;
+   ManualLotsize             = prev.ManualLotsize;
 
-   TakeProfit               = prev.TakeProfit;
-   StopLoss                 = prev.StopLoss;
-   TrailEntryStep           = prev.TrailEntryStep;
-   TrailExitStart           = prev.TrailExitStart;
-   TrailExitStep            = prev.TrailExitStep;
-   MaxSlippage              = prev.MaxSlippage;
-   StopOnTotalProfit        = prev.StopOnTotalProfit;
-   StopOnTotalLoss          = prev.StopOnTotalLoss;
-   Sessionbreak.StartTime   = prev.Sessionbreak.StartTime;
-   Sessionbreak.EndTime     = prev.Sessionbreak.EndTime;
+   TakeProfit                = prev.TakeProfit;
+   StopLoss                  = prev.StopLoss;
+   TrailEntryStep            = prev.TrailEntryStep;
+   TrailExitStart            = prev.TrailExitStart;
+   TrailExitStep             = prev.TrailExitStep;
+   MaxSlippage               = prev.MaxSlippage;
+   StopOnTotalProfit         = prev.StopOnTotalProfit;
+   StopOnTotalLoss           = prev.StopOnTotalLoss;
+   Sessionbreak.StartTime    = prev.Sessionbreak.StartTime;
+   Sessionbreak.EndTime      = prev.Sessionbreak.EndTime;
 
-   RecordPerformanceMetrics = prev.RecordPerformanceMetrics;
-   MetricsServerDirectory   = prev.MetricsServerDirectory;
+   Metrics.RecordPerformance = prev.Metrics.RecordPerformance;
+   Metrics.ServerDirectory   = prev.Metrics.ServerDirectory;
 
-   ChannelBug               = prev.ChannelBug;
-   TakeProfitBug            = prev.TakeProfitBug;
+   ChannelBug                = prev.ChannelBug;
+   TakeProfitBug             = prev.TakeProfitBug;
 }
 
 
@@ -3093,23 +3093,23 @@ bool InitMetrics() {
 
    // read the metrics configuration (on every call)
    string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
-   metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC1", true));
-   metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC2", true));
-   metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC3", true));
-   metrics.enabled[METRIC_RC4] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RC4", true));
-   metrics.enabled[METRIC_RD1] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RD1", true));
-   metrics.enabled[METRIC_RD2] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RD2", true));
-   metrics.enabled[METRIC_RD3] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RD3", true));
-   metrics.enabled[METRIC_RD4] = (tradingMode!=TRADINGMODE_VIRTUAL && RecordPerformanceMetrics && GetConfigBool(section, "Metric.RD4", true));
+   metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
+   metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
+   metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));
+   metrics.enabled[METRIC_RC4] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC4", true));
+   metrics.enabled[METRIC_RD1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RD1", true));
+   metrics.enabled[METRIC_RD2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RD2", true));
+   metrics.enabled[METRIC_RD3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RD3", true));
+   metrics.enabled[METRIC_RD4] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RD4", true));
 
-   metrics.enabled[METRIC_VC1] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VC1", true));
-   metrics.enabled[METRIC_VC2] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VC2", true));
-   metrics.enabled[METRIC_VC3] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VC3", true));
-   metrics.enabled[METRIC_VC4] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VC4", true));
-   metrics.enabled[METRIC_VD1] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD1", true));
-   metrics.enabled[METRIC_VD2] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD2", true));
-   metrics.enabled[METRIC_VD3] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD3", true));
-   metrics.enabled[METRIC_VD4] = (tradingMode!=TRADINGMODE_REGULAR && RecordPerformanceMetrics && GetConfigBool(section, "Metric.VD4", true));
+   metrics.enabled[METRIC_VC1] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VC1", true));
+   metrics.enabled[METRIC_VC2] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VC2", true));
+   metrics.enabled[METRIC_VC3] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VC3", true));
+   metrics.enabled[METRIC_VC4] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VC4", true));
+   metrics.enabled[METRIC_VD1] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VD1", true));
+   metrics.enabled[METRIC_VD2] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VD2", true));
+   metrics.enabled[METRIC_VD3] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VD3", true));
+   metrics.enabled[METRIC_VD4] = (tradingMode!=TRADINGMODE_REGULAR && Metrics.RecordPerformance && GetConfigBool(section, "Metric.VD4", true));
 
    int size = ArraySize(metrics.enabled);
    for (int i=0; i < size; i++) {
@@ -3288,43 +3288,43 @@ bool RecordMetrics() {
  * @return string
  */
 string InputsToStr() {
-   return("Sequence.ID="             + DoubleQuoteStr(Sequence.ID)                  +";"+ NL
-         +"TradingMode="             + DoubleQuoteStr(TradingMode)                  +";"+ NL
+   return("Sequence.ID="              + DoubleQuoteStr(Sequence.ID)                  +";"+ NL
+         +"TradingMode="              + DoubleQuoteStr(TradingMode)                  +";"+ NL
 
-         +"EntryIndicator="          + EntryIndicator                               +";"+ NL
-         +"IndicatorTimeframe="      + IndicatorTimeframe                           +";"+ NL
-         +"IndicatorPeriods="        + IndicatorPeriods                             +";"+ NL
-         +"BollingerBands.Deviation="+ NumberToStr(BollingerBands.Deviation, ".1+") +";"+ NL
-         +"Envelopes.Deviation="     + NumberToStr(Envelopes.Deviation, ".1+")      +";"+ NL
+         +"EntryIndicator="           + EntryIndicator                               +";"+ NL
+         +"IndicatorTimeframe="       + IndicatorTimeframe                           +";"+ NL
+         +"IndicatorPeriods="         + IndicatorPeriods                             +";"+ NL
+         +"BollingerBands.Deviation=" + NumberToStr(BollingerBands.Deviation, ".1+") +";"+ NL
+         +"Envelopes.Deviation="      + NumberToStr(Envelopes.Deviation, ".1+")      +";"+ NL
 
-         +"UseSpreadMultiplier="     + BoolToStr(UseSpreadMultiplier)               +";"+ NL
-         +"SpreadMultiplier="        + NumberToStr(SpreadMultiplier, ".1+")         +";"+ NL
-         +"MinBarSize="              + DoubleToStr(MinBarSize, 1)                   +";"+ NL
+         +"UseSpreadMultiplier="      + BoolToStr(UseSpreadMultiplier)               +";"+ NL
+         +"SpreadMultiplier="         + NumberToStr(SpreadMultiplier, ".1+")         +";"+ NL
+         +"MinBarSize="               + DoubleToStr(MinBarSize, 1)                   +";"+ NL
 
-         +"BreakoutReversal="        + DoubleToStr(BreakoutReversal, 1)             +";"+ NL
-         +"MaxSpread="               + DoubleToStr(MaxSpread, 1)                    +";"+ NL
-         +"ReverseSignals="          + BoolToStr(ReverseSignals)                    +";"+ NL
+         +"BreakoutReversal="         + DoubleToStr(BreakoutReversal, 1)             +";"+ NL
+         +"MaxSpread="                + DoubleToStr(MaxSpread, 1)                    +";"+ NL
+         +"ReverseSignals="           + BoolToStr(ReverseSignals)                    +";"+ NL
 
-         +"UseMoneyManagement="      + BoolToStr(UseMoneyManagement)                +";"+ NL
-         +"Risk="                    + NumberToStr(Risk, ".1+")                     +";"+ NL
-         +"ManualLotsize="           + NumberToStr(ManualLotsize, ".1+")            +";"+ NL
+         +"UseMoneyManagement="       + BoolToStr(UseMoneyManagement)                +";"+ NL
+         +"Risk="                     + NumberToStr(Risk, ".1+")                     +";"+ NL
+         +"ManualLotsize="            + NumberToStr(ManualLotsize, ".1+")            +";"+ NL
 
-         +"TakeProfit="              + DoubleToStr(TakeProfit, 1)                   +";"+ NL
-         +"StopLoss="                + DoubleToStr(StopLoss, 1)                     +";"+ NL
-         +"TrailEntryStep="          + DoubleToStr(TrailEntryStep, 1)               +";"+ NL
-         +"TrailExitStart="          + DoubleToStr(TrailExitStart, 1)               +";"+ NL
-         +"TrailExitStep="           + DoubleToStr(TrailExitStep, 1)                +";"+ NL
-         +"StopOnTotalProfit="       + DoubleToStr(StopOnTotalProfit, 2)            +";"+ NL
-         +"StopOnTotalLoss="         + DoubleToStr(StopOnTotalLoss, 2)              +";"+ NL
-         +"MaxSlippage="             + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
-         +"Sessionbreak.StartTime="  + TimeToStr(Sessionbreak.StartTime, TIME_FULL) +";"+ NL
-         +"Sessionbreak.EndTime="    + TimeToStr(Sessionbreak.EndTime, TIME_FULL)   +";"+ NL
+         +"TakeProfit="               + DoubleToStr(TakeProfit, 1)                   +";"+ NL
+         +"StopLoss="                 + DoubleToStr(StopLoss, 1)                     +";"+ NL
+         +"TrailEntryStep="           + DoubleToStr(TrailEntryStep, 1)               +";"+ NL
+         +"TrailExitStart="           + DoubleToStr(TrailExitStart, 1)               +";"+ NL
+         +"TrailExitStep="            + DoubleToStr(TrailExitStep, 1)                +";"+ NL
+         +"StopOnTotalProfit="        + DoubleToStr(StopOnTotalProfit, 2)            +";"+ NL
+         +"StopOnTotalLoss="          + DoubleToStr(StopOnTotalLoss, 2)              +";"+ NL
+         +"MaxSlippage="              + DoubleToStr(MaxSlippage, 1)                  +";"+ NL
+         +"Sessionbreak.StartTime="   + TimeToStr(Sessionbreak.StartTime, TIME_FULL) +";"+ NL
+         +"Sessionbreak.EndTime="     + TimeToStr(Sessionbreak.EndTime, TIME_FULL)   +";"+ NL
 
-         +"RecordPerformanceMetrics="+ BoolToStr(RecordPerformanceMetrics)          +";"+ NL
-         +"MetricsServerDirectory="  + DoubleQuoteStr(MetricsServerDirectory)       +";"+ NL
+         +"Metrics.RecordPerformance="+ BoolToStr(Metrics.RecordPerformance)         +";"+ NL
+         +"Metrics.ServerDirectory="  + DoubleQuoteStr(Metrics.ServerDirectory)      +";"+ NL
 
-         +"ChannelBug="              + BoolToStr(ChannelBug)                        +";"+ NL
-         +"TakeProfitBug="           + BoolToStr(TakeProfitBug)                     +";"
+         +"ChannelBug="               + BoolToStr(ChannelBug)                        +";"+ NL
+         +"TakeProfitBug="            + BoolToStr(TakeProfitBug)                     +";"
    );
 
    // prevent compiler warnings
