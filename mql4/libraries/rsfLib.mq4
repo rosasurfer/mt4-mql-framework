@@ -4087,40 +4087,39 @@ int Explode(string input, string separator, string &results[], int limit = NULL)
 
 
 /**
- * Gibt die aktuelle Account-Nummer zurück (unabhängig von einer Server-Verbindung).
+ * Return the current account number (with and without a trade server connection).
  *
- * @return int - Account-Nummer oder 0, falls ein Fehler auftrat
+ * @return int - account number or NULL (0) in case of errors
  */
 int GetAccountNumber() {
-   static int tester.result;
-   if (tester.result != 0)
-      return(tester.result);
+   static int testAccount;
+   if (testAccount != 0)
+      return(testAccount);
 
    int account = AccountNumber();
 
    if (account == 0x4000) {                                             // im Tester ohne Server-Verbindung
-      if (!IsTesting())          return(_NULL(catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR)));
+      if (!IsTesting())          return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
       account = 0;
    }
 
    if (!account) {                                                      // Titelzeile des Hauptfensters auswerten
       string title = GetInternalWindowTextA(GetTerminalMainWindow());
-      if (!StringLen(title))     return(_NULL(logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY))));
+      if (!StringLen(title))     return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)               return(_NULL(catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (pos < 1)               return(!catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       string strValue = StrLeft(title, pos);
-      if (!StrIsDigit(strValue)) return(_NULL(catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR)));
+      if (!StrIsDigit(strValue)) return(!catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       account = StrToInteger(strValue);
    }
 
-   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks bei evt. Aufrufen von GetWindowText() in deinit() zu vermeiden.
+   // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks in deinit() caused by GetWindowText() calls zu vermeiden.
    // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
    if (IsTesting())
-      tester.result = account;
-
+      testAccount = account;
    return(account);                                                     // nicht die statische Testervariable zurückgeben (ist online immer 0)
 }
 
