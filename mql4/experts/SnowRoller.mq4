@@ -860,6 +860,16 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   return("SnowR."+ sequence.id);
+}
+
+
+/**
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from afterInit() only.
  *

@@ -2079,6 +2079,16 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   return("XMT."+ sequence.id);
+}
+
+
+/**
  * Calculate a magic order number for the strategy.
  *
  * @param  int sequenceId [optional] - sequence to calculate the magic number for (default: the current sequence)

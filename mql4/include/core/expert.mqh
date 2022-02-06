@@ -9,15 +9,13 @@ extern datetime Test.StartTime       = 0;          // time to start a test
 extern double   Test.StartPrice      = 0;          // price to start a test
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;                     // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
 double  __rates[][6];                              // current price series
 int     __tickTimerId;                             // timer id for virtual ticks
-
-// instance data
-int    instanceId;                                 // used for composition of metrics symbol and by Test_SaveReport()
 
 // performance tracking
 bool   tracker.initialized  = false;
@@ -357,7 +355,7 @@ int start() {
 
    // record equity if configured
    if (EA.RecordEquity) {
-      if (!Test.RecordEquity()) return(_last_error(CheckErrors("start(10)")));
+      if (!RecordEquity()) return(_last_error(CheckErrors("start(10)")));
    }
 
    // check all errors
@@ -560,56 +558,15 @@ bool CheckErrors(string location, int error = NULL) {
 bool InitPerformanceTracking() {
    if (EA.RecordEquity && (!IsTesting() || !IsOptimization())) {
       // create a new symbol
-      int    id             = 0;
-      string symbol         = "";
-      string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
-      string description    = "";
+      string symbol         = CreateUniqueSymbol();
+      string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
+      string description    = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
       int    digits         = 2;
       string baseCurrency   = AccountCurrency();
       string marginCurrency = AccountCurrency();
 
-      // open "symbols.raw" and read the existing symbols
-      string mqlFileName = "history\\"+ tracker.hstDirectory +"\\symbols.raw";
-      int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
-      int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                              return(!catch("InitPerformanceTracking(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
-
-      int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);           return(!catch("InitPerformanceTracking(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
-      int symbolsSize = fileSize/SYMBOL_size;
-
-      int symbols[]; InitializeByteBuffer(symbols, fileSize);
-      if (fileSize > 0) {
-         // read symbols
-         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         error = GetLastError();
-         if (IsError(error) || ints!=fileSize/4) { FileClose(hFile); return(!catch("InitPerformanceTracking(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
-      }
-      FileClose(hFile);
-
-      // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
-
-      for (int i, maxId=0; i < symbolsSize; i++) {
-         symbol = symbols_Name(symbols, i);
-         if (StrStartsWithI(symbol, name)) {
-            suffix = StrSubstr(symbol, StringLen(name));
-            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
-               maxId = Max(maxId, StrToInteger(suffix));
-            }
-         }
-      }
-      id     = maxId + 1;
-      symbol = name + StrPadLeft(id, 3, "0");
-
-      // create a symbol description                                                      // sizeof(SYMBOL.description) = 64
-      description = StrLeft(ProgramName(), 38) +" #"+ id;                                 // 38 + 2 +  3 = 43 chars
-      description = description +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S"); // 43 + 1 + 19 = 63 chars
-
-      // create symbol
       if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tracker.hstDirectory) < 0) return(false);
 
-      instanceId          = id;
       tracker.symbol      = symbol;
       tracker.symbolDescr = description;
    }
@@ -630,12 +587,11 @@ bool InitPerformanceTracking() {
 bool InitTest() {
    if (EA.ExternalReporting && IsTesting()) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_InitReporting(__ExecutionContext, time, Bars, instanceId, tracker.symbol);
+      Test_InitReporting(__ExecutionContext, time, Bars);
    }
    else {
       EA.ExternalReporting = false;
    }
-
    test.initialized = true;
    return(true);
 }
@@ -682,11 +638,63 @@ string GetMarketInfo() {
 
 
 /**
- * Record a test's equity graph.
+ * Create a unique symbol for this instance of the expert. Called from InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string CreateUniqueSymbol() {
+   if (!StringLen(tracker.symbol)) {
+      tracker.symbol = GetUniqueSymbol();
+   }
+
+   if (!StringLen(tracker.symbol)) {
+      // fall-back to manual symbol generation
+
+      // open "symbols.raw" and read the existing symbols
+      string mqlFileName = "history\\"+ tracker.hstDirectory +"\\symbols.raw";
+      int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
+      int error = GetLastError();
+      if (error || hFile <= 0)                              return(!catch("CreateUniqueSymbol(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+
+      int fileSize = FileSize(hFile);
+      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);  return(!catch("CreateUniqueSymbol(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+      int symbolsSize = fileSize/SYMBOL_size;
+
+      int symbols[]; InitializeByteBuffer(symbols, fileSize);
+      if (fileSize > 0) {
+         // read symbols
+         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+         error = GetLastError();
+         if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("CreateUniqueSymbol(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+      }
+      FileClose(hFile);
+
+      // iterate over existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+      string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+
+      for (int i, maxId=0; i < symbolsSize; i++) {
+         string symbol = symbols_Name(symbols, i);
+         if (StrStartsWithI(symbol, name)) {
+            suffix = StrSubstr(symbol, StringLen(name));
+            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
+               maxId = Max(maxId, StrToInteger(suffix));
+            }
+         }
+      }
+      int id = maxId + 1;
+      tracker.symbol = name + StrPadLeft(id, 3, "0");
+   }
+
+   return(tracker.symbol);
+}
+
+
+/**
+ * Record an expert's equity graph.
  *
  * @return bool - success status
  */
-bool Test.RecordEquity() {
+bool RecordEquity() {
    /*
     Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
@@ -703,7 +711,6 @@ bool Test.RecordEquity() {
       tracker.hSet = HistorySet1.Create(tracker.symbol, tracker.symbolDescr, 2, tracker.hstFormat, tracker.hstDirectory);
       if (!tracker.hSet) return(false);
    }
-
    if (!tracker.currEquity) double value = AccountEquity()-AccountCredit();
    else                            value = tracker.currEquity;
 
@@ -725,7 +732,7 @@ bool Test.RecordEquity() {
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
-   bool   Test_InitReporting  (int ec[], datetime from, int bars, int reportId, string reportSymbol);
+   bool   Test_InitReporting  (int ec[], datetime from, int bars);
    bool   Test_onPositionOpen (int ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
    bool   Test_StopReporting  (int ec[], datetime to, int bars);
@@ -738,7 +745,7 @@ bool Test.RecordEquity() {
    bool   HistorySet1.AddTick(int hSet, datetime time, double value, int flags);
 
 #import "user32.dll"
-   int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
+   int    SendMessageA(int hWnd, int msg, int wParam, int lParam);
 #import
 
 
