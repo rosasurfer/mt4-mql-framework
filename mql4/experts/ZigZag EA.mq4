@@ -3,22 +3,22 @@
  *
  *
  * TODO:
- *  - equity graph of live instance
- *     enable EA.RecordEquity for online and tester usage
- *     total PL in money
- *
+ *  - fix start/reload with active @time condition
+ *  - fix config of history directory for EA.RecordEquity
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
  *     daily PL in pip
  *     total PL in pip
- *
  *  - normalize metrics for different account/unit sizes
  *
  *  - reverse trading option "ZigZag.R"
+ *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - stop condition "pip"
  *  - trade breaks for specific day times
  *  - calculate and display TakeProfit level
  *
+ *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #458221925 Buy 1 ****** "ZigZag.Z.7612" [ERR_MARKET_CLOSED]
+ *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to the same direction: long  [ERR_ILLEGAL_STATE]
  *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals
  *  - double ZigZag reversals during large bars are not recognized and ignored
  *  - improve parsing of start.time.condition
@@ -337,7 +337,7 @@ bool StartSequence(int direction) {
 /**
  * Reverse a progressing sequence.
  *
- * @param  int direction - new trade direction to continue with
+ * @param  int direction - new trade direction
  *
  * @return bool - success status
  */
@@ -713,7 +713,8 @@ int CreateSequenceId() {
  * @return string - unique symbol or an empty string in case of errors
  */
 string GetUniqueSymbol() {
-   return("ZigZag."+ sequence.id);
+   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return("ZigZag"+ sequence.id);
 }
 
 
