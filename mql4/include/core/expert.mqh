@@ -647,10 +647,8 @@ string CreateUniqueSymbol() {
       tracker.symbol = GetUniqueSymbol();
    }
 
-   if (!StringLen(tracker.symbol)) {
-      // fall-back to manual symbol generation
-
-      // open "symbols.raw" and read the existing symbols
+   if (!StringLen(tracker.symbol)) {                        // fall-back to manual symbol generation
+      // open "symbols.raw" and read existing symbols
       string mqlFileName = "history\\"+ tracker.hstDirectory +"\\symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
@@ -662,7 +660,6 @@ string CreateUniqueSymbol() {
 
       int symbols[]; InitializeByteBuffer(symbols, fileSize);
       if (fileSize > 0) {
-         // read symbols
          int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
          error = GetLastError();
          if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("CreateUniqueSymbol(3)  error reading \""+ mqlFileName +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }

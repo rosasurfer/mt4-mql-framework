@@ -2084,7 +2084,8 @@ int CreateSequenceId() {
  * @return string - unique symbol or an empty string in case of errors
  */
 string GetUniqueSymbol() {
-   return("XMT."+ sequence.id);
+   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return("XMT_"+ sequence.id);
 }
 
 
