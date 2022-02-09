@@ -160,7 +160,7 @@ int HistorySet2.Create(string symbol, string description, int digits, int format
    if (digits < 0)                            return(!catch("HistorySet2.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet2.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (directory == "0")      directory = "";                                    // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   if (!StringLen(directory)) directory = GetAccountServerName();
 
    // (1) offene Set-Handles durchsuchen und Sets schließen
    int size = ArraySize(hs.hSet);
@@ -262,7 +262,7 @@ int HistorySet2.Get(string symbol, string directory = "") {
    if (StrContains(symbol, " "))              return(!catch("HistorySet2.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (directory == "0")      directory = "";                           // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   if (!StringLen(directory)) directory = GetAccountServerName();
 
    // (1) offene Set-Handles durchsuchen
    int size = ArraySize(hs.hSet);
@@ -448,7 +448,7 @@ int HistoryFile2.Open(string symbol, int timeframe, string description, int digi
    bool read_write =  (mode & FILE_READ) && (mode & FILE_WRITE);
 
    if (directory == "0")      directory = "";                                       // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   if (!StringLen(directory)) directory = GetAccountServerName();
 
    // (1) Datei öffnen
    string mqlHstDir   = directory +"/";                                             // Verzeichnis für MQL-Dateifunktionen

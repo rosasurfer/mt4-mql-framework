@@ -4286,11 +4286,11 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
-   // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   // dessen muß immer der Umweg über GetAccountServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten
+   // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer="", lastId="";
 
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
+   string server = GetAccountServerName(); if (!StringLen(server)) return("");
    if (server == lastServer)
       return(lastId);
 
@@ -7284,7 +7284,7 @@ void __DummyCalls() {
    int      GetAccountNumber();
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetAccountServer();
+   string   GetAccountServerName();
    string   GetServerTimezone();
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);

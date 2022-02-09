@@ -139,7 +139,7 @@ int init() {
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
-         msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         msg = initHandlers[initReason] +"(0)  "+ GetAccountServerName() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
          logInfo(msg);
       }

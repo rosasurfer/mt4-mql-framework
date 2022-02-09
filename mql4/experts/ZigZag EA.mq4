@@ -3,10 +3,11 @@
  *
  *
  * TODO:
- *  - fix config of history directory for EA.RecordEquity
+ *  - fix parameter 'directory' of history functions starting from rsfLib::IsRawSymbol()
  *     warn if "symbols.raw" not found
  *      HistorySet.Create()
  *      CreateRawSymbol()
+ *  - fix config of history directory for EA.RecordEquity
  *
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
@@ -18,13 +19,12 @@
  *  - reverse trading option "ZigZag.R"
  *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - stop condition "pip"
- *  - trade breaks for specific day times
- *  - calculate and display TakeProfit level
+ *  - support of session and trade breaks for specific day times
  *
- *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #458221925 Buy 1 ****** "ZigZag.Z.7612" [ERR_MARKET_CLOSED]
- *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to the same direction: long  [ERR_ILLEGAL_STATE]
+ *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close ... [ERR_MARKET_CLOSED]
+ *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to the same direction  [ERR_ILLEGAL_STATE]
  *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals
- *  - double ZigZag reversals during large bars are not recognized and ignored
+ *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - improve parsing of start.time.condition
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
@@ -42,7 +42,7 @@
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
- *  - ChartInfos::CostumPosition() including/excluding a specific strategy
+ *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - on restart delete dead screen sockets
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  */
