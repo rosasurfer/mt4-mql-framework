@@ -345,9 +345,9 @@ bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
-   if (!IsFile(fullName, MODE_OS)) {
+   if (!IsFile(fullName, MODE_SYSTEM)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
-      if (!IsFile(fullName, MODE_OS)) {
+      if (!IsFile(fullName, MODE_SYSTEM)) {
          if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
@@ -3273,14 +3273,14 @@ string UrlEncode(string value) {
  * Whether the specified file exists.
  *
  * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
- * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
- *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
+ * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
+ *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
  * @return bool
  */
 bool IsFile(string path, int mode) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlFilesPath();
@@ -3288,7 +3288,7 @@ bool IsFile(string path, int mode) {
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
-   return(IsFileA(path, MODE_OS));
+   return(IsFileA(path, MODE_SYSTEM));
 }
 
 
@@ -3296,14 +3296,14 @@ bool IsFile(string path, int mode) {
  * Whether the specified directory exists.
  *
  * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
- * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
- *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
+ * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
+ *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
  * @return bool
  */
 bool IsDirectory(string path, int mode) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
       string filesDirectory = GetMqlFilesPath();
@@ -3311,7 +3311,7 @@ bool IsDirectory(string path, int mode) {
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
-   return(IsDirectoryA(path, MODE_OS));
+   return(IsDirectoryA(path, MODE_SYSTEM));
 }
 
 
@@ -3320,14 +3320,14 @@ bool IsDirectory(string path, int mode) {
  *
  * @param  string path  - directory path
  * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
- *                        MODE_OS:       allow the function to operate outside of the MQL sandbox
+ *                        MODE_SYSTEM:   allow the function to operate outside of the MQL sandbox
  *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
  *                                       otherwise create only the final directory and report an error if it exists
  * @return bool - success status
  */
 bool CreateDirectory(string path, int flags) {
-   if (!(~flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (flags & MODE_MQL && 1) {
       string filesDirectory = GetMqlFilesPath();
@@ -3336,7 +3336,7 @@ bool CreateDirectory(string path, int flags) {
       path = StringConcatenate(filesDirectory, "\\", path);
       flags &= ~MODE_MQL;
    }
-   return(!CreateDirectoryA(path, flags|MODE_OS));
+   return(!CreateDirectoryA(path, flags|MODE_SYSTEM));
 }
 
 
@@ -6117,7 +6117,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_OS)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
