@@ -75,23 +75,25 @@ int init() {
             return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
+      if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
          if (CheckErrors("init(9)", error)) return(last_error);
-      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
+      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
 
-   // before onInit(): if loaded by iCustom() log input parameters
+   // before onInit(): log input parameters if loaded by iCustom()
    if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
-      string sInput = InputsToStr();
-      if (StringLen(sInput) > 0) {
-         sInput = sInput +" __lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
-         logDebug("init(13)  input: "+ sInput);
+      string sInputs = InputsToStr();
+      if (StringLen(sInputs) > 0) {
+         sInputs = StringConcatenate(sInputs,
+            ifString(!AutoConfiguration, "", NL +"AutoConfiguration=TRUE;"),
+                                             NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";");
+         logDebug("init(13)  input: "+ sInputs);
       }
    }
 

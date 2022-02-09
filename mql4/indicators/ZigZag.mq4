@@ -566,10 +566,10 @@ double GetTickSize() {
    int error = GetLastError();                                 // - synthetic symbol in offline chart
    if (IsError(error)) {
       if (error == ERR_SYMBOL_NOT_AVAILABLE)
-         return(_NULL(logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error)));
+         return(!logInfo("GetTickSize(1)  MarketInfo(MODE_TICKSIZE)", error));
       return(!catch("GetTickSize(2)", error));
    }
-   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE): 0");
+   if (!tickSize) logInfo("GetTickSize(3)  MarketInfo(MODE_TICKSIZE=0)");
 
    return(tickSize);
 }
