@@ -129,11 +129,9 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
 
 
 /**
- * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
- * bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
- * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
- *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
+ * Create a new history set for the specified symbol and return its handle. Existing history for the symbol is reset, open
+ * history files of the symbol are closed. Not existing history files are created when new bar data is saved. Multiple calls
+ * for the same symbol return a new handle on every call, and previously open history set handles are closed.
  *
  * @param  string symbol      - Symbol
  * @param  string description - Beschreibung
@@ -151,15 +149,15 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
    if (StrContains(symbol, " "))              return(!catch("HistorySet3.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
    if (!StringLen(description)) {
-      description = "";                                                          // NULL-Pointer => Leerstring
+      description = "";                                                 // NULL-Pointer => Leerstring
    }
-   else if (StringLen(description) > 63) {                                       // ein zu langer String wird gekürzt
+   else if (StringLen(description) > 63) {                              // ein zu langer String wird gekürzt
       logNotice("HistorySet3.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
       description = StrLeft(description, 63);
    }
    if (digits < 0)                            return(!catch("HistorySet3.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
    if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet3.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (directory == "0")      directory = "";                                    // (string) NULL
+   if (directory == "0")      directory = "";                           // (string) NULL
    if (!StringLen(directory)) directory = GetAccountServerName();
 
    // (1) offene Set-Handles durchsuchen und Sets schließen
