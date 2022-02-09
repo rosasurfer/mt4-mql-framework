@@ -3,10 +3,11 @@
  *
  *
  * TODO:
- *  - fix parameter 'directory' of history functions starting from rsfLib::IsRawSymbol()
- *     warn if "symbols.raw" not found
- *      HistorySet.Create()
+ *  - refactor parameter 'directory' in history/symbol functions
  *      CreateRawSymbol()
+ *      HistorySet.Create()
+ *
+ *  - move warning "symbols.raw not found" to CreateRawSymbol()/HistorySet.Create()
  *  - fix config of history directory for EA.RecordEquity
  *
  *  - virtual equity graphs of all variants on all symbols
