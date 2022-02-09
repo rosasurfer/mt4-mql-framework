@@ -1997,7 +1997,7 @@ double MathDiv(double a, double b, double onZero = 0) {
 
 
 /**
- * Return the division remainder of two double values. Replacement for the flawed builtin function MathMod().
+ * Return the division remainder of two double values. Replacement for the flawed built-in function MathMod().
  *
  * @param  double a
  * @param  double b
@@ -2576,7 +2576,7 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 /**
  * Return the day of the month of the specified time: 1...31
  *
- * Fixes the broken builtin function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
@@ -2591,7 +2591,7 @@ int TimeDayEx(datetime time) {
 /**
  * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
  *
- * Fixes the broken builtin function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
+ * Fixes the broken built-in function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
@@ -2606,7 +2606,7 @@ int TimeDayOfWeekEx(datetime time) {
 /**
  * Return the year of the specified time: 1970...2037
  *
- * Fixes the broken builtin function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *

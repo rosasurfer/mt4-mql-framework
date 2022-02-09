@@ -622,7 +622,7 @@ int GetIniSections(string fileName, string &names[]) {
 
 
 /**
- * Return the name of the current account server. Similar to the builtin function AccountServer() but can also be used without
+ * Return the name of the current account server. Similar to the built-in function AccountServer() but can also be used without
  * a server connection.
  *
  * @return string - directory name or an empty string in case of errors
@@ -4306,7 +4306,7 @@ int GetLocalToGmtTimeOffset() {
 string GetServerTimezone() {
    // - The resolved timezone can only change when the trade account changes.
    // - On account change indicators do not perform an init cycle.
-   // - The builtin account functions can't be used to detect an account change. They already return new account data even if
+   // - The built-in account functions can't be used to detect an account change. They already return new account data even if
    //   the program still operates on previous chart data and processes old ticks. On the first tick received for the new
    //   account ValidBars is 0 (zero). This is used to invalidate and refresh a cached timezone id.
    // - This function is stored in the library to make the cache survive an indicator init cyle.
@@ -8046,8 +8046,8 @@ bool IsRawSymbol(string symbol, string directory = "") {
    FileClose(hFile);
    ArrayResize(symbols, 0);            // release allocated memory
 
-}
    return(found);
+}
 
 
 /**
@@ -8162,42 +8162,72 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
 
 
 /**
- * Gibt alle Symbolgruppen des angegebenen AccountServers zurück.
+ * Return the SYMBOL_GROUPs found in "symgroups.raw" of a directory.
  *
- * @param  SYMBOL_GROUP sgs[]      - Array zur Aufnahme der eingelesenen Symbolgruppen
- * @param  string       serverName - Name des AccountServers (default: der aktuelle AccountServer)
+ * @param  _Out_ SYMBOL_GROUP &sgs[]               - array receiving the found symbol groups
+ * @param  _In_  string       directory [optional] - directory name
+ *                                                   if empty:            the current trade server directory (default)
+ *                                                   if a relative path:  relative to the MQL sandbox/files directory
+ *                                                   if an absolute path: as is
  *
- * @return int - Anzahl der gelesenen Gruppen oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - number of found SYMBOL_GROUPs or EMPTY (-1) in case of errors
  */
-int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
-   if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetAccountServerName(); if (serverName == "") return(EMPTY);
-
+int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    ArrayResize(sgs, 0);
+   if (directory == "0") directory = "";                             // (string) NULL
 
-   // (1) "symgroups.raw" auf Existenz prüfen                        // Extra-Prüfung, da bei Read-only-Zugriff FileOpen[History]() bei nicht existierender
-   string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE überschwemmt.
-   if (!IsFile(mqlFileName, MODE_MQL))
-      return(0);
+   if (directory == "") {                                            // current trade server: use built-in function FileOpenHistory()
+      // stat "symgroups.raw"
+      string hstFilename  = "symgroups.raw";                         // without an additional check the built-in functions FileOpen/FileOpenHistory...
+      string serverName   = GetAccountServerName(); if (serverName == "") return(EMPTY);
+      string fullFilename = GetTerminalDataPathA() +"/history/"+ serverName +"/"+ hstFilename;
+      if (!IsFile(fullFilename, MODE_SYSTEM)) return(0);             // ...log each time a warning ERR_CANNOT_OPEN_FILE (if not exists)
 
-   // (2) Datei öffnen und Größe validieren
-   int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
-   int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
-   int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_GROUP_size != 0) {
-      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFileName +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      // open "symgroups.raw" and validate its size
+      int hFile = FileOpen(hstFilename, FILE_READ|FILE_BIN);
+      int error = GetLastError();
+      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpenHistory(\""+ hstFilename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
+      int fileSize = FileSize(hFile);
+      if (fileSize % SYMBOL_GROUP_size != 0) {
+         FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ hstFilename +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      }
+      if (!fileSize) { FileClose(hFile); return(0); }                // accept an empty file which may temporarily happen at creation time
+                                                                     // default: 32 * SYMBOL_GROUP_size = 32 * 80 = 2560 byte
+      // read "symgroups.raw"
+      InitializeByteBuffer(sgs, fileSize);
+      int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
+      error = GetLastError();
+      FileClose(hFile);
+      if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ hstFilename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
+      return(fileSize/SYMBOL_GROUP_size);
    }
-   if (!fileSize) { FileClose(hFile); return(0); }                   // Eine leere Datei wird akzeptiert. Eigentlich muß sie immer 32 * SYMBOL_GROUP_size groß sein,
-                                                                     // doch im Moment der Erstellung (von jemand anderem) kann sie vorübergehend 0 Bytes groß sein.
-   // (3) Datei einlesen
-   InitializeByteBuffer(sgs, fileSize);
-   int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
-   error = GetLastError();
-   FileClose(hFile);
-   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
 
-   return(fileSize/SYMBOL_GROUP_size);
+   if (!IsAbsolutePath(directory)) {                                 // relative sandbox path: use built-in function FileOpen()
+      // stat "symgroups.raw"
+      string mqlFilename = "history/"+ directory +"/symgroups.raw";  // without an additional check the built-in functions FileOpen/FileOpenHistory
+      if (!IsFile(mqlFilename, MODE_MQL)) return(0);                 // log each time a warning ERR_CANNOT_OPEN_FILE (if not exists)
+
+      // open "symgroups.raw" and validate its size
+      hFile = FileOpen(mqlFilename, FILE_READ|FILE_BIN);
+      error = GetLastError();
+      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFilename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
+      fileSize = FileSize(hFile);
+      if (fileSize % SYMBOL_GROUP_size != 0) {
+         FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFilename +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+      }
+      if (!fileSize) { FileClose(hFile); return(0); }                // accept an empty file which may temporarily happen at creation time
+                                                                     // default: 32 * SYMBOL_GROUP_size = 32 * 80 = 2560 byte
+      // read "symgroups.raw"
+      InitializeByteBuffer(sgs, fileSize);
+      ints = FileReadArray(hFile, sgs, 0, fileSize/4);
+      error = GetLastError();
+      FileClose(hFile);
+      if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFilename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
+      return(fileSize/SYMBOL_GROUP_size);
+   }
+
+   // absolute path: use Expander
+   return(_EMPTY(catch("GetSymbolGroups(3)  reading of absolute path \""+ directory +"\" not implemented", ERR_NOT_IMPLEMENTED)));
 }
 
 
