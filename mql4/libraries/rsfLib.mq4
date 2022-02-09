@@ -8001,10 +8001,10 @@ string CreateTempFile(string path, string prefix="") {
 
 
 /**
- * Whether the specified symbol exists in "symbols.raw" of the specified trade server directory.
+ * Whether a symbol exists in "symbols.raw" of a directory.
  *
  * @param  string symbol               - symbol
- * @param  string directory [optional] - trade server directory
+ * @param  string directory [optional] - directory
  *                                       if empty:            the current trade server directory (default)
  *                                       if a relative path:  relative to the MQL sandbox/files directory
  *                                       if an absolute path: as is
@@ -8046,46 +8046,49 @@ bool IsRawSymbol(string symbol, string directory = "") {
    FileClose(hFile);
    ArrayResize(symbols, 0);            // release allocated memory
 
-   return(found);
 }
+   return(found);
 
 
 /**
- * Create a new symbol in "symbols.raw" of the specified trade server directory.
+ * Create a new symbol in "symbols.raw" of the specified directory.
  *
- * @param  string symbol            - symbol
- * @param  string description       - symbol description
- * @param  string group             - group the symbol is listed in
- * @param  int    digits            - digits
- * @param  string baseCurrency      - base currency
- * @param  string marginCurrency    - margin currency
- * @param  string server [optional] - name of the trade server directory (default: the current trade server)
+ * @param  string symbol               - symbol
+ * @param  string description          - symbol description
+ * @param  string group                - group the symbol is listed in
+ * @param  int    digits               - digits
+ * @param  string baseCurrency         - base currency
+ * @param  string marginCurrency       - margin currency
+ * @param  string directory [optional] - directory name
+ *                                       if empty:            the current trade server directory (default)
+ *                                       if a relative path:  relative to the MQL sandbox/files directory
+ *                                       if an absolute path: as is
  *
- * @return int - created symbol id (the field SYMBOL.id) or EMPTY (-1) in case of errors (e.g. if the symbol already exists)
+ * @return int - id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
  */
-int CreateRawSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string server = "") {
+int CreateRawSymbol(string symbol, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory = "") {
    if (!StringLen(symbol))                         return(_EMPTY(catch("CreateRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH)      return(_EMPTY(catch("CreateRawSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (StrContains(symbol, " "))                   return(_EMPTY(catch("CreateRawSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER)));
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateRawSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
+   if (directory == "0") directory = "";           // (string) NULL
 
    int   groupIndex;
    color groupColor = CLR_NONE;
 
-   // read all existing symbol groups
+   // read existing symbol groups
    /*SYMBOL_GROUP[]*/int sgs[];
-   int size = GetSymbolGroups(sgs, server); if (size < 0) return(-1);
+   int size = GetSymbolGroups(sgs, directory); if (size < 0) return(-1);
 
    // look-up the specified group
    for (int i=0; i < size; i++) {
-      if (sgs_Name(sgs, i) == group)
-         break;
+      if (sgs_Name(sgs, i) == group) break;
    }
 
-   // if group not found create a new group
+   // if group not found create it
    if (i == size) {
       i = AddSymbolGroup(sgs, group, group, groupColor); if (i < 0) return(-1);
-      if (!SaveSymbolGroups(sgs, server))                           return(-1);
+      if (!SaveSymbolGroups(sgs, directory))                        return(-1);
    }
    groupIndex = i;
    groupColor = sgs_BackgroundColor(sgs, i);
@@ -8101,7 +8104,8 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (           symbol_SetGroup          (iSymbol, groupIndex        ) < 0)         return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
    if (           symbol_SetBackgroundColor(iSymbol, groupColor        ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
-   if (!InsertRawSymbol(iSymbol, server)) return(-1);
+   // insert it into "symbols.raw"
+   if (!InsertRawSymbol(iSymbol, directory)) return(-1);
    return(symbol_Id(iSymbol));
 }
 
@@ -8306,8 +8310,8 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
 /**
  * Kopiert das Template des angegebenen Symbol-Typs in das übergebene Symbol.
  *
- * @param  SYMBOL symbol[] - Symbol
- * @param  int    type     - Symbol-Typ
+ * @param  SYMBOL symbol - Symbol
+ * @param  int    type   - Symbol-Typ
  *
  * @return bool - Erfolgsstatus
  */
