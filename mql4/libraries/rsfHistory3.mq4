@@ -10,9 +10,9 @@
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet3.Create(symbol, description, digits, format);
  *
- *  - How to sync rsfHistory{1-3}.mq4:
+ *  - How to synchronize rsfHistory{1-3}.mq4:
  *     search:  (HistoryFile|HistorySet)[1-3]\>
- *     replace: \1{1-3}
+ *     replace: \11 or \12 or \13
  *
  *
  * Notes:
@@ -209,7 +209,7 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, auf 0 zurücksetzen
+      if (IsFile(fullFileName, MODE_SYSTEM)) {                          // wenn Datei existiert, auf 0 zurücksetzen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
          if (hFile <= 0) return(!catch("HistorySet3.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -306,7 +306,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
       mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
       fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
 
-      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, öffnen
+      if (IsFile(fullFileName, MODE_SYSTEM)) {                          // wenn Datei existiert, öffnen
          hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
          if (hFile <= 0) return(!catch("HistorySet3.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
@@ -456,7 +456,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    string baseName    = symbol + timeframe +".hst";
    string mqlFileName = mqlHstDir  + baseName;
    // on write access make sure the directory exists
-   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_OS|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
+   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
 
    // (1.1) read-only
    int hFile;                                                                       // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die

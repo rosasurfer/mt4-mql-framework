@@ -2209,7 +2209,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(2)  status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";
@@ -2519,7 +2519,7 @@ bool SaveStatus() {
    }
 
    string section="", file=GetStatusFilename(), separator="";
-   if (!IsFile(file, MODE_OS)) separator = CRLF;                                             // an additional empty line as section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;                                         // an additional empty line as section separator
 
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());

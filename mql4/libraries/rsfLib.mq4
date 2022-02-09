@@ -108,7 +108,7 @@ bool EditFiles(string &filenames[]) {
       if (!StringLen(filenames[i])) return(!catch("EditFiles(2)  invalid parameter filenames["+ i +"]: "+ DoubleQuoteStr(filenames[i]), ERR_INVALID_PARAMETER));
       if (IsLogDebug()) logDebug("EditFiles(3)  loading "+ DoubleQuoteStr(filenames[i]));
 
-      if (IsFile(filenames[i], MODE_OS)) {
+      if (IsFile(filenames[i], MODE_SYSTEM)) {
          while (IsSymlinkA(filenames[i])) {
             string target = GetReparsePointTargetA(filenames[i]);    // resolve symlinks as some editors cannot write to it (e.g. TextPad)
             if (!StringLen(target))
@@ -116,7 +116,7 @@ bool EditFiles(string &filenames[]) {
             filenames[i] = target;
          }
       }
-      else if (IsDirectory(filenames[i], MODE_OS)) {
+      else if (IsDirectory(filenames[i], MODE_SYSTEM)) {
          logError("EditFiles(4)  cannot edit directory "+ DoubleQuoteStr(filenames[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(filenames, i, 1);
          size--; i--;
@@ -668,7 +668,7 @@ string GetAccountServer() {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
                   fullTmpFilename = GetTerminalDataPathA() +"\\history\\"+ name +"\\"+ tmpFilename;
-                  if (IsFile(fullTmpFilename, MODE_OS)) {
+                  if (IsFile(fullTmpFilename, MODE_SYSTEM)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
                      break;
@@ -7980,10 +7980,10 @@ string GetTempPath() {
  */
 string CreateTempFile(string path, string prefix="") {
    int len = StringLen(path);
-   if (!len)                           return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
-   if (len > MAX_PATH-14)              return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
+   if (!len)                               return(_EMPTY(catch("CreateTempFile(1)  illegal parameter path: "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER)));
+   if (len > MAX_PATH-14)                  return(_EMPTY(catch("CreateTempFile(2)  illegal parameter path: "+ DoubleQuoteStr(path) +" (max "+ (MAX_PATH-14) +" characters)", ERR_INVALID_PARAMETER)));
    if (path!=".") /*&&*/ if (path!="..")
-      if (!IsDirectory(path, MODE_OS)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
+      if (!IsDirectory(path, MODE_SYSTEM)) return(_EMPTY(catch("CreateTempFile(3)  directory not found: "+ DoubleQuoteStr(path), ERR_FILE_NOT_FOUND)));
 
    if (StrIsNull(prefix))
       prefix = "";
