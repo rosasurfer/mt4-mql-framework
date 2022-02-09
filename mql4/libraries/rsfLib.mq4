@@ -622,13 +622,12 @@ int GetIniSections(string fileName, string &names[]) {
 
 
 /**
- * Gibt den Servernamen des aktuellen History-Verzeichnisses zurück. Der Name ist bei bestehender Verbindung identisch mit
- * dem Rückgabewert von AccountServer(), läßt sich mit dieser Funktion aber auch ohne Verbindung und bei Accountwechsel
- * ermitteln.
+ * Return the name of the current account server. Similar to the builtin function AccountServer() but can also be used without
+ * a server connection.
  *
  * @return string - directory name or an empty string in case of errors
  */
-string GetAccountServer() {
+string GetAccountServerName() {
    // Der Servername wird zwischengespeichert und der Cache bei ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daß das neue Serververzeichnis aktiv ist.
@@ -647,13 +646,13 @@ string GetAccountServer() {
 
       if (!StringLen(serverName)) {
          // create temporary file
-         tmpFilename = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
+         tmpFilename = "~GetAccountServerName~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
 
          if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                               catch("GetAccountServer(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetAccountServerName(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
             return(EMPTY_STR);
          }
          FileClose(hFile);
@@ -677,14 +676,14 @@ string GetAccountServer() {
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServerName(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
       }
 
-      if (IsError(catch("GetAccountServer(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetAccountServerName(5)"))) return( EMPTY_STR);
+      if (!StringLen(serverName))                    return(_EMPTY_STR(catch("GetAccountServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
       static.serverName[0] = serverName;
    }
@@ -4322,7 +4321,7 @@ string GetServerTimezone() {
 
    if (tick != lastTick) {
       if (StringLen(lastResult[IDX_TIMEZONE]) && !unchangedBars) {
-         string server = GetAccountServer(); if (!StringLen(server)) return("");
+         string server = GetAccountServerName(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
          }
@@ -4330,8 +4329,8 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER ] = GetAccountServer();  if (!StringLen(lastResult[IDX_SERVER ])) return("");
-      lastResult[IDX_COMPANY] = GetAccountCompany(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
+      lastResult[IDX_SERVER ] = GetAccountServerName(); if (!StringLen(lastResult[IDX_SERVER ])) return("");
+      lastResult[IDX_COMPANY] = GetAccountCompany();    if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
       // prefer a custom company mapping of a full server name
       string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);    // global only to prevent recursion
@@ -8004,21 +8003,22 @@ string CreateTempFile(string path, string prefix="") {
 /**
  * Whether the specified symbol exists in "symbols.raw" of the specified trade server directory.
  *
- * @param  string symbol            - symbol
- * @param  string server [optional] - name of the trade server directory (default: the current trade server)
- *
+ * @param  string symbol               - symbol
+ * @param  string directory [optional] - trade server directory
+ *                                       if empty:            the current trade server directory (default)
+ *                                       if a relative path:  relative to the MQL sandbox/files directory
+ *                                       if an absolute path: as is
  * @return bool
  */
-bool IsRawSymbol(string symbol, string server = "") {
+bool IsRawSymbol(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("IsRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("IsRawSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("IsRawSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
 
-   if (server == "0") server = "";     // (string) NULL
-   if (server == "")  server = GetAccountServer(); if (server == "") return(false);
+   if (directory == "") directory = GetAccountServerName(); if (directory == "") return(false);
 
    // open "symbols.raw"
-   string mqlFileName = "history\\"+ server +"\\symbols.raw";
+   string mqlFileName = "history\\"+ directory +"\\symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
    if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
@@ -8167,7 +8167,7 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
  */
 int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(EMPTY);
+   if (!StringLen(serverName)) serverName = GetAccountServerName(); if (serverName == "") return(EMPTY);
 
    ArrayResize(sgs, 0);
 
@@ -8210,7 +8210,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
    string name="", newName=symbol_Name(symbol);
    if (!StringLen(newName))                                                        return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name: "+ DoubleQuoteStr(newName), ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";    // (string) NULL
-   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
+   if (!StringLen(serverName)) serverName = GetAccountServerName(); if (serverName == "") return(false);
 
 
    // (1.1) Symboldatei öffnen und Größe validieren
@@ -8277,7 +8277,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
    if (byteSize % SYMBOL_GROUP_size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR));
    if (byteSize > 32*SYMBOL_GROUP_size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
    if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetAccountServer(); if (serverName == "") return(false);
+   if (!StringLen(serverName)) serverName = GetAccountServerName(); if (serverName == "") return(false);
 
    // "symgroups.raw" muß immer 32 Gruppen enthalten (ggf. undefiniert)
    int sgs.copy[]; ArrayResize(sgs.copy, 0);
