@@ -3,6 +3,8 @@
  *
  *
  * TODO:
+ *  - add GetHistoryPath()
+ *  - add GetAccountServerPath()
  *  - refactor parameter 'directory' in history/symbol functions
  *      CreateRawSymbol()           OK
  *       GetSymbolGroups()
