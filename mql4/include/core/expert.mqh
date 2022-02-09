@@ -712,7 +712,7 @@ string CreateUniqueSymbol() {
  */
 bool RecordEquity() {
    /*
-    Speedtest SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+    Speed test SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
@@ -723,19 +723,18 @@ bool RecordEquity() {
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    if (!tracker.hSet) {
-      // open HistorySet
       tracker.hSet = HistorySet1.Create(tracker.symbol, tracker.symbolDescr, 2, tracker.hstFormat, tracker.hstDirectory);
       if (!tracker.hSet) return(false);
    }
-   if (!tracker.currEquity) double value = AccountEquity()-AccountCredit();
-   else                            value = tracker.currEquity;
+   double value = tracker.currEquity;
+   if (!value) value = AccountEquity()-AccountCredit();
 
    return(HistorySet1.AddTick(tracker.hSet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 
 #import "rsfLib.ex4"
-   int    CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string serverName);
+   int    CreateRawSymbol(string name, string description, string group, int digits, string baseCurrency, string marginCurrency, string directory);
    bool   IntInArray(int haystack[], int needle);
 
 #import "rsfMT4Expander.dll"

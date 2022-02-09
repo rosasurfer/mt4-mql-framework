@@ -4,10 +4,20 @@
  *
  * TODO:
  *  - refactor parameter 'directory' in history/symbol functions
- *      CreateRawSymbol()
+ *      CreateRawSymbol()           OK
+ *       GetSymbolGroups()
+ *       SaveSymbolGroups()
+ *       InsertRawSymbol()
+ *       IsRawSymbol()
+ *
  *      HistorySet.Create()
  *
  *  - move warning "symbols.raw not found" to CreateRawSymbol()/HistorySet.Create()
+ *     core/expert
+ *     EquityRecorder
+ *     LFX-Monitor
+ *     XMT-SCalper
+ *
  *  - fix config of history directory for EA.RecordEquity
  *
  *  - virtual equity graphs of all variants on all symbols

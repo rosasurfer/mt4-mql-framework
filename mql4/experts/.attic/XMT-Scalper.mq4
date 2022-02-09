@@ -236,8 +236,8 @@ bool     sessionbreak.active;
 
 // management of system performance metrics
 bool     metrics.initialized;                   // whether metrics metadata has been initialized
-string   metrics.server = "XTrade-Testresults";
-int      metrics.format = 400;
+string   metrics.hstDirectory = "history/XTrade-Testresults";
+int      metrics.hstFormat    = 400;
 
 bool     metrics.enabled    [16];               // whether a specific metric is enabled
 string   metrics.symbol     [16];               // symbol of a metric
@@ -3139,15 +3139,15 @@ bool InitMetrics() {
  */
 bool InitMetricHistory(int metric) {
    if (!metrics.enabled[metric]) {
-      CloseHistorySet(metric);                                       // make sure the history is closed
+      CloseHistorySet(metric);                                             // make sure the history is closed
       return(true);
    }
 
    if (!metrics.symbolOK[metric]) {
-      if (metrics.server != "") {
-         if (!IsRawSymbol(metrics.symbol[metric], metrics.server)) { // create a new symbol if it doesn't yet exist
+      if (metrics.hstDirectory != "") {
+         if (!IsRawSymbol(metrics.symbol[metric], metrics.hstDirectory)) { // create a new symbol if it doesn't yet exist
             string group = "System metrics";
-            int sId = CreateRawSymbol(metrics.symbol[metric], metrics.description[metric], group, metrics.digits[metric], AccountCurrency(), AccountCurrency(), metrics.server);
+            int sId = CreateRawSymbol(metrics.symbol[metric], metrics.description[metric], group, metrics.digits[metric], AccountCurrency(), AccountCurrency(), metrics.hstDirectory);
             if (sId < 0) return(false);
          }
       }
@@ -3155,7 +3155,7 @@ bool InitMetricHistory(int metric) {
    }
 
    if (!metrics.hSet[metric]) {
-      metrics.hSet[metric] = GetHistorySet(metric);                  // open the history
+      metrics.hSet[metric] = GetHistorySet(metric);                        // open the history
    }
 
    return(metrics.hSet[metric] != NULL);
@@ -3171,14 +3171,14 @@ bool InitMetricHistory(int metric) {
  */
 int GetHistorySet(int mId) {
    int hSet;
-   if      (mId <  6) hSet = HistorySet1.Get(metrics.symbol[mId], metrics.server);
-   else if (mId < 12) hSet = HistorySet2.Get(metrics.symbol[mId], metrics.server);
-   else               hSet = HistorySet3.Get(metrics.symbol[mId], metrics.server);
+   if      (mId <  6) hSet = HistorySet1.Get(metrics.symbol[mId], metrics.hstDirectory);
+   else if (mId < 12) hSet = HistorySet2.Get(metrics.symbol[mId], metrics.hstDirectory);
+   else               hSet = HistorySet3.Get(metrics.symbol[mId], metrics.hstDirectory);
 
    if (hSet == -1) {
-      if      (mId <  6) hSet = HistorySet1.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
-      else if (mId < 12) hSet = HistorySet2.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
-      else               hSet = HistorySet3.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.format, metrics.server);
+      if      (mId <  6) hSet = HistorySet1.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.hstFormat, metrics.hstDirectory);
+      else if (mId < 12) hSet = HistorySet2.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.hstFormat, metrics.hstDirectory);
+      else               hSet = HistorySet3.Create(metrics.symbol[mId], metrics.description[mId], metrics.digits[mId], metrics.hstFormat, metrics.hstDirectory);
    }
 
    if (hSet > 0)
