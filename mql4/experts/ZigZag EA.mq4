@@ -3,14 +3,18 @@
  *
  *
  * TODO:
- *  - fix start/reload with active @time condition
  *  - fix config of history directory for EA.RecordEquity
+ *     warn if "symbols.raw" not found
+ *      HistorySet.Create()
+ *      CreateRawSymbol()
+ *
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
  *     daily PL in pip
  *     total PL in pip
  *  - normalize metrics for different account/unit sizes
  *
+ *  - fix start/reload with active @time condition
  *  - reverse trading option "ZigZag.R"
  *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - stop condition "pip"

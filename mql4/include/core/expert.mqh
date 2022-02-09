@@ -19,10 +19,10 @@ int     __tickTimerId;                             // timer id for virtual ticks
 
 // performance tracking
 bool   tracker.initialized  = false;
-string tracker.hstDirectory = "XTrade-Testresults";
-int    tracker.hstFormat    = 400;
 string tracker.symbol       = "";
 string tracker.symbolDescr  = "";
+string tracker.hstDirectory = "";
+int    tracker.hstFormat;
 int    tracker.hSet;                               // history set handle
 double tracker.startEquity;                        // equity start value
 double tracker.currEquity;                         // current equity value, default: AccountEquity()-AccountCredit()
@@ -98,12 +98,12 @@ int init() {
             return(logInfo("init(5)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!tickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickSize) return(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error)) /*&&*/ if (CheckErrors("init(8)", error)) return(last_error);
-      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!tickValue) return(logInfo("init(9)  MarketInfo(MODE_TICKVALUE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}           // not yet implemented
 
@@ -289,7 +289,7 @@ int start() {
    // check a finished chart initialization (may fail on terminal start)
    if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
-   // tester: wait until the configured start time/price is reached
+   // tester: wait until a configured start time/price is reached
    if (IsTesting()) {
       if (Test.StartTime != 0) {
          static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Test.StartTime, TIME_FULL);
@@ -341,7 +341,7 @@ int start() {
 
    // initialize performance tracking
    if (!tracker.initialized) {
-      if (!InitPerformanceTracking()) return(_last_error(CheckErrors("start(7)")));
+      if (!InitPLTracking()) return(_last_error(CheckErrors("start(7)")));
    }
 
    // initialize configured tester tasks
@@ -555,8 +555,25 @@ bool CheckErrors(string location, int error = NULL) {
  *
  * @return bool - success status
  */
-bool InitPerformanceTracking() {
-   if (EA.RecordEquity && (!IsTesting() || !IsOptimization())) {
+bool InitPLTracking() {
+   if (EA.RecordEquity && !tracker.initialized && (!IsTesting() || !IsOptimization())) {
+      string section = ifString(IsTesting(), "Tester.", "") +"EA.RecordEquity";
+
+      // read EA.RecordEquity/HistoryDirectory configuration
+      string hstDirectory = GetConfigString(section, "HistoryDirectory", "");                         // "XTrade-test-results" | "XTrade-live-results"
+      if (!StringLen(hstDirectory))                               return(!catch("InitPLTracking(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
+      if (IsAbsolutePath(hstDirectory))                           return(!catch("InitPLTracking(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
+      int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
+      if (StrContainsChars(hstDirectory, illegalChars))           return(!catch("InitPLTracking(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
+      hstDirectory = StrReplace(hstDirectory, "\\", "/");
+      if (StrStartsWith(hstDirectory, "/"))                       return(!catch("InitPLTracking(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
+      if (!CreateDirectory(hstDirectory, MODE_MQL|MODE_MKPARENT)) return(!catch("InitPLTracking(5)  cannot create directory "+ DoubleQuoteStr(hstDirectory), ERR_INVALID_CONFIG_VALUE));
+      if (!IsFile(hstDirectory +"/symbols.raw", MODE_MQL))            logNotice("InitPLTracking(6)  \""+ hstDirectory +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
+
+      // read EA.RecordEquity/HistoryFormat configuration
+      int hstFormat = GetConfigInt(section, "HistoryFormat", 401);
+      if (hstFormat!=400 && hstFormat!=401)                       return(!catch("InitPLTracking(7)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+
       // create a new symbol
       string symbol         = CreateUniqueSymbol();
       string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
@@ -565,10 +582,12 @@ bool InitPerformanceTracking() {
       string baseCurrency   = AccountCurrency();
       string marginCurrency = AccountCurrency();
 
-      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, tracker.hstDirectory) < 0) return(false);
+      if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, hstDirectory) < 0) return(false);
 
-      tracker.symbol      = symbol;
-      tracker.symbolDescr = description;
+      tracker.symbol       = symbol;
+      tracker.symbolDescr  = description;
+      tracker.hstDirectory = hstDirectory;
+      tracker.hstFormat    = hstFormat;
    }
    else {
       EA.RecordEquity = false;
