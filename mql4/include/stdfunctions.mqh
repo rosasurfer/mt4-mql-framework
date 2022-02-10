@@ -3341,7 +3341,7 @@ bool CreateDirectory(string path, int flags) {
 
 
 /**
- * Return the full path of the MQL "files" directory. This is the directory accessible to MQL file functions.
+ * Return the full path of the MQL sandbox/files directory. This is the directory accessible to MQL file functions.
  *
  * @return string - directory path not ending with a slash or an empty string in case of errors
  */
