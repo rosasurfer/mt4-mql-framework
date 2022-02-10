@@ -658,7 +658,7 @@ string GetAccountServerName() {
          FileClose(hFile);
 
          // search the created file
-         string pattern = GetCommonHistoryPathA() +"/*";
+         string pattern = GetHistoryRootPathA() +"/*";
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
@@ -666,7 +666,7 @@ string GetAccountServerName() {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
-                  fullTmpFilename = GetCommonHistoryPathA() +"/"+ name +"/"+ tmpFilename;
+                  fullTmpFilename = GetHistoryRootPathA() +"/"+ name +"/"+ tmpFilename;
                   if (IsFile(fullTmpFilename, MODE_SYSTEM)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
@@ -8180,7 +8180,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       // stat "symgroups.raw"
       string hstFilename  = "symgroups.raw";                         // without an additional check the built-in functions FileOpen/FileOpenHistory...
       string serverName   = GetAccountServerName(); if (serverName == "") return(EMPTY);
-      string fullFilename = GetCommonHistoryPathA() +"/"+ serverName +"/"+ hstFilename;
+      string fullFilename = GetHistoryRootPathA() +"/"+ serverName +"/"+ hstFilename;
       if (!IsFile(fullFilename, MODE_SYSTEM)) return(0);             // ...log each time a warning ERR_CANNOT_OPEN_FILE (if not exists)
 
       // open "symgroups.raw" and validate its size
