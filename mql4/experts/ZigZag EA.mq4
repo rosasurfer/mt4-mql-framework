@@ -4,10 +4,9 @@
  *
  * TODO:
  *  - refactor parameter 'directory' of symbol functions
- *     InsertRawSymbol()   FATAL  ZigZag EA::rsfLib::InsertRawSymbol(3)->FileOpen("history\history/XTrade-Live-results\symbols.raw", FILE_READ|FILE_WRITE) => -1  [ERR_CANNOT_OPEN_FILE]
  *     IsRawSymbol()
  *
- *  - refactor parameter 'directory' in history functions
+ *  - refactor parameter 'directory' of history functions
  *     HistorySet.Create()
  *
  *  - move warning "symbols.raw not found" to CreateRawSymbol()/HistorySet.Create()
@@ -16,7 +15,7 @@
  *     LFX-Monitor
  *     XMT-SCalper
  *
- *  - fix config of history directory for EA.RecordEquity
+ *  - log symbol creation
  *
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
