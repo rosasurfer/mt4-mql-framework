@@ -3,10 +3,8 @@
  *
  *
  * TODO:
- *  - add GetCommonHistoryPath()
  *  - add GetAccountServerPath()
- *  - refactor parameter 'directory' in symbol functions
- *     SaveSymbolGroups()        FATAL ZigZag EA::rsfLib::SaveSymbolGroups(3)->FileOpen("history\history/XTrade-Live-results\symgroups.raw", FILE_WRITE) => -1  [ERR_CANNOT_OPEN_FILE]
+ *  - refactor parameter 'directory' of symbol functions
  *     InsertRawSymbol()
  *     IsRawSymbol()
  *

@@ -8298,41 +8298,64 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
 
 
 /**
- * Speichert die ¸bergebenen Symbolgruppen in der Datei "symgroups.raw" des angegebenen AccountServers. Eine existierende Datei wird
- * ¸berschrieben.
+ * Save the specified SYMBOL_GROUPs to a file "symgroups.raw" of a directory. Overwrites an existing file.
  *
- * @param  SYMBOL_GROUP sgs[]      - Array von Symbolgruppen
- * @param  string       serverName - Name des Accountservers, in dessen Verzeichnis die Gruppen gespeichert werden (default: der aktuelle
- *                                   AccountServer)
- * @return bool - Erfolgsstatus
+ * @param  SYMBOL_GROUP sgs[]                - symbol groups
+ * @param  string       directory [optional] - directory name
+ *                                             if empty:            the current trade server directory (default)
+ *                                             if a relative path:  relative to the MQL sandbox/files directory
+ *                                             if an absolute path: as is
+ * @return bool - success status
  */
-bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string serverName="") {
+bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    int byteSize = ArraySize(sgs) * 4;
-   if (byteSize % SYMBOL_GROUP_size != 0)                                          return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR));
-   if (byteSize > 32*SYMBOL_GROUP_size)                                            return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
-   if (serverName == "0")      serverName = "";                      // (string) NULL
-   if (!StringLen(serverName)) serverName = GetAccountServerName(); if (serverName == "") return(false);
+   if (byteSize % SYMBOL_GROUP_size != 0) return(!catch("SaveSymbolGroups(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR));
+   if (byteSize > 32*SYMBOL_GROUP_size)   return(!catch("SaveSymbolGroups(2)  invalid number of groups in sgs[] (max 32)", ERR_RUNTIME_ERROR));
+   if (directory == "0") directory = "";           // (string) NULL
 
-   // "symgroups.raw" muﬂ immer 32 Gruppen enthalten (ggf. undefiniert)
-   int sgs.copy[]; ArrayResize(sgs.copy, 0);
+   // copy the passed array and extend it to a full "symgroups.raw" file size (32 groups)
+   int sgs_copy[]; ArrayResize(sgs_copy, 0);
    if (ArraySize(sgs) < 32*SYMBOL_GROUP_intSize)
-      InitializeByteBuffer(sgs.copy, 32*SYMBOL_GROUP_size);          // um das ¸bergebene Array nicht zu ver‰ndern, erweitern wir ggf. eine Kopie
-   ArrayCopy(sgs.copy, sgs);
+      InitializeByteBuffer(sgs_copy, 32*SYMBOL_GROUP_size);
+   ArrayCopy(sgs_copy, sgs);
 
-   // Datei ˆffnen                                                   // TODO: Verzeichnis ¸berpr¸fen und ggf. erstellen
-   string mqlFileName = "history\\"+ serverName +"\\symgroups.raw";
-   int hFile = FileOpen(mqlFileName, FILE_WRITE|FILE_BIN);
-   int error = GetLastError();
-   if (IsError(error) || hFile <= 0)  return(!catch("SaveSymbolGroups(3)->FileOpen(\""+ mqlFileName +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   if (directory == "") {                          // current trade server: use built-in function FileOpenHistory()
+      // open "symgroups.raw"
+      string filename = "symgroups.raw";
+      int hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
+      int error = GetLastError();
+      if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(3)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
 
-   // Daten schreiben
-   int arraySize = ArraySize(sgs.copy);
-   int ints = FileWriteArray(hFile, sgs.copy, 0, arraySize);
-   error = GetLastError();
-   FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUP[] to \""+ mqlFileName +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+      // write "symgroups.raw"
+      int arraySize = ArraySize(sgs_copy);
+      int ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
+      error = GetLastError();
+      FileClose(hFile);
+      if (IsError(error) || ints!=arraySize)                   return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   }
 
-   ArrayResize(sgs.copy, 0);
+   else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use built-in function FileOpen()
+      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("SaveSymbolGroups(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
+
+      // open "symgroups.raw"
+      filename = directory +"/symgroups.raw";
+      hFile = FileOpen(filename, FILE_WRITE|FILE_BIN);
+      error = GetLastError();
+      if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+
+      // write "symgroups.raw"
+      arraySize = ArraySize(sgs_copy);
+      ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
+      error = GetLastError();
+      FileClose(hFile);
+      if (IsError(error) || ints!=arraySize)                   return(!catch("SaveSymbolGroups(7)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   }
+
+   else {                                          // absolute path: use Expander
+      return(!catch("SaveSymbolGroups(8)  writing to absolute path \""+ directory +"\" not implemented", ERR_NOT_IMPLEMENTED));
+   }
+
+   ArrayResize(sgs_copy, 0);
    return(true);
 }
 
