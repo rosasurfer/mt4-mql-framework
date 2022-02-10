@@ -4261,13 +4261,14 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 
 
 /**
- * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
- * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
- * different company identifier via section [AccountCompanies] of the framework configuration.
+ * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
  *
- * @return string - original or mapped company identifier or an empty string in case of errors
+ * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServerPath() {
+   string directory  = GetHistoryRootPathA();  if (directory == "")  return("");
+   string serverName = GetAccountServerName(); if (serverName == "") return("");
+   return(StringConcatenate(directory, "\\", serverName));
 }
 
 
@@ -7086,6 +7087,7 @@ void __DummyCalls() {
    GetAccountCompany();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
+   GetAccountServerPath();
    GetCommission();
    GetConfigBool(NULL, NULL);
    GetConfigColor(NULL, NULL);
