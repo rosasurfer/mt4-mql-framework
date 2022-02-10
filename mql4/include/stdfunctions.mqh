@@ -3333,7 +3333,7 @@ bool CreateDirectory(string path, int flags) {
       string filesDirectory = GetMqlFilesPath();
       if (!StringLen(filesDirectory))
          return(false);
-      path = StringConcatenate(filesDirectory, "\\", path);
+      path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
    }
    return(!CreateDirectoryA(path, flags|MODE_SYSTEM));
@@ -3351,13 +3351,13 @@ string GetMqlFilesPath() {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
 
-         filesDir = dataDirectory +"\\tester\\files";
+         filesDir = dataDirectory +"/tester/files";
       }
       else {
          string mqlDirectory = GetMqlDirectoryA();
          if (!StringLen(mqlDirectory)) return(EMPTY_STR);
 
-         filesDir = mqlDirectory +"\\files";
+         filesDir = mqlDirectory +"/files";
       }
    }
    return(filesDir);
@@ -6069,7 +6069,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetMqlFilesPath() +"\\";
+   string filesDir = GetMqlFilesPath() +"/";
 
    // Validierung
    // Sender
@@ -6203,9 +6203,9 @@ bool SendSMS(string receiver, string message) {
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlFilesPath();
-   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
-   string logFile      = filesDir +"\\sms.log";
-   string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string logFile      = filesDir +"/sms.log";
+   string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 

@@ -2129,7 +2129,7 @@ string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string result = ""; if (!StringLen(result)) {
-      string directory = "\\presets\\" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"\\";
+      string directory = "/presets/" + ifString(IsTesting(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ sequence.id +".set";
       result = GetMqlFilesPath() + directory + baseName;
    }
