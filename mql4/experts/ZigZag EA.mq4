@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - add GetAccountServerPath()
  *  - refactor parameter 'directory' of symbol functions
  *     InsertRawSymbol()   FATAL  ZigZag EA::rsfLib::InsertRawSymbol(3)->FileOpen("history\history/XTrade-Live-results\symbols.raw", FILE_READ|FILE_WRITE) => -1  [ERR_CANNOT_OPEN_FILE]
  *     IsRawSymbol()
