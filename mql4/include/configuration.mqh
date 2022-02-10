@@ -21,7 +21,7 @@ string GetAccountConfigPath(string company="", int account=NULL) {
       account = GetAccountNumber();
       if (!account) return(EMPTY_STR);
    }
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
+   return(StringConcatenate(GetTerminalCommonDataPathA(), "/accounts/", company, "/", account, "-config.ini"));
 }
 
 

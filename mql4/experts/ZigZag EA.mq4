@@ -5,7 +5,7 @@
  * TODO:
  *  - add GetAccountServerPath()
  *  - refactor parameter 'directory' of symbol functions
- *     InsertRawSymbol()
+ *     InsertRawSymbol()   FATAL  ZigZag EA::rsfLib::InsertRawSymbol(3)->FileOpen("history\history/XTrade-Live-results\symbols.raw", FILE_READ|FILE_WRITE) => -1  [ERR_CANNOT_OPEN_FILE]
  *     IsRawSymbol()
  *
  *  - refactor parameter 'directory' in history functions
@@ -757,14 +757,14 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string directory = "presets/" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
       filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
-   return(GetMqlFilesPath() +"\\"+ filename);
+   return(GetMqlFilesPath() +"/"+ filename);
 }
 
 

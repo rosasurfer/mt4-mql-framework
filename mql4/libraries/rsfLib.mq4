@@ -658,7 +658,7 @@ string GetAccountServerName() {
          FileClose(hFile);
 
          // search the created file
-         string pattern = GetCommonHistoryPathA() +"\\*";
+         string pattern = GetCommonHistoryPathA() +"/*";
 
          /*WIN32_FIND_DATA*/int wfd[]; InitializeByteBuffer(wfd, WIN32_FIND_DATA_size);
          int hFindDir = FindFirstFileA(pattern, wfd), next = hFindDir;
@@ -666,7 +666,7 @@ string GetAccountServerName() {
             if (wfd_FileAttribute_Directory(wfd)) {
                string name = wfd_FileName(wfd);
                if (name!=".") /*&&*/ if (name!="..") {
-                  fullTmpFilename = GetCommonHistoryPathA() +"\\"+ name +"\\"+ tmpFilename;
+                  fullTmpFilename = GetCommonHistoryPathA() +"/"+ name +"/"+ tmpFilename;
                   if (IsFile(fullTmpFilename, MODE_SYSTEM)) {
                      DeleteFileA(fullTmpFilename);
                      serverName = name;
@@ -8018,7 +8018,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
    if (directory == "") directory = GetAccountServerName(); if (directory == "") return(false);
 
    // open "symbols.raw"
-   string mqlFileName = "history\\"+ directory +"\\symbols.raw";
+   string mqlFileName = "history/"+ directory +"/symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
    int error = GetLastError();
    if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
@@ -8248,7 +8248,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string serverName="") {
 
 
    // (1.1) Symboldatei öffnen und Größe validieren
-   string mqlFileName = "history\\"+ serverName +"\\symbols.raw";
+   string mqlFileName = "history/"+ serverName +"/symbols.raw";
    int hFile = FileOpen(mqlFileName, FILE_READ|FILE_WRITE|FILE_BIN);
    int error = GetLastError();
    if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpen(\""+ mqlFileName +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));

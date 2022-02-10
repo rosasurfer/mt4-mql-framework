@@ -668,7 +668,7 @@ string CreateUniqueSymbol() {
 
    if (!StringLen(tracker.symbol)) {                        // fall-back to manual symbol generation
       // open "symbols.raw" and read existing symbols
-      string mqlFileName = "history\\"+ tracker.hstDirectory +"\\symbols.raw";
+      string mqlFileName = "history/"+ tracker.hstDirectory +"/symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (error || hFile <= 0)                              return(!catch("CreateUniqueSymbol(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
