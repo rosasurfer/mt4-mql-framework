@@ -4266,6 +4266,17 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
  * different company identifier via section [AccountCompanies] of the framework configuration.
  *
  * @return string - original or mapped company identifier or an empty string in case of errors
+ */
+string GetAccountServerPath() {
+}
+
+
+/**
+ * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
+ * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
+ * different company identifier via section [AccountCompanies] of the framework configuration.
+ *
+ * @return string - original or mapped company identifier or an empty string in case of errors
  *
  * Example:
  * +--------------------+--------------------+

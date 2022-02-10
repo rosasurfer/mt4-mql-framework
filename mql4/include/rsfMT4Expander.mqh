@@ -7,8 +7,8 @@
 #import "rsfMT4Expander.dll"
 
    // terminal status, terminal interaction
-   string   GetCommonHistoryPathA();
    string   GetExpanderFileNameA();
+   string   GetHistoryRootPathA();
    string   GetMqlDirectoryA();
    int      GetTerminalBuild();
    int      GetTerminalMainWindow();
