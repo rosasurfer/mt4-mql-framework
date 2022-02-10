@@ -3,16 +3,15 @@
  *
  *
  * TODO:
- *  - add GetHistoryPath()
+ *  - add GetCommonHistoryPath()
  *  - add GetAccountServerPath()
- *  - refactor parameter 'directory' in history/symbol functions
- *      CreateRawSymbol()           OK
- *       GetSymbolGroups()
- *       SaveSymbolGroups()
- *       InsertRawSymbol()
- *       IsRawSymbol()
+ *  - refactor parameter 'directory' in symbol functions
+ *     SaveSymbolGroups()        FATAL ZigZag EA::rsfLib::SaveSymbolGroups(3)->FileOpen("history\history/XTrade-Live-results\symgroups.raw", FILE_WRITE) => -1  [ERR_CANNOT_OPEN_FILE]
+ *     InsertRawSymbol()
+ *     IsRawSymbol()
  *
- *      HistorySet.Create()
+ *  - refactor parameter 'directory' in history functions
+ *     HistorySet.Create()
  *
  *  - move warning "symbols.raw not found" to CreateRawSymbol()/HistorySet.Create()
  *     core/expert

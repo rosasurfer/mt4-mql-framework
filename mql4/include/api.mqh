@@ -828,6 +828,8 @@ string   ErrorToStrA(int error);;
 string   EXECUTION_CONTEXT_toStr(int &ec[]);;
 int      FindTesterWindow();;
 int      GetBoolsAddress(bool &values[]);;
+string   GetCommonHistoryPathA();;
+string   GetCommonHistoryPathW();;
 int      GetDoublesAddress(double &values[]);;
 string   GetExpanderFileNameA();;
 string   GetExpanderFileNameW();;
