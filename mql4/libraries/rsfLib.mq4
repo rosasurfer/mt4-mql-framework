@@ -7994,9 +7994,9 @@ string CreateTempFile(string path, string prefix="") {
    int fileId = GetTempFileNameA(path, prefix, unique, buffer[0]);
    if (!fileId) return(_EMPTY_STR(catch("GetTempFileName(4)->kernel32::GetTempFileNameA() => 0", ERR_WIN32_ERROR)));
 
-   string fileName = buffer[0];
+   string filename = buffer[0];
    ArrayResize(buffer, 0);
-   return(fileName);
+   return(filename);
 }
 
 
@@ -8008,32 +8008,51 @@ string CreateTempFile(string path, string prefix="") {
  *                                       if empty:            the current trade server directory (default)
  *                                       if a relative path:  relative to the MQL sandbox/files directory
  *                                       if an absolute path: as is
- * @return bool
+ *
+ * @return bool - success status or FALSE in case of errors
  */
 bool IsRawSymbol(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("IsRawSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("IsRawSymbol(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("IsRawSymbol(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
+   if (directory == "0") directory = "";              // (string) NULL
+   string filename = "";
 
-   if (directory == "") directory = GetAccountServerName(); if (directory == "") return(false);
+   if (directory == "") {                             // current trade server: use built-in function FileOpenHistory()
+      // check "symbols.raw"
+      filename = "symbols.raw";                       // without the additional check FileOpenHistory(FILE_READ) logs a warning if the file doesn't exist
+      if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(false);
 
-   // open "symbols.raw"
-   string mqlFileName = "history/"+ directory +"/symbols.raw";
-   int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
-   int error = GetLastError();
-   if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpen("+ DoubleQuoteStr(mqlFileName) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      // open the file
+      int hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);
+      int error = GetLastError();
+      if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpenHistory("+ DoubleQuoteStr(filename) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   }
+   else if (!IsAbsolutePath(directory)) {             // relative sandbox path: use built-in function FileOpen()
+      // check "symbols.raw"
+      filename = directory +"/symbols.raw";           // without the additional check FileOpen(FILE_READ) logs a warning if the file doesn't exist
+      if (!IsFile(filename, MODE_MQL)) return(false);
+
+      // open the file
+      hFile = FileOpen(filename, FILE_READ|FILE_BIN);
+      error = GetLastError();
+      if (error || hFile <= 0) return(!catch("IsRawSymbol(5)->FileOpen("+ DoubleQuoteStr(filename) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   }
+   else {                                             // absolute path: use Expander
+      return(!catch("IsRawSymbol(6)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+   }
 
    // validate the file size
    int fileSize = FileSize(hFile);
    if (!fileSize)                   { FileClose(hFile); return(false); }
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(5)  illegal size of "+ DoubleQuoteStr(mqlFileName) +" (no even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("IsRawSymbol(7)  illegal size of "+ DoubleQuoteStr(filename) +" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
 
    // read all symbols
    int symbolsCount = fileSize/SYMBOL_size;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
    int dwords = FileReadArray(hFile, symbols, 0, fileSize/4);
    error = GetLastError();
-   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(6)  error reading "+ DoubleQuoteStr(mqlFileName) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+   if (error || dwords!=fileSize/4) { FileClose(hFile); return(!catch("IsRawSymbol(8)  error reading "+ DoubleQuoteStr(filename) +" ("+ dwords*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
    // check for the specified symbol
    bool found = false;
@@ -8044,8 +8063,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
       }
    }
    FileClose(hFile);
-   ArrayResize(symbols, 0);            // release allocated memory
-
+   ArrayResize(symbols, 0);
    return(found);
 }
 
@@ -8123,10 +8141,8 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
 int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, color bgColor) {
    int byteSize = ArraySize(sgs) * 4;
    if (byteSize % SYMBOL_GROUP_size != 0)         return(_EMPTY(catch("AddSymbolGroup(1)  invalid size of sgs[] (not an even SYMBOL_GROUP size, "+ (byteSize % SYMBOL_GROUP_size) +" trailing bytes)", ERR_RUNTIME_ERROR)));
-   if (name == "0") name = "";                    // (string) NULL
    if (!StringLen(name))                          return(_EMPTY(catch("AddSymbolGroup(2)  invalid parameter name: "+ DoubleQuoteStr(name), ERR_INVALID_PARAMETER)));
    if (StringLen(name) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("AddSymbolGroup(3)  invalid parameter name: "+ DoubleQuoteStr(name) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" characters)", ERR_INVALID_PARAMETER)));
-   if (description == "0") description = "";      // (string) NULL
    if (bgColor!=CLR_NONE && bgColor & 0xFF000000) return(_EMPTY(catch("AddSymbolGroup(4)  invalid parameter bgColor: 0x"+ IntToHexStr(bgColor) +" (not a color)", ERR_INVALID_PARAMETER)));
 
    // überprüfen, ob die angegebene Gruppe bereits existiert und dabei den ersten freien Index ermitteln
@@ -8134,8 +8150,8 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
    int iFree = -1;
    for (int i=0; i < groupsSize; i++) {
       string foundName = sgs_Name(sgs, i);
-      if (name == foundName)                      return(_EMPTY(catch("AddSymbolGroup(5)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
-      if (iFree==-1) /*&&*/ if (foundName=="")
+      if (name == foundName)  return(_EMPTY(catch("AddSymbolGroup(5)  a group named "+ DoubleQuoteStr(name) +" already exists", ERR_RUNTIME_ERROR)));
+      if (iFree==-1 && foundName=="")
          iFree = i;
    }
 
@@ -8174,60 +8190,47 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
  */
 int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    ArrayResize(sgs, 0);
-   if (directory == "0") directory = "";                             // (string) NULL
+   if (directory == "0") directory = "";                    // (string) NULL
 
-   if (directory == "") {                                            // current trade server: use built-in function FileOpenHistory()
+   if (directory == "") {                                   // current trade server: use built-in function FileOpenHistory()
       // stat "symgroups.raw"
-      string hstFilename  = "symgroups.raw";                         // without an additional check the built-in functions FileOpen/FileOpenHistory...
-      string serverName   = GetAccountServerName(); if (serverName == "") return(EMPTY);
-      string fullFilename = GetHistoryRootPathA() +"/"+ serverName +"/"+ hstFilename;
-      if (!IsFile(fullFilename, MODE_SYSTEM)) return(0);             // ...log each time a warning ERR_CANNOT_OPEN_FILE (if not exists)
+      string filename = "symgroups.raw";                    // without the additional check FileOpenHistory(FILE_READ) logs a warning if the file doesn't exist
+      if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(0);
 
-      // open "symgroups.raw" and validate its size
-      int hFile = FileOpen(hstFilename, FILE_READ|FILE_BIN);
+      // open the file
+      int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpenHistory(\""+ hstFilename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
-      int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_GROUP_size != 0) {
-         FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ hstFilename +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
-      }
-      if (!fileSize) { FileClose(hFile); return(0); }                // accept an empty file which may temporarily happen at creation time
-                                                                     // default: 32 * SYMBOL_GROUP_size = 32 * 80 = 2560 byte
-      // read "symgroups.raw"
-      InitializeByteBuffer(sgs, fileSize);
-      int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
-      error = GetLastError();
-      FileClose(hFile);
-      if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ hstFilename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
-      return(fileSize/SYMBOL_GROUP_size);
+      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    }
-
-   if (!IsAbsolutePath(directory)) {                                 // relative sandbox path: use built-in function FileOpen()
+   else if (!IsAbsolutePath(directory)) {                   // relative sandbox path: use built-in function FileOpen()
       // stat "symgroups.raw"
-      string mqlFilename = "history/"+ directory +"/symgroups.raw";  // without an additional check the built-in functions FileOpen/FileOpenHistory
-      if (!IsFile(mqlFilename, MODE_MQL)) return(0);                 // log each time a warning ERR_CANNOT_OPEN_FILE (if not exists)
+      filename = directory +"/symgroups.raw";
+      if (!IsFile(filename, MODE_MQL)) return(0);           // without the additional check FileOpen(FILE_READ) logs a warning if the file doesn't exist
 
-      // open "symgroups.raw" and validate its size
-      hFile = FileOpen(mqlFilename, FILE_READ|FILE_BIN);
+      // open the file
+      hFile = FileOpen(filename, FILE_READ|FILE_BIN);
       error = GetLastError();
-      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpen(\""+ mqlFilename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
-      fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_GROUP_size != 0) {
-         FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(2)  invalid size of \""+ mqlFilename +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
-      }
-      if (!fileSize) { FileClose(hFile); return(0); }                // accept an empty file which may temporarily happen at creation time
-                                                                     // default: 32 * SYMBOL_GROUP_size = 32 * 80 = 2560 byte
-      // read "symgroups.raw"
-      InitializeByteBuffer(sgs, fileSize);
-      ints = FileReadArray(hFile, sgs, 0, fileSize/4);
-      error = GetLastError();
-      FileClose(hFile);
-      if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(3)  error reading \""+ mqlFilename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
-      return(fileSize/SYMBOL_GROUP_size);
+      if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
+   }
+   else {                                                   // absolute path: use Expander
+      return(_EMPTY(catch("GetSymbolGroups(3)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED)));
    }
 
-   // absolute path: use Expander
-   return(_EMPTY(catch("GetSymbolGroups(3)  reading of absolute path \""+ directory +"\" not implemented", ERR_NOT_IMPLEMENTED)));
+   // validate the file size
+   int fileSize = FileSize(hFile);
+   if (fileSize % SYMBOL_GROUP_size != 0) {
+      FileClose(hFile);               return(_EMPTY(catch("GetSymbolGroups(4)  invalid size of \""+ filename +"\" (not an even SYMBOL_GROUP size, "+ (fileSize % SYMBOL_GROUP_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))));
+   }
+   if (!fileSize) { FileClose(hFile); return(0); }          // accept an empty file which may temporarily happen at creation time
+                                                            // default: 32 * SYMBOL_GROUP_size = 32 * 80 = 2560 byte
+   // read the file
+   InitializeByteBuffer(sgs, fileSize);
+   int ints = FileReadArray(hFile, sgs, 0, fileSize/4);
+   error = GetLastError();
+   FileClose(hFile);
+   if (IsError(error) || ints!=fileSize/4) return(_EMPTY(catch("GetSymbolGroups(5)  error reading \""+ filename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))));
+
+   return(fileSize/SYMBOL_GROUP_size);
 }
 
 
@@ -8262,7 +8265,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
       if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else {                                          // absolute path: use Expander
-      return(!catch("InsertRawSymbol(5)  writing of absolute path \""+ directory +"\" not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("InsertRawSymbol(5)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    // check file size
@@ -8337,13 +8340,6 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       int hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(3)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
-
-      // write "symgroups.raw"
-      int arraySize = ArraySize(sgs_copy);
-      int ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
-      error = GetLastError();
-      FileClose(hFile);
-      if (IsError(error) || ints!=arraySize)                   return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use built-in function FileOpen()
@@ -8354,18 +8350,18 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       hFile = FileOpen(filename, FILE_WRITE|FILE_BIN);
       error = GetLastError();
       if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
-
-      // write "symgroups.raw"
-      arraySize = ArraySize(sgs_copy);
-      ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
-      error = GetLastError();
-      FileClose(hFile);
-      if (IsError(error) || ints!=arraySize)                   return(!catch("SaveSymbolGroups(7)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else {                                          // absolute path: use Expander
-      return(!catch("SaveSymbolGroups(8)  writing to absolute path \""+ directory +"\" not implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("SaveSymbolGroups(8)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
+
+   // write "symgroups.raw"
+   int arraySize = ArraySize(sgs_copy);
+   int ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
+   error = GetLastError();
+   FileClose(hFile);
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    ArrayResize(sgs_copy, 0);
    return(true);
@@ -8392,8 +8388,8 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
       default: return(!catch("SetRawSymbolTemplate(1)  invalid parameter type: "+ type +" (not a symbol type)", ERR_INVALID_PARAMETER));
    }
 
-   // Template-File auf Existenz prüfen                              // Extra-Prüfung, da bei Read-only-Zugriff FileOpen() bei nicht existierender
-   if (!IsFile(fileName, MODE_MQL))                                  // Datei das Log mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
+   // Template-File auf Existenz prüfen
+   if (!IsFile(fileName, MODE_MQL))       // without the additional check FileOpen(FILE_READ) logs a warning if the file doesn't exist
       return(false);
 
    // Datei öffnen und Größe validieren
