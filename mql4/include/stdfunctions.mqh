@@ -472,7 +472,7 @@ bool IsVisualModeFix() {
 
 
 /**
- * Ob der angegebene Wert einen Fehler darstellt.
+ * Whether the specified value represents an error.
  *
  * @param  int value
  *
@@ -484,7 +484,7 @@ bool IsError(int value) {
 
 
 /**
- * Ob der interne Fehler-Code des aktuellen Moduls gesetzt ist.
+ * Whether the internal error code of the current MQL module is set.
  *
  * @return bool
  */
@@ -494,14 +494,34 @@ bool IsLastError() {
 
 
 /**
- * Setzt den internen Fehlercode des aktuellen Moduls zurück.
+ * Reset the internal error code of the current MQL module.
  *
- * @return int - der vorm Zurücksetzen gesetzte Fehlercode
+ * @return int - previous internal error code
  */
 int ResetLastError() {
    int error = last_error;
    SetLastError(NO_ERROR);
    return(error);
+}
+
+
+/**
+ * Whether the internal MQL error code of the program is set. Covers errors in all MQL modules.
+ *
+ * @return bool
+ */
+bool IsMQLError() {
+   return(__ExecutionContext[EC.mqlError] != NO_ERROR);
+}
+
+
+/**
+ * Whether the internal DLL error code of the program is set. Covers errors in the MT4Expander DLL module.
+ *
+ * @return bool
+ */
+bool IsDLLError() {
+   return(__ExecutionContext[EC.dllError] != NO_ERROR);
 }
 
 
@@ -7137,6 +7157,7 @@ void __DummyCalls() {
    IsCurrency(NULL);
    IsDemoFix();
    IsDirectory(NULL, NULL);
+   IsDLLError();
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
@@ -7151,6 +7172,7 @@ void __DummyCalls() {
    IsLimitOrderType(NULL);
    IsLog();
    IsLongOrderType(NULL);
+   IsMQLError();
    IsNaN(NULL);
    IsNaT(NULL);
    IsOrderType(NULL);
