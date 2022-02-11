@@ -3,9 +3,6 @@
  *
  *
  * TODO:
- *  - refactor parameter 'directory' of symbol functions
- *     IsRawSymbol()
- *
  *  - refactor parameter 'directory' of history functions
  *     HistorySet.Create()
  *

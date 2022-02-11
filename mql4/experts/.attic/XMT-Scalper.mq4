@@ -3146,6 +3146,8 @@ bool InitMetricHistory(int metric) {
    if (!metrics.symbolOK[metric]) {
       if (metrics.hstDirectory != "") {
          if (!IsRawSymbol(metrics.symbol[metric], metrics.hstDirectory)) { // create a new symbol if it doesn't yet exist
+            if (IsMQLError()) return(false);
+
             string group = "System metrics";
             int sId = CreateRawSymbol(metrics.symbol[metric], metrics.description[metric], group, metrics.digits[metric], AccountCurrency(), AccountCurrency(), metrics.hstDirectory);
             if (sId < 0) return(false);
