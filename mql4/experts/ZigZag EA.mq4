@@ -4,9 +4,11 @@
  *
  * TODO:
  *  - refactor parameter 'directory' of history functions
+ *     HistoryFile.Open()
  *     HistorySet.Create()
+ *     HistorySet.Get()
  *
- *  - move warning "symbols.raw not found" to CreateRawSymbol()/HistorySet.Create()
+ *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
  *     core/expert
  *     EquityRecorder
  *     LFX-Monitor
