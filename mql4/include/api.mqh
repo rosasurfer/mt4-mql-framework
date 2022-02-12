@@ -151,7 +151,7 @@ string   GetCurrency(int id);;
 int      GetCurrencyId(string currency);;
 double   GetExternalAssets(string company="", int account=NULL, bool refresh=false);;
 datetime GetFxtTime();;
-string   GetMqlFilesPath();;
+string   GetMqlSandboxPath();;
 int      GetRandomValue(int min, int max);;
 datetime GetServerTime();;
 string   GmtTimeFormat(datetime timestamp, string format);;

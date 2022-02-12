@@ -3303,7 +3303,7 @@ bool IsFile(string path, int mode) {
    if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
@@ -3326,7 +3326,7 @@ bool IsDirectory(string path, int mode) {
    if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
@@ -3350,7 +3350,7 @@ bool CreateDirectory(string path, int flags) {
    if (!( flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (flags & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
@@ -3361,12 +3361,12 @@ bool CreateDirectory(string path, int flags) {
 
 
 /**
- * Return the full path of the MQL sandbox/files directory. This is the directory accessible to MQL file functions.
+ * Return the full path of the MQL sandbox directory. This is the only directory accessible to MQL file functions.
  *
- * @return string - directory path not ending with a slash or an empty string in case of errors
+ * @return string - directory path or an empty string in case of errors
  */
-string GetMqlFilesPath() {
-   static string filesDir=""; if (!StringLen(filesDir)) {
+string GetMqlSandboxPath() {
+   static string filesDir = ""; if (!StringLen(filesDir)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
@@ -6101,7 +6101,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetMqlFilesPath() +"/";
+   string filesDir = GetMqlSandboxPath() +"/";
 
    // Validierung
    // Sender
@@ -6234,7 +6234,7 @@ bool SendSMS(string receiver, string message) {
 
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetMqlFilesPath();
+   string filesDir     = GetMqlSandboxPath();
    string responseFile = filesDir +"/sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
    string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
@@ -7123,7 +7123,7 @@ void __DummyCalls() {
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetMqlFilesPath();
+   GetMqlSandboxPath();
    GetRandomValue(NULL, NULL);
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
