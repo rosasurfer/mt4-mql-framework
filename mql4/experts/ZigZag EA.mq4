@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - rename rsfHistory::hf.full.* to hf.total.*
  *  - rename rsfHistory::*.symbolUpper to *.symbolU (do we even need it?)
  *  - rename *MQLFile* to *MQLSandbox*
  *
