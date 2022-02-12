@@ -54,7 +54,7 @@ int      periods[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, 
 int      hs.hSet       [];                            // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
 int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
-string   hs.symbolUpper[];                            // SYMBOL (Upper-Case)
+string   hs.symbolU    [];                            // Symbol (Upper-Case)
 string   hs.description[];                            // Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
 string   hs.directory  [];                            // Speicherverzeichnis des Sets
@@ -73,7 +73,7 @@ int      hf.header     [][HISTORY_HEADER_intSize];    // History-Header der Date
 int      hf.format     [];                            // Datenformat: 400 | 401
 int      hf.barSize    [];                            // Größe einer Bar entsprechend dem Datenformat
 string   hf.symbol     [];                            // Symbol
-string   hf.symbolUpper[];                            // SYMBOL (Upper-Case)
+string   hf.symbolU    [];                            // Symbol (Upper-Case)
 int      hf.period     [];                            // Periode
 int      hf.periodSecs [];                            // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Woche)
 int      hf.digits     [];                            // Digits
@@ -151,7 +151,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
+   string symbolU = StrToUpper(symbol);
    if (StringLen(description) > 63) {             logNotice("HistorySet1.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
       description = StrLeft(description, 63);
    }
@@ -162,7 +162,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    // check open HistorySets of the same symbol and close them
    int size = ArraySize(hs.hSet);
    for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
          hs.hSet[i] = -1;                                               // mark open sets of the same symbol as closed
@@ -180,7 +180,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    // check open HistoryFiles of the same symbol and close them
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)){
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)){
          if (!HistoryFile1.Close(hf.hFile[i])) return(NULL);
       }
    }
@@ -245,7 +245,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
 
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
-   hs.symbolUpper[iH] = symbolUpper;
+   hs.symbolU    [iH] = symbolU;
    hs.description[iH] = description;
    hs.digits     [iH] = digits;
    hs.directory  [iH] = directory;
@@ -274,30 +274,30 @@ int HistorySet1.Get(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
+   string symbolU = StrToUpper(symbol);
    if (directory == "0") directory = "";                             // (string) NULL
 
    // check open HistorySets of the same symbol
    int size = ArraySize(hs.hSet), iH, hSet=-1;
    for (int i=0; i < size; i++) {
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory))
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory))
          return(hs.hSet[i]);
    }
 
    // check open HistoryFiles of the same symbol
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
          size = Max(ArraySize(hs.hSet), 1) + 1;                      // open handle found: create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
          __ResizeSetArrays(size);
          iH   = size-1;
          hSet = iH;                                                  // the HistorySet handle matches the array index of hs.*
          hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hf.symbol     [i];
-         hs.symbolUpper[iH] = hf.symbolUpper[i];
+         hs.symbol     [iH] = hf.symbol   [i];
+         hs.symbolU    [iH] = hf.symbolU  [i];
          hs.description[iH] = hhs_Description(hf.header, i);
-         hs.digits     [iH] = hf.digits     [i];
-         hs.directory  [iH] = hf.directory  [i];
+         hs.digits     [iH] = hf.digits   [i];
+         hs.directory  [iH] = hf.directory[i];
          hs.format     [iH] = 400;                                   // default bar format for non-existing files
          return(hSet);
       }
@@ -334,7 +334,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
             hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
             hs.hSet       [iH] = hSet;
             hs.symbol     [iH] = hh_Symbol(hh);
-            hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
+            hs.symbolU    [iH] = StrToUpper(hs.symbol[iH]);
             hs.description[iH] = hh_Description(hh);
             hs.digits     [iH] = hh_Digits(hh);
             hs.directory  [iH] = directory;
@@ -370,7 +370,7 @@ int HistorySet1.Get(string symbol, string directory = "") {
             hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
             hs.hSet       [iH] = hSet;
             hs.symbol     [iH] = hh_Symbol(hh);
-            hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
+            hs.symbolU    [iH] = StrToUpper(hs.symbol[iH]);
             hs.description[iH] = hh_Description(hh);
             hs.digits     [iH] = hh_Digits(hh);
             hs.directory  [iH] = directory;
@@ -489,7 +489,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    if (!StringLen(symbol))                    return(!catch("HistoryFile1.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistoryFile1.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max. "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistoryFile1.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
+   string symbolU = StrToUpper(symbol);
    if (timeframe <= 0)                        return(!catch("HistoryFile1.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(!catch("HistoryFile1.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
    mode &= (FILE_READ|FILE_WRITE);                                               // unset all other bits
@@ -616,7 +616,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    hf.format                     [hFile]        = hh_BarFormat(hh);
    hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
    hf.symbol                     [hFile]        = hh_Symbol(hh);
-   hf.symbolUpper                [hFile]        = symbolUpper;
+   hf.symbolU                    [hFile]        = symbolU;
    hf.period                     [hFile]        = timeframe;
    hf.periodSecs                 [hFile]        = periodSecs;
    hf.digits                     [hFile]        = hh_Digits(hh);
@@ -1507,7 +1507,7 @@ int __ResizeSetArrays(int size) {
    if (size != oldSize) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
-      ArrayResize(hs.symbolUpper, size);
+      ArrayResize(hs.symbolU,     size);
       ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
       ArrayResize(hs.directory,   size);
@@ -1517,7 +1517,7 @@ int __ResizeSetArrays(int size) {
 
    for (int i=oldSize; i < size; i++) {
       hs.symbol     [i] = "";                   // init new strings to prevent NULL pointer errors
-      hs.symbolUpper[i] = "";
+      hs.symbolU    [i] = "";
       hs.description[i] = "";
       hs.directory  [i] = "";
    }
@@ -1547,7 +1547,7 @@ int __ResizeFileArrays(int size) {
       ArrayResize(hf.format,                      size);
       ArrayResize(hf.barSize,                     size);
       ArrayResize(hf.symbol,                      size);
-      ArrayResize(hf.symbolUpper,                 size);
+      ArrayResize(hf.symbolU,                     size);
       ArrayResize(hf.period,                      size);
       ArrayResize(hf.periodSecs,                  size);
       ArrayResize(hf.digits,                      size);
@@ -1588,10 +1588,10 @@ int __ResizeFileArrays(int size) {
    }
 
    for (int i=oldSize; i < size; i++) {
-      hf.name       [i] = "";                   // init new strings to prevent NULL pointer errors
-      hf.symbol     [i] = "";
-      hf.symbolUpper[i] = "";
-      hf.directory  [i] = "";
+      hf.name     [i] = "";                     // init new strings to prevent NULL pointer errors
+      hf.symbol   [i] = "";
+      hf.symbolU  [i] = "";
+      hf.directory[i] = "";
 
       hf.lastStoredBar.offset[i] = -1;          // init new bar offset fields
       hf.bufferedBar.offset  [i] = -1;

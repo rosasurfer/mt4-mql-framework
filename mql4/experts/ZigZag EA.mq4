@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - rename rsfHistory::*.symbolUpper to *.symbolU (do we even need it?)
  *  - rename *MQLFile* to *MQLSandbox*
  *
  *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
