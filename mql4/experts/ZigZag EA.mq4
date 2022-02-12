@@ -3,18 +3,9 @@
  *
  *
  * TODO:
- *  - check references to vars in rsfHistory
- *     hs.directory
- *     hf.directory
- *
  *  - rename rsfHistory::hf.full.* to hf.total.*
  *  - rename rsfHistory::*.symbolUpper to *.symbolU (do we even need it?)
  *  - rename *MQLFile* to *MQLSandbox*
- *
- *  - check references to history functions
- *     HistoryFile.Open()
- *     HistorySet.Create()
- *     HistorySet.Get()
  *
  *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
  *     core/expert
