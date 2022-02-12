@@ -136,12 +136,13 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  * @param  string symbol               - symbol
  * @param  string description          - symbol description
  * @param  int    digits               - digits of the timeseries
- * @param  int    format               - bar format of the timeseries: 400 - compatible with all MetaTrader builds
- *                                                                     401 - compatible with MetaTrader builds > 509
+ * @param  int    format               - bar format of the timeseries, one of
+ *                                        400: compatible with all MetaTrader builds
+ *                                        401: compatible with MetaTrader builds > 509 only
  * @param  string directory [optional] - directory to store history files in
- *                                       if empty:            the current trade server directory (default)
- *                                       if a relative path:  relative to the MQL sandbox/files directory
- *                                       if an absolute path: as is
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
  * @return int - HistorySet handle or NULL (0) in case of errors
  */
@@ -201,8 +202,8 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
          filename = StringConcatenate(path, "/", symbol, periods[i], ".hst");
 
          if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
-            hFile = FileOpenHistory(filename, FILE_BIN|FILE_WRITE);
-            if (hFile <= 0) return(!catch("HistorySet3.Create(7)->FileOpenHistory(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
+            if (hFile <= 0) return(!catch("HistorySet3.Create(7)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             hh_SetPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
@@ -262,9 +263,9 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
  *
  * @param  string symbol               - symbol
  * @param  string directory [optional] - directory to read history files from
- *                                       if empty:            the current trade server directory (default)
- *                                       if a relative path:  relative to the MQL sandbox/files directory
- *                                       if an absolute path: as is
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
  * @return int - HistorySet handle or EMPTY (-1) if none of the 9 history files exists. Use HistorySet.Create() in this case.
  *               NULL in case of errors.
@@ -314,7 +315,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
 
          if (IsFile(filename, MODE_SYSTEM)) {                        // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
             hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);   // open the file
-            if (hFile <= 0) return(!catch("HistorySet3.Get(4)  hFile(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (hFile <= 0) return(!catch("HistorySet3.Get(4)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             fileSize = FileSize(hFile);
             if (fileSize < HISTORY_HEADER_size) {
@@ -463,22 +464,26 @@ bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL
 
 
 /**
- * Öffnet eine Historydatei im angegeben Access-Mode und gibt ihr Handle zurück.
+ * Open a history file using the specified access mode and return a handle to it.
  *
- * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
- * • Ist FILE_WRITE, jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
+ * @param  string symbol               - symbol of the timeseries
+ * @param  int    timeframe            - period of the timeseries
+ * @param  string description          - symbol description           (used if a non-existing file is created)
+ * @param  int    digits               - digits of the timeseries     (used if a non-existing file is created)
+ * @param  int    format               - bar format of the timeseries (used if a non-existing file is created), one of
+ *                                        400: compatible with all MetaTrader builds
+ *                                        401: compatible with MetaTrader builds > 509 only
+ * @param  int    mode                 - access mode, a combination of
+ *                                        FILE_READ:  A non-existing file causes an error.
+ *                                        FILE_WRITE: A non-existing is created. Without FILE_READ an existing file is reset
+ *                                                    to a size of 0 (zero).
+ * @param  string directory [optional] - directory of history file location
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
- * @param  string symbol               - Symbol des Instruments
- * @param  int    timeframe            - Timeframe der Zeitreihe
- * @param  string description          - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
- * @param  int    digits               - Digits der Werte            (falls die Historydatei neu erstellt wird)
- * @param  int    format               - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
- * @param  int    mode                 - Access-Mode: FILE_READ|FILE_WRITE
- * @param  string directory [optional] - Verzeichnis, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
- *
- * @return int - Dateihandle oder
- *               -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
- *               NULL, falls ein anderer Fehler auftrat
+ * @return int - file handle or -1 if FILE_READ was specified for a non-existing file;
+ *               NULL (0) in case of all other errors
  */
 int HistoryFile3.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistoryFile3.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
@@ -487,53 +492,75 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    string symbolUpper = StrToUpper(symbol);
    if (timeframe <= 0)                        return(!catch("HistoryFile3.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(!catch("HistoryFile3.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
-   mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
+   mode &= (FILE_READ|FILE_WRITE);                                               // unset all other bits
    bool read_only  = !(mode & FILE_WRITE);
    bool write_only = !(mode & FILE_READ);
    bool read_write =  (mode & FILE_READ) && (mode & FILE_WRITE);
+   if (directory == "0") directory = "";                                         // (string) NULL
 
-   if (directory == "0")      directory = "";                                       // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServerName();
+   int hFile;
+   string serverPath="", filename="", basename=symbol + timeframe +".hst";
 
-   // (1) Datei öffnen
-   string mqlHstDir   = directory +"/";                                             // Verzeichnis für MQL-Dateifunktionen
-   string fullHstDir  = GetMqlFilesPath() +"/"+ mqlHstDir;                          // Verzeichnis für Win32-Dateifunktionen
-   string baseName    = symbol + timeframe +".hst";
-   string mqlFileName = mqlHstDir  + baseName;
-   // on write access make sure the directory exists
-   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
+   if (directory == "") {                                                        // current trade server: use MQL::FileOpenHistory()
+      // on write access make sure the directory exists
+      serverPath = GetAccountServerPath();
+      if (!read_only) /*&&*/ if (!CreateDirectory(serverPath, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(6)  cannot create directory "+ DoubleQuoteStr(serverPath) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
+      filename = StringConcatenate(serverPath, "/", basename);
 
-   // (1.1) read-only
-   int hFile;                                                                       // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
-   if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
-      if (!IsFile(mqlFileName, MODE_MQL)) return(-1);                               // file not found
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      // open the file: read-only
+      if (read_only) {
+         if (!IsFile(filename, MODE_SYSTEM)) return(-1);                         // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+         hFile = FileOpenHistory(basename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(7)->FileOpenHistory(\""+ basename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // read-write
+      else if (read_write) {
+         hFile = FileOpenHistory(basename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpenHistory(\""+ basename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // write-only
+      else if (write_only) {
+         hFile = FileOpenHistory(basename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
    }
 
-   // (1.2) read-write
-   else if (read_write) {
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path: use MQL::FileOpen()
+      // on write access make sure the directory exists
+      if (!read_only) /*&&*/ if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("HistoryFile3.Open(10)  cannot create directory "+ DoubleQuoteStr(directory) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
+      filename = StringConcatenate(directory, "/", basename);
+
+      // open the file: read-only
+      if (read_only) {
+         if (!IsFile(filename, MODE_MQL)) return(-1);                            // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(11)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // read-write
+      else if (read_write) {
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(12)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // write-only
+      else if (write_only) {
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile3.Open(13)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
    }
 
-   // (1.3) write-only
-   else if (write_only) {
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile3.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   else {                                                                        // absolute path: use Expander
+      return(!catch("HistoryFile3.Open(14)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    int      bars=0, from.offset=-1, to.offset=-1, fileSize=FileSize(hFile), periodSecs=timeframe * MINUTES;
    datetime from.openTime=0, from.closeTime=0, from.nextCloseTime=0, to.openTime=0, to.closeTime=0, to.nextCloseTime=0;
 
-   // (2) ggf. neuen HISTORY_HEADER schreiben
    if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
-      // Parameter validieren
-      if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
-      if (StringLen(description) > 63) description = StrLeft(description, 63);      // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(!catch("HistoryFile3.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
-      if (format!=400) /*&&*/ if (format!=401) return(!catch("HistoryFile3.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      // create and write new HISTORY_HEADER where appropriate
+      if (StringLen(description) > 63) description = StrLeft(description, 63);   // shorten a too long description
+      if (digits < 0)                 return(!catch("HistoryFile3.Open(15)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (format!=400 && format!=401) return(!catch("HistoryFile3.Open(16)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
 
       hh_SetBarFormat  (hh, format     );
       hh_SetDescription(hh, description);
@@ -543,14 +570,14 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER_intSize);
    }
 
-   // (3.1) ggf. vorhandenen HISTORY_HEADER auslesen
    else if (read_only || fileSize > 0) {
+      // read existing HISTORY_HEADER where appropriate
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(!catch("HistoryFile3.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         return(!catch("HistoryFile3.Open(17)  invalid history file \""+ filename +"\" (size="+ fileSize +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
-      // (3.2) ggf. Bar-Statistik auslesen
+      // read existing bar statistics
       if (fileSize > HISTORY_HEADER_size) {
          int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
          bars        = (fileSize-HISTORY_HEADER_size) / barSize;
@@ -567,25 +594,25 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
                to.nextCloseTime   = to.closeTime   + periodSecs;
             }
             else if (timeframe == PERIOD_MN1) {
-               from.closeTime     = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1);     // 00:00, 1. des nächsten Monats
-               from.nextCloseTime = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2);     // 00:00, 1. des übernächsten Monats
-               to.closeTime       = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1);     // 00:00, 1. des nächsten Monats
-               to.nextCloseTime   = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2);     // 00:00, 1. des übernächsten Monats
+               from.closeTime     = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1);  // 00:00, 1st of the next month
+               from.nextCloseTime = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2);  // 00:00, 1st of the next but one month
+               to.closeTime       = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1);  // 00:00, 1st of the next month
+               to.nextCloseTime   = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2);  // 00:00, 1st of the next but one month
             }
          }
       }
    }
 
-   // (4) Daten zwischenspeichern
-   if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
-      __ResizeFileArrays(hFile+1);                                   // andererseits von FileOpen() wiederverwendetes Handle
+   // store all metadata locally
+   if (hFile >= ArraySize(hf.hFile))                                             // either reuse existing index or increase arrays
+      __ResizeFileArrays(hFile+1);
 
    hf.hFile                      [hFile]        = hFile;
-   hf.name                       [hFile]        = baseName;
+   hf.name                       [hFile]        = basename;
    hf.readAccess                 [hFile]        = !write_only;
    hf.writeAccess                [hFile]        = !read_only;
 
-   ArraySetInts(hf.header,        hFile,          hh);               // entspricht: hf.header[hFile] = hh;
+   ArraySetInts(hf.header,        hFile,          hh);                           // same as: hf.header[hFile] = hh;
    hf.format                     [hFile]        = hh_BarFormat(hh);
    hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
    hf.symbol                     [hFile]        = hh_Symbol(hh);
@@ -595,15 +622,15 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    hf.digits                     [hFile]        = hh_Digits(hh);
    hf.directory                  [hFile]        = directory;
 
-   hf.stored.bars                [hFile]        = bars;                 // bei leerer History: 0
-   hf.stored.from.offset         [hFile]        = from.offset;          // ...                -1
-   hf.stored.from.openTime       [hFile]        = from.openTime;        // ...                 0
-   hf.stored.from.closeTime      [hFile]        = from.closeTime;       // ...                 0
-   hf.stored.from.nextCloseTime  [hFile]        = from.nextCloseTime;   // ...                 0
-   hf.stored.to.offset           [hFile]        = to.offset;            // ...                -1
-   hf.stored.to.openTime         [hFile]        = to.openTime;          // ...                 0
-   hf.stored.to.closeTime        [hFile]        = to.closeTime;         // ...                 0
-   hf.stored.to.nextCloseTime    [hFile]        = to.nextCloseTime;     // ...                 0
+   hf.stored.bars                [hFile]        = bars;                          // on empty history: 0
+   hf.stored.from.offset         [hFile]        = from.offset;                   // ...              -1
+   hf.stored.from.openTime       [hFile]        = from.openTime;                 // ...               0
+   hf.stored.from.closeTime      [hFile]        = from.closeTime;                // ...               0
+   hf.stored.from.nextCloseTime  [hFile]        = from.nextCloseTime;            // ...               0
+   hf.stored.to.offset           [hFile]        = to.offset;                     // ...              -1
+   hf.stored.to.openTime         [hFile]        = to.openTime;                   // ...               0
+   hf.stored.to.closeTime        [hFile]        = to.closeTime;                  // ...               0
+   hf.stored.to.nextCloseTime    [hFile]        = to.nextCloseTime;              // ...               0
 
    hf.full.bars                  [hFile]        = hf.stored.bars              [hFile];
    hf.full.from.offset           [hFile]        = hf.stored.from.offset       [hFile];
@@ -615,8 +642,8 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    hf.full.to.closeTime          [hFile]        = hf.stored.to.closeTime      [hFile];
    hf.full.to.nextCloseTime      [hFile]        = hf.stored.to.nextCloseTime  [hFile];
 
-   hf.lastStoredBar.offset       [hFile]        = -1;                   // vorhandene Bardaten zurücksetzen: wichtig, da MQL die ID eines vorher geschlossenen Dateihandles
-   hf.lastStoredBar.openTime     [hFile]        =  0;                   //                                   wiederverwenden kann
+   hf.lastStoredBar.offset       [hFile]        = -1;                            // reset existing metadata: required because
+   hf.lastStoredBar.openTime     [hFile]        =  0;                            // MQL may reuse closed file handle ids
    hf.lastStoredBar.closeTime    [hFile]        =  0;
    hf.lastStoredBar.nextCloseTime[hFile]        =  0;
    hf.lastStoredBar.data         [hFile][BAR_T] =  0;
@@ -641,9 +668,8 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
    ArrayResize(hh, 0);
 
    int error = GetLastError();
-   if (!error)
-      return(hFile);
-   return(!catch("HistoryFile3.Open(13)  "+ symbol +","+ PeriodDescription(timeframe), error));
+   if (!error) return(hFile);
+   return(!catch("HistoryFile3.Open(18)  "+ symbol +","+ PeriodDescription(timeframe), error));
 }
 
 
