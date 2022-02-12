@@ -3,12 +3,9 @@
  *
  *
  * TODO:
- *  - refactor parameter 'directory' of history function
- *     HistoryFile.Open()
- *
- *  - check references to *.directory vars in rsfHistory
- *     hs.directory[]
- *     hf.directory[]
+ *  - check references to vars in rsfHistory
+ *     hs.directory
+ *     hf.directory
  *
  *  - rename rsfHistory::hf.full.* to hf.total.*
  *  - rename rsfHistory::*.symbolUpper to *.symbolU (do we even need it?)

@@ -647,12 +647,12 @@ string GetAccountServerName() {
       if (!StringLen(serverName)) {
          // create temporary file
          tmpFilename = "~GetAccountServerName~"+ GetCurrentThreadId() +".tmp";
-         int hFile = FileOpenHistory(tmpFilename, FILE_BIN|FILE_WRITE);
+         int hFile = FileOpenHistory(tmpFilename, FILE_WRITE|FILE_BIN);
 
          if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServerName(1)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                               catch("GetAccountServerName(2)->FileOpenHistory("+ DoubleQuoteStr(tmpFilename) +")", error);
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServerName(1)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetAccountServerName(2)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", error);
             return(EMPTY_STR);
          }
          FileClose(hFile);
@@ -8005,9 +8005,9 @@ string CreateTempFile(string path, string prefix="") {
  *
  * @param  string symbol               - symbol
  * @param  string directory [optional] - directory
- *                                       if empty:            the current trade server directory (default)
- *                                       if a relative path:  relative to the MQL sandbox/files directory
- *                                       if an absolute path: as is
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
  * @return bool - success status or FALSE in case of errors
  */
@@ -8026,7 +8026,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
       // open the file
       int hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);
       int error = GetLastError();
-      if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpenHistory("+ DoubleQuoteStr(filename) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else if (!IsAbsolutePath(directory)) {             // relative sandbox path: use MQL::FileOpen()
       // check "symbols.raw"
@@ -8078,9 +8078,9 @@ bool IsRawSymbol(string symbol, string directory = "") {
  * @param  string baseCurrency         - base currency
  * @param  string marginCurrency       - margin currency
  * @param  string directory [optional] - directory name
- *                                       if empty:            the current trade server directory (default)
- *                                       if a relative path:  relative to the MQL sandbox/files directory
- *                                       if an absolute path: as is
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
  * @return int - id of the new symbol (field SYMBOL.id) or EMPTY (-1) in case of errors
  */
@@ -8182,9 +8182,9 @@ int AddSymbolGroup(/*SYMBOL_GROUP*/int sgs[], string name, string description, c
  *
  * @param  _Out_ SYMBOL_GROUP &sgs[]               - array receiving the found symbol groups
  * @param  _In_  string       directory [optional] - directory name
- *                                                   if empty:            the current trade server directory (default)
- *                                                   if a relative path:  relative to the MQL sandbox/files directory
- *                                                   if an absolute path: as is
+ *                                                    if empty:            the current trade server directory (default)
+ *                                                    if a relative path:  relative to the MQL sandbox/files directory
+ *                                                    if an absolute path: as is
  *
  * @return int - number of found SYMBOL_GROUPs or EMPTY (-1) in case of errors
  */
@@ -8239,9 +8239,9 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
  *
  * @param  SYMBOL symbol               - symbol
  * @param  string directory [optional] - directory name
- *                                       if empty:            the current trade server directory (default)
- *                                       if a relative path:  relative to the MQL sandbox/files directory
- *                                       if an absolute path: as is
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  * @return bool - success status
  */
 bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
@@ -8317,9 +8317,9 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
  *
  * @param  SYMBOL_GROUP sgs[]                - symbol groups
  * @param  string       directory [optional] - directory name
- *                                             if empty:            the current trade server directory (default)
- *                                             if a relative path:  relative to the MQL sandbox/files directory
- *                                             if an absolute path: as is
+ *                                              if empty:            the current trade server directory (default)
+ *                                              if a relative path:  relative to the MQL sandbox/files directory
+ *                                              if an absolute path: as is
  * @return bool - success status
  */
 bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
