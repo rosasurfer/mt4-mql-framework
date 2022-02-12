@@ -3,15 +3,16 @@
  *
  *
  * TODO:
- *  - refactor parameter 'directory' of history functions
+ *  - refactor parameter 'directory' of history function
  *     HistoryFile.Open()
- *     HistorySet.Create()
  *
  *  - check references to *.directory vars in rsfHistory
  *     hs.directory[]
  *     hf.directory[]
  *
- *  - rename rsfHistory::hf.full.* to rsfHistory::hf.total.*
+ *  - rename rsfHistory::hf.full.* to hf.total.*
+ *  - rename rsfHistory::*.symbolUpper to *.symbolU (do we even need it?)
+ *  - rename *MQLFile* to *MQLSandbox*
  *
  *  - check references to history functions
  *     HistoryFile.Open()
