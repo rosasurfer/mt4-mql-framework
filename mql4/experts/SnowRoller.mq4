@@ -923,14 +923,14 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".SR."+ sequence.id +".set";
       filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
-   return(GetMqlFilesPath() +"/"+ filename);
+   return(GetMqlSandboxPath() +"/"+ filename);
 }
 
 
