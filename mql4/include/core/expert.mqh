@@ -754,10 +754,9 @@ bool RecordEquity() {
 
 
 #import "rsfHistory1.ex4"
-   int    HistorySet1.Get    (string symbol, string server);
-   int    HistorySet1.Create (string symbol, string description, int digits, int format, string server);
-   bool   HistorySet1.Close  (int hSet);
+   int    HistorySet1.Create (string symbol, string description, int digits, int format, string directory);
    bool   HistorySet1.AddTick(int hSet, datetime time, double value, int flags);
+   bool   HistorySet1.Close  (int hSet);
 
 #import "user32.dll"
    int    SendMessageA(int hWnd, int msg, int wParam, int lParam);
