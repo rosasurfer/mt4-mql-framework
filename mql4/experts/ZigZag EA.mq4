@@ -6,6 +6,16 @@
  *  - refactor parameter 'directory' of history functions
  *     HistoryFile.Open()
  *     HistorySet.Create()
+ *
+ *  - check references to *.directory vars in rsfHistory
+ *     hs.directory[]
+ *     hf.directory[]
+ *
+ *  - rename rsfHistory::hf.full.* to rsfHistory::hf.total.*
+ *
+ *  - check references to history functions
+ *     HistoryFile.Open()
+ *     HistorySet.Create()
  *     HistorySet.Get()
  *
  *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
@@ -23,13 +33,13 @@
  *  - normalize metrics for different account/unit sizes
  *
  *  - fix start/reload with active @time condition
- *  - reverse trading option "ZigZag.R"
+ *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - stop condition "pip"
  *  - support of session and trade breaks for specific day times
  *
  *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close ... [ERR_MARKET_CLOSED]
- *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to the same direction  [ERR_ILLEGAL_STATE]
+ *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to same direction  [ERR_ILLEGAL_STATE]
  *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - improve parsing of start.time.condition
@@ -357,7 +367,7 @@ bool ReverseSequence(int direction) {
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    int lastDirection = ifInt(open.type==OP_BUY, D_LONG, D_SHORT);
-   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence to the same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
+   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence to same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
 
    // close open position
    int oeFlags, oe[];

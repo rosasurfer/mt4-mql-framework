@@ -240,106 +240,138 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
 
 
 /**
- * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet1.Create() erzeugt, muß
- * mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten
- * Daten automatisch im alten Datenformat (400) erstellt.
+ * Return a handle for a symbol's full set of {@link HistoryFile}s (9 timeframes). Requires at least one of the 9 files to
+ * exist. Non-existing files will be created once new data is added with HistorySet.AddTick(). The default bar format for new
+ * files is "400" (if not specified otherwise). Multiple calls for the same symbol return the same handle. Calling this
+ * function doesn't keep files open or locked.
  *
- * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
- * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
+ * @param  string symbol               - symbol
+ * @param  string directory [optional] - directory the HistorySet's files will be stored in
+ *                                       if empty:            the current trade server directory (default)
+ *                                       if a relative path:  relative to the MQL sandbox/files directory
+ *                                       if an absolute path: as is
  *
- * @param  string symbol    - Symbol
- * @param  string directory - Verzeichnis, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
- *
- * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet1.Create() ein neues
- *                 Set erzeugt werden.
- *               • NULL, falls ein Fehler auftrat.
+ * @return int - HistorySet handle or EMPTY (-1) if none of the 9 history files exist. Use HistorySet.Create() in this case.
+ *               NULL in case of errors.
  */
 int HistorySet1.Get(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistorySet1.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet1.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet1.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
    string symbolUpper = StrToUpper(symbol);
-   if (directory == "0")      directory = "";                           // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServerName();
+   if (directory == "0") directory = "";                             // (string) NULL
 
-   // (1) offene Set-Handles durchsuchen
-   int size = ArraySize(hs.hSet);
-   for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
+   // check already open HistorySets
+   int size = ArraySize(hs.hSet), iH, hSet=-1;
+   for (int i=0; i < size; i++) {                                    // the handle needs to be open
       if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory))
          return(hs.hSet[i]);
-   }                                                                    // kein offenes Set-Handle gefunden
+   }                                                                 // no open HistorySet found
 
-   int iH, hSet=-1;
-
-   // (2) offene File-Handles durchsuchen
+   // check already open HistoryFiles
    size = ArraySize(hf.hFile);
-   for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
+   for (i=0; i < size; i++) {                                        // the handle needs to be open
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
-         size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
+         size = Max(ArraySize(hs.hSet), 1) + 1;                      // open handle found: create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
          ResizeSetArrays(size);
          iH   = size-1;
-         hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
-
+         hSet = iH;                                                  // the HistorySet handle matches the array index of hs.*
          hs.hSet       [iH] = hSet;
          hs.symbol     [iH] = hf.symbol     [i];
          hs.symbolUpper[iH] = hf.symbolUpper[i];
          hs.description[iH] = hhs_Description(hf.header, i);
          hs.digits     [iH] = hf.digits     [i];
          hs.directory  [iH] = hf.directory  [i];
-         hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
-
+         hs.format     [iH] = 400;                                   // default bar format for non-existing files
          return(hSet);
       }
-   }                                                                    // kein offenes File-Handle gefunden
+   }                                                                 // no open HistoryFile found
 
-   // (3) existierende HistoryFiles suchen
-   string mqlHstDir  = directory +"/";                                  // Verzeichnis für MQL-Dateifunktionen
-   string fullHstDir = GetMqlFilesPath() +"/"+ mqlHstDir;               // Verzeichnis für Win32-Dateifunktionen
+   // look-up existing HistoryFiles
+   int sizeOfPeriods = ArraySize(periods), hFile, fileSize, hh[];
+   string filename = "";
 
-   string baseName="", mqlFileName="", fullFileName="";
-   int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
+   if (directory == "") {                                            // current trade server: use MQL function FileOpenHistory()
+      string path = GetAccountServerPath();
 
-   for (i=0; i < sizeOfPeriods; i++) {
-      baseName     = symbol + periods[i] +".hst";
-      mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
-      fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
+      for (i=0; i < sizeOfPeriods; i++) {
+         filename = StringConcatenate(path, "/", symbol, periods[i], ".hst");
 
-      if (IsFile(fullFileName, MODE_SYSTEM)) {                          // wenn Datei existiert, öffnen
-         hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
-         if (hFile <= 0) return(!catch("HistorySet1.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         if (IsFile(filename, MODE_SYSTEM)) {                        // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+            hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);   // open the file
+            if (hFile <= 0) return(!catch("HistorySet1.Get(4)  hFile(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
-         fileSize = FileSize(hFile);                                    // Datei geöffnet
-         if (fileSize < HISTORY_HEADER_size) {
+            fileSize = FileSize(hFile);
+            if (fileSize < HISTORY_HEADER_size) {
+               FileClose(hFile);
+               logWarn("HistorySet1.Get(5)  invalid history file \""+ filename +"\" (size="+ fileSize +", too small), skipping...");
+               continue;
+            }
+
+            ArrayResize(hh, HISTORY_HEADER_intSize);                 // read HISTORY_HEADER
+            FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
             FileClose(hFile);
-            logWarn("HistorySet1.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
-            continue;
+
+            size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
+            ResizeSetArrays(size);
+            iH   = size-1;
+            hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
+            hs.hSet       [iH] = hSet;
+            hs.symbol     [iH] = hh_Symbol(hh);
+            hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
+            hs.description[iH] = hh_Description(hh);
+            hs.digits     [iH] = hh_Digits(hh);
+            hs.directory  [iH] = directory;
+            hs.format     [iH] = 400;                                // default bar format for non-existing files
+            ArrayResize(hh, 0);
+            return(hSet);                                            // return after processing the first existing file
          }
-                                                                        // HISTORY_HEADER auslesen
-         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER_intSize);
-         FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
-         FileClose(hFile);
-
-         size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         ResizeSetArrays(size);
-         iH   = size-1;
-         hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
-
-         hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hh_Symbol   (hh);
-         hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
-         hs.description[iH] = hh_Description(hh);
-         hs.digits     [iH] = hh_Digits   (hh);
-         hs.directory  [iH] = directory;
-         hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
-
-         ArrayResize(hh, 0);
-         return(hSet);                                                  // Rückkehr nach der ersten ausgewerteten Datei
       }
    }
 
-   if (!catch("HistorySet1.Get(6)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
-      return(-1);
-   return(NULL);
+   else if (!IsAbsolutePath(directory)) {                            // relative sandbox path: use MQL function FileOpen()
+      for (i=0; i < sizeOfPeriods; i++) {
+         filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
+
+         if (IsFile(filename, MODE_MQL)) {                           // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
+            hFile = FileOpen(filename, FILE_READ|FILE_BIN);          // open the file
+            if (hFile <= 0) return(!catch("HistorySet1.Get(6)  hFile(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+            fileSize = FileSize(hFile);
+            if (fileSize < HISTORY_HEADER_size) {
+               FileClose(hFile);
+               logWarn("HistorySet1.Get(7)  invalid history file \""+ filename +"\" (size="+ fileSize +", too small), skipping...");
+               continue;
+            }
+
+            ArrayResize(hh, HISTORY_HEADER_intSize);                 // read HISTORY_HEADER
+            FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
+            FileClose(hFile);
+
+            size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
+            ResizeSetArrays(size);
+            iH   = size-1;
+            hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
+            hs.hSet       [iH] = hSet;
+            hs.symbol     [iH] = hh_Symbol(hh);
+            hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
+            hs.description[iH] = hh_Description(hh);
+            hs.digits     [iH] = hh_Digits(hh);
+            hs.directory  [iH] = directory;
+            hs.format     [iH] = 400;                                // default bar format for non-existing files
+            ArrayResize(hh, 0);
+            return(hSet);                                            // return after processing the first existing file
+         }
+      }
+   }
+
+   else {                                                            // absolute path: use Expander
+      return(!catch("HistorySet1.Get(8)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+   }
+
+   int error = GetLastError();
+   if (!error) return(-1);
+   return(!catch("HistorySet1.Get(9)  symbol=\""+ symbol +"\""));
 }
 
 
