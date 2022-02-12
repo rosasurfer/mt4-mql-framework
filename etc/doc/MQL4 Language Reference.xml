@@ -5577,9 +5577,9 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
     A group of functions to work with files.<br/><br/>
     There are three directories (with subdirectories) where working files can be placed:
     <ul>
-      <li>/HISTORY/&lt;current broker&gt; - especially for the FileOpenHistory function;</li>
-      <li>/EXPERTS/FILES - common case;</li>
-      <li>/TESTER/FILES - especially for testing.</li>
+      <li>/HISTORY/&lt;current broker&gt; - especially for the FileOpenHistory function</li>
+      <li>/EXPERTS/FILES - common case</li>
+      <li>/TESTER/FILES - especially for testing</li>
     </ul>
     Working with files from other directories is prohibited.
     </content>
@@ -5766,21 +5766,21 @@ if (FileIsLineEnding(hFile)) {
 
          <br/>
          <span style="color:red">Bugs:</span><br/>
-         <li>Ab Build 810 ist die Funktion im Tester blockiert.</li>
+         <li>Seit Build 810 ist die Funktion im Tester blockiert.</li>
          <li>Entgegen der Originaldokumentation kann die Funktion Dateien in Unterverzeichnissen des aktuellen Historyverzeichnisses nicht &ouml;ffnen.</li>
          <br/>
          Workaround: Dateifunktionen des MT4Expanders verwenden.<br/>
          <br/>
       </content>
       <example>
-   int hFile = FileOpenHistory(<span class="string">&quot;USDX240.HST&quot;</span>, <span class="const">FILE_BIN</span>|<span class="const">FILE_WRITE</span>);
-   if (hFile &lt; 1) {
-      Print(<span class="string">&quot;Cannot create file USDX240.HST&quot;</span>);
-      return(false);
-   }
-   // work with file
-   // ...
-   FileClose(hFile);
+<span class="type code">int</span> hFile = <span class="function code">FileOpenHistory</span>(<span class="string code">"USDX240.hst"</span>, <span class="const code">FILE_BIN</span>|<span class="const code">FILE_WRITE</span>);
+<span class="keyword code">if</span> (hFile &lt; 1) {
+    <span class="function code">Print</span>(<span class="string code">"Cannot create file USDX240.hst"</span>);
+    <span class="keyword code">return</span>(<span class="const code">false</span>);
+}
+<span class="comment code">// work with file</span>
+<span class="comment code">// ...</span>
+<span class="function code">FileClose</span>(hFile);
       </example>
       <parameter>
         type=string
@@ -5796,7 +5796,7 @@ if (FileIsLineEnding(hFile)) {
         type=int
         name=delimiter
         def_value=<span class="char">';'</span>
-        description=Delimiter for csv files (default: the <span class="char">';'</span> character)
+        description=delimiter for CSV files (default: the <span class="char">';'</span> character)
       </parameter>
     </function>
 
