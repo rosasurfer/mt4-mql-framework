@@ -316,7 +316,7 @@ int onTick() {
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  "+ sequence.name +" illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
    // update equity for equity recorder
-   if (EA.RecordEquity) tracker.currEquity = sequence.startEquity + sequence.totalPL;
+   if (EA.RecordEquity) recorder.currEquity = sequence.startEquity + sequence.totalPL;
 
    return(last_error);
 }
@@ -607,11 +607,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !tracker.startEquity) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.startEquity) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = tracker.startEquity;
+      result = recorder.startEquity;
    }
 
    if (!catch("CalculateStartEquity(1)"))
