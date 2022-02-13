@@ -3,12 +3,6 @@
  *
  *
  * TODO:
- *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
- *     core/expert      => CreateRawSymbol() => SaveSymbolGroups() | InsertRawSymbol()
- *     EquityRecorder
- *     LFX-Monitor
- *     XMT-SCalper
- *
  *  - log symbol creation
  *
  *  - virtual equity graphs of all variants on all symbols

@@ -561,18 +561,16 @@ bool InitPLTracking() {
 
       // read EA.RecordEquity/HistoryDirectory configuration
       string hstDirectory = GetConfigString(section, "HistoryDirectory", "");                         // "XTrade-test-results" | "XTrade-live-results"
-      if (!StringLen(hstDirectory))                               return(!catch("InitPLTracking(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
-      if (IsAbsolutePath(hstDirectory))                           return(!catch("InitPLTracking(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
+      if (!StringLen(hstDirectory))                     return(!catch("InitPLTracking(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
+      if (IsAbsolutePath(hstDirectory))                 return(!catch("InitPLTracking(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
       int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-      if (StrContainsChars(hstDirectory, illegalChars))           return(!catch("InitPLTracking(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
+      if (StrContainsChars(hstDirectory, illegalChars)) return(!catch("InitPLTracking(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
       hstDirectory = StrReplace(hstDirectory, "\\", "/");
-      if (StrStartsWith(hstDirectory, "/"))                       return(!catch("InitPLTracking(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
-      if (!CreateDirectory(hstDirectory, MODE_MQL|MODE_MKPARENT)) return(!catch("InitPLTracking(5)  cannot create directory "+ DoubleQuoteStr(hstDirectory), ERR_INVALID_CONFIG_VALUE));
-      if (!IsFile(hstDirectory +"/symbols.raw", MODE_MQL))            logNotice("InitPLTracking(6)  \""+ hstDirectory +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
+      if (StrStartsWith(hstDirectory, "/"))             return(!catch("InitPLTracking(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
 
       // read EA.RecordEquity/HistoryFormat configuration
       int hstFormat = GetConfigInt(section, "HistoryFormat", 401);
-      if (hstFormat!=400 && hstFormat!=401)                       return(!catch("InitPLTracking(7)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+      if (hstFormat!=400 && hstFormat!=401)             return(!catch("InitPLTracking(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
 
       // create a new symbol
       string symbol         = CreateUniqueSymbol();
