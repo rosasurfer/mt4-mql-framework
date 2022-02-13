@@ -129,9 +129,9 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
 
 
 /**
- * Create a new history set for the specified symbol and return its handle. Existing history files for the symbol are reset,
- * open history files of the symbol are closed. Not existing history files are created once new bar data is saved. Multiple
- * calls for the same symbol return a new handle on every call, and previously open history set handles are closed.
+ * Create a new history set for the specified symbol and return its handle. Existing history files are reset, open history
+ * files are closed. Not existing history files are created once new history data is appended. Multiple calls for the same
+ * symbol return a new handle on every call. Previously open history set handles are closed.
  *
  * @param  string symbol               - symbol
  * @param  string description          - symbol description
@@ -144,7 +144,7 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
  *                                        if a relative path:  relative to the MQL sandbox/files directory
  *                                        if an absolute path: as is
  *
- * @return int - HistorySet handle or NULL (0) in case of errors
+ * @return int - history set handle or NULL (0) in case of errors
  */
 int HistorySet1.Create(string symbol, string description, int digits, int format, string directory = "") {
    // validate parameters
@@ -187,7 +187,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
 
    // reset existing HistoryFiles of the same symbol and update their headers
    int hFile, hh[], error, sizeOfPeriods = ArraySize(periods);
-   string filename = "";
+   string filename = "", basename = "";
 
    InitializeByteBuffer(hh, HISTORY_HEADER_size);
    hh_SetBarFormat  (hh, format     );
@@ -195,44 +195,48 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
    hh_SetSymbol     (hh, symbol     );
    hh_SetDigits     (hh, digits     );
 
-   if (directory == "") {                                               // current trade server: use MQL::FileOpenHistory()
+   if (directory == "") {                                               // current trade server, use MQL::FileOpenHistory()
       string serverPath = GetAccountServerPath();
+      if (!UseTradeServerPath(serverPath, "HistorySet1.Create(7)")) return(NULL);
 
       for (i=0; i < sizeOfPeriods; i++) {
-         filename = StringConcatenate(serverPath, "/", symbol, periods[i], ".hst");
+         basename = StringConcatenate(symbol, periods[i], ".hst");
+         filename = StringConcatenate(serverPath, "/", basename);
 
          if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
-            hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
-            if (hFile <= 0) return(!catch("HistorySet1.Create(7)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            hFile = FileOpenHistory(basename, FILE_WRITE|FILE_BIN);
+            if (hFile <= 0) return(!catch("HistorySet1.Create(8)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             hh_SetPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
             FileClose(hFile);
             error = GetLastError();
-            if (error != NO_ERROR) return(!catch("HistorySet1.Create(8)  symbol="+ DoubleQuoteStr(symbol), error));
+            if (error != NO_ERROR) return(!catch("HistorySet1.Create(9)  symbol="+ DoubleQuoteStr(symbol), error));
          }
       }
    }
 
-   else if (!IsAbsolutePath(directory)) {                               // relative sandbox path: use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {                               // relative sandbox path, use MQL::FileOpen()
+      if (!UseTradeServerPath(directory, "HistorySet1.Create(10)")) return(NULL);
+
       for (i=0; i < sizeOfPeriods; i++) {
          filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
 
          if (IsFile(filename, MODE_MQL)) {                              // reset existing file to 0
             hFile = FileOpen(filename, FILE_BIN|FILE_WRITE);
-            if (hFile <= 0) return(!catch("HistorySet1.Create(9)->FileOpen(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+            if (hFile <= 0) return(!catch("HistorySet1.Create(11)->FileOpen(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
             hh_SetPeriod(hh, periods[i]);
             FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
             FileClose(hFile);
             error = GetLastError();
-            if (error != NO_ERROR) return(!catch("HistorySet1.Create(10)  symbol="+ DoubleQuoteStr(symbol), error));
+            if (error != NO_ERROR) return(!catch("HistorySet1.Create(12)  symbol="+ DoubleQuoteStr(symbol), error));
          }
       }
    }
 
-   else {                                                               // absolute path: use Expander
-      return(!catch("HistorySet1.Create(11)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+   else {                                                               // absolute path, use Expander
+      return(!catch("HistorySet1.Create(13)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    ArrayResize(hh, 0);
@@ -256,10 +260,10 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
 
 
 /**
- * Return a handle for a symbol's full set of {@link HistoryFile}s (9 timeframes). Requires at least one of the 9 files to
- * exist. Non-existing files will be created once new data is added with HistorySet.AddTick(). The default bar format for new
- * files is "400" (if not specified otherwise). Multiple calls for the same symbol return the same handle. Calling this
- * function doesn't keep files open or locked.
+ * Return a handle for a symbol's full set of history files (9 timeframes). Requires at least one of the 9 files to exist.
+ * Non-existing files will be created once new data is added with HistorySet.AddTick(). The default bar format for new files
+ * is "400" (if not specified otherwise). Multiple calls for the same symbol return the same handle. Calling this function
+ * doesn't keep files open or locked.
  *
  * @param  string symbol               - symbol
  * @param  string directory [optional] - directory to read history files from
@@ -267,7 +271,7 @@ int HistorySet1.Create(string symbol, string description, int digits, int format
  *                                        if a relative path:  relative to the MQL sandbox/files directory
  *                                        if an absolute path: as is
  *
- * @return int - HistorySet handle or EMPTY (-1) if none of the 9 history files exists. Use HistorySet.Create() in this case.
+ * @return int - history set handle or EMPTY (-1) if none of the 9 history files exists. Use HistorySet.Create() in this case.
  *               NULL in case of errors.
  */
 int HistorySet1.Get(string symbol, string directory = "") {
@@ -277,14 +281,14 @@ int HistorySet1.Get(string symbol, string directory = "") {
    string symbolU = StrToUpper(symbol);
    if (directory == "0") directory = "";                             // (string) NULL
 
-   // check open HistorySets of the same symbol
+   // check open history sets of the same symbol
    int size = ArraySize(hs.hSet), iH, hSet=-1;
    for (int i=0; i < size; i++) {
       if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory))
          return(hs.hSet[i]);
    }
 
-   // check open HistoryFiles of the same symbol
+   // check open history files of the same symbol
    size = ArraySize(hf.hFile);
    for (i=0; i < size; i++) {
       if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
@@ -303,15 +307,15 @@ int HistorySet1.Get(string symbol, string directory = "") {
       }
    }
 
-   // look-up existing HistoryFiles
+   // look-up existing history files
    int sizeOfPeriods = ArraySize(periods), hFile, fileSize, hh[];
    string filename = "";
 
-   if (directory == "") {                                            // current trade server: use MQL::FileOpenHistory()
-      string path = GetAccountServerPath();
+   if (directory == "") {                                            // current trade server, use MQL::FileOpenHistory()
+      string serverPath = GetAccountServerPath();
 
       for (i=0; i < sizeOfPeriods; i++) {
-         filename = StringConcatenate(path, "/", symbol, periods[i], ".hst");
+         filename = StringConcatenate(serverPath, "/", symbol, periods[i], ".hst");
 
          if (IsFile(filename, MODE_SYSTEM)) {                        // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
             hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);   // open the file
@@ -340,12 +344,12 @@ int HistorySet1.Get(string symbol, string directory = "") {
             hs.directory  [iH] = directory;
             hs.format     [iH] = 400;                                // default bar format for non-existing files
             ArrayResize(hh, 0);
-            return(hSet);                                            // return after processing the first existing file
+            return(hSet);                                            // return after the first existing file
          }
       }
    }
 
-   else if (!IsAbsolutePath(directory)) {                            // relative sandbox path: use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {                            // relative sandbox path, use MQL::FileOpen()
       for (i=0; i < sizeOfPeriods; i++) {
          filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
 
@@ -376,12 +380,12 @@ int HistorySet1.Get(string symbol, string directory = "") {
             hs.directory  [iH] = directory;
             hs.format     [iH] = 400;                                // default bar format for non-existing files
             ArrayResize(hh, 0);
-            return(hSet);                                            // return after processing the first existing file
+            return(hSet);                                            // return after the first existing file
          }
       }
    }
 
-   else {                                                            // absolute path: use Expander
+   else {                                                            // absolute path, use Expander
       return(!catch("HistorySet1.Get(8)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
@@ -482,7 +486,7 @@ bool HistorySet1.AddTick(int hSet, datetime time, double value, int flags = NULL
  *                                        if a relative path:  relative to the MQL sandbox/files directory
  *                                        if an absolute path: as is
  *
- * @return int - file handle or -1 if FILE_READ was specified for a non-existing file;
+ * @return int - file handle or -1 if FILE_READ was specified and the file doesn't exist;
  *               NULL (0) in case of all other errors
  */
 int HistoryFile1.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "") {
@@ -499,36 +503,34 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
    if (directory == "0") directory = "";                                         // (string) NULL
 
    int hFile;
-   string serverPath="", filename="", basename=symbol + timeframe +".hst";
+   string filename="", basename=symbol + timeframe +".hst";
 
-   if (directory == "") {                                                        // current trade server: use MQL::FileOpenHistory()
-      // on write access make sure the directory exists
-      serverPath = GetAccountServerPath();
-      if (!read_only) /*&&*/ if (!CreateDirectory(serverPath, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("HistoryFile1.Open(6)  cannot create directory "+ DoubleQuoteStr(serverPath) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
-      filename = StringConcatenate(serverPath, "/", basename);
+   if (directory == "") {                                                        // current trade server, use MQL::FileOpenHistory()
+      if (!read_only) /*&&*/ if (!UseTradeServerPath(GetAccountServerPath(), "HistoryFile1.Open(6)")) return(NULL);
+      filename = basename;
 
       // open the file: read-only
       if (read_only) {
          if (!IsFile(filename, MODE_SYSTEM)) return(-1);                         // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
-         hFile = FileOpenHistory(basename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile1.Open(7)->FileOpenHistory(\""+ basename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile1.Open(7)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // read-write
       else if (read_write) {
-         hFile = FileOpenHistory(basename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile1.Open(8)->FileOpenHistory(\""+ basename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile1.Open(8)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
       // write-only
       else if (write_only) {
-         hFile = FileOpenHistory(basename, mode|FILE_BIN);
-         if (hFile <= 0) return(!catch("HistoryFile1.Open(9)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile1.Open(9)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
    }
 
-   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path: use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, use MQL::FileOpen()
       // on write access make sure the directory exists
-      if (!read_only) /*&&*/ if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("HistoryFile1.Open(10)  cannot create directory "+ DoubleQuoteStr(directory) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
-      filename = StringConcatenate(directory, "/", basename);
+      if (!read_only) /*&&*/ if (!UseTradeServerPath(directory, "HistoryFile1.Open(10)")) return(NULL);
+      filename = directory +"/"+ basename;
 
       // open the file: read-only
       if (read_only) {
@@ -548,7 +550,7 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
       }
    }
 
-   else {                                                                        // absolute path: use Expander
+   else {                                                                        // absolute path, use Expander
       return(!catch("HistoryFile1.Open(14)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 

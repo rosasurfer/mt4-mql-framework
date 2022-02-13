@@ -8018,7 +8018,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
    if (directory == "0") directory = "";              // (string) NULL
    string filename = "";
 
-   if (directory == "") {                             // current trade server: use MQL::FileOpenHistory()
+   if (directory == "") {                             // current trade server, use MQL::FileOpenHistory()
       // check "symbols.raw"
       filename = "symbols.raw";                       // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
       if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(false);
@@ -8028,7 +8028,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
       int error = GetLastError();
       if (error || hFile <= 0) return(!catch("IsRawSymbol(4)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
-   else if (!IsAbsolutePath(directory)) {             // relative sandbox path: use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {             // relative sandbox path, use MQL::FileOpen()
       // check "symbols.raw"
       filename = directory +"/symbols.raw";           // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
       if (!IsFile(filename, MODE_MQL)) return(false);
@@ -8038,7 +8038,7 @@ bool IsRawSymbol(string symbol, string directory = "") {
       error = GetLastError();
       if (error || hFile <= 0) return(!catch("IsRawSymbol(5)->FileOpen("+ DoubleQuoteStr(filename) +", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
-   else {                                             // absolute path: use Expander
+   else {                                             // absolute path, use Expander
       return(!catch("IsRawSymbol(6)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
@@ -8192,7 +8192,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    ArrayResize(sgs, 0);
    if (directory == "0") directory = "";                    // (string) NULL
 
-   if (directory == "") {                                   // current trade server: use MQL::FileOpenHistory()
+   if (directory == "") {                                   // current trade server, use MQL::FileOpenHistory()
       // stat "symgroups.raw"
       string filename = "symgroups.raw";                    // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
       if (!IsFile(GetAccountServerPath() +"/"+ filename, MODE_SYSTEM)) return(0);
@@ -8202,7 +8202,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       int error = GetLastError();
       if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(1)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    }
-   else if (!IsAbsolutePath(directory)) {                   // relative sandbox path: use MQL::FileOpen()
+   else if (!IsAbsolutePath(directory)) {                   // relative sandbox path, use MQL::FileOpen()
       // stat "symgroups.raw"
       filename = directory +"/symgroups.raw";
       if (!IsFile(filename, MODE_MQL)) return(0);           // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
@@ -8212,7 +8212,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       error = GetLastError();
       if (IsError(error) || hFile <= 0)  return(_EMPTY(catch("GetSymbolGroups(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR))));
    }
-   else {                                                   // absolute path: use Expander
+   else {                                                   // absolute path, use Expander
       return(_EMPTY(catch("GetSymbolGroups(3)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED)));
    }
 
@@ -8235,7 +8235,7 @@ int GetSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
 
 
 /**
- * Add the specified raw symbol to "symbols.raw" of the specified directory.
+ * Add a symbol to "symbols.raw" of the specified directory and insert it at the correct position.
  *
  * @param  SYMBOL symbol               - symbol
  * @param  string directory [optional] - directory name
@@ -8250,9 +8250,8 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    if (!StringLen(symbolName))              return(!catch("InsertRawSymbol(2)  invalid parameter symbol[], SYMBOL.name: "+ DoubleQuoteStr(symbolName), ERR_RUNTIME_ERROR));
    if (directory == "0") directory = "";           // (string) NULL
 
-   if (directory == "") {                          // current trade server: use MQL::FileOpenHistory()
-      string serverPath = GetAccountServerPath();
-      if (!CreateDirectory(directory, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("InsertRawSymbol(3)  cannot create directory "+ DoubleQuoteStr(serverPath), ERR_RUNTIME_ERROR));
+   if (directory == "") {                          // current trade server, use MQL::FileOpenHistory()
+      if (!UseTradeServerPath(GetAccountServerPath(), "InsertRawSymbol(3)")) return(false);
 
       // open "symbols.raw"
       filename = "symbols.raw";
@@ -8260,8 +8259,8 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
       int error = GetLastError();
       if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
-   else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use MQL::FileOpen()
-      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("InsertRawSymbol(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
+   else if (!IsAbsolutePath(directory)) {          // relative sandbox path, use MQL::FileOpen()
+      if (!UseTradeServerPath(directory, "InsertRawSymbol(5)")) return(false);
 
       // open "symbols.raw"
       filename = directory +"/symbols.raw";
@@ -8269,7 +8268,7 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
       error = GetLastError();
       if (error || hFile <= 0) return(!catch("InsertRawSymbol(6)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
-   else {                                          // absolute path: use Expander
+   else {                                          // absolute path, use Expander
       return(!catch("InsertRawSymbol(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
@@ -8339,28 +8338,27 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
       InitializeByteBuffer(sgs_copy, 32*SYMBOL_GROUP_size);
    ArrayCopy(sgs_copy, sgs);
 
-   if (directory == "") {                          // current trade server: use MQL::FileOpenHistory()
-      string serverPath = GetAccountServerPath();
-      if (!CreateDirectory(directory, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("SaveSymbolGroups(3)  cannot create directory "+ DoubleQuoteStr(serverPath), ERR_RUNTIME_ERROR));
+   if (directory == "") {                          // current trade server, use MQL::FileOpenHistory()
+      if (!UseTradeServerPath(GetAccountServerPath(), "SaveSymbolGroups(3)")) return(false);
 
       // open "symgroups.raw"
       string filename = "symgroups.raw";
       int hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                           return(!catch("SaveSymbolGroups(4)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(4)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
-   else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use MQL::FileOpen()
-      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT))    return(!catch("SaveSymbolGroups(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
+   else if (!IsAbsolutePath(directory)) {          // relative sandbox path, use MQL::FileOpen()
+      if (!UseTradeServerPath(directory, "SaveSymbolGroups(5)")) return(false);
 
       // open "symgroups.raw"
       filename = directory +"/symgroups.raw";
       hFile = FileOpen(filename, FILE_WRITE|FILE_BIN);
       error = GetLastError();
-      if (IsError(error) || hFile <= 0)                           return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0) return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
-   else {                                          // absolute path: use Expander
+   else {                                          // absolute path, use Expander
       return(!catch("SaveSymbolGroups(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
