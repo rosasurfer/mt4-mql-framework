@@ -8251,27 +8251,32 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    if (directory == "0") directory = "";           // (string) NULL
 
    if (directory == "") {                          // current trade server: use MQL::FileOpenHistory()
+      string serverPath = GetAccountServerPath();
+      if (!CreateDirectory(directory, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("InsertRawSymbol(3)  cannot create directory "+ DoubleQuoteStr(serverPath), ERR_RUNTIME_ERROR));
+
       // open "symbols.raw"
       filename = "symbols.raw";
       int hFile = FileOpenHistory(filename, FILE_READ|FILE_WRITE|FILE_BIN);
       int error = GetLastError();
-      if (error || hFile <= 0) return(!catch("InsertRawSymbol(3)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use MQL::FileOpen()
+      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("InsertRawSymbol(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
+
       // open "symbols.raw"
       filename = directory +"/symbols.raw";
       hFile = FileOpen(filename, FILE_READ|FILE_WRITE|FILE_BIN);
       error = GetLastError();
-      if (error || hFile <= 0) return(!catch("InsertRawSymbol(4)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (error || hFile <= 0) return(!catch("InsertRawSymbol(6)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
    else {                                          // absolute path: use Expander
-      return(!catch("InsertRawSymbol(5)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("InsertRawSymbol(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    // check file size
    int fileSize = FileSize(hFile);
    if (fileSize % SYMBOL_size != 0) {
-      FileClose(hFile); return(!catch("InsertRawSymbol(6)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      FileClose(hFile); return(!catch("InsertRawSymbol(8)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
    }
    int symbolsSize = fileSize/SYMBOL_size, maxId=-1;
    /*SYMBOL[]*/int symbols[]; InitializeByteBuffer(symbols, fileSize);
@@ -8280,17 +8285,17 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    if (fileSize > 0) {
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
       error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(7)  error reading \""+ filename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("InsertRawSymbol(9)  error reading \""+ filename +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
 
       // make sure the new symbol doesn't already exist, and find largest symbol id
       for (int i=0; i < symbolsSize; i++) {
-         if (StrCompareI(symbols_Name(symbols, i), symbolName)) { FileClose(hFile); return(!catch("InsertRawSymbol(8)   symbol \""+ symbols_Name(symbols, i) +"\" already exists", ERR_RUNTIME_ERROR)); }
+         if (StrCompareI(symbols_Name(symbols, i), symbolName)) { FileClose(hFile); return(!catch("InsertRawSymbol(10)   symbol \""+ symbols_Name(symbols, i) +"\" already exists", ERR_RUNTIME_ERROR)); }
          maxId = Max(maxId, symbols_Id(symbols, i));
       }
    }
 
    // set new symbol id and append the new symbol to the end
-   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(9)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
+   if (symbol_SetId(symbol, maxId+1) == -1) { FileClose(hFile); return(!catch("InsertRawSymbol(11)->symbol_SetId() => -1", ERR_RUNTIME_ERROR)); }
    ArrayResize(symbols, (symbolsSize+1)*SYMBOL_intSize);
    i = symbolsSize;
    symbolsSize++;
@@ -8299,16 +8304,16 @@ bool InsertRawSymbol(/*SYMBOL*/int symbol[], string directory = "") {
    CopyMemory(dest, src, SYMBOL_size);
 
    // sort symbols and save them to disk                       // TODO: synchronize "symbols.sel" (or delete?)
-   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(10)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!SortSymbols(symbols, symbolsSize)) { FileClose(hFile); return(!catch("InsertRawSymbol(12)->SortSymbols() => FALSE", ERR_RUNTIME_ERROR)); }
 
-   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(11)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
+   if (!FileSeek(hFile, 0, SEEK_SET)) { FileClose(hFile);      return(!catch("InsertRawSymbol(13)->FileSeek(hFile, 0, SEEK_SET) => FALSE", ERR_RUNTIME_ERROR)); }
    int elements = symbolsSize * SYMBOL_size / 4;
    ints  = FileWriteArray(hFile, symbols, 0, elements);
    error = GetLastError();
    FileClose(hFile);
-   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(12)  error writing SYMBOL[] to \""+ filename +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   if (error || ints!=elements)                                return(!catch("InsertRawSymbol(14)  error writing SYMBOL[] to \""+ filename +"\" ("+ ints*4 +" of "+ symbolsSize*SYMBOL_size +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
-   return(!catch("InsertRawSymbol(13)"));
+   return(!catch("InsertRawSymbol(15)"));
 }
 
 
@@ -8335,25 +8340,28 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    ArrayCopy(sgs_copy, sgs);
 
    if (directory == "") {                          // current trade server: use MQL::FileOpenHistory()
+      string serverPath = GetAccountServerPath();
+      if (!CreateDirectory(directory, MODE_SYSTEM|MODE_MKPARENT)) return(!catch("SaveSymbolGroups(3)  cannot create directory "+ DoubleQuoteStr(serverPath), ERR_RUNTIME_ERROR));
+
       // open "symgroups.raw"
       string filename = "symgroups.raw";
       int hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
       int error = GetLastError();
-      if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(3)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                           return(!catch("SaveSymbolGroups(4)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else if (!IsAbsolutePath(directory)) {          // relative sandbox path: use MQL::FileOpen()
-      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT)) return(!catch("SaveSymbolGroups(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
+      if (!CreateDirectory(directory, MODE_MQL|MODE_MKPARENT))    return(!catch("SaveSymbolGroups(5)  cannot create directory "+ DoubleQuoteStr(directory), ERR_INVALID_PARAMETER));
 
       // open "symgroups.raw"
       filename = directory +"/symgroups.raw";
       hFile = FileOpen(filename, FILE_WRITE|FILE_BIN);
       error = GetLastError();
-      if (IsError(error) || hFile <= 0)                        return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+      if (IsError(error) || hFile <= 0)                           return(!catch("SaveSymbolGroups(6)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
    }
 
    else {                                          // absolute path: use Expander
-      return(!catch("SaveSymbolGroups(8)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+      return(!catch("SaveSymbolGroups(7)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    // write "symgroups.raw"
@@ -8361,7 +8369,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
    int ints = FileWriteArray(hFile, sgs_copy, 0, arraySize);
    error = GetLastError();
    FileClose(hFile);
-   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(4)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
+   if (IsError(error) || ints!=arraySize) return(!catch("SaveSymbolGroups(8)  error writing SYMBOL_GROUPs to \""+ filename +"\" ("+ ints*4 +" of "+ arraySize*4 +" bytes written)", intOr(error, ERR_RUNTIME_ERROR)));
 
    ArrayResize(sgs_copy, 0);
    return(true);
