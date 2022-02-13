@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - log symbol creation
- *
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
  *     daily PL in pip

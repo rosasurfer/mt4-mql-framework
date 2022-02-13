@@ -17,15 +17,15 @@ int     __CoreFunction = NULL;                     // currently executed MQL cor
 double  __rates[][6];                              // current price series
 int     __tickTimerId;                             // timer id for virtual ticks
 
-// performance tracking
-bool   tracker.initialized  = false;
-string tracker.symbol       = "";
-string tracker.symbolDescr  = "";
-string tracker.hstDirectory = "";
-int    tracker.hstFormat;
-int    tracker.hSet;                               // history set handle
-double tracker.startEquity;                        // equity start value
-double tracker.currEquity;                         // current equity value, default: AccountEquity()-AccountCredit()
+// equity recorder
+bool   recorder.initialized  = false;
+string recorder.symbol       = "";
+string recorder.symbolDescr  = "";
+string recorder.hstDirectory = "";
+int    recorder.hstFormat;
+int    recorder.hSet;                              // history set handle
+double recorder.startEquity;                       // equity start value
+double recorder.currEquity;                        // current equity value, default: AccountEquity()-AccountCredit()
 
 // test management
 bool   test.initialized = false;
@@ -135,7 +135,7 @@ int init() {
          logInfo(separator);
          logInfo(msg);
       }
-      tracker.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
+      recorder.startEquity = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
@@ -340,7 +340,7 @@ int start() {
    }
 
    // initialize performance tracking
-   if (!tracker.initialized) {
+   if (!recorder.initialized) {
       if (!InitPLTracking()) return(_last_error(CheckErrors("start(7)")));
    }
 
@@ -399,9 +399,9 @@ int deinit() {
    }
 
    // close a performance tracker's history set
-   if (tracker.hSet != 0) {
-      tmp = tracker.hSet;
-      tracker.hSet = NULL;
+   if (recorder.hSet != 0) {
+      tmp = recorder.hSet;
+      recorder.hSet = NULL;
       if (!HistorySet1.Close(tmp)) return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
    }
 
@@ -556,7 +556,7 @@ bool CheckErrors(string location, int error = NULL) {
  * @return bool - success status
  */
 bool InitPLTracking() {
-   if (EA.RecordEquity && !tracker.initialized && (!IsTesting() || !IsOptimization())) {
+   if (EA.RecordEquity && !recorder.initialized && (!IsTesting() || !IsOptimization())) {
       string section = ifString(IsTesting(), "Tester.", "") +"EA.RecordEquity";
 
       // read EA.RecordEquity/HistoryDirectory configuration
@@ -582,16 +582,16 @@ bool InitPLTracking() {
 
       if (CreateRawSymbol(symbol, description, symbolGroup, digits, baseCurrency, marginCurrency, hstDirectory) < 0) return(false);
 
-      tracker.symbol       = symbol;
-      tracker.symbolDescr  = description;
-      tracker.hstDirectory = hstDirectory;
-      tracker.hstFormat    = hstFormat;
+      recorder.symbol       = symbol;
+      recorder.symbolDescr  = description;
+      recorder.hstDirectory = hstDirectory;
+      recorder.hstFormat    = hstFormat;
    }
    else {
       EA.RecordEquity = false;
    }
 
-   tracker.initialized = true;
+   recorder.initialized = true;
    return(true);
 }
 
@@ -660,13 +660,13 @@ string GetMarketInfo() {
  * @return string - unique symbol or an empty string in case of errors
  */
 string CreateUniqueSymbol() {
-   if (!StringLen(tracker.symbol)) {
-      tracker.symbol = GetUniqueSymbol();
+   if (!StringLen(recorder.symbol)) {
+      recorder.symbol = GetUniqueSymbol();
    }
 
-   if (!StringLen(tracker.symbol)) {                        // fall-back to manual symbol generation
+   if (!StringLen(recorder.symbol)) {                       // fall-back to manual symbol generation
       // open "symbols.raw" and read existing symbols
-      string mqlFileName = "history/"+ tracker.hstDirectory +"/symbols.raw";
+      string mqlFileName = "history/"+ recorder.hstDirectory +"/symbols.raw";
       int hFile = FileOpen(mqlFileName, FILE_READ|FILE_BIN);
       int error = GetLastError();
       if (error || hFile <= 0)                              return(!catch("CreateUniqueSymbol(1)->FileOpen(\""+ mqlFileName +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
@@ -696,10 +696,9 @@ string CreateUniqueSymbol() {
          }
       }
       int id = maxId + 1;
-      tracker.symbol = name + StrPadLeft(id, 3, "0");
+      recorder.symbol = name + StrPadLeft(id, 3, "0");
    }
-
-   return(tracker.symbol);
+   return(recorder.symbol);
 }
 
 
@@ -720,14 +719,14 @@ bool RecordEquity() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!tracker.hSet) {
-      tracker.hSet = HistorySet1.Create(tracker.symbol, tracker.symbolDescr, 2, tracker.hstFormat, tracker.hstDirectory);
-      if (!tracker.hSet) return(false);
+   if (!recorder.hSet) {
+      recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, 2, recorder.hstFormat, recorder.hstDirectory);
+      if (!recorder.hSet) return(false);
    }
-   double value = tracker.currEquity;
+   double value = recorder.currEquity;
    if (!value) value = AccountEquity()-AccountCredit();
 
-   return(HistorySet1.AddTick(tracker.hSet, Tick.time, value, HST_BUFFER_TICKS));
+   return(HistorySet1.AddTick(recorder.hSet, Tick.time, value, HST_BUFFER_TICKS));
 }
 
 
