@@ -6,8 +6,8 @@
  *  - log symbol creation
  *  - virtual equity graphs of all variants on all symbols
  *     ZigZag + Reverse
- *     daily PL in pip
  *     total PL in pip
+ *     daily PL in pip
  *  - normalize metrics for different account/unit sizes
  *
  *  - fix start/reload with active @time condition
@@ -16,9 +16,9 @@
  *  - stop condition "pip"
  *  - support of session and trade breaks for specific day times
  *
- *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close ... [ERR_MARKET_CLOSED]
+ *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
  *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to same direction  [ERR_ILLEGAL_STATE]
- *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals
+ *  - merge IsStartSignal() and IsZigZagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - improve parsing of start.time.condition
  *  - track slippage
@@ -177,18 +177,18 @@ int onTick() {
    int zigzagSignal, startSignal, stopSignal;
 
    if (sequence.status != STATUS_STOPPED) {
-      bool isZigzagSignal = IsZigzagSignal(zigzagSignal);         // check ZigZag on every tick
+      bool isZigZagSignal = IsZigZagSignal(zigzagSignal);         // check ZigZag on every tick
 
       if (sequence.status == STATUS_WAITING) {
          if      (IsStopSignal(stopSignal)) StopSequence(stopSignal);
          else if (IsStartSignal(startSignal)) {
-            if (isZigzagSignal)             StartSequence(zigzagSignal);
+            if (isZigZagSignal)             StartSequence(zigzagSignal);
          }
       }
       else if (sequence.status == STATUS_PROGRESSING) {
          if (UpdateStatus()) {                                    // update order status and PL
             if (IsStopSignal(stopSignal)) StopSequence(stopSignal);
-            else if (isZigzagSignal)      ReverseSequence(zigzagSignal);
+            else if (isZigZagSignal)      ReverseSequence(zigzagSignal);
          }
       }
    }
@@ -203,14 +203,14 @@ int onTick() {
  *
  * @return bool
  */
-bool IsZigzagSignal(int &signal) {
+bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
    static int lastSignal;
    int trend, reversal;
 
-   if (!GetZigzagData(0, trend, reversal)) return(false);
+   if (!GetZigZagData(0, trend, reversal)) return(false);
 
    if (Abs(trend) == reversal) {
       if (trend > 0) {
@@ -220,7 +220,7 @@ bool IsZigzagSignal(int &signal) {
          if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
       }
       if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsZigzagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          lastSignal = signal;
          return(true);
       }
@@ -238,7 +238,7 @@ bool IsZigzagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigzagData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
