@@ -320,6 +320,7 @@ int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
 string   UninitializeReasonDescription(int reason);;
 string   UrlEncode(string value);;
+bool     UseTradeServerPath(string path, string caller = "");;
 bool     WaitForTicket(int ticket, bool select = false);;
 
 

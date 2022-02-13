@@ -4,7 +4,7 @@
  *
  * TODO:
  *  - move warning "symbols.raw not found" to first directory write access and touch "symbols.raw" afterwards
- *     core/expert
+ *     core/expert      => CreateRawSymbol() => SaveSymbolGroups() | InsertRawSymbol()
  *     EquityRecorder
  *     LFX-Monitor
  *     XMT-SCalper

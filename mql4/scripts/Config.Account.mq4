@@ -33,11 +33,12 @@ int onStart() {
       }
       // create the file
       int hFile = CreateFileA(filename,                                 // file name
-                              GENERIC_READ, FILE_SHARE_READ,            // open for shared reading
+                              GENERIC_READ,                             // desired access: read
+                              FILE_SHARE_READ,                          // share modehared reading
                               NULL,                                     // default security
                               CREATE_NEW,                               // create file only if it doesn't exist
-                              FILE_ATTRIBUTE_NORMAL,                    // normal file
-                              NULL);                                    // no attribute template
+                              FILE_ATTRIBUTE_NORMAL,                    // flags and attributes: normal file
+                              NULL);                                    // no template file handle
       if (hFile == INVALID_HANDLE_VALUE) {
          error = GetLastWin32Error();
          if (error != ERROR_FILE_EXISTS) return(catch("onStart(4)->CreateFileA("+ DoubleQuoteStr(filename) +")", ERR_WIN32_ERROR+error));
