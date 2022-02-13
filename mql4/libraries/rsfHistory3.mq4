@@ -196,10 +196,10 @@ int HistorySet3.Create(string symbol, string description, int digits, int format
    hh_SetDigits     (hh, digits     );
 
    if (directory == "") {                                               // current trade server: use MQL::FileOpenHistory()
-      string path = GetAccountServerPath();
+      string serverPath = GetAccountServerPath();
 
       for (i=0; i < sizeOfPeriods; i++) {
-         filename = StringConcatenate(path, "/", symbol, periods[i], ".hst");
+         filename = StringConcatenate(serverPath, "/", symbol, periods[i], ".hst");
 
          if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
             hFile = FileOpenHistory(filename, FILE_WRITE|FILE_BIN);
@@ -1607,12 +1607,12 @@ int __ResizeFileArrays(int size) {
  *
  * @access private
  */
-bool CheckFileHandles() {
+bool __CheckFileHandles() {
    int error, size=ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         logWarn("CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
+         logWarn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
          if (!HistoryFile3.Close(hf.hFile[i]))
             error = last_error;
       }
@@ -1636,6 +1636,6 @@ void onLibraryInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   CheckFileHandles();
+   __CheckFileHandles();
    return(last_error);
 }
