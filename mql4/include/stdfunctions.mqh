@@ -7040,6 +7040,47 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
 
 
 /**
+ * Check a trade server path for safe usage. If the file "symbols.raw" is not found a notice is emitted and the file is
+ * created.
+ *
+ * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
+ *                                    if an absolute path: as is
+ * @param  string caller [optional] - caller location for error messages (default: none)
+ *
+ * @return bool - whether it's safe to use the path
+ */
+bool UseTradeServerPath(string path, string caller = "") {
+   int fsMode = ifInt(IsAbsolutePath(path), MODE_SYSTEM, MODE_MQL);
+   string filename = path +"/symbols.raw";
+
+   if (!IsFile(filename, fsMode)) {
+      if (caller == "0") caller = "";                    // (string) NULL
+      if (caller != "")  caller = caller +"->";
+      logNotice(caller +"UseTradeServerPath(1)  \""+ path +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
+
+      // make sure the directory exists
+      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch(caller +"UseTradeServerPath(2)  cannot create directory "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER));
+
+      // touch the file
+      if (fsMode == MODE_MQL) filename = GetMqlSandboxPath() +"/"+ filename;
+      int hFile = CreateFileA(filename,                  // file name
+                              GENERIC_READ,              // desired access
+                              FILE_SHARE_READ,           // share mode
+                              NULL,                      // default security
+                              CREATE_NEW,                // create file only if it doesn't exist
+                              FILE_ATTRIBUTE_NORMAL,     // flags and attributes: normal file
+                              NULL);                     // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) {
+         int error = GetLastWin32Error();
+         if (error != ERROR_FILE_EXISTS) return(!catch(caller +"UseTradeServerPath(3)->CreateFileA("+ DoubleQuoteStr(filename) +")", ERR_WIN32_ERROR+error));
+      }
+      else CloseHandle(hFile);
+   }
+   return(true);
+}
+
+
+/**
  * Suppress compiler warnings.
  */
 void __DummyCalls() {
@@ -7298,6 +7339,7 @@ void __DummyCalls() {
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
    UrlEncode(NULL);
+   UseTradeServerPath(NULL);
    WaitForTicket(NULL);
    WriteIniString(NULL, NULL, NULL, NULL);
 }
@@ -7336,6 +7378,8 @@ void __DummyCalls() {
    int      LeaveContext(int ec[]);
 
 #import "kernel32.dll"
+   bool     CloseHandle(int hObject);
+   int      CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);
