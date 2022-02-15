@@ -4,7 +4,7 @@
  *
  * TODO:
  *  - bugs:
- *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close ... [ERR_MARKET_CLOSED]
+ *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
  *
  *  - PL graphs for all variants/symbols
  *     log symbol creation
@@ -21,7 +21,7 @@
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
- *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
+ *  - RestoreSequence()->SynchronizeStatus() to handle a lost/open position
  *  - parameter ZigZag.Timeframe
  *  - fix start/reload with active @time condition
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
