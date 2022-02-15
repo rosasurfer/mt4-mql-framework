@@ -762,7 +762,7 @@ string GetStatusFilename(bool relative = false) {
    static string filename = ""; if (!StringLen(filename)) {
       string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
-      filename = directory + baseName;
+      filename = StrReplace(directory, "\\", "/") + baseName;
    }
 
    if (relative)
