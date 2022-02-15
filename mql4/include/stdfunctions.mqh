@@ -3366,21 +3366,22 @@ bool CreateDirectory(string path, int flags) {
  * @return string - directory path or an empty string in case of errors
  */
 string GetMqlSandboxPath() {
-   static string filesDir = ""; if (!StringLen(filesDir)) {
+   static string path = ""; if (!StringLen(path)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
 
-         filesDir = dataDirectory +"/tester/files";
+         path = dataDirectory +"/tester/files";
       }
       else {
          string mqlDirectory = GetMqlDirectoryA();
          if (!StringLen(mqlDirectory)) return(EMPTY_STR);
 
-         filesDir = mqlDirectory +"/files";
+         path = mqlDirectory +"/files";
       }
+      path = StrReplace(path, "\\", "/");
    }
-   return(filesDir);
+   return(path);
 }
 
 
