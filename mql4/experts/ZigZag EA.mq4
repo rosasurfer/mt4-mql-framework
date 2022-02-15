@@ -3,21 +3,25 @@
  *
  *
  * TODO:
- *  - log symbol creation
- *  - virtual equity graphs of all variants on all symbols
- *     ZigZag + Reverse
- *     total PL in pip
- *     daily PL in pip
- *  - normalize metrics for different account/unit sizes
+ *  - PL graphs of all variants on all symbols
+ *     log symbol creation
+ *     SynchronizeStatus() after RestoreSequence() to handle a lost/open position
+ *     fix bugs:
+ *      2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to same direction  [ERR_ILLEGAL_STATE]
+ *      2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
+ *     variants: all tradable standalone (no virtual trading)
+ *      ZigZag
+ *      Reverse ZigZag
+ *      total PL
+ *      daily PL
+ *      PL in pip
  *
+ *  - parameter ZigZag.Timeframe
  *  - fix start/reload with active @time condition
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
- *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - stop condition "pip"
  *  - support of session and trade breaks for specific day times
  *
- *  - 2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
- *  - 2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to same direction  [ERR_ILLEGAL_STATE]
  *  - merge IsStartSignal() and IsZigZagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - improve parsing of start.time.condition
