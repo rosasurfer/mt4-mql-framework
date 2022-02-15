@@ -3,19 +3,25 @@
  *
  *
  * TODO:
- *  - PL graphs of all variants on all symbols
- *     log symbol creation
- *     SynchronizeStatus() after RestoreSequence() to handle a lost/open position
- *     fix bugs:
- *      2022-02-08 21:00:02  FATAL  ZigZag EA::ReverseSequence(3)  Z.7612 cannot reverse sequence to same direction  [ERR_ILLEGAL_STATE]
- *      2022-02-07 03:08:16  FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
- *     variants: all tradable standalone (no virtual trading)
- *      ZigZag
- *      Reverse ZigZag
- *      total PL
- *      daily PL
- *      PL in pip
+ *  - bugs:
+ *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close ... [ERR_MARKET_CLOSED]
  *
+ *  - PL graphs for all variants/symbols
+ *     log symbol creation
+ *     all variants must be tradable standalone (no virtual trading)
+ *       ZigZag
+ *       Reverse ZigZag
+ *       total PL
+ *       daily PL
+ *       PL in pip
+ *
+ *  - onInitTemplate error on VM restart
+ *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+ *     INFO   ZigZag EA::initTemplate(0)  ********************************** (demo)
+ *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
+ *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
+ *
+ *  - SynchronizeStatus() after RestoreSequence() to handle a lost/open position
  *  - parameter ZigZag.Timeframe
  *  - fix start/reload with active @time condition
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
@@ -348,13 +354,18 @@ bool ReverseSequence(int direction) {
    if (last_error != NULL)                      return(false);
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   int lastDirection = ifInt(open.type==OP_BUY, D_LONG, D_SHORT);
-   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence to same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
 
-   // close open position
-   int oeFlags, oe[];
-   if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-   if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage-oe.Slippage(oe), 1))) return(false);
+   if (open.ticket > 0) {
+      // either continue in the same direction...
+      if ((open.type==OP_BUY && direction==D_LONG) || (open.type==OP_SELL && direction==D_SHORT)) {
+         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(direction==D_LONG, "long", "short") +": continuing with already open "+ ifString(direction==D_LONG, "long", "short") +" position");
+         return(true);
+      }
+      // ...or close the open position
+      int oeFlags, oe[];
+      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage-oe.Slippage(oe), 1))) return(false);
+   }
 
    // open new position
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
@@ -390,7 +401,7 @@ bool ReverseSequence(int direction) {
 
 
 /**
- * Add the trade details of the specified ticket to the local history and reset open position data.
+ * Add trade details of the specified ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
  * @param int    signal   - signal which caused opening of the trade
@@ -587,7 +598,7 @@ bool UpdateStatus() {
          sequence.openPL = NormalizeDouble(open.swap + open.commission + open.profit, 2);
       }
       else {
-         if (IsError(UpdateStatus.onOrderChange("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+         if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippage)) return(false);
       }
       sequence.totalPL = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
@@ -636,17 +647,20 @@ string UpdateStatus.PositionCloseMsg(int &error) {
 
 
 /**
- * Error handler for unexpected order modifications.
+ * Error handler for unexpected closing of the current position.
  *
  * @param  string message - error message
  * @param  int    error   - error code
  *
- * @return int - the same error
+ * @return int - error status, i.e. whether to interrupt program execution
  */
-int UpdateStatus.onOrderChange(string message, int error) {
-   if (!IsTesting()) logError(message, error);
-   else if (!error)  logDebug(message, error);
-   else              catch(message, error);
+int onPositionClose(string message, int error) {
+   if (!error)      return(logInfo(message));         // no error
+   if (IsTesting()) return(catch(message, error));    // treat everything as a terminating error
+
+   logError(message, error);                          // online
+   if (error == ERR_CONCURRENT_MODIFICATION)          // most probably manually closed
+      return(NO_ERROR);                               // continue
    return(error);
 }
 
