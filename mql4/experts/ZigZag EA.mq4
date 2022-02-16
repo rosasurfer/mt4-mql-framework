@@ -3,17 +3,35 @@
  *
  *
  * TODO:
- *  - bugs:
- *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
- *
- *  - PL graphs for all variants/symbols
+ *  - PL charts for all variants/symbols
  *     log symbol creation
- *     all variants must be tradable standalone (no virtual trading)
- *       ZigZag
- *       Reverse ZigZag
- *       total PL
- *       daily PL
- *       PL in pip
+ *     total PL
+ *     daily PL (daily reset)
+ *     PL in pip/money
+ *
+ *     variants:
+ *      ZigZag                   OK
+ *      Reverse ZigZag
+ *      full session (24h) with trade breaks
+ *      partial session (e.g. 09:00-16:00) with trade breaks
+ *
+ *  - implement better start/stop condition @time(03:20-23:00)
+ *     quick fix for FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
+ *
+ *  - trade breaks
+ *     - trading is disabled but the price feed is active
+ *     - configuration:
+ *        default: auto-config using the SYMBOL configuration
+ *        manual override of times and behaviors (per instance => via input parameters)
+ *     - default behavior:
+ *        no trade commands
+ *        synchronize-after if an opposite signal occurred
+ *     - manual behavior configuration:
+ *        close-before      (default: no)
+ *        synchronize-after (default: yes; if no: wait for the next signal)
+ *
+ *     - better parsing of struct SYMBOL
+ *     - config support for session and trade breaks at specific day times
  *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -21,12 +39,10 @@
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
- *  - RestoreSequence()->SynchronizeStatus() to handle a lost/open position
+ *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
  *  - parameter ZigZag.Timeframe
- *  - fix start/reload with active @time condition
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
- *  - support of session and trade breaks for specific day times
  *
  *  - merge IsStartSignal() and IsZigZagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
@@ -1377,7 +1393,7 @@ bool ValidateInputs() {
 
    // StopConditions: @time(datetime)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
-      start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
+      stop.time.condition = false;                                // on initParameters conditions are re-enabled on change only
 
       sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);    // split conditions
 
