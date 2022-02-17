@@ -669,7 +669,7 @@ string   GetSymbolName(string symbol);;
 string   GetSymbolNameOrAlt(string symbol, string altValue = "");;
 string   GetSymbolNameStrict(string symbol);;
 string   GetTempPath();;
-bool     GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]);;
+bool     GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nextTransition[]);;
 string   GetWindowsShortcutTarget(string lnkFilename);;
 datetime GmtToFxtTime(datetime gmtTime);;
 datetime GmtToServerTime(datetime gmtTime);;
