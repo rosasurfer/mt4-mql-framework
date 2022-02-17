@@ -149,20 +149,21 @@ bool EditFiles(string &filenames[]) {
 /**
  * Ermittelt Zeitpunkt und Offset des vorherigen und nächsten DST-Wechsels der angebenen Serverzeit.
  *
- * @param  _In_  datetime serverTime           - Serverzeit
- * @param  _Out_ datetime previousTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
- * @param  _Out_ datetime nextTransition    [] - Array zur Aufnahme der nächsten Transitionsdaten
+ * @param  _In_  datetime serverTime       - Serverzeit
+ * @param  _Out_ datetime prevTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
+ * @param  _Out_ datetime nextTransition[] - Array zur Aufnahme der nächsten Transitionsdaten
  *
  * @return bool - Erfolgsstatus
  *
- *
- * Datenformat:
- * ------------
- *  transition[TRANSITION_TIME  ] - GMT-Zeitpunkt des Wechsels oder -1, wenn der Wechsel unbekannt ist
- *  transition[TRANSITION_OFFSET] - GMT-Offset nach dem Wechsel
- *  transition[TRANSITION_DST   ] - ob nach dem Wechsel DST gilt oder nicht
+ * Format of prevTransition[] and nextTransition[]:
+ * ------------------------------------------------
+ * int[] = {
+ *    TRANSITION_TIME   => GMT-Zeitpunkt des Wechsels oder -1, wenn der Wechsel unbekannt ist,
+ *    TRANSITION_OFFSET => GMT-Offset nach dem Wechsel,
+ *    TRANSITION_DST    => ob nach dem Wechsel DST gilt oder nicht
+ * }
  */
-bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int &nextTransition[]) {
+bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nextTransition[]) {
    if (serverTime < 0)              return(!catch("GetTimezoneTransitions(1)  invalid parameter serverTime: "+ serverTime +" (not a time)", ERR_INVALID_PARAMETER));
    if (serverTime >= D'2038.01.01') return(!catch("GetTimezoneTransitions(2)  too large parameter serverTime: '"+ GmtTimeFormat(serverTime, "%a, %d.%m.%Y %H:%M") +"' (unsupported)", ERR_INVALID_PARAMETER));
 
@@ -187,57 +188,56 @@ bool GetTimezoneTransitions(datetime serverTime, int &previousTransition[], int 
    datetime toDST, toSTD;
    int i, iMax=2037-1970, y=TimeYearEx(serverTime);
 
-
    // letzter Wechsel
-   if (ArraySize(previousTransition) < 3)
-      ArrayResize(previousTransition, 3);
-   ArrayInitialize(previousTransition, 0);
+   if (ArraySize(prevTransition) < 3)
+      ArrayResize(prevTransition, 3);
+   ArrayInitialize(prevTransition, 0);
    i = y-1970;
 
    while (true) {
-      if (i < 0)              { previousTransition[TRANSITION_TIME] = -1; break; }
-      if (lTimezone == "gmt") { previousTransition[TRANSITION_TIME] = -1; break; }
+      if (i < 0)              { prevTransition[TRANSITION_TIME] = -1; break; }
+      if (lTimezone == "gmt") { prevTransition[TRANSITION_TIME] = -1; break; }
 
       if (lTimezone == "america/new_york") {
          toDST = transitions.America_New_York[i][TR_TO_DST.local];
          toSTD = transitions.America_New_York[i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.America_New_York[i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/berlin") {
          toDST = transitions.Europe_Berlin   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Berlin   [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Berlin   [i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/kiev") {
          toDST = transitions.Europe_Kiev     [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Kiev     [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Kiev     [i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/london") {
          toDST = transitions.Europe_London   [i][TR_TO_DST.local];
          toSTD = transitions.Europe_London   [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.Europe_London   [i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone == "europe/minsk") {
          toDST = transitions.Europe_Minsk    [i][TR_TO_DST.local];
          toSTD = transitions.Europe_Minsk    [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.Europe_Minsk    [i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else if (lTimezone=="fxt" || lTimezone=="america/new_york+0700") {
          toDST = transitions.FXT             [i][TR_TO_DST.local];
          toSTD = transitions.FXT             [i][TR_TO_STD.local];
-         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { previousTransition[TRANSITION_TIME] = toSTD; previousTransition[TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; previousTransition[TRANSITION_DST] = false; break; }
-         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { previousTransition[TRANSITION_TIME] = toDST; previousTransition[TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; previousTransition[TRANSITION_DST] = true;  break; }
+         if (serverTime >= toSTD) /*&&*/ if (toSTD != -1) { prevTransition[TRANSITION_TIME] = toSTD; prevTransition[TRANSITION_OFFSET] = transitions.FXT             [i][STD_OFFSET]; prevTransition[TRANSITION_DST] = false; break; }
+         if (serverTime >= toDST) /*&&*/ if (toDST != -1) { prevTransition[TRANSITION_TIME] = toDST; prevTransition[TRANSITION_OFFSET] = transitions.FXT             [i][DST_OFFSET]; prevTransition[TRANSITION_DST] = true;  break; }
       }
 
       else return(!catch("GetTimezoneTransitions(3)  unknown timezone \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG));
