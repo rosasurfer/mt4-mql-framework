@@ -2192,10 +2192,10 @@ bool CustomPositions.ReadConfig() {
  */
 bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTotal, datetime &from, datetime &to) {
    isTotal = isTotal!=0;
+   string origTerm = term;
 
-   string term.orig = StrTrim(term);
-          term      = StrToUpper(term.orig);
-   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
+   term = StrToUpper(StrTrim(term));
+   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(origTerm) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotal = false;
@@ -2215,7 +2215,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtFrom = ParseDateTimeEx(StrTrim(StrLeft  (term, pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
          if      (isFullYear2  ) dtTo  = DateTime(TimeYearEx(dtTo)+1)                  - 1*SECOND;    // Jahresende
@@ -2230,7 +2230,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                      if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
+      if (!dtFrom) return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm), ERR_INVALID_CONFIG_VALUE));
+
       if      (isFullYear1  ) dtTo = DateTime(TimeYearEx(dtFrom)+1)                    - 1*SECOND;    // Jahresende
       else if (isFullMonth1 ) dtTo = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;    // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                   - 1*SECOND;    // Wochenende
@@ -2240,8 +2241,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       else                    dtTo = dtFrom;
    }
    //debug("CustomPositions.ParseOpenTerm(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm), ERR_INVALID_CONFIG_VALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
 
 
    // (2) Datumswerte definieren und zurückgeben
@@ -2626,14 +2627,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *  {value} = Yesterday                        • Synonym für LastDay
  */
 datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
-   string   value.orig=value, values[], sYY, sMM, sDD, sTime, sHH, sII, sSS;
-   int      valuesSize, iYY, iMM, iDD, iHH, iII, iSS, dow;
-
-   static datetime now;
-          datetime date;
-
-   value = StrTrim(value);
-   if (!StringLen(value)) return(NULL);
+   string values[], origValue=value, sYY, sMM, sDD, sTime, sHH, sII, sSS;
+   int valuesSize, iYY, iMM, iDD, iHH, iII, iSS, dow;
 
    isYear   = false;
    isMonth  = false;
@@ -2642,10 +2637,12 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
    isHour   = false;
    isMinute = false;
 
+   value = StrTrim(value); if (value == "") return(NULL);
+
 
    // (1) Ausdruck parsen
    if (!StrIsDigit(StrLeft(value, 1))) {
-      if (!now) now = TimeFXT(); if (!now) return(NaT);
+      datetime date, now = TimeFXT(); if (!now) return(NaT);
 
       // (1.1) alphabetischer Ausdruck
       if (StrEndsWith(value, "DAY")) {
@@ -2658,7 +2655,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          else if (dow == SUNDAY  ) date -= 2*DAYS;
 
          if (value != "THISDAY") {
-            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             if (dow != MONDAY) date -= 1*DAY;                        // Datum auf den vorherigen Tag setzen
             else               date -= 3*DAYS;                       // an Wochenenden Datum auf den vorherigen Freitag setzen
          }
@@ -2671,7 +2668,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "WEEK")) {
          date = now - (TimeDayOfWeekEx(now)+6)%7 * DAYS;             // Datum auf Wochenbeginn setzen
          if (value != "THISWEEK") {
-            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             date -= 1*WEEK;                                          // Datum auf die vorherige Woche setzen
          }
          iYY    = TimeYearEx(date);
@@ -2683,7 +2680,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "MONTH")) {
          date = now;
          if (value != "THISMONTH") {
-            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             date = DateTime(TimeYearEx(date), TimeMonth(date)-1);    // Datum auf den vorherigen Monat setzen
          }
          iYY     = TimeYearEx(date);
@@ -2695,7 +2692,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "YEAR")) {
          date = now;
          if (value != "THISYEAR") {
-            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             date = DateTime(TimeYearEx(date)-1);                     // Datum auf das vorherige Jahr setzen
          }
          iYY    = TimeYearEx(date);
@@ -2703,7 +2700,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          iDD    = 1;
          isYear = true;
       }
-      else                                                           return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+      else                                                           return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
    }
 
    else {
@@ -2715,14 +2712,14 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       // 2014.01.15 12:34
       // 2014.01.15 12:34:56
       valuesSize = Explode(value, ".", values, NULL);
-      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
       if (valuesSize >= 1) {
          sYY = StrTrim(values[0]);                                   // Jahr prüfen
-         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iYY = StrToInteger(sYY);
-         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 1) {
             iMM    = 1;
             iDD    = 1;
@@ -2732,10 +2729,10 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
       if (valuesSize >= 2) {
          sMM = StrTrim(values[1]);                                   // Monat prüfen
-         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iMM = StrToInteger(sMM);
-         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 2) {
             iDD     = 1;
             isMonth = true;
@@ -2750,7 +2747,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          }
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
-            if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             sTime = StrTrim(StrSubstr(sDD, pos+1));
             sDD   = StrTrim(StrLeft (sDD,  pos  ));
          }
@@ -2758,35 +2755,35 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
             isDay = true;
          }
                                                                      // Tag prüfen
-         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iDD = StrToInteger(sDD);
-         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (iDD > 28) {
             if (iMM == FEB) {
-               if (iDD > 29)                                         return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iDD > 29)                                         return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             }
             else if (iDD==31)
-               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          }
 
          if (StringLen(sTime) > 0) {                                 // Zeit prüfen
             // hh:ii:ss
             valuesSize = Explode(sTime, ":", values, NULL);
-            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
             sHH = StrTrim(values[0]);                                // Stunden
-            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iHH = StrToInteger(sHH);
-            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
             sII = StrTrim(values[1]);                                // Minuten
-            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iII = StrToInteger(sII);
-            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             if (valuesSize == 2) {
                if (!iII) isHour   = true;
                else      isMinute = true;
@@ -2794,10 +2791,10 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
             if (valuesSize == 3) {
                sSS = StrTrim(values[2]);                             // Sekunden
-               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
                iSS = StrToInteger(sSS);
-               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTime(25)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTime(25)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             }
          }
       }
