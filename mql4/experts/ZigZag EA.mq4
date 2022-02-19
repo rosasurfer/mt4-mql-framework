@@ -998,8 +998,8 @@ bool ReadStatus() {
    string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",         "");             // string Sequence.ID         = T1234
    int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"         );             // int    ZigZag.Periods      = 40
    string sLots                = GetIniStringA(file, section, "Lots",                "");             // double Lots                = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime)
+   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime|time)
+   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime|time)
    string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",          "");             // double TakeProfit          = 3.0
    string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
    int    iSlippage            = GetIniInt    (file, section, "Slippage"               );             // int    Slippage            = 2
@@ -1392,21 +1392,11 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-
             int pt[];
             if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            if (!pt[PT_HAS_DATE]) {
-               int now = TimeLocalEx();
-               pt[PT_YEAR    ] = TimeYearEx(now);
-               pt[PT_MONTH   ] = TimeMonth(now);
-               pt[PT_DAY     ] = TimeDayEx(now);
-               pt[PT_HAS_DATE] = 1;
-            }
-            time = DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
-
-            start.time.value       = time;
-            start.time.isDaily     = false;
-            start.time.description = "time("+ TimeToStr(time) +")";
+            start.time.value       = DateTime2(pt, DATE_OF_ERA);
+            start.time.isDaily     = !pt[PT_HAS_DATE];
+            start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
@@ -1433,20 +1423,10 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-
             if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            if (!pt[PT_HAS_DATE]) {
-               now = TimeLocalEx();
-               pt[PT_YEAR    ] = TimeYearEx(now);
-               pt[PT_MONTH   ] = TimeMonth(now);
-               pt[PT_DAY     ] = TimeDayEx(now);
-               pt[PT_HAS_DATE] = 1;
-            }
-            time = DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
-
-            stop.time.value       = time;
-            stop.time.isDaily     = false;
-            stop.time.description = "time("+ TimeToStr(time) +")";
+            stop.time.value       = DateTime2(pt, DATE_OF_ERA);
+            stop.time.isDaily     = !pt[PT_HAS_DATE];
+            stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));

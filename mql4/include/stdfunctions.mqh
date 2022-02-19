@@ -2597,26 +2597,36 @@ datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0,
 /**
  * Create a datetime value from a ParseTime() result array.
  *
- * @param  int parsed[]        - ParseTime() result array
- * @param  int flags [optional - flags controling datetime creation (default: none)
+ * @param  int parsed[]         - ParseTime() result array
+ * @param  int flags [optional] - flags controling datetime creation (see notes)
  *
  * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors
  *
  * Notes:
  * ------
- * - If the passed array nas no date part the date of the resulting datetime value is set to '1970-01-01'.
- * - If the passed array has no time part the time of the resulting datetime value is set to Midnight (00:00:00).
+ * - If the passed data contains no date part the returned datetime value is controled by parameter 'flags':
+ *    DATE_OF_TODAY: a datetime value relative to Midnight of the current day (default)
+ *    DATE_OF_ERA:   a datetime value relative to the start of the era (1970-01-01)
+ * - If the passed data contains no time part the returned datetime value is set to Midnight (00:00:00).
  */
-datetime DateTime2(int parsed[], int flags = NULL) {
+datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
    if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
    if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
 
    int pt[]; ArrayCopy(pt, parsed);
 
    if (!pt[PT_HAS_DATE]) {
-      pt[PT_YEAR    ] = 1970;
-      pt[PT_MONTH   ] = 1;
-      pt[PT_DAY     ] = 1;
+      if (flags & DATE_OF_ERA == DATE_OF_ERA) {
+         pt[PT_YEAR    ] = 1970;
+         pt[PT_MONTH   ] = 1;
+         pt[PT_DAY     ] = 1;
+      }
+      else {
+         datetime now = TimeLocalEx();
+         pt[PT_YEAR    ] = TimeYearEx(now);
+         pt[PT_MONTH   ] = TimeMonth(now);
+         pt[PT_DAY     ] = TimeDayEx(now);
+      }
       pt[PT_HAS_DATE] = 1;
    }
    if (!pt[PT_HAS_TIME]) {

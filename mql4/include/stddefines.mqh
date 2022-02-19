@@ -130,6 +130,11 @@ double  N_INF;                                                    // -1.#INF: ne
 #define TIME_FULL                   7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
+// DateTime2() flags
+#define DATE_OF_ERA                 1           // relative to the era (1970-01-01)
+#define DATE_OF_TODAY               2           // relative to today
+
+
 // ParseTime() flags
 #define DATE_YYYYMMDD               1           // 1980.07.19
 #define DATE_DDMMYYYY               2           // 19.07.1980
