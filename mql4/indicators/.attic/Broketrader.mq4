@@ -134,10 +134,10 @@ int onInit() {
    // StartDate
    string sValue = StrTrim(StartDate);
    if (sValue!="" 0 && sValue!="yyyy.mm.dd") {
-      int result[];
-      bool success = ParseTime(sValue, DATE_YYYYMMDD | DATE_DDMMYYYY | TIME_OPTIONAL, result);
+      int pt[];
+      bool success = ParseTime(sValue, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
       if (!success)                return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
-      startTime = DateTime1(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
+      startTime = DateTime2(pt);
    }
    // Max.Bars
    if (Max.Bars < -1)              return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));

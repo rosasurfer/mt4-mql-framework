@@ -129,7 +129,7 @@ bool     CreateDirectory(string path, int flags);;
 string   CreateLegendLabel();;
 string   CreateString(int length);;
 datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0);;
-datetime DateTime2(int parsed[], int flags = NULL);;
+datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY);;
 int      DebugMarketInfo(string caller);;
 int      Div(int a, int b, int onZero = 0);;
 double   doubleOr(double value, double altValue);;

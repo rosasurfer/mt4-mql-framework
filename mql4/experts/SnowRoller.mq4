@@ -6256,8 +6256,7 @@ bool ValidateInputs() {
                start.trend.params = StrTrim(sValues[2]);
                if (!StringLen(start.trend.params))                return(!onInputError("ValidateInputs(26)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)"));
             }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
-            start.trend.description = exprs[i];
+            start.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
             start.trend.condition   = true;
          }
 
@@ -6272,22 +6271,18 @@ bool ValidateInputs() {
             if      (key == "@bid") start.price.type = PRICE_BID;
             else if (key == "@ask") start.price.type = PRICE_ASK;
             else                    start.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            start.price.description = exprs[i];
+            sValue = NumberToStr(start.price.value, PriceFormat);
+            if (StrEndsWith(sValue, "'0")) sValue = StrLeft(sValue, -2);   // cut "'0" for improved readability
+            start.price.description = StrSubstr(key, 1) +"("+ sValue +")";
             start.price.condition   = true;
          }
 
          else if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            int dtResult[];
-            if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
-            int now = TimeLocalEx();
-            time = DateTime1(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
-            start.time.value = time;
-            exprs[i]         = "time("+ TimeToStr(time) +")";
-            start.time.description = exprs[i];
+            int pt[];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            start.time.value       = DateTime2(pt);
+            start.time.description = "time("+ TimeToStr(start.time.value) +")";
             start.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(32)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
@@ -6342,8 +6337,7 @@ bool ValidateInputs() {
                stop.trend.params = StrTrim(sValues[2]);
                if (!StringLen(stop.trend.params))                 return(!onInputError("ValidateInputs(41)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)"));
             }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
-            stop.trend.description = exprs[i];
+            stop.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
             stop.trend.condition   = true;
          }
 
@@ -6358,21 +6352,17 @@ bool ValidateInputs() {
             if      (key == "@bid") stop.price.type = PRICE_BID;
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            stop.price.description = exprs[i];
+            sValue = NumberToStr(stop.price.value, PriceFormat);
+            if (StrEndsWith(sValue, "'0")) sValue = StrLeft(sValue, -2);   // cut "'0" for improved readability
+            stop.price.description = StrSubstr(key, 1) +"("+ sValue +")";
             stop.price.condition   = true;
          }
 
          else if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, dtResult))                return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
-            now = TimeLocalEx();
-            time = DateTime1(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
-            stop.time.value       = time;
-            exprs[i]              = "time("+ TimeToStr(time) +")";
-            stop.time.description = exprs[i];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            stop.time.value       = DateTime2(pt);
+            stop.time.description = "time("+ TimeToStr(stop.time.value) +")";
             stop.time.condition   = true;
          }
 
@@ -6385,15 +6375,13 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
-               stop.profitAbs.description = exprs[i];
+               stop.profitAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
                stop.profitAbs.condition   = true;
             }
             else {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
-               stop.profitPct.description = exprs[i];
+               stop.profitPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
                stop.profitPct.condition   = true;
             }
          }
@@ -6407,15 +6395,13 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
-               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
                stop.lossAbs.condition   = true;
             }
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
-               stop.lossPct.description = exprs[i];
+               stop.lossPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.condition   = true;
             }
          }
