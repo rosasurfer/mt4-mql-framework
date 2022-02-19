@@ -2563,20 +2563,19 @@ bool IsLeapYear(int year) {
 /**
  * Create a datetime value from the specified parameters.
  *
- * Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die resultierende Periode
- * übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07'
- * (INT_MAX) liegen.
+ * Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die resultierende Periode übertragen. Der
+ * resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
  *
- * @param  int year    -
- * @param  int month   - default: Januar
- * @param  int day     - default: der 1. des Monats
- * @param  int hours   - default: 0 Stunden
- * @param  int minutes - default: 0 Minuten
- * @param  int seconds - default: 0 Sekunden
+ * @param  int year    - year
+ * @param  int month   - month   (default: January)
+ * @param  int day     - day     (default: 1st of the month)
+ * @param  int hours   - hour    (default: Midnight)
+ * @param  int minutes - minutes (default: 0 minutes)
+ * @param  int seconds - seconds (default: 0 seconds)
  *
- * @return datetime - datetime-Wert oder NaT (Not-a-Time), falls ein Fehler auftrat
+ * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
  *
  * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
  *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
@@ -2602,12 +2601,31 @@ datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0,
  * @param  int flags [optional - flags controling datetime creation (default: none)
  *
  * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors
+ *
+ * Notes:
+ * ------
+ * - If the passed array nas no date part the date of the resulting datetime value is set to '1970-01-01'.
+ * - If the passed array has no time part the time of the resulting datetime value is set to Midnight (00:00:00).
  */
 datetime DateTime2(int parsed[], int flags = NULL) {
    if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
    if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
 
-   return(NULL);
+   int pt[]; ArrayCopy(pt, parsed);
+
+   if (!pt[PT_HAS_DATE]) {
+      pt[PT_YEAR    ] = 1970;
+      pt[PT_MONTH   ] = 1;
+      pt[PT_DAY     ] = 1;
+      pt[PT_HAS_DATE] = 1;
+   }
+   if (!pt[PT_HAS_TIME]) {
+      pt[PT_HOUR    ] = 0;
+      pt[PT_MINUTE  ] = 0;
+      pt[PT_SECOND  ] = 0;
+      pt[PT_HAS_TIME] = 1;
+   }
+   return(DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]));
 }
 
 
