@@ -2218,8 +2218,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       dtFrom = ParseDateTimeEx(StrTrim(StrLeft  (term, pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTimeA(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTimeA(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         if      (isFullYear2  ) dtTo  = DateTime1(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime1(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
          else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
          else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
          else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der vorhergehenden Stunde
@@ -2232,8 +2232,8 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       if (!dtFrom) return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm), ERR_INVALID_CONFIG_VALUE));
 
-      if      (isFullYear1  ) dtTo = DateTimeA(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTimeA(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      if      (isFullYear1  ) dtTo = DateTime1(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
       else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
       else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
@@ -2423,8 +2423,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTimeA(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTimeA(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         if      (isFullYear2  ) dtTo  = DateTime1(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime1(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
          else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
          else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
          else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der vorhergehenden Stunde
@@ -2436,8 +2436,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       isSingleTimespan = true;
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
                                                                                                                       if (!dtFrom)       return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
-      if      (isFullYear1  ) dtTo = DateTimeA(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTimeA(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      if      (isFullYear1  ) dtTo = DateTime1(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
       else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
       else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
       else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
@@ -2456,18 +2456,18 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
       datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentEx("CustomPositions.ParseHstTerm(6)");
-      if      (groupByMonth) groupFrom = DateTimeA(TimeYearEx(dtFrom), TimeMonth(dtFrom));
+      if      (groupByMonth) groupFrom = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekEx(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
 
       if (!dtTo) {                                                                                       // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTimeA(TimeYearEx(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
+         if      (groupByMonth) dtTo = DateTime1(TimeYearEx(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
          else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekEx(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
          else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                             - 1*SECOND;    // aktuelles Tagesende
       }
 
       for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
-         if      (groupByMonth) nextGroupFrom = DateTimeA(TimeYearEx(groupFrom), TimeMonth(groupFrom)+1);
+         if      (groupByMonth) nextGroupFrom = DateTime1(TimeYearEx(groupFrom), TimeMonth(groupFrom)+1);
          else if (groupByWeek ) nextGroupFrom = groupFrom + 7*DAYS;
          else if (groupByDay  ) nextGroupFrom = groupFrom + 1*DAY;
          groupTo   = nextGroupFrom - 1*SECOND;
@@ -2681,7 +2681,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          date = now;
          if (value != "THISMONTH") {
             if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTimeEx(3)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-            date = DateTimeA(TimeYearEx(date), TimeMonth(date)-1);   // Datum auf den vorherigen Monat setzen
+            date = DateTime1(TimeYearEx(date), TimeMonth(date)-1);   // Datum auf den vorherigen Monat setzen
          }
          iYY     = TimeYearEx(date);
          iMM     = TimeMonth (date);
@@ -2693,7 +2693,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          date = now;
          if (value != "THISYEAR") {
             if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTimeEx(4)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-            date = DateTimeA(TimeYearEx(date)-1);                    // Datum auf das vorherige Jahr setzen
+            date = DateTime1(TimeYearEx(date)-1);                    // Datum auf das vorherige Jahr setzen
          }
          iYY    = TimeYearEx(date);
          iMM    = 1;
@@ -2802,7 +2802,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
 
    // (2) DateTime aus geparsten Werten erzeugen
-   datetime result = DateTimeA(iYY, iMM, iDD, iHH, iII, iSS);
+   datetime result = DateTime1(iYY, iMM, iDD, iHH, iII, iSS);
    if (isWeek)                                                       // wenn volle Woche, dann Zeit auf Wochenbeginn setzen
       result -= (TimeDayOfWeekEx(result)+6)%7 * DAYS;
    return(result);

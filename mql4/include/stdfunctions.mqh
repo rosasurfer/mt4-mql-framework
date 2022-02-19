@@ -2567,7 +2567,7 @@ bool IsLeapYear(int year) {
  * übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07'
  * (INT_MAX) liegen.
  *
- * Beispiel: DateTimeA(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
+ * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
  *
  * @param  int year    -
  * @param  int month   - default: Januar
@@ -2581,14 +2581,14 @@ bool IsLeapYear(int year) {
  * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
  *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
  */
-datetime DateTimeA(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
+datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
    month = (12 + month%12) % 12;
    if (!month) month = 12;
 
    string  sDate = StringConcatenate(StrRight("000"+year, 4), ".", StrRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
-   if (date < 0) return(_NaT(catch("DateTimeA(1)  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
+   if (date < 0) return(_NaT(catch("DateTime1(1)  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 
    int time = (day-1)*DAYS + hours*HOURS + minutes*MINUTES + seconds*SECONDS;
    return(date + time);
@@ -2603,9 +2603,9 @@ datetime DateTimeA(int year, int month=1, int day=1, int hours=0, int minutes=0,
  *
  * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors
  */
-datetime DateTimeB(int parsed[], int flags = NULL) {
-   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTimeB(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
-   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTimeB(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
+datetime DateTime2(int parsed[], int flags = NULL) {
+   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
 
    return(NULL);
 }
@@ -7241,8 +7241,8 @@ void __DummyCalls() {
    CreateDirectory(NULL, NULL);
    CreateLegendLabel();
    CreateString(NULL);
-   DateTimeA(NULL);
-   DateTimeB(iNulls);
+   DateTime1(NULL);
+   DateTime2(iNulls);
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
