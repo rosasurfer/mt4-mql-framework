@@ -324,6 +324,29 @@
 #define DEC                              DECEMBER
 
 
+// ParseTime() result element indexes
+#define PT_YEAR                                 0
+#define PT_MONTH                                1
+#define PT_DAY                                  2
+#define PT_HOUR                                 3
+#define PT_MINUTE                               4
+#define PT_SECOND                               5
+#define PT_ERROR                                6        // string*
+
+// ParseTime() format flags
+#define DATE_YYYYMMDD                           1        // 1980.07.19
+#define DATE_DDMMYYYY                           2        // 19.07.1980
+//efine DATE_YEAR_OPTIONAL                      4
+//efine DATE_MONTH_OPTIONAL                     8
+//efine DATE_DAY_OPTIONAL                      16
+#define DATE_OPTIONAL                          28        // (DATE_YEAR_OPTIONAL | DATE_MONTH_OPTIONAL | DATE_DAY_OPTIONAL)
+
+//efine TIME_SECONDS_OPTIONAL                  32
+//efine TIME_MINUTES_OPTIONAL                  64
+//efine TIME_HOURS_OPTIONAL                   128
+#define TIME_OPTIONAL                         224        // (TIME_HOURS_OPTIONAL | TIME_MINUTES_OPTIONAL | TIME_SECONDS_OPTIONAL)
+
+
 // init() flags
 #define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
