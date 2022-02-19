@@ -5504,18 +5504,19 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
  *
  * - Format of result[]:
  *    int[] = {
- *       PT_YEAR   => 2006,
- *       PT_MONTH  => 12,
- *       PT_DAY    => 24,
- *       PT_HOUR   => 10,
- *       PT_MINUTE => 45,
- *       PT_SECOND => 0,
- *       PT_ERROR  => string*       // pointer to an error message
+ *       PT_YEAR     => 2006,
+ *       PT_MONTH    => 12,
+ *       PT_DAY      => 24,
+ *       PT_HOUR     => 10,
+ *       PT_MINUTE   => 45,
+ *       PT_SECOND   => 0,
+ *       PT_HAS_DATE => 1,          // whether the parsed value has a date part
+ *       PT_HAS_TIME => 1,          // whether the parsed value has a time part
+ *       PT_ERROR    => string*     // pointer to an error message
  *    }
  */
 bool ParseTime(string value, int flags, int &result[]) {
-   if (ArraySize(result) != 7)
-      ArrayResize(result, 7);
+   if (ArraySize(result) != PT_ERROR+1) ArrayResize(result, PT_ERROR+1);
    ArrayInitialize(result, 0);
 
    value = StrTrim(value);
@@ -5632,13 +5633,15 @@ bool ParseTime(string value, int flags, int &result[]) {
       }
    }
 
-   result[PT_YEAR  ] = iYYYY;
-   result[PT_MONTH ] = iMM;
-   result[PT_DAY   ] = iDD;
-   result[PT_HOUR  ] = iHH;
-   result[PT_MINUTE] = iII;
-   result[PT_SECOND] = iSS;
-   result[PT_ERROR ] = NULL;
+   result[PT_YEAR    ] = iYYYY;
+   result[PT_MONTH   ] = iMM;
+   result[PT_DAY     ] = iDD;
+   result[PT_HAS_DATE] = (sDate != "");
+   result[PT_HOUR    ] = iHH;
+   result[PT_MINUTE  ] = iII;
+   result[PT_SECOND  ] = iSS;
+   result[PT_HAS_TIME] = (sTime != "");
+   result[PT_ERROR   ] = NULL;
    return(true);
 }
 

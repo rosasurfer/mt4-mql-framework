@@ -77,8 +77,8 @@ extern string Sequence.ID         = "";                              // instance
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
-extern string StartConditions     = "";                              // @time(datetime)
-extern string StopConditions      = "";                              // @time(datetime)
+extern string StartConditions     = "";                              // @time(datetime|time)
+extern string StopConditions      = "";                              // @time(datetime|time)
 extern double TakeProfit          = 0;                               // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
 extern int    Slippage            = 2;                               // in point
@@ -1359,7 +1359,7 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                               return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                             return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // StartConditions: @time(datetime)
+   // StartConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
       start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
 
@@ -1380,10 +1380,12 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            int dtResult[];
-            if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+
+            int pt[];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
             int now = TimeLocalEx();
-            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
+            time = DateTime(intOr(pt[PT_YEAR], TimeYearEx(now)), intOr(pt[PT_MONTH], TimeMonth(now)), intOr(pt[PT_DAY], TimeDayEx(now)), pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+
             start.time.value       = time;
             start.time.description = "time("+ TimeToStr(time) +")";
             start.time.condition   = true;
@@ -1392,7 +1394,7 @@ bool ValidateInputs() {
       }
    }
 
-   // StopConditions: @time(datetime)
+   // StopConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
       stop.time.condition = false;                                // on initParameters conditions are re-enabled on change only
 
@@ -1412,9 +1414,9 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             now = TimeLocalEx();
-            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
+            time = DateTime(intOr(pt[PT_YEAR], TimeYearEx(now)), intOr(pt[PT_MONTH], TimeMonth(now)), intOr(pt[PT_DAY], TimeDayEx(now)), pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
             stop.time.value       = time;
             stop.time.description = "time("+ TimeToStr(time) +")";
             stop.time.condition   = true;
