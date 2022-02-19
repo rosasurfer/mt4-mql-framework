@@ -2560,8 +2560,8 @@ bool IsLeapYear(int year) {
 
 
 /**
- * Erzeugt einen datetime-Wert. Parameter, die außerhalb der gebräuchlichen Zeitgrenzen liegen, werden automatisch in die
- * entsprechende Periode übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis
+ * Erzeugt einen datetime-Wert. Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die entsprechende
+ * Periode übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis
  * D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
  * Beispiel: DateTime(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
