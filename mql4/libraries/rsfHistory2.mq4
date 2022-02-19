@@ -922,7 +922,7 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    }
    if (offset < 0)                      return(!catch("HistoryFile2.WriteBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (offset > hf.total.bars[hFile])   return(!catch("HistoryFile2.WriteBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
    // Bar validieren
    datetime openTime = Round(bar[BAR_T]); if (!openTime) return(!catch("HistoryFile2.WriteBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
@@ -1124,7 +1124,7 @@ bool HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags = NUL
    }
    if (offset < 0)                      return(!catch("HistoryFile2.InsertBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (offset > hf.total.bars[hFile])   return(!catch("HistoryFile2.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
    // ggf. Lücke für einzufügende Bar schaffen
    if (offset < hf.total.bars[hFile])
