@@ -1412,9 +1412,9 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            // TODO: validation of @time is not sufficient
+            if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            now = TimeLocalEx();
+            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             stop.time.value       = time;
             stop.time.description = "time("+ TimeToStr(time) +")";
             stop.time.condition   = true;

@@ -6281,9 +6281,10 @@ bool ValidateInputs() {
 
          else if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
-            // TODO: validation of @time is not sufficient
+            int dtResult[];
+            if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            int now = TimeLocalEx();
+            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             start.time.value = time;
             exprs[i]         = "time("+ TimeToStr(time) +")";
             start.time.description = exprs[i];
@@ -6366,9 +6367,9 @@ bool ValidateInputs() {
 
          else if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
-            // TODO: validation of @time is not sufficient
+            if (!ParseTime(sValue, NULL, dtResult))                return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            now = TimeLocalEx();
+            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             stop.time.value       = time;
             exprs[i]              = "time("+ TimeToStr(time) +")";
             stop.time.description = exprs[i];
