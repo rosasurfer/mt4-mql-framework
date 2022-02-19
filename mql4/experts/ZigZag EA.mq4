@@ -1380,9 +1380,12 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            // TODO: validation of @time is not sufficient
+            int dtResult[];
+            bool success = ParseTime(StartDate, NULL, dtResult);
+            if (!success)                                         return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            // TODO:
+
+            //time = DateTime(dtResult[PT_YEAR], dtResult[PT_MONTH], dtResult[PT_DAY], dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             start.time.value       = time;
             start.time.description = "time("+ TimeToStr(time) +")";
             start.time.condition   = true;
