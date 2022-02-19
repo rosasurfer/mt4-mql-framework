@@ -4037,7 +4037,7 @@ datetime TimeGMT() {
 
    if (This.IsTesting()) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = GetLocalTime(); if (!localTime) return(NULL);
+      datetime localTime = TimeLocalEx(); if (!localTime) return(NULL);
       gmt = ServerToGmtTime(localTime);                              // TimeLocal() entspricht im Tester der Serverzeit
    }
    else {
@@ -6328,7 +6328,7 @@ bool SendSMS(string receiver, string message) {
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
    string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
