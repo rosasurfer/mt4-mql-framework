@@ -234,7 +234,6 @@ bool     OrderPop(string location = "");;
 bool     OrderPush(string location = "");;
 string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
-datetime ParseDateTime(string value);;
 bool     ParseTime(string value, int flags, int &result[]);;
 string   PeriodDescription(int period = NULL);;
 int      PeriodFlag(int period = NULL);;
