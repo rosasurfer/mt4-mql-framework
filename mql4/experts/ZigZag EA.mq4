@@ -1402,7 +1402,7 @@ bool ValidateInputs() {
                pt[PT_DAY     ] = TimeDayEx(now);
                pt[PT_HAS_DATE] = 1;
             }
-            time = DateTimeA(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+            time = DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
 
             start.time.value       = time;
             start.time.isDaily     = false;
@@ -1442,7 +1442,7 @@ bool ValidateInputs() {
                pt[PT_DAY     ] = TimeDayEx(now);
                pt[PT_HAS_DATE] = 1;
             }
-            time = DateTimeA(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+            time = DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
 
             stop.time.value       = time;
             stop.time.isDaily     = false;

@@ -137,7 +137,7 @@ int onInit() {
       int result[];
       bool success = ParseTime(sValue, DATE_YYYYMMDD | DATE_DDMMYYYY | TIME_OPTIONAL, result);
       if (!success)                return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
-      startTime = DateTimeA(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
+      startTime = DateTime1(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
    }
    // Max.Bars
    if (Max.Bars < -1)              return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
