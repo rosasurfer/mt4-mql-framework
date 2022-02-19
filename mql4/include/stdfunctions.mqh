@@ -4088,16 +4088,35 @@ datetime GetServerTime() {
 
 
 /**
+ * Drop-in replacement for the flawed built-in function TimeLocal().
+ *
+ * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
+ * the local timezone is set to the trade server's timezone.
+ *
+ * @param  string location [optional] - location identifier of the caller (default: none)
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ *
+ * NOTE: This function signals an error if TimeLocal() returns an invalid value.
+ */
+datetime TimeLocalEx(string location = "") {
+   datetime time = TimeLocal();
+   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+   return(time);
+}
+
+
+/**
+ * Drop-in replacement for the flawed built-in function TimeCurrent().
+ *
  * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
  * letzten Ticks des getesteten Symbols.
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * @param  string location [optional] - location identifier of the caller (default: none)
  *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ * @return datetime - time or NULL (0) in case of errors
  *
- *
- * NOTE: Im Unterschied zur Originalfunktion meldet diese Funktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
- *       bekannt ist.
+ * NOTE: This function signals an error if TimeCurrent() returns an invalid value.
  */
 datetime TimeCurrentEx(string location="") {
    datetime time = TimeCurrent();
@@ -7118,7 +7137,7 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
  *
  * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
  *                                    if an absolute path: as is
- * @param  string caller [optional] - caller location for error messages (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return bool - whether it's safe to use the path
  */
@@ -7405,6 +7424,7 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
+   TimeLocalEx();
    TimeServer();
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);
