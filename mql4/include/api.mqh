@@ -313,6 +313,7 @@ int      TimeframeFlag(int timeframe = NULL);;
 string   TimeframeFlagToStr(int flag);;
 datetime TimeFXT();;
 datetime TimeGMT();;
+datetime TimeLocalEx(string location = "");;
 datetime TimeServer();;
 int      TimeYearEx(datetime time);;
 int      Toolbar.Experts(bool enable);;
