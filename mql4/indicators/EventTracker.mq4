@@ -679,7 +679,7 @@ bool onOrderFail(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Order failed: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Order failed: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"with error: \""+ OrderComment() +"\""+ NL +"("+ TimeToStr(TimeLocalEx(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       if (IsLogInfo()) logInfo("onOrderFail(2)  "+ message);
 
@@ -719,7 +719,7 @@ bool onPositionOpen(int tickets[]) {
       int    pipDigits   = digits & (~1);
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string price       = NumberToStr(OrderOpenPrice(), priceFormat);
-      string message     = "Position opened: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position opened: "+ type +" "+ lots +" "+ OrderSymbol() +" at "+ price + NL +"("+ TimeToStr(TimeLocalEx(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       if (IsLogInfo()) logInfo("onPositionOpen(2)  "+ message);
 
@@ -764,7 +764,7 @@ bool onPositionClose(int tickets[][]) {
       string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
       string openPrice   = NumberToStr(OrderOpenPrice(), priceFormat);
       string closePrice  = NumberToStr(OrderClosePrice(), priceFormat);
-      string message     = "Position closed: "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
+      string message     = "Position closed: "+ type +" "+ lots +" "+ OrderSymbol() +" open="+ openPrice +" close="+ closePrice + closeTypeDescr[closeType] + NL +"("+ TimeToStr(TimeLocalEx(), TIME_MINUTES|TIME_SECONDS) +", "+ orders.accountAlias +")";
 
       if (IsLogInfo()) logInfo("onPositionClose(2)  "+ message);
 
@@ -1167,7 +1167,7 @@ bool onBarRangeSignal(int index, int direction, double level, double price, date
    int signal.timeframe = signal.config[index][SIGNAL_CONFIG_TIMEFRAME];
    int signal.bar       = signal.config[index][SIGNAL_CONFIG_BAR      ];
 
-   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(GetLocalTime(), TIME_MINUTES|TIME_SECONDS) +")";
+   string message = StdSymbol() +" broke "+ BarDescription(signal.timeframe, signal.bar) +"'s "+ ifString(direction==SIGNAL_UP, "high", "low") +" of "+ NumberToStr(level, PriceFormat) + NL +" ("+ TimeToStr(TimeLocalEx(), TIME_MINUTES|TIME_SECONDS) +")";
    if (IsLogInfo()) logInfo("onBarRangeSignal(2)  "+ message);
 
    int error = 0;
