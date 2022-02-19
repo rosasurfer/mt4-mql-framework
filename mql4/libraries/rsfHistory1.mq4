@@ -596,10 +596,10 @@ int HistoryFile1.Open(string symbol, int timeframe, string description, int digi
                to.nextCloseTime   = to.closeTime   + periodSecs;
             }
             else if (timeframe == PERIOD_MN1) {
-               from.closeTime     = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1);  // 00:00, 1st of the next month
-               from.nextCloseTime = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2);  // 00:00, 1st of the next but one month
-               to.closeTime       = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1);  // 00:00, 1st of the next month
-               to.nextCloseTime   = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2);  // 00:00, 1st of the next but one month
+               from.closeTime     = DateTimeA(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1); // 00:00, 1st of the next month
+               from.nextCloseTime = DateTimeA(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2); // 00:00, 1st of the next but one month
+               to.closeTime       = DateTimeA(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1); // 00:00, 1st of the next month
+               to.nextCloseTime   = DateTimeA(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2); // 00:00, 1st of the next but one month
             }
          }
       }
@@ -875,8 +875,8 @@ bool HistoryFile1.ReadBar(int hFile, int offset, double &bar[]) {
       nextCloseTime = closeTime + hf.periodSecs[hFile];
    }
    else if (hf.period[hFile] == PERIOD_MN1) {
-      closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);     // 00:00, 1. des nächsten Monats
-      nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);     // 00:00, 1. des übernächsten Monats
+      closeTime     = DateTimeA(TimeYearEx(openTime), TimeMonth(openTime)+1);    // 00:00, 1. des nächsten Monats
+      nextCloseTime = DateTimeA(TimeYearEx(openTime), TimeMonth(openTime)+2);    // 00:00, 1. des übernächsten Monats
    }
 
    hf.lastStoredBar.offset       [hFile]        = offset;
@@ -988,8 +988,8 @@ bool HistoryFile1.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
          nextCloseTime = closeTime + hf.periodSecs[hFile];
       }
       else if (hf.period[hFile] == PERIOD_MN1) {
-         closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);  // 00:00, 1. des nächsten Monats
-         nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);  // 00:00, 1. des übernächsten Monats
+         closeTime     = DateTimeA(TimeYearEx(openTime), TimeMonth(openTime)+1); // 00:00, 1. des nächsten Monats
+         nextCloseTime = DateTimeA(TimeYearEx(openTime), TimeMonth(openTime)+2); // 00:00, 1. des übernächsten Monats
       }
       hf.lastStoredBar.offset       [hFile] = offset;
       hf.lastStoredBar.openTime     [hFile] = openTime;
@@ -1412,8 +1412,8 @@ bool HistoryFile1.AddTick(int hFile, datetime time, double value, int flags = NU
                nextCloseTime = closeTime     + hf.periodSecs[hFile];
             }
             else if (hf.period[hFile] == PERIOD_MN1) {
-               closeTime     = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);    // 00:00, 1. des nächsten Monats
-               nextCloseTime = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);    // 00:00, 1. des übernächsten Monats
+               closeTime     = DateTimeA(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);   // 00:00, 1. des nächsten Monats
+               nextCloseTime = DateTimeA(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);   // 00:00, 1. des übernächsten Monats
             }
             hf.bufferedBar.offset       [hFile]        = tick.offset;
             hf.bufferedBar.openTime     [hFile]        = tick.openTime;

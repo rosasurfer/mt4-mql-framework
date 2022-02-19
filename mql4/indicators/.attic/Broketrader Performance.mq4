@@ -83,7 +83,7 @@ int onInit() {
    int result[];
    bool success = ParseTime(StartDate, DATE_YYYYMMDD | DATE_DDMMYYYY | TIME_OPTIONAL, result);
    if (!success)                   return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
-   systemStartDate = DateTime(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
+   systemStartDate = DateTimeA(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible

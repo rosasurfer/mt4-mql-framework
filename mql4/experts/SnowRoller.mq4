@@ -5408,7 +5408,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
       if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(7)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
       iMinutes = StrToInteger(sMinutes);
       if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(8)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dStartTime = DateTime(1970, 1, 1, iHours, iMinutes);
+      dStartTime = DateTimeA(1970, 1, 1, iHours, iMinutes);
 
       sTime = StrTrim(sTimes[1]);
       if (StringLen(sTime) != 5)                     return(_false(catch("ReadSessionBreaks(9)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
@@ -5421,7 +5421,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
       if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(13)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
       iMinutes = StrToInteger(sMinutes);
       if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(14)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dEndTime = DateTime(1970, 1, 1, iHours, iMinutes);
+      dEndTime = DateTimeA(1970, 1, 1, iHours, iMinutes);
 
       debug("ReadSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
    }
@@ -6284,7 +6284,7 @@ bool ValidateInputs() {
             int dtResult[];
             if (!ParseTime(sValue, NULL, dtResult))               return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             int now = TimeLocalEx();
-            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
+            time = DateTimeA(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             start.time.value = time;
             exprs[i]         = "time("+ TimeToStr(time) +")";
             start.time.description = exprs[i];
@@ -6369,7 +6369,7 @@ bool ValidateInputs() {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
             if (!ParseTime(sValue, NULL, dtResult))                return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             now = TimeLocalEx();
-            time = DateTime(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
+            time = DateTimeA(intOr(dtResult[PT_YEAR], TimeYearEx(now)), intOr(dtResult[PT_MONTH], TimeMonth(now)), intOr(dtResult[PT_DAY], TimeDayEx(now)), dtResult[PT_HOUR], dtResult[PT_MINUTE], dtResult[PT_SECOND]);
             stop.time.value       = time;
             exprs[i]              = "time("+ TimeToStr(time) +")";
             stop.time.description = exprs[i];

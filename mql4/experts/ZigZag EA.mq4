@@ -152,11 +152,13 @@ double   history[][13];                         // multiple closed positions
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
 datetime start.time.value;
+bool     start.time.isDaily;
 string   start.time.description = "";
 
 // stop conditions ("OR" combined)
 bool     stop.time.condition;                   // whether a time condition is active
 datetime stop.time.value;
+bool     stop.time.isDaily;
 string   stop.time.description = "";
 
 bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
@@ -879,10 +881,12 @@ bool SaveStatus() {
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
    WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
    WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
 
    WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
    WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
    WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
 
    WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
@@ -1052,10 +1056,12 @@ bool ReadStatus() {
    // other
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
    start.time.value           = GetIniInt    (file, section, "start.time.value"          );           // datetime start.time.value           = 1624924800
+   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"        );           // bool     start.time.isDaily         = 0
    start.time.description     = GetIniStringA(file, section, "start.time.description", "");           // string   start.time.description     = text
 
    stop.time.condition        = GetIniBool   (file, section, "stop.time.condition"      );            // bool     stop.time.condition        = 1
    stop.time.value            = GetIniInt    (file, section, "stop.time.value"          );            // datetime stop.time.value            = 1624924800
+   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"        );            // bool     stop.time.isDaily          = 0
    stop.time.description      = GetIniStringA(file, section, "stop.time.description", "");            // string   stop.time.description      = text
 
    stop.profitAbs.condition   = GetIniBool   (file, section, "stop.profitAbs.condition"        );     // bool     stop.profitAbs.condition   = 1
@@ -1197,10 +1203,12 @@ int      prev.sequence.status;
 
 bool     prev.start.time.condition;
 datetime prev.start.time.value;
+bool     prev.start.time.isDaily;
 string   prev.start.time.description = "";
 
 bool     prev.stop.time.condition;
 datetime prev.stop.time.value;
+bool     prev.stop.time.isDaily;
 string   prev.stop.time.description = "";
 bool     prev.stop.profitAbs.condition;
 double   prev.stop.profitAbs.value;
@@ -1239,10 +1247,12 @@ void BackupInputs() {
 
    prev.start.time.condition       = start.time.condition;
    prev.start.time.value           = start.time.value;
+   prev.start.time.isDaily         = start.time.isDaily;
    prev.start.time.description     = start.time.description;
 
    prev.stop.time.condition        = stop.time.condition;
    prev.stop.time.value            = stop.time.value;
+   prev.stop.time.isDaily          = stop.time.isDaily;
    prev.stop.time.description      = stop.time.description;
    prev.stop.profitAbs.condition   = stop.profitAbs.condition;
    prev.stop.profitAbs.value       = stop.profitAbs.value;
@@ -1281,10 +1291,12 @@ void RestoreInputs() {
 
    start.time.condition       = prev.start.time.condition;
    start.time.value           = prev.start.time.value;
+   start.time.isDaily         = prev.start.time.isDaily;
    start.time.description     = prev.start.time.description;
 
    stop.time.condition        = prev.stop.time.condition;
    stop.time.value            = prev.stop.time.value;
+   stop.time.isDaily          = prev.stop.time.isDaily;
    stop.time.description      = prev.stop.time.description;
    stop.profitAbs.condition   = prev.stop.profitAbs.condition;
    stop.profitAbs.value       = prev.stop.profitAbs.value;
@@ -1383,10 +1395,17 @@ bool ValidateInputs() {
 
             int pt[];
             if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            int now = TimeLocalEx();
-            time = DateTime(intOr(pt[PT_YEAR], TimeYearEx(now)), intOr(pt[PT_MONTH], TimeMonth(now)), intOr(pt[PT_DAY], TimeDayEx(now)), pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+            if (!pt[PT_HAS_DATE]) {
+               int now = TimeLocalEx();
+               pt[PT_YEAR    ] = TimeYearEx(now);
+               pt[PT_MONTH   ] = TimeMonth(now);
+               pt[PT_DAY     ] = TimeDayEx(now);
+               pt[PT_HAS_DATE] = 1;
+            }
+            time = DateTimeA(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
 
             start.time.value       = time;
+            start.time.isDaily     = false;
             start.time.description = "time("+ TimeToStr(time) +")";
             start.time.condition   = true;
          }
@@ -1414,10 +1433,19 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+
             if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            now = TimeLocalEx();
-            time = DateTime(intOr(pt[PT_YEAR], TimeYearEx(now)), intOr(pt[PT_MONTH], TimeMonth(now)), intOr(pt[PT_DAY], TimeDayEx(now)), pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+            if (!pt[PT_HAS_DATE]) {
+               now = TimeLocalEx();
+               pt[PT_YEAR    ] = TimeYearEx(now);
+               pt[PT_MONTH   ] = TimeMonth(now);
+               pt[PT_DAY     ] = TimeDayEx(now);
+               pt[PT_HAS_DATE] = 1;
+            }
+            time = DateTimeA(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]);
+
             stop.time.value       = time;
+            stop.time.isDaily     = false;
             stop.time.description = "time("+ TimeToStr(time) +")";
             stop.time.condition   = true;
          }
