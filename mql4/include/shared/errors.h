@@ -93,7 +93,7 @@
 #define ERR_ARRAY_ERROR                                            4053
 #define ERR_SERIES_NOT_AVAILABLE                                   4054    // requested time series not available
 #define ERR_CUSTOM_INDICATOR_ERROR                                 4055
-#define ERR_INCOMPATIBLE_ARRAYS                                    4056
+#define ERR_INCOMPATIBLE_ARRAY                                     4056
 #define ERR_GLOBAL_VARIABLES_PROCESSING                            4057    // global variables processing error
 #define ERR_GLOBAL_VARIABLE_NOT_FOUND                              4058
 #define ERR_FUNC_NOT_ALLOWED_IN_TESTER                             4059

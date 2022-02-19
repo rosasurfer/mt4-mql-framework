@@ -125,7 +125,7 @@ string ErrorDescription(int error) {
       case ERR_ARRAY_ERROR                : return("array error"                                               );    //   4053 array error
       case ERR_SERIES_NOT_AVAILABLE       : return("requested time series not available"                       );    //   4054 time series not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    );    //   4055 custom indicator error
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       );    //   4056 incompatible arrays
+      case ERR_INCOMPATIBLE_ARRAY         : return("incompatible arrays"                                       );    //   4056 incompatible array
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                         );    //   4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                 );    //   4058
       case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in tester"                            );    //   4059
@@ -2448,7 +2448,7 @@ bool StrIsPhoneNumber(string value) {
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string &array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -2604,8 +2604,8 @@ datetime DateTimeA(int year, int month=1, int day=1, int hours=0, int minutes=0,
  * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors
  */
 datetime DateTimeB(int parsed[], int flags = NULL) {
-   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTimeB(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAYS)));
-   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTimeB(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTimeB(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTimeB(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
 
    return(NULL);
 }
@@ -2682,7 +2682,7 @@ void CopyMemory(int destination, int source, int bytes) {
  * @return int - sum or NULL (0) in case of errors
  */
 int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
 
    int sum, size=ArraySize(values);
 
