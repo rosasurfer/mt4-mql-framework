@@ -787,12 +787,12 @@ bool Chart.MarkPositionClosed(int i) {
 /**
  * Get a user confirmation for a trade request at the first tick. Safety measure against runtime errors.
  *
- * @param  string location - location identifier of the confirmation
- * @param  string message  - confirmation message
+ * @param  string caller  - location identifier of the caller
+ * @param  string message - confirmation message
  *
  * @return bool - confirmation result
  */
-bool ConfirmFirstTickTrade(string location, string message) {
+bool ConfirmFirstTickTrade(string caller, string message) {
    static bool confirmed;
    if (confirmed)                         // On nested calls behave like a no-op, don't return the former result. Trade requests
       return(true);                       // will differ and the calling logic must correctly interprete the first result.
@@ -803,7 +803,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(caller), " - "+ caller, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
       RefreshRates();
    }
    confirmed = true;

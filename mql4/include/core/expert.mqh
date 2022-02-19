@@ -494,12 +494,12 @@ bool IsLibrary() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location         - location of the check
+ * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int error = NULL) {
+bool CheckErrors(string caller, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error != NO_ERROR) {
@@ -535,7 +535,7 @@ bool CheckErrors(string location, int error = NULL) {
    // check uncatched errors
    if (!error) error = GetLastError();
    if (error != NO_ERROR) {
-      catch(location, error);                                        // catch() calls SetLastError() which calls CheckErrors() again
+      catch(caller, error);                                          // catch() calls SetLastError() which calls CheckErrors() again
    }                                                                 // which updates __STATUS_OFF accordingly
 
    // update the variable last_error

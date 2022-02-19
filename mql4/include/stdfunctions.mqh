@@ -547,18 +547,19 @@ bool IsTicket(int ticket) {
  * Select a ticket.
  *
  * @param  int    ticket                      - ticket
- * @param  string location                    - location identifier of a potential error message
+ * @param  string caller           [optional] - location identifier of the caller (default: none)
  * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
  * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
  *                                              (default: yes if pushTicket=TRUE, no if pushTicket=FALSE)
  * @return bool - success status
  */
-bool SelectTicket(int ticket, string location, bool pushTicket=false, bool onErrorPopTicket=false) {
+bool SelectTicket(int ticket, string caller="", bool pushTicket=false, bool onErrorPopTicket=false) {
    pushTicket       = pushTicket!=0;
    onErrorPopTicket = onErrorPopTicket!=0;
+   if (caller != "") caller = caller +"->";
 
    if (pushTicket) {
-      if (!OrderPush(location +"->SelectTicket(1)")) return(false);
+      if (!OrderPush(caller +"SelectTicket(1)")) return(false);
       onErrorPopTicket = true;
    }
 
@@ -566,12 +567,12 @@ bool SelectTicket(int ticket, string location, bool pushTicket=false, bool onErr
       return(true);                                   // success
 
    if (onErrorPopTicket)                              // error
-      if (!OrderPop(location +"->SelectTicket(2)")) return(false);
+      if (!OrderPop(caller +"SelectTicket(2)")) return(false);
 
    int error = GetLastError();
    if (!error)
       error = ERR_INVALID_TICKET;
-   return(!catch(location +"->SelectTicket(3)   ticket="+ ticket, error));
+   return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
 }
 
 
@@ -615,16 +616,16 @@ string OrderLogMessage(int ticket) {
 /**
  * Append the currently selected order ticket to the order stack.
  *
- * @param  string location [optional] - error identifier (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return bool - success status
  */
-bool OrderPush(string location = "") {
+bool OrderPush(string caller = "") {
    int ticket = OrderTicket();
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
-      return(!catch(location +"->OrderPush(1)", error));
+      return(!catch(caller +"->OrderPush(1)", error));
 
    ArrayPushInt(__orderStack, ticket);
    return(true);
@@ -634,20 +635,20 @@ bool OrderPush(string location = "") {
 /**
  * Remove the last order ticket from the order stack and restore (i.e. select) it.
  *
- * @param  string location [optional] - error identifier (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return bool - success status
  */
-bool OrderPop(string location = "") {
+bool OrderPop(string caller = "") {
    int ticket = ArrayPopInt(__orderStack);
    if (ticket > 0)
-      return(SelectTicket(ticket, location +"->OrderPop(1)"));
+      return(SelectTicket(ticket, caller +"->OrderPop(1)"));
 
    OrderSelect(0, SELECT_BY_TICKET);
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
-      return(!catch(location +"->OrderPop(2)", error));
+      return(!catch(caller +"->OrderPop(2)", error));
    return(true);
 }
 
@@ -821,31 +822,31 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 /**
  * Return a symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
  *
- * @param  _In_  string symbol              - symbol
- * @param  _In_  double lots                - lot amount
- * @param  _Out_ int    &error              - variable receiving the error status
- * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
- *                                            if specified errors are logged
- *                                            if not specified errors are not logged (default)
+ * @param  _In_  string symbol            - symbol
+ * @param  _In_  double lots              - lot amount
+ * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
+ *                                           if specified errors are logged
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - pip value or NULL (0) in case of errors, check parameter 'error'
  */
-double PipValueEx(string symbol, double lots, int &error, string location = "") {
-   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, location);
+double PipValueEx(string symbol, double lots, int &error, string caller = "") {
+   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, caller);
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(1)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(1)", error);
       return(NULL);
    }
 
-   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, location);  // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
+   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller);    // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(2)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(2)", error);
       return(NULL);
    }
 
-   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, location);           // TODO: the returned digits may be wrong
+   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, caller);             // TODO: the returned digits may be wrong
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(3)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(3)", error);
       return(NULL);
    }
 
@@ -2677,16 +2678,16 @@ int SumInts(int values[]) {
 /**
  * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
- * @param  _In_  string symbol              - symbol
- * @param  _In_  int    type                - identifier of the MarketInfo data to query
- * @param  _Out_ int    &error              - variable receiving the error status
- * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
- *                                            if specified errors are logged
- *                                            if not specified errors are not logged (default)
+ * @param  _In_  string symbol            - symbol
+ * @param  _In_  int    type              - identifier of the MarketInfo data to query
+ * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
+ *                                           if specified errors are logged
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - result of the MarketInfo() call or NULL (0) in case of errors, check parameter 'error'
  */
-double MarketInfoEx(string symbol, int type, int &error, string location = "") {
+double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    double value = MarketInfo(symbol, type);
 
    error = GetLastError();
@@ -2700,8 +2701,8 @@ double MarketInfoEx(string symbol, int type, int &error, string location = "") {
    }
    if (!error) return(value);
 
-   if (location != "") {
-      if (IsLogDebug()) logDebug(location +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
+   if (caller != "") {
+      if (IsLogDebug()) logDebug(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    }
    return(NULL);
 }
@@ -2752,66 +2753,66 @@ string MarketInfoTypeToStr(int type) {
 /**
  * Dump major global vars and available MarketInfo() data to the system debugger.
  *
- * @param  string location - location identifier
+ * @param  string caller - location identifier of the caller
  *
  * @return int - error status
  */
-int DebugMarketInfo(string location) {
+int DebugMarketInfo(string caller = "") {
    string symbol = Symbol();
    double value;
    int    error;
 
-   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
-   debug(location +"  Global variables for \""+ symbol +"\"");             //  Global variables "EURUSD"
-   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  Global variables for \""+ symbol +"\"");               //  Global variables "EURUSD"
+   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
 
-   debug(location +"  built-in: Digits      = "+ Digits);
-   debug(location +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
-   debug(location +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(location +"  derived:  PipDigits   = "+ PipDigits);
-   debug(location +"  derived:  PipPoints   = "+ PipPoints);
-   debug(location +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
-   debug(location +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug(location +"  built-in: Bars        = "+ Bars);
+   debug(caller +"  built-in: Digits      = "+ Digits);
+   debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
+   debug(caller +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(caller +"  derived:  PipDigits   = "+ PipDigits);
+   debug(caller +"  derived:  PipPoints   = "+ PipPoints);
+   debug(caller +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
+   debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
+   debug(caller +"  built-in: Bars        = "+ Bars);
 
-   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
-   debug(location +"  MarketInfo() for \""+ symbol +"\"");                 //  MarketInfo() for "EURUSD"
-   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  MarketInfo() for \""+ symbol +"\"");                   //  MarketInfo() for "EURUSD"
+   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
 
    // see MODE explanations in "include/stddefines.mqh"
-   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(location +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(location +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(location +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(location +"  4                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(location +"  MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(location +"  6                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(location +"  7                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(location +"  8                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(location +"  MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(location +"  MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(location +"  MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(location +"  MODE_DIGITS            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(location +"  MODE_SPREAD            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(location +"  MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(location +"  MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(location +"  MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(location +"  MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(location +"  MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(location +"  MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(location +"  MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(location +"  MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(location +"  MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(location +"  MODE_MINLOT            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(location +"  MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(location +"  MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(location +"  MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(location +"  MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(location +"  MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(location +"  MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(location +"  MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(location +"  MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(caller +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(caller +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(caller +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(caller +"  4                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(caller +"  MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(caller +"  6                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(caller +"  7                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(caller +"  8                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(caller +"  MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(caller +"  MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(caller +"  MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(caller +"  MODE_DIGITS            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(caller +"  MODE_SPREAD            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(caller +"  MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(caller +"  MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(caller +"  MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(caller +"  MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(caller +"  MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(caller +"  MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(caller +"  MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(caller +"  MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(caller +"  MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(caller +"  MODE_MINLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(caller +"  MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(caller +"  MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(caller +"  MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(caller +"  MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(caller +"  MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(caller +"  MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(caller +"  MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(caller +"  MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(caller +"  MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(caller +"  MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                              , error);
 
    return(catch("DebugMarketInfo(1)"));
 }
@@ -3784,11 +3785,11 @@ int Tester.GetBarModel() {
 /**
  * Pause the tester. Can be used only in the tester.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
-int Tester.Pause(string location = "") {
+int Tester.Pause(string caller = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
@@ -3798,7 +3799,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
    return(NO_ERROR);
@@ -3808,16 +3809,16 @@ int Tester.Pause(string location = "") {
 /**
  * Stop the tester. Can be used only in the tester.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
-int Tester.Stop(string location = "") {
+int Tester.Stop(string caller = "") {
    if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -4093,15 +4094,15 @@ datetime GetServerTime() {
  * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
  * the local timezone is set to the trade server's timezone.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return datetime - time or NULL (0) in case of errors
  *
  * NOTE: This function signals an error if TimeLocal() returns an invalid value.
  */
-datetime TimeLocalEx(string location = "") {
+datetime TimeLocalEx(string caller = "") {
    datetime time = TimeLocal();
-   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
    return(time);
 }
 
@@ -4112,15 +4113,15 @@ datetime TimeLocalEx(string location = "") {
  * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
  * letzten Ticks des getesteten Symbols.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return datetime - time or NULL (0) in case of errors
  *
  * NOTE: This function signals an error if TimeCurrent() returns an invalid value.
  */
-datetime TimeCurrentEx(string location="") {
+datetime TimeCurrentEx(string caller = "") {
    datetime time = TimeCurrent();
-   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR));
+   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR));
    return(time);
 }
 
