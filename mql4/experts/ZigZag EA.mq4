@@ -15,8 +15,8 @@
  *      full session (24h) with trade breaks
  *      partial session (e.g. 09:00-16:00) with trade breaks
  *
- *  - implement better start/stop condition @time(03:20-23:00)
- *     quick fix for FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
+ *  - periodic start/stop conditions @time(03:20)
+ *     quick fix for FATAL ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -1706,38 +1706,4 @@ string InputsToStr() {
                             "Slippage=",            Slippage,                        ";", NL,
                             "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),  ";")
    );
-   int iNulls[];
-   ParseTime(NULL, NULL, iNulls);
-}
-
-
-/**
- * Parse the string representation of a date or time.
- *
- * @param  _In_  string value    - string to parse
- * @param  _In_  int    flags    - supported or requird date/time formats
- * @param  _Out_ int   &result[] - array receiving the parsed elements
- *
- * @return bool - success status
- */
-bool ParseTime(string value, int flags, int &result[]) {
-   return(NaT);
-
-   //D'1980.07.19 12:30:27'
-   //D'1980.07.19 12:30'
-   //D'01.01.2004'
-   //D'12:30:27'
-   //D'12:30'
-
-   //DATEFORMAT_YYYYMMDD
-   //DATEFORMAT_DDMMYYYY
-   //DATEFORMAT_OPTIONAL
-   //DATEFORMAT_OPTIONAL_YEAR
-   //DATEFORMAT_OPTIONAL_MONTH
-   //DATEFORMAT_OPTIONAL_DAY
-   //DATEFORMAT_SINGLE_DIGITS
-
-   //TIMEFORMAT_OPTIONAL
-   //TIMEFORMAT_OPTIONAL_SECONDS
-   //TIMEFORMAT_SINGLE_DIGITS
 }
