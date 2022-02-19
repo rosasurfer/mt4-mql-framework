@@ -227,18 +227,18 @@ bool IsLibrary() {
 /**
  * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
  *
- * @param  string location - Ort, an dem der Fehler auftrat
- * @param  string message  - Fehlermeldung
- * @param  int    error    - zu setzender Fehlercode
+ * @param  string caller  - location identifier of the caller
+ * @param  string message - Fehlermeldung
+ * @param  int    error   - zu setzender Fehlercode
  *
  * @return int - derselbe Fehlercode
  */
-int HandleScriptError(string location, string message, int error) {
-   if (StringLen(location) > 0)
-      location = " :: "+ location;
+int HandleScriptError(string caller, string message, int error) {
+   if (StringLen(caller) > 0)
+      caller = " :: "+ caller;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName() + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }
@@ -247,12 +247,12 @@ int HandleScriptError(string location, string message, int error) {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location         - location of the check
+ * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int error = NULL) {
+bool CheckErrors(string caller, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error != NO_ERROR) {
@@ -288,7 +288,7 @@ bool CheckErrors(string location, int error = NULL) {
    // check uncatched errors
    if (!error) error = GetLastError();
    if (error != NO_ERROR) {
-      catch(location, error);
+      catch(caller, error);
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
    }
