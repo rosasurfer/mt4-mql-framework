@@ -286,12 +286,16 @@ bool IsStartSignal(int &signal) {
 
    // start.time
    if (start.time.condition) {
-      if (TimeCurrentEx("IsStartSignal(1)") < start.time.value)
-         return(false);
+      datetime startTime = start.time.value;
+      if (start.time.isDaily) {
+         datetime now = TimeCurrentEx();
+         startTime += (now - (now % DAY));
+      }
+      if (TimeCurrentEx("IsStartSignal(1)") < start.time.value) return(false);
 
       if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       signal               = SIGNAL_TIME;
-      start.time.condition = false;
+      start.time.condition = start.time.isDaily;
       SS.StartStopConditions();
       return(true);
    }
@@ -483,7 +487,12 @@ bool IsStopSignal(int &signal) {
 
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
-      if (TimeCurrentEx("IsStopSignal(1)") >= stop.time.value) {
+      datetime stopTime = stop.time.value;
+      if (stop.time.isDaily) {
+         datetime now = TimeCurrentEx();
+         stopTime += (now - (now % DAY));
+      }
+      if (TimeCurrentEx("IsStopSignal(1)") >= stopTime) {
          if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TIME;
          return(true);
@@ -569,7 +578,7 @@ bool StopSequence(int signal) {
    // update stop conditions
    switch (signal) {
       case SIGNAL_TIME:
-         stop.time.condition = false;
+         stop.time.condition = (stop.time.condition && stop.time.isDaily);
          break;
 
       case SIGNAL_TAKEPROFIT:
