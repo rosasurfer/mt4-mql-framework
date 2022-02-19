@@ -80,8 +80,10 @@ int onInit() {
    if (systemTimeframe == -1)      return(catch("onInit(6)  invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
    Timeframe = TimeframeDescription(systemTimeframe);
    // StartDate
-   systemStartDate = ParseDate(StartDate);
-   if (IsNaT(systemStartDate))     return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   int result[];
+   bool success = ParseTime(StartDate, DATE_YYYYMMDD | DATE_DDMMYYYY | TIME_OPTIONAL, result);
+   if (!success)                   return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   systemStartDate = DateTime(result[PT_YEAR], result[PT_MONTH], result[PT_DAY]);
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible
