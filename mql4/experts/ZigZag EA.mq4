@@ -3,6 +3,9 @@
  *
  *
  * TODO:
+ *  - periodic start/stop conditions @time(03:20)
+ *     quick fix for FATAL ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
+ *
  *  - PL charts for all variants/symbols
  *     log symbol creation
  *     total PL
@@ -14,9 +17,6 @@
  *      Reverse ZigZag
  *      full session (24h) with trade breaks
  *      partial session (e.g. 09:00-16:00) with trade breaks
- *
- *  - periodic start/stop conditions @time(03:20)
- *     quick fix for FATAL ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -44,7 +44,6 @@
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
  *
- *  - merge IsStartSignal() and IsZigZagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
@@ -202,21 +201,19 @@ bool     test.optimizeStatus = true;               // whether to reduce status f
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   int zigzagSignal, startSignal, stopSignal;
+   int startSignal, stopSignal, zigzagSignal;
 
    if (sequence.status != STATUS_STOPPED) {
-      bool isZigZagSignal = IsZigZagSignal(zigzagSignal);         // check ZigZag on every tick
+      IsZigZagSignal(zigzagSignal);                                  // check ZigZag on every tick
 
       if (sequence.status == STATUS_WAITING) {
-         if      (IsStopSignal(stopSignal)) StopSequence(stopSignal);
-         else if (IsStartSignal(startSignal)) {
-            if (isZigZagSignal)             StartSequence(zigzagSignal);
-         }
+         if      (IsStopSignal(stopSignal))   StopSequence(stopSignal);
+         else if (IsStartSignal(startSignal)) StartSequence(startSignal);
       }
       else if (sequence.status == STATUS_PROGRESSING) {
-         if (UpdateStatus()) {                                    // update order status and PL
-            if (IsStopSignal(stopSignal)) StopSequence(stopSignal);
-            else if (isZigZagSignal)      ReverseSequence(zigzagSignal);
+         if (UpdateStatus()) {                                       // update order status and PL
+            if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
+            else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
          }
       }
    }
@@ -235,25 +232,32 @@ bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   static int lastSignal;
+   static int lastTick, lastResult, lastSignal;
    int trend, reversal;
 
-   if (!GetZigZagData(0, trend, reversal)) return(false);
-
-   if (Abs(trend) == reversal) {
-      if (trend > 0) {
-         if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
-      }
-      else {
-         if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
-      }
-      if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         lastSignal = signal;
-         return(true);
-      }
+   if (Tick == lastTick) {
+      signal = lastResult;
    }
-   return(false);
+   else {
+      if (!GetZigZagData(0, trend, reversal)) return(false);
+      if (Abs(trend) == reversal) {
+         if (trend > 0) {
+            if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
+         }
+         else {
+            if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
+         }
+         if (signal != NULL) {
+            if (sequence.status == STATUS_PROGRESSING) {
+               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            }
+            lastSignal = signal;
+         }
+      }
+      lastTick   = Tick;
+      lastResult = signal;
+   }
+   return(signal != NULL);
 }
 
 
@@ -276,7 +280,7 @@ bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of the satisfied condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
  * @return bool
  */
@@ -289,17 +293,12 @@ bool IsStartSignal(int &signal) {
       datetime startTime=start.time.value, now=TimeServer();
       if (start.time.isDaily) startTime += (now - (now % DAY));
       if (now < startTime) return(false);
-
-      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      signal               = SIGNAL_TIME;
-      start.time.condition = start.time.isDaily;
-      SS.StartStopConditions();
-      return(true);
+      start.time.condition = (start.time.isDaily && stop.time.condition && stop.time.isDaily);
    }
 
-   // no start condition is a valid signal before first start only
-   if (!open.ticket && !ArrayRange(history, 0)) {
-      signal = NULL;
+   // ZigZag signal
+   if (IsZigZagSignal(signal)) {
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -356,6 +355,7 @@ bool StartSequence(int direction) {
    sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
    SS.TotalPL();
    SS.PLStats();
+   SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
    return(SaveStatus());
@@ -474,7 +474,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of the satisfied condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
  * @return bool
  */
@@ -587,6 +587,7 @@ bool StopSequence(int signal) {
 
       default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
+   SS.StartStopConditions();
    SaveStatus();
 
    if (IsTesting()) {                                 // pause or stop the tester according to the debug configuration
