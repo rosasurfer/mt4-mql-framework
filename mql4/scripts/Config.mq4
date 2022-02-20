@@ -63,28 +63,29 @@ int onStart() {
    // make sure all files exist
    int size = ArraySize(files);
    for (int i=0; i < size; i++) {
-      if (IsDirectory(files[i], MODE_OS)) {
+      if (IsDirectory(files[i], MODE_SYSTEM)) {
          logError("onStart(3)  assumed config file is a directory, skipping "+ DoubleQuoteStr(files[i]), ERR_FILE_IS_DIRECTORY);
          ArraySpliceStrings(files, i, 1);
          size--; i--;
          continue;
       }
-      if (!IsFile(files[i], MODE_OS)) {
+      if (!IsFile(files[i], MODE_SYSTEM)) {
          // make sure the final directory exists
          int pos = Max(StrFindR(files[i], "/"), StrFindR(files[i], "\\"));
          if (pos == 0)          return(catch("onStart(4)  illegal filename in files["+ i +"]: "+ DoubleQuoteStr(files[i]), ERR_ILLEGAL_STATE));
          if (pos > 0) {
             string dir = StrLeft(files[i], pos);
-            int error = CreateDirectoryA(dir, MODE_OS|MODE_MKPARENT);
+            int error = CreateDirectoryA(dir, MODE_SYSTEM|MODE_MKPARENT);
             if (IsError(error)) return(catch("onStart(5)  cannot create directory "+ DoubleQuoteStr(dir), ERR_WIN32_ERROR+error));
          }
          // create the file
          int hFile = CreateFileA(files[i],                                 // file name
-                                 GENERIC_READ, FILE_SHARE_READ,            // open for shared reading
+                                 GENERIC_READ,                             // desired access: read
+                                 FILE_SHARE_READ,                          // share mode
                                  NULL,                                     // default security
                                  CREATE_NEW,                               // create file only if it doesn't exist
-                                 FILE_ATTRIBUTE_NORMAL,                    // normal file
-                                 NULL);                                    // no attribute template
+                                 FILE_ATTRIBUTE_NORMAL,                    // flags and attributes: normal file
+                                 NULL);                                    // no template file handle
          if (hFile == INVALID_HANDLE_VALUE) {
             error = GetLastWin32Error();
             if (error != ERROR_FILE_EXISTS) return(catch("onStart(6)->CreateFileA("+ DoubleQuoteStr(files[i]) +")", ERR_WIN32_ERROR+error));

@@ -10,9 +10,9 @@
  *  - Create a new history and delete all existing data (e.g. for writing a new history):
  *     int hSet = HistorySet2.Create(symbol, description, digits, format);
  *
- *  - How to sync rsfHistory{1-3}.mq4:
+ *  - How to synchronize rsfHistory{1-3}.mq4:
  *     search:  (HistoryFile|HistorySet)[1-3]\>
- *     replace: \1{1-3}
+ *     replace: \11 or \12 or \13
  *
  *
  * Notes:
@@ -54,7 +54,7 @@ int      periods[] = { PERIOD_M1, PERIOD_M5, PERIOD_M15, PERIOD_M30, PERIOD_H1, 
 int      hs.hSet       [];                            // Set-Handle: größer 0 = offenes Handle; kleiner 0 = geschlossenes Handle; 0 = ungültiges Handle
 int      hs.hSet.lastValid;                           // das letzte gültige, offene Handle (um ein übergebenes Handle nicht ständig neu validieren zu müssen)
 string   hs.symbol     [];                            // Symbol
-string   hs.symbolUpper[];                            // SYMBOL (Upper-Case)
+string   hs.symbolU    [];                            // Symbol (Upper-Case)
 string   hs.description[];                            // Beschreibung
 int      hs.digits     [];                            // Symbol-Digits
 string   hs.directory  [];                            // Speicherverzeichnis des Sets
@@ -73,7 +73,7 @@ int      hf.header     [][HISTORY_HEADER_intSize];    // History-Header der Date
 int      hf.format     [];                            // Datenformat: 400 | 401
 int      hf.barSize    [];                            // Größe einer Bar entsprechend dem Datenformat
 string   hf.symbol     [];                            // Symbol
-string   hf.symbolUpper[];                            // SYMBOL (Upper-Case)
+string   hf.symbolU    [];                            // Symbol (Upper-Case)
 int      hf.period     [];                            // Periode
 int      hf.periodSecs [];                            // Dauer einer Periode in Sekunden (nicht gültig für Perioden > 1 Woche)
 int      hf.digits     [];                            // Digits
@@ -89,15 +89,15 @@ datetime hf.stored.to.openTime       [];              // OpenTime der letzten ge
 datetime hf.stored.to.closeTime      [];              // CloseTime der letzten gespeicherten Bar der Datei
 datetime hf.stored.to.nextCloseTime  [];              // CloseTime der der letzten gespeicherten Bar der Datei folgenden Bar
 
-int      hf.full.bars                [];              // Metadaten: Anzahl der Bars der Datei inkl. ungespeicherter Daten im Schreibpuffer
-int      hf.full.from.offset         [];              // Offset der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.from.openTime       [];              // OpenTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.from.closeTime      [];              // CloseTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.from.nextCloseTime  [];              // CloseTime der der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
-int      hf.full.to.offset           [];              // Offset der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.to.openTime         [];              // OpenTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.to.closeTime        [];              // CloseTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
-datetime hf.full.to.nextCloseTime    [];              // CloseTime dre der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
+int      hf.total.bars              [];               // Metadaten: Anzahl der Bars der Datei inkl. ungespeicherter Daten im Schreibpuffer
+int      hf.total.from.offset       [];               // Offset der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.from.openTime     [];               // OpenTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.from.closeTime    [];               // CloseTime der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.from.nextCloseTime[];               // CloseTime der der ersten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
+int      hf.total.to.offset         [];               // Offset der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.to.openTime       [];               // OpenTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.to.closeTime      [];               // CloseTime der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer
+datetime hf.total.to.nextCloseTime  [];               // CloseTime dre der letzten Bar der Datei inkl. ungespeicherter Daten im Schreibpuffer folgenden Bar
 
 
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -129,109 +129,127 @@ bool     hf.bufferedBar.modified     [];              // ob die Daten seit dem l
 
 
 /**
- * Erzeugt für ein Symbol ein neues HistorySet mit den angegebenen Daten und gibt dessen Handle zurück. Beim Aufruf der Funktion werden
- * bereits existierende HistoryFiles des Symbols zurückgesetzt (vorhandene Bardaten werden gelöscht) und evt. offene HistoryFile-Handles
- * geschlossen. Noch nicht existierende HistoryFiles werden beim ersten Speichern hinzugefügter Daten automatisch erstellt.
+ * Create a new history set for the specified symbol and return its handle. Existing history files are reset, open history
+ * files are closed. Not existing history files are created once new history data is appended. Multiple calls for the same
+ * symbol return a new handle on every call. Previously open history set handles are closed.
  *
- * Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben jeweils ein neues Handle zurück, ein vorheriges Handle wird geschlossen.
+ * @param  string symbol               - symbol
+ * @param  string description          - symbol description
+ * @param  int    digits               - digits of the timeseries
+ * @param  int    format               - bar format of the timeseries, one of
+ *                                        400: compatible with all MetaTrader builds
+ *                                        401: compatible with MetaTrader builds > 509 only
+ * @param  string directory [optional] - directory to store history files in
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
- * @param  string symbol      - Symbol
- * @param  string description - Beschreibung
- * @param  int    digits      - Digits der Datenreihe
- * @param  int    format      - Speicherformat der Datenreihe: 400 - altes Datenformat (wie MetaTrader <= Build 509)
- *                                                             401 - neues Datenformat (wie MetaTrader  > Build 509)
- * @param  string directory   - Verzeichnis, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
- *
- * @return int - Set-Handle oder NULL, falls ein Fehler auftrat.
+ * @return int - history set handle or NULL (0) in case of errors
  */
 int HistorySet2.Create(string symbol, string description, int digits, int format, string directory = "") {
-   // Parametervalidierung
+   // validate parameters
    if (!StringLen(symbol))                    return(!catch("HistorySet2.Create(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet2.Create(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" characters)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet2.Create(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
-   if (!StringLen(description)) {
-      description = "";                                                          // NULL-Pointer => Leerstring
-   }
-   else if (StringLen(description) > 63) {                                       // ein zu langer String wird gekürzt
-      logNotice("HistorySet2.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
+   string symbolU = StrToUpper(symbol);
+   if (StringLen(description) > 63) {             logNotice("HistorySet2.Create(4)  truncating too long history description "+ DoubleQuoteStr(description) +" to 63 chars...");
       description = StrLeft(description, 63);
    }
-   if (digits < 0)                            return(!catch("HistorySet2.Create(5)  invalid parameter digits: "+ digits +" [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (format!=400) /*&&*/ if (format!=401)   return(!catch("HistorySet2.Create(6)  invalid parameter format: "+ format +" (can be 400 or 401) [hstSet="+ DoubleQuoteStr(symbol) +"]", ERR_INVALID_PARAMETER));
-   if (directory == "0")      directory = "";                                    // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   if (digits < 0)                            return(!catch("HistorySet2.Create(5)  invalid parameter digits: "+ digits +" (symbol="+ DoubleQuoteStr(symbol) +")", ERR_INVALID_PARAMETER));
+   if (format!=400 && format!=401)            return(!catch("HistorySet2.Create(6)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ DoubleQuoteStr(symbol) +")", ERR_INVALID_PARAMETER));
+   if (directory == "0") directory = "";                                // (string) NULL
 
-   // (1) offene Set-Handles durchsuchen und Sets schließen
+   // check open HistorySets of the same symbol and close them
    int size = ArraySize(hs.hSet);
-   for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
-         // wenn Symbol gefunden, Set schließen...
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory)) {
          if (hs.hSet.lastValid == hs.hSet[i])
             hs.hSet.lastValid = NULL;
-         hs.hSet[i] = -1;
+         hs.hSet[i] = -1;                                               // mark open sets of the same symbol as closed
 
-         // Dateien des Sets schließen...
          size = ArrayRange(hs.hFile, 1);
          for (int n=0; n < size; n++) {
             if (hs.hFile[i][n] > 0) {
-               if (!HistoryFile2.Close(hs.hFile[i][n]))
-                  return(NULL);
+               if (!HistoryFile2.Close(hs.hFile[i][n])) return(NULL);   // close open files of the just closed set
                hs.hFile[i][n] = -1;
             }
          }
       }
    }
 
-   // (2) offene File-Handles durchsuchen und Dateien schließen
+   // check open HistoryFiles of the same symbol and close them
    size = ArraySize(hf.hFile);
-   for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)){
-         if (!HistoryFile2.Close(hf.hFile[i]))
-            return(NULL);
+   for (i=0; i < size; i++) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)){
+         if (!HistoryFile2.Close(hf.hFile[i])) return(NULL);
       }
    }
 
-   // (3) existierende HistoryFiles zurücksetzen und ihre Header aktualisieren
-   string mqlHstDir  = directory +"/";                                  // Verzeichnis für MQL-Dateifunktionen
-   string fullHstDir = GetMqlFilesPath() +"/"+ mqlHstDir;               // Verzeichnis für Win32-Dateifunktionen
-   string baseName="", mqlFileName="", fullFileName="";
-   int hFile, fileSize, sizeOfPeriods=ArraySize(periods), error;
+   // reset existing HistoryFiles of the same symbol and update their headers
+   int hFile, hh[], error, sizeOfPeriods = ArraySize(periods);
+   string filename = "", basename = "";
 
-   /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
+   InitializeByteBuffer(hh, HISTORY_HEADER_size);
    hh_SetBarFormat  (hh, format     );
    hh_SetDescription(hh, description);
    hh_SetSymbol     (hh, symbol     );
    hh_SetDigits     (hh, digits     );
 
-   for (i=0; i < sizeOfPeriods; i++) {
-      baseName = symbol + periods[i] +".hst";
-      mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
-      fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
+   if (directory == "") {                                               // current trade server, use MQL::FileOpenHistory()
+      string serverPath = GetAccountServerPath();
+      if (!UseTradeServerPath(serverPath, "HistorySet2.Create(7)")) return(NULL);
 
-      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, auf 0 zurücksetzen
-         hFile = FileOpen(mqlFileName, FILE_BIN|FILE_WRITE);
-         if (hFile <= 0) return(!catch("HistorySet2.Create(7)  fileName=\""+ mqlFileName +"\"  hFile="+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      for (i=0; i < sizeOfPeriods; i++) {
+         basename = StringConcatenate(symbol, periods[i], ".hst");
+         filename = StringConcatenate(serverPath, "/", basename);
 
-         hh_SetPeriod(hh, periods[i]);
-         FileWriteArray(hFile, hh, 0, ArraySize(hh));                   // neuen HISTORY_HEADER schreiben
-         FileClose(hFile);
-         if (!catch("HistorySet2.Create(8)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
-            continue;
-         return(NULL);
+         if (IsFile(filename, MODE_SYSTEM)) {                           // reset existing file to 0
+            hFile = FileOpenHistory(basename, FILE_WRITE|FILE_BIN);
+            if (hFile <= 0) return(!catch("HistorySet2.Create(8)->FileOpenHistory(\""+ basename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+            hh_SetPeriod(hh, periods[i]);
+            FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
+            FileClose(hFile);
+            error = GetLastError();
+            if (error != NO_ERROR) return(!catch("HistorySet2.Create(9)  symbol="+ DoubleQuoteStr(symbol), error));
+         }
       }
    }
+
+   else if (!IsAbsolutePath(directory)) {                               // relative sandbox path, use MQL::FileOpen()
+      if (!UseTradeServerPath(directory, "HistorySet2.Create(10)")) return(NULL);
+
+      for (i=0; i < sizeOfPeriods; i++) {
+         filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
+
+         if (IsFile(filename, MODE_MQL)) {                              // reset existing file to 0
+            hFile = FileOpen(filename, FILE_BIN|FILE_WRITE);
+            if (hFile <= 0) return(!catch("HistorySet2.Create(11)->FileOpen(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+            hh_SetPeriod(hh, periods[i]);
+            FileWriteArray(hFile, hh, 0, ArraySize(hh));                // write new HISTORY_HEADER
+            FileClose(hFile);
+            error = GetLastError();
+            if (error != NO_ERROR) return(!catch("HistorySet2.Create(12)  symbol="+ DoubleQuoteStr(symbol), error));
+         }
+      }
+   }
+
+   else {                                                               // absolute path, use Expander
+      return(!catch("HistorySet2.Create(13)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+   }
+
    ArrayResize(hh, 0);
 
-   // (4) neues HistorySet erzeugen
-   size = Max(ArraySize(hs.hSet), 1) + 1;                               // minSize=2: auf Index[0] kann kein gültiges Handle liegen
-   ResizeSetArrays(size);
+   // create a new HistorySet
+   size = Max(ArraySize(hs.hSet), 1) + 1;                               // min. sizeof(hs.hSet)=2 as index[0] can't hold a handle
+   __ResizeSetArrays(size);
    int iH   = size-1;
-   int hSet = iH;                                                       // das Set-Handle entspricht jeweils dem Index in hs.*[]
+   int hSet = iH;                                                       // the HistorySet handle matches the array index of hs.*
 
    hs.hSet       [iH] = hSet;
    hs.symbol     [iH] = symbol;
-   hs.symbolUpper[iH] = symbolUpper;
+   hs.symbolU    [iH] = symbolU;
    hs.description[iH] = description;
    hs.digits     [iH] = digits;
    hs.directory  [iH] = directory;
@@ -242,106 +260,138 @@ int HistorySet2.Create(string symbol, string description, int digits, int format
 
 
 /**
- * Gibt ein Handle für das gesamte HistorySet eines Symbols zurück. Wurde das HistorySet vorher nicht mit HistorySet2.Create() erzeugt, muß
- * mindestens ein HistoryFile des Symbols existieren. Noch nicht existierende HistoryFiles werden beim Speichern der ersten hinzugefügten
- * Daten automatisch im alten Datenformat (400) erstellt.
+ * Return a handle for a symbol's full set of history files (9 timeframes). Requires at least one of the 9 files to exist.
+ * Non-existing files will be created once new data is added with HistorySet.AddTick(). The default bar format for new files
+ * is "400" (if not specified otherwise). Multiple calls for the same symbol return the same handle. Calling this function
+ * doesn't keep files open or locked.
  *
- * - Mehrfachaufrufe dieser Funktion für dasselbe Symbol geben dasselbe Handle zurück.
- * - Die Funktion greift ggf. auf genau eine Historydatei lesend zu. Sie hält keine Dateien offen.
+ * @param  string symbol               - symbol
+ * @param  string directory [optional] - directory to read history files from
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
- * @param  string symbol    - Symbol
- * @param  string directory - Verzeichnis, in dem das Set gespeichert wird (default: aktuelles Serververzeichnis)
- *
- * @return int - • Set-Handle oder -1, falls kein HistoryFile dieses Symbols existiert. In diesem Fall muß mit HistorySet2.Create() ein neues
- *                 Set erzeugt werden.
- *               • NULL, falls ein Fehler auftrat.
+ * @return int - history set handle or EMPTY (-1) if none of the 9 history files exists. Use HistorySet.Create() in this case.
+ *               NULL in case of errors.
  */
 int HistorySet2.Get(string symbol, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistorySet2.Get(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistorySet2.Get(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistorySet2.Get(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
-   if (directory == "0")      directory = "";                           // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   string symbolU = StrToUpper(symbol);
+   if (directory == "0") directory = "";                             // (string) NULL
 
-   // (1) offene Set-Handles durchsuchen
-   int size = ArraySize(hs.hSet);
-   for (int i=0; i < size; i++) {                                       // Das Handle muß offen sein.
-      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hs.directory[i], directory))
+   // check open history sets of the same symbol
+   int size = ArraySize(hs.hSet), iH, hSet=-1;
+   for (int i=0; i < size; i++) {
+      if (hs.hSet[i] > 0) /*&&*/ if (hs.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hs.directory[i], directory))
          return(hs.hSet[i]);
-   }                                                                    // kein offenes Set-Handle gefunden
+   }
 
-   int iH, hSet=-1;
-
-   // (2) offene File-Handles durchsuchen
+   // check open history files of the same symbol
    size = ArraySize(hf.hFile);
-   for (i=0; i < size; i++) {                                           // Das Handle muß offen sein.
-      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolUpper[i]==symbolUpper) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
-         size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         ResizeSetArrays(size);
+   for (i=0; i < size; i++) {
+      if (hf.hFile[i] > 0) /*&&*/ if (hf.symbolU[i]==symbolU) /*&&*/ if (StrCompareI(hf.directory[i], directory)) {
+         size = Max(ArraySize(hs.hSet), 1) + 1;                      // open handle found: create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
+         __ResizeSetArrays(size);
          iH   = size-1;
-         hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
-
+         hSet = iH;                                                  // the HistorySet handle matches the array index of hs.*
          hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hf.symbol     [i];
-         hs.symbolUpper[iH] = hf.symbolUpper[i];
+         hs.symbol     [iH] = hf.symbol   [i];
+         hs.symbolU    [iH] = hf.symbolU  [i];
          hs.description[iH] = hhs_Description(hf.header, i);
-         hs.digits     [iH] = hf.digits     [i];
-         hs.directory  [iH] = hf.directory  [i];
-         hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
-
+         hs.digits     [iH] = hf.digits   [i];
+         hs.directory  [iH] = hf.directory[i];
+         hs.format     [iH] = 400;                                   // default bar format for non-existing files
          return(hSet);
-      }
-   }                                                                    // kein offenes File-Handle gefunden
-
-   // (3) existierende HistoryFiles suchen
-   string mqlHstDir  = directory +"/";                                  // Verzeichnis für MQL-Dateifunktionen
-   string fullHstDir = GetMqlFilesPath() +"/"+ mqlHstDir;               // Verzeichnis für Win32-Dateifunktionen
-
-   string baseName="", mqlFileName="", fullFileName="";
-   int hFile, fileSize, sizeOfPeriods=ArraySize(periods);
-
-   for (i=0; i < sizeOfPeriods; i++) {
-      baseName     = symbol + periods[i] +".hst";
-      mqlFileName  = mqlHstDir  + baseName;                             // Dateiname für MQL-Dateifunktionen
-      fullFileName = fullHstDir + baseName;                             // Dateiname für Win32-Dateifunktionen
-
-      if (IsFile(fullFileName, MODE_OS)) {                              // wenn Datei existiert, öffnen
-         hFile = FileOpen(mqlFileName, FILE_BIN|FILE_READ);             // FileOpenHistory() kann Unterverzeichnisse nicht handhaben => alle Zugriffe per FileOpen(symlink)
-         if (hFile <= 0) return(!catch("HistorySet2.Get(4)  hFile(\""+ mqlFileName +"\") = "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
-
-         fileSize = FileSize(hFile);                                    // Datei geöffnet
-         if (fileSize < HISTORY_HEADER_size) {
-            FileClose(hFile);
-            logWarn("HistorySet2.Get(5)  invalid history file \""+ mqlFileName +"\" found (size="+ fileSize +")");
-            continue;
-         }
-                                                                        // HISTORY_HEADER auslesen
-         /*HISTORY_HEADER*/int hh[]; ArrayResize(hh, HISTORY_HEADER_intSize);
-         FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
-         FileClose(hFile);
-
-         size = Max(ArraySize(hs.hSet), 1) + 1;                         // neues HistorySet erstellen (minSize=2: auf Index[0] kann kein gültiges Handle liegen)
-         ResizeSetArrays(size);
-         iH   = size-1;
-         hSet = iH;                                                     // das Set-Handle entspricht jeweils dem Index in hs.*[]
-
-         hs.hSet       [iH] = hSet;
-         hs.symbol     [iH] = hh_Symbol   (hh);
-         hs.symbolUpper[iH] = StrToUpper(hs.symbol[iH]);
-         hs.description[iH] = hh_Description(hh);
-         hs.digits     [iH] = hh_Digits   (hh);
-         hs.directory  [iH] = directory;
-         hs.format     [iH] = 400;                                      // Default für neu zu erstellende HistoryFiles
-
-         ArrayResize(hh, 0);
-         return(hSet);                                                  // Rückkehr nach der ersten ausgewerteten Datei
       }
    }
 
-   if (!catch("HistorySet2.Get(6)  [hstSet="+ DoubleQuoteStr(symbol) +"]"))
-      return(-1);
-   return(NULL);
+   // look-up existing history files
+   int sizeOfPeriods = ArraySize(periods), hFile, fileSize, hh[];
+   string filename = "";
+
+   if (directory == "") {                                            // current trade server, use MQL::FileOpenHistory()
+      string serverPath = GetAccountServerPath();
+
+      for (i=0; i < sizeOfPeriods; i++) {
+         filename = StringConcatenate(serverPath, "/", symbol, periods[i], ".hst");
+
+         if (IsFile(filename, MODE_SYSTEM)) {                        // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+            hFile = FileOpenHistory(filename, FILE_READ|FILE_BIN);   // open the file
+            if (hFile <= 0) return(!catch("HistorySet2.Get(4)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+            fileSize = FileSize(hFile);
+            if (fileSize < HISTORY_HEADER_size) {
+               FileClose(hFile);
+               logWarn("HistorySet2.Get(5)  invalid history file \""+ filename +"\" (size="+ fileSize +", too small), skipping...");
+               continue;
+            }
+
+            ArrayResize(hh, HISTORY_HEADER_intSize);                 // read HISTORY_HEADER
+            FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
+            FileClose(hFile);
+
+            size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
+            __ResizeSetArrays(size);
+            iH   = size-1;
+            hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
+            hs.hSet       [iH] = hSet;
+            hs.symbol     [iH] = hh_Symbol(hh);
+            hs.symbolU    [iH] = StrToUpper(hs.symbol[iH]);
+            hs.description[iH] = hh_Description(hh);
+            hs.digits     [iH] = hh_Digits(hh);
+            hs.directory  [iH] = directory;
+            hs.format     [iH] = 400;                                // default bar format for non-existing files
+            ArrayResize(hh, 0);
+            return(hSet);                                            // return after the first existing file
+         }
+      }
+   }
+
+   else if (!IsAbsolutePath(directory)) {                            // relative sandbox path, use MQL::FileOpen()
+      for (i=0; i < sizeOfPeriods; i++) {
+         filename = StringConcatenate(directory, "/", symbol, periods[i], ".hst");
+
+         if (IsFile(filename, MODE_MQL)) {                           // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
+            hFile = FileOpen(filename, FILE_READ|FILE_BIN);          // open the file
+            if (hFile <= 0) return(!catch("HistorySet2.Get(6)  hFile(\""+ filename +"\") => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+            fileSize = FileSize(hFile);
+            if (fileSize < HISTORY_HEADER_size) {
+               FileClose(hFile);
+               logWarn("HistorySet2.Get(7)  invalid history file \""+ filename +"\" (size="+ fileSize +", too small), skipping...");
+               continue;
+            }
+
+            ArrayResize(hh, HISTORY_HEADER_intSize);                 // read HISTORY_HEADER
+            FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize);
+            FileClose(hFile);
+
+            size = Max(ArraySize(hs.hSet), 1) + 1;                   // create new HistorySet (min. sizeof(hs.hSet)=2 as index[0] can't hold a handle)
+            __ResizeSetArrays(size);
+            iH   = size-1;
+            hSet = iH;                                               // the HistorySet handle matches the array index of hs.*
+            hs.hSet       [iH] = hSet;
+            hs.symbol     [iH] = hh_Symbol(hh);
+            hs.symbolU    [iH] = StrToUpper(hs.symbol[iH]);
+            hs.description[iH] = hh_Description(hh);
+            hs.digits     [iH] = hh_Digits(hh);
+            hs.directory  [iH] = directory;
+            hs.format     [iH] = 400;                                // default bar format for non-existing files
+            ArrayResize(hh, 0);
+            return(hSet);                                            // return after the first existing file
+         }
+      }
+   }
+
+   else {                                                            // absolute path, use Expander
+      return(!catch("HistorySet2.Get(8)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
+   }
+
+   int error = GetLastError();
+   if (!error) return(-1);
+   return(!catch("HistorySet2.Get(9)  symbol=\""+ symbol +"\""));
 }
 
 
@@ -357,7 +407,7 @@ bool HistorySet2.Close(int hSet) {
    if (hSet <= 0)                     return(!catch("HistorySet2.Close(1)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.Close(2)  invalid set handle "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.Close(3)  unknown set handle "+ hSet +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.Close(3)  unknown set handle "+ hSet +" (symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
    }
    else {
       hs.hSet.lastValid = NULL;
@@ -395,11 +445,11 @@ bool HistorySet2.AddTick(int hSet, datetime time, double value, int flags = NULL
    if (hSet <= 0)                     return(!catch("HistorySet2.AddTick(1)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
    if (hSet != hs.hSet.lastValid) {
       if (hSet >= ArraySize(hs.hSet)) return(!catch("HistorySet2.AddTick(2)  invalid parameter hSet: "+ hSet, ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
-      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet2.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle) [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] == 0)         return(!catch("HistorySet2.AddTick(3)  invalid parameter hSet: "+ hSet +" (unknown handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
+      if (hs.hSet[hSet] <  0)         return(!catch("HistorySet2.AddTick(4)  invalid parameter hSet: "+ hSet +" (closed handle, symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
       hs.hSet.lastValid = hSet;
    }
-   if (time <= 0)                     return(!catch("HistorySet2.AddTick(5)  invalid parameter time: "+ time +" [hstSet="+ DoubleQuoteStr(hs.symbol[hSet]) +"]", ERR_INVALID_PARAMETER));
+   if (time <= 0)                     return(!catch("HistorySet2.AddTick(5)  invalid parameter time: "+ time +" (symbol="+ DoubleQuoteStr(hs.symbol[hSet]) +")", ERR_INVALID_PARAMETER));
 
    // Dateihandles holen und jeweils Tick hinzufügen
    int hFile, sizeOfPeriods=ArraySize(periods);
@@ -418,77 +468,101 @@ bool HistorySet2.AddTick(int hSet, datetime time, double value, int flags = NULL
 
 
 /**
- * Öffnet eine Historydatei im angegeben Access-Mode und gibt ihr Handle zurück.
+ * Open a history file using the specified access mode and return a handle to it.
  *
- * • Ist FILE_WRITE angegeben und die Datei existiert nicht, wird sie erstellt.
- * • Ist FILE_WRITE, jedoch nicht FILE_READ angegeben und die Datei existiert, wird sie zurückgesetzt und vorhandene Daten gelöscht.
+ * @param  string symbol               - symbol of the timeseries
+ * @param  int    timeframe            - period of the timeseries
+ * @param  string description          - symbol description           (used if a non-existing file is created)
+ * @param  int    digits               - digits of the timeseries     (used if a non-existing file is created)
+ * @param  int    format               - bar format of the timeseries (used if a non-existing file is created), one of
+ *                                        400: compatible with all MetaTrader builds
+ *                                        401: compatible with MetaTrader builds > 509 only
+ * @param  int    mode                 - access mode, a combination of
+ *                                        FILE_READ:  A non-existing file causes an error.
+ *                                        FILE_WRITE: A non-existing is created. Without FILE_READ an existing file is reset
+ *                                                    to a size of 0 (zero).
+ * @param  string directory [optional] - directory of history file location
+ *                                        if empty:            the current trade server directory (default)
+ *                                        if a relative path:  relative to the MQL sandbox/files directory
+ *                                        if an absolute path: as is
  *
- * @param  string symbol               - Symbol des Instruments
- * @param  int    timeframe            - Timeframe der Zeitreihe
- * @param  string description          - Copyright oder Beschreibung (falls die Historydatei neu erstellt wird)
- * @param  int    digits               - Digits der Werte            (falls die Historydatei neu erstellt wird)
- * @param  int    format               - Datenformat der Zeitreihe   (falls die Historydatei neu erstellt wird)
- * @param  int    mode                 - Access-Mode: FILE_READ|FILE_WRITE
- * @param  string directory [optional] - Verzeichnis, in dem die Datei gespeichert wird (default: aktuelles Serververzeichnis)
- *
- * @return int - Dateihandle oder
- *               -1, falls nur FILE_READ angegeben wurde und die Datei nicht existiert oder
- *               NULL, falls ein anderer Fehler auftrat
+ * @return int - file handle or -1 if FILE_READ was specified and the file doesn't exist;
+ *               NULL (0) in case of all other errors
  */
 int HistoryFile2.Open(string symbol, int timeframe, string description, int digits, int format, int mode, string directory = "") {
    if (!StringLen(symbol))                    return(!catch("HistoryFile2.Open(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER));
    if (StringLen(symbol) > MAX_SYMBOL_LENGTH) return(!catch("HistoryFile2.Open(2)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (max. "+ MAX_SYMBOL_LENGTH +" chars)", ERR_INVALID_PARAMETER));
    if (StrContains(symbol, " "))              return(!catch("HistoryFile2.Open(3)  invalid parameter symbol: "+ DoubleQuoteStr(symbol) +" (must not contain spaces)", ERR_INVALID_PARAMETER));
-   string symbolUpper = StrToUpper(symbol);
+   string symbolU = StrToUpper(symbol);
    if (timeframe <= 0)                        return(!catch("HistoryFile2.Open(4)  invalid parameter timeframe: "+ timeframe +" ("+ symbol +")", ERR_INVALID_PARAMETER));
    if (!(mode & (FILE_READ|FILE_WRITE)))      return(!catch("HistoryFile2.Open(5)  invalid parameter mode: "+ mode +" (must be FILE_READ and/or FILE_WRITE) ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
-   mode &= (FILE_READ|FILE_WRITE);                                                  // alle anderen Bits löschen
+   mode &= (FILE_READ|FILE_WRITE);                                               // unset all other bits
    bool read_only  = !(mode & FILE_WRITE);
    bool write_only = !(mode & FILE_READ);
    bool read_write =  (mode & FILE_READ) && (mode & FILE_WRITE);
+   if (directory == "0") directory = "";                                         // (string) NULL
 
-   if (directory == "0")      directory = "";                                       // (string) NULL
-   if (!StringLen(directory)) directory = GetAccountServer();
+   int hFile;
+   string filename="", basename=symbol + timeframe +".hst";
 
-   // (1) Datei öffnen
-   string mqlHstDir   = directory +"/";                                             // Verzeichnis für MQL-Dateifunktionen
-   string fullHstDir  = GetMqlFilesPath() +"/"+ mqlHstDir;                          // Verzeichnis für Win32-Dateifunktionen
-   string baseName    = symbol + timeframe +".hst";
-   string mqlFileName = mqlHstDir  + baseName;
-   // on write access make sure the directory exists
-   if (!read_only) /*&&*/ if (!CreateDirectory(fullHstDir, MODE_OS|MODE_MKPARENT)) return(!catch("HistoryFile2.Open(6)  cannot create directory "+ DoubleQuoteStr(fullHstDir) +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_RUNTIME_ERROR));
+   if (directory == "") {                                                        // current trade server, use MQL::FileOpenHistory()
+      if (!read_only) /*&&*/ if (!UseTradeServerPath(GetAccountServerPath(), "HistoryFile2.Open(6)")) return(NULL);
+      filename = basename;
 
-   // (1.1) read-only
-   int hFile;                                                                       // Bei read-only kann die Existenz nicht mit FileOpen() geprüft werden, da die
-   if (read_only) {                                                                 // Funktion das Log bei fehlender Datei mit Warnungen ERR_CANNOT_OPEN_FILE zumüllt.
-      if (!IsFile(mqlFileName, MODE_MQL)) return(-1);                               // file not found
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile2.Open(7)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      // open the file: read-only
+      if (read_only) {
+         if (!IsFile(filename, MODE_SYSTEM)) return(-1);                         // without the additional check FileOpenHistory(READ) logs a warning if the file doesn't exist
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(7)->FileOpenHistory(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // read-write
+      else if (read_write) {
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(8)->FileOpenHistory(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // write-only
+      else if (write_only) {
+         hFile = FileOpenHistory(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(9)->FileOpenHistory(\""+ filename +"\", FILE_WRITE) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
    }
 
-   // (1.2) read-write
-   else if (read_write) {
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile2.Open(8)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   else if (!IsAbsolutePath(directory)) {                                        // relative sandbox path, use MQL::FileOpen()
+      // on write access make sure the directory exists
+      if (!read_only) /*&&*/ if (!UseTradeServerPath(directory, "HistoryFile2.Open(10)")) return(NULL);
+      filename = directory +"/"+ basename;
+
+      // open the file: read-only
+      if (read_only) {
+         if (!IsFile(filename, MODE_MQL)) return(-1);                            // without the additional check FileOpen(READ) logs a warning if the file doesn't exist
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(11)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // read-write
+      else if (read_write) {
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(12)->FileOpen(\""+ filename +"\", FILE_READ|FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
+      // write-only
+      else if (write_only) {
+         hFile = FileOpen(filename, mode|FILE_BIN);
+         if (hFile <= 0) return(!catch("HistoryFile2.Open(13)->FileOpen(\""+ filename +"\", FILE_WRITE) => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+      }
    }
 
-   // (1.3) write-only
-   else if (write_only) {
-      hFile = FileOpen(mqlFileName, mode|FILE_BIN);
-      if (hFile <= 0) return(!catch("HistoryFile2.Open(9)->FileOpen(\""+ mqlFileName +"\") => "+ hFile +" ("+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   else {                                                                        // absolute path, use Expander
+      return(!catch("HistoryFile2.Open(14)  accessing absolute path \""+ directory +"\" not yet implemented", ERR_NOT_IMPLEMENTED));
    }
 
    /*HISTORY_HEADER*/int hh[]; InitializeByteBuffer(hh, HISTORY_HEADER_size);
    int      bars=0, from.offset=-1, to.offset=-1, fileSize=FileSize(hFile), periodSecs=timeframe * MINUTES;
    datetime from.openTime=0, from.closeTime=0, from.nextCloseTime=0, to.openTime=0, to.closeTime=0, to.nextCloseTime=0;
 
-   // (2) ggf. neuen HISTORY_HEADER schreiben
    if (write_only || (read_write && fileSize < HISTORY_HEADER_size)) {
-      // Parameter validieren
-      if (!StringLen(description))     description = "";                            // NULL-Pointer => Leerstring
-      if (StringLen(description) > 63) description = StrLeft(description, 63);      // ein zu langer String wird gekürzt
-      if (digits < 0)                          return(!catch("HistoryFile2.Open(10)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
-      if (format!=400) /*&&*/ if (format!=401) return(!catch("HistoryFile2.Open(11)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      // create and write new HISTORY_HEADER where appropriate
+      if (StringLen(description) > 63) description = StrLeft(description, 63);   // shorten a too long description
+      if (digits < 0)                 return(!catch("HistoryFile2.Open(15)  invalid parameter digits: "+ digits +" ("+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
+      if (format!=400 && format!=401) return(!catch("HistoryFile2.Open(16)  invalid parameter format: "+ format +" (must be 400 or 401, symbol="+ symbol +","+ PeriodDescription(timeframe) +")", ERR_INVALID_PARAMETER));
 
       hh_SetBarFormat  (hh, format     );
       hh_SetDescription(hh, description);
@@ -498,14 +572,14 @@ int HistoryFile2.Open(string symbol, int timeframe, string description, int digi
       FileWriteArray(hFile, hh, 0, HISTORY_HEADER_intSize);
    }
 
-   // (3.1) ggf. vorhandenen HISTORY_HEADER auslesen
    else if (read_only || fileSize > 0) {
+      // read existing HISTORY_HEADER where appropriate
       if (FileReadArray(hFile, hh, 0, HISTORY_HEADER_intSize) != HISTORY_HEADER_intSize) {
          FileClose(hFile);
-         return(!catch("HistoryFile2.Open(12)  invalid history file \""+ mqlFileName +"\" (size="+ fileSize +", symbol="+ symbol +","+ PeriodDescription(timeframe) +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+         return(!catch("HistoryFile2.Open(17)  invalid history file \""+ filename +"\" (size="+ fileSize +")", intOr(GetLastError(), ERR_RUNTIME_ERROR)));
       }
 
-      // (3.2) ggf. Bar-Statistik auslesen
+      // read existing bar statistics
       if (fileSize > HISTORY_HEADER_size) {
          int barSize = ifInt(hh_BarFormat(hh)==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
          bars        = (fileSize-HISTORY_HEADER_size) / barSize;
@@ -522,56 +596,56 @@ int HistoryFile2.Open(string symbol, int timeframe, string description, int digi
                to.nextCloseTime   = to.closeTime   + periodSecs;
             }
             else if (timeframe == PERIOD_MN1) {
-               from.closeTime     = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1);     // 00:00, 1. des nächsten Monats
-               from.nextCloseTime = DateTime(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2);     // 00:00, 1. des übernächsten Monats
-               to.closeTime       = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1);     // 00:00, 1. des nächsten Monats
-               to.nextCloseTime   = DateTime(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2);     // 00:00, 1. des übernächsten Monats
+               from.closeTime     = DateTime1(TimeYearEx(from.openTime), TimeMonth(from.openTime)+1); // 00:00, 1st of the next month
+               from.nextCloseTime = DateTime1(TimeYearEx(from.openTime), TimeMonth(from.openTime)+2); // 00:00, 1st of the next but one month
+               to.closeTime       = DateTime1(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+1); // 00:00, 1st of the next month
+               to.nextCloseTime   = DateTime1(TimeYearEx(to.openTime  ), TimeMonth(to.openTime  )+2); // 00:00, 1st of the next but one month
             }
          }
       }
    }
 
-   // (4) Daten zwischenspeichern
-   if (hFile >= ArraySize(hf.hFile))                                 // neues Datei-Handle: Arrays vergrößer
-      ResizeFileArrays(hFile+1);                                     // andererseits von FileOpen() wiederverwendetes Handle
+   // store all metadata locally
+   if (hFile >= ArraySize(hf.hFile))                                             // either reuse existing index or increase arrays
+      __ResizeFileArrays(hFile+1);
 
    hf.hFile                      [hFile]        = hFile;
-   hf.name                       [hFile]        = baseName;
+   hf.name                       [hFile]        = basename;
    hf.readAccess                 [hFile]        = !write_only;
    hf.writeAccess                [hFile]        = !read_only;
 
-   ArraySetInts(hf.header,        hFile,          hh);               // entspricht: hf.header[hFile] = hh;
+   ArraySetInts(hf.header,        hFile,          hh);                           // same as: hf.header[hFile] = hh;
    hf.format                     [hFile]        = hh_BarFormat(hh);
    hf.barSize                    [hFile]        = ifInt(hf.format[hFile]==400, HISTORY_BAR_400_size, HISTORY_BAR_401_size);
    hf.symbol                     [hFile]        = hh_Symbol(hh);
-   hf.symbolUpper                [hFile]        = symbolUpper;
+   hf.symbolU                    [hFile]        = symbolU;
    hf.period                     [hFile]        = timeframe;
    hf.periodSecs                 [hFile]        = periodSecs;
    hf.digits                     [hFile]        = hh_Digits(hh);
    hf.directory                  [hFile]        = directory;
 
-   hf.stored.bars                [hFile]        = bars;                 // bei leerer History: 0
-   hf.stored.from.offset         [hFile]        = from.offset;          // ...                -1
-   hf.stored.from.openTime       [hFile]        = from.openTime;        // ...                 0
-   hf.stored.from.closeTime      [hFile]        = from.closeTime;       // ...                 0
-   hf.stored.from.nextCloseTime  [hFile]        = from.nextCloseTime;   // ...                 0
-   hf.stored.to.offset           [hFile]        = to.offset;            // ...                -1
-   hf.stored.to.openTime         [hFile]        = to.openTime;          // ...                 0
-   hf.stored.to.closeTime        [hFile]        = to.closeTime;         // ...                 0
-   hf.stored.to.nextCloseTime    [hFile]        = to.nextCloseTime;     // ...                 0
+   hf.stored.bars                [hFile]        = bars;                          // on empty history: 0
+   hf.stored.from.offset         [hFile]        = from.offset;                   // ...              -1
+   hf.stored.from.openTime       [hFile]        = from.openTime;                 // ...               0
+   hf.stored.from.closeTime      [hFile]        = from.closeTime;                // ...               0
+   hf.stored.from.nextCloseTime  [hFile]        = from.nextCloseTime;            // ...               0
+   hf.stored.to.offset           [hFile]        = to.offset;                     // ...              -1
+   hf.stored.to.openTime         [hFile]        = to.openTime;                   // ...               0
+   hf.stored.to.closeTime        [hFile]        = to.closeTime;                  // ...               0
+   hf.stored.to.nextCloseTime    [hFile]        = to.nextCloseTime;              // ...               0
 
-   hf.full.bars                  [hFile]        = hf.stored.bars              [hFile];
-   hf.full.from.offset           [hFile]        = hf.stored.from.offset       [hFile];
-   hf.full.from.openTime         [hFile]        = hf.stored.from.openTime     [hFile];
-   hf.full.from.closeTime        [hFile]        = hf.stored.from.closeTime    [hFile];
-   hf.full.from.nextCloseTime    [hFile]        = hf.stored.from.nextCloseTime[hFile];
-   hf.full.to.offset             [hFile]        = hf.stored.to.offset         [hFile];
-   hf.full.to.openTime           [hFile]        = hf.stored.to.openTime       [hFile];
-   hf.full.to.closeTime          [hFile]        = hf.stored.to.closeTime      [hFile];
-   hf.full.to.nextCloseTime      [hFile]        = hf.stored.to.nextCloseTime  [hFile];
+   hf.total.bars                 [hFile]        = hf.stored.bars              [hFile];
+   hf.total.from.offset          [hFile]        = hf.stored.from.offset       [hFile];
+   hf.total.from.openTime        [hFile]        = hf.stored.from.openTime     [hFile];
+   hf.total.from.closeTime       [hFile]        = hf.stored.from.closeTime    [hFile];
+   hf.total.from.nextCloseTime   [hFile]        = hf.stored.from.nextCloseTime[hFile];
+   hf.total.to.offset            [hFile]        = hf.stored.to.offset         [hFile];
+   hf.total.to.openTime          [hFile]        = hf.stored.to.openTime       [hFile];
+   hf.total.to.closeTime         [hFile]        = hf.stored.to.closeTime      [hFile];
+   hf.total.to.nextCloseTime     [hFile]        = hf.stored.to.nextCloseTime  [hFile];
 
-   hf.lastStoredBar.offset       [hFile]        = -1;                   // vorhandene Bardaten zurücksetzen: wichtig, da MQL die ID eines vorher geschlossenen Dateihandles
-   hf.lastStoredBar.openTime     [hFile]        =  0;                   //                                   wiederverwenden kann
+   hf.lastStoredBar.offset       [hFile]        = -1;                            // reset existing metadata: required because
+   hf.lastStoredBar.openTime     [hFile]        =  0;                            // MQL may reuse closed file handle ids
    hf.lastStoredBar.closeTime    [hFile]        =  0;
    hf.lastStoredBar.nextCloseTime[hFile]        =  0;
    hf.lastStoredBar.data         [hFile][BAR_T] =  0;
@@ -596,9 +670,8 @@ int HistoryFile2.Open(string symbol, int timeframe, string description, int digi
    ArrayResize(hh, 0);
 
    int error = GetLastError();
-   if (!error)
-      return(hFile);
-   return(!catch("HistoryFile2.Open(13)  "+ symbol +","+ PeriodDescription(timeframe), error));
+   if (!error) return(hFile);
+   return(!catch("HistoryFile2.Open(18)  "+ symbol +","+ PeriodDescription(timeframe), error));
 }
 
 
@@ -658,7 +731,7 @@ bool HistoryFile2.Close(int hFile) {
 int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    // NOTE: Der Parameter lpBarExists ist für den externen Gebrauch implementiert (Aufruf der Funktion von außerhalb der Library). Beim internen Gebrauch
    //       läßt sich über die Metadaten der Historydatei einfacher herausfinden, ob eine Bar an einem Offset existiert oder nicht.
-   //       @see  int hf.full.bars[]
+   //       @see  int hf.total.bars[]
    if (hFile <= 0)                      return(_EMPTY(catch("HistoryFile2.FindBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
    if (hFile != hf.hFile.lastValid) {
       if (hFile >= ArraySize(hf.hFile)) return(_EMPTY(catch("HistoryFile2.FindBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER)));
@@ -671,7 +744,7 @@ int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
       ArrayResize(lpBarExists, 1);
 
    // History leer?
-   if (!hf.full.bars[hFile]) {
+   if (!hf.total.bars[hFile]) {
       lpBarExists[0] = false;
       return(0);
    }
@@ -682,49 +755,49 @@ int HistoryFile2.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
    // alle bekannten Daten abprüfen
    if (hf.stored.bars[hFile] > 0) {
       // hf.stored.from
-      if (openTime < hf.stored.from.openTime     [hFile]) { lpBarExists[0] = false;                     return(0); }    // Zeitpunkt liegt zeitlich vor der ersten Bar
-      if (openTime < hf.stored.from.closeTime    [hFile]) { lpBarExists[0] = true;                      return(0); }    // Zeitpunkt liegt in der ersten Bar
-      if (openTime < hf.stored.from.nextCloseTime[hFile]) { lpBarExists[0] = (hf.full.bars[hFile] > 1); return(1); }    // Zeitpunkt liegt in der zweiten Bar
+      if (openTime < hf.stored.from.openTime     [hFile]) { lpBarExists[0] = false;                      return(0); }   // Zeitpunkt liegt zeitlich vor der ersten Bar
+      if (openTime < hf.stored.from.closeTime    [hFile]) { lpBarExists[0] = true;                       return(0); }   // Zeitpunkt liegt in der ersten Bar
+      if (openTime < hf.stored.from.nextCloseTime[hFile]) { lpBarExists[0] = (hf.total.bars[hFile] > 1); return(1); }   // Zeitpunkt liegt in der zweiten Bar
 
       // hf.stored.to
       if      (openTime < hf.stored.to.openTime     [hFile]) {}
-      else if (openTime < hf.stored.to.closeTime    [hFile]) { lpBarExists[0] = true;                                          return(hf.stored.to.offset[hFile]); }    // Zeitpunkt liegt in der letzten gespeicherten Bar
-      else if (openTime < hf.stored.to.nextCloseTime[hFile]) { lpBarExists[0] = (hf.full.bars[hFile] > hf.stored.bars[hFile]); return(hf.stored.bars     [hFile]); }    // Zeitpunkt liegt in der darauf folgenden Bar
-      else                                                   { lpBarExists[0] = false;                                         return(hf.full.bars       [hFile]); }    // Zeitpunkt liegt in der ersten neuen Bar
+      else if (openTime < hf.stored.to.closeTime    [hFile]) { lpBarExists[0] = true;                                           return(hf.stored.to.offset[hFile]); }   // Zeitpunkt liegt in der letzten gespeicherten Bar
+      else if (openTime < hf.stored.to.nextCloseTime[hFile]) { lpBarExists[0] = (hf.total.bars[hFile] > hf.stored.bars[hFile]); return(hf.stored.bars     [hFile]); }   // Zeitpunkt liegt in der darauf folgenden Bar
+      else                                                   { lpBarExists[0] = false;                                          return(hf.total.bars      [hFile]); }   // Zeitpunkt liegt in der ersten neuen Bar
 
       // hf.lastStoredBar
       if (hf.lastStoredBar.offset[hFile] > 0) {                         // LastStoredBar ist definiert und entspricht nicht hf.stored.from (schon geprüft)
          if (hf.lastStoredBar.offset[hFile] != hf.stored.to.offset[hFile]) {
             if      (openTime < hf.lastStoredBar.openTime     [hFile]) {}
-            else if (openTime < hf.lastStoredBar.closeTime    [hFile]) { lpBarExists[0] = true;                                 return(hf.lastStoredBar.offset[hFile]); }   // Zeitpunkt liegt in LastStoredBar
+            else if (openTime < hf.lastStoredBar.closeTime    [hFile]) { lpBarExists[0] = true;                                  return(hf.lastStoredBar.offset[hFile]); }  // Zeitpunkt liegt in LastStoredBar
             else if (openTime < hf.lastStoredBar.nextCloseTime[hFile]) { offset         = hf.lastStoredBar.offset[hFile] + 1;
-                                                                         lpBarExists[0] = (hf.full.to.offset[hFile] >= offset); return(offset); }                           // Zeitpunkt liegt in der darauf folgenden Bar
-            else                                                       { offset = hf.lastStoredBar.offset[hFile] + 1 + (hf.full.to.offset[hFile] > hf.lastStoredBar.offset[hFile]);
-                                                                         lpBarExists[0] = (hf.full.to.offset[hFile] >= offset); return(offset); }                           // Zeitpunkt liegt in der ersten neuen Bar
+                                                                         lpBarExists[0] = (hf.total.to.offset[hFile] >= offset); return(offset); }                          // Zeitpunkt liegt in der darauf folgenden Bar
+            else                                                       { offset = hf.lastStoredBar.offset[hFile] + 1 + (hf.total.to.offset[hFile] > hf.lastStoredBar.offset[hFile]);
+                                                                         lpBarExists[0] = (hf.total.to.offset[hFile] >= offset); return(offset); }                          // Zeitpunkt liegt in der ersten neuen Bar
          }
       }
    }
 
    if (hf.bufferedBar.offset[hFile] >= 0) {                             // BufferedBar ist definiert
-      // hf.full.from
-      if (hf.full.from.offset[hFile] != hf.stored.from.offset[hFile]) { // bei Gleichheit identisch zu hf.stored.from (schon geprüft)
-         if (openTime < hf.full.from.openTime     [hFile]) { lpBarExists[0] = false;                     return(0); }                           // Zeitpunkt liegt zeitlich vor der ersten Bar
-         if (openTime < hf.full.from.closeTime    [hFile]) { lpBarExists[0] = true;                      return(0); }                           // Zeitpunkt liegt in der ersten Bar
-         if (openTime < hf.full.from.nextCloseTime[hFile]) { lpBarExists[0] = (hf.full.bars[hFile] > 1); return(1); }                           // Zeitpunkt liegt in der zweiten Bar
+      // hf.total.from
+      if (hf.total.from.offset[hFile] != hf.stored.from.offset[hFile]) {// bei Gleichheit identisch zu hf.stored.from (schon geprüft)
+         if (openTime < hf.total.from.openTime     [hFile]) { lpBarExists[0] = false;                      return(0); }                         // Zeitpunkt liegt zeitlich vor der ersten Bar
+         if (openTime < hf.total.from.closeTime    [hFile]) { lpBarExists[0] = true;                       return(0); }                         // Zeitpunkt liegt in der ersten Bar
+         if (openTime < hf.total.from.nextCloseTime[hFile]) { lpBarExists[0] = (hf.total.bars[hFile] > 1); return(1); }                         // Zeitpunkt liegt in der zweiten Bar
       }
 
-      // hf.full.to
-      if (hf.full.to.offset[hFile] != hf.stored.to.offset[hFile]) {     // bei Gleichheit identisch zu hf.stored.to (schon geprüft)
-         if      (openTime < hf.full.to.openTime [hFile]) {}
-         else if (openTime < hf.full.to.closeTime[hFile]) { lpBarExists[0] = true;                       return(hf.full.to.offset[hFile]); }    // Zeitpunkt liegt in der letzten absoluten Bar
-         else                                             { lpBarExists[0] = false;                      return(hf.full.bars     [hFile]); }    // Zeitpunkt liegt in der ersten neuen Bar
+      // hf.total.to
+      if (hf.total.to.offset[hFile] != hf.stored.to.offset[hFile]) {    // bei Gleichheit identisch zu hf.stored.to (schon geprüft)
+         if      (openTime < hf.total.to.openTime [hFile]) {}
+         else if (openTime < hf.total.to.closeTime[hFile]) { lpBarExists[0] = true;                      return(hf.total.to.offset[hFile]); }   // Zeitpunkt liegt in der letzten absoluten Bar
+         else                                              { lpBarExists[0] = false;                     return(hf.total.bars     [hFile]); }   // Zeitpunkt liegt in der ersten neuen Bar
       }
 
-      // hf.bufferedBar                                                 // eine definierte BufferedBar ist immer identisch zu hf.full.to (schon geprüft)
+      // hf.bufferedBar                                                 // eine definierte BufferedBar ist immer identisch zu hf.total.to (schon geprüft)
    }
 
    // binäre Suche in der Datei                                         // TODO: implementieren
-   return(_EMPTY(catch("HistoryFile2.FindBar(6)  bars="+ hf.full.bars[hFile] +", from='"+ TimeToStr(hf.full.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
+   return(_EMPTY(catch("HistoryFile2.FindBar(6)  bars="+ hf.total.bars[hFile] +", from='"+ TimeToStr(hf.total.from.openTime[hFile], TIME_FULL) +"', to='"+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +"')  time look-up in a timeseries not yet implemented ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED)));
 }
 
 
@@ -748,7 +821,7 @@ bool HistoryFile2.ReadBar(int hFile, int offset, double &bar[]) {
       hf.hFile.lastValid = hFile;
    }
    if (offset < 0)                      return(!catch("HistoryFile2.ReadBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile2.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset >= hf.total.bars[hFile])  return(!catch("HistoryFile2.ReadBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
    if (ArraySize(bar) != 6) ArrayResize(bar, 6);
 
    // vorzugsweise bereits bekannte Bars zurückgeben                 // ACHTUNG: hf.lastStoredBar wird nur aktualisiert, wenn die Bar tatsächlich neu gelesen wurde.
@@ -802,8 +875,8 @@ bool HistoryFile2.ReadBar(int hFile, int offset, double &bar[]) {
       nextCloseTime = closeTime + hf.periodSecs[hFile];
    }
    else if (hf.period[hFile] == PERIOD_MN1) {
-      closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);     // 00:00, 1. des nächsten Monats
-      nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);     // 00:00, 1. des übernächsten Monats
+      closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+1);    // 00:00, 1. des nächsten Monats
+      nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+2);    // 00:00, 1. des übernächsten Monats
    }
 
    hf.lastStoredBar.offset       [hFile]        = offset;
@@ -848,8 +921,8 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
       hf.hFile.lastValid = hFile;
    }
    if (offset < 0)                      return(!catch("HistoryFile2.WriteBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile2.WriteBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset > hf.total.bars[hFile])   return(!catch("HistoryFile2.WriteBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.WriteBar(7)  invalid size of parameter bar[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
    // Bar validieren
    datetime openTime = Round(bar[BAR_T]); if (!openTime) return(!catch("HistoryFile2.WriteBar(8)  invalid bar["+ offset +"].time: "+ openTime +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
@@ -858,14 +931,14 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    // Sicherstellen, daß bekannte Bars nicht mit einer anderen Bar überschrieben werden               // TODO: if-Tests reduzieren
    if (offset==hf.stored.from.offset  [hFile]) /*&&*/ if (openTime!=hf.stored.from.openTime  [hFile]) return(!catch("HistoryFile2.WriteBar(10)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.from.time="                                        + TimeToStr(hf.stored.from.openTime  [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    if (offset==hf.stored.to.offset    [hFile]) /*&&*/ if (openTime!=hf.stored.to.openTime    [hFile]) return(!catch("HistoryFile2.WriteBar(11)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.stored.to.time="                                          + TimeToStr(hf.stored.to.openTime    [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   if (offset==hf.full.to.offset      [hFile]) /*&&*/ if (openTime!=hf.full.to.openTime      [hFile]) return(!catch("HistoryFile2.WriteBar(12)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.full.to.time="                                            + TimeToStr(hf.full.to.openTime      [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
+   if (offset==hf.total.to.offset     [hFile]) /*&&*/ if (openTime!=hf.total.to.openTime     [hFile]) return(!catch("HistoryFile2.WriteBar(12)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.total.to.time="                                           + TimeToStr(hf.total.to.openTime     [hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
    if (offset==hf.lastStoredBar.offset[hFile]) /*&&*/ if (openTime!=hf.lastStoredBar.openTime[hFile]) return(!catch("HistoryFile2.WriteBar(13)  bar["+ offset +"].time="+ TimeToStr(openTime, TIME_FULL) +" collides with hf.lastStoredBar["+ hf.lastStoredBar.offset[hFile] +"].time="+ TimeToStr(hf.lastStoredBar.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_ILLEGAL_STATE));
-   // hf.bufferedBar.offset: entspricht hf.full.to.offset (schon geprüft)
+   // hf.bufferedBar.offset: entspricht hf.total.to.offset (schon geprüft)
 
    // TODO: Sicherstellen, daß nach bekannten Bars keine älteren Bars geschrieben werden              // TODO: if-Tests reduzieren
    if (offset==hf.stored.from.offset  [hFile]+1) {}
    if (offset==hf.stored.to.offset    [hFile]+1) {}
-   if (offset==hf.full.to.offset      [hFile]+1) {}
+   if (offset==hf.total.to.offset     [hFile]+1) {}
    if (offset==hf.lastStoredBar.offset[hFile]+1) {}
 
    // Löst die Bar für eine BufferedBar ein BarClose-Event aus, zuerst die BufferedBar schreiben
@@ -915,8 +988,8 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
          nextCloseTime = closeTime + hf.periodSecs[hFile];
       }
       else if (hf.period[hFile] == PERIOD_MN1) {
-         closeTime     = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+1);  // 00:00, 1. des nächsten Monats
-         nextCloseTime = DateTime(TimeYearEx(openTime), TimeMonth(openTime)+2);  // 00:00, 1. des übernächsten Monats
+         closeTime     = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+1); // 00:00, 1. des nächsten Monats
+         nextCloseTime = DateTime1(TimeYearEx(openTime), TimeMonth(openTime)+2); // 00:00, 1. des übernächsten Monats
       }
       hf.lastStoredBar.offset       [hFile] = offset;
       hf.lastStoredBar.openTime     [hFile] = openTime;
@@ -940,23 +1013,23 @@ bool HistoryFile2.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
    if (offset >= hf.stored.bars[hFile]) {
                          hf.stored.bars              [hFile] = offset + 1;
 
-      if (offset == 0) { hf.stored.from.offset       [hFile] = 0;                hf.full.from.offset       [hFile] = hf.stored.from.offset       [hFile];
-                         hf.stored.from.openTime     [hFile] = openTime;         hf.full.from.openTime     [hFile] = hf.stored.from.openTime     [hFile];
-                         hf.stored.from.closeTime    [hFile] = closeTime;        hf.full.from.closeTime    [hFile] = hf.stored.from.closeTime    [hFile];
-                         hf.stored.from.nextCloseTime[hFile] = nextCloseTime;    hf.full.from.nextCloseTime[hFile] = hf.stored.from.nextCloseTime[hFile]; }
-                                                                                 //                ^               ^               ^
+      if (offset == 0) { hf.stored.from.offset       [hFile] = 0;                hf.total.from.offset       [hFile] = hf.stored.from.offset       [hFile];
+                         hf.stored.from.openTime     [hFile] = openTime;         hf.total.from.openTime     [hFile] = hf.stored.from.openTime     [hFile];
+                         hf.stored.from.closeTime    [hFile] = closeTime;        hf.total.from.closeTime    [hFile] = hf.stored.from.closeTime    [hFile];
+                         hf.stored.from.nextCloseTime[hFile] = nextCloseTime;    hf.total.from.nextCloseTime[hFile] = hf.stored.from.nextCloseTime[hFile]; }
+                                                                                 //                ^                ^               ^
                          hf.stored.to.offset         [hFile] = offset;           // Wird die Bar wie in (6.3) eingefügt, wurde der Offset der BufferedBar um eins
                          hf.stored.to.openTime       [hFile] = openTime;         // vergrößert. Ist die History noch leer und die BufferedBar war die erste Bar, steht
-                         hf.stored.to.closeTime      [hFile] = closeTime;        // hf.full.from bis zu dieser Zuweisung *über mir* auf 0 (Zeiten unbekannt, da die
+                         hf.stored.to.closeTime      [hFile] = closeTime;        // hf.total.from bis zu dieser Zuweisung *über mir* auf 0 (Zeiten unbekannt, da die
                          hf.stored.to.nextCloseTime  [hFile] = nextCloseTime;    // neue Startbar gerade eingefügt wird).
    }
-   if (hf.stored.bars[hFile] > hf.full.bars[hFile]) {
-      hf.full.bars            [hFile] = hf.stored.bars            [hFile];
+   if (hf.stored.bars[hFile] > hf.total.bars[hFile]) {
+      hf.total.bars            [hFile] = hf.stored.bars            [hFile];
 
-      hf.full.to.offset       [hFile] = hf.stored.to.offset       [hFile];
-      hf.full.to.openTime     [hFile] = hf.stored.to.openTime     [hFile];
-      hf.full.to.closeTime    [hFile] = hf.stored.to.closeTime    [hFile];
-      hf.full.to.nextCloseTime[hFile] = hf.stored.to.nextCloseTime[hFile];
+      hf.total.to.offset       [hFile] = hf.stored.to.offset       [hFile];
+      hf.total.to.openTime     [hFile] = hf.stored.to.openTime     [hFile];
+      hf.total.to.closeTime    [hFile] = hf.stored.to.closeTime    [hFile];
+      hf.total.to.nextCloseTime[hFile] = hf.stored.to.nextCloseTime[hFile];
    }
 
    // Ist die geschriebene Bar gleichzeitig die BufferedBar, wird deren veränderlicher Status aktualisiert.
@@ -995,7 +1068,7 @@ bool HistoryFile2.UpdateBar(int hFile, int offset, double value) {
       hf.hFile.lastValid = hFile;
    }
    if (offset < 0 )                     return(!catch("HistoryFile2.UpdateBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset >= hf.full.bars[hFile])   return(!catch("HistoryFile2.UpdateBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (offset >= hf.total.bars[hFile])  return(!catch("HistoryFile2.UpdateBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    // vorzugsweise bekannte Bars aktualisieren
    if (offset == hf.bufferedBar.offset[hFile]) {                                 // BufferedBar
@@ -1050,11 +1123,11 @@ bool HistoryFile2.InsertBar(int hFile, int offset, double bar[], int flags = NUL
       hf.hFile.lastValid = hFile;
    }
    if (offset < 0)                      return(!catch("HistoryFile2.InsertBar(5)  invalid parameter offset: "+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (offset > hf.full.bars[hFile])    return(!catch("HistoryFile2.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAYS));
+   if (offset > hf.total.bars[hFile])   return(!catch("HistoryFile2.InsertBar(6)  invalid parameter offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (ArraySize(bar) != 6)             return(!catch("HistoryFile2.InsertBar(7)  invalid size of parameter data[]: "+ ArraySize(bar) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INCOMPATIBLE_ARRAY));
 
    // ggf. Lücke für einzufügende Bar schaffen
-   if (offset < hf.full.bars[hFile])
+   if (offset < hf.total.bars[hFile])
       if (!HistoryFile2.MoveBars(hFile, offset, offset+1)) return(false);
 
    // Bar schreiben, HistoryFile2.WriteBar() führt u.a. folgende Tasks aus: - validiert die Bar
@@ -1142,16 +1215,16 @@ bool HistoryFile2.WriteLastStoredBar(int hFile, int flags = NULL) {
  * @access private
  */
 bool HistoryFile2.WriteBufferedBar(int hFile, int flags = NULL) {
-   if (hFile <= 0)                      return(!catch("HistoryFile2.WriteBufferedBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+   if (hFile <= 0)                       return(!catch("HistoryFile2.WriteBufferedBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile)) return(!catch("HistoryFile2.WriteBufferedBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)         return(!catch("HistoryFile2.WriteBufferedBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)         return(!catch("HistoryFile2.WriteBufferedBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile))  return(!catch("HistoryFile2.WriteBufferedBar(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)          return(!catch("HistoryFile2.WriteBufferedBar(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)          return(!catch("HistoryFile2.WriteBufferedBar(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
    int offset = hf.bufferedBar.offset[hFile];
-   if (offset < 0)                      return(_true(logWarn("HistoryFile2.WriteBufferedBar(5)  undefined bufferedBar: hf.bufferedBar.offset="+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")")));
-   if (offset != hf.full.bars[hFile]-1) return(!catch("HistoryFile2.WriteBufferedBar(6)  invalid hf.bufferedBar.offset: "+ offset +" ("+ hf.full.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
+   if (offset < 0)                       return(_true(logWarn("HistoryFile2.WriteBufferedBar(5)  undefined bufferedBar: hf.bufferedBar.offset="+ offset +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")")));
+   if (offset != hf.total.bars[hFile]-1) return(!catch("HistoryFile2.WriteBufferedBar(6)  invalid hf.bufferedBar.offset: "+ offset +" ("+ hf.total.bars[hFile] +" full bars, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_RUNTIME_ERROR));
 
    // Die Bar wird nur dann geschrieben, wenn sie sich seit dem letzten Schreiben geändert hat.
    if (hf.bufferedBar.modified[hFile]) {
@@ -1206,19 +1279,19 @@ bool HistoryFile2.WriteBufferedBar(int hFile, int flags = NULL) {
 
       // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History sein, (b) existierende jüngste Bar oder (c) neue jüngste Bar sein.
       //                          - Die Bar ist immer die jüngste (letzte) Bar.
-      //                          - Die Metadaten von hf.full.* ändern sich nicht.
-      //                          - Nach dem Speichern stimmen hf.stored.* und hf.full.* überein.
-      hf.stored.bars              [hFile] = hf.full.bars              [hFile];
+      //                          - Die Metadaten von hf.total.* ändern sich nicht.
+      //                          - Nach dem Speichern stimmen hf.stored.* und hf.total.* überein.
+      hf.stored.bars              [hFile] = hf.total.bars              [hFile];
 
-      hf.stored.from.offset       [hFile] = hf.full.from.offset       [hFile];
-      hf.stored.from.openTime     [hFile] = hf.full.from.openTime     [hFile];
-      hf.stored.from.closeTime    [hFile] = hf.full.from.closeTime    [hFile];
-      hf.stored.from.nextCloseTime[hFile] = hf.full.from.nextCloseTime[hFile];
+      hf.stored.from.offset       [hFile] = hf.total.from.offset       [hFile];
+      hf.stored.from.openTime     [hFile] = hf.total.from.openTime     [hFile];
+      hf.stored.from.closeTime    [hFile] = hf.total.from.closeTime    [hFile];
+      hf.stored.from.nextCloseTime[hFile] = hf.total.from.nextCloseTime[hFile];
 
-      hf.stored.to.offset         [hFile] = hf.full.to.offset         [hFile];
-      hf.stored.to.openTime       [hFile] = hf.full.to.openTime       [hFile];
-      hf.stored.to.closeTime      [hFile] = hf.full.to.closeTime      [hFile];
-      hf.stored.to.nextCloseTime  [hFile] = hf.full.to.nextCloseTime  [hFile];
+      hf.stored.to.offset         [hFile] = hf.total.to.offset         [hFile];
+      hf.stored.to.openTime       [hFile] = hf.total.to.openTime       [hFile];
+      hf.stored.to.closeTime      [hFile] = hf.total.to.closeTime      [hFile];
+      hf.stored.to.nextCloseTime  [hFile] = hf.total.to.nextCloseTime  [hFile];
    }
 
    int error = GetLastError();
@@ -1256,15 +1329,15 @@ bool HistoryFile2.MoveBars(int hFile, int fromOffset, int destOffset) {
  * @return bool - Erfolgsstatus
  */
 bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NULL) {
-   if (hFile <= 0)                        return(!catch("HistoryFile2.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+   if (hFile <= 0)                         return(!catch("HistoryFile2.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
    if (hFile != hf.hFile.lastValid) {
-      if (hFile >= ArraySize(hf.hFile))   return(!catch("HistoryFile2.AddTick(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] == 0)           return(!catch("HistoryFile2.AddTick(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-      if (hf.hFile[hFile] <  0)           return(!catch("HistoryFile2.AddTick(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hFile >= ArraySize(hf.hFile))    return(!catch("HistoryFile2.AddTick(2)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] == 0)            return(!catch("HistoryFile2.AddTick(3)  invalid parameter hFile: "+ hFile +" (unknown handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+      if (hf.hFile[hFile] <  0)            return(!catch("HistoryFile2.AddTick(4)  invalid parameter hFile: "+ hFile +" (closed handle, symbol="+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
       hf.hFile.lastValid = hFile;
    }
-   if (time <= 0)                         return(!catch("HistoryFile2.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
-   if (time < hf.full.to.openTime[hFile]) return(!catch("HistoryFile2.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.full.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (time <= 0)                          return(!catch("HistoryFile2.AddTick(5)  invalid parameter time: "+ time +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
+   if (time < hf.total.to.openTime[hFile]) return(!catch("HistoryFile2.AddTick(6)  cannot add tick to a closed bar: tickTime="+ TimeToStr(time, TIME_FULL) +", last bar.time="+ TimeToStr(hf.total.to.openTime[hFile], TIME_FULL) +" ("+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_INVALID_PARAMETER));
 
    double bar[6];
    bool   barExists[1];
@@ -1318,8 +1391,8 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
             else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                // 00:00, 1. des Monats
             tick.offset = HistoryFile2.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
          }
-         if (tick.offset < hf.full.bars[hFile]) {                                      // Tickbar existiert, laden
-            if (!HistoryFile2.ReadBar(hFile, tick.offset, bar)) return(false);          // ReadBar() setzt LastStoredBar auf die Tickbar
+         if (tick.offset < hf.total.bars[hFile]) {                                     // Tickbar existiert, laden
+            if (!HistoryFile2.ReadBar(hFile, tick.offset, bar)) return(false);         // ReadBar() setzt LastStoredBar auf die Tickbar
             hf.bufferedBar.offset       [hFile]        = hf.lastStoredBar.offset       [hFile];
             hf.bufferedBar.openTime     [hFile]        = hf.lastStoredBar.openTime     [hFile];
             hf.bufferedBar.closeTime    [hFile]        = hf.lastStoredBar.closeTime    [hFile];
@@ -1339,8 +1412,8 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
                nextCloseTime = closeTime     + hf.periodSecs[hFile];
             }
             else if (hf.period[hFile] == PERIOD_MN1) {
-               closeTime     = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);    // 00:00, 1. des nächsten Monats
-               nextCloseTime = DateTime(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);    // 00:00, 1. des übernächsten Monats
+               closeTime     = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+1);   // 00:00, 1. des nächsten Monats
+               nextCloseTime = DateTime1(TimeYearEx(tick.openTime), TimeMonth(tick.openTime)+2);   // 00:00, 1. des übernächsten Monats
             }
             hf.bufferedBar.offset       [hFile]        = tick.offset;
             hf.bufferedBar.openTime     [hFile]        = tick.openTime;
@@ -1357,17 +1430,17 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
             // Metadaten aktualisieren: - Die Bar kann (a) erste Bar einer leeren History oder (b) neue Bar am Ende sein.
             //                          - Die Bar ist immer die jüngste (letzte) Bar.
             //                          - Die Bar existiert in der Historydatei nicht, die Metadaten von hf.stored.* ändern sich daher nicht.
-                                    hf.full.bars              [hFile] = tick.offset + 1;
+                                    hf.total.bars              [hFile] = tick.offset + 1;
 
-            if (tick.offset == 0) { hf.full.from.offset       [hFile] = tick.offset;
-                                    hf.full.from.openTime     [hFile] = tick.openTime;
-                                    hf.full.from.closeTime    [hFile] = closeTime;
-                                    hf.full.from.nextCloseTime[hFile] = nextCloseTime; }
+            if (tick.offset == 0) { hf.total.from.offset       [hFile] = tick.offset;
+                                    hf.total.from.openTime     [hFile] = tick.openTime;
+                                    hf.total.from.closeTime    [hFile] = closeTime;
+                                    hf.total.from.nextCloseTime[hFile] = nextCloseTime; }
 
-                                    hf.full.to.offset         [hFile] = tick.offset;
-                                    hf.full.to.openTime       [hFile] = tick.openTime;
-                                    hf.full.to.closeTime      [hFile] = closeTime;
-                                    hf.full.to.nextCloseTime  [hFile] = nextCloseTime;
+                                    hf.total.to.offset         [hFile] = tick.offset;
+                                    hf.total.to.openTime       [hFile] = tick.openTime;
+                                    hf.total.to.closeTime      [hFile] = closeTime;
+                                    hf.total.to.nextCloseTime  [hFile] = nextCloseTime;
          }
       }
 
@@ -1405,7 +1478,7 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
       else if (hf.period[hFile] == PERIOD_MN1) tick.openTime = tick.time - tick.time%DAYS - (TimeDayEx(tick.time)-1)*DAYS;                  // 00:00, 1. des Monats
       tick.offset = HistoryFile2.FindBar(hFile, tick.openTime, barExists); if (tick.offset < 0) return(false);
    }
-   if (tick.offset < hf.full.bars[hFile]) {
+   if (tick.offset < hf.total.bars[hFile]) {
       if (!HistoryFile2.UpdateBar(hFile, tick.offset, tick.value)) return(false);      // existierende Bar aktualisieren
    }
    else {
@@ -1422,39 +1495,48 @@ bool HistoryFile2.AddTick(int hFile, datetime time, double value, int flags = NU
 
 
 /**
- * Setzt die Größe der internen HistorySet-Datenarrays auf den angegebenen Wert.
+ * Resize the arrays holding HistorySet metadata.
  *
- * @param  int size - neue Größe
+ * @param  int size - new size
  *
- * @return int - neue Größe der Arrays
+ * @return int - the same size value
  *
  * @access private
  */
-int ResizeSetArrays(int size) {
-   if (size != ArraySize(hs.hSet)) {
+int __ResizeSetArrays(int size) {
+   int oldSize = ArraySize(hs.hSet);
+
+   if (size != oldSize) {
       ArrayResize(hs.hSet,        size);
       ArrayResize(hs.symbol,      size);
-      ArrayResize(hs.symbolUpper, size);
+      ArrayResize(hs.symbolU,     size);
       ArrayResize(hs.description, size);
       ArrayResize(hs.digits,      size);
       ArrayResize(hs.directory,   size);
       ArrayResize(hs.hFile,       size);
       ArrayResize(hs.format,      size);
    }
+
+   for (int i=oldSize; i < size; i++) {
+      hs.symbol     [i] = "";                   // init new strings to prevent NULL pointer errors
+      hs.symbolU    [i] = "";
+      hs.description[i] = "";
+      hs.directory  [i] = "";
+   }
    return(size);
 }
 
 
 /**
- * Setzt die Größe der internen HistoryFile-Datenarrays auf den angegebenen Wert.
+ * Resize the arrays holding HistoryFile metadata.
  *
- * @param  int size - neue Größe
+ * @param  int size - new size
  *
- * @return int - neue Größe der Arrays
+ * @return int - the same size value
  *
  * @access private
  */
-int ResizeFileArrays(int size) {
+int __ResizeFileArrays(int size) {
    int oldSize = ArraySize(hf.hFile);
 
    if (size != oldSize) {
@@ -1467,7 +1549,7 @@ int ResizeFileArrays(int size) {
       ArrayResize(hf.format,                      size);
       ArrayResize(hf.barSize,                     size);
       ArrayResize(hf.symbol,                      size);
-      ArrayResize(hf.symbolUpper,                 size);
+      ArrayResize(hf.symbolU,                     size);
       ArrayResize(hf.period,                      size);
       ArrayResize(hf.periodSecs,                  size);
       ArrayResize(hf.digits,                      size);
@@ -1483,15 +1565,15 @@ int ResizeFileArrays(int size) {
       ArrayResize(hf.stored.to.closeTime,         size);
       ArrayResize(hf.stored.to.nextCloseTime,     size);
 
-      ArrayResize(hf.full.bars,                   size);
-      ArrayResize(hf.full.from.offset,            size);
-      ArrayResize(hf.full.from.openTime,          size);
-      ArrayResize(hf.full.from.closeTime,         size);
-      ArrayResize(hf.full.from.nextCloseTime,     size);
-      ArrayResize(hf.full.to.offset,              size);
-      ArrayResize(hf.full.to.openTime,            size);
-      ArrayResize(hf.full.to.closeTime,           size);
-      ArrayResize(hf.full.to.nextCloseTime,       size);
+      ArrayResize(hf.total.bars,                  size);
+      ArrayResize(hf.total.from.offset,           size);
+      ArrayResize(hf.total.from.openTime,         size);
+      ArrayResize(hf.total.from.closeTime,        size);
+      ArrayResize(hf.total.from.nextCloseTime,    size);
+      ArrayResize(hf.total.to.offset,             size);
+      ArrayResize(hf.total.to.openTime,           size);
+      ArrayResize(hf.total.to.closeTime,          size);
+      ArrayResize(hf.total.to.nextCloseTime,      size);
 
       ArrayResize(hf.lastStoredBar.offset,        size);
       ArrayResize(hf.lastStoredBar.openTime,      size);
@@ -1505,11 +1587,16 @@ int ResizeFileArrays(int size) {
       ArrayResize(hf.bufferedBar.nextCloseTime,   size);
       ArrayResize(hf.bufferedBar.data,            size);
       ArrayResize(hf.bufferedBar.modified,        size);
+   }
 
-      for (int i=size-1; i >= oldSize; i--) {                        // falls Arrays vergrößert werden, neue Offsets initialisieren
-         hf.lastStoredBar.offset [i] = -1;
-         hf.bufferedBar.offset[i] = -1;
-      }
+   for (int i=oldSize; i < size; i++) {
+      hf.name     [i] = "";                     // init new strings to prevent NULL pointer errors
+      hf.symbol   [i] = "";
+      hf.symbolU  [i] = "";
+      hf.directory[i] = "";
+
+      hf.lastStoredBar.offset[i] = -1;          // init new bar offset fields
+      hf.bufferedBar.offset  [i] = -1;
    }
    return(size);
 }
@@ -1522,12 +1609,12 @@ int ResizeFileArrays(int size) {
  *
  * @access private
  */
-bool CheckFileHandles() {
+bool __CheckFileHandles() {
    int error, size=ArraySize(hf.hFile);
 
    for (int i=0; i < size; i++) {
       if (hf.hFile[i] > 0) {
-         logWarn("CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
+         logWarn("__CheckFileHandles(1)  open file handle #"+ hf.hFile[i] +" found ("+ hf.symbol[i] +","+ PeriodDescription(hf.period[i]) +")");
          if (!HistoryFile2.Close(hf.hFile[i]))
             error = last_error;
       }
@@ -1540,8 +1627,8 @@ bool CheckFileHandles() {
  * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
 void onLibraryInit() {
-   ResizeSetArrays(0);
-   ResizeFileArrays(0);
+   __ResizeSetArrays(0);
+   __ResizeFileArrays(0);
 }
 
 
@@ -1551,6 +1638,6 @@ void onLibraryInit() {
  * @return int - Fehlerstatus
  */
 int onDeinit() {
-   CheckFileHandles();
+   __CheckFileHandles();
    return(last_error);
 }

@@ -28,6 +28,7 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
+#include <functions/ParseTime.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
@@ -79,10 +80,12 @@ int onInit() {
       MTF.Timeframe = TimeframeDescription(dataTimeframe);
    }
    // StartDate
-   sValue = StrToLower(StrTrim(StartDate));
-   if (StringLen(sValue) > 0 && sValue!="yyyy.mm.dd") {
-      startTime = ParseDateTime(sValue);
-      if (IsNaT(startTime))    return(catch("onInit(2)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   sValue = StrTrim(StartDate);
+   if (sValue!="" && sValue!="yyyy.mm.dd") {
+      int pt[];
+      bool success = ParseTime(sValue, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
+      if (!success)            return(catch("onInit(2)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+      startTime = DateTime2(pt);
    }
    // Max.Bars
    if (Max.Bars < -1)          return(catch("onInit(2)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));

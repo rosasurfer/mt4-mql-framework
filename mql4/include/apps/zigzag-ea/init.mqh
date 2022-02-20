@@ -21,14 +21,13 @@ int onInitUser() {
    // check for and validate a specified sequence id
    if (ValidateInputs.SID()) {
       RestoreSequence();                                       // a valid sequence id was specified
-      SS.All();
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.created = TimeServer();
          sequence.status  = STATUS_WAITING;
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
@@ -49,7 +48,6 @@ int onInitParameters() {
       RestoreInputs();
       return(last_error);
    }
-   SS.All();
    SaveStatus();
    return(last_error);
 }
@@ -85,8 +83,7 @@ int onInitTemplate() {
    // restore sequence id from the chart
    if (FindSequenceId()) {                                  // on success a sequence id was restored
       if (RestoreSequence()) {
-         SS.All();
-         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
    }
    return(last_error);
@@ -102,8 +99,7 @@ int onInitRecompile() {                                     // same requirements
    // restore sequence id from the chart
    if (FindSequenceId()) {
       if (RestoreSequence()) {
-         SS.All();
-         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
    }
    return(last_error);
@@ -125,6 +121,7 @@ int afterInit() {
       test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
    }
    StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
+   SS.All();
    return(catch("afterInit(1)"));
 }
 

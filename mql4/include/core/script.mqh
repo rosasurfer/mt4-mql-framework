@@ -55,11 +55,11 @@ int init() {
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
-      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE): 0", ERR_INVALID_MARKET_DATA)));
+      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE): 0", ERR_INVALID_MARKET_DATA)));
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -162,16 +162,15 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
 
-   error = catch("deinit(1)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   error = catch("deinit(2)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    if (!error) error = onDeinit();                    // preprocessing hook
    if (!error) error = afterDeinit();                 // postprocessing hook
    if (!This.IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(2)");
-   return(error|last_error|LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(3)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -228,18 +227,18 @@ bool IsLibrary() {
 /**
  * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
  *
- * @param  string location - Ort, an dem der Fehler auftrat
- * @param  string message  - Fehlermeldung
- * @param  int    error    - zu setzender Fehlercode
+ * @param  string caller  - location identifier of the caller
+ * @param  string message - Fehlermeldung
+ * @param  int    error   - zu setzender Fehlercode
  *
  * @return int - derselbe Fehlercode
  */
-int HandleScriptError(string location, string message, int error) {
-   if (StringLen(location) > 0)
-      location = " :: "+ location;
+int HandleScriptError(string caller, string message, int error) {
+   if (StringLen(caller) > 0)
+      caller = " :: "+ caller;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName() + location, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }
@@ -248,12 +247,12 @@ int HandleScriptError(string location, string message, int error) {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location         - location of the check
+ * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int error = NULL) {
+bool CheckErrors(string caller, int error = NULL) {
    // check and signal DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error != NO_ERROR) {
@@ -289,7 +288,7 @@ bool CheckErrors(string location, int error = NULL) {
    // check uncatched errors
    if (!error) error = GetLastError();
    if (error != NO_ERROR) {
-      catch(location, error);
+      catch(caller, error);
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
    }
@@ -306,7 +305,7 @@ bool CheckErrors(string location, int error = NULL) {
 
 
 #import "rsfMT4Expander.dll"
-   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int SyncMainContext_deinit(int ec[], int uninitReason);
 

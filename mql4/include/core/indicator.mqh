@@ -75,23 +75,25 @@ int init() {
             return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
          if (CheckErrors("init(6)", error)) return(last_error);
       }
-      if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
+      if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
       if (IsError(error))
          if (CheckErrors("init(9)", error)) return(last_error);
-      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE): 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
+      if (!tickValue)                       return(_last_error(logInfo("init(10)  MarketInfo(MODE_TICKVALUE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(11)")));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
 
-   // before onInit(): if loaded by iCustom() log input parameters
+   // before onInit(): log input parameters if loaded by iCustom()
    if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
-      string sInput = InputsToStr();
-      if (StringLen(sInput) > 0) {
-         sInput = sInput +" __lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";";
-         logDebug("init(13)  input: "+ sInput);
+      string sInputs = InputsToStr();
+      if (StringLen(sInputs) > 0) {
+         sInputs = StringConcatenate(sInputs,
+            ifString(!AutoConfiguration, "", NL +"AutoConfiguration=TRUE;"),
+                                             NL +"__lpSuperContext=0x"+ IntToHexStr(__lpSuperContext) +";");
+         logDebug("init(13)  input: "+ sInputs);
       }
    }
 
@@ -389,9 +391,9 @@ int deinit() {
       return(last_error);
 
    int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (IsError(error)) return(error|last_error|LeaveContext(__ExecutionContext));
+   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
 
-   error = catch("deinit(1)");                                          // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   error = catch("deinit(2)");                                          // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
       return(error|last_error|LeaveContext(__ExecutionContext));
@@ -413,15 +415,14 @@ int deinit() {
          case UR_CLOSE      : error = onDeinitClose();       break;     //
                                                                         //
          default:                                                       //
-            CheckErrors("deinit(2)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
+            CheckErrors("deinit(3)  unexpected UninitializeReason: "+ UninitializeReason(), ERR_RUNTIME_ERROR);
             return(last_error|LeaveContext(__ExecutionContext));        //
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
    if (!This.IsTesting()) DeleteRegisteredObjects();
 
-   CheckErrors("deinit(3)");
-   return(last_error|LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -478,12 +479,12 @@ int DeinitReason() {
 /**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
- * @param  string location         - location of the check
+ * @param  string caller           - location identifier of the caller
  * @param  int    error [optional] - error to enforce (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
-bool CheckErrors(string location, int error = NULL) {
+bool CheckErrors(string caller, int error = NULL) {
    // check DLL errors
    int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
    if (dll_error != NO_ERROR) {
@@ -521,7 +522,7 @@ bool CheckErrors(string location, int error = NULL) {
    // check uncatched errors
    if (!error) error = GetLastError();
    if (error != NO_ERROR) {
-      catch(location, error);
+      catch(caller, error);
       __STATUS_OFF        = true;
       __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
    }
@@ -549,7 +550,7 @@ bool CheckErrors(string location, int error = NULL) {
 
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
-   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int extReporting, int recordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int  SyncMainContext_deinit(int ec[], int unintReason);
 #import

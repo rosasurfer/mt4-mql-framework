@@ -114,8 +114,8 @@ int onInit() {
 
 
    // (2) check BFX indicator and license for existence
-   string indicatorFile = GetMqlDirectoryA() +"\\indicators\\"+ bfxName +".ex4";
-   if (!IsFile(indicatorFile, MODE_OS)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
+   string indicatorFile = GetMqlDirectoryA() +"/indicators/"+ bfxName +".ex4";
+   if (!IsFile(indicatorFile, MODE_SYSTEM)) return(catch("onInit(6)  BankersFX Core Volume indicator not found: "+ DoubleQuoteStr(indicatorFile), ERR_FILE_NOT_FOUND));
 
    string section = "bankersfx.com", key = "CoreVolume.License";
    bfxLicense = GetConfigString(section, key);

@@ -213,7 +213,7 @@ int iPivotLevel() {
  */
 int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
    if (ArraySize(results) != 7)
-      return(catch("iPivotLevel_new(1)   invalid parameter results["+ ArrayRange(results, 0) +"]", ERR_INCOMPATIBLE_ARRAYS));
+      return(catch("iPivotLevel_new(1)   invalid parameter results["+ ArrayRange(results, 0) +"]", ERR_INCOMPATIBLE_ARRAY));
 
    int startBar, endBar, highBar, lowBar, closeBar;
    if (!period)

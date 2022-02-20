@@ -12,10 +12,9 @@
  * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
  * schreibend).
  *
- * TODO: • In Indikatoren geladene Libraries müssen während ihres init()-Cycles mit einer temporären Kopie des Hauptmodul-
- *         kontexts arbeiten.
- *       • __STATUS_OFF        integrieren
- *       • __STATUS_OFF.reason integrieren
+ * TODO:
+ *  - indicators loaded in a library must use a temporary copy of the main module context for their init() cycles
+ *  - integrate __STATUS_OFF and __STATUS_OFF.reason
  */
 #import "rsfMT4Expander.dll"
    // getters
@@ -77,14 +76,12 @@
    int      ec_TestTicks          (int ec[]);
    double   ec_TestSpread         (int ec[]);
    int      ec_TestTradeDirections(int ec[]);
-   int      ec_TestReportId       (int ec[]);
-   string   ec_TestReportSymbol   (int ec[]);
    bool     ec_Testing            (int ec[]);
    bool     ec_VisualMode         (int ec[]);
    bool     ec_Optimization       (int ec[]);
 
-   bool     ec_ExtReporting       (int ec[]);
-   bool     ec_RecordEquity       (int ec[]);
+   bool     ec_EaExternalReporting(int ec[]);
+   bool     ec_EaRecordEquity     (int ec[]);
 
    int      ec_MqlError           (int ec[]);
    int      ec_DllError           (int ec[]);

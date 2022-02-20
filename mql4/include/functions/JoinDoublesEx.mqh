@@ -8,7 +8,7 @@
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoublesEx(double values[], int digits, string separator = ", ") {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoublesEx(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoublesEx(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    if (digits < 0 || digits > 16)  return(_EMPTY_STR(catch("JoinDoublesEx(2)  illegal parameter digits: "+ digits, ERR_INVALID_PARAMETER)));
 
    string strings[];

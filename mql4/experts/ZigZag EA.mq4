@@ -3,17 +3,44 @@
  *
  *
  * TODO:
- *  - performance tracking of all variants on all symbols
- *  - stop condition "pip"
- *  - reverse trading option "ZigZag.R"
- *  - normalize resulting PL metrics for different accounts/unit sizes
- *  - trade breaks for specific day times
- *  - track PL curve per live instance
- *  - calculate and display TakeProfit level
+ *  - PL charts for all variants/symbols
+ *     log symbol creation
+ *     total PL
+ *     daily PL (daily reset)
+ *     PL in pip/money
  *
- *  - merge IsStartSignal() and IsZigzagSignal() and fix loglevel of both signals
- *  - double ZigZag reversals during large bars are not recognized and ignored
- *  - improve parsing of start.time.condition
+ *     variants:
+ *      ZigZag                   OK
+ *      Reverse ZigZag
+ *      full session (24h) with trade breaks
+ *      partial session (e.g. 09:00-16:00) with trade breaks
+ *
+ *  - trade breaks
+ *     - trading is disabled but the price feed is active
+ *     - configuration:
+ *        default: auto-config using the SYMBOL configuration
+ *        manual override of times and behaviors (per instance => via input parameters)
+ *     - default behavior:
+ *        no trade commands
+ *        synchronize-after if an opposite signal occurred
+ *     - manual behavior configuration:
+ *        close-before      (default: no)
+ *        synchronize-after (default: yes; if no: wait for the next signal)
+ *     - better parsing of struct SYMBOL
+ *     - config support for session and trade breaks at specific day times
+ *
+ *  - onInitTemplate error on VM restart
+ *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+ *     INFO   ZigZag EA::initTemplate(0)  ********************************** (demo)
+ *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
+ *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
+ *
+ *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
+ *  - parameter ZigZag.Timeframe
+ *  - reverse trading option "ZigZag.R" (and Turtle Soup)
+ *  - stop condition "pip"
+ *
+ *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
@@ -30,7 +57,7 @@
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
- *  - ChartInfos::CostumPosition() including/excluding a specific strategy
+ *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - on restart delete dead screen sockets
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  */
@@ -44,8 +71,8 @@ extern string Sequence.ID         = "";                              // instance
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
-extern string StartConditions     = "";                              // @time(datetime)
-extern string StopConditions      = "";                              // @time(datetime)
+extern string StartConditions     = "";                              // @time(datetime|time)
+extern string StopConditions      = "";                              // @time(datetime|time)
 extern double TakeProfit          = 0;                               // TP value
 extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
 extern int    Slippage            = 2;                               // in point
@@ -57,6 +84,7 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
@@ -119,11 +147,13 @@ double   history[][13];                         // multiple closed positions
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
 datetime start.time.value;
+bool     start.time.isDaily;
 string   start.time.description = "";
 
 // stop conditions ("OR" combined)
 bool     stop.time.condition;                   // whether a time condition is active
 datetime stop.time.value;
+bool     stop.time.isDaily;
 string   stop.time.description = "";
 
 bool     stop.profitAbs.condition;              // whether a takeprofit condition in money is active
@@ -167,21 +197,19 @@ bool     test.optimizeStatus = true;               // whether to reduce status f
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   int zigzagSignal, startSignal, stopSignal;
+   int startSignal, stopSignal, zigzagSignal;
 
    if (sequence.status != STATUS_STOPPED) {
-      bool isZigzagSignal = IsZigzagSignal(zigzagSignal);         // check ZigZag on every tick
+      IsZigZagSignal(zigzagSignal);                                  // check ZigZag on every tick
 
       if (sequence.status == STATUS_WAITING) {
-         if      (IsStopSignal(stopSignal)) StopSequence(stopSignal);
-         else if (IsStartSignal(startSignal)) {
-            if (isZigzagSignal)             StartSequence(zigzagSignal);
-         }
+         if      (IsStopSignal(stopSignal))   StopSequence(stopSignal);
+         else if (IsStartSignal(startSignal)) StartSequence(startSignal);
       }
       else if (sequence.status == STATUS_PROGRESSING) {
-         if (UpdateStatus()) {                                    // update order status and PL
-            if (IsStopSignal(stopSignal)) StopSequence(stopSignal);
-            else if (isZigzagSignal)      ReverseSequence(zigzagSignal);
+         if (UpdateStatus()) {                                       // update order status and PL
+            if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
+            else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
          }
       }
    }
@@ -196,29 +224,36 @@ int onTick() {
  *
  * @return bool
  */
-bool IsZigzagSignal(int &signal) {
+bool IsZigZagSignal(int &signal) {
    if (last_error != NULL) return(false);
    signal = NULL;
 
-   static int lastSignal;
+   static int lastTick, lastResult, lastSignal;
    int trend, reversal;
 
-   if (!GetZigzagData(0, trend, reversal)) return(false);
-
-   if (Abs(trend) == reversal) {
-      if (trend > 0) {
-         if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
-      }
-      else {
-         if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
-      }
-      if (signal != NULL) {
-         if (IsLogInfo()) logInfo("IsZigzagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-         lastSignal = signal;
-         return(true);
-      }
+   if (Tick == lastTick) {
+      signal = lastResult;
    }
-   return(false);
+   else {
+      if (!GetZigZagData(0, trend, reversal)) return(false);
+      if (Abs(trend) == reversal) {
+         if (trend > 0) {
+            if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
+         }
+         else {
+            if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
+         }
+         if (signal != NULL) {
+            if (sequence.status == STATUS_PROGRESSING) {
+               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            }
+            lastSignal = signal;
+         }
+      }
+      lastTick   = Tick;
+      lastResult = signal;
+   }
+   return(signal != NULL);
 }
 
 
@@ -231,7 +266,7 @@ bool IsZigzagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigzagData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
@@ -241,7 +276,7 @@ bool GetZigzagData(int bar, int &combinedTrend, int &reversal) {
 /**
  * Whether a start condition is satisfied for a waiting sequence.
  *
- * @param  _Out_ int &signal - variable receiving the identifier of the satisfied condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
  * @return bool
  */
@@ -249,21 +284,19 @@ bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
-   // start.time
+   // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
-      if (TimeCurrentEx("IsStartSignal(1)") < start.time.value)
-         return(false);
-
-      if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-      signal               = SIGNAL_TIME;
-      start.time.condition = false;
-      SS.StartStopConditions();
-      return(true);
+      datetime now = TimeServer();
+      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {
+         start.time.value += (now - (now % DAY));
+         if (start.time.value < now) start.time.value += 1*DAY;      // set periodic value to the next time in the future
+      }
+      if (now < start.time.value) return(false);
    }
 
-   // no start condition is a valid signal before first start only
-   if (!open.ticket && !ArrayRange(history, 0)) {
-      signal = NULL;
+   // ZigZag signal: --------------------------------------------------------------------------------------------------------
+   if (IsZigZagSignal(signal)) {
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -321,6 +354,12 @@ bool StartSequence(int direction) {
    SS.TotalPL();
    SS.PLStats();
 
+   // update start/stop conditions
+   start.time.condition = false;
+   stop.time.condition  = stop.time.isDaily;
+   if (stop.time.isDaily) stop.time.value %= DAYS;
+   SS.StartStopConditions();
+
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
    return(SaveStatus());
 }
@@ -329,7 +368,7 @@ bool StartSequence(int direction) {
 /**
  * Reverse a progressing sequence.
  *
- * @param  int direction - new trade direction to continue with
+ * @param  int direction - new trade direction
  *
  * @return bool - success status
  */
@@ -337,13 +376,18 @@ bool ReverseSequence(int direction) {
    if (last_error != NULL)                      return(false);
    if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   int lastDirection = ifInt(open.type==OP_BUY, D_LONG, D_SHORT);
-   if (direction == lastDirection)              return(!catch("ReverseSequence(3)  "+ sequence.name +" cannot reverse sequence to the same direction: "+ ifString(direction==D_LONG, "long", "short"), ERR_ILLEGAL_STATE));
 
-   // close open position
-   int oeFlags, oe[];
-   if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-   if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage-oe.Slippage(oe), 1))) return(false);
+   if (open.ticket > 0) {
+      // either continue in the same direction...
+      if ((open.type==OP_BUY && direction==D_LONG) || (open.type==OP_SELL && direction==D_SHORT)) {
+         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(direction==D_LONG, "long", "short") +": continuing with already open "+ ifString(direction==D_LONG, "long", "short") +" position");
+         return(true);
+      }
+      // ...or close the open position
+      int oeFlags, oe[];
+      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage-oe.Slippage(oe), 1))) return(false);
+   }
 
    // open new position
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
@@ -379,7 +423,7 @@ bool ReverseSequence(int direction) {
 
 
 /**
- * Add the trade details of the specified ticket to the local history and reset open position data.
+ * Add trade details of the specified ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
  * @param int    signal   - signal which caused opening of the trade
@@ -433,7 +477,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
 /**
  * Whether a stop condition is satisfied for a progressing sequence.
  *
- * @param  _Out_ int &signal - variable receiving the signal identifier of the satisfied condition
+ * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
  * @return bool
  */
@@ -443,8 +487,12 @@ bool IsStopSignal(int &signal) {
 
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
-      if (TimeCurrentEx("IsStopSignal(1)") >= stop.time.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      datetime now = TimeServer();
+      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {
+         stop.time.value += (now - (now % DAY));
+         if (stop.time.value < now) stop.time.value += 1*DAY;        // set periodic value to the next time in the future
+      }
+      if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
          return(true);
       }
@@ -454,7 +502,7 @@ bool IsStopSignal(int &signal) {
       // stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
@@ -466,7 +514,7 @@ bool IsStopSignal(int &signal) {
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
          if (sequence.totalPL >= stop.profitPct.absValue) {
-            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
@@ -474,7 +522,7 @@ bool IsStopSignal(int &signal) {
 
       // stop.profitPip: ----------------------------------------------------------------------------------------------------
       if (stop.profitPip.condition) {
-         return(!catch("IsStopSignal(5)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
+         return(!catch("IsStopSignal(4)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
       }
    }
    return(false);
@@ -510,7 +558,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                          // a progressing sequence may have an open position to close
+      if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"stopping...");
 
          int oeFlags, oe[];
@@ -523,29 +571,34 @@ bool StopSequence(int signal) {
          SS.PLStats();
       }
    }
-   sequence.status = STATUS_STOPPED;
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 
-   // update stop conditions
+   // update stop conditions and status
    switch (signal) {
       case SIGNAL_TIME:
-         stop.time.condition = false;
+         start.time.condition = start.time.isDaily;
+         if (start.time.isDaily) start.time.value %= DAYS;
+         stop.time.condition  = false;
+         sequence.status      = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
       case SIGNAL_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
          stop.profitPip.condition = false;
+         sequence.status          = STATUS_STOPPED;
          break;
 
-      case NULL:                                      // explicit (manual) stop or end of test
+      case NULL:                                            // explicit stop (manual) or end of test
          break;
 
-      default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
+   SS.StartStopConditions();
+
+   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                 // pause or stop the tester according to the debug configuration
+   if (IsTesting() && sequence.status == STATUS_STOPPED) {  // pause or stop the tester according to the debug configuration
       if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
       else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
@@ -576,7 +629,7 @@ bool UpdateStatus() {
          sequence.openPL = NormalizeDouble(open.swap + open.commission + open.profit, 2);
       }
       else {
-         if (IsError(UpdateStatus.onOrderChange("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+         if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippage)) return(false);
       }
       sequence.totalPL = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
@@ -625,17 +678,20 @@ string UpdateStatus.PositionCloseMsg(int &error) {
 
 
 /**
- * Error handler for unexpected order modifications.
+ * Error handler for unexpected closing of the current position.
  *
  * @param  string message - error message
  * @param  int    error   - error code
  *
- * @return int - the same error
+ * @return int - error status, i.e. whether to interrupt program execution
  */
-int UpdateStatus.onOrderChange(string message, int error) {
-   if (!IsTesting()) logError(message, error);
-   else if (!error)  logDebug(message, error);
-   else              catch(message, error);
+int onPositionClose(string message, int error) {
+   if (!error)      return(logInfo(message));         // no error
+   if (IsTesting()) return(catch(message, error));    // treat everything as a terminating error
+
+   logError(message, error);                          // online
+   if (error == ERR_CONCURRENT_MODIFICATION)          // most probably manually closed
+      return(NO_ERROR);                               // continue
    return(error);
 }
 
@@ -700,6 +756,17 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return("ZigZag"+ sequence.id);
+}
+
+
+/**
  * Return the full name of the instance logfile.
  *
  * @return string - filename or an empty string in case of errors
@@ -724,14 +791,14 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
-      filename = directory + baseName;
+      filename = StrReplace(directory, "\\", "/") + baseName;
    }
 
    if (relative)
       return(filename);
-   return(GetMqlFilesPath() +"\\"+ filename);
+   return(GetMqlSandboxPath() +"/"+ filename);
 }
 
 
@@ -770,7 +837,7 @@ bool SaveStatus() {
    }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) separator = CRLF;                // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;             // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -827,10 +894,12 @@ bool SaveStatus() {
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
    WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
    WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
 
    WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
    WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
    WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
 
    WriteIniString(file, section, "stop.profitAbs.condition",    /*bool    */ stop.profitAbs.condition);
@@ -927,7 +996,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";
@@ -942,8 +1011,8 @@ bool ReadStatus() {
    string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",         "");             // string Sequence.ID         = T1234
    int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"         );             // int    ZigZag.Periods      = 40
    string sLots                = GetIniStringA(file, section, "Lots",                "");             // double Lots                = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime)
+   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime|time)
+   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime|time)
    string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",          "");             // double TakeProfit          = 3.0
    string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
    int    iSlippage            = GetIniInt    (file, section, "Slippage"               );             // int    Slippage            = 2
@@ -1000,10 +1069,12 @@ bool ReadStatus() {
    // other
    start.time.condition       = GetIniBool   (file, section, "start.time.condition"      );           // bool     start.time.condition       = 1
    start.time.value           = GetIniInt    (file, section, "start.time.value"          );           // datetime start.time.value           = 1624924800
+   start.time.isDaily         = GetIniBool   (file, section, "start.time.isDaily"        );           // bool     start.time.isDaily         = 0
    start.time.description     = GetIniStringA(file, section, "start.time.description", "");           // string   start.time.description     = text
 
    stop.time.condition        = GetIniBool   (file, section, "stop.time.condition"      );            // bool     stop.time.condition        = 1
    stop.time.value            = GetIniInt    (file, section, "stop.time.value"          );            // datetime stop.time.value            = 1624924800
+   stop.time.isDaily          = GetIniBool   (file, section, "stop.time.isDaily"        );            // bool     stop.time.isDaily          = 0
    stop.time.description      = GetIniStringA(file, section, "stop.time.description", "");            // string   stop.time.description      = text
 
    stop.profitAbs.condition   = GetIniBool   (file, section, "stop.profitAbs.condition"        );     // bool     stop.profitAbs.condition   = 1
@@ -1145,10 +1216,12 @@ int      prev.sequence.status;
 
 bool     prev.start.time.condition;
 datetime prev.start.time.value;
+bool     prev.start.time.isDaily;
 string   prev.start.time.description = "";
 
 bool     prev.stop.time.condition;
 datetime prev.stop.time.value;
+bool     prev.stop.time.isDaily;
 string   prev.stop.time.description = "";
 bool     prev.stop.profitAbs.condition;
 double   prev.stop.profitAbs.value;
@@ -1187,10 +1260,12 @@ void BackupInputs() {
 
    prev.start.time.condition       = start.time.condition;
    prev.start.time.value           = start.time.value;
+   prev.start.time.isDaily         = start.time.isDaily;
    prev.start.time.description     = start.time.description;
 
    prev.stop.time.condition        = stop.time.condition;
    prev.stop.time.value            = stop.time.value;
+   prev.stop.time.isDaily          = stop.time.isDaily;
    prev.stop.time.description      = stop.time.description;
    prev.stop.profitAbs.condition   = stop.profitAbs.condition;
    prev.stop.profitAbs.value       = stop.profitAbs.value;
@@ -1229,10 +1304,12 @@ void RestoreInputs() {
 
    start.time.condition       = prev.start.time.condition;
    start.time.value           = prev.start.time.value;
+   start.time.isDaily         = prev.start.time.isDaily;
    start.time.description     = prev.start.time.description;
 
    stop.time.condition        = prev.stop.time.condition;
    stop.time.value            = prev.stop.time.value;
+   stop.time.isDaily          = prev.stop.time.isDaily;
    stop.time.description      = prev.stop.time.description;
    stop.profitAbs.condition   = prev.stop.profitAbs.condition;
    stop.profitAbs.value       = prev.stop.profitAbs.value;
@@ -1307,7 +1384,7 @@ bool ValidateInputs() {
    if (LT(Lots, 0))                                               return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
    if (NE(Lots, NormalizeLots(Lots)))                             return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
-   // StartConditions: @time(datetime)
+   // StartConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
       start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
 
@@ -1328,20 +1405,20 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            // TODO: validation of @time is not sufficient
-            start.time.value       = time;
-            start.time.description = "time("+ TimeToStr(time) +")";
+            int pt[];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            start.time.value       = DateTime2(pt, DATE_OF_ERA);
+            start.time.isDaily     = !pt[PT_HAS_DATE];
+            start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
       }
    }
 
-   // StopConditions: @time(datetime)
+   // StopConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
-      start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
+      stop.time.condition = false;                                // on initParameters conditions are re-enabled on change only
 
       sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);    // split conditions
 
@@ -1359,11 +1436,10 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            // TODO: validation of @time is not sufficient
-            stop.time.value       = time;
-            stop.time.description = "time("+ TimeToStr(time) +")";
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            stop.time.value       = DateTime2(pt, DATE_OF_ERA);
+            stop.time.isDaily     = !pt[PT_HAS_DATE];
+            stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
@@ -1654,38 +1730,4 @@ string InputsToStr() {
                             "Slippage=",            Slippage,                        ";", NL,
                             "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),  ";")
    );
-   int iNulls[];
-   ParseTime(NULL, NULL, iNulls);
-}
-
-
-/**
- * Parse the string representation of a date or time.
- *
- * @param  _In_  string value    - string to parse
- * @param  _In_  int    flags    - supported or requird date/time formats
- * @param  _Out_ int   &result[] - array receiving the parsed elements
- *
- * @return bool - success status
- */
-bool ParseTime(string value, int flags, int &result[]) {
-   return(NaT);
-
-   //D'1980.07.19 12:30:27'
-   //D'1980.07.19 12:30'
-   //D'01.01.2004'
-   //D'12:30:27'
-   //D'12:30'
-
-   //DATEFORMAT_YYYYMMDD
-   //DATEFORMAT_DDMMYYYY
-   //DATEFORMAT_OPTIONAL
-   //DATEFORMAT_OPTIONAL_YEAR
-   //DATEFORMAT_OPTIONAL_MONTH
-   //DATEFORMAT_OPTIONAL_DAY
-   //DATEFORMAT_SINGLE_DIGITS
-
-   //TIMEFORMAT_OPTIONAL
-   //TIMEFORMAT_OPTIONAL_SECONDS
-   //TIMEFORMAT_SINGLE_DIGITS
 }

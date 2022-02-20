@@ -24,8 +24,8 @@ bool RunScript(string name, string parameters="") {
 
 
    // (1) Prüfen, ob das Script existiert
-   string file = GetMqlDirectoryA() +"\\scripts\\"+ name +".ex4";
-   if (!IsFile(file, MODE_OS)) return(!catch("RunScript(3)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
+   string file = GetMqlDirectoryA() +"/scripts/"+ name +".ex4";
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("RunScript(3)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
 
 
    // (2) Prüfen, ob bereits ein Script läuft. Eines läuft, wenn auf dem Parameter-Channel ein Receiver aktiv ist oder dort unabgeholte Messages liegen.
