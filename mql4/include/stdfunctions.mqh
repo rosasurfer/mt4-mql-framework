@@ -125,7 +125,7 @@ string ErrorDescription(int error) {
       case ERR_ARRAY_ERROR                : return("array error"                                               );    //   4053 array error
       case ERR_SERIES_NOT_AVAILABLE       : return("requested time series not available"                       );    //   4054 time series not available
       case ERR_CUSTOM_INDICATOR_ERROR     : return("custom indicator error"                                    );    //   4055 custom indicator error
-      case ERR_INCOMPATIBLE_ARRAYS        : return("incompatible arrays"                                       );    //   4056 incompatible arrays
+      case ERR_INCOMPATIBLE_ARRAY         : return("incompatible arrays"                                       );    //   4056 incompatible array
       case ERR_GLOBAL_VARIABLES_PROCESSING: return("global variables processing error"                         );    //   4057
       case ERR_GLOBAL_VARIABLE_NOT_FOUND  : return("global variable not found"                                 );    //   4058
       case ERR_FUNC_NOT_ALLOWED_IN_TESTER : return("function not allowed in tester"                            );    //   4059
@@ -345,9 +345,9 @@ bool PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
-   if (!IsFile(fullName, MODE_OS)) {
+   if (!IsFile(fullName, MODE_SYSTEM)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
-      if (!IsFile(fullName, MODE_OS)) {
+      if (!IsFile(fullName, MODE_SYSTEM)) {
          if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
          return(false);
       }
@@ -472,7 +472,7 @@ bool IsVisualModeFix() {
 
 
 /**
- * Ob der angegebene Wert einen Fehler darstellt.
+ * Whether the specified value represents an error.
  *
  * @param  int value
  *
@@ -484,7 +484,7 @@ bool IsError(int value) {
 
 
 /**
- * Ob der interne Fehler-Code des aktuellen Moduls gesetzt ist.
+ * Whether the internal error code of the current MQL module is set.
  *
  * @return bool
  */
@@ -494,14 +494,34 @@ bool IsLastError() {
 
 
 /**
- * Setzt den internen Fehlercode des aktuellen Moduls zurück.
+ * Reset the internal error code of the current MQL module.
  *
- * @return int - der vorm Zurücksetzen gesetzte Fehlercode
+ * @return int - previous internal error code
  */
 int ResetLastError() {
    int error = last_error;
    SetLastError(NO_ERROR);
    return(error);
+}
+
+
+/**
+ * Whether the internal MQL error code of the program is set. Covers errors in all MQL modules.
+ *
+ * @return bool
+ */
+bool IsMQLError() {
+   return(__ExecutionContext[EC.mqlError] != NO_ERROR);
+}
+
+
+/**
+ * Whether the internal DLL error code of the program is set. Covers errors in the MT4Expander DLL module.
+ *
+ * @return bool
+ */
+bool IsDLLError() {
+   return(__ExecutionContext[EC.dllError] != NO_ERROR);
 }
 
 
@@ -527,18 +547,19 @@ bool IsTicket(int ticket) {
  * Select a ticket.
  *
  * @param  int    ticket                      - ticket
- * @param  string location                    - location identifier of a potential error message
+ * @param  string caller           [optional] - location identifier of the caller (default: none)
  * @param  bool   pushTicket       [optional] - whether to push the selection onto the order selection stack (default: no)
  * @param  bool   onErrorPopTicket [optional] - whether to restore the previously selected ticket in case of errors
  *                                              (default: yes if pushTicket=TRUE, no if pushTicket=FALSE)
  * @return bool - success status
  */
-bool SelectTicket(int ticket, string location, bool pushTicket=false, bool onErrorPopTicket=false) {
+bool SelectTicket(int ticket, string caller="", bool pushTicket=false, bool onErrorPopTicket=false) {
    pushTicket       = pushTicket!=0;
    onErrorPopTicket = onErrorPopTicket!=0;
+   if (caller != "") caller = caller +"->";
 
    if (pushTicket) {
-      if (!OrderPush(location +"->SelectTicket(1)")) return(false);
+      if (!OrderPush(caller +"SelectTicket(1)")) return(false);
       onErrorPopTicket = true;
    }
 
@@ -546,12 +567,12 @@ bool SelectTicket(int ticket, string location, bool pushTicket=false, bool onErr
       return(true);                                   // success
 
    if (onErrorPopTicket)                              // error
-      if (!OrderPop(location +"->SelectTicket(2)")) return(false);
+      if (!OrderPop(caller +"SelectTicket(2)")) return(false);
 
    int error = GetLastError();
    if (!error)
       error = ERR_INVALID_TICKET;
-   return(!catch(location +"->SelectTicket(3)   ticket="+ ticket, error));
+   return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
 }
 
 
@@ -595,16 +616,16 @@ string OrderLogMessage(int ticket) {
 /**
  * Append the currently selected order ticket to the order stack.
  *
- * @param  string location [optional] - error identifier (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return bool - success status
  */
-bool OrderPush(string location = "") {
+bool OrderPush(string caller = "") {
    int ticket = OrderTicket();
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
-      return(!catch(location +"->OrderPush(1)", error));
+      return(!catch(caller +"->OrderPush(1)", error));
 
    ArrayPushInt(__orderStack, ticket);
    return(true);
@@ -614,20 +635,20 @@ bool OrderPush(string location = "") {
 /**
  * Remove the last order ticket from the order stack and restore (i.e. select) it.
  *
- * @param  string location [optional] - error identifier (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return bool - success status
  */
-bool OrderPop(string location = "") {
+bool OrderPop(string caller = "") {
    int ticket = ArrayPopInt(__orderStack);
    if (ticket > 0)
-      return(SelectTicket(ticket, location +"->OrderPop(1)"));
+      return(SelectTicket(ticket, caller +"->OrderPop(1)"));
 
    OrderSelect(0, SELECT_BY_TICKET);
 
    int error = GetLastError();
    if (error && error!=ERR_NO_TICKET_SELECTED)
-      return(!catch(location +"->OrderPop(2)", error));
+      return(!catch(caller +"->OrderPop(2)", error));
    return(true);
 }
 
@@ -801,31 +822,31 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 /**
  * Return a symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
  *
- * @param  _In_  string symbol              - symbol
- * @param  _In_  double lots                - lot amount
- * @param  _Out_ int    &error              - variable receiving the error status
- * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
- *                                            if specified errors are logged
- *                                            if not specified errors are not logged (default)
+ * @param  _In_  string symbol            - symbol
+ * @param  _In_  double lots              - lot amount
+ * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
+ *                                           if specified errors are logged
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - pip value or NULL (0) in case of errors, check parameter 'error'
  */
-double PipValueEx(string symbol, double lots, int &error, string location = "") {
-   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, location);
+double PipValueEx(string symbol, double lots, int &error, string caller = "") {
+   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, caller);
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(1)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(1)", error);
       return(NULL);
    }
 
-   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, location);  // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
+   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller);    // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(2)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(2)", error);
       return(NULL);
    }
 
-   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, location);           // TODO: the returned digits may be wrong
+   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, caller);             // TODO: the returned digits may be wrong
    if (error != NO_ERROR) {
-      if (location!="" && IsLogDebug()) logDebug(location +"->PipValueEx(3)", error);
+      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(3)", error);
       return(NULL);
    }
 
@@ -849,8 +870,8 @@ double PipValueEx(string symbol, double lots, int &error, string location = "") 
  * @return double - commission value or EMPTY (-1) in case of errors
  */
 double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
-   static double baseCommission;
-   static bool resolved; if (!resolved) {
+   static double baseCommission = EMPTY_VALUE;
+   if (baseCommission == EMPTY_VALUE) {
       bool isCFD = false;
       double value = 0;
 
@@ -892,7 +913,6 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          }
       }
       baseCommission = value;
-      resolved = true;
    }
 
    switch (mode) {
@@ -1997,7 +2017,7 @@ double MathDiv(double a, double b, double onZero = 0) {
 
 
 /**
- * Return the division remainder of two double values. Replacement for the flawed builtin function MathMod().
+ * Return the division remainder of two double values. Replacement for the flawed built-in function MathMod().
  *
  * @param  double a
  * @param  double b
@@ -2427,7 +2447,7 @@ bool StrIsPhoneNumber(string value) {
  *       nach Aufruf anderer Array-Funktionen auf, die mit völlig unbeteiligten Arrays/String arbeiteten.
  */
 int ArrayUnshiftString(string &array[], string value) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArrayUnshiftString(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
 
    ReverseStringArray(array);
    int size = ArrayPushString(array, value);
@@ -2540,33 +2560,33 @@ bool IsLeapYear(int year) {
 
 
 /**
- * Erzeugt einen datetime-Wert. Parameter, die außerhalb der gebräuchlichen Zeitgrenzen liegen, werden automatisch in die
- * entsprechende Periode übertragen. Der resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis
- * D'2038.01.19 03:14:07' (INT_MAX) liegen.
+ * Create a datetime value from the specified parameters.
  *
- * Beispiel: DateTime(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
+ * Parameter, die außerhalb der üblichen Wertegrenzen liegen, werden in die resultierende Periode übertragen. Der
+ * resultierende Zeitpunkt kann im Bereich von D'1901.12.13 20:45:52' (INT_MIN) bis D'2038.01.19 03:14:07' (INT_MAX) liegen.
  *
- * @param  int year    -
- * @param  int month   - default: Januar
- * @param  int day     - default: der 1. des Monats
- * @param  int hours   - default: 0 Stunden
- * @param  int minutes - default: 0 Minuten
- * @param  int seconds - default: 0 Sekunden
+ * Beispiel: DateTime1(2012, 2, 32, 25, -2) => D'2012.03.04 00:58:00' (2012 war ein Schaltjahr)
  *
- * @return datetime - datetime-Wert oder NaT (Not-a-Time), falls ein Fehler auftrat
+ * @param  int year    - year
+ * @param  int month   - month   (default: January)
+ * @param  int day     - day     (default: 1st of the month)
+ * @param  int hours   - hour    (default: Midnight)
+ * @param  int minutes - minutes (default: 0 minutes)
+ * @param  int seconds - seconds (default: 0 seconds)
+ *
+ * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
  *
  * Note: Die internen MQL-Funktionen unterstützen nur datetime-Werte im Bereich von D'1970.01.01 00:00:00' bis
  *       D'2037.12.31 23:59:59'. Diese Funktion unterstützt eine größere datetime-Range.
  */
-datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
+datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0, int seconds=0) {
    year += (Ceil(month/12.) - 1);
    month = (12 + month%12) % 12;
-   if (!month)
-      month = 12;
+   if (!month) month = 12;
 
    string  sDate = StringConcatenate(StrRight("000"+year, 4), ".", StrRight("0"+month, 2), ".01");
    datetime date = StrToTime(sDate);
-   if (date < 0) return(_NaT(catch("DateTime(1)  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
+   if (date < 0) return(_NaT(catch("DateTime1(1)  year="+ year +", month="+ month +", day="+ day +", hours="+ hours +", minutes="+ minutes +", seconds="+ seconds, ERR_INVALID_PARAMETER)));
 
    int time = (day-1)*DAYS + hours*HOURS + minutes*MINUTES + seconds*SECONDS;
    return(date + time);
@@ -2574,9 +2594,54 @@ datetime DateTime(int year, int month=1, int day=1, int hours=0, int minutes=0, 
 
 
 /**
+ * Create a datetime value from a ParseTime() result array.
+ *
+ * @param  int parsed[]         - ParseTime() result array
+ * @param  int flags [optional] - flags controling datetime creation (see notes)
+ *
+ * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors
+ *
+ * Notes:
+ * ------
+ * - If the passed data contains no date part the returned datetime value is controled by parameter 'flags':
+ *    DATE_OF_TODAY: a datetime value relative to Midnight of the current day (default)
+ *    DATE_OF_ERA:   a datetime value relative to the start of the era (1970-01-01)
+ * - If the passed data contains no time part the returned datetime value is set to Midnight (00:00:00).
+ */
+datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
+   if (ArrayDimension(parsed) > 1)      return(_NaT(catch("DateTime2(1)  too many dimensions of parameter parsed: "+ ArrayDimension(parsed), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(parsed) != PT_ERROR+1) return(_NaT(catch("DateTime2(2)  invalid size of parameter parsed: "+ ArraySize(parsed), ERR_INCOMPATIBLE_ARRAY)));
+
+   int pt[]; ArrayCopy(pt, parsed);
+
+   if (!pt[PT_HAS_DATE]) {
+      if (flags & DATE_OF_ERA == DATE_OF_ERA) {
+         pt[PT_YEAR    ] = 1970;
+         pt[PT_MONTH   ] = 1;
+         pt[PT_DAY     ] = 1;
+      }
+      else {
+         datetime now = TimeLocalEx();
+         pt[PT_YEAR    ] = TimeYearEx(now);
+         pt[PT_MONTH   ] = TimeMonth(now);
+         pt[PT_DAY     ] = TimeDayEx(now);
+      }
+      pt[PT_HAS_DATE] = 1;
+   }
+   if (!pt[PT_HAS_TIME]) {
+      pt[PT_HOUR    ] = 0;
+      pt[PT_MINUTE  ] = 0;
+      pt[PT_SECOND  ] = 0;
+      pt[PT_HAS_TIME] = 1;
+   }
+   return(DateTime1(pt[PT_YEAR], pt[PT_MONTH], pt[PT_DAY], pt[PT_HOUR], pt[PT_MINUTE], pt[PT_SECOND]));
+}
+
+
+/**
  * Return the day of the month of the specified time: 1...31
  *
- * Fixes the broken builtin function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeDay() which returns 0 instead of 1 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
@@ -2591,7 +2656,7 @@ int TimeDayEx(datetime time) {
 /**
  * Return the zero-based weekday of the specified time: 0=Sunday...6=Saturday
  *
- * Fixes the broken builtin function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
+ * Fixes the broken built-in function TimeDayOfWeek() which returns 0 (Sunday) for D'1970.01.01 00:00:00' (a Thursday).
  *
  * @param  datetime time
  *
@@ -2606,7 +2671,7 @@ int TimeDayOfWeekEx(datetime time) {
 /**
  * Return the year of the specified time: 1970...2037
  *
- * Fixes the broken builtin function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
+ * Fixes the broken built-in function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
  * @param  datetime time
  *
@@ -2644,7 +2709,7 @@ void CopyMemory(int destination, int source, int bytes) {
  * @return int - sum or NULL (0) in case of errors
  */
 int SumInts(int values[]) {
-   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_NULL(catch("SumInts(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
 
    int sum, size=ArraySize(values);
 
@@ -2658,16 +2723,16 @@ int SumInts(int values[]) {
 /**
  * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
- * @param  _In_  string symbol              - symbol
- * @param  _In_  int    type                - identifier of the MarketInfo data to query
- * @param  _Out_ int    &error              - variable receiving the error status
- * @param  _In_  string location [optional] - location identifier of the call, controls logging behavior:
- *                                            if specified errors are logged
- *                                            if not specified errors are not logged (default)
+ * @param  _In_  string symbol            - symbol
+ * @param  _In_  int    type              - identifier of the MarketInfo data to query
+ * @param  _Out_ int    &error            - variable receiving the error status
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
+ *                                           if specified errors are logged
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - result of the MarketInfo() call or NULL (0) in case of errors, check parameter 'error'
  */
-double MarketInfoEx(string symbol, int type, int &error, string location = "") {
+double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    double value = MarketInfo(symbol, type);
 
    error = GetLastError();
@@ -2681,8 +2746,8 @@ double MarketInfoEx(string symbol, int type, int &error, string location = "") {
    }
    if (!error) return(value);
 
-   if (location != "") {
-      if (IsLogDebug()) logDebug(location +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
+   if (caller != "") {
+      if (IsLogDebug()) logDebug(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    }
    return(NULL);
 }
@@ -2733,66 +2798,66 @@ string MarketInfoTypeToStr(int type) {
 /**
  * Dump major global vars and available MarketInfo() data to the system debugger.
  *
- * @param  string location - location identifier
+ * @param  string caller - location identifier of the caller
  *
  * @return int - error status
  */
-int DebugMarketInfo(string location) {
+int DebugMarketInfo(string caller = "") {
    string symbol = Symbol();
    double value;
    int    error;
 
-   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
-   debug(location +"  Global variables for \""+ symbol +"\"");             //  Global variables "EURUSD"
-   debug(location +"  "+ StrRepeat("-", 23 + StringLen(symbol)));          //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  Global variables for \""+ symbol +"\"");               //  Global variables "EURUSD"
+   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
 
-   debug(location +"  built-in: Digits      = "+ Digits);
-   debug(location +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
-   debug(location +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
-   debug(location +"  derived:  PipDigits   = "+ PipDigits);
-   debug(location +"  derived:  PipPoints   = "+ PipPoints);
-   debug(location +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
-   debug(location +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
-   debug(location +"  built-in: Bars        = "+ Bars);
+   debug(caller +"  built-in: Digits      = "+ Digits);
+   debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
+   debug(caller +"  derived:  Pip         = "+ NumberToStr(Pip, PriceFormat));
+   debug(caller +"  derived:  PipDigits   = "+ PipDigits);
+   debug(caller +"  derived:  PipPoints   = "+ PipPoints);
+   debug(caller +"  derived:  PriceFormat = \""+ PriceFormat +"\"");
+   debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
+   debug(caller +"  built-in: Bars        = "+ Bars);
 
-   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
-   debug(location +"  MarketInfo() for \""+ symbol +"\"");                 //  MarketInfo() for "EURUSD"
-   debug(location +"  "+ StrRepeat("-", 19 + StringLen(symbol)));          //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  MarketInfo() for \""+ symbol +"\"");                   //  MarketInfo() for "EURUSD"
+   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
 
    // see MODE explanations in "include/stddefines.mqh"
-   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(location +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(location +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(location +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(location +"  4                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(location +"  MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(location +"  6                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(location +"  7                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(location +"  8                      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(location +"  MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(location +"  MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(location +"  MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(location +"  MODE_DIGITS            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(location +"  MODE_SPREAD            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(location +"  MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(location +"  MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(location +"  MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(location +"  MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
-   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(location +"  MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(location +"  MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(location +"  MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(location +"  MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
-   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(location +"  MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(location +"  MODE_MINLOT            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(location +"  MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(location +"  MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(location +"  MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(location +"  MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(location +"  MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(location +"  MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(location +"  MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(location +"  MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                              , error);
-   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(location +"  MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(caller +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_HIGH             ); error = GetLastError();                 debug(caller +"  MODE_HIGH              = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, 3                     ); error = GetLastError(); if (value != 0) debug(caller +"  3                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 4                     ); error = GetLastError(); if (value != 0) debug(caller +"  4                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TIME             ); error = GetLastError();                 debug(caller +"  MODE_TIME              = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, 6                     ); error = GetLastError(); if (value != 0) debug(caller +"  6                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 7                     ); error = GetLastError(); if (value != 0) debug(caller +"  7                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, 8                     ); error = GetLastError(); if (value != 0) debug(caller +"  8                      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_BID              ); error = GetLastError();                 debug(caller +"  MODE_BID               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_ASK              ); error = GetLastError();                 debug(caller +"  MODE_ASK               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_POINT            ); error = GetLastError();                 debug(caller +"  MODE_POINT             = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_DIGITS           ); error = GetLastError();                 debug(caller +"  MODE_DIGITS            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SPREAD           ); error = GetLastError();                 debug(caller +"  MODE_SPREAD            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STOPLEVEL        ); error = GetLastError();                 debug(caller +"  MODE_STOPLEVEL         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSIZE          ); error = GetLastError();                 debug(caller +"  MODE_LOTSIZE           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKVALUE        ); error = GetLastError();                 debug(caller +"  MODE_TICKVALUE         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_TICKSIZE         ); error = GetLastError();                 debug(caller +"  MODE_TICKSIZE          = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
+   value = MarketInfo(symbol, MODE_SWAPLONG         ); error = GetLastError();                 debug(caller +"  MODE_SWAPLONG          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPSHORT        ); error = GetLastError();                 debug(caller +"  MODE_SWAPSHORT         = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_STARTING         ); error = GetLastError();                 debug(caller +"  MODE_STARTING          = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_EXPIRATION       ); error = GetLastError();                 debug(caller +"  MODE_EXPIRATION        = "+ ifString(value<=0, NumberToStr(value, ".+"), TimeToStr(value, TIME_FULL)), error);
+   value = MarketInfo(symbol, MODE_TRADEALLOWED     ); error = GetLastError();                 debug(caller +"  MODE_TRADEALLOWED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MINLOT           ); error = GetLastError();                 debug(caller +"  MODE_MINLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_LOTSTEP          ); error = GetLastError();                 debug(caller +"  MODE_LOTSTEP           = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MAXLOT           ); error = GetLastError();                 debug(caller +"  MODE_MAXLOT            = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_SWAPTYPE         ); error = GetLastError();                 debug(caller +"  MODE_SWAPTYPE          = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_PROFITCALCMODE   ); error = GetLastError();                 debug(caller +"  MODE_PROFITCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINCALCMODE   ); error = GetLastError();                 debug(caller +"  MODE_MARGINCALCMODE    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGININIT       ); error = GetLastError();                 debug(caller +"  MODE_MARGININIT        = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINMAINTENANCE); error = GetLastError();                 debug(caller +"  MODE_MARGINMAINTENANCE = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINHEDGED     ); error = GetLastError();                 debug(caller +"  MODE_MARGINHEDGED      = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_MARGINREQUIRED   ); error = GetLastError();                 debug(caller +"  MODE_MARGINREQUIRED    = "+                    NumberToStr(value, ".+")                              , error);
+   value = MarketInfo(symbol, MODE_FREEZELEVEL      ); error = GetLastError();                 debug(caller +"  MODE_FREEZELEVEL       = "+                    NumberToStr(value, ".+")                              , error);
 
    return(catch("DebugMarketInfo(1)"));
 }
@@ -3008,11 +3073,10 @@ string StrRightPad(string input, int padLength, string padString = " ") {
  * @return bool
  */
 bool This.IsTesting() {
-   static bool result, resolved;
-   if (!resolved) {
+   static bool result = -1;
+   if (result == -1) {
       if (IsTesting()) result = true;
-      else             result = __ExecutionContext[EC.testing] != 0;
-      resolved = true;
+      else             result = (__ExecutionContext[EC.testing] != 0);
    }
    return(result);
 }
@@ -3025,11 +3089,10 @@ bool This.IsTesting() {
  * @return bool
  */
 bool IsDemoFix() {
-   static bool result, resolved;
-   if (!resolved) {
+   static bool result = -1;
+   if (result == -1) {
       if (IsDemo()) result = true;
       else          result = This.IsTesting();
-      resolved = true;
    }
    return(result);
 }
@@ -3273,22 +3336,22 @@ string UrlEncode(string value) {
  * Whether the specified file exists.
  *
  * @param  string path - file path (may be a symbolic link); supports both forward and backward slashes
- * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
- *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
+ * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
+ *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
  * @return bool
  */
 bool IsFile(string path, int mode) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsFile(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
-   return(IsFileA(path, MODE_OS));
+   return(IsFileA(path, MODE_SYSTEM));
 }
 
 
@@ -3296,22 +3359,22 @@ bool IsFile(string path, int mode) {
  * Whether the specified directory exists.
  *
  * @param  string path - directory path (may be a symbolic link or a junction), supports both forward and backward slashes
- * @param  int    mode - MODE_MQL: restrict the function's operation to the MQL sandbox
- *                       MODE_OS:  allow the function to operate outside of the MQL sandbox
+ * @param  int    mode - MODE_MQL:    restrict the function's operation to the MQL sandbox
+ *                       MODE_SYSTEM: allow the function to operate outside of the MQL sandbox
  * @return bool
  */
 bool IsDirectory(string path, int mode) {
    // TODO: check whether scripts and indicators in tester indeed access "{data-directory}/tester/"
-   if (!(~mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( mode & (MODE_MQL|MODE_OS))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(1)  invalid parameter mode: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( mode & (MODE_MQL|MODE_SYSTEM))) return(!catch("IsDirectory(2)  invalid parameter mode: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (mode & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
       path = StringConcatenate(filesDirectory, "/", path);
    }
-   return(IsDirectoryA(path, MODE_OS));
+   return(IsDirectoryA(path, MODE_SYSTEM));
 }
 
 
@@ -3320,47 +3383,48 @@ bool IsDirectory(string path, int mode) {
  *
  * @param  string path  - directory path
  * @param  int    flags - MODE_MQL:      restrict the function's operation to the MQL sandbox
- *                        MODE_OS:       allow the function to operate outside of the MQL sandbox
+ *                        MODE_SYSTEM:   allow the function to operate outside of the MQL sandbox
  *                        MODE_MKPARENT: create parent directories as needed and report no error on an existing directory;
  *                                       otherwise create only the final directory and report an error if it exists
  * @return bool - success status
  */
 bool CreateDirectory(string path, int flags) {
-   if (!(~flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_OS can be specified", ERR_INVALID_PARAMETER));
-   if (!( flags & (MODE_MQL|MODE_OS))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_OS must be specified", ERR_INVALID_PARAMETER));
+   if (!(~flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(1)  invalid parameter flag: only one of MODE_MQL or MODE_SYSTEM can be specified", ERR_INVALID_PARAMETER));
+   if (!( flags & (MODE_MQL|MODE_SYSTEM))) return(!catch("CreateDirectory(2)  invalid parameter flag: one of MODE_MQL or MODE_SYSTEM must be specified", ERR_INVALID_PARAMETER));
 
    if (flags & MODE_MQL && 1) {
-      string filesDirectory = GetMqlFilesPath();
+      string filesDirectory = GetMqlSandboxPath();
       if (!StringLen(filesDirectory))
          return(false);
-      path = StringConcatenate(filesDirectory, "\\", path);
+      path = StringConcatenate(filesDirectory, "/", path);
       flags &= ~MODE_MQL;
    }
-   return(!CreateDirectoryA(path, flags|MODE_OS));
+   return(!CreateDirectoryA(path, flags|MODE_SYSTEM));
 }
 
 
 /**
- * Return the full path of the MQL "files" directory. This is the directory accessible to MQL file functions.
+ * Return the full path of the MQL sandbox directory. This is the only directory accessible to MQL file functions.
  *
- * @return string - directory path not ending with a slash or an empty string in case of errors
+ * @return string - directory path or an empty string in case of errors
  */
-string GetMqlFilesPath() {
-   static string filesDir=""; if (!StringLen(filesDir)) {
+string GetMqlSandboxPath() {
+   static string path = ""; if (!StringLen(path)) {
       if (IsTesting()) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
 
-         filesDir = dataDirectory +"\\tester\\files";
+         path = dataDirectory +"/tester/files";
       }
       else {
          string mqlDirectory = GetMqlDirectoryA();
          if (!StringLen(mqlDirectory)) return(EMPTY_STR);
 
-         filesDir = mqlDirectory +"\\files";
+         path = mqlDirectory +"/files";
       }
+      path = StrReplace(path, "\\", "/");
    }
-   return(filesDir);
+   return(path);
 }
 
 
@@ -3764,11 +3828,11 @@ int Tester.GetBarModel() {
 /**
  * Pause the tester. Can be used only in the tester.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
-int Tester.Pause(string location = "") {
+int Tester.Pause(string caller = "") {
    if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
@@ -3778,7 +3842,7 @@ int Tester.Pause(string location = "") {
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
 
-   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Pause()");
+   if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Pause()");
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
    return(NO_ERROR);
@@ -3788,16 +3852,16 @@ int Tester.Pause(string location = "") {
 /**
  * Stop the tester. Can be used only in the tester.
  *
- * @param  string location [optional] - location identifier of the caller (default: none)
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
  * @return int - error status
  */
-int Tester.Stop(string location = "") {
+int Tester.Stop(string caller = "") {
    if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
 
-   if (IsLogDebug()) logDebug(location + ifString(StringLen(location), "->", "") +"Tester.Stop()");
+   if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Stop()");
 
    int hWnd = GetTerminalMainWindow();
    if (!hWnd) return(last_error);
@@ -3985,39 +4049,47 @@ bool EventListener.NewTick() {
 
 
 /**
- * Gibt die aktuelle Server-Zeit des Terminals zurück (im Tester entsprechend der im Tester modellierten Zeit). Diese Zeit
- * muß nicht mit der Zeit des letzten Ticks übereinstimmen (z.B. am Wochenende oder wenn keine Ticks existieren).
+ * Return the current trade server time. In tester the time is modeled. Different from the last known tick time which is only
+ * updated on new ticks.
  *
- * @return datetime - Server-Zeit oder NULL, falls ein Fehler auftrat
+ * @param  bool watchLastTick [optional] - account for a server clock being fast wich happens quite often (default: yes)
+ *
+ * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
  */
-datetime TimeServer() {
-   datetime serverTime;
+datetime TimeServer(bool watchLastTick = true) {
+   static bool isLibrary = -1;
+   if (isLibrary == -1) isLibrary = IsLibrary();
 
    if (This.IsTesting()) {
-      // im Tester entspricht die Serverzeit immer der Zeit des letzten Ticks
-      serverTime = TimeCurrentEx("TimeServer(1)");
+      if (isLibrary)
+         return(__ExecutionContext[EC.currTickTime]);
+      return(Tick.time);
    }
-   else {
-      // Außerhalb des Testers darf TimeCurrent[Ex]() nicht verwendet werden. Der Rückgabewert ist in Kurspausen bzw. am Wochenende oder wenn keine
-      // Ticks existieren (in Offline-Charts) falsch.
-      serverTime = GmtToServerTime(GetGmtTime()); if (serverTime == NaT) return(NULL);
+
+   datetime serverTime = GmtToServerTime(GetGmtTime());
+   if (serverTime == NaT) return(NULL);
+
+   if (watchLastTick) {
+      datetime lastTickTime = TimeCurrent();
+      if (lastTickTime > serverTime)
+         return(lastTickTime);
    }
    return(serverTime);
 }
 
 
 /**
- * Return the trade server's current time in GMT. In tester the time is modeled accordingly.
+ * Return the current trade server time in GMT. In tester the time is modeled.
  *
- * @return datetime - trade server time in GMT or NULL in case of errors
+ * @return datetime - trade server time in GMT or NULL (0) in case of errors
  */
 datetime TimeGMT() {
    datetime gmt;
 
    if (This.IsTesting()) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = GetLocalTime(); if (!localTime) return(NULL);
-      gmt = ServerToGmtTime(localTime);                              // TimeLocal() entspricht im Tester der Serverzeit
+      datetime localTime = Tick.time;
+      gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
    }
    else {
       gmt = GetGmtTime();
@@ -4027,11 +4099,9 @@ datetime TimeGMT() {
 
 
 /**
- * Return the trade server's current time in FXT. In tester the time is modeled accordingly.
+ * Return the current trade server time in FXT. In tester the time is modeled.
  *
- * @return datetime - trade server time in FXT or NULL in case of errors
- *
- * @see  GetFxtTime() to return the system's FXT time in tester
+ * @return datetime - trade server time in FXT or NULL (0) in case of errors
  */
 datetime TimeFXT() {
    datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
@@ -4068,20 +4138,20 @@ datetime GetServerTime() {
 
 
 /**
- * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
- * letzten Ticks des getesteten Symbols.
+ * Drop-in replacement for the flawed built-in function TimeLocal().
  *
- * @param  string location - Bezeichner für eine evt. Fehlermeldung
+ * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
+ * the local timezone is set to the trade server's timezone.
  *
- * @return datetime - Zeitpunkt oder NULL, falls ein Fehler auftrat
+ * @param  string caller [optional] - location identifier of the caller (default: none)
  *
+ * @return datetime - time or NULL (0) in case of errors
  *
- * NOTE: Im Unterschied zur Originalfunktion meldet diese Funktion einen Fehler, wenn der Zeitpunkt des letzten Ticks nicht
- *       bekannt ist.
+ * NOTE: This function signals an error if TimeLocal() returns an invalid value.
  */
-datetime TimeCurrentEx(string location="") {
-   datetime time = TimeCurrent();
-   if (!time) return(!catch(location + ifString(!StringLen(location), "", "->") +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR));
+datetime TimeLocalEx(string caller = "") {
+   datetime time = TimeLocal();
+   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
    return(time);
 }
 
@@ -4261,6 +4331,18 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 
 
 /**
+ * Return the full path of the current account/trade server directory. The function doesn't check whether the directory exists.
+ *
+ * @return string - directory name or an empty string in case of errors
+ */
+string GetAccountServerPath() {
+   string directory  = GetHistoryRootPathA();  if (directory == "")  return("");
+   string serverName = GetAccountServerName(); if (serverName == "") return("");
+   return(StringConcatenate(directory, "\\", serverName));
+}
+
+
+/**
  * Return the identifier of the current account company. The identifier is case-insensitive and consists of alpha-numerical
  * characters only. By default the identifier matches the first word of the current tradeserver name. It can be mapped to a
  * different company identifier via section [AccountCompanies] of the framework configuration.
@@ -4286,11 +4368,11 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten Servernamen
-   // zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
+   // dessen muß immer der Umweg über GetAccountServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten
+   // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer="", lastId="";
 
-   string server = GetAccountServer(); if (!StringLen(server)) return("");
+   string server = GetAccountServerName(); if (!StringLen(server)) return("");
    if (server == lastServer)
       return(lastId);
 
@@ -5431,118 +5513,6 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
 
 
 /**
- * Parse the string representation of a date value.
- *
- * @param  string value - format: "yyyy.mm.dd"
- *
- * @return datetime - datetime value or NaT (not-a-time) in case of errors
- */
-datetime ParseDate(string value) {
-   string sValues[], origValue=value;
-   value = StrTrim(value);
-   if (!StringLen(value))                                  return(_NaT(catch("ParseDate(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-   int sizeOfValues = Explode(value, ".", sValues, NULL);
-   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDate(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-
-   // parse year: YYYY
-   string sYY = StrTrim(sValues[0]);
-   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDate(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-   int iYY = StrToInteger(sYY);
-   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDate(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-
-   // parse month: MM
-   string sMM = StrTrim(sValues[1]);
-   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDate(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-   int iMM = StrToInteger(sMM);
-   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDate(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-
-   // parse day: DD
-   string sDD = StrTrim(sValues[2]);
-   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDate(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-   int iDD = StrToInteger(sDD);
-   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDate(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-   if (iDD > 28) {
-      if (iMM == FEB) {
-         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDate(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-      }
-      else if (iDD == 31) {
-         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDate(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date)", ERR_INVALID_PARAMETER)));
-      }
-   }
-   return(DateTime(iYY, iMM, iDD));
-}
-
-
-/**
- * Parse the string representation of a date or datetime value.
- *
- * @param  string value - format: "yyyy.mm.dd [hh:ii[:ss]]" with optional time part
- *
- * @return datetime - datetime value or NaT (Not-a-Time) in case of errors
- */
-datetime ParseDateTime(string value) {
-   string sValues[], origValue=value;
-   value = StrTrim(value);
-   if (!StringLen(value))                                  return(_NaT(catch("ParseDateTime(1)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int sizeOfValues = Explode(value, ".", sValues, NULL);
-   if (sizeOfValues != 3)                                  return(_NaT(catch("ParseDateTime(2)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-   // parse year: yyyy
-   string sYY = StrTrim(sValues[0]);
-   if (StringLen(sYY)!=4 || !StrIsDigit(sYY))              return(_NaT(catch("ParseDateTime(3)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iYY = StrToInteger(sYY);
-   if (iYY < 1970 || iYY > 2037)                           return(_NaT(catch("ParseDateTime(4)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-   // parse month: mm
-   string sMM = StrTrim(sValues[1]);
-   if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(_NaT(catch("ParseDateTime(5)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iMM = StrToInteger(sMM);
-   if (iMM < 1 || iMM > 12)                                return(_NaT(catch("ParseDateTime(6)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   sValues[2]   = StrTrim(sValues[2]);
-   string sDD   = StrLeftTo(sValues[2], " ");
-   string sTime = StrTrim(StrRight(sValues[2], -StringLen(sDD)));
-
-   // parse day: dd
-   sDD = StrTrim(sDD);
-   if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(_NaT(catch("ParseDateTime(7)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   int iDD = StrToInteger(sDD);
-   if (iDD < 1 || iDD > 31)                                return(_NaT(catch("ParseDateTime(8)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-   if (iDD > 28) {
-      if (iMM == FEB) {
-         if (iDD > 29 || !IsLeapYear(iYY))                 return(_NaT(catch("ParseDateTime(9)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-      else if (iDD == 31) {
-         if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV) return(_NaT(catch("ParseDateTime(10)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-   }
-
-   // parse time: hh:ii[:ss]
-   int iHH=0, iII=0, iSS=0;
-   if (StringLen(sTime) > 0) {
-      sizeOfValues = Explode(sTime, ":", sValues, NULL);
-      if (sizeOfValues < 2 || sizeOfValues > 3)            return(_NaT(catch("ParseDateTime(11)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-      string sHH = StrTrim(sValues[0]);
-      if (StringLen(sHH) > 2 || !StrIsDigit(sHH))          return(_NaT(catch("ParseDateTime(12)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      iHH = StrToInteger(sHH);
-      if (iHH < 0 || iHH > 23)                             return(_NaT(catch("ParseDateTime(13)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-
-      string sII = StrTrim(sValues[1]);
-      if (StringLen(sII) > 2 || !StrIsDigit(sII))          return(_NaT(catch("ParseDateTime(14)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      iII = StrToInteger(sII);
-      if (iII < 0 || iII > 59)                             return(_NaT(catch("ParseDateTime(15)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      if (sizeOfValues == 3) {
-         string sSS = StrTrim(sValues[2]);
-         if (StringLen(sSS) > 2 || !StrIsDigit(sSS))       return(_NaT(catch("ParseDateTime(16)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-         iSS = StrToInteger(sSS);
-         if (iSS < 0 || iSS > 59)                          return(_NaT(catch("ParseDateTime(17)  invalid parameter value: "+ DoubleQuoteStr(origValue) +" (not a date/time)", ERR_INVALID_PARAMETER)));
-      }
-   }
-   return(DateTime(iYY, iMM, iDD, iHH, iII, iSS));
-}
-
-
-/**
  * Return the description of a loglevel constant.
  *
  * @param  int level - loglevel
@@ -6069,7 +6039,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
-   string filesDir = GetMqlFilesPath() +"\\";
+   string filesDir = GetMqlSandboxPath() +"/";
 
    // Validierung
    // Sender
@@ -6117,7 +6087,7 @@ bool SendEmail(string sender, string receiver, string subject, string message) {
 
    // benötigte Executables ermitteln: Bash und Mailclient
    string bash = GetConfigString("System", "Bash");
-   if (!IsFile(bash, MODE_OS)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
+   if (!IsFile(bash, MODE_SYSTEM)) return(!catch("SendEmail(10)  bash executable not found: "+ DoubleQuoteStr(bash), ERR_FILE_NOT_FOUND));
    // TODO: absoluter Pfad => direkt testen
    // TODO: relativer Pfad => Systemverzeichnisse und $PATH durchsuchen
 
@@ -6202,10 +6172,10 @@ bool SendSMS(string receiver, string message) {
 
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
-   string filesDir     = GetMqlFilesPath();
-   string responseFile = filesDir +"\\sms_"+ GmtTimeFormat(GetLocalTime(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
-   string logFile      = filesDir +"\\sms.log";
-   string cmd          = GetMqlDirectoryA() +"\\libraries\\wget.exe";
+   string filesDir     = GetMqlSandboxPath();
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string logFile      = filesDir +"/sms.log";
+   string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
    string cmdLine      = cmd +" "+ arguments;
 
@@ -7008,6 +6978,47 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
 
 
 /**
+ * Check a trade server path for safe usage. If the file "symbols.raw" is not found a notice is emitted and the file is
+ * created.
+ *
+ * @param  string path              - if a relative path:  relative to the MQL sandbox/files directory
+ *                                    if an absolute path: as is
+ * @param  string caller [optional] - location identifier of the caller (default: none)
+ *
+ * @return bool - whether it's safe to use the path
+ */
+bool UseTradeServerPath(string path, string caller = "") {
+   int fsMode = ifInt(IsAbsolutePath(path), MODE_SYSTEM, MODE_MQL);
+   string filename = path +"/symbols.raw";
+
+   if (!IsFile(filename, fsMode)) {
+      if (caller == "0") caller = "";                    // (string) NULL
+      if (caller != "")  caller = caller +"->";
+      logNotice(caller +"UseTradeServerPath(1)  \""+ path +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
+
+      // make sure the directory exists
+      if (!CreateDirectory(path, fsMode|MODE_MKPARENT)) return(!catch(caller +"UseTradeServerPath(2)  cannot create directory "+ DoubleQuoteStr(path), ERR_INVALID_PARAMETER));
+
+      // touch the file
+      if (fsMode == MODE_MQL) filename = GetMqlSandboxPath() +"/"+ filename;
+      int hFile = CreateFileA(filename,                  // file name
+                              GENERIC_READ,              // desired access
+                              FILE_SHARE_READ,           // share mode
+                              NULL,                      // default security
+                              CREATE_NEW,                // create file only if it doesn't exist
+                              FILE_ATTRIBUTE_NORMAL,     // flags and attributes: normal file
+                              NULL);                     // no template file handle
+      if (hFile == INVALID_HANDLE_VALUE) {
+         int error = GetLastWin32Error();
+         if (error != ERROR_FILE_EXISTS) return(!catch(caller +"UseTradeServerPath(3)->CreateFileA("+ DoubleQuoteStr(filename) +")", ERR_WIN32_ERROR+error));
+      }
+      else CloseHandle(hFile);
+   }
+   return(true);
+}
+
+
+/**
  * Suppress compiler warnings.
  */
 void __DummyCalls() {
@@ -7054,7 +7065,8 @@ void __DummyCalls() {
    CreateDirectory(NULL, NULL);
    CreateLegendLabel();
    CreateString(NULL);
-   DateTime(NULL);
+   DateTime1(NULL);
+   DateTime2(iNulls);
    DebugMarketInfo(NULL);
    DeinitReason();
    Div(NULL, NULL);
@@ -7075,6 +7087,7 @@ void __DummyCalls() {
    GetAccountCompany();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
+   GetAccountServerPath();
    GetCommission();
    GetConfigBool(NULL, NULL);
    GetConfigColor(NULL, NULL);
@@ -7090,7 +7103,7 @@ void __DummyCalls() {
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetMqlFilesPath();
+   GetMqlSandboxPath();
    GetRandomValue(NULL, NULL);
    GetServerTime();
    GmtTimeFormat(NULL, NULL);
@@ -7124,6 +7137,7 @@ void __DummyCalls() {
    IsCurrency(NULL);
    IsDemoFix();
    IsDirectory(NULL, NULL);
+   IsDLLError();
    IsEmpty(NULL);
    IsEmptyString(NULL);
    IsEmptyValue(NULL);
@@ -7138,6 +7152,7 @@ void __DummyCalls() {
    IsLimitOrderType(NULL);
    IsLog();
    IsLongOrderType(NULL);
+   IsMQLError();
    IsNaN(NULL);
    IsNaT(NULL);
    IsOrderType(NULL);
@@ -7173,8 +7188,6 @@ void __DummyCalls() {
    OrderLogMessage(NULL);
    OrderPop(NULL);
    OrderPush(NULL);
-   ParseDate(NULL);
-   ParseDateTime(NULL);
    PeriodDescription();
    PeriodFlag();
    PeriodFlagToStr(NULL);
@@ -7249,7 +7262,6 @@ void __DummyCalls() {
    Tester.Pause();
    Tester.Stop();
    This.IsTesting();
-   TimeCurrentEx();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();
@@ -7257,12 +7269,14 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
+   TimeLocalEx();
    TimeServer();
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);
    TradeCommandToStr(NULL);
    UninitializeReasonDescription(NULL);
    UrlEncode(NULL);
+   UseTradeServerPath(NULL);
    WaitForTicket(NULL);
    WriteIniString(NULL, NULL, NULL, NULL);
 }
@@ -7284,7 +7298,7 @@ void __DummyCalls() {
    int      GetAccountNumber();
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetAccountServer();
+   string   GetAccountServerName();
    string   GetServerTimezone();
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
@@ -7301,6 +7315,8 @@ void __DummyCalls() {
    int      LeaveContext(int ec[]);
 
 #import "kernel32.dll"
+   bool     CloseHandle(int hObject);
+   int      CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    int      GetCurrentProcessId();
    int      GetCurrentThreadId();
    int      GetPrivateProfileIntA(string lpSection, string lpKey, int nDefault, string lpFileName);

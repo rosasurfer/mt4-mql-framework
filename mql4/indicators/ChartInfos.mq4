@@ -2192,10 +2192,10 @@ bool CustomPositions.ReadConfig() {
  */
 bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTotal, datetime &from, datetime &to) {
    isTotal = isTotal!=0;
+   string origTerm = term;
 
-   string term.orig = StrTrim(term);
-          term      = StrToUpper(term.orig);
-   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(term.orig) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
+   term = StrToUpper(StrTrim(term));
+   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(origTerm) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
    if     (!StrStartsWith(term, "T"    )) isTotal = false;
@@ -2215,33 +2215,34 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
       // {DateTime}-{DateTime}
       // {DateTime}-NULL
       //       NULL-{DateTime}
-      dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
+      dtFrom = ParseDateTimeEx(StrTrim(StrLeft  (term, pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTime(TimeYearEx(dtTo)+1)                  - 1*SECOND;    // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTime(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;    // Monatsende
-         else if (isFullWeek2  ) dtTo += 1*WEEK                                        - 1*SECOND;    // Wochenende
-         else if (isFullDay2   ) dtTo += 1*DAY                                         - 1*SECOND;    // Tagesende
-         else if (isFullHour2  ) dtTo -=                                                 1*SECOND;    // Ende der vorhergehenden Stunde
-       //else if (isFullMinute2) dtTo -=                                                 1*SECOND;    // nicht bei Minuten (deaktivert)
+         if      (isFullYear2  ) dtTo  = DateTime1(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime1(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
+         else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
+         else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der vorhergehenden Stunde
+       //else if (isFullMinute2) dtTo -=                                                  1*SECOND;   // nicht bei Minuten (deaktivert)
       }
    }
    else {
       // {DateTime}                                                  // einzelnen Zeitraum parsen
       isSingleTimespan = true;
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
-                                                                                                                      if (!dtFrom)  return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
-      if      (isFullYear1  ) dtTo = DateTime(TimeYearEx(dtFrom)+1)                    - 1*SECOND;    // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;    // Monatsende
-      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                   - 1*SECOND;    // Wochenende
-      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                    - 1*SECOND;    // Tagesende
-      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                   - 1*SECOND;    // Ende der Stunde
-      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                 - 1*SECOND;    // Ende der Minute
+      if (!dtFrom) return(!catch("CustomPositions.ParseOpenTerm(2)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm), ERR_INVALID_CONFIG_VALUE));
+
+      if      (isFullYear1  ) dtTo = DateTime1(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
+      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
+      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
+      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
    //debug("CustomPositions.ParseOpenTerm(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL));
-   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
-   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(term.orig) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
+   if (!dtFrom && !dtTo)      return(!catch("CustomPositions.ParseOpenTerm(3)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm), ERR_INVALID_CONFIG_VALUE));
+   if (dtTo && dtFrom > dtTo) return(!catch("CustomPositions.ParseOpenTerm(4)  invalid open positions configuration in "+ DoubleQuoteStr(origTerm) +" (start time after end time)", ERR_INVALID_CONFIG_VALUE));
 
 
    // (2) Datumswerte definieren und zurückgeben
@@ -2422,12 +2423,12 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       dtFrom = ParseDateTimeEx(StrTrim(StrLeft (term,  pos  )), isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
       dtTo   = ParseDateTimeEx(StrTrim(StrSubstr(term, pos+1)), isFullYear2, isFullMonth2, isFullWeek2, isFullDay2, isFullHour2, isFullMinute2); if (IsNaT(dtTo  )) return(false);
       if (dtTo != NULL) {
-         if      (isFullYear2  ) dtTo  = DateTime(TimeYearEx(dtTo)+1)                  - 1*SECOND;    // Jahresende
-         else if (isFullMonth2 ) dtTo  = DateTime(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;    // Monatsende
-         else if (isFullWeek2  ) dtTo += 1*WEEK                                        - 1*SECOND;    // Wochenende
-         else if (isFullDay2   ) dtTo += 1*DAY                                         - 1*SECOND;    // Tagesende
-         else if (isFullHour2  ) dtTo -=                                                 1*SECOND;    // Ende der vorhergehenden Stunde
-       //else if (isFullMinute2) dtTo -=                                                 1*SECOND;    // nicht bei Minuten (deaktiviert)
+         if      (isFullYear2  ) dtTo  = DateTime1(TimeYearEx(dtTo)+1)                  - 1*SECOND;   // Jahresende
+         else if (isFullMonth2 ) dtTo  = DateTime1(TimeYearEx(dtTo), TimeMonth(dtTo)+1) - 1*SECOND;   // Monatsende
+         else if (isFullWeek2  ) dtTo += 1*WEEK                                         - 1*SECOND;   // Wochenende
+         else if (isFullDay2   ) dtTo += 1*DAY                                          - 1*SECOND;   // Tagesende
+         else if (isFullHour2  ) dtTo -=                                                  1*SECOND;   // Ende der vorhergehenden Stunde
+       //else if (isFullMinute2) dtTo -=                                                  1*SECOND;   // nicht bei Minuten (deaktiviert)
       }
    }
    else {
@@ -2435,12 +2436,12 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       isSingleTimespan = true;
       dtFrom = ParseDateTimeEx(term, isFullYear1, isFullMonth1, isFullWeek1, isFullDay1, isFullHour1, isFullMinute1); if (IsNaT(dtFrom)) return(false);
                                                                                                                       if (!dtFrom)       return(!catch("CustomPositions.ParseHstTerm(3)  invalid history configuration in "+ DoubleQuoteStr(term.orig), ERR_INVALID_CONFIG_VALUE));
-      if      (isFullYear1  ) dtTo = DateTime(TimeYearEx(dtFrom)+1)                    - 1*SECOND;    // Jahresende
-      else if (isFullMonth1 ) dtTo = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;    // Monatsende
-      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                   - 1*SECOND;    // Wochenende
-      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                    - 1*SECOND;    // Tagesende
-      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                   - 1*SECOND;    // Ende der Stunde
-      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                 - 1*SECOND;    // Ende der Minute
+      if      (isFullYear1  ) dtTo = DateTime1(TimeYearEx(dtFrom)+1)                    - 1*SECOND;   // Jahresende
+      else if (isFullMonth1 ) dtTo = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom)+1) - 1*SECOND;   // Monatsende
+      else if (isFullWeek1  ) dtTo = dtFrom + 1*WEEK                                    - 1*SECOND;   // Wochenende
+      else if (isFullDay1   ) dtTo = dtFrom + 1*DAY                                     - 1*SECOND;   // Tagesende
+      else if (isFullHour1  ) dtTo = dtFrom + 1*HOUR                                    - 1*SECOND;   // Ende der Stunde
+      else if (isFullMinute1) dtTo = dtFrom + 1*MINUTE                                  - 1*SECOND;   // Ende der Minute
       else                    dtTo = dtFrom;
    }
    //debug("CustomPositions.ParseHstTerm(0.1)  dtFrom="+ TimeToStr(dtFrom, TIME_FULL) +"  dtTo="+ TimeToStr(dtTo, TIME_FULL) +"  grouped="+ isGroupingTerm);
@@ -2454,19 +2455,19 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       //
 
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
-      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentEx("CustomPositions.ParseHstTerm(6)");
-      if      (groupByMonth) groupFrom = DateTime(TimeYearEx(dtFrom), TimeMonth(dtFrom));
+      datetime groupFrom, groupTo, nextGroupFrom, now=Tick.time;
+      if      (groupByMonth) groupFrom = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekEx(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
 
       if (!dtTo) {                                                                                       // {DateTime} - NULL
-         if      (groupByMonth) dtTo = DateTime(TimeYearEx(now), TimeMonth(now)+1)        - 1*SECOND;    // aktuelles Monatsende
+         if      (groupByMonth) dtTo = DateTime1(TimeYearEx(now), TimeMonth(now)+1)       - 1*SECOND;    // aktuelles Monatsende
          else if (groupByWeek ) dtTo = now - now%DAYS + (7-TimeDayOfWeekEx(now))%7 * DAYS - 1*SECOND;    // aktuelles Wochenende
          else if (groupByDay  ) dtTo = now - now%DAYS + 1*DAY                             - 1*SECOND;    // aktuelles Tagesende
       }
 
       for (bool firstGroup=true; groupFrom < dtTo; groupFrom=nextGroupFrom) {
-         if      (groupByMonth) nextGroupFrom = DateTime(TimeYearEx(groupFrom), TimeMonth(groupFrom)+1);
+         if      (groupByMonth) nextGroupFrom = DateTime1(TimeYearEx(groupFrom), TimeMonth(groupFrom)+1);
          else if (groupByWeek ) nextGroupFrom = groupFrom + 7*DAYS;
          else if (groupByDay  ) nextGroupFrom = groupFrom + 1*DAY;
          groupTo   = nextGroupFrom - 1*SECOND;
@@ -2600,7 +2601,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
    if (!StringLen(hstComments)) hstComments = comment;
    else                         hstComments = hstComments +", "+ comment;
-   return(!catch("CustomPositions.ParseHstTerm(7)"));
+   return(!catch("CustomPositions.ParseHstTerm(6)"));
 }
 
 
@@ -2626,14 +2627,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *  {value} = Yesterday                        • Synonym für LastDay
  */
 datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
-   string   value.orig=value, values[], sYY, sMM, sDD, sTime, sHH, sII, sSS;
-   int      valuesSize, iYY, iMM, iDD, iHH, iII, iSS, dow;
-
-   static datetime now;
-          datetime date;
-
-   value = StrTrim(value);
-   if (!StringLen(value)) return(NULL);
+   string values[], origValue=value, sYY, sMM, sDD, sTime, sHH, sII, sSS;
+   int valuesSize, iYY, iMM, iDD, iHH, iII, iSS, dow;
 
    isYear   = false;
    isMonth  = false;
@@ -2642,10 +2637,12 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
    isHour   = false;
    isMinute = false;
 
+   value = StrTrim(value); if (value == "") return(NULL);
+
 
    // (1) Ausdruck parsen
    if (!StrIsDigit(StrLeft(value, 1))) {
-      if (!now) now = TimeFXT(); if (!now) return(NaT);
+      datetime date, now = TimeFXT(); if (!now) return(NaT);
 
       // (1.1) alphabetischer Ausdruck
       if (StrEndsWith(value, "DAY")) {
@@ -2658,7 +2655,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          else if (dow == SUNDAY  ) date -= 2*DAYS;
 
          if (value != "THISDAY") {
-            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTDAY")                                  return(_NaT(catch("ParseDateTimeEx(1)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             if (dow != MONDAY) date -= 1*DAY;                        // Datum auf den vorherigen Tag setzen
             else               date -= 3*DAYS;                       // an Wochenenden Datum auf den vorherigen Freitag setzen
          }
@@ -2671,7 +2668,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "WEEK")) {
          date = now - (TimeDayOfWeekEx(now)+6)%7 * DAYS;             // Datum auf Wochenbeginn setzen
          if (value != "THISWEEK") {
-            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (value != "LASTWEEK")                                 return(_NaT(catch("ParseDateTimeEx(2)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             date -= 1*WEEK;                                          // Datum auf die vorherige Woche setzen
          }
          iYY    = TimeYearEx(date);
@@ -2683,8 +2680,8 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "MONTH")) {
          date = now;
          if (value != "THISMONTH") {
-            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            date = DateTime(TimeYearEx(date), TimeMonth(date)-1);    // Datum auf den vorherigen Monat setzen
+            if (value != "LASTMONTH")                                return(_NaT(catch("ParseDateTimeEx(3)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            date = DateTime1(TimeYearEx(date), TimeMonth(date)-1);   // Datum auf den vorherigen Monat setzen
          }
          iYY     = TimeYearEx(date);
          iMM     = TimeMonth (date);
@@ -2695,15 +2692,15 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       else if (StrEndsWith(value, "YEAR")) {
          date = now;
          if (value != "THISYEAR") {
-            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            date = DateTime(TimeYearEx(date)-1);                     // Datum auf das vorherige Jahr setzen
+            if (value != "LASTYEAR")                                 return(_NaT(catch("ParseDateTimeEx(4)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            date = DateTime1(TimeYearEx(date)-1);                    // Datum auf das vorherige Jahr setzen
          }
          iYY    = TimeYearEx(date);
          iMM    = 1;
          iDD    = 1;
          isYear = true;
       }
-      else                                                           return(_NaT(catch("ParseDateTime(1)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+      else                                                           return(_NaT(catch("ParseDateTimeEx(5)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
    }
 
    else {
@@ -2715,14 +2712,14 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       // 2014.01.15 12:34
       // 2014.01.15 12:34:56
       valuesSize = Explode(value, ".", values, NULL);
-      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTime(2)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+      if (valuesSize > 3)                                            return(_NaT(catch("ParseDateTimeEx(6)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
       if (valuesSize >= 1) {
          sYY = StrTrim(values[0]);                                   // Jahr prüfen
-         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTime(3)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTime(4)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTimeEx(7)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTimeEx(8)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iYY = StrToInteger(sYY);
-         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTime(5)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTimeEx(9)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 1) {
             iMM    = 1;
             iDD    = 1;
@@ -2732,10 +2729,10 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
       if (valuesSize >= 2) {
          sMM = StrTrim(values[1]);                                   // Monat prüfen
-         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTime(6)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTime(7)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTimeEx(10)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTimeEx(11)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iMM = StrToInteger(sMM);
-         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTime(8)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTimeEx(12)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 2) {
             iDD     = 1;
             isMonth = true;
@@ -2750,7 +2747,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          }
          else if (StringLen(sDD) > 2) {                              // Tag + Zeit:  "2014.01.15 12:34:56"
             int pos = StringFind(sDD, " ");
-            if (pos == -1)                                           return(_NaT(catch("ParseDateTime(9)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (pos == -1)                                           return(_NaT(catch("ParseDateTimeEx(13)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             sTime = StrTrim(StrSubstr(sDD, pos+1));
             sDD   = StrTrim(StrLeft (sDD,  pos  ));
          }
@@ -2758,35 +2755,35 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
             isDay = true;
          }
                                                                      // Tag prüfen
-         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTime(10)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTime(11)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTimeEx(14)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTimeEx(15)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iDD = StrToInteger(sDD);
-         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTime(12)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+         if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTimeEx(16)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (iDD > 28) {
             if (iMM == FEB) {
-               if (iDD > 29)                                         return(_NaT(catch("ParseDateTime(13)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTime(14)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iDD > 29)                                         return(_NaT(catch("ParseDateTimeEx(17)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+               if (!IsLeapYear(iYY))                                 return(_NaT(catch("ParseDateTimeEx(18)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             }
             else if (iDD==31)
-               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTime(15)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iMM==APR || iMM==JUN || iMM==SEP || iMM==NOV)     return(_NaT(catch("ParseDateTimeEx(19)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          }
 
          if (StringLen(sTime) > 0) {                                 // Zeit prüfen
             // hh:ii:ss
             valuesSize = Explode(sTime, ":", values, NULL);
-            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTime(16)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (valuesSize < 2 || 3 < valuesSize)                    return(_NaT(catch("ParseDateTimeEx(20)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
             sHH = StrTrim(values[0]);                                // Stunden
-            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTime(17)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTime(18)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTimeEx(21)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTimeEx(22)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iHH = StrToInteger(sHH);
-            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTime(19)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTimeEx(23)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
             sII = StrTrim(values[1]);                                // Minuten
-            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTime(20)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTime(21)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTimeEx(24)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTimeEx(25)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iII = StrToInteger(sII);
-            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTime(22)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+            if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTimeEx(26)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             if (valuesSize == 2) {
                if (!iII) isHour   = true;
                else      isMinute = true;
@@ -2794,10 +2791,10 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
             if (valuesSize == 3) {
                sSS = StrTrim(values[2]);                             // Sekunden
-               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTime(23)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
-               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTime(24)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTimeEx(27)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTimeEx(28)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
                iSS = StrToInteger(sSS);
-               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTime(25)  invalid history configuration in "+ DoubleQuoteStr(value.orig), ERR_INVALID_CONFIG_VALUE)));
+               if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTimeEx(29)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             }
          }
       }
@@ -2805,7 +2802,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
 
    // (2) DateTime aus geparsten Werten erzeugen
-   datetime result = DateTime(iYY, iMM, iDD, iHH, iII, iSS);
+   datetime result = DateTime1(iYY, iMM, iDD, iHH, iII, iSS);
    if (isWeek)                                                       // wenn volle Woche, dann Zeit auf Wochenbeginn setzen
       result -= (TimeDayOfWeekEx(result)+6)%7 * DAYS;
    return(result);
@@ -2816,13 +2813,13 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer CustomPosition
  * {customVars} hinzu.
  *
- *                                                                     -+    struct POSITION_CONFIG_TERM {
+ *                                                                    +-+    struct POSITION_CONFIG_TERM {
  * @param  _In_    int    type           - zu extrahierender Typ      |       double type;
  * @param  _In_    double value1         - zu extrahierende Lotsize   |       double confValue1;
  * @param  _In_    double value2         - Preis/Betrag/Equity        +->     double confValue2;
  * @param  _InOut_ double cache1         - Zwischenspeicher 1         |       double cacheValue1;
  * @param  _InOut_ double cache2         - Zwischenspeicher 2         |       double cacheValue2;
- *                                                                     -+    };
+ *                                                                    +-+    };
  *
  * @param  _InOut_ mixed fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
  * @param  _InOut_ mixed customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
@@ -3484,7 +3481,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  * @return bool - Erfolgsstatus
  */
 bool SortClosedTickets(int &tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
-   if (ArrayRange(tickets, 1) != 3) return(!catch("SortClosedTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAYS));
+   if (ArrayRange(tickets, 1) != 3) return(!catch("SortClosedTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAY));
 
    int rows = ArrayRange(tickets, 0);
    if (rows < 2) return(true);                                       // single row, nothing to do

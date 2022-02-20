@@ -947,7 +947,7 @@ double stop.lossPct.AbsValue() {
 bool IsSessionBreak() {
    if (IsLastError()) return(false);
 
-   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+   datetime serverTime = TimeServer();
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
@@ -1007,7 +1007,7 @@ bool StartSequence(int signal) {
    if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    sequence.status      = STATUS_PROGRESSING;
-   sequence.startTime   = Max(TimeCurrentEx(), TimeServer());
+   sequence.startTime   = TimeServer();
    sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
    sequence.stopTime    = 0;
    sequence.stopPrice   = 0;
@@ -1062,7 +1062,7 @@ bool ResumeSequence(int signal) {
    sequence.cycle++;
    sequence.status       = STATUS_PROGRESSING;                    // TODO: update TP/SL conditions
    sequence.gridbase     = 0;
-   sequence.startTime    = Max(TimeCurrentEx(), TimeServer());
+   sequence.startTime    = TimeServer();
    sequence.startPrice   = 0;
    sequence.stopTime     = 0;
    sequence.stopPrice    = 0;
@@ -1193,7 +1193,7 @@ bool StopSequence(int signal) {
    }
 
    sequence.status    = STATUS_STOPPED;
-   sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
+   sequence.stopTime  = Tick.time;
    sequence.stopPrice = doubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 
@@ -1814,6 +1814,17 @@ int CreateSequenceId() {
       id = MathRand();                                         // TODO: in tester generate consecutive ids
    }                                                           // TODO: test id for uniqueness
    return(id);
+}
+
+
+/**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return("Duel_"+ sequence.id);
 }
 
 
@@ -2508,14 +2519,14 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
       filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
-   return(GetMqlFilesPath() +"\\"+ filename);
+   return(GetMqlSandboxPath() +"/"+ filename);
 }
 
 
@@ -3558,7 +3569,7 @@ bool SaveStatus() {
    }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) separator = CRLF;                // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;            // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -3862,7 +3873,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string section="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [General]
    section = "General";

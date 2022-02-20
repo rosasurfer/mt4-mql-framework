@@ -7,7 +7,7 @@
  * @return string - resultierender String oder Leerstring, falls ein Fehler auftrat
  */
 string JoinDoubles(double values[], string separator = ", ") {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAYS)));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinDoubles(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
 
    string strings[];
 

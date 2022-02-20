@@ -25,10 +25,6 @@ mqlcache.dat
 /mql4/experts/scripts
 /mql4/experts/templates
 
-# ignore DLL related files
-/mql4/libraries/*.Debug.dll
-/mql4/libraries/*.Release.dll
-
 # ignore log related/generated/linked files in MQL4.5 and MQL5 structures
 /mql*/Files
 /mql*/files

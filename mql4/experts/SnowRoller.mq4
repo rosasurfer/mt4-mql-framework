@@ -65,6 +65,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
+#include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
@@ -316,7 +317,7 @@ int onTick() {
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  "+ sequence.name +" illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
    // update equity for equity recorder
-   if (EA.RecordEquity) tester.equityValue = sequence.startEquity + sequence.totalPL;
+   if (EA.RecordEquity) recorder.currEquity = sequence.startEquity + sequence.totalPL;
 
    return(last_error);
 }
@@ -607,11 +608,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !tester.startEquity) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.startEquity) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = tester.startEquity;
+      result = recorder.startEquity;
    }
 
    if (!catch("CalculateStartEquity(1)"))
@@ -787,12 +788,12 @@ bool Chart.MarkPositionClosed(int i) {
 /**
  * Get a user confirmation for a trade request at the first tick. Safety measure against runtime errors.
  *
- * @param  string location - location identifier of the confirmation
- * @param  string message  - confirmation message
+ * @param  string caller  - location identifier of the caller
+ * @param  string message - confirmation message
  *
  * @return bool - confirmation result
  */
-bool ConfirmFirstTickTrade(string location, string message) {
+bool ConfirmFirstTickTrade(string caller, string message) {
    static bool confirmed;
    if (confirmed)                         // On nested calls behave like a no-op, don't return the former result. Trade requests
       return(true);                       // will differ and the calling logic must correctly interprete the first result.
@@ -803,7 +804,7 @@ bool ConfirmFirstTickTrade(string location, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(location), " - "+ location, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(caller), " - "+ caller, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
       RefreshRates();
    }
    confirmed = true;
@@ -860,6 +861,17 @@ int CreateSequenceId() {
 
 
 /**
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ *
+ * @return string - unique symbol or an empty string in case of errors
+ */
+string GetUniqueSymbol() {
+   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return("Snow_"+ sequence.id);
+}
+
+
+/**
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from afterInit() only.
  *
@@ -912,14 +924,14 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets\\" + ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"\\";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
       string baseName  = StrToLower(Symbol()) +".SR."+ sequence.id +".set";
       filename = directory + baseName;
    }
 
    if (relative)
       return(filename);
-   return(GetMqlFilesPath() +"\\"+ filename);
+   return(GetMqlSandboxPath() +"/"+ filename);
 }
 
 
@@ -1266,7 +1278,7 @@ bool StartSequence(int signal) {
    }
 
    // calculate new start price and set start/stop data before setting the gridbase
-   datetime startTime  = TimeCurrentEx("StartSequence(5)");
+   datetime startTime  = Tick.time;
    double   startPrice = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
 
    ArrayPushInt   (sequence.start.event,  CreateEventId());
@@ -1296,15 +1308,15 @@ bool StartSequence(int signal) {
    if (!UpdatePendingOrders(SAVESTATUS_ENFORCE)) return(false);
    RedrawStartStop();
 
-   if (IsLogDebug()) logDebug("StartSequence(6)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("StartSequence(4)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (test.onStartPause)                                        Tester.Pause("StartSequence(7)");
-      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(8)");
-      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(9)");
+      if      (test.onStartPause)                                        Tester.Pause("StartSequence(5)");
+      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(6)");
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(7)");
    }
-   return(!catch("StartSequence(10)"));
+   return(!catch("StartSequence(8)"));
 }
 
 
@@ -1485,13 +1497,13 @@ bool StopSequence(int signal) {
       if (!stopPrice) stopPrice = ifDouble(sequence.direction==D_LONG, Bid, Ask);
 
       sequence.stop.event [n] = CreateEventId();
-      sequence.stop.time  [n] = TimeCurrentEx("StopSequence(9)");
+      sequence.stop.time  [n] = Tick.time;
       sequence.stop.price [n] = stopPrice;
       sequence.stop.profit[n] = sequence.totalPL;
       RedrawStartStop();
 
       sequence.status = STATUS_STOPPED;
-      if (IsLogDebug()) logDebug("StopSequence(10)  "+ sequence.name +" sequence stopped at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
+      if (IsLogDebug()) logDebug("StopSequence(9)  "+ sequence.name +" sequence stopped at level "+ sequence.level +" (stop price "+ NumberToStr(stopPrice, PriceFormat) +", gridbase "+ NumberToStr(GetGridbase(), PriceFormat) +")");
       UpdateProfitTargets();
       ShowProfitTargets();
       SS.ProfitPerLevel();
@@ -1542,7 +1554,7 @@ bool StopSequence(int signal) {
       case NULL:                                            // explicit (manual) stop or end of test
          break;
 
-      default: return(!catch("StopSequence(11)  "+ sequence.name +" unsupported stop signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(10)  "+ sequence.name +" unsupported stop signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
    SaveStatus();
@@ -1569,15 +1581,15 @@ bool StopSequence(int signal) {
    // pause or stop the tester according to the configuration
    if (IsTesting()) {
       if (IsVisualMode()) {
-         if      (test.onStopPause)                                         Tester.Pause("StopSequence(12)");
-         else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(13)");
-         else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StopSequence(14)");
-         else if (test.onTakeProfitPause   && signal==SIGNAL_TAKEPROFIT)    Tester.Pause("StopSequence(15)");
-         else if (test.onStopLossPause     && signal==SIGNAL_STOPLOSS)      Tester.Pause("StopSequence(16)");
+         if      (test.onStopPause)                                         Tester.Pause("StopSequence(11)");
+         else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(12)");
+         else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StopSequence(13)");
+         else if (test.onTakeProfitPause   && signal==SIGNAL_TAKEPROFIT)    Tester.Pause("StopSequence(14)");
+         else if (test.onStopLossPause     && signal==SIGNAL_STOPLOSS)      Tester.Pause("StopSequence(15)");
       }
-      else if (sequence.status == STATUS_STOPPED)                           Tester.Stop("StopSequence(17)");
+      else if (sequence.status == STATUS_STOPPED)                           Tester.Stop("StopSequence(16)");
    }
-   return(!catch("StopSequence(18)"));
+   return(!catch("StopSequence(17)"));
 }
 
 
@@ -1609,7 +1621,7 @@ bool ResetSequence(double gridbase, int level) {
    //sequence.id           = ...                         // unchanged
    sequence.cycle++;                                     // increase restart cycle
    //sequence.name         = ...                         // unchanged
-   sequence.created        = Max(TimeCurrentEx(), TimeServer());
+   sequence.created        = TimeServer();
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
@@ -1812,7 +1824,7 @@ bool ResumeSequence(int signal) {
    // calculate the new gridbase
    if (!newGridbase) {
       // without open positions define the new gridbase using the previous one
-      startTime   = TimeCurrentEx("ResumeSequence(4)");
+      startTime   = Tick.time;
       startPrice  = ifDouble(sequence.direction==D_SHORT, Bid, Ask);
       newGridbase = lastGridbase + startPrice - stopPrice;
       SetGridbase(startTime, newGridbase);
@@ -1840,15 +1852,15 @@ bool ResumeSequence(int signal) {
    if (!UpdatePendingOrders(SAVESTATUS_ENFORCE)) return(false);
    RedrawStartStop();
 
-   if (IsLogDebug()) logDebug("ResumeSequence(5)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
+   if (IsLogDebug()) logDebug("ResumeSequence(4)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
    if (IsTesting()) /*&&*/ if (IsVisualMode()) {
-      if      (test.onStartPause)                                        Tester.Pause("ResumeSequence(6)");
-      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(7)");
-      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(8)");
+      if      (test.onStartPause)                                        Tester.Pause("ResumeSequence(5)");
+      else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(6)");
+      else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(7)");
    }
-   return(!catch("ResumeSequence(9)"));
+   return(!catch("ResumeSequence(8)"));
 }
 
 
@@ -2069,7 +2081,7 @@ bool UpdateStatus(bool &gridChanged) {
          else                              gridbase = MathMax(gridbase, NormalizeDouble((Bid + Ask)/2, Digits));
 
          if (NE(gridbase, lastGridbase, Digits)) {
-            SetGridbase(TimeCurrentEx("UpdateStatus(10)"), gridbase);
+            SetGridbase(Tick.time, gridbase);
             gridChanged = true;
          }
          else if (NE(orders.gridbase[sizeOfTickets-1], gridbase, Digits)) {   // double-check gridbase of the last ticket as
@@ -2077,7 +2089,7 @@ bool UpdateStatus(bool &gridChanged) {
          }
       }
    }
-   return(!catch("UpdateStatus(11)"));
+   return(!catch("UpdateStatus(10)"));
 }
 
 
@@ -2288,10 +2300,9 @@ bool IsStartSignal(int &signal) {
    if (start.conditions) {
       // -- start.time: satisfied at the specified time and after -----------------------------------------------------------
       if (start.time.condition) {
-         if (TimeCurrentEx("IsStartSignal(4)") < start.time.value)
-            return(false);
+         if (TimeServer() < start.time.value) return(false);
 
-         message = "IsStartSignal(5)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+         message = "IsStartSignal(4)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
          if (IsLogNotice()) logNotice(message);
          start.time.condition = false;                         // prevent permanent consecutive tests
          SS.StartStopConditions();
@@ -2312,7 +2323,7 @@ bool IsStartSignal(int &signal) {
          start.price.lastValue = price;
          if (!triggered) return(false);
 
-         message = "IsStartSignal(6)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.price.description +"\" satisfied";
+         message = "IsStartSignal(5)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.price.description +"\" satisfied";
          if (IsLogNotice()) logNotice(message);
          start.price.condition = false;                        // prevent permanent consecutive tests
          SS.StartStopConditions();
@@ -2324,14 +2335,14 @@ bool IsStartSignal(int &signal) {
             trend = GetStartTrendValue(1);
 
             if ((sequence.direction==D_LONG && trend==1) || (sequence.direction==D_SHORT && trend==-1)) {
-               message = "IsStartSignal(7)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+               message = "IsStartSignal(6)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
                if (IsLogNotice()) logNotice(message);
                signal = SIGNAL_TREND;
                return(true);
             }
          }
          if (sessionbreak.startSignal == SIGNAL_TREND) {
-            message = "IsStartSignal(8)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+            message = "IsStartSignal(7)  "+ sequence.name +" "+ ifString(!resuming, "start", "resume") +" condition \"@"+ start.trend.description +"\" satisfied (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
             if (IsLogNotice()) logNotice(message);
             signal = SIGNAL_TREND;
             return(true);
@@ -2407,8 +2418,8 @@ bool IsStopSignal(int &signal) {
 
    // stop.time: satisfied at the specified time and after ------------------------------------------------------------------
    if (stop.time.condition) {
-      if (TimeCurrentEx("IsStopSignal(3)") >= stop.time.value) {
-         if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (TimeServer() >= stop.time.value) {
+         if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          stop.time.condition = false;
          signal = SIGNAL_PRICE_TIME;
          return(true);
@@ -2419,7 +2430,7 @@ bool IsStopSignal(int &signal) {
       // stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.profitAbs.condition = false;
             signal = SIGNAL_TAKEPROFIT;
             return(true);
@@ -2432,7 +2443,7 @@ bool IsStopSignal(int &signal) {
             stop.profitPct.absValue = stop.profitPct.value/100 * sequence.startEquity;
          }
          if (sequence.totalPL >= stop.profitPct.absValue) {
-            if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(5)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.profitPct.condition = false;
             signal = SIGNAL_TAKEPROFIT;
             return(true);
@@ -2442,7 +2453,7 @@ bool IsStopSignal(int &signal) {
       // stop.lossAbs: ------------------------------------------------------------------------------------------------------
       if (stop.lossAbs.condition) {
          if (sequence.totalPL <= stop.lossAbs.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(6)  "+ sequence.name +" stop condition \"@"+ stop.lossAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.lossAbs.condition = false;
             signal = SIGNAL_STOPLOSS;
             return(true);
@@ -2455,7 +2466,7 @@ bool IsStopSignal(int &signal) {
             stop.lossPct.absValue = stop.lossPct.value/100 * sequence.startEquity;
          }
          if (sequence.totalPL <= stop.lossPct.absValue) {
-            if (IsLogNotice()) logNotice("IsStopSignal(8)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(7)  "+ sequence.name +" stop condition \"@"+ stop.lossPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             stop.lossPct.condition = false;
             signal = SIGNAL_STOPLOSS;
             return(true);
@@ -2464,7 +2475,7 @@ bool IsStopSignal(int &signal) {
 
       // session break ------------------------------------------------------------------------------------------------------
       if (IsSessionBreak()) {
-         if (IsLogInfo()) logInfo("IsStopSignal(9)  "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         if (IsLogInfo()) logInfo("IsStopSignal(8)  "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_SESSION_BREAK;
          return(true);
       }
@@ -2482,7 +2493,7 @@ bool IsStopSignal(int &signal) {
 bool IsSessionBreak() {
    if (IsLastError()) return(false);
 
-   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+   datetime serverTime = TimeServer();
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
@@ -2824,7 +2835,7 @@ double ResetGridbase(datetime time=NULL, double value=NULL) {
    ArrayResize(gridbase.price,  0);
    ArrayResize(gridbase.status, 0);
 
-   if (!time) time = TimeCurrentEx("ResetGridbase(1)");
+   if (!time) time = TimeServer();
 
    if (time && value)
       return(SetGridbase(time, value));
@@ -2882,7 +2893,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
    //double gridbase     = ...                     // ...
 
    //int    pendingType  = ...                     // ...
-   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = TimeCurrentEx("Grid.AddPendingOrder(6)");
+   datetime pendingTime  = oe.OpenTime(oe); if (ticket < 0) pendingTime = Tick.time;
    double   pendingPrice = oe.OpenPrice(oe);
 
    int      openType     = OP_UNDEFINED;
@@ -2903,7 +2914,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
    if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, openType, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit, offset))
       return(NULL);
 
-   if (last_error || catch("Grid.AddPendingOrder(7)"))
+   if (last_error || catch("Grid.AddPendingOrder(6)"))
       return(NULL);
    return(pendingType);
 }
@@ -2933,14 +2944,14 @@ bool Grid.AddPosition(int level) {
       if (oe.Error(oe) != ERR_INVALID_STOP) return(false);
       if (ticket == -1) {
          // market violated                        // use #-1 as marker for a virtually triggered SL, the caller will decrease the gridlevel and "close" it with PL=0.00
-         oe.setOpenTime(oe, TimeCurrentEx("Grid.AddPosition(3)"));
-         if (IsLogDebug()) logDebug("Grid.AddPosition(4)  "+ sequence.name +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding marker ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
+         oe.setOpenTime(oe, Tick.time);
+         if (IsLogDebug()) logDebug("Grid.AddPosition(3)  "+ sequence.name +" new position at level "+ level +" would be immediately closed by SL="+ NumberToStr(oe.StopLoss(oe), PriceFormat) +", adding marker ticket #-1 (market: "+ NumberToStr(oe.Bid(oe), PriceFormat) +"/"+ NumberToStr(oe.Ask(oe), PriceFormat) +")");
       }
       else if (ticket == -2) {
-         return(!catch("Grid.AddPosition(5)  "+ sequence.name +" unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
+         return(!catch("Grid.AddPosition(4)  "+ sequence.name +" unsupported bucketshop account (stop distance is not zero)", oe.Error(oe)));
       }
       else {
-         return(!catch("Grid.AddPosition(6)  "+ sequence.name +" unexpected return value "+ ticket +" of SubmitMarketOrder()", oe.Error(oe)));
+         return(!catch("Grid.AddPosition(5)  "+ sequence.name +" unexpected return value "+ ticket +" of SubmitMarketOrder()", oe.Error(oe)));
       }
    }
 
@@ -2970,7 +2981,7 @@ bool Grid.AddPosition(int level) {
    // store dataset
    if (!Orders.AddRecord(ticket, level, gridbase, pendingType, pendingTime, pendingPrice, type, openEvent, openTime, openPrice, closeEvent, closeTime, closePrice, stopLoss, closedBySL, swap, commission, profit))
       return(false);
-   return(!catch("Grid.AddPosition(7)"));
+   return(!catch("Grid.AddPosition(6)"));
 }
 
 
@@ -4255,7 +4266,7 @@ bool ReadStatus() {
    if (!sequence.id)  return(!catch("ReadStatus(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string file = GetStatusFilename();
-   if (!IsFile(file, MODE_OS)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
+   if (!IsFile(file, MODE_SYSTEM)) return(!catch("ReadStatus(2)  "+ sequence.name +" status file "+ DoubleQuoteStr(file) +" not found", ERR_FILE_NOT_FOUND));
 
    // [Common]
    string section = "Common";
@@ -5397,7 +5408,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
       if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(7)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
       iMinutes = StrToInteger(sMinutes);
       if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(8)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dStartTime = DateTime(1970, 1, 1, iHours, iMinutes);
+      dStartTime = DateTime1(1970, 1, 1, iHours, iMinutes);
 
       sTime = StrTrim(sTimes[1]);
       if (StringLen(sTime) != 5)                     return(_false(catch("ReadSessionBreaks(9)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
@@ -5410,7 +5421,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
       if (!StrIsDigit(sMinutes))                     return(_false(catch("ReadSessionBreaks(13)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
       iMinutes = StrToInteger(sMinutes);
       if (iMinutes > 59)                             return(_false(catch("ReadSessionBreaks(14)  "+ sequence.name +" illegal session break configuration \""+ value +"\"", ERR_INVALID_CONFIG_VALUE)));
-      dEndTime = DateTime(1970, 1, 1, iHours, iMinutes);
+      dEndTime = DateTime1(1970, 1, 1, iHours, iMinutes);
 
       debug("ReadSessionBreaks(15)  start="+ TimeToStr(dStartTime, TIME_FULL) +"  end="+ TimeToStr(dEndTime, TIME_FULL));
    }
@@ -5453,7 +5464,7 @@ bool UpdateProfitTargets() {
  */
 bool ShowProfitTargets() {
    if (IsLastError())       return(false);
-   if (!sequence.breakeven) return(true);       // BE is not calculated if tester.showBreakeven = Off
+   if (!sequence.breakeven) return(true);       // BE is not calculated if test.showBreakeven = Off
 
    datetime time = TimeCurrent(); time -= time % MINUTES;
    string label = "arrow_"+ time;
@@ -6245,8 +6256,7 @@ bool ValidateInputs() {
                start.trend.params = StrTrim(sValues[2]);
                if (!StringLen(start.trend.params))                return(!onInputError("ValidateInputs(26)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)"));
             }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
-            start.trend.description = exprs[i];
+            start.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
             start.trend.condition   = true;
          }
 
@@ -6261,21 +6271,18 @@ bool ValidateInputs() {
             if      (key == "@bid") start.price.type = PRICE_BID;
             else if (key == "@ask") start.price.type = PRICE_ASK;
             else                    start.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(start.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            start.price.description = exprs[i];
+            sValue = NumberToStr(start.price.value, PriceFormat);
+            if (StrEndsWith(sValue, "'0")) sValue = StrLeft(sValue, -2);   // cut "'0" for improved readability
+            start.price.description = StrSubstr(key, 1) +"("+ sValue +")";
             start.price.condition   = true;
          }
 
          else if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
-            // TODO: validation of @time is not sufficient
-            start.time.value = time;
-            exprs[i]         = "time("+ TimeToStr(time) +")";
-            start.time.description = exprs[i];
+            int pt[];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            start.time.value       = DateTime2(pt);
+            start.time.description = "time("+ TimeToStr(start.time.value) +")";
             start.time.condition   = true;
          }
          else                                                     return(!onInputError("ValidateInputs(32)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
@@ -6330,8 +6337,7 @@ bool ValidateInputs() {
                stop.trend.params = StrTrim(sValues[2]);
                if (!StringLen(stop.trend.params))                 return(!onInputError("ValidateInputs(41)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)"));
             }
-            exprs[i] = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
-            stop.trend.description = exprs[i];
+            stop.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
             stop.trend.condition   = true;
          }
 
@@ -6346,21 +6352,17 @@ bool ValidateInputs() {
             if      (key == "@bid") stop.price.type = PRICE_BID;
             else if (key == "@ask") stop.price.type = PRICE_ASK;
             else                    stop.price.type = PRICE_MEDIAN;
-            exprs[i] = NumberToStr(stop.price.value, PriceFormat);
-            if (StrEndsWith(exprs[i], "'0")) exprs[i] = StrLeft(exprs[i], -2);   // cut "'0" for improved readability
-            exprs[i] = StrSubstr(key, 1) +"("+ exprs[i] +")";
-            stop.price.description = exprs[i];
+            sValue = NumberToStr(stop.price.value, PriceFormat);
+            if (StrEndsWith(sValue, "'0")) sValue = StrLeft(sValue, -2);   // cut "'0" for improved readability
+            stop.price.description = StrSubstr(key, 1) +"("+ sValue +")";
             stop.price.condition   = true;
          }
 
          else if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            time = StrToTime(sValue);
-            if (IsError(GetLastError()))                          return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
-            // TODO: validation of @time is not sufficient
-            stop.time.value       = time;
-            exprs[i]              = "time("+ TimeToStr(time) +")";
-            stop.time.description = exprs[i];
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            stop.time.value       = DateTime2(pt);
+            stop.time.description = "time("+ TimeToStr(stop.time.value) +")";
             stop.time.condition   = true;
          }
 
@@ -6373,15 +6375,13 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                   = "profit("+ DoubleToStr(dValue, 2) +")";
-               stop.profitAbs.description = exprs[i];
+               stop.profitAbs.description = "profit("+ DoubleToStr(dValue, 2) +")";
                stop.profitAbs.condition   = true;
             }
             else {
                stop.profitPct.value       = dValue;
                stop.profitPct.absValue    = INT_MAX;
-               exprs[i]                   = "profit("+ NumberToStr(dValue, ".+") +"%)";
-               stop.profitPct.description = exprs[i];
+               stop.profitPct.description = "profit("+ NumberToStr(dValue, ".+") +"%)";
                stop.profitPct.condition   = true;
             }
          }
@@ -6395,15 +6395,13 @@ bool ValidateInputs() {
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
-               exprs[i]                 = "loss("+ DoubleToStr(dValue, 2) +")";
-               stop.lossAbs.description = exprs[i];
+               stop.lossAbs.description = "loss("+ DoubleToStr(dValue, 2) +")";
                stop.lossAbs.condition   = true;
             }
             else {
                stop.lossPct.value       = dValue;
                stop.lossPct.absValue    = INT_MIN;
-               exprs[i]                 = "loss("+ NumberToStr(dValue, ".+") +"%)";
-               stop.lossPct.description = exprs[i];
+               stop.lossPct.description = "loss("+ NumberToStr(dValue, ".+") +"%)";
                stop.lossPct.condition   = true;
             }
          }

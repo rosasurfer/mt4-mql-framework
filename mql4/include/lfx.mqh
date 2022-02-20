@@ -860,17 +860,17 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
-   int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders: "+ dims, ERR_INCOMPATIBLE_ARRAYS, fCatch));
+   int dims = ArrayDimension(orders); if (dims > 2)   return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(1)  invalid dimensions of parameter orders: "+ dims, ERR_INCOMPATIBLE_ARRAY, fCatch));
 
    /*LFX_ORDER*/int order[]; ArrayResize(order, LFX_ORDER_intSize);
    if (dims == 1) {
       // Parameter orders[] ist einzelne Order
-      if (ArrayRange(orders, 0) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      if (ArrayRange(orders, 0) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(2)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]", ERR_INCOMPATIBLE_ARRAY, fCatch));
       ArrayCopy(order, orders);
    }
    else {
       // Parameter orders[] ist Order-Array
-      if (ArrayRange(orders, 1) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAYS, fCatch));
+      if (ArrayRange(orders, 1) != LFX_ORDER_intSize) return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(3)  invalid size of parameter orders["+ ArrayRange(orders, 0) +"]["+ ArrayRange(orders, 1) +"]", ERR_INCOMPATIBLE_ARRAY, fCatch));
       int ordersSize = ArrayRange(orders, 0);
       if (index < 0 || index > ordersSize-1)          return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(4)  invalid parameter index: "+ index, ERR_ARRAY_INDEX_OUT_OF_RANGE, fCatch));
       int src  = GetIntsAddress(orders) + index*LFX_ORDER_intSize*4;
@@ -1030,7 +1030,7 @@ bool QC.StartTradeCmdSender() {
       return(true);
 
    // aktiven Channel ermitteln
-   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"/quickchannel.ini";
    string section = tradeAccount.number;
    string keys[], value="";
    int error, iValue, keysSize = GetIniKeys(file, section, keys);
@@ -1109,7 +1109,7 @@ bool QC.StartTradeCmdReceiver() {
    //debug("QC.StartTradeCmdReceiver(2)  receiver on \""+ qc.TradeCmdChannel +"\" started");
 
    // Channelnamen und -status in .ini-Datei hinterlegen
-   string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
+   string file    = GetTerminalCommonDataPathA() +"/quickchannel.ini";
    string section = GetAccountNumber();
    string key     = qc.TradeCmdChannel;
    string value   = "1";
@@ -1128,7 +1128,7 @@ bool QC.StartTradeCmdReceiver() {
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
       // Channelstatus in .ini-Datei aktualisieren (vorm Stoppen des Receivers)
-      string file    = GetTerminalCommonDataPathA() +"\\quickchannel.ini";
+      string file    = GetTerminalCommonDataPathA() +"/quickchannel.ini";
       string section = GetAccountNumber();
       string key     = qc.TradeCmdChannel;
       if (!DeleteIniKeyA(file, section, key)) return(false);

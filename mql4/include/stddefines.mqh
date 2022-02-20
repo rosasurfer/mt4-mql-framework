@@ -130,6 +130,37 @@ double  N_INF;                                                    // -1.#INF: ne
 #define TIME_FULL                   7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
+// DateTime2() flags
+#define DATE_OF_ERA                 1           // relative to the era (1970-01-01)
+#define DATE_OF_TODAY               2           // relative to today
+
+
+// ParseTime() flags
+#define DATE_YYYYMMDD               1           // 1980.07.19
+#define DATE_DDMMYYYY               2           // 19.07.1980
+//efine DATE_YEAR_OPTIONAL          4
+//efine DATE_MONTH_OPTIONAL         8
+//efine DATE_DAY_OPTIONAL          16
+#define DATE_OPTIONAL              28           // (DATE_YEAR_OPTIONAL | DATE_MONTH_OPTIONAL | DATE_DAY_OPTIONAL)
+
+//efine TIME_SECONDS_OPTIONAL      32
+//efine TIME_MINUTES_OPTIONAL      64
+//efine TIME_HOURS_OPTIONAL       128
+#define TIME_OPTIONAL             224           // (TIME_HOURS_OPTIONAL | TIME_MINUTES_OPTIONAL | TIME_SECONDS_OPTIONAL)
+
+
+// ParseTime() result element indexes
+#define PT_YEAR                     0
+#define PT_MONTH                    1
+#define PT_DAY                      2
+#define PT_HAS_DATE                 3
+#define PT_HOUR                     4
+#define PT_MINUTE                   5
+#define PT_SECOND                   6
+#define PT_HAS_TIME                 7
+#define PT_ERROR                    8           // string*
+
+
 // timeframe identifier
 #define PERIOD_M1                   1           // 1 Minute
 #define PERIOD_M5                   5           // 5 Minuten
@@ -445,7 +476,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define MSM_ABSOLUTE                   1
 
 
-// Swap types, siehe MarketInfo(MODE_SWAPTYPE): jeweils per Lot und Tag
+// swap types, see MarketInfo(MODE_SWAPTYPE)    // per day for 1 lot
 #define SCM_POINTS                     0        // in points (quote currency), Forex standard
 #define SCM_BASE_CURRENCY              1        // as amount of base currency   (see "symbols.raw")
 #define SCM_INTEREST                   2        // in percentage terms

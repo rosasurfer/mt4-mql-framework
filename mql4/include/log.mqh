@@ -73,13 +73,13 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
  * Check for and handle runtime errors. If an error occurred the error is logged and stored in the global var "last_error".
  * After return the internal MQL error as returned by GetLastError() is always reset.
  *
- * @param  string location            - a possible error's location identifier and/or an error message
+ * @param  string caller              - location identifier of the caller
  * @param  int    error    [optional] - trigger a specific error (default: no)
  * @param  bool   popOrder [optional] - whether the last order context on the order stack should be restored (default: no)
  *
  * @return int - the same error
  */
-int catch(string location, int error=NO_ERROR, bool popOrder=false) {
+int catch(string caller, int error=NO_ERROR, bool popOrder=false) {
    popOrder = popOrder!=0;
    if      (!error                  ) { error  =                      GetLastError(); }
    else if (error == ERR_WIN32_ERROR) { error += GetLastWin32Error(); GetLastError(); }
@@ -88,16 +88,16 @@ int catch(string location, int error=NO_ERROR, bool popOrder=false) {
 
    if (error != 0) {
       if (isRecursion) {
-         Alert("catch(1)  recursion: ", location, ", error: ", error);        // should never happen
-         return(debug("catch(1)  recursion: "+ location, error, LOG_ERROR));
+         Alert("catch(1)  recursion: ", caller, ", error: ", error);          // should never happen
+         return(debug("catch(1)  recursion: "+ caller, error, LOG_ERROR));
       }
       isRecursion = true;
 
-      logFatal(location, error);                                              // handle the error
+      logFatal(caller, error);                                                // handle the error
       SetLastError(error);                                                    // set the error
    }
 
-   if (popOrder) OrderPop(location);
+   if (popOrder) OrderPop(caller);
    isRecursion = false;
    return(error);
 }
@@ -625,10 +625,10 @@ bool SetLogfile(string filename) {
       if (loglevel!=LOG_OFF && loglevelFile!=LOG_OFF) {
          string prevName = ec_LogFilename(__ExecutionContext);
          if (filename != prevName) {
-            if (IsLogDebug()) debug("SetLogfile(1)  "+ DoubleQuoteStr(filename));      // only to DebugView (for quick control)
+            if (IsLogDebug()) debug("SetLogfile(1)  \""+ filename +"\"");        // only to DebugView (for quick control)
          }
       }
-      else {                                                                           // only to DebugView (for quick control)
+      else {                                                                     // only to DebugView (for quick control)
          if (IsLogDebug()) debug("SetLogfile(2)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
       }
    }

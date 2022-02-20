@@ -30,6 +30,7 @@ extern string StartDate              = "2019.01.01";        // Broketrader start
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
+#include <functions/ParseTime.mqh>
 
 #define MODE_OPEN            0                              // indicator buffer ids
 #define MODE_CLOSED          1
@@ -80,8 +81,10 @@ int onInit() {
    if (systemTimeframe == -1)      return(catch("onInit(6)  invalid input parameter Timeframe: "+ DoubleQuoteStr(Timeframe), ERR_INVALID_INPUT_PARAMETER));
    Timeframe = TimeframeDescription(systemTimeframe);
    // StartDate
-   systemStartDate = ParseDate(StartDate);
-   if (IsNaT(systemStartDate))     return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   int pt[];
+   bool success = ParseTime(StartDate, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
+   if (!success)                   return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
+   systemStartDate = DateTime2(pt);
 
    // buffer management
    SetIndexBuffer(MODE_OPEN,   bufferOpenPL  );                               // open PL:   invisible
@@ -233,7 +236,7 @@ double iMTF(int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, systemTimeframe, ".attic\\"+ WindowExpertName(),
+   double value = iCustom(NULL, systemTimeframe, ".attic/"+ WindowExpertName(),
                           SMA.Periods,                            // int    SMA.Periods
                           Stochastic.Periods,                     // int    Stochastic.Periods
                           Stochastic.MA1.Periods,                 // int    Stochastic.MA1.Periods

@@ -21,7 +21,7 @@ string GetAccountConfigPath(string company="", int account=NULL) {
       account = GetAccountNumber();
       if (!account) return(EMPTY_STR);
    }
-   return(StringConcatenate(GetTerminalCommonDataPathA(), "\\accounts\\", company, "\\", account, "-config.ini"));
+   return(StringConcatenate(GetTerminalCommonDataPathA(), "/accounts/", company, "/", account, "-config.ini"));
 }
 
 
@@ -683,8 +683,8 @@ bool WriteIniString(string fileName, string section, string key, string value) {
          string name = StrReplace(fileName, "\\", "/");
          string directory = StrLeftTo(name, "/", -1);
 
-         if (directory!=name) /*&&*/ if (!IsDirectory(directory, MODE_OS)) {
-            error = CreateDirectoryA(directory, MODE_OS|MODE_MKPARENT);
+         if (directory!=name) /*&&*/ if (!IsDirectory(directory, MODE_SYSTEM)) {
+            error = CreateDirectoryA(directory, MODE_SYSTEM|MODE_MKPARENT);
             if (IsError(error)) return(!catch("WriteIniString(1)  cannot create directory "+ DoubleQuoteStr(directory), ERR_WIN32_ERROR+error));
             return(WriteIniString(fileName, section, key, value));
          }
