@@ -5344,8 +5344,8 @@ int init() {
       caption=TimeCurrent()
       type=datetime
       <content>
-      Opposite to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of the selected symbols
-      as seconds since 00:00 January 1, 1970. In the Tester this time is modelled.<br/>
+      Unlike to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of all selected symbols
+      as a Unix timestamp. In tester this time is modelled.<br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <li>Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
@@ -5354,10 +5354,7 @@ int init() {
       <br/>
       <br/>
       <span style="color:green">Note:</span><br/>
-      Diese Funktion sollte niemals verwendet werden. Um bei R&uuml;ckgabe von <span class="const">NULL</span> einen Fehler zu melden, kann <span class="function">TimeCurrentEx</span>()
-      verwendet werden. Um den Zeitpunkt des letzten Ticks zu ermitteln, sollte
-      <nobr><span class="function">MarketInfo</span>(<span class="function">Symbol</span>(), <span class="const">MODE_TIME</span>)</nobr> verwendet werden. Um die Serverzeit
-      zu ermitteln, sollte <span class="function">GetServerTime</span>() bzw. <span class="function">TimeServer</span>() verwendet werden.<br/>
+      Don't use this function. Instead use either the variable <span class="global">Tick.time</span> or the function <span class="function">TimeServer</span>().<br/>
 
       <br/>
       <span style="color:red">TODO:</span><br/>
@@ -5365,8 +5362,9 @@ int init() {
       in Standalone-Indikatoren unter Test).<br/>
       </content>
       <example>
-if (TimeCurrent()-OrderOpenTime()&lt;360)
+if (TimeCurrent()-OrderOpenTime() &lt; 360) {
    return(0);
+}
       </example>
     </function>
 

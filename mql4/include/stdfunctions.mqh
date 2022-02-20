@@ -4149,23 +4149,6 @@ datetime TimeLocalEx(string caller = "") {
 
 
 /**
- * Drop-in replacement for the flawed built-in function TimeCurrent().
- *
- * Gibt den Zeitpunkt des letzten Ticks aller selektierten Symbole zurück. Im Tester entspricht diese Zeit dem Zeitpunkt des
- * letzten Ticks des getesteten Symbols.
- *
- * @param  string caller [optional] - location identifier of the caller (default: none)
- *
- * @return datetime - time or NULL (0) in case of errors
- */
-datetime TimeLastTick(string caller = "") {
-   datetime time = TimeCurrent();
-   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLastTick(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR));
-   return(time);
-}
-
-
-/**
  * Format a timestamp as a string representing GMT time. MQL wrapper for the ANSI function of the MT4Expander.
  *
  * @param  datetime timestamp - Unix timestamp (GMT)
@@ -7278,7 +7261,6 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
-   TimeLastTick();
    TimeLocalEx();
    TimeServer();
    TimeYearEx(NULL);

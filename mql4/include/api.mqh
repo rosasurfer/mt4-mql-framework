@@ -312,7 +312,6 @@ int      TimeframeFlag(int timeframe = NULL);;
 string   TimeframeFlagToStr(int flag);;
 datetime TimeFXT();;
 datetime TimeGMT();;
-datetime TimeLastTick(string caller = "");;
 datetime TimeLocalEx(string caller = "");;
 datetime TimeServer();;
 int      TimeYearEx(datetime time);;
