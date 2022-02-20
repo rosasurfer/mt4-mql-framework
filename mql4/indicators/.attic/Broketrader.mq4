@@ -46,6 +46,7 @@ extern string Signal.SMS             = "on | off | auto*";
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ParseTime.mqh>
 #include <functions/@Trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
@@ -133,7 +134,7 @@ int onInit() {
    if (SMA.DrawWidth < 0)          return(catch("onInit(6)  invalid input parameter SMA.DrawWidth: "+ SMA.DrawWidth, ERR_INVALID_INPUT_PARAMETER));
    // StartDate
    string sValue = StrTrim(StartDate);
-   if (sValue!="" 0 && sValue!="yyyy.mm.dd") {
+   if (sValue!="" && sValue!="yyyy.mm.dd") {
       int pt[];
       bool success = ParseTime(sValue, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
       if (!success)                return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));

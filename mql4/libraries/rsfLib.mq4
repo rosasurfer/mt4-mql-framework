@@ -5573,9 +5573,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
    // expires
-   if (expires && expires <= TimeCurrentEx("OrderSendEx(14)")) return(!Order.HandleError("OrderSendEx(15)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (expires && expires <= TimeServer())                     return(!Order.HandleError("OrderSendEx(14)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(15)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
@@ -5605,10 +5605,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    // loop until the trade request succeeded or a permanent error occurred
    while (true) {
       // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
-      if (IsStopped()) return(!Order.HandleError("OrderSendEx(17)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
+      if (IsStopped()) return(!Order.HandleError("OrderSendEx(16)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderSendEx(18)  trade context busy, retrying...");
+         if (IsLogDebug()) logDebug("OrderSendEx(17)  trade context busy, retrying...");
          Sleep(300);
          continue;
       }
@@ -5630,11 +5630,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
       oe.setDuration(oe, GetTickCount()-time1);                            // total time in milliseconds
 
       if (ticket > 0) {
-         OrderPush("OrderSendEx(19)");
+         OrderPush("OrderSendEx(18)");
          WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(20)")));
+            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(19)")));
 
          // On a slow OrderSend() response or in a fast market limits/stops may have already been executed, or the order may
          // have been modified or closed. The returned values must describe the original order, not the current order status.
@@ -5652,7 +5652,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else                             dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
 
-         if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
+         if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
             if (type<=OP_SELL && __ExecutionContext[EC.eaExternalReporting]) {
@@ -5661,8 +5661,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
-         OrderPop("OrderSendEx(22)");
-         if (IsError(Order.HandleError("OrderSendEx(23)", GetLastError(), oeFlags, oe)))
+         OrderPop("OrderSendEx(21)");
+         if (IsError(Order.HandleError("OrderSendEx(22)", GetLastError(), oeFlags, oe)))
             return(NULL);
          return(ticket);                                                   // regular exit (NO_ERROR)
       }
@@ -5677,7 +5677,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderSendEx(24)  trade context busy, retrying...");
+            if (IsLogDebug()) logDebug("OrderSendEx(23)  trade context busy, retrying...");
             Sleep(300);
             continue;
 
@@ -5688,7 +5688,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          case ERR_OFF_QUOTES:
             tempErrors++;
             if (tempErrors > 5) break;
-            logWarn("OrderSendEx(25)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+            logWarn("OrderSendEx(24)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          case ERR_REQUOTE:
@@ -5707,19 +5707,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else if (type == OP_SELLSTOP)  marketViolated = GE(oe.OpenPrice(oe), oe.Bid(oe));
             else if (type == OP_SELLLIMIT) marketViolated = LE(oe.OpenPrice(oe), oe.Bid(oe));
             if (!marketViolated) {
-               if (IsLogDebug()) logDebug("OrderSendEx(26)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
+               if (IsLogDebug()) logDebug("OrderSendEx(25)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
                error = oe.setError(oe, ERR_STOP_DISTANCE_VIOLATED);
             }
             break;
 
          case NO_ERROR:
-            logWarn("OrderSendEx(27)  returned no ticket and no error => ERR_RUNTIME_ERROR");
+            logWarn("OrderSendEx(26)  returned no ticket and no error => ERR_RUNTIME_ERROR");
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
       break;
    }
-   return(!Order.HandleError("OrderSendEx(28)  "+ OrderSendEx.ErrorMsg(oe), error, oeFlags, oe, true));
+   return(!Order.HandleError("OrderSendEx(27)  "+ OrderSendEx.ErrorMsg(oe), error, oeFlags, oe, true));
 }
 
 
@@ -5895,11 +5895,11 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (LT(takeProfit, 0, digits))                              return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
    // expires
    if (expires != 0)
-      if (expires <= TimeCurrentEx("OrderModifyEx(17)"))       return(_false(Order.HandleError("OrderModifyEx(18)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(19)")));
+      if (expires <= TimeServer())                             return(_false(Order.HandleError("OrderModifyEx(17)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(18)")));
    if (expires != OrderExpiration())
-      if (!isPendingOrder)                                     return(_false(Order.HandleError("OrderModifyEx(20)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(21)")));
+      if (!isPendingOrder)                                     return(_false(Order.HandleError("OrderModifyEx(19)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(20)")));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(Order.HandleError("OrderModifyEx(22)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(23)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(Order.HandleError("OrderModifyEx(21)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(22)")));
 
    // initialize oe[]
    oe.setSymbol        (oe, OrderSymbol()    );
@@ -5922,8 +5922,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double prevOpenPrice=OrderOpenPrice(), prevStopLoss=OrderStopLoss(), prevTakeProfit=OrderTakeProfit();
 
    if (EQ(openPrice, prevOpenPrice, digits)) /*&&*/ if (EQ(stopLoss, prevStopLoss, digits)) /*&&*/ if (EQ(takeProfit, prevTakeProfit, digits)) {
-      logWarn("OrderModifyEx(24)  nothing to modify for ticket #"+ ticket);
-      return(_false(Order.HandleError("OrderModifyEx(25)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(26)")));
+      logWarn("OrderModifyEx(23)  nothing to modify for ticket #"+ ticket);
+      return(_false(Order.HandleError("OrderModifyEx(24)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(25)")));
    }
    int  tempErrors, startTime = GetTickCount();
    bool success;
@@ -5931,10 +5931,10 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    // loop until the order was modified or a permanent error occurred
    while (true) {
       // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
-      if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(27)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(28)")));
+      if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(26)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(27)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderModifyEx(29)  trade context busy, retrying...");
+         if (IsLogDebug()) logDebug("OrderModifyEx(28)  trade context busy, retrying...");
          Sleep(300);
          continue;
       }
@@ -5949,8 +5949,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
       if (success) {
          WaitForTicket(ticket, /*select=*/true);
 
-         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, TimeCurrentEx("OrderModifyEx(30)"), prevOpenPrice, prevStopLoss, prevTakeProfit))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(31)")));
+         if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currTickTime], prevOpenPrice, prevStopLoss, prevTakeProfit))
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(29)")));
 
          // In a fast market limits may have already been executed or the order status may have changed other-wise.
          // The returned values must describe the original order, not the current status.
@@ -5962,16 +5962,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
-         if (IsLogDebug()) logDebug("OrderModifyEx(32)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
+         if (IsLogDebug()) logDebug("OrderModifyEx(30)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!IsTesting()) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
-         return(!_bool(Order.HandleError("OrderModifyEx(33)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(34)")));
+         return(!_bool(Order.HandleError("OrderModifyEx(31)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(32)")));
       }
 
       error = GetLastError();
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderModifyEx(35)  trade context busy, retrying...");
+            if (IsLogDebug()) logDebug("OrderModifyEx(33)  trade context busy, retrying...");
             Sleep(300);
             continue;
 
@@ -5979,21 +5979,21 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          case ERR_TRADE_TIMEOUT:
             tempErrors++;
             if (tempErrors > 5) break;
-            logWarn("OrderModifyEx(36)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            logWarn("OrderModifyEx(34)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          // map terminal generated errors
          case ERR_INVALID_TICKET:                // unknown ticket or not an open pending order anymore (client-side)
-            if (IsLogDebug()) logDebug("OrderModifyEx(37)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+            if (IsLogDebug()) logDebug("OrderModifyEx(35)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = oe.setError(oe, ERR_INVALID_TRADE_PARAMETERS);
             break;
 
          case ERR_INVALID_STOP:
-            logWarn("OrderModifyEx(38)  detection of ERR_STOP_DISTANCE_VIOLATED not yet implemented", ERR_NOT_IMPLEMENTED);
+            logWarn("OrderModifyEx(36)  detection of ERR_STOP_DISTANCE_VIOLATED not yet implemented", ERR_NOT_IMPLEMENTED);
             break;
 
          case NO_ERROR:
-            logWarn("OrderModifyEx(39)  returned no success and no error => ERR_RUNTIME_ERROR");
+            logWarn("OrderModifyEx(37)  returned no success and no error => ERR_RUNTIME_ERROR");
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
@@ -6001,7 +6001,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    }
 
    string msg = OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit);
-   return(_false(Order.HandleError("OrderModifyEx(40)  "+ msg, error, oeFlags, oe, true), OrderPop("OrderModifyEx(40)")));
+   return(_false(Order.HandleError("OrderModifyEx(38)  "+ msg, error, oeFlags, oe, true), OrderPop("OrderModifyEx(39)")));
 }
 
 

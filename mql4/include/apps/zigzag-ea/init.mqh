@@ -27,7 +27,7 @@ int onInitUser() {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = Max(TimeCurrentEx(), TimeServer());
+         sequence.created = TimeServer();
          sequence.status  = STATUS_WAITING;
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();

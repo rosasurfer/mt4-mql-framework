@@ -988,7 +988,7 @@ bool IsEntrySignal(int &signal) {
 bool IsSessionBreak() {
    if (last_error != NO_ERROR) return(false);
 
-   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+   datetime serverTime = TimeServer();
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {

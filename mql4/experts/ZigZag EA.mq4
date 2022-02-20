@@ -90,6 +90,7 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
@@ -288,12 +289,12 @@ bool IsStartSignal(int &signal) {
    if (start.time.condition) {
       datetime startTime = start.time.value;
       if (start.time.isDaily) {
-         datetime now = TimeCurrentEx();
+         datetime now = TimeServer();
          startTime += (now - (now % DAY));
       }
-      if (TimeCurrentEx("IsStartSignal(1)") < start.time.value) return(false);
+      if (TimeServer() < start.time.value) return(false);
 
-      if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       signal               = SIGNAL_TIME;
       start.time.condition = start.time.isDaily;
       SS.StartStopConditions();
@@ -489,11 +490,11 @@ bool IsStopSignal(int &signal) {
    if (stop.time.condition) {
       datetime stopTime = stop.time.value;
       if (stop.time.isDaily) {
-         datetime now = TimeCurrentEx();
+         datetime now = TimeServer;
          stopTime += (now - (now % DAY));
       }
-      if (TimeCurrentEx("IsStopSignal(1)") >= stopTime) {
-         if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (TimeServer() >= stopTime) {
+         if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TIME;
          return(true);
       }
@@ -503,7 +504,7 @@ bool IsStopSignal(int &signal) {
       // stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
          if (sequence.totalPL >= stop.profitAbs.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
@@ -515,7 +516,7 @@ bool IsStopSignal(int &signal) {
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
          if (sequence.totalPL >= stop.profitPct.absValue) {
-            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
          }
@@ -523,7 +524,7 @@ bool IsStopSignal(int &signal) {
 
       // stop.profitPip: ----------------------------------------------------------------------------------------------------
       if (stop.profitPip.condition) {
-         return(!catch("IsStopSignal(5)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
+         return(!catch("IsStopSignal(4)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
       }
    }
    return(false);

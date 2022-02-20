@@ -947,7 +947,7 @@ double stop.lossPct.AbsValue() {
 bool IsSessionBreak() {
    if (IsLastError()) return(false);
 
-   datetime serverTime = Max(TimeCurrentEx(), TimeServer());
+   datetime serverTime = TimeServer();
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
@@ -1007,7 +1007,7 @@ bool StartSequence(int signal) {
    if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    sequence.status      = STATUS_PROGRESSING;
-   sequence.startTime   = Max(TimeCurrentEx(), TimeServer());
+   sequence.startTime   = TimeServer();
    sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
    sequence.stopTime    = 0;
    sequence.stopPrice   = 0;
@@ -1062,7 +1062,7 @@ bool ResumeSequence(int signal) {
    sequence.cycle++;
    sequence.status       = STATUS_PROGRESSING;                    // TODO: update TP/SL conditions
    sequence.gridbase     = 0;
-   sequence.startTime    = Max(TimeCurrentEx(), TimeServer());
+   sequence.startTime    = TimeServer();
    sequence.startPrice   = 0;
    sequence.stopTime     = 0;
    sequence.stopPrice    = 0;
@@ -1193,7 +1193,7 @@ bool StopSequence(int signal) {
    }
 
    sequence.status    = STATUS_STOPPED;
-   sequence.stopTime  = Max(TimeCurrentEx(), TimeServer());
+   sequence.stopTime  = Tick.time;
    sequence.stopPrice = doubleOr(hedgeOpenPrice, NormalizeDouble((Bid+Ask)/2, Digits));
    if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" sequence stopped at "+ NumberToStr(sequence.stopPrice, PriceFormat) +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 

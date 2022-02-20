@@ -30,6 +30,7 @@ extern string StartDate              = "2019.01.01";        // Broketrader start
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
+#include <functions/ParseTime.mqh>
 
 #define MODE_OPEN            0                              // indicator buffer ids
 #define MODE_CLOSED          1
