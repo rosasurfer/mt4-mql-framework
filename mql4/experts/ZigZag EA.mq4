@@ -6,7 +6,7 @@
  *  - PL charts for all variants/symbols
  *     log symbol creation
  *     total PL
- *     daily PL (daily reset)
+ *     daily PL reset
  *     PL in pip/money
  *
  *     variants:
@@ -15,6 +15,7 @@
  *      full session (24h) with trade breaks
  *      partial session (e.g. 09:00-16:00) with trade breaks
  *
+ *  - parameter ZigZag.Timeframe
  *  - trade breaks
  *     - trading is disabled but the price feed is active
  *     - configuration:
@@ -31,12 +32,10 @@
  *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
- *     INFO   ZigZag EA::initTemplate(0)  ********************************** (demo)
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
  *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
- *  - parameter ZigZag.Timeframe
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
  *
