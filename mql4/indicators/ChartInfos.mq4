@@ -2455,7 +2455,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
       //
 
       // (3) Gruppen anlegen und komplette Zeilen direkt hier einfügen (bei der letzten Gruppe jedoch ohne Zeilenende)
-      datetime groupFrom, groupTo, nextGroupFrom, now=TimeCurrentEx("CustomPositions.ParseHstTerm(6)");
+      datetime groupFrom, groupTo, nextGroupFrom, now=Tick.time;
       if      (groupByMonth) groupFrom = DateTime1(TimeYearEx(dtFrom), TimeMonth(dtFrom));
       else if (groupByWeek ) groupFrom = dtFrom - dtFrom%DAYS - (TimeDayOfWeekEx(dtFrom)+6)%7 * DAYS;
       else if (groupByDay  ) groupFrom = dtFrom - dtFrom%DAYS;
@@ -2601,7 +2601,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
 
    if (!StringLen(hstComments)) hstComments = comment;
    else                         hstComments = hstComments +", "+ comment;
-   return(!catch("CustomPositions.ParseHstTerm(7)"));
+   return(!catch("CustomPositions.ParseHstTerm(6)"));
 }
 
 

@@ -1018,15 +1018,12 @@ bool BarRangeSignal.Check(int index) {
       tick.new = EventListener.NewTick();
    }
 
-
    // (2) changedBars(testTimeframe) für die Testdatenreihe ermitteln
    int changedBars = iChangedBars(NULL, testTimeframe);
    if (changedBars == -1) return(false);
 
    if (!changedBars)                                                                      // z.B. bei Aufruf in init() oder deinit()
       return(true);
-   //debug("BarRangeSignal.Check(2)       changedBars="+ changedBars +"  tick.new="+ tick.new);
-
 
    // (3) Prüflevel reinitialisieren, wenn:
    //     - der Bereich der changedBars(testTimeframe) die Testsession überlappt (History-Backfill) oder wenn
@@ -1035,13 +1032,11 @@ bool BarRangeSignal.Check(int index) {
    if (changedBars > testSessionCloseBar) {
       // Ist testSessionCloseBar=0 und nur sie verändert, wird nur reinitialisiert, wenn der Tick synthetisch ist. Das deshalb, weil changedBars=0 in anderen als dem aktuellem
       if (changedBars > 1 || !tick.new) {                                                 // Timeframe nicht zuverlässig detektiert werden kann.
-         //debug("BarRangeSignal.Check(3)       changedBars="+ changedBars +"  tick.new="+ tick.new);
          if (!BarRangeSignal.Init(index)) return(false);
          reinitialized = true;
       }
    }
    if (!reinitialized) /*&&*/ if (iTime(NULL, testTimeframe, 0) > lastSessionEndTime) {   // autom. Signal-Reset bei Beginn neuer Testsession
-      //debug("BarRangeSignal.Check(4)       changedBars="+ changedBars +"  tick.new="+ tick.new);
       if (!BarRangeSignal.Init(index, true)) return(false);                               // barOpen = true
       reinitialized = true;
    }
@@ -1054,46 +1049,37 @@ bool BarRangeSignal.Check(int index) {
       lastSessionEndTime  = signal.data[index][I_BRS_CURRENT_SESSION_ENDTIME];
       lastChangedBars     = signal.data[index][I_BRS_LAST_CHANGED_BARS      ];
    }
-   //debug("BarRangeSignal.Check(5)       lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars);
-
 
    // (4) Signallevel prüfen, wenn die Bars der Testdatenreihe komplett scheinen und der zweite echte Tick eintrifft.
    if (lastChangedBars<=2 && changedBars<=2 && lastTick.new && tick.new) {                // Optimierung unnötig, da im Normalfall immer alle Bedingungen zutreffen
-      //debug("BarRangeSignal.Check(6)       checking tick "+ Tick);
-
       double price = NormalizeDouble(Bid, Digits);
 
       if (signalLevelH != NULL) {
          if (GE(price, signalLevelH)) {
             if (GT(price, signalLevelH)) {
-               onBarRangeSignal(index, SIGNAL_UP, signalLevelH, price, TimeCurrentEx("BarRangeSignal.Check(7)"));
+               onBarRangeSignal(index, SIGNAL_UP, signalLevelH, price);
                signalLevelH                               = NULL;
                signal.data  [index][I_BRS_SIGNAL_LEVEL_H] = NULL;
                signal.status[index]                       = BarRangeSignal.Status(index);
                ShowStatus();
             }
-            //else if (signal.onTouch) debug("BarRangeSignal.Check(8)       touch signal: current price "+ NumberToStr(price, PriceFormat) +" = High["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelH, PriceFormat));
          }
       }
       if (signalLevelL != NULL) {
          if (LE(price, signalLevelL)) {
             if (LT(price, signalLevelL)) {
-               onBarRangeSignal(index, SIGNAL_DOWN, signalLevelL, price, TimeCurrentEx("BarRangeSignal.Check(9)"));
+               onBarRangeSignal(index, SIGNAL_DOWN, signalLevelL, price);
                signalLevelL                               = NULL;
                signal.data  [index][I_BRS_SIGNAL_LEVEL_L] = NULL;
                signal.status[index]                       = BarRangeSignal.Status(index);
                ShowStatus();
             }
-            //else if (signal.onTouch) debug("BarRangeSignal.Check(10)       touch signal: current price "+ NumberToStr(price, PriceFormat) +" = Low["+ PeriodDescription(signal.timeframe) +","+ signal.bar +"]="+ NumberToStr(signalLevelL, PriceFormat));
          }
       }
    }
-   else {
-      //debug("BarRangeSignal.Check(11)       not checking tick "+ Tick +", lastChangedBars="+ lastChangedBars +"  changedBars="+ changedBars +"  lastTick.new="+ lastTick.new +"  tick.isNew="+ tick.isNew);
-   }
 
    signal.data[index][I_BRS_LAST_CHANGED_BARS] = changedBars;
-   return(!catch("BarRangeSignal.Check(12)"));
+   return(!catch("BarRangeSignal.Check(2)"));
 }
 
 
@@ -1152,15 +1138,14 @@ string BarRangeDescription(int timeframe, int bar) {
 /**
  * Handler für BarRange-Signale.
  *
- * @param  int      index     - Index in den zur Überwachung konfigurierten Signalen
- * @param  int      direction - Richtung des Signals: SD_UP|SD_DOWN
- * @param  double   level     - Signallevel, der berührt oder gebrochen wurde
- * @param  double   price     - Preis, der den Signallevel berührt oder gebrochen hat
- * @param  datetime time.srv  - Zeitpunkt des Signals (Serverzeit)
+ * @param  int    index     - Index in den zur Überwachung konfigurierten Signalen
+ * @param  int    direction - Richtung des Signals: SD_UP|SD_DOWN
+ * @param  double level     - Signallevel, der berührt oder gebrochen wurde
+ * @param  double price     - Preis, der den Signallevel berührt oder gebrochen hat
  *
  * @return bool - Erfolgsstatus
  */
-bool onBarRangeSignal(int index, int direction, double level, double price, datetime time.srv) {
+bool onBarRangeSignal(int index, int direction, double level, double price) {
    if (!track.signals)                                 return(true);
    if (direction!=SIGNAL_UP && direction!=SIGNAL_DOWN) return(!catch("onBarRangeSignal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 

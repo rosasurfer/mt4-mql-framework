@@ -235,7 +235,6 @@ bool     OrderPop(string caller = "");;
 bool     OrderPush(string caller = "");;
 string   OrderTypeDescription(int type);;
 string   OrderTypeToStr(int type);;
-bool     ParseTime(string value, int flags, int &result[]);;
 string   PeriodDescription(int period = NULL);;
 int      PeriodFlag(int period = NULL);;
 string   PeriodFlagToStr(int flag);;
@@ -306,7 +305,6 @@ bool     Tester.IsStopped();;
 int      Tester.Pause(string caller = "");;
 int      Tester.Stop(string caller = "");;
 bool     This.IsTesting();;
-datetime TimeCurrentEx(string caller = "");;
 int      TimeDayEx(datetime time);;
 int      TimeDayOfWeekEx(datetime time);;
 string   TimeframeDescription(int timeframe = NULL);;
@@ -314,6 +312,7 @@ int      TimeframeFlag(int timeframe = NULL);;
 string   TimeframeFlagToStr(int flag);;
 datetime TimeFXT();;
 datetime TimeGMT();;
+datetime TimeLastTick(string caller = "");;
 datetime TimeLocalEx(string caller = "");;
 datetime TimeServer();;
 int      TimeYearEx(datetime time);;
@@ -351,6 +350,7 @@ string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
+bool     ParseTime(string value, int flags, int &result[]);;
 
 
 // include/structs/mt4/
