@@ -288,7 +288,7 @@ bool IsStartSignal(int &signal) {
    if (start.time.condition) {
       datetime startTime=start.time.value, now=TimeServer();
       if (start.time.isDaily) startTime += (now - (now % DAY));
-      if (now < start.time.value) return(false);
+      if (now < startTime) return(false);
 
       if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       signal               = SIGNAL_TIME;
