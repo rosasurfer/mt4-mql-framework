@@ -4,6 +4,7 @@
  *
  * TODO:
  *  - periodic start/stop conditions @time(03:20)
+ *     prevent ZigZag signals between stop.time.condition and Midnight
  *     quick fix for FATAL ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
  *
  *  - PL charts for all variants/symbols
@@ -288,15 +289,14 @@ bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
-   // start.time
+   // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
       datetime startTime=start.time.value, now=TimeServer();
       if (start.time.isDaily) startTime += (now - (now % DAY));
       if (now < startTime) return(false);
-      start.time.condition = (start.time.isDaily && stop.time.condition && stop.time.isDaily);
    }
 
-   // ZigZag signal
+   // ZigZag signal: --------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
       if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
@@ -355,6 +355,10 @@ bool StartSequence(int direction) {
    sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
    SS.TotalPL();
    SS.PLStats();
+
+   // update start/stop conditions
+   start.time.condition = false;
+   stop.time.condition  = stop.time.isDaily;
    SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
@@ -486,9 +490,7 @@ bool IsStopSignal(int &signal) {
    if (stop.time.condition) {
       datetime stopTime=stop.time.value, now=TimeServer();
       if (stop.time.isDaily) stopTime += (now - (now % DAY));
-
       if (now >= stopTime) {
-         if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TIME;
          return(true);
       }
@@ -567,27 +569,30 @@ bool StopSequence(int signal) {
          SS.PLStats();
       }
    }
-   sequence.status = STATUS_STOPPED;
-   if (IsLogInfo()) logInfo("StopSequence(3)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
 
-   // update stop conditions
+   // update stop conditions and status
    switch (signal) {
       case SIGNAL_TIME:
-         stop.time.condition = (stop.time.condition && stop.time.isDaily);
+         start.time.condition = start.time.isDaily;
+         stop.time.condition  = false;
+         sequence.status      = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
       case SIGNAL_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
          stop.profitPip.condition = false;
+         sequence.status          = STATUS_STOPPED;
          break;
 
       case NULL:                                      // explicit (manual) stop or end of test
          break;
 
-      default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
+
+   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                 // pause or stop the tester according to the debug configuration
