@@ -287,12 +287,9 @@ bool IsStartSignal(int &signal) {
 
    // start.time
    if (start.time.condition) {
-      datetime startTime = start.time.value;
-      if (start.time.isDaily) {
-         datetime now = TimeServer();
-         startTime += (now - (now % DAY));
-      }
-      if (TimeServer() < start.time.value) return(false);
+      datetime startTime=start.time.value, now=TimeServer();
+      if (start.time.isDaily) startTime += (now - (now % DAY));
+      if (now < start.time.value) return(false);
 
       if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" start condition \"@"+ start.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       signal               = SIGNAL_TIME;
@@ -488,12 +485,10 @@ bool IsStopSignal(int &signal) {
 
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
-      datetime stopTime = stop.time.value;
-      if (stop.time.isDaily) {
-         datetime now = TimeServer;
-         stopTime += (now - (now % DAY));
-      }
-      if (TimeServer() >= stopTime) {
+      datetime stopTime=stop.time.value, now=TimeServer();
+      if (stop.time.isDaily) stopTime += (now - (now % DAY));
+
+      if (now >= stopTime) {
          if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_TIME;
          return(true);
