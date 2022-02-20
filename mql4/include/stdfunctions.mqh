@@ -870,8 +870,8 @@ double PipValueEx(string symbol, double lots, int &error, string caller = "") {
  * @return double - commission value or EMPTY (-1) in case of errors
  */
 double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
-   static double baseCommission;
-   static bool resolved; if (!resolved) {
+   static double baseCommission = EMPTY_VALUE;
+   if (baseCommission == EMPTY_VALUE) {
       bool isCFD = false;
       double value = 0;
 
@@ -913,7 +913,6 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
          }
       }
       baseCommission = value;
-      resolved = true;
    }
 
    switch (mode) {
@@ -3090,11 +3089,10 @@ bool This.IsTesting() {
  * @return bool
  */
 bool IsDemoFix() {
-   static bool result, resolved;
-   if (!resolved) {
+   static bool result = -1;
+   if (result == -1) {
       if (IsDemo()) result = true;
       else          result = This.IsTesting();
-      resolved = true;
    }
    return(result);
 }
@@ -4059,9 +4057,8 @@ bool EventListener.NewTick() {
  * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
  */
 datetime TimeServer(bool watchLastTick = true) {
-   static bool isLibrary = -1; if (isLibrary == -1) {
-      isLibrary = IsLibrary();
-   }
+   static bool isLibrary = -1;
+   if (isLibrary == -1) isLibrary = IsLibrary();
 
    if (This.IsTesting()) {
       if (isLibrary)
