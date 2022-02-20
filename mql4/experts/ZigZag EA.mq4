@@ -26,7 +26,6 @@
  *     - manual behavior configuration:
  *        close-before      (default: no)
  *        synchronize-after (default: yes; if no: wait for the next signal)
- *
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
