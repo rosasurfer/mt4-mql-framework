@@ -313,7 +313,7 @@ string   TimeframeFlagToStr(int flag);;
 datetime TimeFXT();;
 datetime TimeGMT();;
 datetime TimeLocalEx(string caller = "");;
-datetime TimeServer();;
+datetime TimeServer(bool watchLastTick = true);;
 int      TimeYearEx(datetime time);;
 int      Toolbar.Experts(bool enable);;
 string   TradeCommandToStr(int cmd);;
