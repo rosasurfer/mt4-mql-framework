@@ -3074,11 +3074,10 @@ string StrRightPad(string input, int padLength, string padString = " ") {
  * @return bool
  */
 bool This.IsTesting() {
-   static bool result, resolved;
-   if (!resolved) {
+   static bool result = -1;
+   if (result == -1) {
       if (IsTesting()) result = true;
-      else             result = __ExecutionContext[EC.testing] != 0;
-      resolved = true;
+      else             result = (__ExecutionContext[EC.testing] != 0);
    }
    return(result);
 }
@@ -4053,18 +4052,31 @@ bool EventListener.NewTick() {
 
 /**
  * Return the current trade server time. In tester the time is modeled. Different from the last known tick time which is only
- * updated when new ticks arrive.
+ * updated on new ticks.
  *
- * @return datetime - trade server time in server timezone or NULL (0) in case of errors
+ * @param  bool watchLastTick [optional] - account for a server clock being fast wich happens quite often (default: yes)
+ *
+ * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
  */
-datetime TimeServer() {
-   datetime serverTime;
+datetime TimeServer(bool watchLastTick = true) {
+   static bool isLibrary = -1; if (isLibrary == -1) {
+      isLibrary = IsLibrary();
+   }
 
    if (This.IsTesting()) {
-      serverTime = Tick.time;
+      if (isLibrary)
+         return(__ExecutionContext[EC.currTickTime]);
+      return(Tick.time);
    }
-   else {
-      serverTime = GmtToServerTime(GetGmtTime()); if (serverTime == NaT) return(NULL);
+
+   datetime serverTime = GmtToServerTime(GetGmtTime());
+   if (serverTime == NaT) return(NULL);
+
+   if (watchLastTick) {
+      if (isLibrary) datetime tickTime = __ExecutionContext[EC.currTickTime];
+      else                    tickTime = Tick.time;
+      if (tickTime > serverTime)
+         return(tickTime);
    }
    return(serverTime);
 }

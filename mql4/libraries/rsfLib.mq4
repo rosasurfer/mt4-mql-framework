@@ -5573,7 +5573,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
    // expires
-   if (expires && expires <= TimeServer())                     return(!Order.HandleError("OrderSendEx(14)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (expires && expires <= TimeServer(false))                return(!Order.HandleError("OrderSendEx(14)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
    // markerColor
    if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(15)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
@@ -5895,7 +5895,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    if (LT(takeProfit, 0, digits))                              return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
    // expires
    if (expires != 0)
-      if (expires <= TimeServer())                             return(_false(Order.HandleError("OrderModifyEx(17)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(18)")));
+      if (expires <= TimeServer(false))                        return(_false(Order.HandleError("OrderModifyEx(17)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(18)")));
    if (expires != OrderExpiration())
       if (!isPendingOrder)                                     return(_false(Order.HandleError("OrderModifyEx(19)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(20)")));
    // markerColor

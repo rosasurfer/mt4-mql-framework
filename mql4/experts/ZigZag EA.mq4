@@ -46,7 +46,6 @@
  *
  *  - merge IsStartSignal() and IsZigZagSignal() and fix loglevel of both signals
  *  - two ZigZag reversals during the same bar are not recognized and ignored
- *  - improve parsing of start.time.condition
  *  - track slippage
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
