@@ -4070,10 +4070,9 @@ datetime TimeServer(bool watchLastTick = true) {
    if (serverTime == NaT) return(NULL);
 
    if (watchLastTick) {
-      if (isLibrary) datetime tickTime = __ExecutionContext[EC.currTickTime];
-      else                    tickTime = Tick.time;
-      if (tickTime > serverTime)
-         return(tickTime);
+      datetime lastTickTime = TimeCurrent();
+      if (lastTickTime > serverTime)
+         return(lastTickTime);
    }
    return(serverTime);
 }
