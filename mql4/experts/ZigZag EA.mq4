@@ -3,10 +3,6 @@
  *
  *
  * TODO:
- *  - periodic start/stop conditions @time(03:20)
- *     prevent ZigZag signals between stop.time.condition and Midnight
- *     quick fix for FATAL ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close... [ERR_MARKET_CLOSED]
- *
  *  - PL charts for all variants/symbols
  *     log symbol creation
  *     total PL
@@ -291,9 +287,12 @@ bool IsStartSignal(int &signal) {
 
    // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
-      datetime startTime=start.time.value, now=TimeServer();
-      if (start.time.isDaily) startTime += (now - (now % DAY));
-      if (now < startTime) return(false);
+      datetime now = TimeServer();
+      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {
+         start.time.value += (now - (now % DAY));
+         if (start.time.value < now) start.time.value += 1*DAY;      // set periodic value to the next time in the future
+      }
+      if (now < start.time.value) return(false);
    }
 
    // ZigZag signal: --------------------------------------------------------------------------------------------------------
@@ -359,6 +358,7 @@ bool StartSequence(int direction) {
    // update start/stop conditions
    start.time.condition = false;
    stop.time.condition  = stop.time.isDaily;
+   if (stop.time.isDaily) stop.time.value %= DAYS;
    SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
@@ -488,9 +488,12 @@ bool IsStopSignal(int &signal) {
 
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
-      datetime stopTime=stop.time.value, now=TimeServer();
-      if (stop.time.isDaily) stopTime += (now - (now % DAY));
-      if (now >= stopTime) {
+      datetime now = TimeServer();
+      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {
+         stop.time.value += (now - (now % DAY));
+         if (stop.time.value < now) stop.time.value += 1*DAY;        // set periodic value to the next time in the future
+      }
+      if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
          return(true);
       }
@@ -556,7 +559,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                          // a progressing sequence may have an open position to close
+      if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"stopping...");
 
          int oeFlags, oe[];
@@ -574,6 +577,7 @@ bool StopSequence(int signal) {
    switch (signal) {
       case SIGNAL_TIME:
          start.time.condition = start.time.isDaily;
+         if (start.time.isDaily) start.time.value %= DAYS;
          stop.time.condition  = false;
          sequence.status      = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
@@ -585,7 +589,7 @@ bool StopSequence(int signal) {
          sequence.status          = STATUS_STOPPED;
          break;
 
-      case NULL:                                      // explicit (manual) stop or end of test
+      case NULL:                                            // explicit stop (manual) or end of test
          break;
 
       default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
@@ -595,7 +599,7 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                 // pause or stop the tester according to the debug configuration
+   if (IsTesting() && sequence.status == STATUS_STOPPED) {  // pause or stop the tester according to the debug configuration
       if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
       else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
