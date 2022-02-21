@@ -2,7 +2,7 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.RecordEquity      = false;      // whether to generate performance graphs
+extern bool     EA.Recorder          = false;      // whether to record PL graphs
 extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
 
 extern datetime Test.StartTime       = 0;          // time to start a test
@@ -73,7 +73,7 @@ int init() {
    if (EA.ExternalReporting && initFlags & INIT_NO_EXTERNAL_REPORTING) {
       EA.ExternalReporting = false;                            // the input must be reset before SyncMainContext_init()
    }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.ExternalReporting, EA.RecordEquity, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.ExternalReporting, EA.Recorder, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -152,7 +152,7 @@ int init() {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
             sInputs = StringConcatenate(sInputs,
-               ifString(!EA.RecordEquity,      "", NL +"EA.RecordEquity=TRUE"                                        +";"),
+               ifString(!EA.Recorder,          "", NL +"EA.Recorder=TRUE"                                            +";"),
                ifString(!EA.ExternalReporting, "", NL +"EA.ExternalReporting=TRUE"                                   +";"),
                ifString(!Test.StartTime,       "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
                ifString(!Test.StartPrice,      "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
@@ -356,8 +356,8 @@ int start() {
    if (error && error!=last_error) catch("start(9)", error);
 
    // record PL
-   if (EA.RecordEquity) {
-      if (!start_RecordPL()) return(_last_error(CheckErrors("start(10)")));
+   if (EA.Recorder) {
+      if (!start_Recorder()) return(_last_error(CheckErrors("start(10)")));
    }
 
    // check all errors
@@ -558,10 +558,10 @@ bool CheckErrors(string caller, int error = NULL) {
  * @return bool - success status
  */
 bool init_Recorder() {
-   if (EA.RecordEquity && !recorder.initialized && (!IsTesting() || !IsOptimization())) {
-      string section = ifString(IsTesting(), "Tester.", "") +"EA.RecordEquity";
+   if (EA.Recorder && !recorder.initialized && (!IsTesting() || !IsOptimization())) {
+      string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
 
-      // read EA.RecordEquity/HistoryDirectory configuration
+      // read EA.Recorder/HistoryDirectory configuration
       string hstDirectory = GetConfigString(section, "HistoryDirectory", "");                         // "XTrade-test-results" | "XTrade-live-results"
       if (!StringLen(hstDirectory))                     return(!catch("init_Recorder(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
       if (IsAbsolutePath(hstDirectory))                 return(!catch("init_Recorder(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
@@ -570,7 +570,7 @@ bool init_Recorder() {
       hstDirectory = StrReplace(hstDirectory, "\\", "/");
       if (StrStartsWith(hstDirectory, "/"))             return(!catch("init_Recorder(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
 
-      // read EA.RecordEquity/HistoryFormat configuration
+      // read EA.Recorder/HistoryFormat configuration
       int hstFormat = GetConfigInt(section, "HistoryFormat", 401);
       if (hstFormat!=400 && hstFormat!=401)             return(!catch("init_Recorder(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
 
@@ -592,7 +592,7 @@ bool init_Recorder() {
       recorder.hstFormat    = hstFormat;
    }
    else {
-      EA.RecordEquity = false;
+      EA.Recorder = false;
    }
 
    recorder.initialized = true;
@@ -601,7 +601,7 @@ bool init_Recorder() {
 
 
 /**
- * Determine a unique symbol for this instance of the expert. Called from init_Recorder() if EA.RecordEquity is TRUE.
+ * Determine a unique symbol for this instance of the expert. Called from init_Recorder() if EA.Recorder is TRUE.
  *
  * @return string - unique symbol or an empty string in case of errors
  */
@@ -711,13 +711,13 @@ string init_MarketInfo() {
  *
  * @return bool - success status
  */
-bool start_RecordPL() {
+bool start_Recorder() {
    /*
     Speed test SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - w/o start_RecordPL() | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v419 - w/o start_Recorder() | 17.613 t/sec |           |              |             |             |              |              |              |
    | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
    | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
@@ -744,7 +744,7 @@ bool start_RecordPL() {
 
    string symbols_Name(/*SYMBOL*/int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
