@@ -3,19 +3,19 @@
  *
  *
  * TODO:
- *  - PL charts for all variants/symbols
+ *  - PL charts for variants
+ *     total & daily PL in pip/money
+ *     all recorder defaults can be overridden by the expert (e.g. pip instead of money)
+ *
+ *  - simplify creation of additional metrics
  *     log symbol creation
- *     total PL
- *     daily PL reset
- *     PL in pip/money
  *
- *     variants:
- *      ZigZag                   OK
- *      Reverse ZigZag
- *      full session (24h) with trade breaks
- *      partial session (e.g. 09:00-16:00) with trade breaks
+ *  - variants:
+ *     ZigZag                   OK
+ *     Reverse ZigZag
+ *     full session (24h) with trade breaks
+ *     partial session (e.g. 09:00-16:00) with trade breaks
  *
- *  - parameter ZigZag.Timeframe
  *  - trade breaks
  *     - trading is disabled but the price feed is active
  *     - configuration:
@@ -30,6 +30,7 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
+ *  - parameter ZigZag.Timeframe
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
@@ -57,8 +58,8 @@
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
- *  - on restart delete dead screen sockets
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
