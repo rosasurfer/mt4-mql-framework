@@ -59,7 +59,7 @@ int init() {
    }
 
    // finish initialization
-   if (!InitGlobals()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init_Globals()) if (CheckErrors("init(2)")) return(last_error);
 
    // execute custom init tasks
    int initFlags = __ExecutionContext[EC.programInitFlags];
@@ -157,7 +157,7 @@ int init() {
  *
  * @return bool - success status
  */
-bool InitGlobals() {
+bool init_Globals() {
    //
    // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
    //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
@@ -187,7 +187,7 @@ bool InitGlobals() {
    P_INF = -N_INF;                                                   // positive infinity
    NaN   =  N_INF - N_INF;                                           // not-a-number
 
-   return(!catch("InitGlobals(1)"));
+   return(!catch("init_Globals(1)"));
 }
 
 
