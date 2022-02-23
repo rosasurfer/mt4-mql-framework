@@ -697,7 +697,19 @@ bool WaitForTicket(int ticket, bool select = false) {
  * @return string - concatenated string or an empty string in case of errors
  */
 string JoinStrings(string values[], string separator = ", ") {
-   return(JoinStringsEx(values, separator));
+   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinStrings(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
+
+   string result = "";
+   int size = ArraySize(values);
+
+   for (int i=0; i < size; i++) {
+      if (StrIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
+      else                      result = StringConcatenate(result, values[i], separator);
+   }
+   if (size > 0)
+      result = StrLeft(result, -StringLen(separator));
+
+   return(result);
 }
 
 
@@ -7303,7 +7315,6 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
-   string   JoinStringsEx(string values[], string separator);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
