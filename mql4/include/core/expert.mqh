@@ -19,15 +19,15 @@ int     __tickTimerId;                             // timer id for virtual ticks
 
 // PL recorder
 bool   recorder.initialized  = false;
-double recorder.startValue;                        // values can be overwritten by the EA
-double recorder.currValue;                         // ...
-string recorder.symbol       = "";                 // ...
-string recorder.symbolDescr  = "";                 // ...
-string recorder.symbolGroup  = "";                 // ...
-int    recorder.symbolDigits = 2;                  // ...
-string recorder.hstDirectory = "";                 // values come via framework config
-int    recorder.hstFormat;                         // ...
-int    recorder.hSet;                              // history set handle
+string recorder.symbol      [1] = {""};            // all values can be overwritten by the EA
+string recorder.symbolDescr [1] = {""};            // ...
+string recorder.symbolGroup [1] = {""};            // ...
+int    recorder.symbolDigits[1];                   // ...
+double recorder.startValue  [1];                   // ...
+double recorder.currValue   [1];                   // ...
+string recorder.hstDirectory[1] = {""};            // ...
+int    recorder.hstFormat   [1];                   // ...
+int    recorder.hSet        [1];                   // except the history set handle
 
 // test management
 bool   test.initialized = false;
@@ -137,7 +137,6 @@ int init() {
          logInfo(separator);
          logInfo(msg);
       }
-      recorder.startValue = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
@@ -400,11 +399,16 @@ int deinit() {
       if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
-   // close a performance tracker's history set
-   if (recorder.hSet != 0) {
-      tmp = recorder.hSet;
-      recorder.hSet = NULL;
-      if (!HistorySet1.Close(tmp)) return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
+   // close open history sets of the PL recorder
+   int size = ArraySize(recorder.hSet);
+   for (int i=0; i < size; i++) {
+      if (recorder.hSet[i] > 0) {
+         tmp = recorder.hSet[i];
+         recorder.hSet[i] = NULL;
+         if      (i <  7) { if (!HistorySet1.Close(tmp)) return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext)); }
+         else if (i < 14) { if (!HistorySet2.Close(tmp)) return(CheckErrors("deinit(5)") + LeaveContext(__ExecutionContext)); }
+         else             { if (!HistorySet3.Close(tmp)) return(CheckErrors("deinit(6)") + LeaveContext(__ExecutionContext)); }
+      }
    }
 
    // stop external reporting
@@ -432,14 +436,14 @@ int deinit() {
                                                                         //
          default:                                                       //
             error = ERR_ILLEGAL_STATE;                                  //
-            catch("deinit(5)  unknown UninitializeReason: "+ UninitializeReason(), error);
+            catch("deinit(7)  unknown UninitializeReason: "+ UninitializeReason(), error);
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
 
    if (!IsTesting()) DeleteRegisteredObjects();
 
-   return(CheckErrors("deinit(6)") + LeaveContext(__ExecutionContext));
+   return(CheckErrors("deinit(8)") + LeaveContext(__ExecutionContext));
 }
 
 
@@ -553,43 +557,76 @@ bool CheckErrors(string caller, int error = NULL) {
 
 
 /**
- * Initialize the PL recorder. Called at the first tick.
+ * Initialize the PL recorder. Called on the first tick.
  *
  * @return bool - success status
  */
 bool init_Recorder() {
-   if (EA.Recorder && !recorder.initialized && (!IsTesting() || !IsOptimization())) {
-      string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+   if (EA.Recorder && !recorder.initialized && !IsOptimization()) {
+      string symbol="", symbolDescr="", symbolGroup="", hstDirectory="", baseCurrency="", marginCurrency="";
+      int symbolDigits, hstFormat, size, i=0;
 
-      // read EA.Recorder/HistoryDirectory configuration
-      string hstDirectory = GetConfigString(section, "HistoryDirectory", "");                         // "XTrade-test-results" | "XTrade-live-results"
-      if (!StringLen(hstDirectory))                     return(!catch("init_Recorder(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
-      if (IsAbsolutePath(hstDirectory))                 return(!catch("init_Recorder(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
-      int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-      if (StrContainsChars(hstDirectory, illegalChars)) return(!catch("init_Recorder(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
-      hstDirectory = StrReplace(hstDirectory, "\\", "/");
-      if (StrStartsWith(hstDirectory, "/"))             return(!catch("init_Recorder(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
+      // fetch symbol definitions from the EA instance
+      while (GetRecorderSymbolDefinitionA(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+         size = i + 1;
+         ArrayResize(recorder.symbol,       size);
+         ArrayResize(recorder.symbolDescr,  size);
+         ArrayResize(recorder.symbolGroup,  size);
+         ArrayResize(recorder.symbolDigits, size);
+         ArrayResize(recorder.hstDirectory, size);
+         ArrayResize(recorder.hstFormat,    size);
+         ArrayResize(recorder.hSet,         size);
+         ArrayResize(recorder.startValue,   size);
+         ArrayResize(recorder.currValue,    size);
 
-      // read EA.Recorder/HistoryFormat configuration
-      int hstFormat = GetConfigInt(section, "HistoryFormat", 401);
-      if (hstFormat!=400 && hstFormat!=401)             return(!catch("init_Recorder(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+         recorder.symbol      [i] = symbol;
+         recorder.symbolDescr [i] = symbolDescr;
+         recorder.symbolGroup [i] = symbolGroup;
+         recorder.symbolDigits[i] = symbolDigits;
+         recorder.hstDirectory[i] = hstDirectory;
+         recorder.hstFormat   [i] = hstFormat;
+         recorder.hSet        [i] = NULL;
+         recorder.startValue  [i] = NULL;
+         recorder.currValue   [i] = NULL;
+         i++;
+      }
 
-      // create a new symbol
-      string symbol         = init_UniqueSymbol();
-      string symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
-      string symbolDescr    = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
-      int    symbolDigits   = 2;
-      string baseCurrency   = AccountCurrency();
-      string marginCurrency = AccountCurrency();
+      // if no definitions received but the recorder is enabled: use default values for 1 equity symbol
+      if (!i) {
+         // read history directory configuration
+         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+         hstDirectory = GetConfigString(section, "HistoryDirectory", "");
+         if (!StringLen(hstDirectory))                     return(!catch("init_Recorder(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
+         if (IsAbsolutePath(hstDirectory))                 return(!catch("init_Recorder(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
+         int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
+         if (StrContainsChars(hstDirectory, illegalChars)) return(!catch("init_Recorder(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
+         hstDirectory = StrReplace(hstDirectory, "\\", "/");
+         if (StrStartsWith(hstDirectory, "/"))             return(!catch("init_Recorder(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
 
-      if (CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory) < 0) return(false);
+         // read history format configuration
+         hstFormat = GetConfigInt(section, "HistoryFormat", 401);
+         if (hstFormat!=400 && hstFormat!=401)             return(!catch("init_Recorder(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
 
-      recorder.symbol       = symbol;
-      recorder.symbolDescr  = symbolDescr;
-      recorder.symbolGroup  = symbolGroup;
-      recorder.symbolDigits = symbolDigits;
-      recorder.hstDirectory = hstDirectory;
-      recorder.hstFormat    = hstFormat;
+         // create a new symbol
+         symbol         = init_RecorderSymbol(hstDirectory);
+         symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
+         symbolDescr    = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
+         symbolDigits   = 2;
+         baseCurrency   = AccountCurrency();
+         marginCurrency = AccountCurrency();
+
+         if (CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory) < 0) return(false);
+
+         recorder.symbol      [0] = symbol;
+         recorder.symbolDescr [0] = symbolDescr;
+         recorder.symbolGroup [0] = symbolGroup;
+         recorder.symbolDigits[0] = symbolDigits;
+         recorder.hstDirectory[0] = hstDirectory;
+         recorder.hstFormat   [0] = hstFormat;
+         recorder.hSet        [0] = NULL;
+         recorder.startValue  [0] = NormalizeDouble(AccountEquity()-AccountCredit(), symbolDigits);
+         recorder.currValue   [0] = NULL;
+      }
    }
    else {
       EA.Recorder = false;
@@ -601,50 +638,44 @@ bool init_Recorder() {
 
 
 /**
- * Determine a unique symbol for this instance of the expert. Called from init_Recorder() if EA.Recorder is TRUE.
+ * Create a default recorder symbol for this instance. Called from init_Recorder() if EA.Recorder is TRUE.
  *
- * @return string - unique symbol or an empty string in case of errors
+ * @param  string hstDirectory - history directory to use
+ *
+ * @return string - symbol or an empty string in case of errors
  */
-string init_UniqueSymbol() {
-   if (!StringLen(recorder.symbol)) {
-      recorder.symbol = GetUniqueSymbol();
+string init_RecorderSymbol(string hstDirectory) {
+   // open "symbols.raw" and read existing symbols
+   string filename = hstDirectory +"/symbols.raw";
+   int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
+   int error = GetLastError();
+   if (error || hFile <= 0)                              return(!catch("init_RecorderSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+
+   int fileSize = FileSize(hFile);
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile);  return(!catch("init_RecorderSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   int symbolsSize = fileSize/SYMBOL_size;
+
+   int symbols[]; InitializeByteBuffer(symbols, fileSize);
+   if (fileSize > 0) {
+      int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
+      error = GetLastError();
+      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("init_RecorderSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
    }
+   FileClose(hFile);
 
-   if (!StringLen(recorder.symbol)) {                       // fall-back to manual symbol generation
-      // open "symbols.raw" and read existing symbols
-      string filename = "history/"+ recorder.hstDirectory +"/symbols.raw";
-      int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-      int error = GetLastError();
-      if (error || hFile <= 0)                              return(!catch("init_UniqueSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   // iterate over the existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+   string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
-      int fileSize = FileSize(hFile);
-      if (fileSize % SYMBOL_size != 0) { FileClose(hFile);  return(!catch("init_UniqueSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
-      int symbolsSize = fileSize/SYMBOL_size;
-
-      int symbols[]; InitializeByteBuffer(symbols, fileSize);
-      if (fileSize > 0) {
-         int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-         error = GetLastError();
-         if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("init_UniqueSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
-      }
-      FileClose(hFile);
-
-      // iterate over all existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-      string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
-
-      for (int i, maxId=0; i < symbolsSize; i++) {
-         string symbol = symbols_Name(symbols, i);
-         if (StrStartsWithI(symbol, name)) {
-            suffix = StrSubstr(symbol, StringLen(name));
-            if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
-               maxId = Max(maxId, StrToInteger(suffix));
-            }
+   for (int i, maxId=0; i < symbolsSize; i++) {
+      string symbol = symbols_Name(symbols, i);
+      if (StrStartsWithI(symbol, name)) {
+         suffix = StrSubstr(symbol, StringLen(name));
+         if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
+            maxId = Max(maxId, StrToInteger(suffix));
          }
       }
-      int id = maxId + 1;
-      recorder.symbol = name + StrPadLeft(id, 3, "0");
    }
-   return(recorder.symbol);
+   return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
 }
 
 
@@ -707,7 +738,7 @@ string init_MarketInfo() {
 
 
 /**
- * Record an expert's PL graph.
+ * Record an expert's PL metrics.
  *
  * @return bool - success status
  */
@@ -723,14 +754,26 @@ bool start_Recorder() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   if (!recorder.hSet) {
-      recorder.hSet = HistorySet1.Create(recorder.symbol, recorder.symbolDescr, 2, recorder.hstFormat, recorder.hstDirectory);
-      if (!recorder.hSet) return(false);
-   }
-   double value = recorder.currValue;
-   if (!value) value = AccountEquity()-AccountCredit();
+   int size = ArraySize(recorder.hSet);
 
-   return(HistorySet1.AddTick(recorder.hSet, Tick.time, value, HST_BUFFER_TICKS));
+   for (int i=0; i < size; i++) {
+      if (!recorder.hSet[i]) {
+         if (i < 7) {
+            recorder.hSet[i] = HistorySet1.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
+            if (!i) /*&&*/ if (!recorder.currValue[i]) recorder.currValue[i] = AccountEquity()-AccountCredit();
+            if (!HistorySet1.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
+         }
+         else if (i < 14) {
+            recorder.hSet[i] = HistorySet2.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
+            if (!HistorySet2.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
+         }
+         else {
+            recorder.hSet[i] = HistorySet3.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
+            if (!HistorySet3.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
+         }
+      }
+   }
+   return(true);
 }
 
 
@@ -753,11 +796,20 @@ bool start_Recorder() {
    bool   Test_onPositionClose(int ec[], int ticket, datetime closeTime, double closePrice, double swap, double profit);
    bool   Test_StopReporting  (int ec[], datetime to, int bars);
 
-
 #import "rsfHistory1.ex4"
    int    HistorySet1.Create (string symbol, string description, int digits, int format, string directory);
    bool   HistorySet1.AddTick(int hSet, datetime time, double value, int flags);
    bool   HistorySet1.Close  (int hSet);
+
+#import "rsfHistory2.ex4"
+   int    HistorySet2.Create (string symbol, string description, int digits, int format, string directory);
+   bool   HistorySet2.AddTick(int hSet, datetime time, double value, int flags);
+   bool   HistorySet2.Close  (int hSet);
+
+#import "rsfHistory3.ex4"
+   int    HistorySet3.Create (string symbol, string description, int digits, int format, string directory);
+   bool   HistorySet3.AddTick(int hSet, datetime time, double value, int flags);
+   bool   HistorySet3.Close  (int hSet);
 
 #import "user32.dll"
    int    SendMessageA(int hWnd, int msg, int wParam, int lParam);

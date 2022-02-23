@@ -1822,10 +1822,10 @@ int CreateSequenceId() {
  *
  * @return string - unique symbol or an empty string in case of errors
  */
-string GetUniqueSymbol() {
-   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return("Duel_"+ sequence.id);
-}
+//string GetUniqueSymbol() {
+//   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+//   return("Duel_"+ sequence.id);
+//}
 
 
 /**
@@ -2509,8 +2509,8 @@ string GetLogFilename() {
 /**
  * Return the full name of the instance status file.
  *
- * @param  relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                               (default: the absolute path)
+ * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
+ *                                    (default: the absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */

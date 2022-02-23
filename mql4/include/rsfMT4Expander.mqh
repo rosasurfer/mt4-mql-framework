@@ -191,7 +191,7 @@
 
    // no-ops
    void     DummyCalls();
-   string   GetUniqueSymbol();
+   bool     GetRecorderSymbolDefinitionA(int i, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat);
    string   InputsToStr();
    int      ShowStatus(int error);
 #import

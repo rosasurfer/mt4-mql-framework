@@ -317,7 +317,7 @@ int onTick() {
    else if (sequence.status != STATUS_STOPPED) return(catch("onTick(1)  "+ sequence.name +" illegal sequence status: "+ StatusToStr(sequence.status), ERR_ILLEGAL_STATE));
 
    // update value for PL recorder
-   if (EA.Recorder) recorder.currValue = sequence.startEquity + sequence.totalPL;
+   if (EA.Recorder) recorder.currValue[0] = sequence.startEquity + sequence.totalPL;
 
    return(last_error);
 }
@@ -608,11 +608,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.startValue) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.startValue[0]) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = recorder.startValue;
+      result = recorder.startValue[0];
    }
 
    if (!catch("CalculateStartEquity(1)"))
@@ -865,10 +865,10 @@ int CreateSequenceId() {
  *
  * @return string - unique symbol or an empty string in case of errors
  */
-string GetUniqueSymbol() {
-   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return("Snow_"+ sequence.id);
-}
+//string GetUniqueSymbol() {
+//   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+//   return("Snow_"+ sequence.id);
+//}
 
 
 /**
@@ -914,8 +914,8 @@ string GetLogFilename() {
 /**
  * Return the full name of the instance status file.
  *
- * @param  relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                               (default: the absolute path)
+ * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
+ *                                    (default: the absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */

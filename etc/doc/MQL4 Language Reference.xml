@@ -4051,16 +4051,16 @@ Print(&quot;Min value = &quot;, num_array[minValueIdx]);
       caption=ArrayResize()
       type=int
       <content>
-        Sets the size of an array's first dimension. Returns the number of all array elements after resizing or <span class="number">-1</span> in case of errors.<br/>
+        Sets the size of an array's first dimension. Returns the resulting number of all array elements or <span class="number">-1</span> in case of errors.<br/>
         <br/>
         <b>Notes:</b>
         <br/>
-        <li>Local arrays (arrays declared in a function) will remain resized and keep their values after the function returned.</li>
+        <li>Local arrays (arrays which are declared in a function) will remain resized and keep their values after the function returned.</li>
 
-        <li>Resizing an array to the same size does nothing (no-op). Resizing an array to a size of <span class="number">0</span> releases the
-        allocated memory. Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
+        <li>Resizing an array to a size of <span class="number">0</span> releases allocated memory. Resizing an array to the same size does nothing (no-op). 
+        Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
 
-        <li>When resizing an array existing or remaining array elements are kept. New array elements are initialized with <span class="number">0</span> (zero).</li>
+        <li>During resizing existing or remaining array elements are kept. New numeric array elements are initialized with <span class="number">0</span> (zero).</li>
       </content>
       <example>
 <span class="type code">double</span> array[][<span class="number code">4</span>];
