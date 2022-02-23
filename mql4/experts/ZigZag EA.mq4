@@ -5,12 +5,8 @@
  * TODO:
  *  - PL charts for variants
  *     - total & daily PL in pip/money
- *     - all recorder defaults can be overridden by the expert (e.g. pip instead of money)
  *     - an existing history is continued live and reset in tester (with or w/o warning?)
- *
- *
- *  - simplify creation of additional metrics
- *     log symbol creation
+ *     - log symbol creation
  *
  *  - variants:
  *     ZigZag                   OK
@@ -758,32 +754,24 @@ int CreateSequenceId() {
 
 
 /**
- * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.Recorder is TRUE.
+ * Return symbol definitions for metrics to be recorded by this EA instance.
  *
- * @return string - unique symbol or an empty string in case of errors
- */
-//string GetUniqueSymbol() {
-//   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-//   return("ZigZag"+ sequence.id);
-//}
-
-
-/**
- * Return symbol definitions for the metrics to be recorded for this EA instance.
- *
- * @param  _In_  int    i            - zero-based index of the metric in the recorder
- * @param  _Out_ string symbol       - instrument symbol
- * @param  _Out_ string symbolDescr  - symbol description
- * @param  _Out_ string symbolGroup  - symbol group
- * @param  _Out_ int    symbolDigits - symbol digits
+ * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
+ * @param  _Out_ string symbol       - unique timeseries symbol
+ * @param  _Out_ string description  - timeseries description
+ * @param  _Out_ string group        - timeseries group
+ * @param  _Out_ int    digits       - timeseries digits
  * @param  _Out_ string hstDirectory - history directory of the timeseries to record
  * @param  _Out_ int    hstFormat    - history format of the timeseries to recorded
  *
- * @return bool - whether to record a metric for the specified index
+ * @return bool - whether to record the timeseries at the specified index
  */
-bool GetRecorderSymbolDefinitionA(int i, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
-   if (!sequence.id) return(!catch("GetRecorderSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &description, string &group, int &digits, string &hstDirectory, int &hstFormat) {
+   if (!sequence.id) return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
    return(false);
+
+   // old:
+   //return("ZigZag"+ sequence.id);
 }
 
 

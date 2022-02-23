@@ -567,7 +567,7 @@ bool init_Recorder() {
       int symbolDigits, hstFormat, size, i=0;
 
       // fetch symbol definitions from the EA instance
-      while (GetRecorderSymbolDefinitionA(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+      while (Recorder_GetSymbolDefinitionA(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
          size = i + 1;
          ArrayResize(recorder.symbol,       size);
          ArrayResize(recorder.symbolDescr,  size);
