@@ -130,7 +130,7 @@ bool EditFiles(string &filenames[]) {
 
    if (StringLen(editor) > 0) {
       // use configured editor
-      string cmd = editor +" \""+ JoinStringsEx(filenames, "\" \"") +"\"";
+      string cmd = editor +" \""+ JoinStrings(filenames, "\" \"") +"\"";
       int result = WinExec(cmd, SW_SHOWNORMAL);
       if (result < 32) return(!catch("EditFiles(5)->kernel32::WinExec(cmd="+ DoubleQuoteStr(editor) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
    }
@@ -3409,7 +3409,7 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
          sValues2_X[x] = BoolsToStr(values2_Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues2_X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
       ArrayResize(sValues2_X, 0);
       ArrayResize( values2_Y, 0);
       return(result);
@@ -3430,10 +3430,10 @@ string __BoolsToStr(bool values2[][], bool values3[][][], string separator) {
             }
             sValues3_Y[y] = BoolsToStr(values3_Z, separator);
          }
-         sValues3_X[x] = StringConcatenate("{", JoinStringsEx(sValues3_Y, separator), "}");
+         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues3_X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
       ArrayResize(sValues3_X, 0);
       ArrayResize(sValues3_Y, 0);
       ArrayResize( values3_Z, 0);
@@ -3474,7 +3474,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
       ArrayCopy(copy, values2);
       DoubleQuoteStrings(copy);
 
-      result = StringConcatenate("{", JoinStringsEx(copy, separator), "}");
+      result = StringConcatenate("{", JoinStrings(copy, separator), "}");
       ArrayResize(copy, 0);
       return(result);
    }
@@ -3493,7 +3493,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
          sValues2_X[x] = StringsToStr(values2_Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues2_X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues2_X, separator), "}");
       ArrayResize(sValues2_X, 0);
       ArrayResize( values2_Y, 0);
       return(result);
@@ -3514,10 +3514,10 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
             }
             sValues3_Y[y] = StringsToStr(values3_Z, separator);
          }
-         sValues3_X[x] = StringConcatenate("{", JoinStringsEx(sValues3_Y, separator), "}");
+         sValues3_X[x] = StringConcatenate("{", JoinStrings(sValues3_Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues3_X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues3_X, separator), "}");
       ArrayResize(sValues3_X, 0);
       ArrayResize(sValues3_Y, 0);
       ArrayResize( values3_Z, 0);
@@ -4891,7 +4891,7 @@ string CharsToStr(int values[], string separator = ", ") {
       strings[i] = StringConcatenate("'", CharToStr(values[i]), "'");
    }
 
-   string joined = JoinStringsEx(strings, separator);
+   string joined = JoinStrings(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -4943,7 +4943,7 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
          sValues2.X[x] = DoublesToStr(values2.Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -4963,10 +4963,10 @@ string __DoublesToStr(double values2[][], double values3[][][], string separator
             }
             sValues3.Y[y] = DoublesToStr(values3.Z, separator);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5025,7 +5025,7 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
          sValues2.X[x] = DoublesToStrEx(values2.Y, separator, digits);
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -5045,10 +5045,10 @@ string __DoublesToStrEx(double values2[][], double values3[][][], string separat
             }
             sValues3.Y[y] = DoublesToStrEx(values3.Z, separator, digits);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5104,7 +5104,7 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
          sValues2.X[x] = IntsToStr(values2.Y, separator);
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues2.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues2.X, separator), "}");
       ArrayResize(sValues2.X, 0);
       ArrayResize( values2.Y, 0);
       return(result);
@@ -5124,10 +5124,10 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
             }
             sValues3.Y[y] = IntsToStr(values3.Z, separator);
          }
-         sValues3.X[x] = StringConcatenate("{", JoinStringsEx(sValues3.Y, separator), "}");
+         sValues3.X[x] = StringConcatenate("{", JoinStrings(sValues3.Y, separator), "}");
       }
 
-      result = StringConcatenate("{", JoinStringsEx(sValues3.X, separator), "}");
+      result = StringConcatenate("{", JoinStrings(sValues3.X, separator), "}");
       ArrayResize(sValues3.X, 0);
       ArrayResize(sValues3.Y, 0);
       ArrayResize( values3.Z, 0);
@@ -5165,7 +5165,7 @@ string MoneysToStr(double values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStringsEx(strings, separator);
+   string joined = JoinStrings(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5198,7 +5198,7 @@ string OperationTypesToStr(int values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStringsEx(strings, separator);
+   string joined = JoinStrings(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5234,7 +5234,7 @@ string RatesToStr(double values[], string separator = ", ") {
          return("");
    }
 
-   string joined = JoinStringsEx(strings, separator);
+   string joined = JoinStrings(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -5407,7 +5407,7 @@ string TimesToStr(datetime values[], string separator=", ") {
       else                     strings[i] = StringConcatenate("'", TimeToStr(values[i], TIME_FULL), "'");
    }
 
-   string joined = JoinStringsEx(strings, separator);
+   string joined = JoinStrings(strings, separator);
    if (!StringLen(joined))
       return("");
    return(StringConcatenate("{", joined, "}"));
@@ -8416,31 +8416,6 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    if (IsError(error) || ints!=fileSize/4) return(!catch("SetRawSymbolTemplate(3)  error reading \""+ fileName +"\" ("+ ints*4 +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR)));
 
    return(true);
-}
-
-
-/**
- * Concatenate the values of a string array using the specified separator.
- *
- * @param  string values[]             - string array
- * @param  string separator [optional] - separator (default: ", ")
- *
- * @return string - concatenated string or an empty string in case of errors
- */
-string JoinStringsEx(string values[], string separator = ", ") {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("JoinStringsEx(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
-
-   string result = "";
-   int size = ArraySize(values);
-
-   for (int i=0; i < size; i++) {
-      if (StrIsNull(values[i])) result = StringConcatenate(result, "NULL",    separator);
-      else                      result = StringConcatenate(result, values[i], separator);
-   }
-   if (size > 0)
-      result = StrLeft(result, -StringLen(separator));
-
-   return(result);
 }
 
 

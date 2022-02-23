@@ -645,7 +645,7 @@ bool init_Recorder() {
  * @return string - symbol or an empty string in case of errors
  */
 string init_RecorderSymbol(string hstDirectory) {
-   // open "symbols.raw" and read existing symbols
+   // open "symbols.raw" and read symbols
    string filename = hstDirectory +"/symbols.raw";
    int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
    int error = GetLastError();
@@ -663,7 +663,7 @@ string init_RecorderSymbol(string hstDirectory) {
    }
    FileClose(hFile);
 
-   // iterate over the existing symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
+   // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
    string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
    for (int i, maxId=0; i < symbolsSize; i++) {
