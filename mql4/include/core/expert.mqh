@@ -27,7 +27,8 @@ double recorder.startValue  [1];                   // ...
 double recorder.currValue   [1];                   // ...
 string recorder.hstDirectory[1] = {""};            // ...
 int    recorder.hstFormat   [1];                   // ...
-int    recorder.hSet        [1];                   // except the history set handle
+int    recorder.hSet        [1];                   // except history set handles and internal markers
+bool   recorder.isInternal  [1];                   // whether defined by this file or by calling Recorder_GetSymbolDefinition()
 
 // test management
 bool   test.initialized = false;
@@ -578,6 +579,7 @@ bool init_Recorder() {
          ArrayResize(recorder.hSet,         size);
          ArrayResize(recorder.startValue,   size);
          ArrayResize(recorder.currValue,    size);
+         ArrayResize(recorder.isInternal,   size);
 
          recorder.symbol      [i] = symbol;
          recorder.symbolDescr [i] = symbolDescr;
@@ -588,6 +590,7 @@ bool init_Recorder() {
          recorder.hSet        [i] = NULL;
          recorder.startValue  [i] = NULL;
          recorder.currValue   [i] = NULL;
+         recorder.isInternal  [i] = false;
          i++;
       }
 
@@ -624,8 +627,9 @@ bool init_Recorder() {
          recorder.hstDirectory[0] = hstDirectory;
          recorder.hstFormat   [0] = hstFormat;
          recorder.hSet        [0] = NULL;
-         recorder.startValue  [0] = NormalizeDouble(AccountEquity()-AccountCredit(), symbolDigits);
+         recorder.startValue  [0] = NULL;
          recorder.currValue   [0] = NULL;
+         recorder.isInternal  [0] = true;
       }
    }
    else {
@@ -755,23 +759,20 @@ bool start_Recorder() {
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
    int size = ArraySize(recorder.hSet);
+   double currentValue;
 
    for (int i=0; i < size; i++) {
       if (!recorder.hSet[i]) {
-         if (i < 7) {
-            recorder.hSet[i] = HistorySet1.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
-            if (!i) /*&&*/ if (!recorder.currValue[i]) recorder.currValue[i] = AccountEquity()-AccountCredit();
-            if (!HistorySet1.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
-         }
-         else if (i < 14) {
-            recorder.hSet[i] = HistorySet2.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
-            if (!HistorySet2.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
-         }
-         else {
-            recorder.hSet[i] = HistorySet3.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false);
-            if (!HistorySet3.AddTick(recorder.hSet[i], Tick.time, recorder.currValue[i], HST_BUFFER_TICKS)) return(false);
-         }
+         if      (i <  7) { recorder.hSet[i] = HistorySet1.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false); }
+         else if (i < 14) { recorder.hSet[i] = HistorySet2.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false); }
+         else             { recorder.hSet[i] = HistorySet3.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]); if (!recorder.hSet[i]) return(false); }
       }
+      if (recorder.isInternal[i]) currentValue = AccountEquity() - AccountCredit();
+      else                        currentValue = recorder.startValue[i] + recorder.currValue[i];
+
+      if      (i <  7) HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else if (i < 14) HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else             HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
    }
    return(true);
 }

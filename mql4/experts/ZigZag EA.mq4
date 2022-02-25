@@ -39,8 +39,10 @@
  *  - stop condition "pip"
  *
  *  - two ZigZag reversals during the same bar are not recognized and ignored
- *  - track slippage
+ *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
+ *  - display overall number of trades
+ *  - display total transaction costs
  *  - input option to pick-up the last signal on start
  *  - improve handling of network outages (price and/or trade connection)
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
@@ -51,6 +53,7 @@
  *  - merge inputs TakeProfit and StopConditions
  *
  *  - permanent spread logging to a separate logfile
+ *  - move all history functionality to the Expander
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -764,7 +767,7 @@ int CreateSequenceId() {
  * @param  _Out_ string hstDirectory - history directory of the timeseries to record
  * @param  _Out_ int    hstFormat    - history format of the timeseries to recorded
  *
- * @return bool - whether to record the timeseries at the specified index
+ * @return bool - whether to record a timeseries for the specified index
  */
 bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &description, string &group, int &digits, string &hstDirectory, int &hstFormat) {
    if (!sequence.id) return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
