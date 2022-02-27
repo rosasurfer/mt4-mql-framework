@@ -3,13 +3,13 @@
  *
  *
  * TODO:
- *  - PL charts for variants
- *     - total & daily PL in pip/money
- *     - an existing history is continued live and reset in tester (with or w/o warning?)
+ *  - PL recording of variants
  *     - log symbol creation
+ *     - an existing history is continued live and reset in tester (with or w/o warning?)
+ *     - total & daily PL in pip/money
  *
  *  - variants:
- *     ZigZag                   OK
+ *     ZigZag                                                  OK
  *     Reverse ZigZag
  *     full session (24h) with trade breaks
  *     partial session (e.g. 09:00-16:00) with trade breaks
