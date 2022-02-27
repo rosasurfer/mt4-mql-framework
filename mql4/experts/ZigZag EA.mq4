@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - PL recording of variants
- *     - log symbol creation
  *     - an existing history is continued live and reset in tester (with or w/o warning?)
  *     - total & daily PL in pip/money
  *

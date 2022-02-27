@@ -8092,6 +8092,8 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateRawSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (directory == "0") directory = "";           // (string) NULL
 
+   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating symbol \""+ directory + ifString(directory=="", "", "/") + symbol +"\"");
+
    int   groupIndex;
    color groupColor = CLR_NONE;
 
@@ -8115,13 +8117,13 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    // create symbol
    /*SYMBOL*/int iSymbol[]; InitializeByteBuffer(iSymbol, SYMBOL_size);
    if (!SetRawSymbolTemplate               (iSymbol, SYMBOL_TYPE_INDEX))              return(-1);
-   if (!StringLen(symbol_SetName           (iSymbol, symbol          )))              return(_EMPTY(catch("CreateRawSymbol(5)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetDescription    (iSymbol, description     )))              return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
-   if (          !symbol_SetDigits         (iSymbol, digits           ))              return(_EMPTY(catch("CreateRawSymbol(7)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency    )))              return(_EMPTY(catch("CreateRawSymbol(8)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency  )))              return(_EMPTY(catch("CreateRawSymbol(9)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetGroup          (iSymbol, groupIndex        ) < 0)         return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
-   if (           symbol_SetBackgroundColor(iSymbol, groupColor        ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetName           (iSymbol, symbol          )))              return(_EMPTY(catch("CreateRawSymbol(6)->symbol_SetName() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetDescription    (iSymbol, description     )))              return(_EMPTY(catch("CreateRawSymbol(7)->symbol_SetDescription() => NULL", ERR_RUNTIME_ERROR)));
+   if (          !symbol_SetDigits         (iSymbol, digits           ))              return(_EMPTY(catch("CreateRawSymbol(8)->symbol_SetDigits() => FALSE", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetBaseCurrency   (iSymbol, baseCurrency    )))              return(_EMPTY(catch("CreateRawSymbol(9)->symbol_SetBaseCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (!StringLen(symbol_SetMarginCurrency (iSymbol, marginCurrency  )))              return(_EMPTY(catch("CreateRawSymbol(10)->symbol_SetMarginCurrency() => NULL", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetGroup          (iSymbol, groupIndex        ) < 0)         return(_EMPTY(catch("CreateRawSymbol(11)->symbol_SetGroup() => -1", ERR_RUNTIME_ERROR)));
+   if (           symbol_SetBackgroundColor(iSymbol, groupColor        ) == CLR_NONE) return(_EMPTY(catch("CreateRawSymbol(12)->symbol_SetBackgroundColor() => CLR_NONE", ERR_RUNTIME_ERROR)));
 
    // insert it into "symbols.raw"
    if (!InsertRawSymbol(iSymbol, directory)) return(-1);
