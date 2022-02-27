@@ -93,11 +93,8 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define STATUS_PROGRESSING          2
 #define STATUS_STOPPED              3
 
-#define D_LONG   TRADE_DIRECTION_LONG           // 1
-#define D_SHORT TRADE_DIRECTION_SHORT           // 2
-
-#define SIGNAL_ENTRY_LONG      D_LONG           // 1 start/stop/resume signal types
-#define SIGNAL_ENTRY_SHORT    D_SHORT           // 2
+#define SIGNAL_LONG  TRADE_DIRECTION_LONG       // 1 start/stop/resume signal types
+#define SIGNAL_SHORT TRADE_DIRECTION_SHORT      // 2
 #define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
@@ -238,14 +235,14 @@ bool IsZigZagSignal(int &signal) {
       if (!GetZigZagData(0, trend, reversal)) return(false);
       if (Abs(trend) == reversal) {
          if (trend > 0) {
-            if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
+            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
          }
          else {
-            if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
+            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
          }
          if (signal != NULL) {
             if (sequence.status == STATUS_PROGRESSING) {
-               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             }
             lastSignal = signal;
          }
@@ -296,7 +293,7 @@ bool IsStartSignal(int &signal) {
 
    // ZigZag signal: --------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -306,37 +303,37 @@ bool IsStartSignal(int &signal) {
 /**
  * Start a waiting sequence.
  *
- * @param  int direction - trade direction to start with
+ * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
-bool StartSequence(int direction) {
-   if (last_error != NULL)                      return(false);
-   if (sequence.status != STATUS_WAITING)       return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool StartSequence(int signal) {
+   if (last_error != NULL)                          return(false);
+   if (sequence.status != STATUS_WAITING)           return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    SetLogfile(GetLogFilename());                               // flush the log on start
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting...");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting... ("+ SignalToStr(signal) +")");
 
    sequence.status = STATUS_PROGRESSING;
    if (!sequence.startEquity) sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open new position
-   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ sequence.name;
    int      magicNumber = CalculateMagicNumber();
-   color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL, oe[];
 
    int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store position data
-   open.signal     = direction;
+   open.signal     = signal;
    open.ticket     = ticket;
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
@@ -360,7 +357,7 @@ bool StartSequence(int direction) {
    if (stop.time.isDaily) stop.time.value %= DAYS;
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
+   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
    return(SaveStatus());
 }
 
@@ -368,19 +365,19 @@ bool StartSequence(int direction) {
 /**
  * Reverse a progressing sequence.
  *
- * @param  int direction - new trade direction
+ * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
-bool ReverseSequence(int direction) {
-   if (last_error != NULL)                      return(false);
-   if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool ReverseSequence(int signal) {
+   if (last_error != NULL)                          return(false);
+   if (sequence.status != STATUS_PROGRESSING)       return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    if (open.ticket > 0) {
       // either continue in the same direction...
-      if ((open.type==OP_BUY && direction==D_LONG) || (open.type==OP_SELL && direction==D_SHORT)) {
-         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(direction==D_LONG, "long", "short") +": continuing with already open "+ ifString(direction==D_LONG, "long", "short") +" position");
+      if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
+         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
          return(true);
       }
       // ...or close the open position
@@ -390,7 +387,7 @@ bool ReverseSequence(int direction) {
    }
 
    // open new position
-   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
@@ -400,7 +397,7 @@ bool ReverseSequence(int direction) {
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-   open.signal     = direction;
+   open.signal     = signal;
    open.ticket     = oe.Ticket    (oe);
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
@@ -559,7 +556,7 @@ bool StopSequence(int signal) {
 
    if (sequence.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
-         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"stopping...");
+         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping... ("+ SignalToStr(signal) +")");
 
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                     return(!SetLastError(oe.Error(oe)));
@@ -595,7 +592,7 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting() && sequence.status == STATUS_STOPPED) {  // pause or stop the tester according to the debug configuration
@@ -828,6 +825,25 @@ string StatusDescription(int status) {
       case STATUS_STOPPED    : return("stopped"    );
    }
    return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a human-readable presentation of a signal constant.
+ *
+ * @param  int signal
+ *
+ * @return string - readable constant or an empty string in case of errors
+ */
+string SignalToStr(int signal) {
+   switch (signal) {
+      case NULL             : return("no signal"        );
+      case SIGNAL_LONG      : return("SIGNAL_LONG"      );
+      case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
+      case SIGNAL_TIME      : return("SIGNAL_TIME"      );
+      case SIGNAL_TAKEPROFIT: return("SIGNAL_TAKEPROFIT");
+   }
+   return(_EMPTY_STR(catch("SignalToStr(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER)));
 }
 
 
