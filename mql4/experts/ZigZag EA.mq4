@@ -4,8 +4,8 @@
  *
  * TODO:
  *  - PL recording of variants
- *     - an existing history is continued live and reset in tester (with or w/o warning?)
- *     - total & daily PL in pip/money
+ *     an existing history is continued live and reset in tester (with or w/o warning?)
+ *     total & daily PL in pip/money
  *
  *  - variants:
  *     ZigZag                                                  OK
@@ -125,7 +125,7 @@ datetime sequence.created;
 bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";
 int      sequence.status;
-double   sequence.startEquity;                  //
+double   sequence.startEquity;
 double   sequence.openPL;                       // PL of all open positions (incl. commissions and swaps)
 double   sequence.closedPL;                     // PL of all closed positions (incl. commissions and swaps)
 double   sequence.totalPL;                      // total PL of the sequence: openPL + closedPL
@@ -318,8 +318,8 @@ bool StartSequence(int direction) {
    SetLogfile(GetLogFilename());                               // flush the log on start
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting...");
 
-   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
-   sequence.status      = STATUS_PROGRESSING;
+   sequence.status = STATUS_PROGRESSING;
+   if (!sequence.startEquity) sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open new position
    int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
