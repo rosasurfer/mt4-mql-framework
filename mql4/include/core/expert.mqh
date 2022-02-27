@@ -564,7 +564,7 @@ bool CheckErrors(string caller, int error = NULL) {
  */
 bool init_Recorder() {
    if (EA.Recorder && !recorder.initialized && !IsOptimization()) {
-      string symbol="", symbolDescr="", symbolGroup="", hstDirectory="", baseCurrency="", marginCurrency="";
+      string symbol="", symbolDescr="", symbolGroup="", hstDirectory="", baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
       int symbolDigits, hstFormat, size, i=0;
 
       // fetch symbol definitions from the EA instance
@@ -610,26 +610,23 @@ bool init_Recorder() {
          hstFormat = GetConfigInt(section, "HistoryFormat", 401);
          if (hstFormat!=400 && hstFormat!=401)             return(!catch("init_Recorder(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
 
-         // create a new symbol
-         symbol         = init_RecorderSymbol(hstDirectory);
-         symbolGroup    = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
-         symbolDescr    = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
-         symbolDigits   = 2;
-         baseCurrency   = AccountCurrency();
-         marginCurrency = AccountCurrency();
-
-         if (CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory) < 0) return(false);
-
-         recorder.symbol      [0] = symbol;
-         recorder.symbolDescr [0] = symbolDescr;
-         recorder.symbolGroup [0] = symbolGroup;
-         recorder.symbolDigits[0] = symbolDigits;
+         // define a new symbol
+         recorder.symbol      [0] = init_RecorderSymbol(hstDirectory);
+         recorder.symbolDescr [0] = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
+         recorder.symbolGroup [0] = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
+         recorder.symbolDigits[0] = 2;
          recorder.hstDirectory[0] = hstDirectory;
          recorder.hstFormat   [0] = hstFormat;
          recorder.hSet        [0] = NULL;
          recorder.startValue  [0] = NULL;
          recorder.currValue   [0] = NULL;
          recorder.isInternal  [0] = true;
+         size = 1;
+      }
+
+      // create new symbols
+      for (i=size-1; i < size; i++) {
+         if (!CreateRawSymbol(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolGroup[i], recorder.symbolDigits[i], baseCurrency, marginCurrency, recorder.hstDirectory[i])) return(false);
       }
    }
    else {
