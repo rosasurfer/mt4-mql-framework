@@ -983,8 +983,8 @@ bool HandleNetworkErrors() {
 
 
 /**
- * Whether the current sequence was created in the tester. Considers the fact that a test sequence may be loaded into an
- * online chart after the test (for visualization).
+ * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
+ * chart after the test (for visualization).
  *
  * @return bool
  */

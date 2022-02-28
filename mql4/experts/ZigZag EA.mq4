@@ -3,7 +3,7 @@
  *
  *
  * TODO:
- *  - PL recording of variants
+ *  - PL recording of system variants
  *     an existing history is continued live and reset in tester (with or w/o warning?)
  *     total & daily PL in pip/money
  *
@@ -1213,8 +1213,8 @@ int History.AddRecord(int index, int signal, int ticket, double lots, int openTy
 
 
 /**
- * Whether the current sequence was created in the tester. Considers the fact that a test sequence can be loaded into an
- * online chart after the test (for visualization).
+ * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
+ * chart after the test (for visualization).
  *
  * @return bool
  */
