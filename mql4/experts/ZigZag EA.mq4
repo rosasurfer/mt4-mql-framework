@@ -4,9 +4,7 @@
  *
  * TODO:
  *  - PL recording of system variants
- *     an existing history is continued live and reset in tester (with or w/o warning?)
  *     total & daily PL in pip/money
- *
  *  - variants:
  *     ZigZag                                                  OK
  *     Reverse ZigZag
