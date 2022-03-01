@@ -75,7 +75,7 @@
 #define EC.visualMode                      180
 #define EC.optimization                    181
 #define EC.eaExternalReporting             182
-#define EC.eaRecordEquity                  183
+#define EC.eaRecorder                      183
 #define EC.mqlError                        184
 #define EC.dllError                        185
 #define EC.dllWarning                      187

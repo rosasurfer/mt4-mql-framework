@@ -43,7 +43,7 @@ int init() {
 
 
    // (1) finish initialization
-   if (!InitGlobals()) if (CheckErrors("init(2)")) return(last_error);
+   if (!init_Globals()) if (CheckErrors("init(2)")) return(last_error);
 
 
    // (2) user-spezifische Init-Tasks ausführen
@@ -80,7 +80,7 @@ int init() {
  *
  * @return bool - success status
  */
-bool InitGlobals() {
+bool init_Globals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
    PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
    PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
@@ -92,7 +92,7 @@ bool InitGlobals() {
    P_INF = -N_INF;                                                   // positive infinity
    NaN   =  N_INF - N_INF;                                           // not-a-number
 
-   return(!catch("InitGlobals(1)"));
+   return(!catch("init_Globals(1)"));
 }
 
 
@@ -305,7 +305,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
 
 #import "rsfMT4Expander.dll"
-   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecordEquity, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int SyncMainContext_deinit(int ec[], int uninitReason);
 

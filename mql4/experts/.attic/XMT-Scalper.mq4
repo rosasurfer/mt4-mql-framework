@@ -2079,14 +2079,14 @@ int CreateSequenceId() {
 
 
 /**
- * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.Recorder is TRUE.
  *
  * @return string - unique symbol or an empty string in case of errors
  */
-string GetUniqueSymbol() {
-   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return("XMT_"+ sequence.id);
-}
+//string GetUniqueSymbol() {
+//   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+//   return("XMT_"+ sequence.id);
+//}
 
 
 /**

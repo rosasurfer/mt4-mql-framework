@@ -81,7 +81,7 @@
    bool     ec_Optimization       (int ec[]);
 
    bool     ec_EaExternalReporting(int ec[]);
-   bool     ec_EaRecordEquity     (int ec[]);
+   bool     ec_EaRecorder         (int ec[]);
 
    int      ec_MqlError           (int ec[]);
    int      ec_DllError           (int ec[]);
