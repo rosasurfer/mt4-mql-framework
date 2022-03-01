@@ -5,6 +5,7 @@
  * TODO:
  *  - PL recording of system variants
  *     total & daily PL in pip/money
+ *
  *  - variants:
  *     ZigZag                                                  OK
  *     Reverse ZigZag
