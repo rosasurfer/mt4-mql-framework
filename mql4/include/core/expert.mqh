@@ -765,11 +765,11 @@ bool init_Test() {
  */
 bool start_Recorder() {
    /*
-    Speed test SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+    Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - w/o start_Recorder() | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v419 - no recording         | 17.613 t/sec |           |              |             |             |              |              |              |
    | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
    | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
@@ -785,9 +785,8 @@ bool start_Recorder() {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else             recorder.hSet[i] = HistorySet3.Get(recorder.symbol[i], recorder.hstDirectory[i]);
-            if (!recorder.hSet[i]) return(false);
-            if (recorder.hSet[i] == -1)
-               recorder.hSet[i] = NULL;
+            if      (recorder.hSet[i] == -1) recorder.hSet[i] = NULL;
+            else if (recorder.hSet[i] <=  0) return(false);
          }
 
          // tester and online: create new histories
