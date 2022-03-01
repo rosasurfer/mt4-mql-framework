@@ -10,10 +10,10 @@
 /**
  * Set the last error code of the MQL module. If called in a library the error will bubble up to the program's main module.
  * If called in an indicator loaded by iCustom() the error will bubble up to the caller of iCustom(). The error code NO_ERROR
- * will never bubble up.
+ * will not bubble up.
  *
  * @param  int error            - error code
- * @param  int param [optional] - any value (not processed)
+ * @param  int param [optional] - any value (ignored)
  *
  * @return int - the same error
  */
