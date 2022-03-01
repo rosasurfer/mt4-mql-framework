@@ -5,10 +5,10 @@
  * Notes:
  * ------
  *  - The MQL4 language in terminal builds <= 509 imposes a limit of 16 open files per MQL module. In terminal builds > 509
- *    this limit was extended to 64 open files per MQL module. It means older terminals can manage max. 1 full history set
- *    and newer terminals max. 7 full history sets per MQL module. For some use cases this is still not sufficient.
- *    To overcome this limits there are 3 fully identical history libraries, extending the limits for newer terminal builds
- *    to max. 21 full history sets per MQL program.
+ *    this limit was extended to 64 open files per MQL module. It means older terminals can manage 1 full history set per MQL
+ *    module and newer terminals can manage 7 full history sets per MQL module. But for some uses cases 7 history sets per MQL
+ *    program are still not sufficient. For this reason there are 3 fully identical history libraries. With it newer terminal
+ *    builds can manage max. 21 history sets per MQL program.
  *
  *  - Since terminal builds > 509 MT4 supports two history file formats. The format is identified in history files by the
  *    field HISTORY_HEADER.barFormat. The default bar format in builds <= 509 is "400" and in builds > 509 "401".

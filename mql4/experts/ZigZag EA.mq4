@@ -3,17 +3,14 @@
  *
  *
  * TODO:
- *  - PL charts for all variants/symbols
- *     log symbol creation
- *     total PL
- *     daily PL (daily reset)
- *     PL in pip/money
+ *  - PL recording of system variants
+ *     total & daily PL in pip/money
  *
- *     variants:
- *      ZigZag                   OK
- *      Reverse ZigZag
- *      full session (24h) with trade breaks
- *      partial session (e.g. 09:00-16:00) with trade breaks
+ *  - variants:
+ *     ZigZag                                                  OK
+ *     Reverse ZigZag
+ *     full session (24h) with trade breaks
+ *     partial session (e.g. 09:00-16:00) with trade breaks
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -29,20 +26,21 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
+ *  - parameter ZigZag.Timeframe
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
- *     INFO   ZigZag EA::initTemplate(0)  ********************************** (demo)
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
  *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
- *  - parameter ZigZag.Timeframe
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
  *
  *  - two ZigZag reversals during the same bar are not recognized and ignored
- *  - track slippage
+ *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
+ *  - display overall number of trades
+ *  - display total transaction costs
  *  - input option to pick-up the last signal on start
  *  - improve handling of network outages (price and/or trade connection)
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
@@ -53,13 +51,14 @@
  *  - merge inputs TakeProfit and StopConditions
  *
  *  - permanent spread logging to a separate logfile
+ *  - move all history functionality to the Expander
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
- *  - on restart delete dead screen sockets
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_BUFFERED_LOG};
@@ -93,11 +92,8 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define STATUS_PROGRESSING          2
 #define STATUS_STOPPED              3
 
-#define D_LONG   TRADE_DIRECTION_LONG           // 1
-#define D_SHORT TRADE_DIRECTION_SHORT           // 2
-
-#define SIGNAL_ENTRY_LONG      D_LONG           // 1 start/stop/resume signal types
-#define SIGNAL_ENTRY_SHORT    D_SHORT           // 2
+#define SIGNAL_LONG  TRADE_DIRECTION_LONG       // 1 start/stop/resume signal types
+#define SIGNAL_SHORT TRADE_DIRECTION_SHORT      // 2
 #define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
@@ -125,7 +121,7 @@ datetime sequence.created;
 bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";
 int      sequence.status;
-double   sequence.startEquity;                  //
+double   sequence.startEquity;
 double   sequence.openPL;                       // PL of all open positions (incl. commissions and swaps)
 double   sequence.closedPL;                     // PL of all closed positions (incl. commissions and swaps)
 double   sequence.totalPL;                      // total PL of the sequence: openPL + closedPL
@@ -238,14 +234,14 @@ bool IsZigZagSignal(int &signal) {
       if (!GetZigZagData(0, trend, reversal)) return(false);
       if (Abs(trend) == reversal) {
          if (trend > 0) {
-            if (lastSignal != SIGNAL_ENTRY_LONG)  signal = SIGNAL_ENTRY_LONG;
+            if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
          }
          else {
-            if (lastSignal != SIGNAL_ENTRY_SHORT) signal = SIGNAL_ENTRY_SHORT;
+            if (lastSignal != SIGNAL_SHORT) signal = SIGNAL_SHORT;
          }
          if (signal != NULL) {
             if (sequence.status == STATUS_PROGRESSING) {
-               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+               if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             }
             lastSignal = signal;
          }
@@ -296,7 +292,7 @@ bool IsStartSignal(int &signal) {
 
    // ZigZag signal: --------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_ENTRY_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -306,37 +302,37 @@ bool IsStartSignal(int &signal) {
 /**
  * Start a waiting sequence.
  *
- * @param  int direction - trade direction to start with
+ * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
-bool StartSequence(int direction) {
-   if (last_error != NULL)                      return(false);
-   if (sequence.status != STATUS_WAITING)       return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool StartSequence(int signal) {
+   if (last_error != NULL)                          return(false);
+   if (sequence.status != STATUS_WAITING)           return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    SetLogfile(GetLogFilename());                               // flush the log on start
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting...");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting... ("+ SignalToStr(signal) +")");
 
-   sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
-   sequence.status      = STATUS_PROGRESSING;
+   sequence.status = STATUS_PROGRESSING;
+   if (!sequence.startEquity) sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // open new position
-   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ sequence.name;
    int      magicNumber = CalculateMagicNumber();
-   color    markerColor = ifInt(direction==D_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
+   color    markerColor = ifInt(signal==SIGNAL_LONG, CLR_OPEN_LONG, CLR_OPEN_SHORT);
    int      oeFlags     = NULL, oe[];
 
    int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
    // store position data
-   open.signal     = direction;
+   open.signal     = signal;
    open.ticket     = ticket;
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
@@ -360,7 +356,7 @@ bool StartSequence(int direction) {
    if (stop.time.isDaily) stop.time.value %= DAYS;
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started");
+   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
    return(SaveStatus());
 }
 
@@ -368,19 +364,19 @@ bool StartSequence(int direction) {
 /**
  * Reverse a progressing sequence.
  *
- * @param  int direction - new trade direction
+ * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
-bool ReverseSequence(int direction) {
-   if (last_error != NULL)                      return(false);
-   if (sequence.status != STATUS_PROGRESSING)   return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool ReverseSequence(int signal) {
+   if (last_error != NULL)                          return(false);
+   if (sequence.status != STATUS_PROGRESSING)       return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    if (open.ticket > 0) {
       // either continue in the same direction...
-      if ((open.type==OP_BUY && direction==D_LONG) || (open.type==OP_SELL && direction==D_SHORT)) {
-         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(direction==D_LONG, "long", "short") +": continuing with already open "+ ifString(direction==D_LONG, "long", "short") +" position");
+      if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
+         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
          return(true);
       }
       // ...or close the open position
@@ -390,7 +386,7 @@ bool ReverseSequence(int direction) {
    }
 
    // open new position
-   int      type        = ifInt(direction==D_LONG, OP_BUY, OP_SELL);
+   int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
@@ -400,7 +396,7 @@ bool ReverseSequence(int direction) {
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-   open.signal     = direction;
+   open.signal     = signal;
    open.ticket     = oe.Ticket    (oe);
    open.type       = oe.Type      (oe);
    open.time       = oe.OpenTime  (oe);
@@ -559,7 +555,7 @@ bool StopSequence(int signal) {
 
    if (sequence.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
-         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"stopping...");
+         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping... ("+ SignalToStr(signal) +")");
 
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                     return(!SetLastError(oe.Error(oe)));
@@ -595,7 +591,7 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting(), "test ", "") +"sequence stopped, profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting() && sequence.status == STATUS_STOPPED) {  // pause or stop the tester according to the debug configuration
@@ -756,13 +752,24 @@ int CreateSequenceId() {
 
 
 /**
- * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.RecordEquity is TRUE.
+ * Return symbol definitions for metrics to be recorded by this EA instance.
  *
- * @return string - unique symbol or an empty string in case of errors
+ * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
+ * @param  _Out_ string symbol       - unique timeseries symbol
+ * @param  _Out_ string description  - timeseries description
+ * @param  _Out_ string group        - timeseries group
+ * @param  _Out_ int    digits       - timeseries digits
+ * @param  _Out_ string hstDirectory - history directory of the timeseries to record
+ * @param  _Out_ int    hstFormat    - history format of the timeseries to recorded
+ *
+ * @return bool - whether to record a timeseries for the specified index
  */
-string GetUniqueSymbol() {
-   if (!sequence.id) return(!catch("GetUniqueSymbol(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return("ZigZag"+ sequence.id);
+bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &description, string &group, int &digits, string &hstDirectory, int &hstFormat) {
+   if (!sequence.id) return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   return(false);
+
+   // old:
+   //return("ZigZag"+ sequence.id);
 }
 
 
@@ -781,8 +788,8 @@ string GetLogFilename() {
 /**
  * Return the full name of the instance status file.
  *
- * @param  relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
- *                               (default: the absolute path)
+ * @param  bool relative [optional] - whether to return the absolute path or the path relative to the MQL "files" directory
+ *                                    (default: the absolute path)
  *
  * @return string - filename or an empty string in case of errors
  */
@@ -817,6 +824,25 @@ string StatusDescription(int status) {
       case STATUS_STOPPED    : return("stopped"    );
    }
    return(_EMPTY_STR(catch("StatusDescription(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a human-readable presentation of a signal constant.
+ *
+ * @param  int signal
+ *
+ * @return string - readable constant or an empty string in case of errors
+ */
+string SignalToStr(int signal) {
+   switch (signal) {
+      case NULL             : return("no signal"        );
+      case SIGNAL_LONG      : return("SIGNAL_LONG"      );
+      case SIGNAL_SHORT     : return("SIGNAL_SHORT"     );
+      case SIGNAL_TIME      : return("SIGNAL_TIME"      );
+      case SIGNAL_TAKEPROFIT: return("SIGNAL_TAKEPROFIT");
+   }
+   return(_EMPTY_STR(catch("SignalToStr(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -1186,8 +1212,8 @@ int History.AddRecord(int index, int signal, int ticket, double lots, int openTy
 
 
 /**
- * Whether the current sequence was created in the tester. Considers the fact that a test sequence can be loaded into an
- * online chart after the test (for visualization).
+ * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
+ * chart after the test (for visualization).
  *
  * @return bool
  */
