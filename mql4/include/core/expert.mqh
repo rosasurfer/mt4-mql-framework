@@ -356,10 +356,10 @@ int start() {
  * Terminal bug
  * ------------
  * At a regular end of test (testing period ended) with VisualMode=Off the terminal may interrupt more complex deinit()
- * functions "at will", without finishing them. This must not be confused with the regular execution time check of max. 3 sec.
- * in init cycles. The interruption may occur already after a few 100 millisec. and Expert::afterDeinit() may not get executed
- * at all. The only workaround is to no put consuming tasks into deinit(), or to move such tasks to the MT4Expander (possibly
- * to its own thread). Writing status changes to disk as they happen avoids this issue in the first place.
+ * functions "at will" without finishing them. This is not be confused with the regular execution timeout of 3 seconds in
+ * init cycles. The interruption may occur already after a few 100 milliseconds and Expert::afterDeinit() may not get executed
+ * at all. The workaround is to not run time-consuming tasks in deinit() and instead move such tasks to the Expander (possibly
+ * in its own thread). Writing of runtime status changes to disk as they happen avoids this issue in the first place.
  */
 int deinit() {
    __CoreFunction = CF_DEINIT;
