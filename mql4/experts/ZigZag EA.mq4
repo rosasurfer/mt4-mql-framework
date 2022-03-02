@@ -4,7 +4,10 @@
  *
  * TODO:
  *  - PL recording of system variants
- *     total & daily PL in pip/money
+ *     total PL in money
+ *     daily PL in money
+ *     total/daily PL in pips
+ *     Sequence-IDs of all symbols and variants must be unique
  *
  *  - variants:
  *     ZigZag                                                  OK
@@ -751,25 +754,50 @@ int CreateSequenceId() {
 }
 
 
+// recorded PL metrics
+#define METRIC_TOTAL_PL_MONEY    0
+#define METRIC_TOTAL_PL_PIP      1
+#define METRIC_DAILY_PL_MONEY    2
+#define METRIC_DAILY_PL_PIP      3
+
+
 /**
- * Return symbol definitions for metrics to be recorded by this EA instance.
+ * Return symbol definitions for metrics to be recorded by this instance.
  *
  * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
  * @param  _Out_ string symbol       - unique timeseries symbol
- * @param  _Out_ string description  - timeseries description
- * @param  _Out_ string group        - timeseries group
- * @param  _Out_ int    digits       - timeseries digits
- * @param  _Out_ string hstDirectory - history directory of the timeseries to record
- * @param  _Out_ int    hstFormat    - history format of the timeseries to recorded
+ * @param  _Out_ string symbolDescr  - timeseries description
+ * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
+ * @param  _Out_ int    symbolDigits - timeseries digits
+ * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
+ * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
  *
  * @return bool - whether to record a timeseries for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &description, string &group, int &digits, string &hstDirectory, int &hstFormat) {
-   if (!sequence.id) return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return(false);
+bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
+   if (IsLastError())    return(false);
+   if (!sequence.id)     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) return(false);
 
-   // old:
-   //return("ZigZag"+ sequence.id);
+   switch (i) {
+      case METRIC_TOTAL_PL_MONEY:
+         symbol       = "ZigZg_"+ sequence.id +"A";
+         symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
+         symbolGroup  = "";
+         symbolDigits = 2;
+         hstDirectory = "";
+         hstFormat    = NULL;
+         break;
+
+      default: return(false);
+   }
+   return(true);
+
+   /*
+   old: "ZigZag"+ sequence.id
+   Duel_1234A
+   Snow_1234A
+   */
 }
 
 
