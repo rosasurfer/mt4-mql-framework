@@ -10,9 +10,7 @@
  *     Sequence-IDs of all symbols and variants must be unique
  *
  *  - Expander
- *     rename parameter eaExternalReporting to isExternalReporting
- *     move EA.Recorder after Test
- *  - rename MQL: EA.ExternalReporting to Test.ExternalReporting
+ *     move field/parameter EA.Recorder before Test
  *  - add EA.Recorder to SaveStatus()/ReadStatus()
  *
  *  - variants:

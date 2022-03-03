@@ -825,7 +825,7 @@ bool onRealPositionOpen(int i) {
    }
 
    if (IsTesting()) {
-      if (__ExecutionContext[EC.eaExternalReporting] != 0) {
+      if (__ExecutionContext[EC.externalReporting] != 0) {
          Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
       // pause the test if configured
@@ -871,7 +871,7 @@ bool onRealPositionClose(int i) {
       logDebug("onRealPositionClose(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
-   if (IsTesting() && __ExecutionContext[EC.eaExternalReporting]) {
+   if (IsTesting() && __ExecutionContext[EC.externalReporting]) {
       Test_onPositionClose(__ExecutionContext, OrderTicket(), OrderCloseTime(), OrderClosePrice(), NULL, OrderProfit());
    }
    return(!catch("onRealPositionClose(2)"));

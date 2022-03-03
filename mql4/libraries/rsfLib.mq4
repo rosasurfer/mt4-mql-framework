@@ -5655,7 +5655,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
-            if (type<=OP_SELL && __ExecutionContext[EC.eaExternalReporting]) {
+            if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
                Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
@@ -6255,8 +6255,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          }
          if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
-         if (!IsTesting())                                         PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[EC.eaExternalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
+         if (!IsTesting())                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
