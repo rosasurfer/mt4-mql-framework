@@ -9,10 +9,6 @@
  *     total/daily PL in pips
  *     Sequence-IDs of all symbols and variants must be unique
  *
- *  - Expander
- *     move field/parameter EA.Recorder before Test
- *     rename eaRecorder to isRecording
- *
  *  - add EA.Recorder to SaveStatus()/ReadStatus()
  *
  *  - variants:
