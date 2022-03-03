@@ -2,11 +2,11 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.Recorder          = false;      // whether to record performance graphs
-extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
+extern bool     EA.Recorder            = false;    // whether to record performance graphs
 
-extern datetime Test.StartTime       = 0;          // time to start a test
-extern double   Test.StartPrice      = 0;          // price to start a test
+extern datetime Test.StartTime         = 0;        // time to start a test
+extern double   Test.StartPrice        = 0;        // price to start a test
+extern bool     Test.ExternalReporting = false;    // whether to send PositionOpen/Close events to the Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -73,9 +73,9 @@ int init() {
        hChart = WindowHandle(Symbol(), NULL);
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
    if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
-      EA.ExternalReporting = false;                            // the input must be reset before SyncMainContext_init()
+      Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
    }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.Recorder, IsTesting(), IsVisualMode(), IsOptimization(), EA.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.Recorder, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -153,10 +153,10 @@ int init() {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
             sInputs = StringConcatenate(sInputs,
-               ifString(!EA.Recorder,          "", NL +"EA.Recorder=TRUE"                                            +";"),
-               ifString(!EA.ExternalReporting, "", NL +"EA.ExternalReporting=TRUE"                                   +";"),
-               ifString(!Test.StartTime,       "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
-               ifString(!Test.StartPrice,      "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
+               ifString(!EA.Recorder,            "", NL +"EA.Recorder=TRUE"                                            +";"),
+               ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
+               ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+               ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
             logDebug(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
          }
       }
@@ -393,7 +393,7 @@ int deinit() {
    }
 
    // stop external reporting
-   if (EA.ExternalReporting) {
+   if (Test.ExternalReporting) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StopReporting(__ExecutionContext, time, Bars);
    }
@@ -604,28 +604,30 @@ string init_MarketInfo() {
  * @return bool - success status
  */
 bool init_Recorder() {
-   if (EA.Recorder && !recorder.initialized && !IsOptimization()) {
-      int i=0, symbolDigits, hstFormat;
-      bool enabled;
-      string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
+   if (!recorder.initialized) {
+      if (EA.Recorder && !IsOptimization()) {
+         int i=0, symbolDigits, hstFormat;
+         bool enabled;
+         string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
 
-      // fetch symbol definitions from the EA and process external symbols
-      while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
-         init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
-         i++;
-      }
-      if (IsLastError()) return(false);
+         // fetch symbol definitions from the EA and process external symbols
+         while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+            init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
+            i++;
+         }
+         if (IsLastError()) return(false);
 
-      // the recorder is enabled: if no definitions received create a new equity symbol using default values
-      if (!i) {
-         symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
-         symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
-         symbolDigits = 2;
-         if (!init_RecorderAddSymbol(i, true, symbol, symbolDescr, "", symbolDigits, "", NULL, true)) return(false);
+         // the recorder is enabled: if no definitions received create a new equity symbol using default values
+         if (!i) {
+            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
+            symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
+            symbolDigits = 2;
+            if (!init_RecorderAddSymbol(i, true, symbol, symbolDescr, "", symbolDigits, "", NULL, true)) return(false);
+         }
       }
-   }
-   else {
-      EA.Recorder = false;
+      else {
+         EA.Recorder = false;
+      }
    }
 
    recorder.initialized = true;
@@ -821,13 +823,16 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
  * @return bool - success status
  */
 bool init_Test() {
-   if (EA.ExternalReporting && IsTesting()) {
-      datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_InitReporting(__ExecutionContext, time, Bars);
+   if (!test.initialized) {
+      if (Test.ExternalReporting && IsTesting()) {
+         datetime time = MarketInfo(Symbol(), MODE_TIME);
+         Test_InitReporting(__ExecutionContext, time, Bars);
+      }
+      else {
+         Test.ExternalReporting = false;
+      }
    }
-   else {
-      EA.ExternalReporting = false;
-   }
+
    test.initialized = true;
    return(true);
 }
