@@ -66,7 +66,7 @@
    int      ec_hChart             (int ec[]);
    int      ec_hChartWindow       (int ec[]);
 
-   bool     ec_EaRecorder         (int ec[]);
+   bool     ec_Recording          (int ec[]);
 
    //       ec.test
    int      ec_TestId             (int ec[]);
