@@ -79,8 +79,8 @@
    bool     ec_Testing            (int ec[]);
    bool     ec_VisualMode         (int ec[]);
    bool     ec_Optimization       (int ec[]);
-
    bool     ec_EaExternalReporting(int ec[]);
+
    bool     ec_EaRecorder         (int ec[]);
 
    int      ec_MqlError           (int ec[]);
