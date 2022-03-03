@@ -11,6 +11,8 @@
  *
  *  - Expander
  *     move field/parameter EA.Recorder before Test
+ *     rename eaRecorder to isRecording
+ *
  *  - add EA.Recorder to SaveStatus()/ReadStatus()
  *
  *  - variants:
