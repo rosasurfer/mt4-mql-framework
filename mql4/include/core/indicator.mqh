@@ -43,7 +43,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, IsTesting(), IsVisualMode(), IsOptimization(), false, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -550,7 +550,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
-   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int eaExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int  SyncMainContext_deinit(int ec[], int unintReason);
 #import

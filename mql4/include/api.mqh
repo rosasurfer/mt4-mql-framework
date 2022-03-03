@@ -943,7 +943,7 @@ bool     StrStartsWith(string str, string prefix);;
 int      SyncLibContext_deinit(int &ec[], int uninitReason);;
 int      SyncLibContext_init(int &ec[], int uninitReason, int initFlags, int deinitFlags, string name, string symbol, int timeframe, int digits, double point, int isTesting, int isOptimization);;
 int      SyncMainContext_deinit(int &ec[], int uninitReason);;
-int      SyncMainContext_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
+int      SyncMainContext_init(int &ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int eaExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);;
 int      SyncMainContext_start(int &ec[], double &rates[][], int bars, int changedBars, int ticks, datetime tickTime, double bid, double ask);;
 bool     TerminalIsPortableMode();;
 bool     Test_onPositionOpen(int &ec[], int ticket, int type, double lots, string symbol, datetime openTime, double openPrice, double stopLoss, double takeProfit, double commission, int magicNumber, string comment);;

@@ -9,7 +9,11 @@
  *     total/daily PL in pips
  *     Sequence-IDs of all symbols and variants must be unique
  *
- *  - rename EA.ExternalReporting to Test.ExternalReporting
+ *  - Expander
+ *     rename EA.ExternalReporting to Test.ExternalReporting
+ *     rename parameter eaExternalReporting to isExternalReporting
+ *     move EA.Recorder after Test
+ *  - rename MQL: EA.ExternalReporting to Test.ExternalReporting
  *  - add EA.Recorder to SaveStatus()/ReadStatus()
  *
  *  - variants:
