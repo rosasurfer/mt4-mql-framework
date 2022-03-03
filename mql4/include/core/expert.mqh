@@ -2,7 +2,7 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.Recorder          = false;      // whether to record PL graphs
+extern bool     EA.Recorder          = false;      // whether to record performance graphs
 extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
 
 extern datetime Test.StartTime       = 0;          // time to start a test
@@ -19,16 +19,17 @@ int     __tickTimerId;                             // timer id for virtual ticks
 
 // PL recorder
 bool   recorder.initialized  = false;
-bool   recorder.internal    [1];                   // whether defined by this file or by calling Recorder_GetSymbolDefinition()
-string recorder.symbol      [1] = {""};            // all following values can be defined by the EA
-string recorder.symbolDescr [1] = {""};            // ...
-string recorder.symbolGroup [1] = {""};            // ...
-int    recorder.symbolDigits[1];                   // ...
-double recorder.startValue  [1];                   // ...
-double recorder.currValue   [1];                   // ...
-string recorder.hstDirectory[1] = {""};            // ...
-int    recorder.hstFormat   [1];                   // ...
-int    recorder.hSet        [1];                   // except the history set handle
+bool   recorder.enabled     [1];                   // whether a metric is enabled
+bool   recorder.internal    [1];                   // whether a metric is defined by this file or by the user/EA
+string recorder.symbol      [1] = {""};
+string recorder.symbolDescr [1] = {""};
+string recorder.symbolGroup [1] = {""};
+int    recorder.symbolDigits[1];
+double recorder.startValue  [1];
+double recorder.currValue   [1];
+string recorder.hstDirectory[1] = {""};
+int    recorder.hstFormat   [1];
+int    recorder.hSet        [1];
 
 // test management
 bool   test.initialized = false;
@@ -604,12 +605,13 @@ string init_MarketInfo() {
  */
 bool init_Recorder() {
    if (EA.Recorder && !recorder.initialized && !IsOptimization()) {
+      int i=0, symbolDigits, hstFormat;
+      bool enabled;
       string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
-      int symbolDigits, hstFormat, i=0;
 
       // fetch symbol definitions from the EA and process external symbols
-      while (Recorder_GetSymbolDefinitionA(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
-         init_RecorderAddSymbol(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
+      while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+         init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
          i++;
       }
       if (IsLastError()) return(false);
@@ -619,7 +621,7 @@ bool init_Recorder() {
          symbol       = init_RecorderNewSymbol();                                               // sizeof(SYMBOL.description) = 64 chars
          symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
          symbolDigits = 2;
-         if (!init_RecorderAddSymbol(i, symbol, symbolDescr, "", symbolDigits, "", NULL, true)) return(false);
+         if (!init_RecorderAddSymbol(i, true, symbol, symbolDescr, "", symbolDigits, "", NULL, true)) return(false);
       }
    }
    else {
@@ -635,6 +637,7 @@ bool init_Recorder() {
  * Create a symbol definition from the passed data and add it to the specified position of the PL recorder.
  *
  * @param  int    i            - zero-based index of the symbol (position in the recorder)
+ * @param  bool   enabled      - whether the related metric is active and recorded
  * @param  string symbol       - symbol
  * @param  string symbolDescr  - symbol description
  * @param  string symbolGroup  - symbol group (if empty recorder defaults are used)
@@ -645,7 +648,8 @@ bool init_Recorder() {
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat, bool internal) {
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat, bool internal) {
+   enabled  = enabled !=0;
    internal = internal!=0;
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
@@ -653,14 +657,16 @@ bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string sym
    hstDirectory = init_RecorderHstDirectory(hstDirectory); if (!StringLen(hstDirectory)) return(false);
    hstFormat    = init_RecorderHstFormat(hstFormat);       if (!hstFormat)               return(false);
 
-   // check an existing symbol
-   if (IsRawSymbol(symbol, hstDirectory)) {
-      if (IsTesting()) return(!catch("init_RecorderAddSymbol(2)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
-      // TODO: update an existing raw symbol
-   }
-   else {
-      string baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
-      if (!CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory)) return(false);
+   if (enabled) {
+      // check an existing symbol
+      if (IsRawSymbol(symbol, hstDirectory)) {
+         if (IsTesting()) return(!catch("init_RecorderAddSymbol(2)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
+         // TODO: update an existing raw symbol
+      }
+      else {
+         string baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
+         if (!CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory)) return(false);
+      }
    }
 
    // add all metadata to the recorder
@@ -668,6 +674,7 @@ bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string sym
    if (i >= size) {
       size = i + 1;
       ArrayResize(recorder.internal,     size);
+      ArrayResize(recorder.enabled,      size);
       ArrayResize(recorder.symbol,       size);
       ArrayResize(recorder.symbolDescr,  size);
       ArrayResize(recorder.symbolGroup,  size);
@@ -681,6 +688,7 @@ bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string sym
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(3)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
    recorder.internal    [i] = internal;
+   recorder.enabled     [i] = enabled;
    recorder.symbol      [i] = symbol;
    recorder.symbolDescr [i] = symbolDescr;
    recorder.symbolGroup [i] = symbolGroup;

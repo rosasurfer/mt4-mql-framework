@@ -765,6 +765,7 @@ int CreateSequenceId() {
  * Return symbol definitions for metrics to be recorded by this instance.
  *
  * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
+ * @param  _Out_ bool   enabled      - whether the metric is active and recorded
  * @param  _Out_ string symbol       - unique timeseries symbol
  * @param  _Out_ string symbolDescr  - timeseries description
  * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
@@ -772,15 +773,16 @@ int CreateSequenceId() {
  * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
  * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
  *
- * @return bool - whether to record a timeseries for the specified index
+ * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
+bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
    if (IsLastError())    return(false);
    if (!sequence.id)     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
    if (IsTestSequence()) return(false);
 
    switch (i) {
       case METRIC_TOTAL_PL_MONEY:
+         enabled      = true;
          symbol       = "ZigZg_"+ sequence.id +"A";
          symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
          symbolGroup  = "";
