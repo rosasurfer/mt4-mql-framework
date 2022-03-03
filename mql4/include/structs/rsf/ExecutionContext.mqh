@@ -66,6 +66,8 @@
    int      ec_hChart             (int ec[]);
    int      ec_hChartWindow       (int ec[]);
 
+   bool     ec_EaRecorder         (int ec[]);
+
    //       ec.test
    int      ec_TestId             (int ec[]);
    datetime ec_TestCreated        (int ec[]);
@@ -80,8 +82,6 @@
    bool     ec_VisualMode         (int ec[]);
    bool     ec_Optimization       (int ec[]);
    bool     ec_ExternalReporting  (int ec[]);
-
-   bool     ec_EaRecorder         (int ec[]);
 
    int      ec_MqlError           (int ec[]);
    int      ec_DllError           (int ec[]);
