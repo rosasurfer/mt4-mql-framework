@@ -716,26 +716,24 @@ string init_RecorderNewSymbol() {
    // open "symbols.raw" and read symbols
    string filename = hstDirectory +"/symbols.raw";
    int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-   int error = GetLastError();
-   if (error || hFile <= 0)                              return(!catch("init_RecorderNewSymbol(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   if (hFile <= 0)                                      return(!catch("init_RecorderNewSymbol(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
    int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile);  return(!catch("init_RecorderNewSymbol(3)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("init_RecorderNewSymbol(3)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    int symbolsSize = fileSize/SYMBOL_size;
 
    int symbols[]; InitializeByteBuffer(symbols, fileSize);
    if (fileSize > 0) {
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-      error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("init_RecorderNewSymbol(4)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+      if (ints!=fileSize/4) { FileClose(hFile);         return(!catch("init_RecorderNewSymbol(4)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    }
    FileClose(hFile);
 
    // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
    for (int i, maxId=0; i < symbolsSize; i++) {
-      string symbol = symbols_Name(symbols, i);
+      symbol = symbols_Name(symbols, i);
       if (StrStartsWithI(symbol, name)) {
          suffix = StrSubstr(symbol, StringLen(name));
          if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
@@ -743,6 +741,7 @@ string init_RecorderNewSymbol() {
          }
       }
    }
+
    return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
 }
 
@@ -784,6 +783,7 @@ string init_RecorderHstDirectory(string caller, string hstDirectory = "") {
          string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
          string sValue  = GetConfigString(section, "HistoryDirectory", "");
          if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE)));
+         configValue = sValue;
       }
       hstDirectory = configValue;
    }
@@ -857,10 +857,13 @@ bool start_Recorder() {
    */
    int size = ArraySize(recorder.hSet);
    double currentValue;
+   bool success = true;
 
    for (int i=0; i < size; i++) {
+      if (!recorder.enabled[i]) continue;
+
       if (!recorder.hSet[i]) {
-         // online: prefer to continue existing histories
+         // online: prefer to continue existing history
          if (!IsTesting()) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Get(recorder.symbol[i], recorder.hstDirectory[i]);
@@ -869,7 +872,7 @@ bool start_Recorder() {
             else if (recorder.hSet[i] <=  0) return(false);
          }
 
-         // tester and online: create new histories
+         // tester or no existing history
          if (!recorder.hSet[i]) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]);
@@ -880,11 +883,13 @@ bool start_Recorder() {
       if (recorder.internal[i]) currentValue = AccountEquity() - AccountCredit();
       else                      currentValue = recorder.startValue[i] + recorder.currValue[i];
 
-      if      (i <  7) HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else if (i < 14) HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else             HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      if (!success) break;
    }
-   return(true);
+
+   return(success);
 }
 
 
