@@ -6,14 +6,14 @@
 /**
  * Return the full filename of an account configuration file.
  *
- * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
  *
  * @return string - filename or an empty string in case of errors
  */
 string GetAccountConfigPath(string company="", int account=NULL) {
    if (!StringLen(company) || company=="0") {
-      company = GetAccountCompany();
+      company = GetAccountCompanyId();
       if (!StringLen(company)) return(EMPTY_STR);
    }
    if (account <= 0) {

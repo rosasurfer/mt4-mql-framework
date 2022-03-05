@@ -4329,8 +4329,8 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER ] = GetAccountServer(); if (!StringLen(lastResult[IDX_SERVER ])) return("");
-      lastResult[IDX_COMPANY] = GetAccountCompany();    if (!StringLen(lastResult[IDX_COMPANY])) return("");
+      lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
+      lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
       // prefer a custom company mapping of a full server name
       string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);    // global only to prevent recursion

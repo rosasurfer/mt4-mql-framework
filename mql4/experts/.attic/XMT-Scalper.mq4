@@ -2129,7 +2129,7 @@ string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string result = ""; if (!StringLen(result)) {
-      string directory = "/presets/"+ ifString(IsTesting(), "Tester", GetAccountCompany()) +"/";
+      string directory = "/presets/"+ ifString(IsTesting(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ sequence.id +".set";
       result = GetMqlSandboxPath() + directory + baseName;
    }
@@ -2215,7 +2215,7 @@ bool ReadStatus() {
    section = "General";
    string sAccount = GetIniStringA(file, section, "Account", "");                                     // string Account = ICMarkets:12345678
    string sSymbol  = GetIniStringA(file, section, "Symbol",  "");                                     // string Symbol  = EURUSD
-   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (sAccount != sThisAccount) return(!catch("ReadStatus(3)  account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (sSymbol  != Symbol())     return(!catch("ReadStatus(4)  symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
@@ -2522,7 +2522,7 @@ bool SaveStatus() {
    if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;                                         // an additional empty line as section separator
 
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol() + separator);                           // conditional section separator
 
    section = "Inputs";

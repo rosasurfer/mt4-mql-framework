@@ -908,8 +908,8 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
             }
             else {
                // query global config
-               string company  = GetAccountCompany(); if (!StringLen(company)) return(EMPTY);
-               int    account  = GetAccountNumber();  if (!account)            return(EMPTY);
+               string company  = GetAccountCompanyId(); if (!StringLen(company)) return(EMPTY);
+               int    account  = GetAccountNumber();    if (!account)            return(EMPTY);
                string currency = AccountCurrency();
 
                if      (IsGlobalConfigKeyA(section, company +"."+ currency +"."+ account)) key = company +"."+ currency +"."+ account;
@@ -4313,7 +4313,7 @@ string InitReasonDescription(int reason) {
  * Get the configured value of an account's externally hold assets. The returned value can be negative to scale-down the
  * account size (e.g. for testing in a real account).
  *
- * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
  * @param  bool   refresh [optional] - whether to refresh a cached value (default: no)
  *
@@ -4323,7 +4323,7 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
    refresh = refresh!=0;
 
    if (!StringLen(company) || company=="0") {
-      company = GetAccountCompany();
+      company = GetAccountCompanyId();
       if (!StringLen(company)) return(EMPTY_VALUE);
    }
    if (account <= 0) {
@@ -4386,7 +4386,7 @@ string GetAccountServerPath() {
  *  alpariuk       = Alpari
  *  alpariuk-live2 = AlpariLive              ; A mapped full server name precedes a mapping for a default identifier.
  */
-string GetAccountCompany() {
+string GetAccountCompanyId() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
    // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
@@ -4416,14 +4416,14 @@ string GetAccountCompany() {
  * number and is configurable via the framework configuration. If no alias is configured the function returns the account
  * number with all characters except the last 4 replaced by wildcards.
  *
- * @param  string company [optional] - account company as returned by GetAccountCompany() (default: the current account company)
+ * @param  string company [optional] - account company as returned by GetAccountCompanyId() (default: the current company id)
  * @param  int    account [optional] - account number (default: the current account number)
  *
  * @return string - account alias or an empty string in case of errors
  */
 string GetAccountAlias(string company="", int account=NULL) {
    if (!StringLen(company) || company=="0") {
-      company = GetAccountCompany();
+      company = GetAccountCompanyId();
       if (!StringLen(company)) return(EMPTY_STR);
    }
    if (account <= 0) {
@@ -7105,7 +7105,7 @@ void __DummyCalls() {
    FullModuleName();
    GE(NULL, NULL);
    GetAccountAlias();
-   GetAccountCompany();
+   GetAccountCompanyId();
    GetAccountConfigPath(NULL, NULL);
    GetAccountNumberFromAlias(NULL, NULL);
    GetAccountServerPath();
