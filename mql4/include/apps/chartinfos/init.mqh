@@ -46,8 +46,8 @@ int onInit() {
          key    = symbolRangeKey;
          sValue = sSymbolRange;
          if (StrCompareI(sValue, "ADR")) {
-            mm.pipRange = iADR()/Pip;        // FATAL  EURUSD,H4  ChartInfos::onInit(0.1)  mm.pipRange=93.98666667  [ERS_HISTORY_UPDATE]
-            mm.pipRangeIsADR = true;         // if (!catch("onInit(0.1)  mm.pipRange="+ mm.pipRange)) debug("onInit(0.2)  mm.pipRange="+ mm.pipRange);
+            mm.pipRange = iADR()/Pip;
+            mm.pipRangeIsADR = true;
          }
          else {
             if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
