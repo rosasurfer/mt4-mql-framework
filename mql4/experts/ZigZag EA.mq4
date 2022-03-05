@@ -3,13 +3,19 @@
  *
  *
  * TODO:
+ *  - EA.Recorder
+ *     convert input to (string) "on | off* | {int},..."
+ *      off:       recorder off
+ *      on:        recorder on with one internal default metric (total PL in money)
+ *      {int},...: recorder on with the specified custom metrics starting with 1, e.g. "1,3,4"
+ *      both active recorder modes are available in tester and live
+ *     add input to SaveStatus()/ReadStatus()
+ *
  *  - PL recording of system variants
  *     total PL in money
  *     daily PL in money
  *     total/daily PL in pips
  *     Sequence-IDs of all symbols and variants must be unique
- *
- *  - add EA.Recorder to SaveStatus()/ReadStatus()
  *
  *  - variants:
  *     ZigZag                                                  OK
@@ -54,8 +60,9 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
+ *  - set flag in HistorySet.AddTick(hSet, time, value, flags=HST_BUFFER_TICKS) accordingly
  *
- *  - implement GetAccountCompany() reading the name from the server file if not connected
+ *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
  *  - build script for all .ex4 files after deployment
@@ -120,6 +127,11 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_MONEY               1           // TakeProfit types
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
+
+#define METRIC_TOTAL_PL_MONEY       0           // recorded PL metrics
+#define METRIC_TOTAL_PL_PIP         1
+#define METRIC_DAILY_PL_MONEY       2
+#define METRIC_DAILY_PL_PIP         3
 
 // sequence data
 int      sequence.id;
@@ -212,6 +224,13 @@ int onTick() {
          if (UpdateStatus()) {                                       // update order status and PL
             if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
             else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
+         }
+      }
+
+      if (EA.Recorder) {                                             // update PL recorder values
+         if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
+            recorder.startValue[METRIC_TOTAL_PL_MONEY] = sequence.startEquity;
+            recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;
          }
       }
    }
@@ -757,13 +776,6 @@ int CreateSequenceId() {
 }
 
 
-// recorded PL metrics
-#define METRIC_TOTAL_PL_MONEY    0
-#define METRIC_TOTAL_PL_PIP      1
-#define METRIC_DAILY_PL_MONEY    2
-#define METRIC_DAILY_PL_PIP      3
-
-
 /**
  * Return symbol definitions for metrics to be recorded by this instance.
  *
@@ -781,12 +793,12 @@ int CreateSequenceId() {
 bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
    if (IsLastError())    return(false);
    if (!sequence.id)     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence()) return(false);
+   //if (IsTestSequence()) return(false);
 
    switch (i) {
       case METRIC_TOTAL_PL_MONEY:
          enabled      = true;
-         symbol       = "ZigZg_"+ sequence.id +"A";
+         symbol       = "ZigZg_"+ sequence.id +"A";                     // 6 + 4 + 1 = 11 chars
          symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
          symbolGroup  = "";
          symbolDigits = 2;
@@ -797,12 +809,6 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       default: return(false);
    }
    return(true);
-
-   /*
-   old: "ZigZag"+ sequence.id
-   Duel_1234A
-   Snow_1234A
-   */
 }
 
 
