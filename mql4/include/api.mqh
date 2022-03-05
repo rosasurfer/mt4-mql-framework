@@ -144,7 +144,7 @@ void     ForceAlert(string message);;
 string   FullModuleName();;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string company="", int account=NULL);;
-string   GetAccountCompany();;
+string   GetAccountCompanyId();;
 int      GetAccountNumberFromAlias(string company, string alias);;
 string   GetClassName(int hWnd);;
 double   GetCommission(double lots=1.0, int mode=MODE_MONEY);;

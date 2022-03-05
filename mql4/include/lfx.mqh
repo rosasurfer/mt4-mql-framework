@@ -50,8 +50,8 @@ int    hQC.TradeCmdReceiver;
 bool InitTradeAccount(string accountId = "") {
    if (IsLastError()) return(false);
 
-   string currAccountCompany = GetAccountCompany(); if (!StringLen(currAccountCompany)) return(false);
-   int    currAccountNumber  = GetAccountNumber();  if (!currAccountNumber)             return(false);
+   string currAccountCompany = GetAccountCompanyId(); if (!StringLen(currAccountCompany)) return(false);
+   int    currAccountNumber  = GetAccountNumber();    if (!currAccountNumber)             return(false);
 
    string _accountCompany = "";                                // global vars are modified on success only
    int    _accountNumber;

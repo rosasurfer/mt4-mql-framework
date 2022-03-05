@@ -55,6 +55,7 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
  *
+ *  - implement GetAccountCompany() reading the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
  *  - build script for all .ex4 files after deployment
@@ -830,7 +831,7 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
       filename = StrReplace(directory, "\\", "/") + baseName;
    }
@@ -899,7 +900,7 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
 
@@ -1060,7 +1061,7 @@ bool ReadStatus() {
    section = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
-   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 

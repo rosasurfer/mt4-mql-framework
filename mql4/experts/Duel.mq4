@@ -2519,7 +2519,7 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
       filename = directory + baseName;
    }
@@ -3573,7 +3573,7 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
 
@@ -3879,7 +3879,7 @@ bool ReadStatus() {
    section = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
-   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
