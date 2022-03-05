@@ -2817,11 +2817,20 @@ string MarketInfoTypeToStr(int type) {
 int DebugMarketInfo(string caller = "") {
    string symbol = Symbol();
    double value;
-   int    error;
+   int error, len=21 + StringLen(symbol);
 
-   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
-   debug(caller +"  Global variables for \""+ symbol +"\"");               //  Global variables "EURUSD"
-   debug(caller +"  "+ StrRepeat("-", 23 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  Account");                                             //  Account
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+
+   debug(caller +"  server  = "+ DoubleQuoteStr(GetAccountServer()));
+   debug(caller +"  company = "+ DoubleQuoteStr(AccountCompany()));
+   debug(caller +"  name    = "+ DoubleQuoteStr(AccountName()));
+   debug(caller +"  number  = "+ GetAccountNumber());
+
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  Global variables (\""+ symbol +"\")");                 //  Global variables ("EURUSD")
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
 
    debug(caller +"  built-in: Digits      = "+ Digits);
    debug(caller +"  built-in: Point       = "+ NumberToStr(Point, PriceFormat));
@@ -2832,9 +2841,9 @@ int DebugMarketInfo(string caller = "") {
    debug(caller +"  built-in: Bid/Ask     = "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat));
    debug(caller +"  built-in: Bars        = "+ Bars);
 
-   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
-   debug(caller +"  MarketInfo() for \""+ symbol +"\"");                   //  MarketInfo() for "EURUSD"
-   debug(caller +"  "+ StrRepeat("-", 19 + StringLen(symbol)));            //  -------------------------
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
+   debug(caller +"  MarketInfo(\""+ symbol +"\")");                        //  MarketInfo("EURUSD")
+   debug(caller +"  "+ StrRepeat("-", len));                               //  ---------------------------
 
    // see MODE explanations in "include/stddefines.mqh"
    value = MarketInfo(symbol, MODE_LOW              ); error = GetLastError();                 debug(caller +"  MODE_LOW               = "+                    NumberToStr(value, ifString(error, ".+", PriceFormat)), error);
@@ -4348,8 +4357,8 @@ double GetExternalAssets(string company="", int account=NULL, bool refresh=false
  * @return string - directory name or an empty string in case of errors
  */
 string GetAccountServerPath() {
-   string directory  = GetHistoryRootPathA();  if (directory == "")  return("");
-   string serverName = GetAccountServerName(); if (serverName == "") return("");
+   string directory  = GetHistoryRootPathA(); if (directory == "")  return("");
+   string serverName = GetAccountServer();    if (serverName == "") return("");
    return(StringConcatenate(directory, "\\", serverName));
 }
 
@@ -4380,11 +4389,11 @@ string GetAccountServerPath() {
 string GetAccountCompany() {
    // Da bei Accountwechsel der Rückgabewert von AccountServer() bereits wechselt, obwohl der aktuell verarbeitete Tick noch
    // auf Daten des alten Account-Servers arbeitet, kann die Funktion AccountServer() nicht direkt verwendet werden. Statt
-   // dessen muß immer der Umweg über GetAccountServerName() gegangen werden. Die Funktion gibt erst dann einen geänderten
+   // dessen muß immer der Umweg über GetAccountServer() gegangen werden. Die Funktion gibt erst dann einen geänderten
    // Servernamen zurück, wenn tatsächlich ein Tick des neuen Servers verarbeitet wird.
    static string lastServer="", lastId="";
 
-   string server = GetAccountServerName(); if (!StringLen(server)) return("");
+   string server = GetAccountServer(); if (!StringLen(server)) return("");
    if (server == lastServer)
       return(lastId);
 
@@ -7310,7 +7319,7 @@ void __DummyCalls() {
    int      GetAccountNumber();
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
-   string   GetAccountServerName();
+   string   GetAccountServer();
    string   GetServerTimezone();
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
