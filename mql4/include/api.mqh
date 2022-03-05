@@ -631,7 +631,7 @@ int      FindFileNames(string pattern, string &results[], int flags = NULL);;
 datetime FxtToGmtTime(datetime fxtTime);;
 datetime FxtToServerTime(datetime fxtTime);;
 int      GetAccountNumber();;
-string   GetAccountServerName();;
+string   GetAccountServer();;
 int      GetFxtToGmtTimeOffset(datetime fxtTime);;
 int      GetFxtToServerTimeOffset(datetime fxtTime);;
 int      GetGmtToFxtTimeOffset(datetime gmtTime);;
