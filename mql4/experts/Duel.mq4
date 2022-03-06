@@ -3576,10 +3576,11 @@ double iADR() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (IsLastError())                            return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                        return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // in tester skip most status file writes, except at creation, sequence stop and test end
+   // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -3608,9 +3609,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
    WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
-
    WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
    WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)") + separator);
+   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder);
 
    // [Runtime status]
    section = "Runtime status";            // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -3916,6 +3917,7 @@ bool ReadStatus() {
    string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");        // bool     ShowProfitInPercent    = 1
    int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );        // datetime Sessionbreak.StartTime = 86160 (23:56:30)
    int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );        // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
+   string sEaRecorder            = GetIniStringA(file, section, "EA.Recorder",            "");        // string   EA.Recorder            = 1,2,4
 
    if (!StrIsNumeric(sGridSize))             return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sUnitSize))             return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3935,6 +3937,7 @@ bool ReadStatus() {
    ShowProfitInPercent    = StrToBool(sShowProfitInPercent);
    Sessionbreak.StartTime = iSessionbreakStartTime;
    Sessionbreak.EndTime   = iSessionbreakEndTime;
+   EA.Recorder            = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";

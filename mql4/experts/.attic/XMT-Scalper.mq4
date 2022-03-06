@@ -2253,11 +2253,12 @@ bool ReadStatus() {
    string sSessionbreakStartTime    = GetIniStringA(file, section, "Sessionbreak.StartTime",    "");   // datetime Sessionbreak.StartTime    = 86160
    string sSessionbreakEndTime      = GetIniStringA(file, section, "Sessionbreak.EndTime",      "");   // datetime Sessionbreak.EndTime      = 3730
 
-   string sMetricsRecordPerformance = GetIniStringA(file, section, "Metrics.RecordPerformance", "");   // bool     Metrics.RecordPerformance = 0
-   string sMetricsServerDirectory   = GetIniStringA(file, section, "Metrics.ServerDirectory",   "");   // string   Metrics.ServerDirectory   = auto
-
    string sChannelBug               = GetIniStringA(file, section, "ChannelBug",                "");   // bool     ChannelBug                = 0
    string sTakeProfitBug            = GetIniStringA(file, section, "TakeProfitBug",             "");   // bool     TakeProfitBug             = 1
+
+   string sMetricsRecordPerformance = GetIniStringA(file, section, "Metrics.RecordPerformance", "");   // bool     Metrics.RecordPerformance = 0
+   string sMetricsServerDirectory   = GetIniStringA(file, section, "Metrics.ServerDirectory",   "");   // string   Metrics.ServerDirectory   = auto
+   string sEaRecorder               = GetIniStringA(file, section, "EA.Recorder",               "");   // string   EA.Recorder               = 1,2,4
 
    if (sSequenceId != ""+ sequence.id)          return(!catch("ReadStatus(5)  "+ sequence.name +" invalid Sequence.ID "+ DoubleQuoteStr(sSequenceId) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sequence.ID = sSequenceId;
@@ -2308,10 +2309,11 @@ bool ReadStatus() {
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
    if (!StrIsDigit(sSessionbreakEndTime))       return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
+   ChannelBug                = StrToBool(sChannelBug);
+   TakeProfitBug             = StrToBool(sTakeProfitBug);
    Metrics.RecordPerformance = StrToBool(sMetricsRecordPerformance);
-   Metrics.ServerDirectory = sMetricsServerDirectory;
-   ChannelBug = StrToBool(sChannelBug);
-   TakeProfitBug = StrToBool(sTakeProfitBug);
+   Metrics.ServerDirectory   = sMetricsServerDirectory;
+   EA.Recorder               = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";
@@ -2511,7 +2513,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
-   // in tester skip most status file writes, except at creation and test end
+   // in tester skip most status file writes, except file creation and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
@@ -2558,11 +2560,12 @@ bool SaveStatus() {
    WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime);
    WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime);
 
-   WriteIniString(file, section, "Metrics.RecordPerformance", Metrics.RecordPerformance);
-   WriteIniString(file, section, "Metrics.ServerDirectory",   Metrics.ServerDirectory);
-
    WriteIniString(file, section, "ChannelBug",                ChannelBug);
    WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug + separator);    // conditional section separator
+
+   WriteIniString(file, section, "Metrics.RecordPerformance", Metrics.RecordPerformance);
+   WriteIniString(file, section, "Metrics.ServerDirectory",   Metrics.ServerDirectory);
+   WriteIniString(file, section, "EA.Recorder",               EA.Recorder);
 
    section = "Runtime status";
    // On deletion of pending orders the number of stored order records decreases. To prevent orphaned status file

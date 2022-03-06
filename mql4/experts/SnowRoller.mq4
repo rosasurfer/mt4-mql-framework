@@ -4055,11 +4055,11 @@ int CreateEventId() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (IsLastError())                             return(false);
+   if (last_error != NULL)                        return(false);
    if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
    if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // in tester skip most status file writes, except at creation, sequence stop and test end
+   // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -4097,6 +4097,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "StartLevel",               StartLevel);
    WriteIniString(file, section, "Sessionbreak.StartTime",   Sessionbreak.StartTime);
    WriteIniString(file, section, "Sessionbreak.EndTime",     Sessionbreak.EndTime);
+   WriteIniString(file, section, "EA.Recorder",              EA.Recorder);
 
    WriteIniString(file, section, "rt.sessionbreak.waiting",  sessionbreak.waiting);
    WriteIniString(file, section, "rt.sequence.startEquity",  DoubleToStr(sequence.startEquity, 2));
@@ -4341,6 +4342,7 @@ bool ReadStatus() {
    string sStartLevel            = GetIniStringA(file, section, "StartLevel",             "");     // int      StartLevel=0
    string sSessionbreakStartTime = GetIniStringA(file, section, "Sessionbreak.StartTime", "");     // datetime Sessionbreak.StartTime=86160
    string sSessionbreakEndTime   = GetIniStringA(file, section, "Sessionbreak.EndTime",   "");     // datetime Sessionbreak.EndTime=3730
+   string sEaRecorder            = GetIniStringA(file, section, "EA.Recorder",            "");     // string   EA.Recorder=1,2,4
 
    sequence.cycle++;
    sValue = StrTrim(StrLeftTo(sCreated, "("));
@@ -4360,6 +4362,7 @@ bool ReadStatus() {
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);          // TODO: convert input to string and validate
    if (!StrIsDigit(sSessionbreakEndTime))   return(!catch("ReadStatus(13)  "+ sequence.name +" invalid or missing Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);              // TODO: convert input to string and validate
+   EA.Recorder = sEaRecorder;
 
    string sSessionbreakWaiting = GetIniStringA(file, section, "rt.sessionbreak.waiting",  "");     // bool    rt.sessionbreak.waiting=1
    string sStartEquity         = GetIniStringA(file, section, "rt.sequence.startEquity",  "");     // double  rt.sequence.startEquity=7801.13
