@@ -161,8 +161,8 @@ int init() {
       if (IsLogDebug()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
-            sInputs = StringConcatenate(sInputs,                                                                        NL,
-               ifString(recordCustom, EA.Recorder, recordModeDescr[recordMode]),                                        ";",
+            sInputs = StringConcatenate(sInputs,
+                                                     NL, "EA.Recorder=\"", EA.Recorder, "\"",                           ";",
                ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
                ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
                ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
@@ -829,6 +829,8 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
  * @return bool - success status
  */
 bool init_RecorderValidateInput() {
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);
+
    string sValues[], sValue = StrToLower(EA.Recorder);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
@@ -854,12 +856,11 @@ bool init_RecorderValidateInput() {
 
       for (int i=0; i < size; i++) {
          sValue = StrTrim(sValues[i]);
-         if (sValue == "") continue;
-
-         if (!StrIsDigit(sValue))     return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be digits)",   ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (sValue == "")            continue;
+         if (!StrIsDigit(sValue))     return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be digits)",   ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
          int iValue = StrToInteger(sValue);
-         if (!iValue)                 return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be positive)", ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
-         if (IntInArray(ids, iValue)) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate ids)",        ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (!iValue)                 return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be positive)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue)) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate ids)",        ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
          ArrayPushInt(ids, iValue);
 
          if (ArraySize(recorder.symbol) < iValue) {
@@ -876,7 +877,7 @@ bool init_RecorderValidateInput() {
          }
          recorder.enabled[iValue-1] = true;
       }
-      if (!ArraySize(ids))            return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing ids)", ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+      if (!ArraySize(ids))            return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
       recordMode     = RECORDING_CUSTOM;
       recordInternal = false;

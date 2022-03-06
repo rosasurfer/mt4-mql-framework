@@ -112,7 +112,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define HI_PROFIT            22
 
 // sequence data
-int      sequence.id;                              //
+int      sequence.id;                              // instance id between 1000-9999
 datetime sequence.created;                         //
 bool     sequence.isTest;                          // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence-id}"
