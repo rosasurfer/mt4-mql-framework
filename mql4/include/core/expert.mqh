@@ -2,25 +2,35 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.Recorder            = false;    // whether to record performance graphs
+extern string   EA.Recorder            = "on | off* | {int},..."; // on=internal, off, {int}=custom
 
-extern datetime Test.StartTime         = 0;        // time to start a test
-extern double   Test.StartPrice        = 0;        // price to start a test
-extern bool     Test.ExternalReporting = false;    // whether to send PositionOpen/Close events to the Expander
+extern datetime Test.StartTime         = 0;                       // time to start a test
+extern double   Test.StartPrice        = 0;                       // price to start a test
+extern bool     Test.ExternalReporting = false;                   // whether to send PositionOpen/Close events to the Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <functions/InitializeByteBuffer.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;                     // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
-double  __rates[][6];                              // current price series
-int     __tickTimerId;                             // timer id for virtual ticks
+int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+double  __rates[][6];                        // current price series
+int     __tickTimerId;                       // timer id for virtual ticks
 
-// PL recorder
-bool   recorder.initialized  = false;
-bool   recorder.enabled     [1];                   // whether a metric is enabled
-bool   recorder.internal    [1];                   // whether a metric is defined by this file or by the user/EA
+// PL recorder modes
+#define RECORDING_OFF         0              // recording off
+#define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
+#define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
+
+string recordModeDescr[]  = {"off", "internal", "custom"};
+
+int    recordMode = RECORDING_OFF;
+bool   recordInternal;
+bool   recordCustom;
+
+bool   recorder.initialized = false;
+bool   recorder.enabled     [1];             // whether a metric is enabled
+bool   recorder.internal    [1];             // whether a metric is defined by this file or by the user/EA
 string recorder.symbol      [1] = {""};
 string recorder.symbolDescr [1] = {""};
 string recorder.symbolGroup [1] = {""};
@@ -75,7 +85,7 @@ int init() {
    if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
       Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
    }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.Recorder, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recordMode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -152,8 +162,8 @@ int init() {
       if (IsLogDebug()) {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
-            sInputs = StringConcatenate(sInputs,
-               ifString(!EA.Recorder,            "", NL +"EA.Recorder=TRUE"                                            +";"),
+            sInputs = StringConcatenate(sInputs,                                                                        NL,
+               ifString(recordCustom, EA.Recorder, recordModeDescr[recordMode]),                                        ";",
                ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
                ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
                ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
@@ -336,7 +346,7 @@ int start() {
    if (error && error!=last_error) catch("start(9)", error);
 
    // record PL
-   if (EA.Recorder) {
+   if (recordMode != RECORDING_OFF) {
       if (!start_Recorder()) return(_last_error(CheckErrors("start(10)")));
    }
 
@@ -380,7 +390,7 @@ int deinit() {
       if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
-   // close open history sets of the PL recorder
+   // close history sets of the PL recorder
    int size = ArraySize(recorder.hSet);
    for (int i=0; i < size; i++) {
       if (recorder.hSet[i] > 0) {
@@ -605,7 +615,7 @@ string init_MarketInfo() {
  */
 bool init_Recorder() {
    if (!recorder.initialized) {
-      if (EA.Recorder && !IsOptimization()) {
+      if (recordMode && !IsOptimization()) {
          int i=0, symbolDigits, hstFormat;
          bool enabled;
          string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
@@ -626,11 +636,13 @@ bool init_Recorder() {
          }
       }
       else {
-         EA.Recorder = false;
+         EA.Recorder    = "off";
+         recordMode     = RECORDING_OFF;
+         recordInternal = false;
+         recordCustom   = false;
       }
+      recorder.initialized = true;
    }
-
-   recorder.initialized = true;
    return(true);
 }
 
@@ -831,9 +843,8 @@ bool init_Test() {
       else {
          Test.ExternalReporting = false;
       }
+      test.initialized = true;
    }
-
-   test.initialized = true;
    return(true);
 }
 
@@ -921,7 +932,7 @@ bool start_Recorder() {
 
    string symbols_Name(int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int isRecording, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 
