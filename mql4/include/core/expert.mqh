@@ -838,7 +838,7 @@ bool init_RecorderValidateInput() {
    }
    sValue = StrTrim(sValue);
 
-   if (sValue == "off") {
+   if (sValue == "off" || IsOptimization()) {
       recordMode     = RECORDING_OFF;
       recordInternal = false;
       recordCustom   = false;
