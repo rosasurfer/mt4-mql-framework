@@ -136,7 +136,7 @@ extern bool     TakeProfitBug                  = true;                       // 
 
 // general
 int      tradingMode;
-int      sequence.id;
+int      sequence.id;                           // instance id between 1000-9999
 string   sequence.name = "";                    // "R.1234" | "V.5678" | "VC.1234" | "VM.5678"
 
 // real order log

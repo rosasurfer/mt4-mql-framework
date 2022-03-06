@@ -29,7 +29,7 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
- *  - parameter ZigZag.Timeframe
+ *  - input parameter ZigZag.Timeframe
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
@@ -127,7 +127,7 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define METRIC_DAILY_PL_PIP         3
 
 // sequence data
-int      sequence.id;
+int      sequence.id;                           // instance id between 1000-9999
 datetime sequence.created;
 bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";

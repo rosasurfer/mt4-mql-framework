@@ -71,7 +71,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #define STRATEGY_ID  103                           // unique strategy id between 101-1023 (10 bit)
 
 // --- sequence data -----------------------
-int      sequence.id;
+int      sequence.id;                              // instance id between 1000-9999
 int      sequence.cycle;                           // counter of restarted sequences if AutoRestart is not "Off"
 string   sequence.name = "";                       // "L.1234" | "S.5678"
 datetime sequence.created;
