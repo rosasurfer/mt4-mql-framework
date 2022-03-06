@@ -11,6 +11,7 @@ extern bool     Test.ExternalReporting = false;                   // whether to 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinInts.mqh>
 
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
@@ -821,6 +822,70 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
    else if (hstFormat!=400 && hstFormat!=401) return(!catch(caller +"->init_RecorderHstFormat(2)  invalid parameter hstFormat: "+ hstFormat, ERR_INVALID_PARAMETER));
 
    return(hstFormat);
+}
+
+
+/**
+ * Validate input parameter "EA.Recorder".
+ *
+ * @return bool - success status
+ */
+bool init_RecorderValidateInput() {
+   string sValues[], sValue = StrToLower(EA.Recorder);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+
+   if (sValue == "off") {
+      recordMode     = RECORDING_OFF;
+      recordInternal = false;
+      recordCustom   = false;
+      EA.Recorder    = recordModeDescr[recordMode];
+   }
+   else if (sValue == "on" ) {
+      recordMode     = RECORDING_INTERNAL;
+      recordInternal = true;
+      recordCustom   = false;
+      EA.Recorder    = recordModeDescr[recordMode];
+   }
+   else {
+      int ids[]; ArrayResize(ids, 0);
+      size = Explode(sValue, ",", sValues, NULL);
+
+      for (int i=0; i < size; i++) {
+         sValue = StrTrim(sValues[i]);
+         if (sValue == "") continue;
+
+         if (!StrIsDigit(sValue))     return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be digits)",   ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+         int iValue = StrToInteger(sValue);
+         if (!iValue)                 return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be positive)", ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue)) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate ids)",        ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+         ArrayPushInt(ids, iValue);
+
+         if (ArraySize(recorder.symbol) < iValue) {
+            ArrayResize(recorder.enabled,      iValue);
+            ArrayResize(recorder.symbol,       iValue);
+            ArrayResize(recorder.symbolDescr,  iValue);
+            ArrayResize(recorder.symbolGroup,  iValue);
+            ArrayResize(recorder.symbolDigits, iValue);
+            ArrayResize(recorder.hstDirectory, iValue);
+            ArrayResize(recorder.hstFormat,    iValue);
+            ArrayResize(recorder.hSet,         iValue);
+            ArrayResize(recorder.startValue,   iValue);
+            ArrayResize(recorder.currValue,    iValue);
+         }
+         recorder.enabled[iValue-1] = true;
+      }
+      if (!ArraySize(ids))            return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing ids)", ERR_INVALID_PARAMETER, ifInt(ProgramInitReason()==IR_PARAMETERS, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(ProgramInitReason()==IR_PARAMETERS, NO_ERROR, ERR_INVALID_PARAMETER))));
+
+      recordMode     = RECORDING_CUSTOM;
+      recordInternal = false;
+      recordCustom   = true;
+      EA.Recorder    = JoinInts(ids, ",");
+   }
+   return(true);
 }
 
 

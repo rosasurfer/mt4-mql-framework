@@ -64,7 +64,6 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/JoinInts.mqh>
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
@@ -6155,15 +6154,15 @@ bool ValidateInputs() {
    // Sequence.ID
    if (isInitParameters) {
       if (sequence.status == STATUS_UNDEFINED) {
-         if (Sequence.ID != prev.Sequence.ID)                     return(!onInputError("ValidateInputs(1)  switching to another sequence is not supported. Unload the EA first."));
+         if (Sequence.ID != prev.Sequence.ID)                     return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported. Unload the EA first."));
       }
       else if (!StringLen(StrTrim(Sequence.ID))) {
          Sequence.ID = prev.Sequence.ID;                          // apply the existing internal id
       }
-      else if (StrTrim(Sequence.ID) != StrTrim(prev.Sequence.ID)) return(!onInputError("ValidateInputs(2)  switching to another sequence is not supported. Unload the EA first."));
+      else if (StrTrim(Sequence.ID) != StrTrim(prev.Sequence.ID)) return(!onInputError("ValidateInputs(2)  "+ sequence.name +" switching to another sequence is not supported. Unload the EA first."));
    }
    else if (!StringLen(Sequence.ID)) {                            // status must be STATUS_UNDEFINED (sequence.id = 0)
-      if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
+      if (sequence.id != 0)                                       return(_false(catch("ValidateInputs(3)  "+ sequence.name +" illegal Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (sequence.id="+ sequence.id +")", ERR_RUNTIME_ERROR)));
    }
    else {}                                                        // the id was validated in ValidateInputs.SID()
 
@@ -6171,9 +6170,9 @@ bool ValidateInputs() {
    string sValues[], sValue=StrToLower(StrTrim(GridDirection));
    if      (StrStartsWith("long",  sValue)) sValue = "Long";
    else if (StrStartsWith("short", sValue)) sValue = "Short";
-   else                                                           return(!onInputError("ValidateInputs(4)  invalid GridDirection "+ DoubleQuoteStr(GridDirection)));
+   else                                                           return(!onInputError("ValidateInputs(4)  "+ sequence.name +" invalid GridDirection "+ DoubleQuoteStr(GridDirection)));
    if (isInitParameters && !StrCompareI(sValue, prev.GridDirection)) {
-      if (ArraySize(sequence.start.event) > 0)                    return(!onInputError("ValidateInputs(5)  cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence"));
+      if (ArraySize(sequence.start.event) > 0)                    return(!onInputError("ValidateInputs(5)  "+ sequence.name +" cannot change GridDirection of "+ StatusDescription(sequence.status) +" sequence"));
    }
    sequence.direction = StrToTradeDirection(sValue);
    GridDirection      = sValue; SS.GridDirection();
@@ -6182,14 +6181,14 @@ bool ValidateInputs() {
    // GridSize
    if (isInitParameters) {
       if (GridSize != prev.GridSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(6)  cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence"));
+         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(6)  "+ sequence.name +" cannot change GridSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (GridSize < 1)                                              return(!onInputError("ValidateInputs(7)  invalid GridSize: "+ GridSize));
+   if (GridSize < 1)                                              return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid GridSize: "+ GridSize));
 
    // UnitSize
    if (isInitParameters) {
       if (UnitSize != prev.UnitSize)
-         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(8)  cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence"));
+         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(8)  "+ sequence.name +" cannot change UnitSize of "+ StatusDescription(sequence.status) +" sequence"));
    }
    sValue = StrToLower(UnitSize);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -6204,7 +6203,7 @@ bool ValidateInputs() {
       bool fixedSize = true;
       if      (StrStartsWithI(sValue, "Leverage")) { sValue = StrTrim(StrSubstr(sValue, 8)); fixedSize = false; }
       else if (StrStartsWithI(sValue, "L"       )) { sValue = StrTrim(StrSubstr(sValue, 1)); fixedSize = false; }
-      if (!StrIsNumeric(sValue))                                  return(!onInputError("ValidateInputs(9)  invalid UnitSize: "+ DoubleQuoteStr(UnitSize)));
+      if (!StrIsNumeric(sValue))                                  return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(UnitSize)));
       double dValue = StrToDouble(sValue);
       if (fixedSize) {
          double minLot  = MarketInfo(Symbol(), MODE_MINLOT );
@@ -6212,13 +6211,13 @@ bool ValidateInputs() {
          double lotStep = MarketInfo(Symbol(), MODE_LOTSTEP);
          int    error   = GetLastError();
          if (IsError(error))                                      return(!onInputError("ValidateInputs(10)"));
-         if (LE(dValue, 0))                                       return(!onInputError("ValidateInputs(11)  invalid UnitSize: "+ DoubleQuoteStr(sValue)));
-         if (LT(dValue, minLot))                                  return(!onInputError("ValidateInputs(12)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MinLot="+  NumberToStr(minLot, ".+" ) +")"));
-         if (GT(dValue, maxLot))                                  return(!onInputError("ValidateInputs(13)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")"));
-         if (MathModFix(dValue, lotStep) != 0)                    return(!onInputError("ValidateInputs(14)  invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (LotStep="+ NumberToStr(lotStep, ".+") +")"));
+         if (LE(dValue, 0))                                       return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(sValue)));
+         if (LT(dValue, minLot))                                  return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MinLot="+  NumberToStr(minLot, ".+" ) +")"));
+         if (GT(dValue, maxLot))                                  return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (MaxLot="+  NumberToStr(maxLot, ".+" ) +")"));
+         if (MathModFix(dValue, lotStep) != 0)                    return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(sValue) +" (LotStep="+ NumberToStr(lotStep, ".+") +")"));
       }
       else {
-         if (LE(dValue, 0))                                       return(!onInputError("ValidateInputs(15)  invalid UnitSize: "+ DoubleQuoteStr(sValue)));
+         if (LE(dValue, 0))                                       return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid UnitSize: "+ DoubleQuoteStr(sValue)));
       }
       UnitSize = ifString(fixedSize, "", "L") + sValue;
    }
@@ -6244,43 +6243,43 @@ bool ValidateInputs() {
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
          if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(16)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(17)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(18)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(17)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(18)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(19)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(19)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
 
          if (key == "@trend") {
-            if (start.trend.condition)                            return(!onInputError("ValidateInputs(20)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)"));
-            if (start.price.condition)                            return(!onInputError("ValidateInputs(21)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)"));
-            if (start.time.condition)                             return(!onInputError("ValidateInputs(22)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)"));
+            if (start.trend.condition)                            return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple trend conditions)"));
+            if (start.price.condition)                            return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and price conditions)"));
+            if (start.time.condition)                             return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend and time conditions)"));
             size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(!onInputError("ValidateInputs(23)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            if (size < 2 || size > 3)                             return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             sValue = StrTrim(sValues[0]);
             int idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(!onInputError("ValidateInputs(24)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")"));
+            if (idx == -1)                                        return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")"));
             start.trend.indicator = StrToLower(sValue);
             start.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (start.trend.timeframe == -1)                      return(!onInputError("ValidateInputs(25)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)"));
+            if (start.trend.timeframe == -1)                      return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator timeframe)"));
             if (size == 2) {
                start.trend.params = "";
             }
             else {
                start.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(start.trend.params))                return(!onInputError("ValidateInputs(26)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)"));
+               if (!StringLen(start.trend.params))                return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (trend indicator parameters)"));
             }
             start.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(start.trend.timeframe) + ifString(size==2, "", ":") + start.trend.params +")";
             start.trend.condition   = true;
          }
 
          else if (key=="@bid" || key=="@ask" || key=="@price") {
-            if (start.price.condition)                            return(!onInputError("ValidateInputs(27)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)"));
+            if (start.price.condition)                            return(!onInputError("ValidateInputs(27)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple price conditions)"));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(28)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(28)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(29)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(29)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             start.price.value     = NormalizeDouble(dValue, Digits);
             start.price.lastValue = NULL;
             if      (key == "@bid") start.price.type = PRICE_BID;
@@ -6293,14 +6292,14 @@ bool ValidateInputs() {
          }
 
          else if (key == "@time") {
-            if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
+            if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(31)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             start.time.value       = DateTime2(pt);
             start.time.description = "time("+ TimeToStr(start.time.value) +")";
             start.time.condition   = true;
          }
-         else                                                     return(!onInputError("ValidateInputs(32)  invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+         else                                                     return(!onInputError("ValidateInputs(32)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
 
          start.conditions = true;                                 // on success enable start.conditions
       }
@@ -6325,43 +6324,43 @@ bool ValidateInputs() {
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
          if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(33)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(33)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(34)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(35)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(34)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(35)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(36)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(36)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
 
          if (key == "@trend") {
-            if (stop.trend.condition)                             return(!onInputError("ValidateInputs(37)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)"));
+            if (stop.trend.condition)                             return(!onInputError("ValidateInputs(37)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple trend conditions)"));
             size = Explode(sValue, ":", sValues, NULL);
-            if (size < 2 || size > 3)                             return(!onInputError("ValidateInputs(38)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (size < 2 || size > 3)                             return(!onInputError("ValidateInputs(38)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
 
 
             sValue = StrTrim(sValues[0]);
             idx = SearchStringArrayI(trendIndicators, sValue);
-            if (idx == -1)                                        return(!onInputError("ValidateInputs(39)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")"));
+            if (idx == -1)                                        return(!onInputError("ValidateInputs(39)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (unsupported trend indicator "+ DoubleQuoteStr(sValue) +")"));
             stop.trend.indicator = StrToLower(sValue);
             stop.trend.timeframe = StrToPeriod(sValues[1], F_ERR_INVALID_PARAMETER);
-            if (stop.trend.timeframe == -1)                       return(!onInputError("ValidateInputs(40)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)"));
+            if (stop.trend.timeframe == -1)                       return(!onInputError("ValidateInputs(40)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator timeframe)"));
             if (size == 2) {
                stop.trend.params = "";
             }
             else {
                stop.trend.params = StrTrim(sValues[2]);
-               if (!StringLen(stop.trend.params))                 return(!onInputError("ValidateInputs(41)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)"));
+               if (!StringLen(stop.trend.params))                 return(!onInputError("ValidateInputs(41)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (trend indicator parameters)"));
             }
             stop.trend.description = "trend("+ trendIndicators[idx] +":"+ TimeframeDescription(stop.trend.timeframe) + ifString(size==2, "", ":") + stop.trend.params +")";
             stop.trend.condition   = true;
          }
 
          else if (key=="@bid" || key=="@ask" || key=="@price") {
-            if (stop.price.condition)                             return(!onInputError("ValidateInputs(42)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
+            if (stop.price.condition)                             return(!onInputError("ValidateInputs(42)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple price conditions)"));
             sValue = StrReplace(sValue, "'", "");
-            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(43)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(43)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             dValue = StrToDouble(sValue);
-            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(44)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
+            if (dValue <= 0)                                      return(!onInputError("ValidateInputs(44)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (illegal price)"));
             stop.price.value     = NormalizeDouble(dValue, Digits);
             stop.price.lastValue = NULL;
             if      (key == "@bid") stop.price.type = PRICE_BID;
@@ -6374,19 +6373,19 @@ bool ValidateInputs() {
          }
 
          else if (key == "@time") {
-            if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(46)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(46)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             stop.time.value       = DateTime2(pt);
             stop.time.description = "time("+ TimeToStr(stop.time.value) +")";
             stop.time.condition   = true;
          }
 
          else if (key == "@profit") {
-            if (stop.profitAbs.condition || stop.profitPct.condition) return(!onInputError("ValidateInputs(47)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
+            if (stop.profitAbs.condition || stop.profitPct.condition) return(!onInputError("ValidateInputs(47)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple profit conditions)"));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                      return(!onInputError("ValidateInputs(48)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (sizeOfElems > 2)                                      return(!onInputError("ValidateInputs(48)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                                return(!onInputError("ValidateInputs(49)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                                return(!onInputError("ValidateInputs(49)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.profitAbs.value       = NormalizeDouble(dValue, 2);
@@ -6402,11 +6401,11 @@ bool ValidateInputs() {
          }
 
          else if (key == "@loss") {
-            if (stop.lossAbs.condition || stop.lossPct.condition) return(!onInputError("ValidateInputs(50)  invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
+            if (stop.lossAbs.condition || stop.lossPct.condition) return(!onInputError("ValidateInputs(50)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple loss conditions)"));
             sizeOfElems = Explode(sValue, "%", sValues, NULL);
-            if (sizeOfElems > 2)                                  return(!onInputError("ValidateInputs(51)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (sizeOfElems > 2)                                  return(!onInputError("ValidateInputs(51)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             sValue = StrTrim(sValues[0]);
-            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(52)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (!StrIsNumeric(sValue))                            return(!onInputError("ValidateInputs(52)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             dValue = StrToDouble(sValue);
             if (sizeOfElems == 1) {
                stop.lossAbs.value       = NormalizeDouble(dValue, 2);
@@ -6420,7 +6419,7 @@ bool ValidateInputs() {
                stop.lossPct.condition   = true;
             }
          }
-         else                                                     return(!onInputError("ValidateInputs(53)  invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+         else                                                     return(!onInputError("ValidateInputs(53)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
       }
    }
 
@@ -6435,26 +6434,29 @@ bool ValidateInputs() {
    else if (StrStartsWith("off",      sValue)) sValue = "off";
    else if (StrStartsWith("continue", sValue)) sValue = "continue";
    else if (StrStartsWith("reset",    sValue)) sValue = "reset";
-   else                                                           return(!onInputError("ValidateInputs(54)  invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart)));
+   else                                                           return(!onInputError("ValidateInputs(54)  "+ sequence.name +" invalid AutoRestart option "+ DoubleQuoteStr(AutoRestart)));
    AutoRestart = StrCapitalize(sValue);
 
    // StartLevel
    if (isInitParameters) {
       if (StartLevel != prev.StartLevel)
-         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(55)  cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence"));
+         if (ArraySize(sequence.start.event) > 0)                 return(!onInputError("ValidateInputs(55)  "+ sequence.name +" cannot change StartLevel of "+ StatusDescription(sequence.status) +" sequence"));
    }
    if (sequence.direction == D_LONG) {
-      if (StartLevel < 0)                                         return(!onInputError("ValidateInputs(56)  invalid StartLevel: "+ StartLevel));
+      if (StartLevel < 0)                                         return(!onInputError("ValidateInputs(56)  "+ sequence.name +" invalid StartLevel: "+ StartLevel));
    }
    StartLevel = Abs(StartLevel);
 
-   // ShowProfitInPercent: nothing to validate
-
+   // ShowProfitInPercent (nothing to do)
    // Sessionbreak.StartTime/EndTime
    if (Sessionbreak.StartTime!=prev.Sessionbreak.StartTime || Sessionbreak.EndTime!=prev.Sessionbreak.EndTime) {
       sessionbreak.starttime = NULL;
       sessionbreak.endtime   = NULL;                              // real times are updated automatically on next use
    }
+
+   // EA.Recorder
+   if (!init_RecorderValidateInput()) return(false);
+
    return(!catch("ValidateInputs(57)"));
 }
 

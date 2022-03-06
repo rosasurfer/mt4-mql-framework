@@ -3067,6 +3067,9 @@ bool ValidateInputs() {
       sessionbreak.active    = false;
    }
 
+   // EA.Recorder
+   if (!init_RecorderValidateInput()) return(false);
+
    return(!catch("ValidateInputs(17)"));
 }
 

@@ -4,9 +4,9 @@
  *
  * TODO:
  *  - EA.Recorder
- *     add validation, backup and restore to all EAs
+ *     handle IsOptimization()
  *     both modes "internal" and "custom" are available in tester and live
- *     pass EA.Recorder to the Expander as a string
+ *     update EC
  *     add input to SaveStatus()/ReadStatus()
  *
  *  - PL recording of system variants
@@ -63,6 +63,7 @@
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
+ *  - pass EA.Recorder to the Expander as a string
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -1474,24 +1475,24 @@ bool ValidateInputs() {
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
          if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
 
          if (key == "@time") {
-            if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
+            if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
             start.time.value       = DateTime2(pt, DATE_OF_ERA);
             start.time.isDaily     = !pt[PT_HAS_DATE];
             start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
          }
-         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         else                                                     return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
       }
    }
 
@@ -1505,23 +1506,23 @@ bool ValidateInputs() {
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
          if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
          if (key == "@time") {
-            if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             stop.time.value       = DateTime2(pt, DATE_OF_ERA);
             stop.time.isDaily     = !pt[PT_HAS_DATE];
             stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
          }
-         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         else                                                     return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
       }
    }
 
@@ -1535,10 +1536,10 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("off",     sValue)) type = NULL;
    else if (StrStartsWith("money",   sValue)) type = TP_TYPE_MONEY;
-   else if (StringLen(sValue) < 2)                                return(!onInputError("ValidateInputs(14)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StringLen(sValue) < 2)                                return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent", sValue)) type = TP_TYPE_PERCENT;
    else if (StrStartsWith("pip",     sValue)) type = TP_TYPE_PIP;
-   else                                                           return(!onInputError("ValidateInputs(15)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else                                                           return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
@@ -1569,45 +1570,9 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[type];
 
    // EA.Recorder
-   recordInternal = false;
-   recordCustom   = false;
-   sValue = StrToLower(EA.Recorder);
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      size = Explode(sValues[0], "|", sValues, NULL);
-      sValue = sValues[size-1];
-   }
-   sValue = StrTrim(sValue);
-   if      (sValue == "off") { recordMode = RECORDING_OFF;                             }
-   else if (sValue == "on" ) { recordMode = RECORDING_INTERNAL; recordInternal = true; }
-   else {
-      int ids[]; ArrayResize(ids, 0);
-      size = Explode(sValue, ",", sValues, NULL);
-      for (i=0; i < size; i++) {
-         sValue = StrTrim(sValues[i]);
-         if (!StrIsDigit(sValue))                                 return(!onInputError("ValidateInputs(16)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (ids must be digits)"));
-         iValue = StrToInteger(sValue);
-         if (!iValue)                                             return(!onInputError("ValidateInputs(17)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (ids must be positive)"));
-         if (IntInArray(ids, iValue))                             return(!onInputError("ValidateInputs(18)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate ids)"));
-         if (ArraySize(recorder.symbol) < iValue) {
-            ArrayResize(recorder.enabled,      iValue);
-            ArrayResize(recorder.symbol,       iValue);
-            ArrayResize(recorder.symbolDescr,  iValue);
-            ArrayResize(recorder.symbolGroup,  iValue);
-            ArrayResize(recorder.symbolDigits, iValue);
-            ArrayResize(recorder.hstDirectory, iValue);
-            ArrayResize(recorder.hstFormat,    iValue);
-            ArrayResize(recorder.hSet,         iValue);
-            ArrayResize(recorder.startValue,   iValue);
-            ArrayResize(recorder.currValue,    iValue);
-         }
-         ArrayPushInt(ids, iValue);
-         recorder.enabled[iValue-1] = true;
-      }
-      recordMode   = RECORDING_CUSTOM;
-      recordCustom = true;
-   }
+   if (!init_RecorderValidateInput()) return(false);
 
-   return(!catch("ValidateInputs(19)"));
+   return(!catch("ValidateInputs(16)"));
 }
 
 
