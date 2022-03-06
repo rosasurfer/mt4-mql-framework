@@ -4,13 +4,11 @@
  *
  * TODO:
  *  - recording of PL variants
- *     total PL in money                                       OK
  *     daily PL in money
  *     total/daily PL in pips
  *     Sequence-IDs of all symbols and variants must be unique
  *
  *  - system variants:
- *     ZigZag                                                  OK
  *     Reverse ZigZag
  *     full session (24h) with trade breaks
  *     partial session (e.g. 09:00-16:00) with trade breaks
