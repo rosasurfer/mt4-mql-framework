@@ -4,6 +4,7 @@
  *
  * TODO:
  *  - EA.Recorder
+ *     add validation, backup and restore to all EAs
  *     both modes "internal" and "custom" are available in tester and live
  *     pass EA.Recorder to the Expander as a string
  *     add input to SaveStatus()/ReadStatus()
@@ -1621,8 +1622,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));            // non-terminating
-   return(catch(message, error));                  // terminating
+      return(logError(message, error));            // non-terminating error
+   return(catch(message, error));                  // terminating error
 }
 
 
