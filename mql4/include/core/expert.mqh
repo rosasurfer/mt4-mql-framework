@@ -29,16 +29,16 @@ bool   recordInternal;
 bool   recordCustom;
 
 bool   recorder.initialized = false;
-bool   recorder.enabled     [1];             // whether a metric is enabled
-string recorder.symbol      [1] = {""};
-string recorder.symbolDescr [1] = {""};
-string recorder.symbolGroup [1] = {""};
-int    recorder.symbolDigits[1];
-double recorder.startValue  [1];
-double recorder.currValue   [1];
-string recorder.hstDirectory[1] = {""};
-int    recorder.hstFormat   [1];
-int    recorder.hSet        [1];
+bool   recorder.enabled     [];              // whether a metric is enabled
+string recorder.symbol      [];
+string recorder.symbolDescr [];
+string recorder.symbolGroup [];
+int    recorder.symbolDigits[];
+double recorder.startValue  [];
+double recorder.currValue   [];
+string recorder.hstDirectory[];
+int    recorder.hstFormat   [];
+int    recorder.hSet        [];
 
 // test management
 bool   test.initialized = false;

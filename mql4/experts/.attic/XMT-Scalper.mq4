@@ -3071,9 +3071,10 @@ bool ValidateInputs() {
    }
 
    // EA.Recorder
-   if (!init_RecorderValidateInput()) return(false);
+   if (!init_RecorderValidateInput())                        return(false);
+   if (recordCustom && ArraySize(recorder.symbol) > 0)       return(!onInputError("ValidateInputs(17)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ ArraySize(recorder.symbol) +")"));
 
-   return(!catch("ValidateInputs(17)"));
+   return(!catch("ValidateInputs(18)"));
 }
 
 
