@@ -4,8 +4,6 @@
  *
  * TODO:
  *  - EA.Recorder
- *     both modes "internal" and "custom" are available in tester and live
- *     update EC
  *     add input to SaveStatus()/ReadStatus()
  *
  *  - PL recording of system variants
