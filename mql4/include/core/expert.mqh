@@ -636,10 +636,8 @@ bool init_Recorder() {
          }
       }
       else {
-         EA.Recorder    = "off";
-         recordMode     = RECORDING_OFF;
-         recordInternal = false;
-         recordCustom   = false;
+         recordMode = RECORDING_OFF;         // disable recording in case init_RecorderValidateInput() was not called
+         ec_SetRecordMode(__ExecutionContext, recordMode);
       }
       recorder.initialized = true;
    }
@@ -885,6 +883,8 @@ bool init_RecorderValidateInput() {
       recordCustom   = true;
       EA.Recorder    = JoinInts(ids, ",");
    }
+   ec_SetRecordMode(__ExecutionContext, recordMode);
+
    return(true);
 }
 
@@ -989,6 +989,7 @@ bool start_Recorder() {
 #import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
+   int    ec_SetRecordMode         (int ec[], int mode    );
 
    string symbols_Name(int symbols[], int i);
 
