@@ -2561,11 +2561,11 @@ bool SaveStatus() {
    WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime);
 
    WriteIniString(file, section, "ChannelBug",                ChannelBug);
-   WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug + separator);    // conditional section separator
+   WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug);
 
    WriteIniString(file, section, "Metrics.RecordPerformance", Metrics.RecordPerformance);
    WriteIniString(file, section, "Metrics.ServerDirectory",   Metrics.ServerDirectory);
-   WriteIniString(file, section, "EA.Recorder",               EA.Recorder);
+   WriteIniString(file, section, "EA.Recorder",               EA.Recorder + separator);      // conditional section separator
 
    section = "Runtime status";
    // On deletion of pending orders the number of stored order records decreases. To prevent orphaned status file

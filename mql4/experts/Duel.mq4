@@ -3595,7 +3595,7 @@ bool SaveStatus() {
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);            // conditional section separator
 
    // [Inputs]
    section = "Inputs";
@@ -3611,8 +3611,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
    WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
-   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)") + separator);
-   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder);
+   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)"));
+   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                        // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";            // On deletion of pending orders the number of stored order records decreases. To prevent
