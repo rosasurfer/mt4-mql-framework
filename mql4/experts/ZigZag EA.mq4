@@ -901,20 +901,20 @@ bool SaveStatus() {
    section = "General";
    WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
 
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",                 /*string*/ Sequence.ID);
    WriteIniString(file, section, "ZigZag.Periods",              /*int   */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                        /*double*/ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "StartConditions",             /*string*/ SaveStatus.ConditionsToStr(sStartConditions));   // contains only active conditions
-   WriteIniString(file, section, "StopConditions",              /*string*/ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
+   WriteIniString(file, section, "StartConditions",             /*string*/ SaveStatus.ConditionsToStr(sStartConditions));  // contains only active conditions
+   WriteIniString(file, section, "StopConditions",              /*string*/ SaveStatus.ConditionsToStr(sStopConditions));   // contains only active conditions
    WriteIniString(file, section, "TakeProfit",                  /*double*/ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
    WriteIniString(file, section, "Slippage",                    /*int   */ Slippage);
-   WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent + separator);
-   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder);
+   WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent);
+   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder + separator);                       // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
