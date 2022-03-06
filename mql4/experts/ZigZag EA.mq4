@@ -3,9 +3,6 @@
  *
  *
  * TODO:
- *  - EA.Recorder
- *     add input to SaveStatus()/ReadStatus()
- *
  *  - PL recording of system variants
  *     total PL in money
  *     daily PL in money
@@ -887,10 +884,11 @@ string SignalToStr(int signal) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                       return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                        return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // in tester skip most status file writes, except at creation, sequence stop and test end
+   // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -917,6 +915,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
    WriteIniString(file, section, "Slippage",                    /*int   */ Slippage);
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent + separator);
+   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder);
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -1078,6 +1077,7 @@ bool ReadStatus() {
    string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
    int    iSlippage            = GetIniInt    (file, section, "Slippage"               );             // int    Slippage            = 2
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");             // bool   ShowProfitInPercent = 1
+   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");             // string EA.Recorder         = 1,2,4
 
    if (!StrIsNumeric(sLots))                 return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit))           return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -1091,6 +1091,7 @@ bool ReadStatus() {
    TakeProfit.Type     = sTakeProfitType;
    Slippage            = iSlippage;
    ShowProfitInPercent = StrToBool(sShowProfitInPercent);
+   EA.Recorder         = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";
