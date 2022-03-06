@@ -2,7 +2,7 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | {int},..."; // on=internal, off, {int}=custom
+extern string   EA.Recorder            = "on | off* | {int},..."; // on=internal, off, {int}=custom metrics
 
 extern datetime Test.StartTime         = 0;                       // time to start a test
 extern double   Test.StartPrice        = 0;                       // price to start a test

@@ -5,12 +5,6 @@
  * TODO:
  *  - EA.Recorder
  *     both modes "internal" and "custom" are available in tester and live
- *
- *     validate input
- *       off:       recorder off
- *       on:        recorder on with one internal default metric (total PL in money)
- *       {int},...: recorder on with the specified custom metrics starting with 1, e.g. "1,3,4"
- *
  *     pass EA.Recorder to the Expander as a string
  *     add input to SaveStatus()/ReadStatus()
  *
@@ -1274,6 +1268,8 @@ double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
 bool     prev.ShowProfitInPercent;
+string   prev.EA.Recorder = "";
+
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
@@ -1302,6 +1298,10 @@ bool     prev.stop.profitPip.condition;
 double   prev.stop.profitPip.value;
 string   prev.stop.profitPip.description = "";
 
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
@@ -1318,6 +1318,7 @@ void BackupInputs() {
    prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.Slippage            = Slippage;
    prev.ShowProfitInPercent = ShowProfitInPercent;
+   prev.EA.Recorder         = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
@@ -1345,6 +1346,10 @@ void BackupInputs() {
    prev.stop.profitPip.condition   = stop.profitPip.condition;
    prev.stop.profitPip.value       = stop.profitPip.value;
    prev.stop.profitPip.description = stop.profitPip.description;
+
+   prev.recordMode                 = recordMode;
+   prev.recordInternal             = recordInternal;
+   prev.recordCustom               = recordCustom;
 }
 
 
@@ -1362,6 +1367,7 @@ void RestoreInputs() {
    TakeProfit.Type     = prev.TakeProfit.Type;
    Slippage            = prev.Slippage;
    ShowProfitInPercent = prev.ShowProfitInPercent;
+   EA.Recorder         = prev.EA.Recorder;
 
    // restore runtime variables
    sequence.id                = prev.sequence.id;
@@ -1389,6 +1395,10 @@ void RestoreInputs() {
    stop.profitPip.condition   = prev.stop.profitPip.condition;
    stop.profitPip.value       = prev.stop.profitPip.value;
    stop.profitPip.description = prev.stop.profitPip.description;
+
+   recordMode                 = prev.recordMode;
+   recordInternal             = prev.recordInternal;
+   recordCustom               = prev.recordCustom;
 }
 
 
@@ -1557,7 +1567,46 @@ bool ValidateInputs() {
    }
    TakeProfit.Type = tpTypeDescriptions[type];
 
-   return(!catch("ValidateInputs(16)"));
+   // EA.Recorder
+   recordInternal = false;
+   recordCustom   = false;
+   sValue = StrToLower(EA.Recorder);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+   if      (sValue == "off") { recordMode = RECORDING_OFF;                             }
+   else if (sValue == "on" ) { recordMode = RECORDING_INTERNAL; recordInternal = true; }
+   else {
+      int ids[]; ArrayResize(ids, 0);
+      size = Explode(sValue, ",", sValues, NULL);
+      for (i=0; i < size; i++) {
+         sValue = StrTrim(sValues[i]);
+         if (!StrIsDigit(sValue))                                 return(!onInputError("ValidateInputs(16)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (ids must be digits)"));
+         iValue = StrToInteger(sValue);
+         if (!iValue)                                             return(!onInputError("ValidateInputs(17)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (ids must be positive)"));
+         if (IntInArray(ids, iValue))                             return(!onInputError("ValidateInputs(18)  invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (duplicate ids)"));
+         if (ArraySize(recorder.symbol) < iValue) {
+            ArrayResize(recorder.enabled,      iValue);
+            ArrayResize(recorder.symbol,       iValue);
+            ArrayResize(recorder.symbolDescr,  iValue);
+            ArrayResize(recorder.symbolGroup,  iValue);
+            ArrayResize(recorder.symbolDigits, iValue);
+            ArrayResize(recorder.hstDirectory, iValue);
+            ArrayResize(recorder.hstFormat,    iValue);
+            ArrayResize(recorder.hSet,         iValue);
+            ArrayResize(recorder.startValue,   iValue);
+            ArrayResize(recorder.currValue,    iValue);
+         }
+         ArrayPushInt(ids, iValue);
+         recorder.enabled[iValue-1] = true;
+      }
+      recordMode   = RECORDING_CUSTOM;
+      recordCustom = true;
+   }
+
+   return(!catch("ValidateInputs(19)"));
 }
 
 
