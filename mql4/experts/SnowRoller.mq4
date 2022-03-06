@@ -400,6 +400,7 @@ string   prev.AutoRestart = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
+string   prev.EA.Recorder = "";
 
 // backed-up status variables
 int      prev.sequence.id;
@@ -454,13 +455,17 @@ string   prev.stop.lossPct.description = "";
 datetime prev.sessionbreak.starttime;
 datetime prev.sessionbreak.endtime;
 
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backed-up input parameters are also accessed from ValidateInputs()
+   // backup input parameters, also accessed for comparison in ValidateInputs()
    prev.Sequence.ID            = StringConcatenate(Sequence.ID,   "");     // string inputs are references to internal C literals
    prev.GridDirection          = StringConcatenate(GridDirection, "");     // and must be copied to break the reference
    prev.GridSize               = GridSize;
@@ -472,8 +477,9 @@ void BackupInputs() {
    prev.ShowProfitInPercent    = ShowProfitInPercent;
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+   prev.EA.Recorder            = StringConcatenate(EA.Recorder, "");
 
-   // backup status variables which may change by modifying input parameters
+   // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
    prev.sequence.cycle             = sequence.cycle;
    prev.sequence.name              = sequence.name;
@@ -525,6 +531,10 @@ void BackupInputs() {
 
    prev.sessionbreak.starttime     = sessionbreak.starttime;
    prev.sessionbreak.endtime       = sessionbreak.endtime;
+
+   prev.recordMode                 = recordMode;
+   prev.recordInternal             = recordInternal;
+   prev.recordCustom               = recordCustom;
 }
 
 
@@ -544,8 +554,9 @@ void RestoreInputs() {
    ShowProfitInPercent    = prev.ShowProfitInPercent;
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
+   EA.Recorder            = prev.EA.Recorder;
 
-   // restore status variables
+   // restore runtime variables
    sequence.id                = prev.sequence.id;
    sequence.cycle             = prev.sequence.cycle;
    sequence.name              = prev.sequence.name;
@@ -597,6 +608,10 @@ void RestoreInputs() {
 
    sessionbreak.starttime     = prev.sessionbreak.starttime;
    sessionbreak.endtime       = prev.sessionbreak.endtime;
+
+   recordMode                 = prev.recordMode;
+   recordInternal             = prev.recordInternal;
+   recordCustom               = prev.recordCustom;
 }
 
 
@@ -6455,8 +6470,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                           // a non-terminating error
-   return(catch(message, error));
+      return(logError(message, error));                           // non-terminating error
+   return(catch(message, error));                                 // terminating error
 }
 
 

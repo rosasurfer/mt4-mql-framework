@@ -2798,6 +2798,7 @@ void SS.UnitSize(double size = NULL) {
 }
 
 
+// backed-up input parameters
 string   prev.Sequence.ID = "";
 string   prev.TradingMode = "";
 
@@ -2830,11 +2831,17 @@ double   prev.StopOnTotalLoss;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
 
-bool     prev.Metrics.RecordPerformance;
-string   prev.Metrics.ServerDirectory = "";
-
 bool     prev.ChannelBug;
 bool     prev.TakeProfitBug;
+
+bool     prev.Metrics.RecordPerformance;
+string   prev.Metrics.ServerDirectory = "";
+string   prev.EA.Recorder = "";
+
+// backed-up runtime variables affected by changing input parameters
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
 
 
 /**
@@ -2842,7 +2849,7 @@ bool     prev.TakeProfitBug;
  * restored in init(). Called from onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backed-up values are also accessed in ValidateInputs()
+   // backup input parameters, also accessed for comparison in ValidateInputs()
    prev.Sequence.ID               = StringConcatenate(Sequence.ID, "");    // string inputs are references to internal C literals
    prev.TradingMode               = StringConcatenate(TradingMode, "");    // and must be copied to break the reference
 
@@ -2875,11 +2882,17 @@ void BackupInputs() {
    prev.Sessionbreak.StartTime    = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime      = Sessionbreak.EndTime;
 
-   prev.Metrics.RecordPerformance = Metrics.RecordPerformance;
-   prev.Metrics.ServerDirectory   = StringConcatenate(Metrics.ServerDirectory, "");
-
    prev.ChannelBug                = ChannelBug;
    prev.TakeProfitBug             = TakeProfitBug;
+
+   prev.Metrics.RecordPerformance = Metrics.RecordPerformance;
+   prev.Metrics.ServerDirectory   = StringConcatenate(Metrics.ServerDirectory, "");
+   prev.EA.Recorder               = StringConcatenate(EA.Recorder, "");
+
+   // backup runtime variables affected by changing input parameters
+   prev.recordMode     = recordMode;
+   prev.recordInternal = recordInternal;
+   prev.recordCustom   = recordCustom;
 }
 
 
@@ -2887,6 +2900,7 @@ void BackupInputs() {
  * Restore backed-up input parameters. Called from onInitParameters() and onInitTimeframeChange().
  */
 void RestoreInputs() {
+   // restore input parameters
    Sequence.ID               = prev.Sequence.ID;
    TradingMode               = prev.TradingMode;
 
@@ -2919,11 +2933,17 @@ void RestoreInputs() {
    Sessionbreak.StartTime    = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime      = prev.Sessionbreak.EndTime;
 
-   Metrics.RecordPerformance = prev.Metrics.RecordPerformance;
-   Metrics.ServerDirectory   = prev.Metrics.ServerDirectory;
-
    ChannelBug                = prev.ChannelBug;
    TakeProfitBug             = prev.TakeProfitBug;
+
+   Metrics.RecordPerformance = prev.Metrics.RecordPerformance;
+   Metrics.ServerDirectory   = prev.Metrics.ServerDirectory;
+   EA.Recorder               = prev.EA.Recorder;
+
+   // restore runtime variables
+   recordMode     = prev.recordMode;
+   recordInternal = prev.recordInternal;
+   recordCustom   = prev.recordCustom;
 }
 
 
@@ -3062,8 +3082,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                      // non-terminating
-   return(catch(message, error));
+      return(logError(message, error));                      // non-terminating error
+   return(catch(message, error));                            // terminating error
 }
 
 

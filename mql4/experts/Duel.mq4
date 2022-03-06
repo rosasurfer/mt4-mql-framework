@@ -2643,11 +2643,11 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
-string   prev.Sequence.ID     = "";
-string   prev.GridDirection   = "";
-string   prev.GridVolatility  = "";
+string   prev.Sequence.ID = "";
+string   prev.GridDirection = "";
+string   prev.GridVolatility = "";
 string   prev.VolatilityRange = "";
-string   prev.GridSize        = "";
+string   prev.GridSize = "";
 double   prev.UnitSize;
 int      prev.MaxUnits;
 double   prev.Pyramid.Multiplier;
@@ -2656,6 +2656,7 @@ string   prev.StopConditions = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
+string   prev.EA.Recorder = "";
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
@@ -2697,13 +2698,17 @@ string   prev.stop.lossPct.description = "";
 datetime prev.sessionbreak.starttime;
 datetime prev.sessionbreak.endtime;
 
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, also used for comparison in ValidateInputs()
+   // backup input parameters, also accessed for comparison in ValidateInputs()
    prev.Sequence.ID            = StringConcatenate(Sequence.ID, "");       // string inputs are references to internal C literals...
    prev.GridDirection          = StringConcatenate(GridDirection, "");     // ...and must be copied to break the reference
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");
@@ -2717,6 +2722,7 @@ void BackupInputs() {
    prev.ShowProfitInPercent    = ShowProfitInPercent;
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+   prev.EA.Recorder            = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
@@ -2757,6 +2763,10 @@ void BackupInputs() {
 
    prev.sessionbreak.starttime     = sessionbreak.starttime;
    prev.sessionbreak.endtime       = sessionbreak.endtime;
+
+   prev.recordMode                 = recordMode;
+   prev.recordInternal             = recordInternal;
+   prev.recordCustom               = recordCustom;
 }
 
 
@@ -2778,8 +2788,9 @@ void RestoreInputs() {
    ShowProfitInPercent    = prev.ShowProfitInPercent;
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
+   EA.Recorder            = prev.EA.Recorder;
 
-   // restore global vars
+   // restore runtime variables
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
    sequence.isTest            = prev.sequence.isTest;
@@ -2818,6 +2829,10 @@ void RestoreInputs() {
 
    sessionbreak.starttime     = prev.sessionbreak.starttime;
    sessionbreak.endtime       = prev.sessionbreak.endtime;
+
+   recordMode                 = prev.recordMode;
+   recordInternal             = prev.recordInternal;
+   recordCustom               = prev.recordCustom;
 }
 
 
@@ -3054,8 +3069,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                           // that's a non-terminating error
-   return(catch(message, error));
+      return(logError(message, error));                           // non-terminating error
+   return(catch(message, error));                                 // terminating error
 }
 
 
