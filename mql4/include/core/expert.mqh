@@ -642,9 +642,6 @@ bool init_Recorder() {
       recorder.initialized = true;
    }
    return(true);
-
-   // suppress compiler warnings
-   init_RecorderValidateInput();
 }
 
 
@@ -829,9 +826,11 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
 /**
  * Validate input parameter "EA.Recorder".
  *
+ * @param  _Out_ int metrics - number of metrics to be recorded
+ *
  * @return bool - success status
  */
-bool init_RecorderValidateInput() {
+bool init_RecorderValidateInput(int &metrics) {
    bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);
 
    string sValues[], sValue = StrToLower(EA.Recorder);
@@ -845,12 +844,14 @@ bool init_RecorderValidateInput() {
       recordMode     = RECORDING_OFF;
       recordInternal = false;
       recordCustom   = false;
+      metrics        = 0;
       EA.Recorder    = recordModeDescr[recordMode];
    }
    else if (sValue == "on" ) {
       recordMode     = RECORDING_INTERNAL;
       recordInternal = true;
       recordCustom   = false;
+      metrics        = 1;
       EA.Recorder    = recordModeDescr[recordMode];
    }
    else {
@@ -885,6 +886,7 @@ bool init_RecorderValidateInput() {
       recordMode     = RECORDING_CUSTOM;
       recordInternal = false;
       recordCustom   = true;
+      metrics        = ArraySize(recorder.symbol);
       EA.Recorder    = JoinInts(ids, ",");
    }
    ec_SetRecordMode(__ExecutionContext, recordMode);

@@ -1564,8 +1564,9 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[type];
 
    // EA.Recorder
-   if (!init_RecorderValidateInput())                    return(false);
-   if (recordCustom && ArraySize(recorder.symbol) > 1)   return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ ArraySize(recorder.symbol) +")"));
+   int metrics;
+   if (!init_RecorderValidateInput(metrics))             return(false);
+   if (recordCustom && metrics > 1)                      return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
 
    return(!catch("ValidateInputs(17)"));
 }
