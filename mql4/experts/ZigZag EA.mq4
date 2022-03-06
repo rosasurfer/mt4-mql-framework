@@ -4,7 +4,6 @@
  *
  * TODO:
  *  - EA.Recorder
- *     handle IsOptimization()
  *     both modes "internal" and "custom" are available in tester and live
  *     update EC
  *     add input to SaveStatus()/ReadStatus()
