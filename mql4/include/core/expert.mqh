@@ -642,6 +642,9 @@ bool init_Recorder() {
       recorder.initialized = true;
    }
    return(true);
+
+   // suppress compiler warnings
+   init_RecorderValidateInput();
 }
 
 
