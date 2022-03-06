@@ -22,15 +22,13 @@ int     __tickTimerId;                       // timer id for virtual ticks
 #define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
 #define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
 
-string recordModeDescr[]  = {"off", "internal", "custom"};
-
-int    recordMode = RECORDING_OFF;
+int    recordMode;
+string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal;
 bool   recordCustom;
 
 bool   recorder.initialized = false;
 bool   recorder.enabled     [1];             // whether a metric is enabled
-bool   recorder.internal    [1];             // whether a metric is defined by this file or by the user/EA
 string recorder.symbol      [1] = {""};
 string recorder.symbolDescr [1] = {""};
 string recorder.symbolGroup [1] = {""};
@@ -620,19 +618,20 @@ bool init_Recorder() {
          bool enabled;
          string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
 
-         // fetch symbol definitions from the EA and process external symbols
-         while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
-            init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
-            i++;
+         if (recordCustom) {
+            // fetch symbol definitions from the EA to record custom metrics
+            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) return(false);
+               i++;
+            }
+            if (IsLastError()) return(false);
          }
-         if (IsLastError()) return(false);
-
-         // the recorder is enabled: if no definitions received create a new equity symbol using default values
-         if (!i) {
+         else {
+            // create a single new equity symbol using default values
             symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
             symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
-            if (!init_RecorderAddSymbol(i, true, symbol, symbolDescr, "", symbolDigits, "", NULL, true)) return(false);
+            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, "", NULL)) return(false);
          }
       }
       else {
@@ -658,13 +657,11 @@ bool init_Recorder() {
  * @param  int    symbolDigits - digits of the timeseries to record
  * @param  string hstDirectory - history directory of the timeseries to record (if empty recorder defaults are used)
  * @param  int    hstFormat    - history format of the timeseries to recorded (if empty recorder defaults are used)
- * @param  bool   internal     - whether the definition was provided by this file or by the containing EA
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat, bool internal) {
-   enabled  = enabled !=0;
-   internal = internal!=0;
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat) {
+   enabled = enabled !=0;
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
    symbolGroup  = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup);  if (!StringLen(symbolGroup))  return(false);
@@ -687,7 +684,6 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    int size = ArraySize(recorder.symbol);
    if (i >= size) {
       size = i + 1;
-      ArrayResize(recorder.internal,     size);
       ArrayResize(recorder.enabled,      size);
       ArrayResize(recorder.symbol,       size);
       ArrayResize(recorder.symbolDescr,  size);
@@ -701,7 +697,6 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    }
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
-   recorder.internal    [i] = internal;
    recorder.enabled     [i] = enabled;
    recorder.symbol      [i] = symbol;
    recorder.symbolDescr [i] = symbolDescr;
@@ -891,8 +886,8 @@ bool start_Recorder() {
             if (!recorder.hSet[i]) return(false);
          }
       }
-      if (recorder.internal[i]) currentValue = AccountEquity() - AccountCredit();
-      else                      currentValue = recorder.startValue[i] + recorder.currValue[i];
+      if (recordInternal) currentValue = AccountEquity() - AccountCredit();
+      else                currentValue = recorder.startValue[i] + recorder.currValue[i];
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
