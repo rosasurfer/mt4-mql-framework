@@ -4,11 +4,14 @@
  *
  * TODO:
  *  - EA.Recorder
- *     convert input to (string) "on | off* | {int},..."
- *      off:       recorder off
- *      on:        recorder on with one internal default metric (total PL in money)
- *      {int},...: recorder on with the specified custom metrics starting with 1, e.g. "1,3,4"
- *      both active recorder modes are available in tester and live
+ *     both modes "internal" and "custom" are available in tester and live
+ *
+ *     validate input
+ *       off:       recorder off
+ *       on:        recorder on with one internal default metric (total PL in money)
+ *       {int},...: recorder on with the specified custom metrics starting with 1, e.g. "1,3,4"
+ *
+ *     pass EA.Recorder to the Expander as a string
  *     add input to SaveStatus()/ReadStatus()
  *
  *  - PL recording of system variants
@@ -227,7 +230,7 @@ int onTick() {
          }
       }
 
-      if (EA.Recorder) {                                             // update PL recorder values
+      if (recordCustom) {                                            // update PL recorder values
          if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
             recorder.startValue[METRIC_TOTAL_PL_MONEY] = sequence.startEquity;
             recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;

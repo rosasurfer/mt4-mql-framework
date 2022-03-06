@@ -70,7 +70,7 @@
 #define EC.threadId                        175
 #define EC.hChart                          176
 #define EC.hChartWindow                    177
-#define EC.recording                       178
+#define EC.recordMode                      178
 #define EC.test                            179
 #define EC.testing                         180
 #define EC.visualMode                      181

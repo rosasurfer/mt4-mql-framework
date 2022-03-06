@@ -1818,7 +1818,7 @@ int CreateSequenceId() {
 
 
 /**
- * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.Recorder is TRUE.
+ * Return a unique symbol for the sequence. Called from core/expert/init_Recorder() if recordCustom is TRUE.
  *
  * @return string - unique symbol or an empty string in case of errors
  */
