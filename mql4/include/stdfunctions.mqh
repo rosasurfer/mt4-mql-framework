@@ -6220,7 +6220,7 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
- * Whether the current program is executed by another one.
+ * Whether the current program is an indicator loaded by iCustom().
  *
  * @return bool
  */
