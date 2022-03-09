@@ -37,8 +37,8 @@
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
  *
- *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - indicator log messages of iCustom() calls are not appended to the caller's log file
+ *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - display overall number of trades
