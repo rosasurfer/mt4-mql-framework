@@ -3,6 +3,8 @@
  *
  *
  * TODO:
+ *  - indicator log messages of iCustom() calls are not appended to the caller's log file
+ *
  *  - recording of PL variants
  *     daily PL in money
  *     total/daily PL in pips
@@ -37,7 +39,6 @@
  *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
  *
- *  - indicator log messages of iCustom() calls are not appended to the caller's log file
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy

@@ -199,23 +199,30 @@ bool IsLogFatal() {
 int log(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
-      if (IsExpert() && !IsTesting()) {
-         configLevel = LOG_ALL;                                                                    // in online EAs: all
-      }
-      else {
-         string key="", value="";
-         if (This.IsTesting()) {
-            key = "Tester";
-            value = GetConfigString("Log", key, "off");                                            // tester default: off
+      bool isSuperContext = IsSuperContext();
+      int pid = __ExecutionContext[EC.pid];
+
+      if (isSuperContext) configLevel = ep_SuperLoglevel(pid);             // an indicator loaded by iCustom()
+      if (!configLevel) {
+         if (IsExpert() && !IsTesting()) {
+            configLevel = LOG_ALL;                                         // online EAs: all
          }
          else {
-            key = ProgramName();
-            if (!IsConfigKey("Log", key)) key = "Online";
-            value = GetConfigString("Log", key, "all");                                            // online default: all
+            string key="", value="";
+            if (This.IsTesting()) {
+               key = "Tester";
+               value = GetConfigString("Log", key, "off");                 // tester, default: off
+            }
+            else {
+               key = ifString(isSuperContext, ep_SuperProgramName(pid), ProgramName());
+               if (!IsConfigKey("Log", key)) key = "Online";
+               value = GetConfigString("Log", key, "all");                 // online others, default: all
+            }
+            configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
+            if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
          }
-         configLevel = StrToLogLevel(value, F_ERR_INVALID_PARAMETER);
-         if (!configLevel) configLevel = _int(LOG_OFF, catch("log(1)  invalid loglevel configuration [Log]->"+ key +" = "+ value, ERR_INVALID_CONFIG_VALUE));
       }
+
       ec_SetLoglevel(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF)
@@ -329,9 +336,13 @@ int logFatal(string message, int error) {
 int log2Alert(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelAlert]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Alert", "notice");                // default: notice
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Alert(2)  invalid loglevel configuration [Log]->Log2Alert = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelAlert(pid);               // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string sValue = GetConfigString("Log", "Log2Alert", "notice");             // default: notice
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Alert(1)  invalid loglevel configuration [Log]->Log2Alert = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       configLevel = Min(configLevel, LOG_FATAL);                                    // the alert appender cannot be fully switched off
       ec_SetLoglevelAlert(__ExecutionContext, configLevel);
    }
@@ -340,7 +351,7 @@ int log2Alert(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {                           // should never happen
-         Alert("log2Alert(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Alert(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
@@ -377,9 +388,13 @@ int log2Alert(string message, int error, int level) {
 int log2Debugger(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebugger]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Debugger", "all");                // default: off
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(2)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelDebugger(pid);            // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string sValue = GetConfigString("Log", "Log2Debugger", "all");             // default: off
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(1)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       ec_SetLoglevelDebugger(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
@@ -387,7 +402,7 @@ int log2Debugger(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {                           // should never happen
-         Alert("log2Debugger(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2Debugger(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
@@ -414,13 +429,17 @@ int log2Debugger(string message, int error, int level) {
 int log2File(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelFile]; if (!configLevel) {
-      if (IsExpert() && !IsTesting()) {
-         configLevel = LOG_ALL;                                                     // in online EAs: all
-      }
-      else {
-         string sValue = GetConfigString("Log", "Log2File", "off");                 // default: off
-         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(2)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
+      if (!configLevel) {
+         if (IsExpert() && !IsTesting()) {
+            configLevel = LOG_ALL;                                                  // in online EAs: all
+         }
+         else {
+            string sValue = GetConfigString("Log", "Log2File", "off");              // default: off
+            configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+            if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(1)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+         }
       }
       ec_SetLoglevelFile(__ExecutionContext, configLevel);
    }
@@ -429,7 +448,7 @@ int log2File(string message, int error, int level) {
    // apply the configured loglevel filter
    if (level >= configLevel) {
       static bool isRecursion = false; if (isRecursion) {                           // should never happen
-         Alert("log2File(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
+         Alert("log2File(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
@@ -456,9 +475,13 @@ int log2File(string message, int error, int level) {
 int log2Mail(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Mail", "off");                    // default: off
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelMail(pid);                // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string sValue = GetConfigString("Log", "Log2Mail", "off");                 // default: off
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Mail(1)  invalid loglevel configuration [Log]->Log2Mail = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       ec_SetLoglevelMail(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
@@ -507,9 +530,13 @@ int log2Mail(string message, int error, int level) {
 int log2SMS(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelSMS]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2SMS", "off");                     // default: off
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2SMS(1)  invalid loglevel configuration [Log]->Log2SMS = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelSMS(pid);                 // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string sValue = GetConfigString("Log", "Log2SMS", "off");                  // default: off
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2SMS(1)  invalid loglevel configuration [Log]->Log2SMS = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       ec_SetLoglevelSMS(__ExecutionContext, configLevel);
    }
    if (level == LOG_OFF) return(configLevel);
@@ -552,9 +579,13 @@ int log2SMS(string message, int error, int level) {
 int log2Terminal(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelTerminal]; if (!configLevel) {
-      string sValue = GetConfigString("Log", "Log2Terminal", "all");                // default: all
-      configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-      if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Terminal(2)  invalid loglevel configuration [Log]->Log2Terminal = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      int pid = __ExecutionContext[EC.pid];
+      if (IsSuperContext()) configLevel = ep_SuperLoglevelTerminal(pid);            // an indicator loaded by iCustom()
+      if (!configLevel) {
+         string sValue = GetConfigString("Log", "Log2Terminal", "all");             // default: all
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Terminal(2)  invalid loglevel configuration [Log]->Log2Terminal = "+ sValue, ERR_INVALID_CONFIG_VALUE));
+      }
       configLevel = Min(configLevel, LOG_FATAL);                                    // the terminal appender cannot be fully switched off
       ec_SetLoglevelTerminal(__ExecutionContext, configLevel);
    }
@@ -637,14 +668,25 @@ bool SetLogfile(string filename) {
 
 
 #import "rsfMT4Expander.dll"
-   string ec_LogFilename        (int ec[]);
-   int    ec_SetLoglevel        (int ec[], int level);
-   int    ec_SetLoglevelAlert   (int ec[], int level);
-   int    ec_SetLoglevelDebugger(int ec[], int level);
-   int    ec_SetLoglevelFile    (int ec[], int level);
-   int    ec_SetLoglevelMail    (int ec[], int level);
-   int    ec_SetLoglevelSMS     (int ec[], int level);
-   int    ec_SetLoglevelTerminal(int ec[], int level);
-   bool   AppendLogMessageA     (int ec[], datetime time, string message, int error, int level);
-   bool   SetLogfileA           (int ec[], string file);
+   string ec_LogFilename          (int ec[]);
+
+   int    ep_SuperLoglevel        (int pid);
+   int    ep_SuperLoglevelAlert   (int pid);
+   int    ep_SuperLoglevelDebugger(int pid);
+   int    ep_SuperLoglevelFile    (int pid);
+   int    ep_SuperLoglevelMail    (int pid);
+   int    ep_SuperLoglevelSMS     (int pid);
+   int    ep_SuperLoglevelTerminal(int pid);
+   string ep_SuperProgramName     (int pid);
+
+   int    ec_SetLoglevel          (int ec[], int level);
+   int    ec_SetLoglevelAlert     (int ec[], int level);
+   int    ec_SetLoglevelDebugger  (int ec[], int level);
+   int    ec_SetLoglevelFile      (int ec[], int level);
+   int    ec_SetLoglevelMail      (int ec[], int level);
+   int    ec_SetLoglevelSMS       (int ec[], int level);
+   int    ec_SetLoglevelTerminal  (int ec[], int level);
+
+   bool   AppendLogMessageA(int ec[], datetime time, string message, int error, int level);
+   bool   SetLogfileA      (int ec[], string file);
 #import

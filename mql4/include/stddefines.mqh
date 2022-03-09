@@ -9,8 +9,8 @@
                                                                   //  @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
-int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // aktueller ExecutionContext
-//int    __lpSuperContext;                                        // Zeiger auf einen SuperContext, kann nur in Indikatoren und deren Libraries gesetzt sein
+int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_CONTEXT
+//int    __lpSuperContext;                                        // address of the super EXECUTION_CONTEXT (in indicators loaded by iCustom() and their libraries only)
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
