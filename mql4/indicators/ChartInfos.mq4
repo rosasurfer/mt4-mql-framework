@@ -4348,16 +4348,24 @@ bool SetOrderEventLogged(string event, bool status) {
  * @return double - ADR in absolute terms or NULL in case of errors
  */
 double iADR() {
-   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
-   if (!adr) {
+   static double adr;                                    // TODO: invalidate static cache on BarOpen(D1)
+
+   if (!adr) {                                           // TODO: convert to current timeframe for non-FXT brokers
       double ranges[];
       int maPeriods = 20;
       ArrayResize(ranges, maPeriods);
       ArraySetAsSeries(ranges, true);
       for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
+         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);
       }
-      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+      double ma = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+
+      int error = GetLastError();
+      if (error != NO_ERROR) {
+         if (error == ERS_HISTORY_UPDATE) return(ma);    // don't store result in cache to resolve it another time
+         return(!catch("iADR(1)", error));
+      }
+      adr = ma;
    }
    return(adr);
 }

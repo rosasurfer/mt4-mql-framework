@@ -112,7 +112,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #define HI_PROFIT            22
 
 // sequence data
-int      sequence.id;                              //
+int      sequence.id;                              // instance id between 1000-9999
 datetime sequence.created;                         //
 bool     sequence.isTest;                          // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";                       // "[LS].{sequence-id}"
@@ -1818,7 +1818,7 @@ int CreateSequenceId() {
 
 
 /**
- * Return a unique symbol for the sequence. Called from core/expert/InitPerformanceTracking() if EA.Recorder is TRUE.
+ * Return a unique symbol for the sequence. Called from core/expert/init_Recorder() if recordCustom is TRUE.
  *
  * @return string - unique symbol or an empty string in case of errors
  */
@@ -2519,7 +2519,7 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".Duel."+ sequence.id +".set";
       filename = directory + baseName;
    }
@@ -2643,11 +2643,11 @@ bool IsTestSequence() {
 
 
 // backed-up input parameters
-string   prev.Sequence.ID     = "";
-string   prev.GridDirection   = "";
-string   prev.GridVolatility  = "";
+string   prev.Sequence.ID = "";
+string   prev.GridDirection = "";
+string   prev.GridVolatility = "";
 string   prev.VolatilityRange = "";
-string   prev.GridSize        = "";
+string   prev.GridSize = "";
 double   prev.UnitSize;
 int      prev.MaxUnits;
 double   prev.Pyramid.Multiplier;
@@ -2656,6 +2656,7 @@ string   prev.StopConditions = "";
 bool     prev.ShowProfitInPercent;
 datetime prev.Sessionbreak.StartTime;
 datetime prev.Sessionbreak.EndTime;
+string   prev.EA.Recorder = "";
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
@@ -2697,13 +2698,17 @@ string   prev.stop.lossPct.description = "";
 datetime prev.sessionbreak.starttime;
 datetime prev.sessionbreak.endtime;
 
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
  * restored in init(). Called in onDeinitParameters() and onDeinitChartChange().
  */
 void BackupInputs() {
-   // backup input parameters, also used for comparison in ValidateInputs()
+   // backup input parameters, also accessed for comparison in ValidateInputs()
    prev.Sequence.ID            = StringConcatenate(Sequence.ID, "");       // string inputs are references to internal C literals...
    prev.GridDirection          = StringConcatenate(GridDirection, "");     // ...and must be copied to break the reference
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");
@@ -2717,6 +2722,7 @@ void BackupInputs() {
    prev.ShowProfitInPercent    = ShowProfitInPercent;
    prev.Sessionbreak.StartTime = Sessionbreak.StartTime;
    prev.Sessionbreak.EndTime   = Sessionbreak.EndTime;
+   prev.EA.Recorder            = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
@@ -2757,6 +2763,10 @@ void BackupInputs() {
 
    prev.sessionbreak.starttime     = sessionbreak.starttime;
    prev.sessionbreak.endtime       = sessionbreak.endtime;
+
+   prev.recordMode                 = recordMode;
+   prev.recordInternal             = recordInternal;
+   prev.recordCustom               = recordCustom;
 }
 
 
@@ -2778,8 +2788,9 @@ void RestoreInputs() {
    ShowProfitInPercent    = prev.ShowProfitInPercent;
    Sessionbreak.StartTime = prev.Sessionbreak.StartTime;
    Sessionbreak.EndTime   = prev.Sessionbreak.EndTime;
+   EA.Recorder            = prev.EA.Recorder;
 
-   // restore global vars
+   // restore runtime variables
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
    sequence.isTest            = prev.sequence.isTest;
@@ -2818,6 +2829,10 @@ void RestoreInputs() {
 
    sessionbreak.starttime     = prev.sessionbreak.starttime;
    sessionbreak.endtime       = prev.sessionbreak.endtime;
+
+   recordMode                 = prev.recordMode;
+   recordInternal             = prev.recordInternal;
+   recordCustom               = prev.recordCustom;
 }
 
 
@@ -3039,7 +3054,12 @@ bool ValidateInputs() {
       sessionbreak.endtime   = NULL;
    }
 
-   return(!catch("ValidateInputs(33)"));
+   // EA.Recorder
+   int metrics;
+   if (!init_RecorderValidateInput(metrics))                             return(false);
+   if (recordCustom && metrics > 0)                                      return(!onInputError("ValidateInputs(33)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+
+   return(!catch("ValidateInputs(34)"));
 }
 
 
@@ -3054,8 +3074,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));                           // that's a non-terminating error
-   return(catch(message, error));
+      return(logError(message, error));                           // non-terminating error
+   return(catch(message, error));                                 // terminating error
 }
 
 
@@ -3558,10 +3578,11 @@ double iADR() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (IsLastError())                            return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                        return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // in tester skip most status file writes, except at creation, sequence stop and test end
+   // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -3573,9 +3594,9 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);            // conditional section separator
 
    // [Inputs]
    section = "Inputs";
@@ -3590,9 +3611,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
    WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
-
    WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
-   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)") + separator);
+   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)"));
+   WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                        // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";            // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -3879,7 +3900,7 @@ bool ReadStatus() {
    section = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
-   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
@@ -3898,6 +3919,7 @@ bool ReadStatus() {
    string sShowProfitInPercent   = GetIniStringA(file, section, "ShowProfitInPercent",    "");        // bool     ShowProfitInPercent    = 1
    int    iSessionbreakStartTime = GetIniInt    (file, section, "Sessionbreak.StartTime"    );        // datetime Sessionbreak.StartTime = 86160 (23:56:30)
    int    iSessionbreakEndTime   = GetIniInt    (file, section, "Sessionbreak.EndTime"      );        // datetime Sessionbreak.EndTime   = 3730 (00:02:10)
+   string sEaRecorder            = GetIniStringA(file, section, "EA.Recorder",            "");        // string   EA.Recorder            = 1,2,4
 
    if (!StrIsNumeric(sGridSize))             return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter GridSize "+ DoubleQuoteStr(sGridSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sUnitSize))             return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter UnitSize "+ DoubleQuoteStr(sUnitSize) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -3917,6 +3939,7 @@ bool ReadStatus() {
    ShowProfitInPercent    = StrToBool(sShowProfitInPercent);
    Sessionbreak.StartTime = iSessionbreakStartTime;
    Sessionbreak.EndTime   = iSessionbreakEndTime;
+   EA.Recorder            = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";

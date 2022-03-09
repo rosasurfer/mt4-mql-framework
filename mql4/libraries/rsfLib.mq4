@@ -627,7 +627,7 @@ int GetIniSections(string fileName, string &names[]) {
  *
  * @return string - directory name or an empty string in case of errors
  */
-string GetAccountServerName() {
+string GetAccountServer() {
    // Der Servername wird zwischengespeichert und der Cache bei ValidBars = 0 invalidiert. Bei Accountwechsel zeigen die MQL-
    // Accountfunktionen evt. schon auf den neuen Account, das Programm verarbeitet aber noch einen Tick des alten Charts im
    // alten Serververzeichnis. Erst nach ValidBars = 0 ist sichergestellt, daﬂ das neue Serververzeichnis aktiv ist.
@@ -646,13 +646,13 @@ string GetAccountServerName() {
 
       if (!StringLen(serverName)) {
          // create temporary file
-         tmpFilename = "~GetAccountServerName~"+ GetCurrentThreadId() +".tmp";
+         tmpFilename = "~GetAccountServer~"+ GetCurrentThreadId() +".tmp";
          int hFile = FileOpenHistory(tmpFilename, FILE_WRITE|FILE_BIN);
 
          if (hFile < 0) {                             // if the server directory doesn't yet exist or write access was denied
             int error = GetLastError();
-            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServerName(1)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
-            else                               catch("GetAccountServerName(2)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", error);
+            if (error == ERR_CANNOT_OPEN_FILE) logNotice("GetAccountServer(1)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", _int(error, SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+            else                               catch("GetAccountServer(2)->FileOpenHistory(\""+ tmpFilename +"\", FILE_WRITE)", error);
             return(EMPTY_STR);
          }
          FileClose(hFile);
@@ -676,14 +676,14 @@ string GetAccountServerName() {
             }
             next = FindNextFileA(hFindDir, wfd);
          }
-         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServerName(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
+         if (hFindDir == INVALID_HANDLE_VALUE) return(_EMPTY_STR(catch("GetAccountServer(4) directory "+ DoubleQuoteStr(pattern) +" not found", ERR_FILE_NOT_FOUND)));
 
          FindClose(hFindDir);
          ArrayResize(wfd, 0);
       }
 
-      if (IsError(catch("GetAccountServerName(5)"))) return( EMPTY_STR);
-      if (!StringLen(serverName))                    return(_EMPTY_STR(catch("GetAccountServerName(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
+      if (IsError(catch("GetAccountServer(5)"))) return( EMPTY_STR);
+      if (!StringLen(serverName))                return(_EMPTY_STR(catch("GetAccountServer(6)  cannot find server directory containing "+ DoubleQuoteStr(tmpFilename), ERR_RUNTIME_ERROR)));
 
       static.serverName[0] = serverName;
    }
@@ -4321,7 +4321,7 @@ string GetServerTimezone() {
 
    if (tick != lastTick) {
       if (StringLen(lastResult[IDX_TIMEZONE]) && !unchangedBars) {
-         string server = GetAccountServerName(); if (!StringLen(server)) return("");
+         string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
          }
@@ -4329,8 +4329,8 @@ string GetServerTimezone() {
    }
 
    if (!StringLen(lastResult[IDX_TIMEZONE])) {
-      lastResult[IDX_SERVER ] = GetAccountServerName(); if (!StringLen(lastResult[IDX_SERVER ])) return("");
-      lastResult[IDX_COMPANY] = GetAccountCompany();    if (!StringLen(lastResult[IDX_COMPANY])) return("");
+      lastResult[IDX_SERVER ] = GetAccountServer();    if (!StringLen(lastResult[IDX_SERVER ])) return("");
+      lastResult[IDX_COMPANY] = GetAccountCompanyId(); if (!StringLen(lastResult[IDX_COMPANY])) return("");
 
       // prefer a custom company mapping of a full server name
       string customMapping = GetGlobalConfigString("AccountCompanies", lastResult[IDX_SERVER]);    // global only to prevent recursion
@@ -5655,7 +5655,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (IsTesting()) {
-            if (type<=OP_SELL && __ExecutionContext[EC.eaExternalReporting]) {
+            if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
                Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
          }
@@ -6255,8 +6255,8 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          }
          if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
-         if (!IsTesting())                                         PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
-         else if (__ExecutionContext[EC.eaExternalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
+         if (!IsTesting())                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
       }
@@ -8092,7 +8092,7 @@ int CreateRawSymbol(string symbol, string description, string group, int digits,
    if (StringLen(group) > MAX_SYMBOL_GROUP_LENGTH) return(_EMPTY(catch("CreateRawSymbol(4)  invalid parameter group: "+ DoubleQuoteStr(group) +" (max "+ MAX_SYMBOL_GROUP_LENGTH +" chars)", ERR_INVALID_PARAMETER)));
    if (directory == "0") directory = "";           // (string) NULL
 
-   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating symbol \""+ directory + ifString(directory=="", "", "/") + symbol +"\"");
+   if (IsLogInfo()) logInfo("CreateRawSymbol(5)  creating \""+ directory + ifString(directory=="", "", "/") + symbol +"\" (group \""+ group +"\")");
 
    int   groupIndex;
    color groupColor = CLR_NONE;
