@@ -3,11 +3,12 @@
  *
  *
  * TODO:
- *  - PL recording of system variants
- *     total & daily PL in pip/money
+ *  - recording of PL variants
+ *     daily PL in money
+ *     total/daily PL in pips
+ *     Sequence-IDs of all symbols and variants must be unique
  *
- *  - variants:
- *     ZigZag                                                  OK
+ *  - system variants:
  *     Reverse ZigZag
  *     full session (24h) with trade breaks
  *     partial session (e.g. 09:00-16:00) with trade breaks
@@ -26,7 +27,7 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
- *  - parameter ZigZag.Timeframe
+ *  - input parameter ZigZag.Timeframe
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
@@ -37,6 +38,7 @@
  *  - stop condition "pip"
  *
  *  - two ZigZag reversals during the same bar are not recognized and ignored
+ *  - indicator log messages of iCustom() calls are not appended to the caller's log file
  *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - display overall number of trades
@@ -49,9 +51,12 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
+ *  - set flag in HistorySet.AddTick(hSet, time, value, flags=HST_BUFFER_TICKS) accordingly
  *
+ *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
+ *  - pass EA.Recorder to the Expander as a string
  *  - build script for all .ex4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -115,8 +120,13 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
+#define METRIC_TOTAL_PL_MONEY       0           // recorded PL metrics
+#define METRIC_TOTAL_PL_PIP         1
+#define METRIC_DAILY_PL_MONEY       2
+#define METRIC_DAILY_PL_PIP         3
+
 // sequence data
-int      sequence.id;
+int      sequence.id;                           // instance id between 1000-9999
 datetime sequence.created;
 bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
 string   sequence.name = "";
@@ -206,6 +216,13 @@ int onTick() {
          if (UpdateStatus()) {                                       // update order status and PL
             if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
             else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
+         }
+      }
+
+      if (recordCustom) {                                            // update PL recorder values
+         if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
+            recorder.startValue[METRIC_TOTAL_PL_MONEY] = sequence.startEquity;
+            recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;
          }
       }
    }
@@ -752,24 +769,37 @@ int CreateSequenceId() {
 
 
 /**
- * Return symbol definitions for metrics to be recorded by this EA instance.
+ * Return symbol definitions for metrics to be recorded by this instance.
  *
  * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
+ * @param  _Out_ bool   enabled      - whether the metric is active and recorded
  * @param  _Out_ string symbol       - unique timeseries symbol
- * @param  _Out_ string description  - timeseries description
- * @param  _Out_ string group        - timeseries group
- * @param  _Out_ int    digits       - timeseries digits
- * @param  _Out_ string hstDirectory - history directory of the timeseries to record
- * @param  _Out_ int    hstFormat    - history format of the timeseries to recorded
+ * @param  _Out_ string symbolDescr  - timeseries description
+ * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
+ * @param  _Out_ int    symbolDigits - timeseries digits
+ * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
+ * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
  *
- * @return bool - whether to record a timeseries for the specified index
+ * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, string &symbol, string &description, string &group, int &digits, string &hstDirectory, int &hstFormat) {
-   if (!sequence.id) return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   return(false);
+bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
+   if (IsLastError()) return(false);
+   if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   // old:
-   //return("ZigZag"+ sequence.id);
+   switch (i) {
+      case METRIC_TOTAL_PL_MONEY:
+         enabled      = true;
+         symbol       = "ZigZg_"+ sequence.id +"A";                     // 6 + 4 + 1 = 11 chars
+         symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
+         symbolGroup  = "";
+         symbolDigits = 2;
+         hstDirectory = "";
+         hstFormat    = NULL;
+         break;
+
+      default: return(false);
+   }
+   return(true);
 }
 
 
@@ -798,7 +828,7 @@ string GetStatusFilename(bool relative = false) {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal value of sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string filename = ""; if (!StringLen(filename)) {
-      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompany()) +"/";
+      string directory = "presets/"+ ifString(IsTestSequence(), "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".ZigZag."+ sequence.id +".set";
       filename = StrReplace(directory, "\\", "/") + baseName;
    }
@@ -852,10 +882,11 @@ string SignalToStr(int signal) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                       return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (last_error != NULL)                        return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
 
-   // in tester skip most status file writes, except at creation, sequence stop and test end
+   // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.optimizeStatus) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
@@ -867,21 +898,22 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompany() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
    WriteIniString(file, section, "Symbol",  Symbol());
-   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);
+   WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
 
    // [Inputs]
    section = "Inputs";
    WriteIniString(file, section, "Sequence.ID",                 /*string*/ Sequence.ID);
    WriteIniString(file, section, "ZigZag.Periods",              /*int   */ ZigZag.Periods);
    WriteIniString(file, section, "Lots",                        /*double*/ NumberToStr(Lots, ".+"));
-   WriteIniString(file, section, "StartConditions",             /*string*/ SaveStatus.ConditionsToStr(sStartConditions));   // contains only active conditions
-   WriteIniString(file, section, "StopConditions",              /*string*/ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
+   WriteIniString(file, section, "StartConditions",             /*string*/ SaveStatus.ConditionsToStr(sStartConditions));  // contains only active conditions
+   WriteIniString(file, section, "StopConditions",              /*string*/ SaveStatus.ConditionsToStr(sStopConditions));   // contains only active conditions
    WriteIniString(file, section, "TakeProfit",                  /*double*/ NumberToStr(TakeProfit, ".+"));
    WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
    WriteIniString(file, section, "Slippage",                    /*int   */ Slippage);
-   WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent + separator);
+   WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent);
+   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder + separator);                       // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -1028,7 +1060,7 @@ bool ReadStatus() {
    section = "General";
    string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
-   string sThisAccount = GetAccountCompany() +":"+ GetAccountNumber();
+   string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
    if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
    if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
@@ -1043,6 +1075,7 @@ bool ReadStatus() {
    string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
    int    iSlippage            = GetIniInt    (file, section, "Slippage"               );             // int    Slippage            = 2
    string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");             // bool   ShowProfitInPercent = 1
+   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");             // string EA.Recorder         = 1,2,4
 
    if (!StrIsNumeric(sLots))                 return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit))           return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
@@ -1056,6 +1089,7 @@ bool ReadStatus() {
    TakeProfit.Type     = sTakeProfitType;
    Slippage            = iSlippage;
    ShowProfitInPercent = StrToBool(sShowProfitInPercent);
+   EA.Recorder         = sEaRecorder;
 
    // [Runtime status]
    section = "Runtime status";
@@ -1232,6 +1266,8 @@ double   prev.TakeProfit;
 string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
 bool     prev.ShowProfitInPercent;
+string   prev.EA.Recorder = "";
+
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.sequence.id;
@@ -1260,6 +1296,10 @@ bool     prev.stop.profitPip.condition;
 double   prev.stop.profitPip.value;
 string   prev.stop.profitPip.description = "";
 
+int      prev.recordMode;
+bool     prev.recordInternal;
+bool     prev.recordCustom;
+
 
 /**
  * Programatically changed input parameters don't survive init cycles. Therefore inputs are backed-up in deinit() and can be
@@ -1276,6 +1316,7 @@ void BackupInputs() {
    prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
    prev.Slippage            = Slippage;
    prev.ShowProfitInPercent = ShowProfitInPercent;
+   prev.EA.Recorder         = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
    prev.sequence.id                = sequence.id;
@@ -1303,6 +1344,10 @@ void BackupInputs() {
    prev.stop.profitPip.condition   = stop.profitPip.condition;
    prev.stop.profitPip.value       = stop.profitPip.value;
    prev.stop.profitPip.description = stop.profitPip.description;
+
+   prev.recordMode                 = recordMode;
+   prev.recordInternal             = recordInternal;
+   prev.recordCustom               = recordCustom;
 }
 
 
@@ -1320,6 +1365,7 @@ void RestoreInputs() {
    TakeProfit.Type     = prev.TakeProfit.Type;
    Slippage            = prev.Slippage;
    ShowProfitInPercent = prev.ShowProfitInPercent;
+   EA.Recorder         = prev.EA.Recorder;
 
    // restore runtime variables
    sequence.id                = prev.sequence.id;
@@ -1347,6 +1393,10 @@ void RestoreInputs() {
    stop.profitPip.condition   = prev.stop.profitPip.condition;
    stop.profitPip.value       = prev.stop.profitPip.value;
    stop.profitPip.description = prev.stop.profitPip.description;
+
+   recordMode                 = prev.recordMode;
+   recordInternal             = prev.recordInternal;
+   recordCustom               = prev.recordCustom;
 }
 
 
@@ -1391,84 +1441,83 @@ bool ValidateInputs() {
    // Sequence.ID
    if (isInitParameters) {
       string sValues[], sValue=StrTrim(Sequence.ID);
-      if (sValue == "") {                                         // the id was deleted or not yet set, re-apply the internal id
+      if (sValue == "") {                                // the id was deleted or not yet set, re-apply the internal id
          Sequence.ID = prev.Sequence.ID;
       }
-      else if (sValue != prev.Sequence.ID)                        return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
-   } //else                                                       // the id was validated in ValidateInputs.SID()
+      else if (sValue != prev.Sequence.ID)               return(!onInputError("ValidateInputs(1)  "+ sequence.name +" switching to another sequence is not supported (unload the EA first)"));
+   } //else                                              // the id was validated in ValidateInputs.SID()
 
    // ZigZag.Periods
    if (isInitParameters && ZigZag.Periods!=prev.ZigZag.Periods) {
-      if (sequenceWasStarted)                                     return(!onInputError("ValidateInputs(2)  "+ sequence.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
+      if (sequenceWasStarted)                            return(!onInputError("ValidateInputs(2)  "+ sequence.name +" cannot change input parameter ZigZag.Periods of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (ZigZag.Periods < 2)                                        return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
+   if (ZigZag.Periods < 2)                               return(!onInputError("ValidateInputs(3)  "+ sequence.name +" invalid input parameter ZigZag.Periods: "+ ZigZag.Periods));
 
    // Lots
    if (isInitParameters && NE(Lots, prev.Lots)) {
-      if (sequenceWasStarted)                                     return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change input parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
+      if (sequenceWasStarted)                            return(!onInputError("ValidateInputs(4)  "+ sequence.name +" cannot change input parameter Lots of "+ StatusDescription(sequence.status) +" sequence"));
    }
-   if (LT(Lots, 0))                                               return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
-   if (NE(Lots, NormalizeLots(Lots)))                             return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
+   if (LT(Lots, 0))                                      return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (too small)"));
+   if (NE(Lots, NormalizeLots(Lots)))                    return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter Lots: "+ NumberToStr(Lots, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
 
    // StartConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
-      start.time.condition = false;                               // on initParameters conditions are re-enabled on change only
+      start.time.condition = false;                      // on initParameters conditions are re-enabled on change only
 
-      string exprs[], expr="", key="";                            // split conditions
+      string exprs[], expr="", key="";                   // split conditions
       int sizeOfExprs = Explode(StartConditions, "|", exprs, NULL), iValue, time, sizeOfElems;
 
-      for (int i=0; i < sizeOfExprs; i++) {                       // validate each expression
+      for (int i=0; i < sizeOfExprs; i++) {              // validate each expression
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
-         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (StringGetChar(expr, 0) == '!') continue;    // skip disabled conditions
+         if (StringGetChar(expr, 0) != '@')              return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)     return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StrEndsWith(sValues[1], ")"))              return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         if (!StringLen(sValue))                         return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
 
          if (key == "@time") {
-            if (start.time.condition)                             return(!onInputError("ValidateInputs(11)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
+            if (start.time.condition)                    return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
             start.time.value       = DateTime2(pt, DATE_OF_ERA);
             start.time.isDaily     = !pt[PT_HAS_DATE];
             start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
          }
-         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+         else                                            return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
       }
    }
 
    // StopConditions: @time(datetime|time)
    if (!isInitParameters || StartConditions!=prev.StartConditions) {
-      stop.time.condition = false;                                // on initParameters conditions are re-enabled on change only
+      stop.time.condition = false;                       // on initParameters conditions are re-enabled on change only
+      sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);
 
-      sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);    // split conditions
-
-      for (i=0; i < sizeOfExprs; i++) {                           // validate each expression
+      for (i=0; i < sizeOfExprs; i++) {                  // validate each expression
          expr = StrTrim(exprs[i]);
          if (!StringLen(expr))              continue;
-         if (StringGetChar(expr, 0) == '!') continue;             // skip disabled conditions
-         if (StringGetChar(expr, 0) != '@')                       return(!onInputError("ValidateInputs(7)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (StringGetChar(expr, 0) == '!') continue;    // skip disabled conditions
+         if (StringGetChar(expr, 0) != '@')              return(!onInputError("ValidateInputs(7)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
-         if (Explode(expr, "(", sValues, NULL) != 2)              return(!onInputError("ValidateInputs(8)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-         if (!StrEndsWith(sValues[1], ")"))                       return(!onInputError("ValidateInputs(9)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (Explode(expr, "(", sValues, NULL) != 2)     return(!onInputError("ValidateInputs(8)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StrEndsWith(sValues[1], ")"))              return(!onInputError("ValidateInputs(9)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
          key = StrTrim(sValues[0]);
          sValue = StrTrim(StrLeft(sValues[1], -1));
-         if (!StringLen(sValue))                                  return(!onInputError("ValidateInputs(10)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         if (!StringLen(sValue))                         return(!onInputError("ValidateInputs(10)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
 
          if (key == "@time") {
-            if (stop.time.condition)                              return(!onInputError("ValidateInputs(11)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(12)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (stop.time.condition)                     return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
+            if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             stop.time.value       = DateTime2(pt, DATE_OF_ERA);
             stop.time.isDaily     = !pt[PT_HAS_DATE];
             stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
          }
-         else                                                     return(!onInputError("ValidateInputs(13)  invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         else                                            return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
       }
    }
 
@@ -1482,10 +1531,10 @@ bool ValidateInputs() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("off",     sValue)) type = NULL;
    else if (StrStartsWith("money",   sValue)) type = TP_TYPE_MONEY;
-   else if (StringLen(sValue) < 2)                                return(!onInputError("ValidateInputs(14)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent", sValue)) type = TP_TYPE_PERCENT;
    else if (StrStartsWith("pip",     sValue)) type = TP_TYPE_PIP;
-   else                                                           return(!onInputError("ValidateInputs(15)  invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else                                                  return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
@@ -1515,7 +1564,12 @@ bool ValidateInputs() {
    }
    TakeProfit.Type = tpTypeDescriptions[type];
 
-   return(!catch("ValidateInputs(16)"));
+   // EA.Recorder
+   int metrics;
+   if (!init_RecorderValidateInput(metrics))             return(false);
+   if (recordCustom && metrics > 1)                      return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+
+   return(!catch("ValidateInputs(17)"));
 }
 
 
@@ -1530,8 +1584,8 @@ int onInputError(string message) {
    int error = ERR_INVALID_PARAMETER;
 
    if (ProgramInitReason() == IR_PARAMETERS)
-      return(logError(message, error));            // non-terminating
-   return(catch(message, error));                  // terminating
+      return(logError(message, error));            // non-terminating error
+   return(catch(message, error));                  // terminating error
 }
 
 

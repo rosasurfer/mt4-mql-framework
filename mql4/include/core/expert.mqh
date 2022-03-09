@@ -2,33 +2,43 @@
 //////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern bool     EA.Recorder          = false;      // whether to record PL graphs
-extern bool     EA.ExternalReporting = false;      // whether to send PositionOpen/Close events to the Expander
+extern string   EA.Recorder            = "on | off* | {int},..."; // on=internal, off, {int}=custom metrics
 
-extern datetime Test.StartTime       = 0;          // time to start a test
-extern double   Test.StartPrice      = 0;          // price to start a test
+extern datetime Test.StartTime         = 0;                       // time to start a test
+extern double   Test.StartPrice        = 0;                       // price to start a test
+extern bool     Test.ExternalReporting = false;                   // whether to send PositionOpen/Close events to the Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <functions/InitializeByteBuffer.mqh>
+#include <functions/JoinInts.mqh>
 
 #define __lpSuperContext NULL
-int     __CoreFunction = NULL;                     // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
-double  __rates[][6];                              // current price series
-int     __tickTimerId;                             // timer id for virtual ticks
+int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
+double  __rates[][6];                        // current price series
+int     __tickTimerId;                       // timer id for virtual ticks
 
-// PL recorder
-bool   recorder.initialized  = false;
-bool   recorder.internal    [1];                   // whether defined by this file or by calling Recorder_GetSymbolDefinition()
-string recorder.symbol      [1] = {""};            // all following values can be defined by the EA
-string recorder.symbolDescr [1] = {""};            // ...
-string recorder.symbolGroup [1] = {""};            // ...
-int    recorder.symbolDigits[1];                   // ...
-double recorder.startValue  [1];                   // ...
-double recorder.currValue   [1];                   // ...
-string recorder.hstDirectory[1] = {""};            // ...
-int    recorder.hstFormat   [1];                   // ...
-int    recorder.hSet        [1];                   // except the history set handle
+// PL recorder modes
+#define RECORDING_OFF         0              // recording off
+#define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
+#define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
+
+int    recordMode;
+string recordModeDescr[] = {"off", "internal", "custom"};
+bool   recordInternal;
+bool   recordCustom;
+
+bool   recorder.initialized = false;
+bool   recorder.enabled     [];              // whether a metric is enabled
+string recorder.symbol      [];
+string recorder.symbolDescr [];
+string recorder.symbolGroup [];
+int    recorder.symbolDigits[];
+double recorder.startValue  [];
+double recorder.currValue   [];
+string recorder.hstDirectory[];
+int    recorder.hstFormat   [];
+int    recorder.hSet        [];
 
 // test management
 bool   test.initialized = false;
@@ -71,10 +81,10 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())      // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
-   if (EA.ExternalReporting && initFlags & INIT_NO_EXTERNAL_REPORTING) {
-      EA.ExternalReporting = false;                            // the input must be reset before SyncMainContext_init()
+   if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
+      Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
    }
-   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, EA.ExternalReporting, EA.Recorder, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_EXPERT, WindowExpertName(), UninitializeReason(), initFlags, deinitFlags, Symbol(), Period(), Digits, Point, recordMode, IsTesting(), IsVisualMode(), IsOptimization(), Test.ExternalReporting, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                         // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(2)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -141,7 +151,7 @@ int init() {
    }
    else if (UninitializeReason() != UR_CHARTCHANGE) {          // log account infos (this becomes the first regular online log entry)
       if (IsLogInfo()) {
-         msg = initHandlers[initReason] +"(0)  "+ GetAccountServerName() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
+         msg = initHandlers[initReason] +"(0)  "+ GetAccountServer() +", account "+ account +" ("+ ifString(IsDemoFix(), "demo", "real") +")";
          logInfo(StrRepeat(":", StringLen(msg)));
          logInfo(msg);
       }
@@ -152,10 +162,10 @@ int init() {
          string sInputs = InputsToStr();
          if (StringLen(sInputs) > 0) {
             sInputs = StringConcatenate(sInputs,
-               ifString(!EA.Recorder,          "", NL +"EA.Recorder=TRUE"                                            +";"),
-               ifString(!EA.ExternalReporting, "", NL +"EA.ExternalReporting=TRUE"                                   +";"),
-               ifString(!Test.StartTime,       "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
-               ifString(!Test.StartPrice,      "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"));
+                                                     NL, "EA.Recorder=\"", EA.Recorder, "\"",                           ";",
+               ifString(!Test.StartTime,         "", NL +"Test.StartTime="+ TimeToStr(Test.StartTime, TIME_FULL)       +";"),
+               ifString(!Test.StartPrice,        "", NL +"Test.StartPrice="+ NumberToStr(Test.StartPrice, PriceFormat) +";"),
+               ifString(!Test.ExternalReporting, "", NL +"Test.ExternalReporting=TRUE"                                 +";"));
             logDebug(initHandlers[initReason] +"(0)  inputs: "+ sInputs);
          }
       }
@@ -335,7 +345,7 @@ int start() {
    if (error && error!=last_error) catch("start(9)", error);
 
    // record PL
-   if (EA.Recorder) {
+   if (recordMode != RECORDING_OFF) {
       if (!start_Recorder()) return(_last_error(CheckErrors("start(10)")));
    }
 
@@ -379,7 +389,7 @@ int deinit() {
       if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
-   // close open history sets of the PL recorder
+   // close history sets of the PL recorder
    int size = ArraySize(recorder.hSet);
    for (int i=0; i < size; i++) {
       if (recorder.hSet[i] > 0) {
@@ -392,7 +402,7 @@ int deinit() {
    }
 
    // stop external reporting
-   if (EA.ExternalReporting) {
+   if (Test.ExternalReporting) {
       datetime time = MarketInfo(Symbol(), MODE_TIME);
       Test_StopReporting(__ExecutionContext, time, Bars);
    }
@@ -603,45 +613,34 @@ string init_MarketInfo() {
  * @return bool - success status
  */
 bool init_Recorder() {
-   if (EA.Recorder && !recorder.initialized && !IsOptimization()) {
-      string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
-      int symbolDigits, hstFormat, i=0;
+   if (!recorder.initialized) {
+      if (recordMode && !IsOptimization()) {
+         int i=0, symbolDigits, hstFormat;
+         bool enabled;
+         string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
 
-      // fetch symbol definitions from the EA and process external symbols
-      while (Recorder_GetSymbolDefinitionA(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
-         init_RecorderAddSymbol(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, false);
-         i++;
+         if (recordCustom) {
+            // fetch symbol definitions from the EA to record custom metrics
+            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
+               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) return(false);
+               i++;
+            }
+            if (IsLastError()) return(false);
+         }
+         else {
+            // create a single new equity symbol using default values
+            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
+            symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
+            symbolDigits = 2;
+            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, "", NULL)) return(false);
+         }
       }
-
-      // the recorder is enabled: if no definitions received create a new equity symbol using default values
-      if (!i) {
-         // read history directory configuration
-         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
-         hstDirectory = GetConfigString(section, "HistoryDirectory", "");
-         if (!StringLen(hstDirectory))                     return(!catch("init_Recorder(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE));
-         if (IsAbsolutePath(hstDirectory))                 return(!catch("init_Recorder(2)  illegal config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not an allowed directory name)", ERR_INVALID_CONFIG_VALUE));
-         int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-         if (StrContainsChars(hstDirectory, illegalChars)) return(!catch("init_Recorder(3)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (not a valid directory name)", ERR_INVALID_CONFIG_VALUE));
-         hstDirectory = StrReplace(hstDirectory, "\\", "/");
-         if (StrStartsWith(hstDirectory, "/"))             return(!catch("init_Recorder(4)  invalid config value ["+ section +"]->HistoryDirectory: "+ DoubleQuoteStr(hstDirectory) +" (must not start with a slash)", ERR_INVALID_CONFIG_VALUE));
-
-         // read history format configuration
-         hstFormat = GetConfigInt(section, "HistoryFormat", 401);
-         if (hstFormat!=400 && hstFormat!=401)             return(!catch("init_Recorder(5)  invalid config value ["+ section +"]->HistoryFormat: "+ hstFormat +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
-
-         // add a new internal symbol
-         symbol       = init_RecorderNewSymbol(hstDirectory);
-         symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
-         symbolGroup  = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);                        // sizeof(SYMBOL.description) = 64 chars
-         symbolDigits = 2;
-         init_RecorderAddSymbol(i, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat, true);
+      else {
+         recordMode = RECORDING_OFF;         // disable recording in case init_RecorderValidateInput() was not called
+         ec_SetRecordMode(__ExecutionContext, recordMode);
       }
+      recorder.initialized = true;
    }
-   else {
-      EA.Recorder = false;
-   }
-
-   recorder.initialized = true;
    return(true);
 }
 
@@ -649,28 +648,42 @@ bool init_Recorder() {
 /**
  * Create a symbol definition from the passed data and add it to the specified position of the PL recorder.
  *
+ * @param  int    i            - zero-based index of the symbol (position in the recorder)
+ * @param  bool   enabled      - whether the related metric is active and recorded
+ * @param  string symbol       - symbol
+ * @param  string symbolDescr  - symbol description
+ * @param  string symbolGroup  - symbol group (if empty recorder defaults are used)
+ * @param  int    symbolDigits - digits of the timeseries to record
+ * @param  string hstDirectory - history directory of the timeseries to record (if empty recorder defaults are used)
+ * @param  int    hstFormat    - history format of the timeseries to recorded (if empty recorder defaults are used)
+ *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat, bool internal) {
-   internal = internal!=0;
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat) {
+   enabled = enabled !=0;
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
-   // check/process an existing symbol
-   if (IsRawSymbol(symbol, hstDirectory)) {
-      if (IsTesting()) return(!catch("init_RecorderAddSymbol(2)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
-      // TODO: update existing raw symbol
-   }
-   else {
-      // create new raw symbol
-      string baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
-      if (!CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory)) return(false);
+   symbolGroup  = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup);  if (!StringLen(symbolGroup))  return(false);
+   hstDirectory = init_RecorderHstDirectory("init_RecorderAddSymbol(3)", hstDirectory); if (!StringLen(hstDirectory)) return(false);
+   hstFormat    = init_RecorderHstFormat   ("init_RecorderAddSymbol(4)", hstFormat);    if (!hstFormat)               return(false);
+
+   if (enabled) {
+      // check an existing symbol
+      if (IsRawSymbol(symbol, hstDirectory)) {
+         if (IsTesting()) return(!catch("init_RecorderAddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
+         // TODO: update an existing raw symbol
+      }
+      else {
+         string baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
+         if (!CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory)) return(false);
+      }
    }
 
-   // on success: add metadata to recorder
+   // add all metadata to the recorder
    int size = ArraySize(recorder.symbol);
    if (i >= size) {
       size = i + 1;
-      ArrayResize(recorder.internal,     size);
+      ArrayResize(recorder.enabled,      size);
       ArrayResize(recorder.symbol,       size);
       ArrayResize(recorder.symbolDescr,  size);
       ArrayResize(recorder.symbolGroup,  size);
@@ -681,9 +694,9 @@ bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string sym
       ArrayResize(recorder.startValue,   size);
       ArrayResize(recorder.currValue,    size);
    }
-   if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(3)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
+   if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
-   recorder.internal    [i] = internal;
+   recorder.enabled     [i] = enabled;
    recorder.symbol      [i] = symbol;
    recorder.symbolDescr [i] = symbolDescr;
    recorder.symbolGroup [i] = symbolGroup;
@@ -699,36 +712,34 @@ bool init_RecorderAddSymbol(int i, string symbol, string symbolDescr, string sym
 
 
 /**
- * Generate a new and unique recorder symbol for this instance. Called from init_Recorder() if EA.Recorder is TRUE.
- *
- * @param  string hstDirectory - history directory to use
+ * Generate a new and unique recorder symbol for this instance.
  *
  * @return string - symbol or an empty string in case of errors
  */
-string init_RecorderNewSymbol(string hstDirectory) {
+string init_RecorderNewSymbol() {
+   string hstDirectory = init_RecorderHstDirectory("init_RecorderNewSymbol(1)"); if (!StringLen(hstDirectory)) return("");
+
    // open "symbols.raw" and read symbols
    string filename = hstDirectory +"/symbols.raw";
    int hFile = FileOpen(filename, FILE_READ|FILE_BIN);
-   int error = GetLastError();
-   if (error || hFile <= 0)                              return(!catch("init_RecorderNewSymbol(1)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(error, ERR_RUNTIME_ERROR)));
+   if (hFile <= 0)                                      return(!catch("init_RecorderNewSymbol(2)->FileOpen(\""+ filename +"\", FILE_READ) => "+ hFile, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
    int fileSize = FileSize(hFile);
-   if (fileSize % SYMBOL_size != 0) { FileClose(hFile);  return(!catch("init_RecorderNewSymbol(2)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
+   if (fileSize % SYMBOL_size != 0) { FileClose(hFile); return(!catch("init_RecorderNewSymbol(3)  invalid size of \""+ filename +"\" (not an even SYMBOL size, "+ (fileSize % SYMBOL_size) +" trailing bytes)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    int symbolsSize = fileSize/SYMBOL_size;
 
    int symbols[]; InitializeByteBuffer(symbols, fileSize);
    if (fileSize > 0) {
       int ints = FileReadArray(hFile, symbols, 0, fileSize/4);
-      error = GetLastError();
-      if (error || ints!=fileSize/4) { FileClose(hFile); return(!catch("init_RecorderNewSymbol(3)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(error, ERR_RUNTIME_ERROR))); }
+      if (ints!=fileSize/4) { FileClose(hFile);         return(!catch("init_RecorderNewSymbol(4)  error reading \""+ filename +"\" ("+ (ints*4) +" of "+ fileSize +" bytes read)", intOr(GetLastError(), ERR_RUNTIME_ERROR))); }
    }
    FileClose(hFile);
 
    // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
+   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
    for (int i, maxId=0; i < symbolsSize; i++) {
-      string symbol = symbols_Name(symbols, i);
+      symbol = symbols_Name(symbols, i);
       if (StrStartsWithI(symbol, name)) {
          suffix = StrSubstr(symbol, StringLen(name));
          if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
@@ -736,7 +747,151 @@ string init_RecorderNewSymbol(string hstDirectory) {
          }
       }
    }
+
    return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
+}
+
+
+/**
+ * Resolve the symbol group to use for a recorded timeseries.
+ *
+ * @param  string caller                 - caller identifier
+ * @param  string symbolGroup [optional] - user-defined group (if empty recorder defaults are used)
+ *
+ * @return string - symbol group or an empty string in case of errors
+ */
+string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
+   static string defaultValue = "";
+
+   if (!StringLen(symbolGroup)) {
+      if (!StringLen(defaultValue)) {
+         defaultValue = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
+      }
+      symbolGroup = defaultValue;
+   }
+   return(symbolGroup);
+}
+
+
+/**
+ * Resolve the history directory to use for a recorded timeseries.
+ *
+ * @param  string caller                  - caller identifier
+ * @param  string hstDirectory [optional] - user-defined directory (if empty recorder defaults are used)
+ *
+ * @return string - history directory or an empty string in case of errors
+ */
+string init_RecorderHstDirectory(string caller, string hstDirectory = "") {
+   static string configValue = "";
+
+   if (!StringLen(hstDirectory)) {
+      if (!StringLen(configValue)) {
+         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+         string sValue  = GetConfigString(section, "HistoryDirectory", "");
+         if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE)));
+         configValue = sValue;
+      }
+      hstDirectory = configValue;
+   }
+   return(hstDirectory);
+}
+
+
+/**
+ * Resolve the history format to use for a recorded timeseries.
+ *
+ * @param  string caller            - caller identifier
+ * @param  int hstFormat [optional] - user-defined format (if empty recorder defaults are used)
+ *
+ * @return int - history format or NULL (0) in case of errors
+ */
+int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
+   static int configValue = 0;
+
+   if (!hstFormat) {
+      if (!configValue) {
+         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+         int iValue = GetConfigInt(section, "HistoryFormat", 401);
+         if (iValue!=400 && iValue!=401) return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+         configValue = iValue;
+      }
+      hstFormat = configValue;
+   }
+   else if (hstFormat!=400 && hstFormat!=401) return(!catch(caller +"->init_RecorderHstFormat(2)  invalid parameter hstFormat: "+ hstFormat, ERR_INVALID_PARAMETER));
+
+   return(hstFormat);
+}
+
+
+/**
+ * Validate input parameter "EA.Recorder".
+ *
+ * @param  _Out_ int metrics - number of metrics to be recorded
+ *
+ * @return bool - success status
+ */
+bool init_RecorderValidateInput(int &metrics) {
+   bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);
+
+   string sValues[], sValue = StrToLower(EA.Recorder);
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrTrim(sValue);
+
+   if (sValue == "off" || IsOptimization()) {
+      recordMode     = RECORDING_OFF;
+      recordInternal = false;
+      recordCustom   = false;
+      metrics        = 0;
+      EA.Recorder    = recordModeDescr[recordMode];
+   }
+   else if (sValue == "on" ) {
+      recordMode     = RECORDING_INTERNAL;
+      recordInternal = true;
+      recordCustom   = false;
+      metrics        = 1;
+      EA.Recorder    = recordModeDescr[recordMode];
+   }
+   else {
+      int ids[]; ArrayResize(ids, 0);
+      size = Explode(sValue, ",", sValues, NULL);
+
+      for (int i=0; i < size; i++) {
+         sValue = StrTrim(sValues[i]);
+         if (sValue == "")            continue;
+         if (!StrIsDigit(sValue))     return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be digits)",   ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         int iValue = StrToInteger(sValue);
+         if (!iValue)                 return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be positive)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue)) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate ids)",        ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         ArrayPushInt(ids, iValue);
+
+         if (ArraySize(recorder.symbol) < iValue) {
+            ArrayResize(recorder.enabled,      iValue);
+            ArrayResize(recorder.symbol,       iValue);
+            ArrayResize(recorder.symbolDescr,  iValue);
+            ArrayResize(recorder.symbolGroup,  iValue);
+            ArrayResize(recorder.symbolDigits, iValue);
+            ArrayResize(recorder.hstDirectory, iValue);
+            ArrayResize(recorder.hstFormat,    iValue);
+            ArrayResize(recorder.hSet,         iValue);
+            ArrayResize(recorder.startValue,   iValue);
+            ArrayResize(recorder.currValue,    iValue);
+         }
+         recorder.enabled[iValue-1] = true;
+      }
+      if (!ArraySize(ids))            return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+
+      recordMode     = RECORDING_CUSTOM;
+      recordInternal = false;
+      recordCustom   = true;
+      metrics        = ArraySize(recorder.symbol);
+      EA.Recorder    = JoinInts(ids, ",");
+   }
+   ec_SetRecordMode(__ExecutionContext, recordMode);
+
+   return(true);
 }
 
 
@@ -746,14 +901,16 @@ string init_RecorderNewSymbol(string hstDirectory) {
  * @return bool - success status
  */
 bool init_Test() {
-   if (EA.ExternalReporting && IsTesting()) {
-      datetime time = MarketInfo(Symbol(), MODE_TIME);
-      Test_InitReporting(__ExecutionContext, time, Bars);
+   if (!test.initialized) {
+      if (Test.ExternalReporting && IsTesting()) {
+         datetime time = MarketInfo(Symbol(), MODE_TIME);
+         Test_InitReporting(__ExecutionContext, time, Bars);
+      }
+      else {
+         Test.ExternalReporting = false;
+      }
+      test.initialized = true;
    }
-   else {
-      EA.ExternalReporting = false;
-   }
-   test.initialized = true;
    return(true);
 }
 
@@ -765,11 +922,11 @@ bool init_Test() {
  */
 bool start_Recorder() {
    /*
-    Speed test SnowRoller EURUSD,M15  04.10.2012, long, GridSize 18
+    Speed test SnowRoller EURUSD,M15  04.10.2012, Long, GridSize=18
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    | Toshiba Satellite           |     old      | optimized | FindBar opt. | Arrays opt. |  Read opt.  |  Write opt.  |  Valid. opt. |  in Library  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
-   | v419 - w/o start_Recorder() | 17.613 t/sec |           |              |             |             |              |              |              |
+   | v419 - no recording         | 17.613 t/sec |           |              |             |             |              |              |              |
    | v225 - HST_BUFFER_TICKS=Off |  6.426 t/sec |           |              |             |             |              |              |              |
    | v419 - HST_BUFFER_TICKS=Off |  5.871 t/sec | 6.877 t/s |   7.381 t/s  |  7.870 t/s  |  9.097 t/s  |   9.966 t/s  |  11.332 t/s  |              |
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
@@ -777,20 +934,22 @@ bool start_Recorder() {
    */
    int size = ArraySize(recorder.hSet);
    double currentValue;
+   bool success = true;
 
    for (int i=0; i < size; i++) {
+      if (!recorder.enabled[i]) continue;
+
       if (!recorder.hSet[i]) {
-         // online: prefer to continue existing histories
+         // online: prefer to continue existing history
          if (!IsTesting()) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else             recorder.hSet[i] = HistorySet3.Get(recorder.symbol[i], recorder.hstDirectory[i]);
-            if (!recorder.hSet[i]) return(false);
-            if (recorder.hSet[i] == -1)
-               recorder.hSet[i] = NULL;
+            if      (recorder.hSet[i] == -1) recorder.hSet[i] = NULL;
+            else if (recorder.hSet[i] <=  0) return(false);
          }
 
-         // tester and online: create new histories
+         // tester or no existing history
          if (!recorder.hSet[i]) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Create(recorder.symbol[i], recorder.symbolDescr[i], recorder.symbolDigits[i], recorder.hstFormat[i], recorder.hstDirectory[i]);
@@ -798,14 +957,16 @@ bool start_Recorder() {
             if (!recorder.hSet[i]) return(false);
          }
       }
-      if (recorder.internal[i]) currentValue = AccountEquity() - AccountCredit();
-      else                      currentValue = recorder.startValue[i] + recorder.currValue[i];
+      if (recordInternal) currentValue = AccountEquity() - AccountCredit();
+      else                currentValue = recorder.startValue[i] + recorder.currValue[i];
 
-      if      (i <  7) HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else if (i < 14) HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else             HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      if (!success) break;
    }
-   return(true);
+
+   return(success);
 }
 
 
@@ -834,10 +995,11 @@ bool start_Recorder() {
 #import "rsfMT4Expander.dll"
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
+   int    ec_SetRecordMode         (int ec[], int mode    );
 
-   string symbols_Name(/*SYMBOL*/int symbols[], int i);
+   string symbols_Name(int symbols[], int i);
 
-   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int    SyncMainContext_init  (int ec[], int programType, string programName, int uninitReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int    SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int    SyncMainContext_deinit(int ec[], int uninitReason);
 

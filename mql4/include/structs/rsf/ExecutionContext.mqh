@@ -66,6 +66,8 @@
    int      ec_hChart             (int ec[]);
    int      ec_hChartWindow       (int ec[]);
 
+   int      ec_RecordMode         (int ec[]);
+
    //       ec.test
    int      ec_TestId             (int ec[]);
    datetime ec_TestCreated        (int ec[]);
@@ -79,9 +81,7 @@
    bool     ec_Testing            (int ec[]);
    bool     ec_VisualMode         (int ec[]);
    bool     ec_Optimization       (int ec[]);
-
-   bool     ec_EaExternalReporting(int ec[]);
-   bool     ec_EaRecorder         (int ec[]);
+   bool     ec_ExternalReporting  (int ec[]);
 
    int      ec_MqlError           (int ec[]);
    int      ec_DllError           (int ec[]);
@@ -102,7 +102,8 @@
 
 
    // used setters
-   int      ec_SetProgramCoreFunction(int ec[], int id);
+   int      ec_SetProgramCoreFunction(int ec[], int id   );
+   int      ec_SetRecordMode         (int ec[], int mode );
    int      ec_SetMqlError           (int ec[], int error);
    int      ec_SetDllError           (int ec[], int error);
    int      ec_SetLoglevel           (int ec[], int level);

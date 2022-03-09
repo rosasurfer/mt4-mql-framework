@@ -43,7 +43,7 @@ int init() {
    int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
 
-   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, false, false, IsTesting(), IsVisualMode(), IsOptimization(), __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
+   int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, NULL, IsTesting(), IsVisualMode(), IsOptimization(), false, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
       ForceAlert("ERROR:   "+ Symbol() +","+ PeriodDescription() +"  "+ WindowExpertName() +"::init(1)->SyncMainContext_init()  ["+ ErrorToStr(error) +"]");
@@ -104,6 +104,8 @@ int init() {
    und sind zur eindeutigen Unterscheidung der verschiedenen Init-Szenarien nicht geeignet.
    Solution: Funktion ProgramInitReason() und die neu eingeführten Konstanten INITREASON_*.
 
+   // Execute init() event handlers. The reason-specific handlers are executed only if onInit() returns without errors.
+   //
    +-- init reason -------+-- description --------------------------------+-- ui -----------+-- applies --+
    | IR_USER              | loaded by the user (also in tester)           |    input dialog |   I, E, S   | I = indicators
    | IR_TEMPLATE          | loaded by a template (also at terminal start) | no input dialog |   I, E      | E = experts
@@ -115,19 +117,16 @@ int init() {
    | IR_RECOMPILE         | reloaded after recompilation                  | no input dialog |   I, E      |
    | IR_TERMINAL_FAILURE  | terminal failure                              |    input dialog |      E      | @see https://github.com/rosasurfer/mt4-mql/issues/1
    +----------------------+-----------------------------------------------+-----------------+-------------+
-
-   Die User-Routinen werden ausgeführt, wenn der Preprocessing-Hook (falls implementiert) ohne Fehler zurückkehrt.
-   Der Postprocessing-Hook wird ausgeführt, wenn weder der Preprocessing-Hook (falls implementiert) noch die User-Routinen
-   (falls implementiert) -1 zurückgeben.
    */
-   error = onInit();                                                                   // Preprocessing-Hook
-   if (!error) {                                                                       //
+   error = onInit();                                                                   // preprocessing hook
+                                                                                       //
+   if (!error && !__STATUS_OFF) {                                                      //
       int initReason = ProgramInitReason();                                            //
       if (!initReason) if (CheckErrors("init(14)")) return(last_error);                //
                                                                                        //
       switch (initReason) {                                                            //
-         case INITREASON_USER             : error = onInitUser();             break;   //
-         case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   // TODO: in neuem Chartfenster falsche Werte für Point und Digits
+         case INITREASON_USER             : error = onInitUser();             break;   // init reasons
+         case INITREASON_TEMPLATE         : error = onInitTemplate();         break;   //
          case INITREASON_PROGRAM          : error = onInitProgram();          break;   //
          case INITREASON_PROGRAM_AFTERTEST: error = onInitProgramAfterTest(); break;   //
          case INITREASON_PARAMETERS       : error = onInitParameters();       break;   //
@@ -139,14 +138,16 @@ int init() {
       }                                                                                //
    }                                                                                   //
    if (error == ERS_TERMINAL_NOT_YET_READY) return(error);                             //
-   if (error != -1)                                                                    //
-      error = afterInit();                                                             // Postprocessing-Hook
+   if (!error && !__STATUS_OFF) {                                                      //
+      error = afterInit();                                                             // postprocessing hook
+   }
 
    // nach Parameteränderung im "Indicators List"-Window nicht auf den nächsten Tick warten
-   if (initReason == INITREASON_PARAMETERS) {
-      Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
-   }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
-
+   if (!error && !__STATUS_OFF) {
+      if (initReason == INITREASON_PARAMETERS) {
+         Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
+      }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
+   }
    CheckErrors("init(16)");
    return(last_error);
 }
@@ -550,7 +551,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
-   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int eaExternalReporting, int eaRecorder, int isTesting, int isVisualMode, int isOptimization, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
+   int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
    int  SyncMainContext_start (int ec[], double rates[][], int bars, int changedBars, int ticks, datetime time, double bid, double ask);
    int  SyncMainContext_deinit(int ec[], int unintReason);
 #import
