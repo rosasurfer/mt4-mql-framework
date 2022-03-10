@@ -3,9 +3,7 @@
  *
  *
  * TODO:
- *  - update symbol generation: Z{Symbol}_{SID}{Type}            ZEURUS_123A
  *  - update symbol description
- *
  *  - recording of PL variants
  *     total/daily PL in money (start level: 1000) with or without commission?
  *     total/daily PL in pip   (start level: 1000) with or without commission?
@@ -801,7 +799,7 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    switch (i) {
       case METRIC_TOTAL_PL_MONEY:
          enabled      = true;
-         symbol       = "ZigZg_"+ sequence.id +"A";                     // 6 + 4 + 1 = 11 chars
+         symbol       = "Z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";  // 1 + 5 + 1 + 3 + 1 = 11 chars, e.g. "ZEURUS_123A"
          symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
          symbolGroup  = "";
          symbolDigits = 2;
