@@ -798,8 +798,8 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    switch (i) {
       case METRIC_TOTAL_PL_MONEY:
          enabled      = true;
-         symbol       = "Z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";                       // 11 chars, e.g. "ZEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +") "+ Symbol() +", cumulative PL with commission, base 1000.00";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // 11 chars, e.g. "zEURUS_123A"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +", cum. PL w/commission, base 1000.00";
          symbolGroup  = "";
          symbolDigits = 2;
          hstDirectory = "";
