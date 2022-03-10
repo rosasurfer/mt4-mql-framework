@@ -675,7 +675,8 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
       }
       else {
          string baseCurrency=AccountCurrency(), marginCurrency=AccountCurrency();
-         if (!CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory)) return(false);
+         int id = CreateRawSymbol(symbol, symbolDescr, symbolGroup, symbolDigits, baseCurrency, marginCurrency, hstDirectory);
+         if (id < 0) return(false);
       }
    }
 
