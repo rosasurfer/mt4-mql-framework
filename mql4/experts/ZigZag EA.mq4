@@ -3,8 +3,6 @@
  *
  *
  * TODO:
- *  - indicator log messages of iCustom() calls are not appended to the caller's log file
- *
  *  - recording of PL variants
  *     daily PL in money
  *     total/daily PL in pips
