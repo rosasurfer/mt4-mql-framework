@@ -232,7 +232,7 @@ int onTick() {
 
       if (recordCustom) {                                            // update PL recorder values
          if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
-            recorder.startValue[METRIC_TOTAL_PL_MONEY] = sequence.startEquity;
+            recorder.startValue[METRIC_TOTAL_PL_MONEY] = 1000.00;
             recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;
          }
       }
@@ -728,7 +728,7 @@ int onPositionClose(string message, int error) {
 int CalculateMagicNumber(int sequenceId = NULL) {
    if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = intOr(sequenceId, sequence.id);
-   if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < SID_MIN || id > SID_MAX)            return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
    int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
    int sequence = id;                                       // now 100-999 but was 1000-9999 (14 bit)
@@ -799,7 +799,7 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       case METRIC_TOTAL_PL_MONEY:
          enabled      = true;
          symbol       = "Z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";                       // 11 chars, e.g. "ZEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +") "+ Symbol() +", total PL, base 1000.00";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +") "+ Symbol() +", cumulative PL with commission, base 1000.00";
          symbolGroup  = "";
          symbolDigits = 2;
          hstDirectory = "";
