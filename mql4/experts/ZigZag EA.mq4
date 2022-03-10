@@ -299,9 +299,8 @@ bool IsStartSignal(int &signal) {
    // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
       datetime now = TimeServer();
-      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {
-         start.time.value += (now - (now % DAY));
-         if (start.time.value < now) start.time.value += 1*DAY;      // set periodic value to the next time in the future
+      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative to an absolute value
+         start.time.value += (now - (now % DAY));                       // relative + Midnight
       }
       if (now < start.time.value) return(false);
    }
@@ -500,9 +499,8 @@ bool IsStopSignal(int &signal) {
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
       datetime now = TimeServer();
-      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {
-         stop.time.value += (now - (now % DAY));
-         if (stop.time.value < now) stop.time.value += 1*DAY;        // set periodic value to the next time in the future
+      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {      // convert a relative to an absolute value
+         stop.time.value += (now - (now % DAY));                        // relative + Midnight
       }
       if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
