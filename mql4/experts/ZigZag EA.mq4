@@ -1683,7 +1683,7 @@ void SS.StartStopConditions() {
       // start conditions
       string sValue = "";
       if (start.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition || start.time.isDaily, "@", "!") + start.time.description;
       }
       if (sValue == "") sStartConditions = "-";
       else              sStartConditions = sValue;
@@ -1691,7 +1691,7 @@ void SS.StartStopConditions() {
       // stop conditions
       sValue = "";
       if (stop.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition || stop.time.isDaily, "@", "!") + stop.time.description;
       }
       if (stop.profitAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
