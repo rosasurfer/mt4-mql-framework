@@ -935,6 +935,7 @@ bool start_Recorder() {
    int size = ArraySize(recorder.hSet);
    double currentValue;
    bool success = true;
+   int flags = NULL;
 
    for (int i=0; i < size; i++) {
       if (!recorder.enabled[i]) continue;
@@ -960,9 +961,11 @@ bool start_Recorder() {
       if (recordInternal) currentValue = AccountEquity() - AccountCredit();
       else                currentValue = recorder.startValue[i] + recorder.currValue[i];
 
-      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
-      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, HST_BUFFER_TICKS);
+      if (IsTesting()) flags = HST_BUFFER_TICKS;
+
+      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
+      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
+      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
       if (!success) break;
    }
 
