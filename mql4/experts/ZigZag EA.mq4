@@ -4,8 +4,8 @@
  *
  * TODO:
  *  - recording of PL variants
- *     total/daily PL in money, with or without commission?
- *     total/daily PL in pip,   with or without commission?
+ *     cumulated/daily PL in money, with or without commission?
+ *     cumulated/daily PL in pip,   with or without commission?
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -131,8 +131,8 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
-#define METRIC_TOTAL_PL_MONEY       0           // recorded PL metrics
-#define METRIC_TOTAL_PL_PIP         1
+#define METRIC_CUMUL_PL_MONEY       0           // recorded PL metrics
+#define METRIC_CUMUL_PL_PIP         1
 #define METRIC_DAILY_PL_MONEY       2
 #define METRIC_DAILY_PL_PIP         3
 
@@ -231,9 +231,9 @@ int onTick() {
       }
 
       if (recordCustom) {                                            // update PL recorder values
-         if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
-            recorder.startValue[METRIC_TOTAL_PL_MONEY] = 1000.00;
-            recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;
+         if (recorder.enabled[METRIC_CUMUL_PL_MONEY]) {
+            recorder.startValue[METRIC_CUMUL_PL_MONEY] = 1000.00;
+            recorder.currValue [METRIC_CUMUL_PL_MONEY] = sequence.totalPL;
          }
       }
    }
@@ -796,9 +796,9 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    switch (i) {
-      case METRIC_TOTAL_PL_MONEY:
+      case METRIC_CUMUL_PL_MONEY:
          enabled      = true;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // 11 chars, e.g. "zEURUS_123A"
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";           // "zEURUS_123A" (11 chars)
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +", cum. PL w/commission, base 1000.00";
          symbolGroup  = "";
          symbolDigits = 2;
