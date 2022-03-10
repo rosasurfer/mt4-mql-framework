@@ -3,10 +3,9 @@
  *
  *
  * TODO:
- *  - update symbol description
  *  - recording of PL variants
- *     total/daily PL in money (start level: 1000) with or without commission?
- *     total/daily PL in pip   (start level: 1000) with or without commission?
+ *     total/daily PL in money, with or without commission?
+ *     total/daily PL in pip,   with or without commission?
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -799,8 +798,8 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    switch (i) {
       case METRIC_TOTAL_PL_MONEY:
          enabled      = true;
-         symbol       = "Z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";  // 1 + 5 + 1 + 3 + 1 = 11 chars, e.g. "ZEURUS_123A"
-         symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
+         symbol       = "Z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";                       // 11 chars, e.g. "ZEURUS_123A"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +") "+ Symbol() +", total PL, base 1000.00";
          symbolGroup  = "";
          symbolDigits = 2;
          hstDirectory = "";
