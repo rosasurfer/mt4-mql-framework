@@ -42,6 +42,8 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
+ *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
+ *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
@@ -317,8 +319,8 @@ bool IsStartSignal(int &signal) {
    // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
       datetime now = TimeServer();
-      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative to an absolute value
-         start.time.value += (now - (now % DAY));                       // relative + Midnight
+      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative start time to an absolute one
+         start.time.value += (now - (now % DAY));                       // relative + Midnight (possibly in the past)
       }
       if (now < start.time.value) return(false);
    }
@@ -386,7 +388,12 @@ bool StartSequence(int signal) {
    // update start/stop conditions
    start.time.condition = false;
    stop.time.condition  = stop.time.isDaily;
-   if (stop.time.isDaily) stop.time.value %= DAYS;
+   if (stop.time.isDaily) {
+      datetime now = TimeServer();                          // convert a relative start time to the next absolute time in
+      stop.time.value %= DAYS;                              // the future:
+      stop.time.value += (now - (now % DAY));               // relative + Midnight (possibly in the past)
+      if (stop.time.value < now) stop.time.value += 1*DAY;
+   }
    SS.StartStopConditions();
 
    if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
@@ -517,8 +524,8 @@ bool IsStopSignal(int &signal) {
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
       datetime now = TimeServer();
-      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {      // convert a relative to an absolute value
-         stop.time.value += (now - (now % DAY));                        // relative + Midnight
+      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {      // convert a relative stop time to an absolute one
+         stop.time.value += (now - (now % DAY));                        // relative + Midnight (possibly in the past)
       }
       if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
@@ -586,7 +593,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
+      if (open.ticket > 0) {                                         // a progressing sequence may have an open position to close
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
          int oeFlags, oe[];
@@ -604,7 +611,12 @@ bool StopSequence(int signal) {
    switch (signal) {
       case SIGNAL_TIME:
          start.time.condition = start.time.isDaily;
-         if (start.time.isDaily) start.time.value %= DAYS;
+         if (start.time.isDaily) {
+            datetime now = TimeServer();                             // convert a relative start time to the next absolute time in
+            start.time.value %= DAYS;                                // the future:
+            start.time.value += (now - (now % DAY));                 // relative + Midnight (possibly in the past)
+            if (start.time.value < now) start.time.value += 1*DAY;   // TODO: 1 day is not enough, shift to next trading session
+         }
          stop.time.condition  = false;
          sequence.status      = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
@@ -616,7 +628,7 @@ bool StopSequence(int signal) {
          sequence.status          = STATUS_STOPPED;
          break;
 
-      case NULL:                                            // explicit stop (manual) or end of test
+      case NULL:                                                     // explicit stop (manual) or end of test
          break;
 
       default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
@@ -626,7 +638,7 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                       // pause or stop the tester according to the debug configuration
+   if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(5)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(6)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(7)"); }
