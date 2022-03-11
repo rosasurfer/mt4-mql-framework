@@ -114,12 +114,12 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 </tr>
 
 <tr>
-    <td nowrap>
+    <td nowrap colspan="2">
         <a href="http://www.rosasurfer.com/.mt4/"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Archive
         </a>
     </td>
-    <td nowrap colspan="2"> older builds </td>
+    <td nowrap> older builds </td>
 </tr>
 
 <tr>
@@ -172,7 +172,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
     </td>
     <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/225/metaeditor-compiler.zip"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
-            MetaEditor+Compiler
+            MetaEditor & Compiler
         </a>
     </td>
     <td nowrap> oldest build supported by this framework </td>
