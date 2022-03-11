@@ -8,7 +8,7 @@
  * Once started the EA waits until one of the defined start conditions is satisfied. It then manages the resulting trades in
  * a pyramiding way until one of the defined stop conditions is satisfied. Start conditions can be price, time or a trend
  * change of one of the supported trend indicators. Stop conditions can be price, time, a trend change of a supported trend
- * indicators or an absolute or percentage stoploss or takeprofit amount. Multiple start and stop conditions may be combined.
+ * indicator or an absolute or percentage stoploss or takeprofit amount. Multiple start and stop conditions can be combined.
  *
  * If both start and stop parameters define a trend condition the EA waits after a trend stop signal and continues trading
  * when the next trend start condition is satisfied. The EA finally stops when takeprofit or stoploss are reached.

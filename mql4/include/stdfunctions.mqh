@@ -3865,7 +3865,7 @@ int Tester.Pause(string caller = "") {
 
    if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Pause()");
 
-   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() causes a UI thread dead-lock if called in deinit()
+   PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_PAUSERESUME, 0);  // SendMessage() would cause a UI thread dead-lock if called in deinit()
    return(NO_ERROR);
 }
 
