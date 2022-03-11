@@ -4,14 +4,29 @@
  *
  * TODO:
  *  - recording of PL variants
- *     daily PL in money
- *     total/daily PL in pips
- *     Sequence-IDs of all symbols and variants must be unique
+ *     cumulated/daily PL in money, with or without commission?
+ *     cumulated/daily PL in pip,   with or without commission?
+ *
+ *  - status display
+ *     parameter: ZigZag.Periods
+ *     current position
+ *     current spread
+ *     number of trades
+ *     total commission
+ *     track and display total slippage
+ *     recorded symbols with descriptions
+ *
+ *  - ChartInfos: read/display symbol description as long name
  *
  *  - system variants:
  *     Reverse ZigZag
  *     full session (24h) with trade breaks
  *     partial session (e.g. 09:00-16:00) with trade breaks
+ *
+ *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
+ *  - reverse trading option "ZigZag.R" (and Turtle Soup)
+ *  - stop condition "pip"
+ *  - input parameter ZigZag.Timeframe
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -27,22 +42,13 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
- *  - input parameter ZigZag.Timeframe
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
- *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
- *  - reverse trading option "ZigZag.R" (and Turtle Soup)
- *  - stop condition "pip"
- *
  *  - two ZigZag reversals during the same bar are not recognized and ignored
- *  - indicator log messages of iCustom() calls are not appended to the caller's log file
- *  - track slippage and add to status display
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
- *  - display overall number of trades
- *  - display total transaction costs
  *  - input option to pick-up the last signal on start
  *  - improve handling of network outages (price and/or trade connection)
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
@@ -51,8 +57,10 @@
  *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
  *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
- *  - set flag in HistorySet.AddTick(hSet, time, value, flags=HST_BUFFER_TICKS) accordingly
+ *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - CLI tools to rename/update/delete symbols
+ *  - CLI tools to shift/scale histories
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
@@ -71,7 +79,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";                              // instance to load from a status file, format /T?[0-9]{4}/
+extern string Sequence.ID         = "";                              // instance to load from a status file, format /T?[0-9]{3}/
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
@@ -92,6 +100,9 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
+
+#define SID_MIN                   100           // valid range of sequence id values
+#define SID_MAX                   999
 
 #define STATUS_WAITING              1           // sequence status values
 #define STATUS_PROGRESSING          2
@@ -120,8 +131,8 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
-#define METRIC_TOTAL_PL_MONEY       0           // recorded PL metrics
-#define METRIC_TOTAL_PL_PIP         1
+#define METRIC_CUMUL_PL_MONEY       0           // recorded PL metrics
+#define METRIC_CUMUL_PL_PIP         1
 #define METRIC_DAILY_PL_MONEY       2
 #define METRIC_DAILY_PL_PIP         3
 
@@ -220,9 +231,9 @@ int onTick() {
       }
 
       if (recordCustom) {                                            // update PL recorder values
-         if (recorder.enabled[METRIC_TOTAL_PL_MONEY]) {
-            recorder.startValue[METRIC_TOTAL_PL_MONEY] = sequence.startEquity;
-            recorder.currValue [METRIC_TOTAL_PL_MONEY] = sequence.totalPL;
+         if (recorder.enabled[METRIC_CUMUL_PL_MONEY]) {
+            recorder.startValue[METRIC_CUMUL_PL_MONEY] = 1000.00;
+            recorder.currValue [METRIC_CUMUL_PL_MONEY] = sequence.totalPL;
          }
       }
    }
@@ -300,9 +311,8 @@ bool IsStartSignal(int &signal) {
    // start.time: -----------------------------------------------------------------------------------------------------------
    if (start.time.condition) {
       datetime now = TimeServer();
-      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {
-         start.time.value += (now - (now % DAY));
-         if (start.time.value < now) start.time.value += 1*DAY;      // set periodic value to the next time in the future
+      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative to an absolute value
+         start.time.value += (now - (now % DAY));                       // relative + Midnight
       }
       if (now < start.time.value) return(false);
    }
@@ -501,9 +511,8 @@ bool IsStopSignal(int &signal) {
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
       datetime now = TimeServer();
-      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {
-         stop.time.value += (now - (now % DAY));
-         if (stop.time.value < now) stop.time.value += 1*DAY;        // set periodic value to the next time in the future
+      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {      // convert a relative to an absolute value
+         stop.time.value += (now - (now % DAY));                        // relative + Midnight
       }
       if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
@@ -719,10 +728,10 @@ int onPositionClose(string message, int error) {
 int CalculateMagicNumber(int sequenceId = NULL) {
    if (STRATEGY_ID < 101 || STRATEGY_ID > 1023) return(!catch("CalculateMagicNumber(1)  "+ sequence.name +" illegal strategy id: "+ STRATEGY_ID, ERR_ILLEGAL_STATE));
    int id = intOr(sequenceId, sequence.id);
-   if (id < 1000 || id > 9999)                  return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
+   if (id < SID_MIN || id > SID_MAX)            return(!catch("CalculateMagicNumber(2)  "+ sequence.name +" illegal sequence id: "+ id, ERR_ILLEGAL_STATE));
 
-   int strategy = STRATEGY_ID;                              //  101-1023 (10 bit)
-   int sequence = id;                                       // 1000-9999 (14 bit)
+   int strategy = STRATEGY_ID;                              // 101-1023 (10 bit)
+   int sequence = id;                                       // now 100-999 but was 1000-9999 (14 bit)
 
    return((strategy<<22) + (sequence<<8));                  // the remaining 8 bit are not used in this strategy
 }
@@ -731,7 +740,7 @@ int CalculateMagicNumber(int sequenceId = NULL) {
 /**
  * Generate a new sequence id. Must be unique for all instances of this strategy.
  *
- * @return int - sequence id in the range of 1000-9999 or NULL in case of errors
+ * @return int - sequence id in the range of 100-999 or NULL in case of errors
  */
 int CreateSequenceId() {
    MathSrand(GetTickCount()-__ExecutionContext[EC.hChartWindow]);
@@ -739,7 +748,7 @@ int CreateSequenceId() {
 
    while (!magicNumber) {
       while (sequenceId < SID_MIN || sequenceId > SID_MAX) {
-         sequenceId = MathRand();                                 // TODO: generate consecutive ids in tester
+         sequenceId = MathRand();                           // TODO: generate consecutive ids in tester
       }
       magicNumber = CalculateMagicNumber(sequenceId); if (!magicNumber) return(NULL);
 
@@ -787,10 +796,10 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    switch (i) {
-      case METRIC_TOTAL_PL_MONEY:
+      case METRIC_CUMUL_PL_MONEY:
          enabled      = true;
-         symbol       = "ZigZg_"+ sequence.id +"A";                     // 6 + 4 + 1 = 11 chars
-         symbolDescr  = Symbol() +", total PL in "+ AccountCurrency();
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";           // "zEURUS_123A" (11 chars)
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +", cum. PL w/commission, base 1000.00";
          symbolGroup  = "";
          symbolDigits = 2;
          hstDirectory = "";
@@ -1401,7 +1410,7 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4}/). Called only from onInitUser().
+ * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{3}/). Called only from onInitUser().
  *
  * @return bool - whether the id was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
  */
@@ -1686,7 +1695,7 @@ void SS.StartStopConditions() {
       // start conditions
       string sValue = "";
       if (start.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition || start.time.isDaily, "@", "!") + start.time.description;
       }
       if (sValue == "") sStartConditions = "-";
       else              sStartConditions = sValue;
@@ -1694,7 +1703,7 @@ void SS.StartStopConditions() {
       // stop conditions
       sValue = "";
       if (stop.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition || stop.time.isDaily, "@", "!") + stop.time.description;
       }
       if (stop.profitAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;

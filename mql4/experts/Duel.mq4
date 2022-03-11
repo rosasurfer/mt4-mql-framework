@@ -72,6 +72,9 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 
 #define STRATEGY_ID         105                    // unique strategy id between 101-1023 (10 bit)
 
+#define SID_MIN            1000                    // valid range of sequence id values
+#define SID_MAX            9999
+
 #define STATUS_UNDEFINED      0                    // sequence status values
 #define STATUS_WAITING        1
 #define STATUS_PROGRESSING    2
