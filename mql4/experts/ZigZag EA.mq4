@@ -4,8 +4,8 @@
  *
  * TODO:
  *  - recording of PL variants
- *     cumulated/daily PL in money, with or without commission?
- *     cumulated/daily PL in pip,   with or without commission?
+ *     cumulated/daily PL in money, with (if applicable) and w/o commission
+ *     cumulated/daily PL in pip,   with (if applicable) and w/o commission
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -86,7 +86,7 @@ extern double Lots                = 0.1;
 extern string StartConditions     = "";                              // @time(datetime|time)
 extern string StopConditions      = "";                              // @time(datetime|time)
 extern double TakeProfit          = 0;                               // TP value
-extern string TakeProfit.Type     = "off* | money | percent | pip";  // may be shortened
+extern string TakeProfit.Type     = "off* | money | percent | pip";  // can be shortened as long as it's distinct
 extern int    Slippage            = 2;                               // in point
 
 extern bool   ShowProfitInPercent = true;                            // whether PL is displayed in money or percentage terms
@@ -198,9 +198,11 @@ string   sSequencePlStats     = "";
 // other
 string tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
-// debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
+// debug settings                               // configurable via framework config, see afterInit()
+bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
+bool     test.onSessionBreakPause = false;      // whether to pause a test after StopSequence(SIGNAL_TIME)
+bool     test.onStopPause         = false;      // whether to pause a test after a final StopSequence()
+bool     test.optimizeStatus      = true;       // whether to reduce status file writes in tester
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -272,6 +274,10 @@ bool IsZigZagSignal(int &signal) {
                if (IsLogInfo()) logInfo("IsZigZagSignal(1)  "+ sequence.name +" "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             }
             lastSignal = signal;
+
+            if (IsVisualMode()) {        // pause the tester according to the debug configuration
+               if (test.onReversalPause) Tester.Pause("IsZigZagSignal(2)");
+            }
          }
       }
       lastTick   = Tick;
@@ -339,7 +345,7 @@ bool StartSequence(int signal) {
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
    SetLogfile(GetLogFilename());                               // flush the log on start
-   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting... ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
 
    sequence.status = STATUS_PROGRESSING;
    if (!sequence.startEquity) sequence.startEquity = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
@@ -581,7 +587,7 @@ bool StopSequence(int signal) {
 
    if (sequence.status == STATUS_PROGRESSING) {
       if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
-         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping... ("+ SignalToStr(signal) +")");
+         if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
          int oeFlags, oe[];
          if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                     return(!SetLastError(oe.Error(oe)));
@@ -620,11 +626,12 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting() && sequence.status == STATUS_STOPPED) {  // pause or stop the tester according to the debug configuration
-      if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
-      else if (test.onStopPause) Tester.Pause("StopSequence(6)");
+   if (IsTesting()) {                                       // pause or stop the tester according to the debug configuration
+      if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(5)"); }
+      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(6)"); }
+      else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(7)"); }
    }
-   return(!catch("StopSequence(7)"));
+   return(!catch("StopSequence(8)"));
 }
 
 
