@@ -103,6 +103,9 @@ extern bool     TakeProfitBug                  = true;                       // 
 
 #define STRATEGY_ID                  106        // unique strategy id between 101-1023 (10 bit)
 
+#define SID_MIN                     1000        // valid range of sequence id values
+#define SID_MAX                     9999
+
 #define TRADINGMODE_REGULAR            1
 #define TRADINGMODE_VIRTUAL            2
 #define TRADINGMODE_VIRTUAL_COPIER     3
