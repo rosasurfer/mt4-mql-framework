@@ -3,9 +3,15 @@
  *
  *
  * TODO:
- *  - recording of PL variants
- *     cumulated/daily PL in money, w/a and w/o commission
- *     cumulated/daily PL in pip,   w/a and w/o commission
+ *  - stable forward performance tracking
+ *    - recording of PL variants
+ *       cumulated/daily PL in money w/costs
+ *       cumulated/daily PL in pip w/costs + w/o costs (no spread, no commission, no slippage)
+ *    - system variants:
+ *       Reverse ZigZag
+ *       full session (24h) with trade breaks
+ *       partial session (e.g. 09:00-16:00) with trade breaks
+ *    - reverse trading option "ZigZag.R" (and Turtle Soup)
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -16,17 +22,13 @@
  *     track and display total slippage
  *     recorded symbols with descriptions
  *
+ *  - input parameter ZigZag.Timeframe
  *  - ChartInfos: read/display symbol description as long name
  *
- *  - system variants:
- *     Reverse ZigZag
- *     full session (24h) with trade breaks
- *     partial session (e.g. 09:00-16:00) with trade breaks
+ *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
  *
  *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
- *  - reverse trading option "ZigZag.R" (and Turtle Soup)
  *  - stop condition "pip"
- *  - input parameter ZigZag.Timeframe
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -42,17 +44,17 @@
  *     - better parsing of struct SYMBOL
  *     - config support for session and trade breaks at specific day times
  *
- *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
- *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
+ *  - improve handling of network outages (price and/or trade connection)
+ *  - "no connection" event, no price feed for 5 minutes, a signal in this time was not detected => EA out of sync
+ *
  *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
- *  - improve handling of network outages (price and/or trade connection)
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
@@ -133,10 +135,10 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
-#define METRIC_CUMUL_PL_MONEY       0           // recorded PL metrics
-#define METRIC_CUMUL_PL_PIP         1
-#define METRIC_DAILY_PL_MONEY       2
-#define METRIC_DAILY_PL_PIP         3
+#define METRIC_CUM_MONEY            0           // recorded PL metrics
+#define METRIC_DAILY_MONEY          1           //
+#define METRIC_CUM_PIP              2           // cumulated and daily
+#define METRIC_DAILY_PIP            3           // in money and in pip
 
 // sequence data
 int      sequence.id;                           // instance id between 1000-9999
@@ -188,6 +190,9 @@ bool     stop.profitPip.condition;              // whether a takeprofit conditio
 double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
+// other
+string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
+
 // caching vars to speed-up ShowStatus()
 string   sLots                = "";
 string   sStartConditions     = "";
@@ -196,9 +201,6 @@ string   sSequenceTotalPL     = "";
 string   sSequenceMaxProfit   = "";
 string   sSequenceMaxDrawdown = "";
 string   sSequencePlStats     = "";
-
-// other
-string tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -235,9 +237,8 @@ int onTick() {
       }
 
       if (recordCustom) {                                            // update PL recorder values
-         if (recorder.enabled[METRIC_CUMUL_PL_MONEY]) {
-            recorder.startValue[METRIC_CUMUL_PL_MONEY] = 1000.00;
-            recorder.currValue [METRIC_CUMUL_PL_MONEY] = sequence.totalPL;
+         if (recorder.enabled[METRIC_CUM_MONEY]) {
+            recorder.currValue[METRIC_CUM_MONEY] = sequence.totalPL;
          }
       }
    }
@@ -306,7 +307,7 @@ bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
 
 
 /**
- * Whether a start condition is satisfied for a waiting sequence.
+ * Whether a start condition is satisfied for a sequence.
  *
  * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
@@ -511,7 +512,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
 
 
 /**
- * Whether a stop condition is satisfied for a progressing sequence.
+ * Whether a stop condition is satisfied for a sequence.
  *
  * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
  *
@@ -805,22 +806,24 @@ int CreateSequenceId() {
  * @param  _Out_ string symbolDescr  - timeseries description
  * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
  * @param  _Out_ int    symbolDigits - timeseries digits
+ * @param  _Out_ double baseValue    - timeseries base value
  * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
  * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
  *
  * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, string &hstDirectory, int &hstFormat) {
+bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &baseValue, string &hstDirectory, int &hstFormat) {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    switch (i) {
-      case METRIC_CUMUL_PL_MONEY:
+      case METRIC_CUM_MONEY:
          enabled      = true;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";           // "zEURUS_123A" (11 chars)
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") "+ Symbol() +", cum. PL w/commission, base 1000.00";
-         symbolGroup  = "";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +" w/costs, base 1000.00";
+         symbolGroup  = "";                                                   // "ZigZag(40,H1) 3 x EURUSD, cum. AUD w/costs, base 1000.00"
          symbolDigits = 2;
+         baseValue    = 1000.00;
          hstDirectory = "";
          hstFormat    = NULL;
          break;

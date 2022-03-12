@@ -34,7 +34,7 @@ string recorder.symbol      [];
 string recorder.symbolDescr [];
 string recorder.symbolGroup [];
 int    recorder.symbolDigits[];
-double recorder.startValue  [];
+double recorder.baseValue   [];
 double recorder.currValue   [];
 string recorder.hstDirectory[];
 int    recorder.hstFormat   [];
@@ -617,12 +617,13 @@ bool init_Recorder() {
       if (recordMode && !IsOptimization()) {
          int i=0, symbolDigits, hstFormat;
          bool enabled;
+         double baseValue;
          string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
 
          if (recordCustom) {
             // fetch symbol definitions from the EA to record custom metrics
-            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) {
-               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstDirectory, hstFormat)) return(false);
+            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, baseValue, hstDirectory, hstFormat)) {
+               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, baseValue, hstDirectory, hstFormat)) return(false);
                i++;
             }
             if (IsLastError()) return(false);
@@ -632,7 +633,7 @@ bool init_Recorder() {
             symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
             symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
-            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, "", NULL)) return(false);
+            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, 0, "", NULL)) return(false);
          }
       }
       else {
@@ -654,12 +655,13 @@ bool init_Recorder() {
  * @param  string symbolDescr  - symbol description
  * @param  string symbolGroup  - symbol group (if empty recorder defaults are used)
  * @param  int    symbolDigits - digits of the timeseries to record
+ * @param  double baseValue    - nominal base value of the timeseries
  * @param  string hstDirectory - history directory of the timeseries to record (if empty recorder defaults are used)
  * @param  int    hstFormat    - history format of the timeseries to recorded (if empty recorder defaults are used)
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, string hstDirectory, int hstFormat) {
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double baseValue, string hstDirectory, int hstFormat) {
    enabled = enabled !=0;
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
@@ -689,11 +691,11 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
       ArrayResize(recorder.symbolDescr,  size);
       ArrayResize(recorder.symbolGroup,  size);
       ArrayResize(recorder.symbolDigits, size);
+      ArrayResize(recorder.baseValue,    size);
+      ArrayResize(recorder.currValue,    size);
       ArrayResize(recorder.hstDirectory, size);
       ArrayResize(recorder.hstFormat,    size);
       ArrayResize(recorder.hSet,         size);
-      ArrayResize(recorder.startValue,   size);
-      ArrayResize(recorder.currValue,    size);
    }
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
@@ -702,11 +704,11 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    recorder.symbolDescr [i] = symbolDescr;
    recorder.symbolGroup [i] = symbolGroup;
    recorder.symbolDigits[i] = symbolDigits;
+   recorder.baseValue   [i] = baseValue;
+   recorder.currValue   [i] = NULL;
    recorder.hstDirectory[i] = hstDirectory;
    recorder.hstFormat   [i] = hstFormat;
    recorder.hSet        [i] = NULL;
-   recorder.startValue  [i] = NULL;
-   recorder.currValue   [i] = NULL;
 
    return(true);
 }
@@ -874,11 +876,11 @@ bool init_RecorderValidateInput(int &metrics) {
             ArrayResize(recorder.symbolDescr,  iValue);
             ArrayResize(recorder.symbolGroup,  iValue);
             ArrayResize(recorder.symbolDigits, iValue);
+            ArrayResize(recorder.baseValue,    iValue);
+            ArrayResize(recorder.currValue,    iValue);
             ArrayResize(recorder.hstDirectory, iValue);
             ArrayResize(recorder.hstFormat,    iValue);
             ArrayResize(recorder.hSet,         iValue);
-            ArrayResize(recorder.startValue,   iValue);
-            ArrayResize(recorder.currValue,    iValue);
          }
          recorder.enabled[iValue-1] = true;
       }
@@ -933,10 +935,9 @@ bool start_Recorder() {
    | v419 - HST_BUFFER_TICKS=On  |              |           |              |             |             |              |  15.486 t/s  |  14.286 t/s  |
    +-----------------------------+--------------+-----------+--------------+-------------+-------------+--------------+--------------+--------------+
    */
-   int size = ArraySize(recorder.hSet);
-   double currentValue;
+   int size = ArraySize(recorder.hSet), flags=NULL;
+   double value;
    bool success = true;
-   int flags = NULL;
 
    for (int i=0; i < size; i++) {
       if (!recorder.enabled[i]) continue;
@@ -959,14 +960,14 @@ bool start_Recorder() {
             if (!recorder.hSet[i]) return(false);
          }
       }
-      if (recordInternal) currentValue = AccountEquity() - AccountCredit();
-      else                currentValue = recorder.startValue[i] + recorder.currValue[i];
+      if (recordInternal) value = AccountEquity() - AccountCredit();
+      else                value = recorder.baseValue[i] + recorder.currValue[i];
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
 
-      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
-      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
-      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, currentValue, flags);
+      if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
+      else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);
+      else             success = HistorySet3.AddTick(recorder.hSet[i], Tick.time, value, flags);
       if (!success) break;
    }
 
