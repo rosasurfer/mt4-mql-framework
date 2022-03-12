@@ -26,11 +26,12 @@ int onInitUser() {
       if (ValidateInputs()) {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
-         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id;
          sequence.created = TimeServer();
          sequence.status  = STATUS_WAITING;
+         SS.All();
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
-         SaveStatus();
+         SaveStatus();                                         // needs sStart/sStopConditions to be set
       }
    }
    //else {}                                                   // an invalid sequence id was specified
@@ -48,7 +49,8 @@ int onInitParameters() {
       RestoreInputs();
       return(last_error);
    }
-   SaveStatus();
+   SS.All();
+   SaveStatus();                                               // needs sStart/sStopConditions to be set
    return(last_error);
 }
 
