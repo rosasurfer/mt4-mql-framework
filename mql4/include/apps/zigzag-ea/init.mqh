@@ -26,12 +26,11 @@ int onInitUser() {
       if (ValidateInputs()) {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
-         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id;
+         Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = TimeServer();
          sequence.status  = STATUS_WAITING;
-         SS.All();
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
-         SaveStatus();                                         // needs sStart/sStopConditions to be set
+         SaveStatus();
       }
    }
    //else {}                                                   // an invalid sequence id was specified
@@ -49,8 +48,7 @@ int onInitParameters() {
       RestoreInputs();
       return(last_error);
    }
-   SS.All();
-   SaveStatus();                                               // needs sStart/sStopConditions to be set
+   SaveStatus();
    return(last_error);
 }
 
@@ -125,7 +123,6 @@ int afterInit() {
       test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus",      true);
    }
    StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
-   SS.All();
    return(catch("afterInit(1)"));
 }
 

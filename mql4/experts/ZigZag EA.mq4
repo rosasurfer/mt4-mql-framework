@@ -1597,6 +1597,7 @@ bool ValidateInputs() {
    if (!init_RecorderValidateInput(metrics))             return(false);
    if (recordCustom && metrics > 1)                      return(!onInputError("ValidateInputs(16)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
 
+   SS.All();
    return(!catch("ValidateInputs(17)"));
 }
 

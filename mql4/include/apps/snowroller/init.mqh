@@ -1,10 +1,21 @@
 /**
- * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
- * There was an input dialog.
+ * Initialization preprocessing.
  *
  * @return int - error status
  *
  * @see  mql4/experts/SnowRoller.mq4
+ */
+int onInit() {
+   CreateStatusBox();
+   return(catch("onInit(1)"));
+}
+
+
+/**
+ * Called after the expert was manually loaded by the user. Also in tester with both "VisualMode=On|Off".
+ * There was an input dialog.
+ *
+ * @return int - error status
  */
 int onInitUser() {
    // check for a specified sequence id
@@ -122,10 +133,6 @@ int onInitRecompile() {                                        // same requireme
  * @return int - error status
  */
 int afterInit() {
-   // initialize status display
-   CreateStatusBox();
-   SS.All();
-
    if (!SetLogfile(GetLogFilename())) return(last_error);
 
    string section = ProgramName();
