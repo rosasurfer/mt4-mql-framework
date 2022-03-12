@@ -5,8 +5,9 @@
  * TODO:
  *  - stable forward performance tracking
  *    - recording of PL variants
- *       cumulated/daily PL in money w/costs
+ *       daily PL in money w/costs
  *       cumulated/daily PL in pip w/costs + w/o costs (no spread, no commission, no slippage)
+ *    - move validation of custom "EA.Recorder" to EA
  *    - system variants:
  *       Reverse ZigZag
  *       full session (24h) with trade breaks
@@ -135,15 +136,17 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 
-#define METRIC_CUM_MONEY            0           // recorded PL metrics
-#define METRIC_DAILY_MONEY          1           //
-#define METRIC_CUM_PIP              2           // cumulated and daily
-#define METRIC_DAILY_PIP            3           // in money and in pip
+#define METRIC_MON_CUMULATED_NET    0           // recorded PL metrics
+#define METRIC_MON_DAILY_NET        1           //
+#define METRIC_PIP_CUMULATED_GROSS  2           // in money and in pip
+#define METRIC_PIP_CUMULATED_NET    3           // cumulated and daily
+#define METRIC_PIP_DAILY_GROSS      4           // without and with trading costs (spread, slippage, commission)
+#define METRIC_PIP_DAILY_NET        5
 
 // sequence data
-int      sequence.id;                           // instance id between 1000-9999
+int      sequence.id;                           // instance id between 100-999
 datetime sequence.created;
-bool     sequence.isTest;                       // whether the sequence is a test (which can be loaded into an online chart)
+bool     sequence.isTest;                       // whether the sequence is a test
 string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquity;
@@ -236,9 +239,9 @@ int onTick() {
          }
       }
 
-      if (recordCustom) {                                            // update PL recorder values
-         if (recorder.enabled[METRIC_CUM_MONEY]) {
-            recorder.currValue[METRIC_CUM_MONEY] = sequence.totalPL;
+      if (recordCustom) {                                            // update recorder values
+         if (recorder.enabled[METRIC_MON_CUMULATED_NET]) {
+            recorder.currValue[METRIC_MON_CUMULATED_NET] = sequence.totalPL;
          }
       }
    }
@@ -798,10 +801,10 @@ int CreateSequenceId() {
 
 
 /**
- * Return symbol definitions for metrics to be recorded by this instance.
+ * Return custom symbol definitions for metrics to be recorded by this instance.
  *
  * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
- * @param  _Out_ bool   enabled      - whether the metric is active and recorded
+ * @param  _Out_ bool   enabled      - whether the metric is active and should be recorded
  * @param  _Out_ string symbol       - unique timeseries symbol
  * @param  _Out_ string symbolDescr  - timeseries description
  * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
@@ -816,21 +819,55 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   switch (i) {
-      case METRIC_CUM_MONEY:
-         enabled      = true;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +" w/costs, base 1000.00";
-         symbolGroup  = "";                                                   // "ZigZag(40,H1) 3 x EURUSD, cum. AUD w/costs, base 1000.00"
-         symbolDigits = 2;
-         baseValue    = 1000.00;
-         hstDirectory = "";
-         hstFormat    = NULL;
-         break;
+   symbolGroup  = "";
+   baseValue    = 1000.0;
+   hstDirectory = "";
+   hstFormat    = NULL;
 
-      default: return(false);
+   switch (i) {
+      case METRIC_MON_CUMULATED_NET:      // OK
+         enabled      = true;
+         symbolDigits = 2;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +" w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. AUD w/costs, base 1000.00"
+
+      case METRIC_MON_DAILY_NET:
+         enabled      = false;
+         symbolDigits = 2;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +" w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);
+
+      case METRIC_PIP_CUMULATED_GROSS:
+         enabled      = false;
+         symbolDigits = 1;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip w/o costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);
+
+      case METRIC_PIP_CUMULATED_NET:
+         enabled      = false;
+         symbolDigits = 1;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);
+
+      case METRIC_PIP_DAILY_GROSS:
+         enabled      = false;
+         symbolDigits = 1;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip w/o costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);
+
+      case METRIC_PIP_DAILY_NET:
+         enabled      = false;
+         symbolDigits = 1;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
+         return(true);
    }
-   return(true);
+   return(false);
 }
 
 
