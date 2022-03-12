@@ -7013,7 +7013,7 @@ bool UseTradeServerPath(string path, string caller = "") {
    string groupsFile  = path +"/symgroups.raw";
 
    if (!IsFile(symbolsFile, fsMode)) /*&&*/ if (!IsFile(groupsFile, fsMode)) {
-      if (caller == "0") caller = "";                    // (string) NULL
+      if (caller == "0") caller = "";                       // (string) NULL
       if (caller != "")  caller = caller +"->";
       logNotice(caller +"UseTradeServerPath(1)  \""+ path +"\" doesn't seem to be a regular trade server directory (file \"symbols.raw\" not found)");
 
