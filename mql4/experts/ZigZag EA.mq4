@@ -4,8 +4,8 @@
  *
  * TODO:
  *  - recording of PL variants
- *     cumulated/daily PL in money, with (if applicable) and w/o commission
- *     cumulated/daily PL in pip,   with (if applicable) and w/o commission
+ *     cumulated/daily PL in money, w/a and w/o commission
+ *     cumulated/daily PL in pip,   w/a and w/o commission
  *
  *  - status display
  *     parameter: ZigZag.Periods

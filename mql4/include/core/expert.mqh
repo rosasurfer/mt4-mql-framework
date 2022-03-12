@@ -120,7 +120,7 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}           // not yet implemented
 
-   // enable experts if they are disabled
+   // enable experts if they are disabled                      // @see  https://www.mql5.com/en/code/29022#    [Disable auto trading for one EA]
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
    if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                           // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
