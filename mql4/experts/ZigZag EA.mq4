@@ -10,22 +10,22 @@
  *
  *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
  *    "2":   Records a timeseries depicting cumulated PL before all costs (no spread) in quote units.
- *    "3":   Records a timeseries depicting cumulated PL after spread but before other costs in quote units.                     OK
+ *    "3":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
  *    "4":   Records a timeseries depicting cumulated PL after all costs in quote units.
  *
  *    "5":   Records a timeseries depicting daily PL after all costs in account currency.
  *    "6":   Records a timeseries depicting daily PL before all costs (no spread) in quote units.
- *    "7":   Records a timeseries depicting daily PL after spread but before other costs in quote units.
+ *    "7":   Records a timeseries depicting daily PL after spread but before all other costs in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs in quote units.
  *
- *    The term "quote units" refers to the best matching quote unit. One of pip, quote currency (QC) or index point (IP).
+ *    The term "quote units" refers to the best matching unit. One of pip, quote currency (QC) or index point (IP).
  *
  *
  * TODO:
  *  - stable forward performance tracking
  *    - recording of PL variants
  *       daily PL in money w/costs
- *       cumulated/daily PL in pip w/costs + w/o costs (no spread, no commission, no slippage)
+ *       cumulated/daily PL in pip with and w/o costs (spread, commission, swap, slippage)
  *    - move validation of custom "EA.Recorder" to EA
  *    - system variants:
  *       Reverse ZigZag
