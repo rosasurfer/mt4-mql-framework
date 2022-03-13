@@ -2,6 +2,25 @@
  * ZigZag EA
  *
  *
+ * Input parameters:
+ * -----------------
+ * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers (separated by comma).
+ *    "off": Nothing is recorded.
+ *    "on":  Records a single timeseries depicting the EA's equity graph after all costs.                                        OK
+ *
+ *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
+ *    "2":   Records a timeseries depicting cumulated theoretical PL (no spread, no costs) in quote terms.
+ *    "3":   Records a timeseries depicting cumulated PL after spread but without other costs in quote terms.
+ *    "4":   Records a timeseries depicting cumulated PL after all costs in quote terms.
+ *
+ *    "5":   Records a timeseries depicting daily PL after all costs in account currency.
+ *    "6":   Records a timeseries depicting daily theoretical PL (no spread, no costs) in quote terms.
+ *    "7":   Records a timeseries depicting daily PL after spread but without other costs in quote terms.
+ *    "8":   Records a timeseries depicting daily PL after all costs in quote terms.
+ *
+ *    The term "quote terms" refers to the best available quote unit. One of pip, quote currency (QC) or index point (IP).
+ *
+ *
  * TODO:
  *  - stable forward performance tracking
  *    - recording of PL variants
@@ -104,44 +123,46 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
+#define STRATEGY_ID                  107        // unique strategy id between 101-1023 (10 bit)
 
-#define SID_MIN                   100           // valid range of sequence id values
-#define SID_MAX                   999
+#define SID_MIN                      100        // valid range of sequence id values
+#define SID_MAX                      999
 
-#define STATUS_WAITING              1           // sequence status values
-#define STATUS_PROGRESSING          2
-#define STATUS_STOPPED              3
+#define STATUS_WAITING                 1        // sequence status values
+#define STATUS_PROGRESSING             2
+#define STATUS_STOPPED                 3
 
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG       // 1 start/stop/resume signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT      // 2
-#define SIGNAL_TIME                 3
-#define SIGNAL_TAKEPROFIT           4
+#define SIGNAL_TIME                    3
+#define SIGNAL_TAKEPROFIT              4
 
-#define HI_SIGNAL                   0           // order history indexes
-#define HI_TICKET                   1
-#define HI_LOTS                     2
-#define HI_OPENTYPE                 3
-#define HI_OPENTIME                 4
-#define HI_OPENPRICE                5
-#define HI_CLOSETIME                6
-#define HI_CLOSEPRICE               7
-#define HI_SLIPPAGE                 8
-#define HI_SWAP                     9
-#define HI_COMMISSION              10
-#define HI_PROFIT                  11
-#define HI_TOTALPROFIT             12
+#define HI_SIGNAL                      0        // order history indexes
+#define HI_TICKET                      1
+#define HI_LOTS                        2
+#define HI_OPENTYPE                    3
+#define HI_OPENTIME                    4
+#define HI_OPENPRICE                   5
+#define HI_CLOSETIME                   6
+#define HI_CLOSEPRICE                  7
+#define HI_SLIPPAGE                    8
+#define HI_SWAP                        9
+#define HI_COMMISSION                 10
+#define HI_PROFIT                     11
+#define HI_PROFIT_NET                 12
 
-#define TP_TYPE_MONEY               1           // TakeProfit types
-#define TP_TYPE_PERCENT             2
-#define TP_TYPE_PIP                 3
+#define TP_TYPE_MONEY                  1        // TakeProfit types
+#define TP_TYPE_PERCENT                2
+#define TP_TYPE_PIP                    3
 
-#define METRIC_MON_CUMULATED_NET    0           // recorded PL metrics
-#define METRIC_MON_DAILY_NET        1           //
-#define METRIC_PIP_CUMULATED_GROSS  2           // in money and in pip
-#define METRIC_PIP_CUMULATED_NET    3           // cumulated and daily
-#define METRIC_PIP_DAILY_GROSS      4           // without and with trading costs (spread, slippage, commission)
-#define METRIC_PIP_DAILY_NET        5
+#define METRIC_CUMULATED_NET_MONEY     0        // available PL metrics
+#define METRIC_CUMULATED_VIRT_QUOTE    1
+#define METRIC_CUMULATED_GROSS_QUOTE   2
+#define METRIC_CUMULATED_NET_QUOTE     3
+#define METRIC_DAILY_NET_MONEY         4
+#define METRIC_DAILY_VIRT_QUOTE        5
+#define METRIC_DAILY_GROSS_QUOTE       6
+#define METRIC_DAILY_NET_QUOTE         7
 
 // sequence data
 int      sequence.id;                           // instance id between 100-999
@@ -150,11 +171,11 @@ bool     sequence.isTest;                       // whether the sequence is a tes
 string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquity;
-double   sequence.openPL;                       // PL of all open positions (incl. commissions and swaps)
-double   sequence.closedPL;                     // PL of all closed positions (incl. commissions and swaps)
-double   sequence.totalPL;                      // total PL of the sequence: openPL + closedPL
-double   sequence.maxProfit;                    // max. observed total profit:   0...+n
-double   sequence.maxDrawdown;                  // max. observed total drawdown: -n...0
+double   sequence.openNetPL;                    // PL of all open positions (incl. transaction costs)
+double   sequence.closedNetPL;                  // PL of all closed positions (incl. transaction costs)
+double   sequence.totalNetPL;                   // total net PL of the sequence: netOpenPL + netClosedPL
+double   sequence.maxNetProfit;                 // max. observed total net profit:   0...+n
+double   sequence.maxNetDrawdown;               // max. observed total net drawdown: -n...0
 
 // order data
 int      open.signal;                           // one open position
@@ -162,10 +183,11 @@ int      open.ticket;                           //
 int      open.type;                             //
 datetime open.time;                             //
 double   open.price;                            //
-double   open.slippage;                         //
-double   open.swap;                             //
-double   open.commission;                       //
-double   open.profit;                           //
+double   open.slippage;                         // in pip
+double   open.swap;                             // in account currency
+double   open.commission;                       // in account currency
+double   open.grossPL;                          // in account currency
+double   open.grossPLNom;                       // nominal (quote terms)
 double   history[][13];                         // multiple closed positions
 
 // start conditions
@@ -197,13 +219,11 @@ string   stop.profitPip.description = "";
 string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // caching vars to speed-up ShowStatus()
-string   sLots                = "";
-string   sStartConditions     = "";
-string   sStopConditions      = "";
-string   sSequenceTotalPL     = "";
-string   sSequenceMaxProfit   = "";
-string   sSequenceMaxDrawdown = "";
-string   sSequencePlStats     = "";
+string   sLots               = "";
+string   sStartConditions    = "";
+string   sStopConditions     = "";
+string   sSequenceTotalNetPL = "";
+string   sSequencePlStats    = "";
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
@@ -240,9 +260,9 @@ int onTick() {
       }
 
       if (recordCustom) {                                            // update recorder values
-         if (recorder.enabled[METRIC_MON_CUMULATED_NET]) {
-            recorder.currValue[METRIC_MON_CUMULATED_NET] = sequence.totalPL;
-         }
+         if (recorder.enabled[METRIC_CUMULATED_NET_MONEY  ]) recorder.currValue[METRIC_CUMULATED_NET_MONEY  ] = sequence.totalNetPL;
+         if (recorder.enabled[METRIC_CUMULATED_GROSS_QUOTE]) recorder.currValue[METRIC_CUMULATED_GROSS_QUOTE] = 0;
+         if (recorder.enabled[METRIC_CUMULATED_NET_QUOTE  ]) recorder.currValue[METRIC_CUMULATED_NET_QUOTE  ] = 0;
       }
    }
    return(catch("onTick(1)"));
@@ -373,19 +393,20 @@ bool StartSequence(int signal) {
    // store position data
    open.signal     = signal;
    open.ticket     = ticket;
-   open.type       = oe.Type      (oe);
+   open.type       = type;
    open.time       = oe.OpenTime  (oe);
    open.price      = oe.OpenPrice (oe);
    open.slippage   = -oe.Slippage (oe);
    open.swap       = oe.Swap      (oe);
    open.commission = oe.Commission(oe);
-   open.profit     = oe.Profit    (oe);
+   open.grossPLNom = oe.Profit    (oe);
+   open.grossPLNom = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
 
    // update PL numbers
-   sequence.openPL      = NormalizeDouble(open.swap + open.commission + open.profit, 2);
-   sequence.totalPL     = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
-   sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
-   sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
+   sequence.openNetPL      = NormalizeDouble(open.swap + open.commission + open.grossPL, 2);
+   sequence.totalNetPL     = NormalizeDouble(sequence.openNetPL + sequence.closedNetPL, 2);
+   sequence.maxNetProfit   = MathMax(sequence.maxNetProfit, sequence.totalNetPL);
+   sequence.maxNetDrawdown = MathMin(sequence.maxNetDrawdown, sequence.totalNetPL);
    SS.TotalPL();
    SS.PLStats();
 
@@ -448,13 +469,14 @@ bool ReverseSequence(int signal) {
    open.slippage   = oe.Slippage  (oe);
    open.swap       = oe.Swap      (oe);
    open.commission = oe.Commission(oe);
-   open.profit     = oe.Profit    (oe);
+   open.grossPL    = oe.Profit    (oe);
+   open.grossPLNom = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
 
    // update PL numbers
-   sequence.openPL      = NormalizeDouble(open.swap + open.commission + open.profit, 2);
-   sequence.totalPL     = NormalizeDouble(sequence.openPL + sequence.closedPL, 2);
-   sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
-   sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
+   sequence.openNetPL      = NormalizeDouble(open.swap + open.commission + open.grossPL, 2);
+   sequence.totalNetPL     = NormalizeDouble(sequence.openNetPL + sequence.closedNetPL, 2);
+   sequence.maxNetProfit   = MathMax(sequence.maxNetProfit, sequence.totalNetPL);
+   sequence.maxNetDrawdown = MathMin(sequence.maxNetDrawdown, sequence.totalNetPL);
    SS.TotalPL();
    SS.PLStats();
 
@@ -475,25 +497,23 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   //if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage - oe.Slippage(oe), 1))) return(false);
-
    int i = ArrayRange(history, 0);
    ArrayResize(history, i + 1);
 
    SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
-   history[i][HI_SIGNAL     ] = signal;
-   history[i][HI_TICKET     ] = ticket;
-   history[i][HI_LOTS       ] = OrderLots();
-   history[i][HI_OPENTYPE   ] = OrderType();
-   history[i][HI_OPENTIME   ] = OrderOpenTime();
-   history[i][HI_OPENPRICE  ] = OrderOpenPrice();
-   history[i][HI_CLOSETIME  ] = OrderCloseTime();
-   history[i][HI_CLOSEPRICE ] = OrderClosePrice();
-   history[i][HI_SLIPPAGE   ] = slippage;
-   history[i][HI_SWAP       ] = OrderSwap();
-   history[i][HI_COMMISSION ] = OrderCommission();
-   history[i][HI_PROFIT     ] = OrderProfit();
-   history[i][HI_TOTALPROFIT] = NormalizeDouble(history[i][HI_SWAP] + history[i][HI_COMMISSION] + history[i][HI_PROFIT], 2);
+   history[i][HI_SIGNAL    ] = signal;
+   history[i][HI_TICKET    ] = ticket;
+   history[i][HI_LOTS      ] = OrderLots();
+   history[i][HI_OPENTYPE  ] = OrderType();
+   history[i][HI_OPENTIME  ] = OrderOpenTime();
+   history[i][HI_OPENPRICE ] = OrderOpenPrice();
+   history[i][HI_CLOSETIME ] = OrderCloseTime();
+   history[i][HI_CLOSEPRICE] = OrderClosePrice();
+   history[i][HI_SLIPPAGE  ] = slippage;
+   history[i][HI_SWAP      ] = OrderSwap();
+   history[i][HI_COMMISSION] = OrderCommission();
+   history[i][HI_PROFIT    ] = OrderProfit();
+   history[i][HI_PROFIT_NET] = NormalizeDouble(history[i][HI_SWAP] + history[i][HI_COMMISSION] + history[i][HI_PROFIT], 2);
    OrderPop("ArchiveClosedPosition(3)");
 
    open.signal     = NULL;
@@ -504,11 +524,12 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    open.slippage   = NULL;
    open.swap       = NULL;
    open.commission = NULL;
-   open.profit     = NULL;
+   open.grossPL    = NULL;
+   open.grossPLNom = NULL;
 
-   sequence.openPL   = 0;
-   sequence.closedPL = NormalizeDouble(sequence.closedPL + history[i][HI_TOTALPROFIT], 2);
-   sequence.totalPL  = sequence.closedPL;
+   sequence.openNetPL   = 0;
+   sequence.closedNetPL = NormalizeDouble(sequence.closedNetPL + history[i][HI_PROFIT_NET], 2);
+   sequence.totalNetPL  = sequence.closedNetPL;
 
    return(!catch("ArchiveClosedPosition(4)"));
 }
@@ -540,7 +561,7 @@ bool IsStopSignal(int &signal) {
    if (sequence.status == STATUS_PROGRESSING) {
       // stop.profitAbs: ----------------------------------------------------------------------------------------------------
       if (stop.profitAbs.condition) {
-         if (sequence.totalPL >= stop.profitAbs.value) {
+         if (sequence.totalNetPL >= stop.profitAbs.value) {
             if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
@@ -552,7 +573,7 @@ bool IsStopSignal(int &signal) {
          if (stop.profitPct.absValue == INT_MAX)
             stop.profitPct.absValue = stop.profitPct.AbsValue();
 
-         if (sequence.totalPL >= stop.profitPct.absValue) {
+         if (sequence.totalNetPL >= stop.profitPct.absValue) {
             if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
             signal = SIGNAL_TAKEPROFIT;
             return(true);
@@ -604,8 +625,8 @@ bool StopSequence(int signal) {
          if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                     return(!SetLastError(oe.Error(oe)));
          if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippage - oe.Slippage(oe), 1))) return(false);
 
-         sequence.maxProfit   = MathMax(sequence.maxProfit, sequence.totalPL);
-         sequence.maxDrawdown = MathMin(sequence.maxDrawdown, sequence.totalPL);
+         sequence.maxNetProfit   = MathMax(sequence.maxNetProfit, sequence.totalNetPL);
+         sequence.maxNetDrawdown = MathMin(sequence.maxNetDrawdown, sequence.totalNetPL);
          SS.TotalPL();
          SS.PLStats();
       }
@@ -639,7 +660,7 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
@@ -668,19 +689,20 @@ bool UpdateStatus() {
 
       open.swap       = OrderSwap();
       open.commission = OrderCommission();
-      open.profit     = OrderProfit();
+      open.grossPL    = OrderProfit();
+      open.grossPLNom = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
 
       if (isOpen) {
-         sequence.openPL = NormalizeDouble(open.swap + open.commission + open.profit, 2);
+         sequence.openNetPL = NormalizeDouble(open.swap + open.commission + open.grossPL, 2);
       }
       else {
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippage)) return(false);
       }
-      sequence.totalPL = NormalizeDouble(sequence.openPL + sequence.closedPL, 2); SS.TotalPL();
+      sequence.totalNetPL = NormalizeDouble(sequence.openNetPL + sequence.closedNetPL, 2); SS.TotalPL();
 
-      if      (sequence.totalPL > sequence.maxProfit  ) { sequence.maxProfit   = sequence.totalPL; SS.PLStats(); }
-      else if (sequence.totalPL < sequence.maxDrawdown) { sequence.maxDrawdown = sequence.totalPL; SS.PLStats(); }
+      if      (sequence.totalNetPL > sequence.maxNetProfit  ) { sequence.maxNetProfit   = sequence.totalNetPL; SS.PLStats(); }
+      else if (sequence.totalNetPL < sequence.maxNetDrawdown) { sequence.maxNetDrawdown = sequence.totalNetPL; SS.PLStats(); }
    }
    return(!catch("UpdateStatus(4)"));
 }
@@ -825,42 +847,42 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    hstFormat    = NULL;
 
    switch (i) {
-      case METRIC_MON_CUMULATED_NET:      // OK
+      case METRIC_CUMULATED_NET_MONEY:    // OK
          enabled      = true;
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +" w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
          return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. AUD w/costs, base 1000.00"
 
-      case METRIC_MON_DAILY_NET:
+      case METRIC_DAILY_NET_MONEY:
          enabled      = false;
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +" w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
          return(true);
 
-      case METRIC_PIP_CUMULATED_GROSS:
+      case METRIC_CUMULATED_GROSS_QUOTE:
          enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip w/o costs, base "+ DoubleToStr(baseValue, symbolDigits);
          return(true);
 
-      case METRIC_PIP_CUMULATED_NET:
+      case METRIC_CUMULATED_NET_QUOTE:
          enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip w/costs, base "+ DoubleToStr(baseValue, symbolDigits);
          return(true);
 
-      case METRIC_PIP_DAILY_GROSS:
+      case METRIC_DAILY_GROSS_QUOTE:
          enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip w/o costs, base "+ DoubleToStr(baseValue, symbolDigits);
          return(true);
 
-      case METRIC_PIP_DAILY_NET:
+      case METRIC_DAILY_NET_QUOTE:
          enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
@@ -994,11 +1016,11 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.name",               /*string  */ sequence.name);
    WriteIniString(file, section, "sequence.status",             /*int     */ sequence.status);
    WriteIniString(file, section, "sequence.startEquity",        /*double  */ DoubleToStr(sequence.startEquity, 2));
-   WriteIniString(file, section, "sequence.openPL",             /*double  */ DoubleToStr(sequence.openPL, 2));
-   WriteIniString(file, section, "sequence.closedPL",           /*double  */ DoubleToStr(sequence.closedPL, 2));
-   WriteIniString(file, section, "sequence.totalPL",            /*double  */ DoubleToStr(sequence.totalPL, 2));
-   WriteIniString(file, section, "sequence.maxProfit",          /*double  */ DoubleToStr(sequence.maxProfit, 2));
-   WriteIniString(file, section, "sequence.maxDrawdown",        /*double  */ DoubleToStr(sequence.maxDrawdown, 2) + CRLF);
+   WriteIniString(file, section, "sequence.openNetPL",          /*double  */ DoubleToStr(sequence.openNetPL, 2));
+   WriteIniString(file, section, "sequence.closedNetPL",        /*double  */ DoubleToStr(sequence.closedNetPL, 2));
+   WriteIniString(file, section, "sequence.totalNetPL",         /*double  */ DoubleToStr(sequence.totalNetPL, 2));
+   WriteIniString(file, section, "sequence.maxNetProfit",       /*double  */ DoubleToStr(sequence.maxNetProfit, 2));
+   WriteIniString(file, section, "sequence.maxNetDrawdown",     /*double  */ DoubleToStr(sequence.maxNetDrawdown, 2) + CRLF);
 
    // open order data
    WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
@@ -1009,7 +1031,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.slippage",               /*double  */ DoubleToStr(open.slippage, 1));
    WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
-   WriteIniString(file, section, "open.profit",                 /*double  */ DoubleToStr(open.profit, 2) + CRLF);
+   WriteIniString(file, section, "open.grossPL",                /*double  */ DoubleToStr(open.grossPL, 2));
+   WriteIniString(file, section, "open.grossPLNom",             /*double  */ DoubleToStr(open.grossPLNom, Digits) + CRLF);
 
    // closed order data
    int size = ArrayRange(history, 0);
@@ -1078,23 +1101,23 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,profit,totalProfit
+   // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
 
-   int      signal      = history[index][HI_SIGNAL     ];
-   int      ticket      = history[index][HI_TICKET     ];
-   double   lots        = history[index][HI_LOTS       ];
-   int      openType    = history[index][HI_OPENTYPE   ];
-   datetime openTime    = history[index][HI_OPENTIME   ];
-   double   openPrice   = history[index][HI_OPENPRICE  ];
-   datetime closeTime   = history[index][HI_CLOSETIME  ];
-   double   closePrice  = history[index][HI_CLOSEPRICE ];
-   double   slippage    = history[index][HI_SLIPPAGE   ];
-   double   swap        = history[index][HI_SWAP       ];
-   double   commission  = history[index][HI_COMMISSION ];
-   double   profit      = history[index][HI_PROFIT     ];
-   double   totalProfit = history[index][HI_TOTALPROFIT];
+   int      signal      = history[index][HI_SIGNAL    ];
+   int      ticket      = history[index][HI_TICKET    ];
+   double   lots        = history[index][HI_LOTS      ];
+   int      openType    = history[index][HI_OPENTYPE  ];
+   datetime openTime    = history[index][HI_OPENTIME  ];
+   double   openPrice   = history[index][HI_OPENPRICE ];
+   datetime closeTime   = history[index][HI_CLOSETIME ];
+   double   closePrice  = history[index][HI_CLOSEPRICE];
+   double   slippage    = history[index][HI_SLIPPAGE  ];
+   double   swap        = history[index][HI_SWAP      ];
+   double   commission  = history[index][HI_COMMISSION];
+   double   grossProfit = history[index][HI_PROFIT    ];
+   double   netProfit   = history[index][HI_PROFIT_NET];
 
-   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(profit, 2), ",", DoubleToStr(totalProfit, 2)));
+   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
@@ -1162,17 +1185,17 @@ bool ReadStatus() {
    // [Runtime status]
    section = "Runtime status";
    // sequence data
-   sequence.id          = GetIniInt    (file, section, "sequence.id"         );                       // int      sequence.id          = 1234
-   sequence.created     = GetIniInt    (file, section, "sequence.created"    );                       // datetime sequence.created     = 1624924800 (Mon, 2021.05.12 13:22:34)
-   sequence.isTest      = GetIniBool   (file, section, "sequence.isTest"     );                       // bool     sequence.isTest      = 1
-   sequence.name        = GetIniStringA(file, section, "sequence.name",    "");                       // string   sequence.name        = Z.1234
-   sequence.status      = GetIniInt    (file, section, "sequence.status"     );                       // int      sequence.status      = 1
-   sequence.startEquity = GetIniDouble (file, section, "sequence.startEquity");                       // double   sequence.startEquity = 1000.00
-   sequence.openPL      = GetIniDouble (file, section, "sequence.openPL"     );                       // double   sequence.openPL      = 23.45
-   sequence.closedPL    = GetIniDouble (file, section, "sequence.closedPL"   );                       // double   sequence.closedPL    = 45.67
-   sequence.totalPL     = GetIniDouble (file, section, "sequence.totalPL"    );                       // double   sequence.totalPL     = 123.45
-   sequence.maxProfit   = GetIniDouble (file, section, "sequence.maxProfit"  );                       // double   sequence.maxProfit   = 23.45
-   sequence.maxDrawdown = GetIniDouble (file, section, "sequence.maxDrawdown");                       // double   sequence.maxDrawdown = -11.23
+   sequence.id             = GetIniInt    (file, section, "sequence.id"            );                 // int      sequence.id             = 1234
+   sequence.created        = GetIniInt    (file, section, "sequence.created"       );                 // datetime sequence.created        = 1624924800 (Mon, 2021.05.12 13:22:34)
+   sequence.isTest         = GetIniBool   (file, section, "sequence.isTest"        );                 // bool     sequence.isTest         = 1
+   sequence.name           = GetIniStringA(file, section, "sequence.name",       "");                 // string   sequence.name           = Z.1234
+   sequence.status         = GetIniInt    (file, section, "sequence.status"        );                 // int      sequence.status         = 1
+   sequence.startEquity    = GetIniDouble (file, section, "sequence.startEquity"   );                 // double   sequence.startEquity    = 1000.00
+   sequence.openNetPL      = GetIniDouble (file, section, "sequence.openNetPL"     );                 // double   sequence.openNetPL      = 23.45
+   sequence.closedNetPL    = GetIniDouble (file, section, "sequence.closedNetPL"   );                 // double   sequence.closedNetPL    = 45.67
+   sequence.totalNetPL     = GetIniDouble (file, section, "sequence.totalNetPL"    );                 // double   sequence.totalNetPL     = 123.45
+   sequence.maxNetProfit   = GetIniDouble (file, section, "sequence.maxNetProfit"  );                 // double   sequence.maxNetProfit   = 23.45
+   sequence.maxNetDrawdown = GetIniDouble (file, section, "sequence.maxNetDrawdown");                 // double   sequence.maxNetDrawdown = -11.23
    SS.SequenceName();
 
    // open order data
@@ -1184,7 +1207,8 @@ bool ReadStatus() {
    open.slippage        = GetIniDouble (file, section, "open.slippage"  );                            // double   open.slippage   = 1.0
    open.swap            = GetIniDouble (file, section, "open.swap"      );                            // double   open.swap       = -1.23
    open.commission      = GetIniDouble (file, section, "open.commission");                            // double   open.commission = -5.50
-   open.profit          = GetIniDouble (file, section, "open.profit"    );                            // double   open.profit     = 12.34
+   open.grossPL         = GetIniDouble (file, section, "open.grossPL"   );                            // double   open.grossPL    = 12.34
+   open.grossPLNom      = GetIniDouble (file, section, "open.grossPLNom");                            // double   open.grossPLNom = 0.12345
 
    // history data
    string sKeys[], sOrder="";
@@ -1256,27 +1280,27 @@ bool ReadStatus.ParseHistory(string key, string value) {
    if (IsLastError())                    return(false);
    if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
 
-   // history.i=signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,profit,totalProfit
+   // history.i=signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))   return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    int index = StrToInteger(sId);
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-   int      signal      = StrToInteger(values[HI_SIGNAL     ]);
-   int      ticket      = StrToInteger(values[HI_TICKET     ]);
-   double   lots        =  StrToDouble(values[HI_LOTS       ]);
-   int      openType    = StrToInteger(values[HI_OPENTYPE   ]);
-   datetime openTime    = StrToInteger(values[HI_OPENTIME   ]);
-   double   openPrice   =  StrToDouble(values[HI_OPENPRICE  ]);
-   datetime closeTime   = StrToInteger(values[HI_CLOSETIME  ]);
-   double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE ]);
-   double   slippage    =  StrToDouble(values[HI_SLIPPAGE   ]);
-   double   swap        =  StrToDouble(values[HI_SWAP       ]);
-   double   commission  =  StrToDouble(values[HI_COMMISSION ]);
-   double   profit      =  StrToDouble(values[HI_PROFIT     ]);
-   double   totalProfit =  StrToDouble(values[HI_TOTALPROFIT]);
+   int      signal      = StrToInteger(values[HI_SIGNAL    ]);
+   int      ticket      = StrToInteger(values[HI_TICKET    ]);
+   double   lots        =  StrToDouble(values[HI_LOTS      ]);
+   int      openType    = StrToInteger(values[HI_OPENTYPE  ]);
+   datetime openTime    = StrToInteger(values[HI_OPENTIME  ]);
+   double   openPrice   =  StrToDouble(values[HI_OPENPRICE ]);
+   datetime closeTime   = StrToInteger(values[HI_CLOSETIME ]);
+   double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE]);
+   double   slippage    =  StrToDouble(values[HI_SLIPPAGE  ]);
+   double   swap        =  StrToDouble(values[HI_SWAP      ]);
+   double   commission  =  StrToDouble(values[HI_COMMISSION]);
+   double   grossProfit =  StrToDouble(values[HI_PROFIT    ]);
+   double   netProfit   =  StrToDouble(values[HI_PROFIT_NET]);
 
-   return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, profit, totalProfit));
+   return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, grossProfit, netProfit));
 }
 
 
@@ -1288,26 +1312,26 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return bool - success status
  */
-int History.AddRecord(int index, int signal, int ticket, double lots, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double slippage, double swap, double commission, double profit, double totalProfit) {
+int History.AddRecord(int index, int signal, int ticket, double lots, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
 
    int size = ArrayRange(history, 0);
    if (index >= size) ArrayResize(history, index+1);
    if (history[index][HI_TICKET] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite history["+ index +"] record, ticket #"+ history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-   history[index][HI_SIGNAL     ] = signal;
-   history[index][HI_TICKET     ] = ticket;
-   history[index][HI_LOTS       ] = lots;
-   history[index][HI_OPENTYPE   ] = openType;
-   history[index][HI_OPENTIME   ] = openTime;
-   history[index][HI_OPENPRICE  ] = openPrice;
-   history[index][HI_CLOSETIME  ] = closeTime;
-   history[index][HI_CLOSEPRICE ] = closePrice;
-   history[index][HI_SLIPPAGE   ] = slippage;
-   history[index][HI_SWAP       ] = swap;
-   history[index][HI_COMMISSION ] = commission;
-   history[index][HI_PROFIT     ] = profit;
-   history[index][HI_TOTALPROFIT] = totalProfit;
+   history[index][HI_SIGNAL    ] = signal;
+   history[index][HI_TICKET    ] = ticket;
+   history[index][HI_LOTS      ] = lots;
+   history[index][HI_OPENTYPE  ] = openType;
+   history[index][HI_OPENTIME  ] = openTime;
+   history[index][HI_OPENPRICE ] = openPrice;
+   history[index][HI_CLOSETIME ] = closeTime;
+   history[index][HI_CLOSEPRICE] = closePrice;
+   history[index][HI_SLIPPAGE  ] = slippage;
+   history[index][HI_SWAP      ] = swap;
+   history[index][HI_COMMISSION] = commission;
+   history[index][HI_PROFIT    ] = grossProfit;
+   history[index][HI_PROFIT_NET] = netProfit;
 
    return(!catch("History.AddRecord(3)"));
 }
@@ -1781,14 +1805,14 @@ void SS.StartStopConditions() {
 
 
 /**
- * ShowStatus: Update the string representation of "sequence.totalPL".
+ * ShowStatus: Update the string representation of "sequence.netTotalPL".
  */
 void SS.TotalPL() {
    if (__isChart) {
       // not before a position was opened
-      if (!open.ticket && !ArrayRange(history, 0)) sSequenceTotalPL = "-";
-      else if (ShowProfitInPercent)                sSequenceTotalPL = NumberToStr(MathDiv(sequence.totalPL, sequence.startEquity) * 100, "+.2") +"%";
-      else                                         sSequenceTotalPL = NumberToStr(sequence.totalPL, "+.2");
+      if (!open.ticket && !ArrayRange(history, 0)) sSequenceTotalNetPL = "-";
+      else if (ShowProfitInPercent)                sSequenceTotalNetPL = NumberToStr(MathDiv(sequence.totalNetPL, sequence.startEquity) * 100, "+.2") +"%";
+      else                                         sSequenceTotalNetPL = NumberToStr(sequence.totalNetPL, "+.2");
    }
 }
 
@@ -1803,16 +1827,16 @@ void SS.PLStats() {
          sSequencePlStats = "";
       }
       else {
-         string sSequenceMaxProfit="", sSequenceMaxDrawdown="";
+         string sSequenceMaxNetProfit="", sSequenceMaxNetDrawdown="";
          if (ShowProfitInPercent) {
-            sSequenceMaxProfit   = NumberToStr(MathDiv(sequence.maxProfit, sequence.startEquity) * 100, "+.2") +"%";
-            sSequenceMaxDrawdown = NumberToStr(MathDiv(sequence.maxDrawdown, sequence.startEquity) * 100, "+.2") +"%";
+            sSequenceMaxNetProfit   = NumberToStr(MathDiv(sequence.maxNetProfit, sequence.startEquity) * 100, "+.2") +"%";
+            sSequenceMaxNetDrawdown = NumberToStr(MathDiv(sequence.maxNetDrawdown, sequence.startEquity) * 100, "+.2") +"%";
          }
          else {
-            sSequenceMaxProfit   = NumberToStr(sequence.maxProfit, "+.2");
-            sSequenceMaxDrawdown = NumberToStr(sequence.maxDrawdown, "+.2");
+            sSequenceMaxNetProfit   = NumberToStr(sequence.maxNetProfit, "+.2");
+            sSequenceMaxNetDrawdown = NumberToStr(sequence.maxNetDrawdown, "+.2");
          }
-         sSequencePlStats = StringConcatenate("(", sSequenceMaxProfit, " / ", sSequenceMaxDrawdown, ")");
+         sSequencePlStats = StringConcatenate("(", sSequenceMaxNetProfit, " / ", sSequenceMaxNetDrawdown, ")");
       }
    }
 }
@@ -1845,12 +1869,12 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                 NL,
-                                                                                           NL,
-                                  "Lots:      ", sLots,                                    NL,
-                                  "Start:    ",  sStartConditions,                         NL,
-                                  "Stop:     ",  sStopConditions,                          NL,
-                                  "Profit:   ",  sSequenceTotalPL, "  ", sSequencePlStats, NL
+   string text = StringConcatenate(ProgramName(), "    ", sStatus, sError,                    NL,
+                                                                                              NL,
+                                  "Lots:      ", sLots,                                       NL,
+                                  "Start:    ",  sStartConditions,                            NL,
+                                  "Stop:     ",  sStopConditions,                             NL,
+                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats, NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
