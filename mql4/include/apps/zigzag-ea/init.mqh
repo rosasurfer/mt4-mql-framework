@@ -112,6 +112,10 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
+   double pipValue = PipValue();
+   if (!pipValue) return(last_error);
+   quoteUnitValue = pipValue/Pip;                              // quote unit value of 1 lot in account currency (ignores a floating value)
+
    if (IsTesting() || !IsTestSequence()) {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
       if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
