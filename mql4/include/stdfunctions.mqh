@@ -803,7 +803,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       else if (Symbol() == "EURJPY") dynamicTickValue = 100/Close[0];
       else if (Symbol() == "GBPJPY") dynamicTickValue = 100/Close[0];
       else if (Symbol() == "USDJPY") dynamicTickValue = 100/Close[0];
-      else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in Strategy Tester not yet implemented", ERR_NOT_IMPLEMENTED));
+      else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in tester not yet implemented", ERR_NOT_IMPLEMENTED));
       return(Pip/tickSize * dynamicTickValue * lots);                // return the calculated value
    }
 

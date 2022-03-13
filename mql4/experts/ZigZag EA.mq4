@@ -11,7 +11,7 @@
  *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
  *    "2":   Records a timeseries depicting cumulated PL before all costs (no spread) in quote units.
  *    "3":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
- *    "4":   Records a timeseries depicting cumulated PL after all costs in quote units.
+ *    "4":   Records a timeseries depicting cumulated PL after all costs in quote units.                                         OK
  *
  *    "5":   Records a timeseries depicting daily PL after all costs in account currency.
  *    "6":   Records a timeseries depicting daily PL before all costs (no spread) in quote units.
@@ -26,6 +26,7 @@
  *    - recording of PL variants
  *       daily PL in money w/costs
  *       cumulated/daily PL in pip with and w/o costs (spread, commission, swap, slippage)
+ *       add quote unit multiplicator
  *    - move validation of custom "EA.Recorder" to EA
  *    - system variants:
  *       Reverse ZigZag
@@ -98,7 +99,7 @@
  *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
-int   __InitFlags[] = {INIT_BUFFERED_LOG};
+int   __InitFlags[] = {INIT_PIPVALUE, INIT_BUFFERED_LOG};
 int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
@@ -171,14 +172,21 @@ bool     sequence.isTest;                       // whether the sequence is a tes
 string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquity;
+
 double   sequence.openGrossPlQu;
 double   sequence.closedGrossPlQu;
 double   sequence.totalGrossPlQu;
-double   sequence.openNetPL;                    // PL of all open positions (incl. transaction costs)
-double   sequence.closedNetPL;                  // PL of all closed positions (incl. transaction costs)
-double   sequence.totalNetPL;                   // total net PL of the sequence: netOpenPL + netClosedPL
-double   sequence.maxNetProfit;                 // max. observed total net profit:   0...+n
-double   sequence.maxNetDrawdown;               // max. observed total net drawdown: -n...0
+
+double   sequence.openNetPL;
+double   sequence.closedNetPL;
+double   sequence.totalNetPL;                   // total net PL in account currency: openNetPL + closedNetPL
+
+double   sequence.openNetPlQu;
+double   sequence.closedNetPlQu;
+double   sequence.totalNetPlQu;                 // total net PL in quote units: openNetPlQu + closedNetPlQu
+
+double   sequence.maxNetProfit;                 // max. observed total net profit in account currency:   0...+n
+double   sequence.maxNetDrawdown;               // max. observed total net drawdown in account currency: -n...0
 
 // order data
 int      open.signal;                           // one open position
@@ -191,6 +199,8 @@ double   open.swap;                             // in account currency
 double   open.commission;                       // in account currency
 double   open.grossPL;                          // in account currency
 double   open.grossPlQu;                        // in quote units
+double   open.netPL;                            // in account currency
+double   open.netPlQu;                          // in quote units
 double   history[][13];                         // multiple closed positions
 
 // start conditions
@@ -219,6 +229,7 @@ double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
 // other
+double   quoteUnitValue;                        // quote unit value of 1 lot in account currency
 string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // caching vars to speed-up ShowStatus()
@@ -265,7 +276,7 @@ int onTick() {
       if (recordCustom) {                                            // update recorder values
          if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetPL;
          if (recorder.enabled[METRIC_CUMULATED_QUOTE_GROSS]) recorder.currValue[METRIC_CUMULATED_QUOTE_GROSS] = sequence.totalGrossPlQu/Pip;
-         if (recorder.enabled[METRIC_CUMULATED_QUOTE_NET  ]) recorder.currValue[METRIC_CUMULATED_QUOTE_NET  ] = 0;
+         if (recorder.enabled[METRIC_CUMULATED_QUOTE_NET  ]) recorder.currValue[METRIC_CUMULATED_QUOTE_NET  ] = sequence.totalNetPlQu  /Pip;
       }
    }
    return(catch("onTick(1)"));
@@ -404,13 +415,18 @@ bool StartSequence(int signal) {
    open.commission = oe.Commission(oe);
    open.grossPL    = oe.Profit    (oe);
    open.grossPlQu  = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
+   open.netPL      = open.grossPL + open.swap + open.commission;
+   open.netPlQu    = open.grossPlQu + (open.swap + open.commission)/quoteUnitValue;
 
    // update PL numbers
    sequence.openGrossPlQu  = open.grossPlQu;
    sequence.totalGrossPlQu = sequence.openGrossPlQu + sequence.closedGrossPlQu;
 
-   sequence.openNetPL      = open.swap + open.commission + open.grossPL;
+   sequence.openNetPL      = open.netPL;
    sequence.totalNetPL     = sequence.openNetPL + sequence.closedNetPL;
+   sequence.openNetPlQu    = open.netPlQu;
+   sequence.totalNetPlQu   = sequence.openNetPlQu + sequence.closedNetPlQu;
+
    sequence.maxNetProfit   = MathMax(sequence.maxNetProfit, sequence.totalNetPL);
    sequence.maxNetDrawdown = MathMin(sequence.maxNetDrawdown, sequence.totalNetPL);
    SS.TotalPL();
@@ -477,13 +493,18 @@ bool ReverseSequence(int signal) {
    open.commission = oe.Commission(oe);
    open.grossPL    = oe.Profit    (oe);
    open.grossPlQu  = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
+   open.netPL      = open.grossPL + open.swap + open.commission;
+   open.netPlQu    = open.grossPlQu + (open.swap + open.commission)/quoteUnitValue;
 
    // update PL numbers
    sequence.openGrossPlQu  = open.grossPlQu;
    sequence.totalGrossPlQu = sequence.openGrossPlQu + sequence.closedGrossPlQu;
 
-   sequence.openNetPL      = open.swap + open.commission + open.grossPL;
+   sequence.openNetPL      = open.netPL;
    sequence.totalNetPL     = sequence.openNetPL + sequence.closedNetPL;
+   sequence.openNetPlQu    = open.netPlQu;
+   sequence.totalNetPlQu   = sequence.openNetPlQu + sequence.closedNetPlQu;
+
    sequence.maxNetProfit   = MathMax(sequence.maxNetProfit, sequence.totalNetPL);
    sequence.maxNetDrawdown = MathMin(sequence.maxNetDrawdown, sequence.totalNetPL);
    SS.TotalPL();
@@ -522,7 +543,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    history[i][HI_SWAP        ] = OrderSwap();
    history[i][HI_COMMISSION  ] = OrderCommission();
    history[i][HI_GROSS_PROFIT] = OrderProfit();
-   history[i][HI_NET_PROFIT  ] = NormalizeDouble(OrderSwap() + OrderCommission() + OrderProfit(), 2);
+   history[i][HI_NET_PROFIT  ] = OrderSwap() + OrderCommission() + OrderProfit();
 
    // update PL numbers
    sequence.openGrossPlQu    = 0;
@@ -532,6 +553,10 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    sequence.openNetPL        = 0;
    sequence.closedNetPL     += history[i][HI_NET_PROFIT];
    sequence.totalNetPL       = sequence.closedNetPL;
+
+   sequence.openNetPlQu      = 0;
+   sequence.closedNetPlQu    = sequence.closedNetPL/quoteUnitValue;
+   sequence.totalNetPlQu     = sequence.closedNetPlQu;
    OrderPop("ArchiveClosedPosition(3)");
 
    // reset open position data
@@ -545,6 +570,8 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    open.commission = NULL;
    open.grossPL    = NULL;
    open.grossPlQu  = NULL;
+   open.netPL      = NULL;
+   open.netPlQu    = NULL;
 
    return(!catch("ArchiveClosedPosition(4)"));
 }
@@ -706,16 +733,20 @@ bool UpdateStatus() {
       open.commission = OrderCommission();
       open.grossPL    = OrderProfit();
       open.grossPlQu  = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.netPL      = open.grossPL + open.swap + open.commission;
+      open.netPlQu    = open.grossPlQu + (open.swap + open.commission)/quoteUnitValue;
 
       if (isOpen) {
          sequence.openGrossPlQu = open.grossPlQu;
-         sequence.openNetPL     = open.swap + open.commission + open.grossPL;
+         sequence.openNetPlQu   = open.netPlQu;
+         sequence.openNetPL     = open.netPL;
       }
       else {
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippage)) return(false);
       }
       sequence.totalGrossPlQu = sequence.openGrossPlQu + sequence.closedGrossPlQu;
+      sequence.totalNetPlQu   = sequence.openNetPlQu   + sequence.closedNetPlQu;
       sequence.totalNetPL     = sequence.openNetPL     + sequence.closedNetPL; SS.TotalPL();
 
       if      (sequence.totalNetPL > sequence.maxNetProfit  ) { sequence.maxNetProfit   = sequence.totalNetPL; SS.PLStats(); }
@@ -886,8 +917,8 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. QU, w/spread";
          return(true);
 
-      case METRIC_CUMULATED_QUOTE_NET:
-         enabled      = false;
+      case METRIC_CUMULATED_QUOTE_NET:          // OK
+         enabled      = true;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. QU, all costs";
@@ -1056,6 +1087,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.openNetPL",          /*double  */ DoubleToStr(sequence.openNetPL, 2));
    WriteIniString(file, section, "sequence.closedNetPL",        /*double  */ DoubleToStr(sequence.closedNetPL, 2));
    WriteIniString(file, section, "sequence.totalNetPL",         /*double  */ DoubleToStr(sequence.totalNetPL, 2));
+   WriteIniString(file, section, "sequence.openNetPlQu",        /*double  */ DoubleToStr(sequence.openNetPlQu, 6));
+   WriteIniString(file, section, "sequence.closedNetPlQu",      /*double  */ DoubleToStr(sequence.closedNetPlQu, 6));
+   WriteIniString(file, section, "sequence.totalNetPlQu",       /*double  */ DoubleToStr(sequence.totalNetPlQu, 6));
    WriteIniString(file, section, "sequence.maxNetProfit",       /*double  */ DoubleToStr(sequence.maxNetProfit, 2));
    WriteIniString(file, section, "sequence.maxNetDrawdown",     /*double  */ DoubleToStr(sequence.maxNetDrawdown, 2) + CRLF);
 
@@ -1069,7 +1103,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.swap",                   /*double  */ DoubleToStr(open.swap, 2));
    WriteIniString(file, section, "open.commission",             /*double  */ DoubleToStr(open.commission, 2));
    WriteIniString(file, section, "open.grossPL",                /*double  */ DoubleToStr(open.grossPL, 2));
-   WriteIniString(file, section, "open.grossPlQu",              /*double  */ DoubleToStr(open.grossPlQu, 6) + CRLF);
+   WriteIniString(file, section, "open.grossPlQu",              /*double  */ DoubleToStr(open.grossPlQu, 6));
+   WriteIniString(file, section, "open.netPL",                  /*double  */ DoubleToStr(open.netPL, 2));
+   WriteIniString(file, section, "open.netPlQu",                /*double  */ DoubleToStr(open.netPlQu, 6) + CRLF);
 
    // closed order data
    int size = ArrayRange(history, 0);
@@ -1234,6 +1270,9 @@ bool ReadStatus() {
    sequence.openNetPL       = GetIniDouble (file, section, "sequence.openNetPL"      );               // double   sequence.openNetPL       = 23.45
    sequence.closedNetPL     = GetIniDouble (file, section, "sequence.closedNetPL"    );               // double   sequence.closedNetPL     = 45.67
    sequence.totalNetPL      = GetIniDouble (file, section, "sequence.totalNetPL"     );               // double   sequence.totalNetPL      = 123.45
+   sequence.openNetPlQu     = GetIniDouble (file, section, "sequence.openNetPlQu"    );               // double   sequence.openNetPlQu     = 0.12345
+   sequence.closedNetPlQu   = GetIniDouble (file, section, "sequence.closedNetPlQu"  );               // double   sequence.closedNetPlQu   = -0.23456
+   sequence.totalNetPlQu    = GetIniDouble (file, section, "sequence.totalNetPlQu"   );               // double   sequence.totalNetPlQu    = 1.23456
    sequence.maxNetProfit    = GetIniDouble (file, section, "sequence.maxNetProfit"   );               // double   sequence.maxNetProfit    = 23.45
    sequence.maxNetDrawdown  = GetIniDouble (file, section, "sequence.maxNetDrawdown" );               // double   sequence.maxNetDrawdown  = -11.23
    SS.SequenceName();
@@ -1249,6 +1288,8 @@ bool ReadStatus() {
    open.commission          = GetIniDouble (file, section, "open.commission");                        // double   open.commission = -5.50
    open.grossPL             = GetIniDouble (file, section, "open.grossPL"   );                        // double   open.grossPL    = 12.34
    open.grossPlQu           = GetIniDouble (file, section, "open.grossPlQu" );                        // double   open.grossPlQu  = 0.12345
+   open.netPL               = GetIniDouble (file, section, "open.netPL"     );                        // double   open.netPL      = 12.56
+   open.netPlQu             = GetIniDouble (file, section, "open.netPlQu"   );                        // double   open.netPlQu    = 0.12345
 
    // history data
    string sKeys[], sOrder="";
