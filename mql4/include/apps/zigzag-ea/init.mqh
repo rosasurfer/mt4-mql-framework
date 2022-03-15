@@ -114,7 +114,7 @@ int onInitRecompile() {                                     // same requirements
 int afterInit() {
    double pipValue = PipValue();
    if (!pipValue) return(last_error);
-   quoteUnitValue = pipValue/Pip;                              // quote unit value of 1 lot in account currency (ignores a floating value)
+   unitValue = pipValue/Pip;                                   // quote unit value of 1 lot in account currency   TODO: make more exact if online
 
    if (IsTesting() || !IsTestSequence()) {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
