@@ -22,8 +22,6 @@
  *
  *
  * TODO:
- *  - fix enabling/disabling of metrics
- *
  *  - fix metric "4"
  *  - stable forward performance tracking
  *    - recording of PL variants
@@ -894,6 +892,10 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
+   string sIds[];
+   Explode(EA.Recorder, ",", sIds, NULL);
+
+   enabled      = StringInArray(sIds, ""+ (i+1));
    symbolGroup  = "";
    baseValue    = 1000.0;
    hstDirectory = "";
@@ -901,7 +903,6 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
 
    switch (i) {
       case METRIC_CUMULATED_MONEY_NET:          // OK
-         enabled      = true;
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +", all costs";
@@ -909,21 +910,18 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_CUMULATED_UNITS_ZERO:
-         enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, no spread/costs";
          return(true);
 
       case METRIC_CUMULATED_UNITS_GROSS:        // OK
-         enabled      = true;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, w/spread";
          return(true);
 
       case METRIC_CUMULATED_UNITS_NET:          // OK
-         enabled      = true;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, all costs";
@@ -931,7 +929,6 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_MONEY_NET:
-         enabled      = false;
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +", all costs";
@@ -939,21 +936,18 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
-         enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, no spread/costs";
          return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
-         enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, w/spread";
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
-         enabled      = false;
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, all costs";
