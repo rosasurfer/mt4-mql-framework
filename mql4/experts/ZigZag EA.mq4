@@ -22,7 +22,6 @@
  *
  *
  * TODO:
- *  - fix metric "4"
  *  - stable forward performance tracking
  *    - recording of PL variants
  *       daily PL in money w/costs
@@ -232,7 +231,7 @@ double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
 // other
-double   quoteUnitValue;                        // quote unit value of 1 lot in account currency
+double   unitValue;                             // quote unit value of 1 lot in account currency
 string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // caching vars to speed-up ShowStatus()
@@ -419,7 +418,7 @@ bool StartSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/quoteUnitValue;
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*Lots);
 
    // update PL numbers
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -497,7 +496,7 @@ bool ReverseSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/quoteUnitValue;
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*Lots);
 
    // update PL numbers
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -530,10 +529,19 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
+   SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
+
+   // update now closed position data
+   open.swapM        = OrderSwap();
+   open.commissionM  = OrderCommission();
+   open.grossProfitM = OrderProfit();
+   open.grossProfitU = ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
+   open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*OrderLots());
+
+   // update history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i + 1);
-
-   SelectTicket(ticket, "ArchiveClosedPosition(2)", /*push=*/true);
    history[i][HI_SIGNAL      ] = signal;
    history[i][HI_TICKET      ] = ticket;
    history[i][HI_LOTS        ] = OrderLots();
@@ -543,23 +551,23 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    history[i][HI_CLOSETIME   ] = OrderCloseTime();
    history[i][HI_CLOSEPRICE  ] = OrderClosePrice();
    history[i][HI_SLIPPAGE    ] = slippage;
-   history[i][HI_SWAP        ] = OrderSwap();
-   history[i][HI_COMMISSION  ] = OrderCommission();
-   history[i][HI_GROSS_PROFIT] = OrderProfit();
-   history[i][HI_NET_PROFIT  ] = OrderSwap() + OrderCommission() + OrderProfit();
+   history[i][HI_SWAP        ] = open.swapM;
+   history[i][HI_COMMISSION  ] = open.commissionM;
+   history[i][HI_GROSS_PROFIT] = open.grossProfitM;
+   history[i][HI_NET_PROFIT  ] = open.netProfitM;
 
    // update PL numbers
    sequence.openGrossProfitU    = 0;
-   sequence.closedGrossProfitU += ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
+   sequence.closedGrossProfitU += open.grossProfitU;
    sequence.totalGrossProfitU   = sequence.closedGrossProfitU;
 
    sequence.openNetProfitM    = 0;
-   sequence.closedNetProfitM += history[i][HI_NET_PROFIT];
+   sequence.closedNetProfitM += open.netProfitM;
    sequence.totalNetProfitM   = sequence.closedNetProfitM;
 
-   sequence.openNetProfitU   = 0;
-   sequence.closedNetProfitU = sequence.closedNetProfitM/quoteUnitValue;
-   sequence.totalNetProfitU  = sequence.closedNetProfitU;
+   sequence.openNetProfitU    = 0;
+   sequence.closedNetProfitU += open.netProfitU;
+   sequence.totalNetProfitU   = sequence.closedNetProfitU;
    OrderPop("ArchiveClosedPosition(3)");
 
    // reset open position data
@@ -575,7 +583,6 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    open.grossProfitU = NULL;
    open.netProfitM   = NULL;
    open.netProfitU   = NULL;
-
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
@@ -737,7 +744,7 @@ bool UpdateStatus() {
       open.grossProfitM = OrderProfit();
       open.grossProfitU = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/quoteUnitValue;
+      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*OrderLots());
 
       if (isOpen) {
          sequence.openGrossProfitU = open.grossProfitU;
