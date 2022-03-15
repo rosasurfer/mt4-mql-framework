@@ -22,8 +22,10 @@
  *
  *
  * TODO:
+ *  - fix enabling/disabling of metrics
+ *
+ *  - fix metric "4"
  *  - stable forward performance tracking
- *    - fix metric "4"
  *    - recording of PL variants
  *       daily PL in money w/costs
  *       cumulated/daily PL in pip with and w/o costs (spread, commission, swap, slippage)
@@ -46,6 +48,7 @@
  *
  *  - input parameter ZigZag.Timeframe
  *  - ChartInfos: read/display symbol description as long name
+ *  - ChartInfos: fix display of symbol with Digits=1 (pip)
  *
  *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
  *
@@ -85,6 +88,7 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - CLI tools to rename/update/delete symbols
  *  - CLI tools to shift/scale histories
  *  - implement GetAccountCompany() and read the name from the server file if not connected
@@ -1098,7 +1102,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
-   WriteIniString(file, section, "open.time",                   /*datetime*/ open.time);
+   WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.slippageP",              /*double  */ DoubleToStr(open.slippageP, 1));
    WriteIniString(file, section, "open.swapM",                  /*double  */ DoubleToStr(open.swapM, 2));
@@ -1116,12 +1120,12 @@ bool SaveStatus() {
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
-   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value);
+   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value + ifString(start.time.value, GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
    WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
 
    WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
-   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value);
+   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value + ifString(stop.time.value, GmtTimeFormat(stop.time.value, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
    WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
 

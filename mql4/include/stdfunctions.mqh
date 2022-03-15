@@ -4081,11 +4081,8 @@ datetime TimeServer(bool watchLastTick = true) {
    static bool isLibrary = -1;
    if (isLibrary == -1) isLibrary = IsLibrary();
 
-   if (This.IsTesting()) {
-      if (isLibrary)
-         return(__ExecutionContext[EC.currTickTime]);
-      return(Tick.time);
-   }
+   if (This.IsTesting())
+      return(TimeCurrent());
 
    datetime serverTime = GmtToServerTime(GetGmtTime());
    if (serverTime == NaT) return(NULL);
