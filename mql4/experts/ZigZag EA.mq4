@@ -23,8 +23,8 @@
  *
  * TODO:
  *  - stable forward performance tracking
- *    - recording of PL variants
- *       cumulated/daily PL in pip with and w/o costs (spread, commission, swap, slippage)
+ *    - PL recording
+ *       cumulated PL in pip with zero costs (spread, commission, swap, slippage)
  *       daily PL of all cumulated variants
  *       add quote unit multiplicator
  *    - move validation of custom "EA.Recorder" to EA
