@@ -9,12 +9,12 @@
  *    "on":  Records a single timeseries depicting the EA's equity graph after all costs.
  *
  *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
- *    "2":   Records a timeseries depicting cumulated PL before all costs (zero spread) in quote units.
+ *    "2":   Records a timeseries depicting cumulated PL before all costs (zero spread and slippage) in quote units.
  *    "3":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
  *    "4":   Records a timeseries depicting cumulated PL after all costs in quote units.                                         OK
  *
  *    "5":   Records a timeseries depicting daily PL after all costs in account currency.
- *    "6":   Records a timeseries depicting daily PL before all costs (zero spread) in quote units.
+ *    "6":   Records a timeseries depicting daily PL before all costs (zero spread and slippage) in quote units.
  *    "7":   Records a timeseries depicting daily PL after spread but before all other costs in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs in quote units.
  *
@@ -231,7 +231,7 @@ double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
 // other
-double   unitValue;                             // quote unit value of 1 lot in account currency
+double   _unitValue;                             // quote unit value of 1 lot in account currency
 string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // caching vars to speed-up ShowStatus()
@@ -418,7 +418,7 @@ bool StartSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*Lots);
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -496,7 +496,7 @@ bool ReverseSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*Lots);
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -537,7 +537,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    open.grossProfitM = OrderProfit();
    open.grossProfitU = ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*OrderLots());
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
    // update history
    int i = ArrayRange(history, 0);
@@ -744,7 +744,7 @@ bool UpdateStatus() {
       open.grossProfitM = OrderProfit();
       open.grossProfitU = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/(unitValue*OrderLots());
+      open.netProfitU   = open.grossProfitU; if (open.swapM || open.commissionM) open.netProfitU += (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
       if (isOpen) {
          sequence.openGrossProfitU = open.grossProfitU;
@@ -1823,6 +1823,27 @@ bool RemoveSequenceData() {
       ObjectDelete(label);
    Chart.RestoreString(ProgramName() +".Sequence.ID", label);
    return(true);
+}
+
+
+/**
+ * Return the quote unit value of the specified lot amount in account currency. As PipValue but for a full quote unit.
+ *
+ * @param  double lots [optional] - lot amount (default: 1 lot)
+ *
+ * @return double - unit value or NULL (0) in case of errors (in tester the value may be not exact)
+ */
+double UnitValue(double lots = 1.0) {
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   int error = GetLastError();
+   if (error || !tickValue)   return(!catch("UnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_INVALID_MARKET_DATA)));
+
+   static double tickSize; if (!tickSize) {
+      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+      error = GetLastError();
+      if (error || !tickSize) return(!catch("UnitValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_INVALID_MARKET_DATA)));
+   }
+   return(tickValue/tickSize * lots);
 }
 
 
