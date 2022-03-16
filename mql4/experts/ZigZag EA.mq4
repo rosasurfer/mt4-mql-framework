@@ -5,8 +5,8 @@
  * Input parameters:
  * -----------------
  * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers (separated by comma).
- *    "off": Nothing is recorded.
- *    "on":  Records a single timeseries depicting the EA's equity graph after all costs.
+ *    "off": Nothing is recorded.                                                                                                OK
+ *    "on":  Records a single timeseries depicting the EA's regular equity graph after all costs.                                OK
  *
  *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
  *    "2":   Records a timeseries depicting cumulated PL before all costs (zero spread and slippage) in quote units.
@@ -24,8 +24,8 @@
  * TODO:
  *  - stable forward performance tracking
  *    - recording of PL variants
- *       daily PL in money w/costs
  *       cumulated/daily PL in pip with and w/o costs (spread, commission, swap, slippage)
+ *       daily PL of all cumulated variants
  *       add quote unit multiplicator
  *    - move validation of custom "EA.Recorder" to EA
  *    - system variants:
@@ -231,7 +231,6 @@ double   stop.profitPip.value;
 string   stop.profitPip.description = "";
 
 // other
-double   _unitValue;                             // quote unit value of 1 lot in account currency
 string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
 
 // caching vars to speed-up ShowStatus()
