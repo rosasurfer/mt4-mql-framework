@@ -116,12 +116,13 @@ int afterInit() {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
       if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
 
-      string section      = "Tester."+ StrTrim(ProgramName());
-      test.onStopPause    = GetConfigBool(section, "OnStopPause",    true);
-      test.optimizeStatus = GetConfigBool(section, "OptimizeStatus", true);
+      string section = "Tester."+ StrTrim(ProgramName());
+      test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
+      test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
+      test.onStopPause         = GetConfigBool(section, "OnStopPause",         true);
+      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus",      true);
    }
    StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
-   SS.All();
    return(catch("afterInit(1)"));
 }
 
