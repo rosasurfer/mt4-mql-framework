@@ -112,10 +112,6 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
-   double pipValue = PipValue();
-   if (!pipValue) return(last_error);
-   unitValue = pipValue/Pip;                                   // quote unit value of 1 lot in account currency   TODO: make more exact if online
-
    if (IsTesting() || !IsTestSequence()) {
       bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
       if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()

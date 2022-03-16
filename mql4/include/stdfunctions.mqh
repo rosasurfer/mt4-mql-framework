@@ -726,9 +726,9 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
    static double tickSize;
    if (!tickSize) {
-      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);             // schlägt fehl, wenn kein Tick vorhanden ist
-      int error = GetLastError();                                 // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-      if (IsError(error)) {                                       // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
+      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
+      int error = GetLastError();                                    // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
+      if (IsError(error)) {                                          // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
          if (!suppressErrors) catch("PipValue(1)", error);
          return(0);
       }
