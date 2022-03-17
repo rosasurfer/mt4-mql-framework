@@ -22,9 +22,14 @@
  *
  *
  * TODO:
- *  - stable forward performance tracking
+ *  - performance tracking
  *    - PL recording
  *       cumulated PL in pip with zero costs (spread, commission, swap, slippage)
+ *        StartSequence()
+ *        ReverseSequence()
+ *        StopSequence()
+ *        UpdateStatus()
+ *
  *       daily PL of all cumulated variants
  *       add quote unit multiplicator
  *    - move validation of custom "EA.Recorder" to EA
@@ -33,6 +38,15 @@
  *       full session (24h) with trade breaks
  *       partial session (e.g. 09:00-16:00) with trade breaks
  *    - reverse trading option "ZigZag.R" (and Turtle Soup)
+ *
+ *  - stabilize performance tracking
+ *    - add stoploss to every order
+ *    - RestoreSequence()->SynchronizeStatus()
+ *       handle a lost/open position
+ *       recalculate position/sequence stats
+ *    - virtual trade option: removes ERR_TRADESERVER_GONE
+ *    - CLI tools to shift or scale histories
+ *    - notifications for price feed outages
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -44,13 +58,10 @@
  *     recorded symbols with descriptions
  *
  *  - input parameter ZigZag.Timeframe
+ *  - stop condition "pip"
+ *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
  *  - ChartInfos: read/display symbol description as long name
  *  - ChartInfos: fix display of symbol with Digits=1 (pip)
- *
- *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
- *
- *  - implement RestoreSequence()->SynchronizeStatus() to handle a lost/open position
- *  - stop condition "pip"
  *
  *  - trade breaks
  *     - trading is disabled but the price feed is active
@@ -85,9 +96,8 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - CLI tools to rename/update/delete symbols
- *  - CLI tools to shift/scale histories
+ *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
@@ -175,17 +185,21 @@ string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquityM;                 // M: in account currency
 
-double   sequence.openGrossProfitU;             // U: in quote units (price unit)
+double   sequence.openZeroProfitU;              // U: in quote units (price unit)
+double   sequence.closedZeroProfitU;
+double   sequence.totalZeroProfitU;             // open + close
+
+double   sequence.openGrossProfitU;
 double   sequence.closedGrossProfitU;
-double   sequence.totalGrossProfitU;            // openGrossProfitU + closedGrossProfitU
+double   sequence.totalGrossProfitU;
 
 double   sequence.openNetProfitU;
 double   sequence.closedNetProfitU;
-double   sequence.totalNetProfitU;              // openNetProfitU + closedNetProfitU
+double   sequence.totalNetProfitU;
 
 double   sequence.openNetProfitM;
 double   sequence.closedNetProfitM;
-double   sequence.totalNetProfitM;              // openNetProfitM + closedNetProfitM
+double   sequence.totalNetProfitM;
 
 double   sequence.maxNetProfitM;                // max. observed total net profit in account currency:   0...+n
 double   sequence.maxNetDrawdownM;              // max. observed total net drawdown in account currency: -n...0
@@ -276,6 +290,7 @@ int onTick() {
 
       if (recordCustom) {                                            // update recorder values
          if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
+         if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) recorder.currValue[METRIC_CUMULATED_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
          if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) recorder.currValue[METRIC_CUMULATED_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
          if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) recorder.currValue[METRIC_CUMULATED_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
       }
@@ -731,7 +746,6 @@ bool StopSequence(int signal) {
 bool UpdateStatus() {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   int error;
 
    if (open.ticket > 0) {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
@@ -743,7 +757,7 @@ bool UpdateStatus() {
       open.grossProfitM = OrderProfit();
       open.grossProfitU = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitU   = open.grossProfitU; if (open.swapM || open.commissionM) open.netProfitU += (open.swapM + open.commissionM)/UnitValue(OrderLots());
+      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
       if (isOpen) {
          sequence.openGrossProfitU = open.grossProfitU;
@@ -751,6 +765,7 @@ bool UpdateStatus() {
          sequence.openNetProfitM   = open.netProfitM;
       }
       else {
+         int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippageP)) return(false);
       }
@@ -1086,6 +1101,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.name",               /*string  */ sequence.name);
    WriteIniString(file, section, "sequence.status",             /*int     */ sequence.status);
    WriteIniString(file, section, "sequence.startEquityM",       /*double  */ DoubleToStr(sequence.startEquityM, 2));
+   WriteIniString(file, section, "sequence.openZeroProfitU",    /*double  */ DoubleToStr(sequence.openZeroProfitU, 6));
+   WriteIniString(file, section, "sequence.closedZeroProfitU",  /*double  */ DoubleToStr(sequence.closedZeroProfitU, 6));
+   WriteIniString(file, section, "sequence.totalZeroProfitU",   /*double  */ DoubleToStr(sequence.totalZeroProfitU, 6));
    WriteIniString(file, section, "sequence.openGrossProfitU",   /*double  */ DoubleToStr(sequence.openGrossProfitU, 6));
    WriteIniString(file, section, "sequence.closedGrossProfitU", /*double  */ DoubleToStr(sequence.closedGrossProfitU, 6));
    WriteIniString(file, section, "sequence.totalGrossProfitU",  /*double  */ DoubleToStr(sequence.totalGrossProfitU, 6));
@@ -1269,6 +1287,9 @@ bool ReadStatus() {
    sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.1234
    sequence.status             = GetIniInt    (file, section, "sequence.status"            );         // int      sequence.status             = 1
    sequence.startEquityM       = GetIniDouble (file, section, "sequence.startEquityM"      );         // double   sequence.startEquityM       = 1000.00
+   sequence.openZeroProfitU    = GetIniDouble (file, section, "sequence.openZeroProfitU"   );         // double   sequence.openZeroProfitU    = 0.12345
+   sequence.closedZeroProfitU  = GetIniDouble (file, section, "sequence.closedZeroProfitU" );         // double   sequence.closedZeroProfitU  = -0.23456
+   sequence.totalZeroProfitU   = GetIniDouble (file, section, "sequence.totalZeroProfitU"  );         // double   sequence.totalZeroProfitU   = 1.23456
    sequence.openGrossProfitU   = GetIniDouble (file, section, "sequence.openGrossProfitU"  );         // double   sequence.openGrossProfitU   = 0.12345
    sequence.closedGrossProfitU = GetIniDouble (file, section, "sequence.closedGrossProfitU");         // double   sequence.closedGrossProfitU = -0.23456
    sequence.totalGrossProfitU  = GetIniDouble (file, section, "sequence.totalGrossProfitU" );         // double   sequence.totalGrossProfitU  = 1.23456
