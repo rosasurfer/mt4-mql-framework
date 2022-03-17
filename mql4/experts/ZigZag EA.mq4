@@ -25,7 +25,6 @@
  *  - performance tracking
  *    - PL recording
  *       cumulated PL in pip with zero costs (spread, commission, swap, slippage)
- *         add history fields HI_OPENBID, HI_OPENASK, HI_CLOSEBID, HI_CLOSEASK
  *         StartSequence()
  *         ReverseSequence()
  *           ArchiveClosedPosition
@@ -159,14 +158,18 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define HI_LOTS                        2
 #define HI_OPENTYPE                    3
 #define HI_OPENTIME                    4
-#define HI_OPENPRICE                   5
-#define HI_CLOSETIME                   6
-#define HI_CLOSEPRICE                  7
-#define HI_SLIPPAGE_P                  8        // P: in pip
-#define HI_SWAP_M                      9        // M: in account currency (money)
-#define HI_COMMISSION_M               10        // U: in quote units
-#define HI_GROSS_PROFIT_M             11
-#define HI_NET_PROFIT_M               12
+#define HI_OPENBID                     5
+#define HI_OPENASK                     6
+#define HI_OPENPRICE                   7
+#define HI_CLOSETIME                   8
+#define HI_CLOSEBID                    9
+#define HI_CLOSEASK                   10
+#define HI_CLOSEPRICE                 11
+#define HI_SLIPPAGE_P                 12        // P: in pip
+#define HI_SWAP_M                     13        // M: in account currency (money)
+#define HI_COMMISSION_M               14        // U: in quote units
+#define HI_GROSS_PROFIT_M             15
+#define HI_NET_PROFIT_M               16
 
 #define TP_TYPE_MONEY                  1        // TakeProfit types
 #define TP_TYPE_PERCENT                2
@@ -213,6 +216,8 @@ int      open.signal;                           // one open position
 int      open.ticket;
 int      open.type;
 datetime open.time;
+double   open.bid;
+double   open.ask;
 double   open.price;
 double   open.slippageP;
 double   open.swapM;
@@ -221,7 +226,7 @@ double   open.grossProfitM;
 double   open.grossProfitU;
 double   open.netProfitM;
 double   open.netProfitU;
-double   history[][13];                         // multiple closed positions
+double   history[][17];                         // multiple closed positions
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -412,6 +417,8 @@ bool StartSequence(int signal) {
 
    // open new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+   double   bid         = Bid;
+   double   ask         = Ask;
    double   price       = NULL;
    double   stopLoss    = NULL;
    double   takeProfit  = NULL;
@@ -428,6 +435,8 @@ bool StartSequence(int signal) {
    open.signal       = signal;
    open.ticket       = ticket;
    open.type         = type;
+   open.bid          = bid;
+   open.ask          = ask;
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
    open.slippageP    = -oe.Slippage (oe);
@@ -480,6 +489,8 @@ bool ReverseSequence(int signal) {
    if (sequence.status != STATUS_PROGRESSING)       return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
+   double bid = Bid, ask = Ask;
+
    if (open.ticket > 0) {
       // either continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
@@ -489,7 +500,7 @@ bool ReverseSequence(int signal) {
       // ...or close the open position
       int oeFlags, oe[];
       if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
+      if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
    }
 
    // open new position
@@ -504,6 +515,8 @@ bool ReverseSequence(int signal) {
 
    if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
    open.signal       = signal;
+   open.bid          = bid;
+   open.ask          = ask;
    open.ticket       = oe.Ticket    (oe);
    open.type         = oe.Type      (oe);
    open.time         = oe.OpenTime  (oe);
@@ -539,11 +552,13 @@ bool ReverseSequence(int signal) {
  *
  * @param int    ticket   - closed ticket
  * @param int    signal   - signal which caused opening of the trade
- * @param double slippage - cumulated open and close slippage of the trade in pip
+ * @param double bid      - Bid price before the position was closed
+ * @param double ask      - Ask price before the position was closed
+ * @param double slippage - cumulated open and close slippage of the trade in pip (open + close)
  *
  * @return bool - success status
  */
-bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
+bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, double slippage) {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -565,8 +580,12 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    history[i][HI_LOTS          ] = OrderLots();
    history[i][HI_OPENTYPE      ] = OrderType();
    history[i][HI_OPENTIME      ] = OrderOpenTime();
+   history[i][HI_OPENBID       ] = open.bid;
+   history[i][HI_OPENASK       ] = open.ask;
    history[i][HI_OPENPRICE     ] = OrderOpenPrice();
    history[i][HI_CLOSETIME     ] = OrderCloseTime();
+   history[i][HI_CLOSEBID      ] = doubleOr(bid, OrderClosePrice());
+   history[i][HI_CLOSEASK      ] = doubleOr(ask, OrderClosePrice());
    history[i][HI_CLOSEPRICE    ] = OrderClosePrice();
    history[i][HI_SLIPPAGE_P    ] = slippage;
    history[i][HI_SWAP_M        ] = open.swapM;
@@ -691,9 +710,11 @@ bool StopSequence(int signal) {
       if (open.ticket > 0) {                                         // a progressing sequence may have an open position to close
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
+         double bid = Bid, ask = Ask;
          int oeFlags, oe[];
+
          if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                    return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, open.signal, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
 
          sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
          sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
@@ -771,7 +792,7 @@ bool UpdateStatus() {
       else {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, open.signal, open.slippageP)) return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, open.slippageP)) return(false);
       }
       sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
       sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
@@ -1125,6 +1146,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "open.bid",                    /*double  */ DoubleToStr(open.bid, Digits));
+   WriteIniString(file, section, "open.ask",                    /*double  */ DoubleToStr(open.ask, Digits));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
    WriteIniString(file, section, "open.slippageP",              /*double  */ DoubleToStr(open.slippageP, 1));
    WriteIniString(file, section, "open.swapM",                  /*double  */ DoubleToStr(open.swapM, 2));
@@ -1201,15 +1224,19 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // result: signal,ticket,lots,openType,openTime,openBid,OpenAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
 
    int      signal      = history[index][HI_SIGNAL        ];
    int      ticket      = history[index][HI_TICKET        ];
    double   lots        = history[index][HI_LOTS          ];
    int      openType    = history[index][HI_OPENTYPE      ];
    datetime openTime    = history[index][HI_OPENTIME      ];
+   double   openBid     = history[index][HI_OPENBID       ];
+   double   openAsk     = history[index][HI_OPENASK       ];
    double   openPrice   = history[index][HI_OPENPRICE     ];
    datetime closeTime   = history[index][HI_CLOSETIME     ];
+   double   closeBid    = history[index][HI_CLOSEBID      ];
+   double   closeAsk    = history[index][HI_CLOSEASK      ];
    double   closePrice  = history[index][HI_CLOSEPRICE    ];
    double   slippage    = history[index][HI_SLIPPAGE_P    ];
    double   swap        = history[index][HI_SWAP_M        ];
@@ -1217,7 +1244,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit = history[index][HI_GROSS_PROFIT_M];
    double   netProfit   = history[index][HI_NET_PROFIT_M  ];
 
-   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
@@ -1312,6 +1339,8 @@ bool ReadStatus() {
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 0
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800
+   open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
+   open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
    open.slippageP              = GetIniDouble (file, section, "open.slippageP"   );                   // double   open.slippageP    = 1.0
    open.swapM                  = GetIniDouble (file, section, "open.swapM"       );                   // double   open.swapM        = -1.23
@@ -1391,7 +1420,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    if (IsLastError())                    return(false);
    if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
 
-   // history.i=signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // history.i=signal,ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))   return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    int index = StrToInteger(sId);
@@ -1402,8 +1431,12 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   lots        =  StrToDouble(values[HI_LOTS          ]);
    int      openType    = StrToInteger(values[HI_OPENTYPE      ]);
    datetime openTime    = StrToInteger(values[HI_OPENTIME      ]);
+   double   openBid     =  StrToDouble(values[HI_OPENBID       ]);
+   double   openAsk     =  StrToDouble(values[HI_OPENASK       ]);
    double   openPrice   =  StrToDouble(values[HI_OPENPRICE     ]);
    datetime closeTime   = StrToInteger(values[HI_CLOSETIME     ]);
+   double   closeBid    =  StrToDouble(values[HI_CLOSEBID      ]);
+   double   closeAsk    =  StrToDouble(values[HI_CLOSEASK      ]);
    double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE    ]);
    double   slippage    =  StrToDouble(values[HI_SLIPPAGE_P    ]);
    double   swap        =  StrToDouble(values[HI_SWAP_M        ]);
@@ -1411,7 +1444,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT_M]);
    double   netProfit   =  StrToDouble(values[HI_NET_PROFIT_M  ]);
 
-   return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, grossProfit, netProfit));
+   return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit));
 }
 
 
@@ -1423,7 +1456,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return bool - success status
  */
-int History.AddRecord(int index, int signal, int ticket, double lots, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+int History.AddRecord(int index, int signal, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
 
    int size = ArrayRange(history, 0);
@@ -1435,8 +1468,12 @@ int History.AddRecord(int index, int signal, int ticket, double lots, int openTy
    history[index][HI_LOTS          ] = lots;
    history[index][HI_OPENTYPE      ] = openType;
    history[index][HI_OPENTIME      ] = openTime;
+   history[index][HI_OPENBID       ] = openBid;
+   history[index][HI_OPENASK       ] = openAsk;
    history[index][HI_OPENPRICE     ] = openPrice;
    history[index][HI_CLOSETIME     ] = closeTime;
+   history[index][HI_CLOSEBID      ] = closeBid;
+   history[index][HI_CLOSEASK      ] = closeAsk;
    history[index][HI_CLOSEPRICE    ] = closePrice;
    history[index][HI_SLIPPAGE_P    ] = slippage;
    history[index][HI_SWAP_M        ] = swap;
