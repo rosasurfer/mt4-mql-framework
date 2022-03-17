@@ -25,12 +25,16 @@
  *  - performance tracking
  *    - PL recording
  *       cumulated PL in pip with zero costs (spread, commission, swap, slippage)
- *        StartSequence()
- *        ReverseSequence()
- *        StopSequence()
- *        UpdateStatus()
+ *         add history fields HI_OPENBID, HI_OPENASK, HI_CLOSEBID, HI_CLOSEASK
+ *         StartSequence()
+ *         ReverseSequence()
+ *           ArchiveClosedPosition
+ *         StopSequence()
+ *           ArchiveClosedPosition
+ *         UpdateStatus()
+ *           ArchiveClosedPosition
  *
- *       daily PL of all cumulated variants
+ *       daily PL of all cumulated metrics
  *       add quote unit multiplicator
  *    - move validation of custom "EA.Recorder" to EA
  *    - system variants:
@@ -158,11 +162,11 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define HI_OPENPRICE                   5
 #define HI_CLOSETIME                   6
 #define HI_CLOSEPRICE                  7
-#define HI_SLIPPAGE                    8
-#define HI_SWAP                        9
-#define HI_COMMISSION                 10
-#define HI_GROSS_PROFIT               11
-#define HI_NET_PROFIT                 12
+#define HI_SLIPPAGE_P                  8        // P: in pip
+#define HI_SWAP_M                      9        // M: in account currency (money)
+#define HI_COMMISSION_M               10        // U: in quote units
+#define HI_GROSS_PROFIT_M             11
+#define HI_NET_PROFIT_M               12
 
 #define TP_TYPE_MONEY                  1        // TakeProfit types
 #define TP_TYPE_PERCENT                2
@@ -183,9 +187,9 @@ datetime sequence.created;
 bool     sequence.isTest;                       // whether the sequence is a test
 string   sequence.name = "";
 int      sequence.status;
-double   sequence.startEquityM;                 // M: in account currency
+double   sequence.startEquityM;
 
-double   sequence.openZeroProfitU;              // U: in quote units (price unit)
+double   sequence.openZeroProfitU;
 double   sequence.closedZeroProfitU;
 double   sequence.totalZeroProfitU;             // open + close
 
@@ -210,11 +214,11 @@ int      open.ticket;
 int      open.type;
 datetime open.time;
 double   open.price;
-double   open.slippageP;                        // P: in pip
+double   open.slippageP;
 double   open.swapM;
 double   open.commissionM;
-double   open.grossProfitM;                     // M: in account currency
-double   open.grossProfitU;                     // U: in quote units (price unit)
+double   open.grossProfitM;
+double   open.grossProfitU;
 double   open.netProfitM;
 double   open.netProfitU;
 double   history[][13];                         // multiple closed positions
@@ -556,19 +560,19 @@ bool ArchiveClosedPosition(int ticket, int signal, double slippage) {
    // update history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i + 1);
-   history[i][HI_SIGNAL      ] = signal;
-   history[i][HI_TICKET      ] = ticket;
-   history[i][HI_LOTS        ] = OrderLots();
-   history[i][HI_OPENTYPE    ] = OrderType();
-   history[i][HI_OPENTIME    ] = OrderOpenTime();
-   history[i][HI_OPENPRICE   ] = OrderOpenPrice();
-   history[i][HI_CLOSETIME   ] = OrderCloseTime();
-   history[i][HI_CLOSEPRICE  ] = OrderClosePrice();
-   history[i][HI_SLIPPAGE    ] = slippage;
-   history[i][HI_SWAP        ] = open.swapM;
-   history[i][HI_COMMISSION  ] = open.commissionM;
-   history[i][HI_GROSS_PROFIT] = open.grossProfitM;
-   history[i][HI_NET_PROFIT  ] = open.netProfitM;
+   history[i][HI_SIGNAL        ] = signal;
+   history[i][HI_TICKET        ] = ticket;
+   history[i][HI_LOTS          ] = OrderLots();
+   history[i][HI_OPENTYPE      ] = OrderType();
+   history[i][HI_OPENTIME      ] = OrderOpenTime();
+   history[i][HI_OPENPRICE     ] = OrderOpenPrice();
+   history[i][HI_CLOSETIME     ] = OrderCloseTime();
+   history[i][HI_CLOSEPRICE    ] = OrderClosePrice();
+   history[i][HI_SLIPPAGE_P    ] = slippage;
+   history[i][HI_SWAP_M        ] = open.swapM;
+   history[i][HI_COMMISSION_M  ] = open.commissionM;
+   history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
+   history[i][HI_NET_PROFIT_M  ] = open.netProfitM;
 
    // update PL numbers
    sequence.openGrossProfitU    = 0;
@@ -1199,19 +1203,19 @@ string SaveStatus.ConditionsToStr(string sConditions) {
 string SaveStatus.HistoryToStr(int index) {
    // result: signal,ticket,lots,openType,openTime,openPrice,closeTime,closePrice,slippage,swap,commission,grossProfit,netProfit
 
-   int      signal      = history[index][HI_SIGNAL      ];
-   int      ticket      = history[index][HI_TICKET      ];
-   double   lots        = history[index][HI_LOTS        ];
-   int      openType    = history[index][HI_OPENTYPE    ];
-   datetime openTime    = history[index][HI_OPENTIME    ];
-   double   openPrice   = history[index][HI_OPENPRICE   ];
-   datetime closeTime   = history[index][HI_CLOSETIME   ];
-   double   closePrice  = history[index][HI_CLOSEPRICE  ];
-   double   slippage    = history[index][HI_SLIPPAGE    ];
-   double   swap        = history[index][HI_SWAP        ];
-   double   commission  = history[index][HI_COMMISSION  ];
-   double   grossProfit = history[index][HI_GROSS_PROFIT];
-   double   netProfit   = history[index][HI_NET_PROFIT  ];
+   int      signal      = history[index][HI_SIGNAL        ];
+   int      ticket      = history[index][HI_TICKET        ];
+   double   lots        = history[index][HI_LOTS          ];
+   int      openType    = history[index][HI_OPENTYPE      ];
+   datetime openTime    = history[index][HI_OPENTIME      ];
+   double   openPrice   = history[index][HI_OPENPRICE     ];
+   datetime closeTime   = history[index][HI_CLOSETIME     ];
+   double   closePrice  = history[index][HI_CLOSEPRICE    ];
+   double   slippage    = history[index][HI_SLIPPAGE_P    ];
+   double   swap        = history[index][HI_SWAP_M        ];
+   double   commission  = history[index][HI_COMMISSION_M  ];
+   double   grossProfit = history[index][HI_GROSS_PROFIT_M];
+   double   netProfit   = history[index][HI_NET_PROFIT_M  ];
 
    return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
@@ -1393,19 +1397,19 @@ bool ReadStatus.ParseHistory(string key, string value) {
    int index = StrToInteger(sId);
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-   int      signal      = StrToInteger(values[HI_SIGNAL      ]);
-   int      ticket      = StrToInteger(values[HI_TICKET      ]);
-   double   lots        =  StrToDouble(values[HI_LOTS        ]);
-   int      openType    = StrToInteger(values[HI_OPENTYPE    ]);
-   datetime openTime    = StrToInteger(values[HI_OPENTIME    ]);
-   double   openPrice   =  StrToDouble(values[HI_OPENPRICE   ]);
-   datetime closeTime   = StrToInteger(values[HI_CLOSETIME   ]);
-   double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE  ]);
-   double   slippage    =  StrToDouble(values[HI_SLIPPAGE    ]);
-   double   swap        =  StrToDouble(values[HI_SWAP        ]);
-   double   commission  =  StrToDouble(values[HI_COMMISSION  ]);
-   double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT]);
-   double   netProfit   =  StrToDouble(values[HI_NET_PROFIT  ]);
+   int      signal      = StrToInteger(values[HI_SIGNAL        ]);
+   int      ticket      = StrToInteger(values[HI_TICKET        ]);
+   double   lots        =  StrToDouble(values[HI_LOTS          ]);
+   int      openType    = StrToInteger(values[HI_OPENTYPE      ]);
+   datetime openTime    = StrToInteger(values[HI_OPENTIME      ]);
+   double   openPrice   =  StrToDouble(values[HI_OPENPRICE     ]);
+   datetime closeTime   = StrToInteger(values[HI_CLOSETIME     ]);
+   double   closePrice  =  StrToDouble(values[HI_CLOSEPRICE    ]);
+   double   slippage    =  StrToDouble(values[HI_SLIPPAGE_P    ]);
+   double   swap        =  StrToDouble(values[HI_SWAP_M        ]);
+   double   commission  =  StrToDouble(values[HI_COMMISSION_M  ]);
+   double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT_M]);
+   double   netProfit   =  StrToDouble(values[HI_NET_PROFIT_M  ]);
 
    return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openPrice, closeTime, closePrice, slippage, swap, commission, grossProfit, netProfit));
 }
@@ -1426,19 +1430,19 @@ int History.AddRecord(int index, int signal, int ticket, double lots, int openTy
    if (index >= size) ArrayResize(history, index+1);
    if (history[index][HI_TICKET] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite history["+ index +"] record, ticket #"+ history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-   history[index][HI_SIGNAL      ] = signal;
-   history[index][HI_TICKET      ] = ticket;
-   history[index][HI_LOTS        ] = lots;
-   history[index][HI_OPENTYPE    ] = openType;
-   history[index][HI_OPENTIME    ] = openTime;
-   history[index][HI_OPENPRICE   ] = openPrice;
-   history[index][HI_CLOSETIME   ] = closeTime;
-   history[index][HI_CLOSEPRICE  ] = closePrice;
-   history[index][HI_SLIPPAGE    ] = slippage;
-   history[index][HI_SWAP        ] = swap;
-   history[index][HI_COMMISSION  ] = commission;
-   history[index][HI_GROSS_PROFIT] = grossProfit;
-   history[index][HI_NET_PROFIT  ] = netProfit;
+   history[index][HI_SIGNAL        ] = signal;
+   history[index][HI_TICKET        ] = ticket;
+   history[index][HI_LOTS          ] = lots;
+   history[index][HI_OPENTYPE      ] = openType;
+   history[index][HI_OPENTIME      ] = openTime;
+   history[index][HI_OPENPRICE     ] = openPrice;
+   history[index][HI_CLOSETIME     ] = closeTime;
+   history[index][HI_CLOSEPRICE    ] = closePrice;
+   history[index][HI_SLIPPAGE_P    ] = slippage;
+   history[index][HI_SWAP_M        ] = swap;
+   history[index][HI_COMMISSION_M  ] = commission;
+   history[index][HI_GROSS_PROFIT_M] = grossProfit;
+   history[index][HI_NET_PROFIT_M  ] = netProfit;
 
    return(!catch("History.AddRecord(3)"));
 }
