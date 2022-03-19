@@ -5,18 +5,18 @@
  * Input parameters:
  * -----------------
  * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers (separated by comma).
- *    "off": Nothing is recorded.                                                                                                OK
- *    "on":  Records a single timeseries depicting the EA's regular equity graph after all costs.                                OK
+ *    "off": Nothing is recorded.
+ *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
- *    "1":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
- *    "2":   Records a timeseries depicting cumulated PL before all costs (zero spread and slippage) in quote units.
- *    "3":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
- *    "4":   Records a timeseries depicting cumulated PL after all costs in quote units.                                         OK
+ *    "1":   Records a timeseries depicting cumulated PL before all costs (zero spread and slippage) in quote units.             OK
+ *    "2":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
+ *    "3":   Records a timeseries depicting cumulated PL after all costs in quote units.                                         OK
+ *    "4":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
  *
- *    "5":   Records a timeseries depicting daily PL after all costs in account currency.
- *    "6":   Records a timeseries depicting daily PL before all costs (zero spread and slippage) in quote units.
- *    "7":   Records a timeseries depicting daily PL after spread but before all other costs in quote units.
- *    "8":   Records a timeseries depicting daily PL after all costs in quote units.
+ *    "5":   Records a timeseries depicting daily PL before all costs (zero spread and slippage) in quote units.
+ *    "6":   Records a timeseries depicting daily PL after spread but before all other costs in quote units.
+ *    "7":   Records a timeseries depicting daily PL after all costs in quote units.
+ *    "8":   Records a timeseries depicting daily PL after all costs in account currency.
  *
  *    The term "quote units" refers to the best matching unit. One of pip, quote currency (QC) or index point (IP).
  *
@@ -24,15 +24,16 @@
  * TODO:
  *  - performance tracking
  *    - PL recording
- *       cumulated PL in pip with zero costs (spread, commission, swap, slippage)
- *         StartSequence()
- *         ReverseSequence()
- *           ArchiveClosedPosition
- *         StopSequence()
- *           ArchiveClosedPosition
- *         UpdateStatus()
- *           ArchiveClosedPosition
- *         sync sequence stats after reload
+ *
+ *       cumulated PL in pip with zero costs
+ *       -------------------------------------
+ *       sync sequence stats after reload
+ *
+ *       migrate running sequences: open positions, closed positions
+ *       migrate history files:
+ *         ren 3 > 2:  C > D
+ *         ren 4 > 3:  D > C
+ *         ren 1 > 4:  A > D
  *
  *       daily PL of all cumulated metrics
  *       add quote unit multiplicator
@@ -176,14 +177,15 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_PERCENT                2
 #define TP_TYPE_PIP                    3
 
-#define METRIC_CUMULATED_MONEY_NET     0        // available PL metrics
-#define METRIC_CUMULATED_UNITS_ZERO    1
-#define METRIC_CUMULATED_UNITS_GROSS   2
-#define METRIC_CUMULATED_UNITS_NET     3
-#define METRIC_DAILY_MONEY_NET         4
-#define METRIC_DAILY_UNITS_ZERO        5
-#define METRIC_DAILY_UNITS_GROSS       6
-#define METRIC_DAILY_UNITS_NET         7
+#define METRIC_CUMULATED_UNITS_ZERO    0        // cumulated PL metrics
+#define METRIC_CUMULATED_UNITS_GROSS   1
+#define METRIC_CUMULATED_UNITS_NET     2
+#define METRIC_CUMULATED_MONEY_NET     3
+
+#define METRIC_DAILY_UNITS_ZERO        4        // daily PL metrics
+#define METRIC_DAILY_UNITS_GROSS       5
+#define METRIC_DAILY_UNITS_NET         6
+#define METRIC_DAILY_MONEY_NET         7
 
 // sequence data
 int      sequence.id;                           // instance id between 100-999
@@ -308,10 +310,10 @@ int onTick() {
  */
 void RecordMetrics() {
    if (recordCustom) {
-      if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
       if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) recorder.currValue[METRIC_CUMULATED_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
       if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) recorder.currValue[METRIC_CUMULATED_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
       if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) recorder.currValue[METRIC_CUMULATED_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
+      if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
    }
 }
 
@@ -439,6 +441,8 @@ bool StartSequence(int signal) {
    int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
+   double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
+
    // store position data
    open.signal       = signal;
    open.ticket       = ticket;
@@ -451,18 +455,22 @@ bool StartSequence(int signal) {
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit    (oe);
-   open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
+   open.grossProfitU = ifDouble(type==OP_BUY, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
+   sequence.openZeroProfitU  = ifDouble(type==OP_BUY, currentBid-open.bid, open.bid-currentBid);      // both use Bid prices
+   sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
+
    sequence.openGrossProfitU  = open.grossProfitU;
    sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
 
-   sequence.openNetProfitM  = open.netProfitM;
-   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
    sequence.openNetProfitU  = open.netProfitU;
    sequence.totalNetProfitU = sequence.openNetProfitU + sequence.closedNetProfitU;
+
+   sequence.openNetProfitM  = open.netProfitM;
+   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
 
    sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
    sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
@@ -522,6 +530,9 @@ bool ReverseSequence(int signal) {
    color    markerColor = ifInt(type==OP_BUY, CLR_OPEN_LONG, CLR_OPEN_SHORT);
 
    if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+
+   double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
+
    open.signal       = signal;
    open.bid          = bid;
    open.ask          = ask;
@@ -533,18 +544,22 @@ bool ReverseSequence(int signal) {
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit    (oe);
-   open.grossProfitU = ifDouble(type==OP_BUY, MarketInfo(Symbol(), MODE_BID)-open.price, open.price-MarketInfo(Symbol(), MODE_ASK));
+   open.grossProfitU = ifDouble(type==OP_BUY, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
+   sequence.openZeroProfitU  = ifDouble(type==OP_BUY, currentBid-open.bid, open.bid-currentBid);      // both use Bid prices
+   sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
+
    sequence.openGrossProfitU  = open.grossProfitU;
    sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
 
-   sequence.openNetProfitM  = open.netProfitM;
-   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
    sequence.openNetProfitU  = open.netProfitU;
    sequence.totalNetProfitU = sequence.openNetProfitU + sequence.closedNetProfitU;
+
+   sequence.openNetProfitM  = open.netProfitM;
+   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
 
    sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
    sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
@@ -603,6 +618,10 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    OrderPop("ArchiveClosedPosition(3)");
 
    // update PL numbers
+   sequence.openZeroProfitU    = 0;                                                                   // both use Bid prices
+   sequence.closedZeroProfitU += ifDouble(open.type==OP_BUY, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
+   sequence.totalZeroProfitU   = sequence.closedZeroProfitU;
+
    sequence.openGrossProfitU    = 0;
    sequence.closedGrossProfitU += open.grossProfitU;
    sequence.totalGrossProfitU   = sequence.closedGrossProfitU;
@@ -629,11 +648,11 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    open.netProfitM   = NULL;
    open.netProfitU   = NULL;
 
-   double multiplier = 0.01;
-   if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) debug("ArchiveClosedPosition(0.1)    netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
-   if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.2)   zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
-   if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) debug("ArchiveClosedPosition(0.3)  grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
-   if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) debug("ArchiveClosedPosition(0.4)    netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
+   //double multiplier = 0.01;
+   //if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.1)  zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) debug("ArchiveClosedPosition(0.2) grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) debug("ArchiveClosedPosition(0.3)   netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) debug("ArchiveClosedPosition(0.4)   netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
@@ -799,6 +818,7 @@ bool UpdateStatus() {
       open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
       if (isOpen) {
+         sequence.openZeroProfitU  = ifDouble(open.type==OP_BUY, Bid-open.bid, open.bid-Bid);      // both use Bid prices
          sequence.openGrossProfitU = open.grossProfitU;
          sequence.openNetProfitU   = open.netProfitU;
          sequence.openNetProfitM   = open.netProfitM;
@@ -808,6 +828,7 @@ bool UpdateStatus() {
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, open.slippageP)) return(false);
       }
+      sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
       sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
       sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
       sequence.totalNetProfitM   = sequence.openNetProfitM   + sequence.closedNetProfitM; SS.TotalPL();
@@ -962,55 +983,54 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    hstFormat    = NULL;
 
    switch (i) {
-      case METRIC_CUMULATED_MONEY_NET:          // OK
-         symbolDigits = 2;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +", all costs";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. AUD, all costs"
-
       // --------------------------------------------------------------------------------------------------------------------
-      case METRIC_CUMULATED_UNITS_ZERO:
+      case METRIC_CUMULATED_UNITS_ZERO:         // OK
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, no spread/costs";
          return(true);
 
       case METRIC_CUMULATED_UNITS_GROSS:        // OK
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, w/spread";
          return(true);
 
       case METRIC_CUMULATED_UNITS_NET:          // OK
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, all costs";
          return(true);
 
-      // --------------------------------------------------------------------------------------------------------------------
-      case METRIC_DAILY_MONEY_NET:
+      case METRIC_CUMULATED_MONEY_NET:          // OK
          symbolDigits = 2;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +", all costs";
-         return(true);
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";     // "zEURUS_123D"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +", all costs";
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. AUD, all costs"
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, no spread/costs";
          return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, w/spread";
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
          symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, all costs";
+         return(true);
+
+      case METRIC_DAILY_MONEY_NET:
+         symbolDigits = 2;
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +", all costs";
          return(true);
    }
    return(false);
