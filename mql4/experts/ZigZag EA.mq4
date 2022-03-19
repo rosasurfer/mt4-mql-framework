@@ -32,6 +32,7 @@
  *           ArchiveClosedPosition
  *         UpdateStatus()
  *           ArchiveClosedPosition
+ *         sync sequence stats after reload
  *
  *       daily PL of all cumulated metrics
  *       add quote unit multiplicator
@@ -296,15 +297,22 @@ int onTick() {
             else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
          }
       }
-
-      if (recordCustom) {                                            // update recorder values
-         if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
-         if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) recorder.currValue[METRIC_CUMULATED_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
-         if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) recorder.currValue[METRIC_CUMULATED_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
-         if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) recorder.currValue[METRIC_CUMULATED_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
-      }
+      RecordMetrics();
    }
    return(catch("onTick(1)"));
+}
+
+
+/**
+ * Update recorder with current metric values.
+ */
+void RecordMetrics() {
+   if (recordCustom) {
+      if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
+      if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) recorder.currValue[METRIC_CUMULATED_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
+      if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) recorder.currValue[METRIC_CUMULATED_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
+      if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) recorder.currValue[METRIC_CUMULATED_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
+   }
 }
 
 
@@ -592,20 +600,20 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    history[i][HI_COMMISSION_M  ] = open.commissionM;
    history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
    history[i][HI_NET_PROFIT_M  ] = open.netProfitM;
+   OrderPop("ArchiveClosedPosition(3)");
 
    // update PL numbers
    sequence.openGrossProfitU    = 0;
    sequence.closedGrossProfitU += open.grossProfitU;
    sequence.totalGrossProfitU   = sequence.closedGrossProfitU;
 
-   sequence.openNetProfitM    = 0;
-   sequence.closedNetProfitM += open.netProfitM;
-   sequence.totalNetProfitM   = sequence.closedNetProfitM;
-
    sequence.openNetProfitU    = 0;
    sequence.closedNetProfitU += open.netProfitU;
    sequence.totalNetProfitU   = sequence.closedNetProfitU;
-   OrderPop("ArchiveClosedPosition(3)");
+
+   sequence.openNetProfitM    = 0;
+   sequence.closedNetProfitM += open.netProfitM;
+   sequence.totalNetProfitM   = sequence.closedNetProfitM;
 
    // reset open position data
    open.signal       = NULL;
@@ -620,6 +628,12 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    open.grossProfitU = NULL;
    open.netProfitM   = NULL;
    open.netProfitU   = NULL;
+
+   double multiplier = 0.01;
+   if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) debug("ArchiveClosedPosition(0.1)    netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
+   if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.2)   zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
+   if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) debug("ArchiveClosedPosition(0.3)  grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
+   if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) debug("ArchiveClosedPosition(0.4)    netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
