@@ -242,8 +242,8 @@ string   sSequencePlStats = "";
 string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
+bool     test.onStopPause        = false;          // whether to pause a test after StopSequence()
+bool     test.reduceStatusWrites = true;           // whether to reduce status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -3582,12 +3582,12 @@ double iADR() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                        return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
+   if (last_error != NULL)                       return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting())         return(true);
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;

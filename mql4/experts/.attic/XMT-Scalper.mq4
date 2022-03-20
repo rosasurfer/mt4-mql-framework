@@ -262,7 +262,7 @@ string   sUnitSize            = "-";
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
-bool     test.optimizeStatus      = true;       // whether to minimize status file writing in tester
+bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
 
 /**
@@ -464,7 +464,7 @@ int afterInit() {
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
-      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus", true);
+      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
    return(catch("afterInit(1)"));
 }
@@ -2517,7 +2517,7 @@ bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
    // in tester skip most status file writes, except file creation and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;

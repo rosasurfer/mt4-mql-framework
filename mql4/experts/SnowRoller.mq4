@@ -231,7 +231,7 @@ bool     test.onSessionBreakPause = false;         // whether to pause the teste
 bool     test.onTrendChangePause  = false;         // whether to pause the tester on a satisfied trend change condition
 bool     test.onTakeProfitPause   = false;         // whether to pause the tester when takeprofit is reached
 bool     test.onStopLossPause     = false;         // whether to pause the tester when stoploss is reached
-bool     test.optimizeStatus      = true;          // whether to minimize status file writing in tester
+bool     test.reduceStatusWrites  = true;          // whether to minimize status file writing in tester
 bool     test.showBreakeven       = false;         // whether to show breakeven markers in tester
 
 #include <apps/snowroller/init.mqh>
@@ -4058,12 +4058,12 @@ int CreateEventId() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                        return(false);
-   if (!sequence.id)                              return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
+   if (last_error != NULL)               return(false);
+   if (!sequence.id)                     return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting()) return(true);
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
