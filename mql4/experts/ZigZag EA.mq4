@@ -639,6 +639,8 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    open.ticket       = NULL;
    open.type         = NULL;
    open.time         = NULL;
+   open.bid          = NULL;
+   open.ask          = NULL;
    open.price        = NULL;
    open.slippageP    = NULL;
    open.swapM        = NULL;
