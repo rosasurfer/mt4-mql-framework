@@ -8,15 +8,15 @@
  *    "off": Nothing is recorded.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
- *    "1":   Records a timeseries depicting cumulated PL before all costs (zero spread and slippage) in quote units.             OK
- *    "2":   Records a timeseries depicting cumulated PL after spread but before all other costs in quote units.                 OK
- *    "3":   Records a timeseries depicting cumulated PL after all costs in quote units.                                         OK
- *    "4":   Records a timeseries depicting cumulated PL after all costs in account currency (same as "on" except base value).   OK
+ *    "1":   Records a timeseries depicting cumulated theoretical PL with no costs and zero spread in quote units.                  OK
+ *    "2":   Records a timeseries depicting cumulated PL after spread but before all other costs (gross) in quote units.            OK
+ *    "3":   Records a timeseries depicting cumulated PL after all costs (net) in quote units.                                      OK
+ *    "4":   Records a timeseries depicting cumulated PL after all costs (net) in account currency (like "on" except base value).   OK
  *
- *    "5":   Records a timeseries depicting daily PL before all costs (zero spread and slippage) in quote units.
- *    "6":   Records a timeseries depicting daily PL after spread but before all other costs in quote units.
- *    "7":   Records a timeseries depicting daily PL after all costs in quote units.
- *    "8":   Records a timeseries depicting daily PL after all costs in account currency.
+ *    "5":   Records a timeseries depicting daily theoretical PL with no costs and zero spread in quote units.
+ *    "6":   Records a timeseries depicting daily PL after spread but before all other costs (gross) in quote units.
+ *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
+ *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
  *    The term "quote units" refers to the best matching unit. One of pip, quote currency (QC) or index point (IP).
  *
@@ -24,12 +24,6 @@
  * TODO:
  *  - performance tracking
  *    - PL recording
- *
- *       cumulated PL in pip with zero costs
- *       -----------------------------------
- *       enable recorded metrics: EA.Recorder=2,3,4
- *
- *
  *       add quote unit multiplicator
  *       daily PL of all cumulated metrics
  *    - system variants:
@@ -1003,51 +997,51 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_CUMULATED_UNITS_ZERO:         // OK
          symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, no spread/costs";
-         return(true);
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, no spread";
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. in pip, no spread"
 
       case METRIC_CUMULATED_UNITS_GROSS:        // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, w/spread";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, gross";
          return(true);
 
       case METRIC_CUMULATED_UNITS_NET:          // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. pip, all costs";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, net";
          return(true);
 
       case METRIC_CUMULATED_MONEY_NET:          // OK
          symbolDigits = 2;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";     // "zEURUS_123D"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. "+ AccountCurrency() +", all costs";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. AUD, all costs"
+         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in "+ AccountCurrency() +", net";
+         return(true);
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, no spread/costs";
-         return(true);
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, no spread";
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, daily pip, no spread"
 
       case METRIC_DAILY_UNITS_GROSS:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, w/spread";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, gross";
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, all costs";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, net";
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily "+ AccountCurrency() +", all costs";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily in "+ AccountCurrency() +", net";
          return(true);
    }
    return(false);
