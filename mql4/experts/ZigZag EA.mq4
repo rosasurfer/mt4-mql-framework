@@ -26,14 +26,12 @@
  *    - PL recording
  *
  *       cumulated PL in pip with zero costs
- *       -------------------------------------
+ *       -----------------------------------
  *       migrate running sequences: open positions, closed positions
  *       migrate history files:
  *         ren 3 > 2:  C > D
  *         ren 4 > 3:  D > C
  *         ren 1 > 4:  A > D
- *
- *       change order of history.signal and history.ticket
  *
  *       add quote unit multiplicator
  *       daily PL of all cumulated metrics
@@ -155,23 +153,22 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define SIGNAL_TIME                    3
 #define SIGNAL_TAKEPROFIT              4
 
-#define HI_SIGNAL                      0        // order history indexes
-#define HI_TICKET                      1
-#define HI_LOTS                        2
-#define HI_OPENTYPE                    3
-#define HI_OPENTIME                    4
-#define HI_OPENBID                     5
-#define HI_OPENASK                     6
-#define HI_OPENPRICE                   7
-#define HI_CLOSETIME                   8
-#define HI_CLOSEBID                    9
-#define HI_CLOSEASK                   10
-#define HI_CLOSEPRICE                 11
-#define HI_SLIPPAGE_P                 12        // P: in pip
-#define HI_SWAP_M                     13        // M: in account currency (money)
-#define HI_COMMISSION_M               14        // U: in quote units
-#define HI_GROSS_PROFIT_M             15
-#define HI_NET_PROFIT_M               16
+#define HI_TICKET                      0        // order history indexes
+#define HI_LOTS                        1
+#define HI_OPENTYPE                    2
+#define HI_OPENTIME                    3
+#define HI_OPENBID                     4
+#define HI_OPENASK                     5
+#define HI_OPENPRICE                   6
+#define HI_CLOSETIME                   7
+#define HI_CLOSEBID                    8
+#define HI_CLOSEASK                    9
+#define HI_CLOSEPRICE                 10
+#define HI_SLIPPAGE_P                 11        // P: in pip
+#define HI_SWAP_M                     12        // M: in account currency (money)
+#define HI_COMMISSION_M               13        // U: in quote units
+#define HI_GROSS_PROFIT_M             14
+#define HI_NET_PROFIT_M               15
 
 #define TP_TYPE_MONEY                  1        // TakeProfit types
 #define TP_TYPE_PERCENT                2
@@ -216,7 +213,6 @@ double   sequence.maxNetDrawdownM;              // max. observed total net drawd
 
 // order data
 int      open.ticket;                           // one open position
-int      open.signal;
 int      open.type;
 datetime open.time;
 double   open.bid;
@@ -229,7 +225,7 @@ double   open.grossProfitM;
 double   open.grossProfitU;
 double   open.netProfitM;
 double   open.netProfitU;
-double   history[][17];                         // multiple closed positions
+double   history[][16];                         // multiple closed positions
 
 // start conditions
 bool     start.time.condition;                  // whether a time condition is active
@@ -444,7 +440,6 @@ bool StartSequence(int signal) {
    double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
 
    // store position data
-   open.signal       = signal;
    open.ticket       = ticket;
    open.type         = type;
    open.bid          = bid;
@@ -515,8 +510,8 @@ bool ReverseSequence(int signal) {
       }
       // ...or close the open position
       int oeFlags, oe[];
-      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))            return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, -oe.Slippage(oe))) return(false);
+      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, bid, ask, -oe.Slippage(oe)))   return(false);
    }
 
    // open new position
@@ -533,7 +528,6 @@ bool ReverseSequence(int signal) {
 
    double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
 
-   open.signal       = signal;
    open.bid          = bid;
    open.ask          = ask;
    open.ticket       = oe.Ticket    (oe);
@@ -574,14 +568,13 @@ bool ReverseSequence(int signal) {
  * Add trade details of the specified ticket to the local history and reset open position data.
  *
  * @param int    ticket   - closed ticket
- * @param int    signal   - signal which caused opening of the trade
  * @param double bid      - Bid price before the position was closed
  * @param double ask      - Ask price before the position was closed
  * @param double slippage - close slippage in pip
  *
  * @return bool - success status
  */
-bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, double slippage) {
+bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedPosition(1)  "+ sequence.name +" cannot archive position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
@@ -598,7 +591,6 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    // update history
    int i = ArrayRange(history, 0);
    ArrayResize(history, i + 1);
-   history[i][HI_SIGNAL        ] = signal;
    history[i][HI_TICKET        ] = ticket;
    history[i][HI_LOTS          ] = OrderLots();
    history[i][HI_OPENTYPE      ] = OrderType();
@@ -635,7 +627,6 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    sequence.totalNetProfitM   = sequence.closedNetProfitM;
 
    // reset open position data
-   open.signal       = NULL;
    open.ticket       = NULL;
    open.type         = NULL;
    open.time         = NULL;
@@ -748,8 +739,8 @@ bool StopSequence(int signal) {
          double bid = Bid, ask = Ask;
          int oeFlags, oe[];
 
-         if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))            return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, -oe.Slippage(oe))) return(false);
+         if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, bid, ask, -oe.Slippage(oe)))   return(false);
 
          sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
          sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
@@ -828,7 +819,7 @@ bool UpdateStatus() {
       else {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, NULL)) return(false);
+         if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
       }
       sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
       sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
@@ -1206,7 +1197,6 @@ bool SaveStatus() {
 
    // open order data
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
-   WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.bid",                    /*double  */ DoubleToStr(open.bid, Digits));
@@ -1287,9 +1277,8 @@ string SaveStatus.ConditionsToStr(string sConditions) {
  * @return string - string representation or an empty string in case of errors
  */
 string SaveStatus.HistoryToStr(int index) {
-   // result: signal,ticket,lots,openType,openTime,openBid,OpenAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // result: ticket,lots,openType,openTime,openBid,OpenAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
 
-   int      signal      = history[index][HI_SIGNAL        ];
    int      ticket      = history[index][HI_TICKET        ];
    double   lots        = history[index][HI_LOTS          ];
    int      openType    = history[index][HI_OPENTYPE      ];
@@ -1307,7 +1296,7 @@ string SaveStatus.HistoryToStr(int index) {
    double   grossProfit = history[index][HI_GROSS_PROFIT_M];
    double   netProfit   = history[index][HI_NET_PROFIT_M  ];
 
-   return(StringConcatenate(signal, ",", ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
+   return(StringConcatenate(ticket, ",", DoubleToStr(lots, 2), ",", openType, ",", openTime, ",", DoubleToStr(openBid, Digits), ",", DoubleToStr(openAsk, Digits), ",", DoubleToStr(openPrice, Digits), ",", closeTime, ",", DoubleToStr(closeBid, Digits), ",", DoubleToStr(closeAsk, Digits), ",", DoubleToStr(closePrice, Digits), ",", DoubleToStr(slippage, 1), ",", DoubleToStr(swap, 2), ",", DoubleToStr(commission, 2), ",", DoubleToStr(grossProfit, 2), ",", DoubleToStr(netProfit, 2)));
 }
 
 
@@ -1399,7 +1388,6 @@ bool ReadStatus() {
 
    // open order data
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
-   open.signal                 = GetIniInt    (file, section, "open.signal"      );                   // int      open.signal       = 1
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 0
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800
    open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
@@ -1483,13 +1471,12 @@ bool ReadStatus.ParseHistory(string key, string value) {
    if (IsLastError())                    return(false);
    if (!StrStartsWithI(key, "history.")) return(!catch("ReadStatus.ParseHistory(1)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
 
-   // history.i=signal,ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
+   // history.i=ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))   return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    int index = StrToInteger(sId);
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
-   int      signal      = StrToInteger(values[HI_SIGNAL        ]);
    int      ticket      = StrToInteger(values[HI_TICKET        ]);
    double   lots        =  StrToDouble(values[HI_LOTS          ]);
    int      openType    = StrToInteger(values[HI_OPENTYPE      ]);
@@ -1507,7 +1494,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT_M]);
    double   netProfit   =  StrToDouble(values[HI_NET_PROFIT_M  ]);
 
-   return(History.AddRecord(index, signal, ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit));
+   return(History.AddRecord(index, ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit));
 }
 
 
@@ -1519,14 +1506,13 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return bool - success status
  */
-int History.AddRecord(int index, int signal, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+int History.AddRecord(int index, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
 
    int size = ArrayRange(history, 0);
    if (index >= size) ArrayResize(history, index+1);
    if (history[index][HI_TICKET] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite history["+ index +"] record, ticket #"+ history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-   history[index][HI_SIGNAL        ] = signal;
    history[index][HI_TICKET        ] = ticket;
    history[index][HI_LOTS          ] = lots;
    history[index][HI_OPENTYPE      ] = openType;
@@ -1580,7 +1566,7 @@ bool SynchronizeStatus() {
       }
       else {
          if (IsError(onPositionClose("SynchronizeStatus(2)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, NULL)) return(false);
+         if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
       }
    }
 
