@@ -1531,6 +1531,9 @@ bool History.AddRecord(int index, int ticket, double lots, int openType, datetim
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
 
+   int prevOpenTicket  = open.ticket;
+   int prevHistorySize = ArrayRange(history, 0);
+
    // update local open/closed positions
    if (open.ticket > 0) {
       if (!UpdateStatus()) return(false);
@@ -1547,7 +1550,7 @@ bool SynchronizeStatus() {
    // detect & handle dangling closed positions
    for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;       // skip deleted pending orders (atm not supported)
+      if (IsPendingOrderType(OrderType()))              continue;    // skip deleted pending orders (atm not supported)
 
       if (IsMyOrder(sequence.id)) {
          if (!IsLocalClosedPosition(OrderTicket())) {
@@ -1589,6 +1592,8 @@ bool SynchronizeStatus() {
    SS.TotalPL();
    SS.PLStats();
 
+   if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
+      return(SaveStatus());                                          // immediately save if positions changed
    return(!catch("SynchronizeStatus(3)"));
 }
 
