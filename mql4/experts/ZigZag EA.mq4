@@ -8,12 +8,12 @@
  *    "off": Nothing is recorded.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
- *    "1":   Records a timeseries depicting cumulated theoretical PL with no costs and zero spread in quote units.                  OK
+ *    "1":   Records a timeseries depicting cumulated theoretical PL with zero spread and no costs and in quote units.              OK
  *    "2":   Records a timeseries depicting cumulated PL after spread but before all other costs (gross) in quote units.            OK
  *    "3":   Records a timeseries depicting cumulated PL after all costs (net) in quote units.                                      OK
  *    "4":   Records a timeseries depicting cumulated PL after all costs (net) in account currency (like "on" except base value).   OK
  *
- *    "5":   Records a timeseries depicting daily theoretical PL with no costs and zero spread in quote units.
+ *    "5":   Records a timeseries depicting daily theoretical PL with zero spread and no costs in quote units.
  *    "6":   Records a timeseries depicting daily PL after spread but before all other costs (gross) in quote units.
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
@@ -26,18 +26,17 @@
  *    - PL recording
  *       add quote unit multiplicator
  *       daily PL of all cumulated metrics
- *    - system variants:
- *       Reverse ZigZag
+ *    - system variants
+ *       reverse trading option "ZigZag.R" (and Turtle Soup)
  *       full session (24h) with trade breaks
  *       partial session (e.g. 09:00-16:00) with trade breaks
- *    - reverse trading option "ZigZag.R" (and Turtle Soup)
  *    - move validation of custom "EA.Recorder" to EA
  *
  *  - stabilize performance tracking
+ *    - SynchronizeStatus()
+ *       handle a dangling open position
+ *    - shift periodic time conditions to the next trading session (not only to next day)
  *    - add stoploss to every order
- *    - RestoreSequence()->SynchronizeStatus()
- *       handle a lost/open position
- *       recalculate position/sequence stats
  *    - virtual trade option: removes ERR_TRADESERVER_GONE
  *    - CLI tools to shift or scale histories
  *    - notifications for price feed outages
@@ -53,7 +52,6 @@
  *
  *  - input parameter ZigZag.Timeframe
  *  - stop condition "pip"
- *  - StopSequence(): shift periodic start time to the next trading session (not only to next day)
  *  - ChartInfos: read/display symbol description as long name
  *  - ChartInfos: fix display of symbol with Digits=1 (pip)
  *
@@ -96,7 +94,7 @@
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander
  *  - pass EA.Recorder to the Expander as a string
- *  - build script for all .ex4 files after deployment
+ *  - build script for all .EX4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
@@ -183,7 +181,7 @@ string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquityM;
 
-double   sequence.openZeroProfitU;
+double   sequence.openZeroProfitU;              // PL with zero spread and costs
 double   sequence.closedZeroProfitU;
 double   sequence.totalZeroProfitU;             // open + close
 
@@ -789,6 +787,7 @@ bool StopSequence(int signal) {
 bool UpdateStatus() {
    if (last_error != NULL)                    return(false);
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   int error;
 
    if (open.ticket > 0) {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
@@ -808,7 +807,6 @@ bool UpdateStatus() {
          sequence.openNetProfitM   = open.netProfitM;
       }
       else {
-         int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
          if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
       }
@@ -880,7 +878,7 @@ int onPositionClose(string message, int error) {
    if (!error)      return(logInfo(message));         // no error
    if (IsTesting()) return(catch(message, error));    // treat everything as a terminating error
 
-   logWarn(message, error);                          // online
+   logWarn(message, error);                           // online
    if (error == ERR_CONCURRENT_MODIFICATION)          // most probably manually closed
       return(NO_ERROR);                               // continue
    return(error);
@@ -1497,7 +1495,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
  *
  * @return bool - success status
  */
-int History.AddRecord(int index, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
+bool History.AddRecord(int index, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
 
    int size = ArrayRange(history, 0);
@@ -1542,20 +1540,45 @@ bool SynchronizeStatus() {
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
       if (IsMyOrder(sequence.id)) {
-         if (OrderTicket() != open.ticket)     return(!catch("SynchronizeStatus(1)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+         if (OrderTicket() != open.ticket) return(!catch("SynchronizeStatus(1)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
       }
    }
 
-   // detect dangling closed positions
+   // detect & handle dangling closed positions
    for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
       if (IsPendingOrderType(OrderType()))              continue;       // skip deleted pending orders (atm not supported)
+
       if (IsMyOrder(sequence.id)) {
-         if (!IsClosedPosition(OrderTicket())) return(!catch("SynchronizeStatus(2)  "+ sequence.name +" dangling closed position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
-      }                                                                 // TODO: add to history
+         if (!IsLocalClosedPosition(OrderTicket())) {
+            int      index        = ArrayRange(history, 0);
+            int      ticket       = OrderTicket();
+            double   lots         = OrderLots();
+            int      openType     = OrderType();
+            datetime openTime     = OrderOpenTime();
+            double   openPrice    = OrderOpenPrice();
+            datetime closeTime    = OrderCloseTime();
+            double   closePrice   = OrderClosePrice();
+            double   slippageP    = NULL;
+            double   swapM        = OrderSwap();
+            double   commissionM  = OrderCommission();
+            double   grossProfitM = OrderProfit();
+            double   netProfitM   = grossProfitM + swapM + commissionM;
+            double   grossProfitU = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
+
+            logWarn("SynchronizeStatus(2)  "+ sequence.name +" dangling closed position found: #"+ ticket +", adding to history...");
+            if (!History.AddRecord(index, ticket, lots, openType, openTime, openPrice, openPrice, openPrice, closeTime, closePrice, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM)) return(false);
+
+            // update closed PL data
+            sequence.closedZeroProfitU  += grossProfitU;
+            sequence.closedGrossProfitU += grossProfitU;
+            sequence.closedNetProfitU   += grossProfitU + (swapM + commissionM)/UnitValue(OrderLots());
+            sequence.closedNetProfitM   += netProfitM;
+         }
+      }
    }
 
-   // recalculate stats
+   // recalculate total stats
    sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
    sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
    sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
@@ -1577,7 +1600,7 @@ bool SynchronizeStatus() {
  *
  * @return bool
  */
-bool IsClosedPosition(int ticket) {
+bool IsLocalClosedPosition(int ticket) {
    int size = ArrayRange(history, 0);
    for (int i=0; i < size; i++) {
       if (history[i][HI_TICKET] == ticket) return(true);
