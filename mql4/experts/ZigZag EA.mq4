@@ -27,13 +27,13 @@
  *
  *       cumulated PL in pip with zero costs
  *       -------------------------------------
- *       sync sequence stats after reload
- *
  *       migrate running sequences: open positions, closed positions
  *       migrate history files:
  *         ren 3 > 2:  C > D
  *         ren 4 > 3:  D > C
  *         ren 1 > 4:  A > D
+ *
+ *       change order of history.signal and history.ticket
  *
  *       add quote unit multiplicator
  *       daily PL of all cumulated metrics
@@ -215,8 +215,8 @@ double   sequence.maxNetProfitM;                // max. observed total net profi
 double   sequence.maxNetDrawdownM;              // max. observed total net drawdown in account currency: -n...0
 
 // order data
-int      open.signal;                           // one open position
-int      open.ticket;
+int      open.ticket;                           // one open position
+int      open.signal;
 int      open.type;
 datetime open.time;
 double   open.bid;
@@ -270,7 +270,7 @@ string   sSequencePlStats    = "";
 bool     test.onReversalPause     = false;      // whether to pause a test after a ZigZag reversal
 bool     test.onSessionBreakPause = false;      // whether to pause a test after StopSequence(SIGNAL_TIME)
 bool     test.onStopPause         = false;      // whether to pause a test after a final StopSequence()
-bool     test.optimizeStatus      = true;       // whether to reduce status file writes in tester
+bool     test.reduceStatusWrites  = true;       // whether to reduce status file writes in tester
 
 #include <apps/zigzag-ea/init.mqh>
 #include <apps/zigzag-ea/deinit.mqh>
@@ -455,12 +455,12 @@ bool StartSequence(int signal) {
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit    (oe);
-   open.grossProfitU = ifDouble(type==OP_BUY, currentBid-open.price, open.price-currentAsk);
+   open.grossProfitU = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
-   sequence.openZeroProfitU  = ifDouble(type==OP_BUY, currentBid-open.bid, open.bid-currentBid);      // both use Bid prices
+   sequence.openZeroProfitU  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid);    // both directions use Bid prices
    sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
 
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -515,8 +515,8 @@ bool ReverseSequence(int signal) {
       }
       // ...or close the open position
       int oeFlags, oe[];
-      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
+      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))            return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, -oe.Slippage(oe))) return(false);
    }
 
    // open new position
@@ -544,12 +544,12 @@ bool ReverseSequence(int signal) {
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
    open.grossProfitM = oe.Profit    (oe);
-   open.grossProfitU = ifDouble(type==OP_BUY, currentBid-open.price, open.price-currentAsk);
+   open.grossProfitU = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
 
    // update PL numbers
-   sequence.openZeroProfitU  = ifDouble(type==OP_BUY, currentBid-open.bid, open.bid-currentBid);      // both use Bid prices
+   sequence.openZeroProfitU  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid); // both directions use Bid prices
    sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
 
    sequence.openGrossProfitU  = open.grossProfitU;
@@ -577,7 +577,7 @@ bool ReverseSequence(int signal) {
  * @param int    signal   - signal which caused opening of the trade
  * @param double bid      - Bid price before the position was closed
  * @param double ask      - Ask price before the position was closed
- * @param double slippage - cumulated open and close slippage of the trade in pip (open + close)
+ * @param double slippage - close slippage in pip
  *
  * @return bool - success status
  */
@@ -591,7 +591,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    open.swapM        = OrderSwap();
    open.commissionM  = OrderCommission();
    open.grossProfitM = OrderProfit();
-   open.grossProfitU = ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
+   open.grossProfitU = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
    open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
@@ -610,7 +610,7 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    history[i][HI_CLOSEBID      ] = doubleOr(bid, OrderClosePrice());
    history[i][HI_CLOSEASK      ] = doubleOr(ask, OrderClosePrice());
    history[i][HI_CLOSEPRICE    ] = OrderClosePrice();
-   history[i][HI_SLIPPAGE_P    ] = slippage;
+   history[i][HI_SLIPPAGE_P    ] = open.slippageP + slippage;
    history[i][HI_SWAP_M        ] = open.swapM;
    history[i][HI_COMMISSION_M  ] = open.commissionM;
    history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
@@ -618,8 +618,8 @@ bool ArchiveClosedPosition(int ticket, int signal, double bid, double ask, doubl
    OrderPop("ArchiveClosedPosition(3)");
 
    // update PL numbers
-   sequence.openZeroProfitU    = 0;                                                                   // both use Bid prices
-   sequence.closedZeroProfitU += ifDouble(open.type==OP_BUY, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
+   sequence.openZeroProfitU    = 0;                                           // both directions use Bid prices
+   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
    sequence.totalZeroProfitU   = sequence.closedZeroProfitU;
 
    sequence.openGrossProfitU    = 0;
@@ -748,8 +748,8 @@ bool StopSequence(int signal) {
          double bid = Bid, ask = Ask;
          int oeFlags, oe[];
 
-         if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))                                    return(!SetLastError(oe.Error(oe)));
-         if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, NormalizeDouble(open.slippageP-oe.Slippage(oe), 1))) return(false);
+         if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe))            return(!SetLastError(oe.Error(oe)));
+         if (!ArchiveClosedPosition(open.ticket, open.signal, bid, ask, -oe.Slippage(oe))) return(false);
 
          sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
          sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
@@ -810,18 +810,17 @@ bool UpdateStatus() {
 
    if (open.ticket > 0) {
       if (!SelectTicket(open.ticket, "UpdateStatus(2)")) return(false);
-      bool isOpen   = !OrderCloseTime();
-      bool isClosed = !isOpen;
+      bool isOpen = !OrderCloseTime();
 
       open.swapM        = OrderSwap();
       open.commissionM  = OrderCommission();
       open.grossProfitM = OrderProfit();
-      open.grossProfitU = ifDouble(open.type==OP_BUY, Bid-open.price, open.price-Ask);
+      open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
       open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
 
       if (isOpen) {
-         sequence.openZeroProfitU  = ifDouble(open.type==OP_BUY, Bid-open.bid, open.bid-Bid);      // both use Bid prices
+         sequence.openZeroProfitU  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
          sequence.openGrossProfitU = open.grossProfitU;
          sequence.openNetProfitU   = open.netProfitU;
          sequence.openNetProfitM   = open.netProfitM;
@@ -829,7 +828,7 @@ bool UpdateStatus() {
       else {
          int error;
          if (IsError(onPositionClose("UpdateStatus(3)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, open.slippageP)) return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, NULL)) return(false);
       }
       sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
       sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
@@ -844,7 +843,7 @@ bool UpdateStatus() {
 
 
 /**
- * Compose a log message for a closed open position. The ticket is  selected.
+ * Compose a log message for a closed position. The ticket is selected.
  *
  * @param  _Out_ int error - error code to be returned from the call (if any)
  *
@@ -864,15 +863,23 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = sequence.name;
-   string unexpected  = ifString(!IsTesting() || __CoreFunction!=CF_DEINIT, "unexpectedly ", "");
+   string unexpected  = ifString(__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && IsTesting()), "", "unexpectedly ");
+
+   if (__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && IsTesting())) {
+      unexpected = "";
+   }
+   else {
+      unexpected = "unexpectedly ";
+   }
+
    string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was "+ unexpected +"closed at "+ sClosePrice;
    string sStopout    = "";
 
    if (StrStartsWithI(OrderComment(), "so:")) {
       sStopout = ", "+ OrderComment();
       error = ERR_MARGIN_STOPOUT;
-   }
-   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+   }                                                  // CF_INIT: called from SynchronizeStatus() after reload
+   else if (__CoreFunction!=CF_INIT && (!IsTesting() || __CoreFunction!=CF_DEINIT)) {
       error = ERR_CONCURRENT_MODIFICATION;
    }
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
@@ -891,7 +898,7 @@ int onPositionClose(string message, int error) {
    if (!error)      return(logInfo(message));         // no error
    if (IsTesting()) return(catch(message, error));    // treat everything as a terminating error
 
-   logError(message, error);                          // online
+   logWarn(message, error);                          // online
    if (error == ERR_CONCURRENT_MODIFICATION)          // most probably manually closed
       return(NO_ERROR);                               // continue
    return(error);
@@ -914,6 +921,25 @@ int CalculateMagicNumber(int sequenceId = NULL) {
    int sequence = id;                                       // now 100-999 but was 1000-9999 (14 bit)
 
    return((strategy<<22) + (sequence<<8));                  // the remaining 8 bit are not used in this strategy
+}
+
+
+/**
+ * Whether the currently selected ticket belongs to the current strategy and/or instance.
+ *
+ * @param  int sequenceId [optional] - sequence to check the ticket against (default: check for matching strategy)
+ *
+ * @return bool
+ */
+bool IsMyOrder(int sequenceId = NULL) {
+   if (OrderSymbol() == Symbol()) {
+      int strategy = OrderMagicNumber() >> 22;
+      if (strategy == STRATEGY_ID) {
+         int sequence = OrderMagicNumber() >> 8 & 0x3FFF;   // 14 bit starting at bit 8: sequence id
+         return(!sequenceId || sequenceId==sequence);
+      }
+   }
+   return(false);
 }
 
 
@@ -1119,12 +1145,12 @@ string SignalToStr(int signal) {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                        return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
+   if (last_error != NULL)                       return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting())         return(true);
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -1179,8 +1205,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.maxNetDrawdownM",    /*double  */ DoubleToStr(sequence.maxNetDrawdownM, 2) + CRLF);
 
    // open order data
-   WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
    WriteIniString(file, section, "open.ticket",                 /*int     */ open.ticket);
+   WriteIniString(file, section, "open.signal",                 /*int     */ open.signal);
    WriteIniString(file, section, "open.type",                   /*int     */ open.type);
    WriteIniString(file, section, "open.time",                   /*datetime*/ open.time + ifString(open.time, GmtTimeFormat(open.time, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "open.bid",                    /*double  */ DoubleToStr(open.bid, Digits));
@@ -1291,10 +1317,10 @@ string SaveStatus.HistoryToStr(int index) {
  * @return bool - success status
  */
 bool RestoreSequence() {
-   if (IsLastError())     return(false);
-   if (!ReadStatus())     return(false);                 // read and apply the status file
-   if (!ValidateInputs()) return(false);                 // validate restored input parameters
-   //if (!SynchronizeStatus()) return(false);            // synchronize restored state with the trade server
+   if (IsLastError())        return(false);
+   if (!ReadStatus())        return(false);              // read and apply the status file
+   if (!ValidateInputs())    return(false);              // validate restored input parameters
+   if (!SynchronizeStatus()) return(false);              // synchronize restored state with the trade server
    return(true);
 }
 
@@ -1372,8 +1398,8 @@ bool ReadStatus() {
    SS.SequenceName();
 
    // open order data
-   open.signal                 = GetIniInt    (file, section, "open.signal"      );                   // int      open.signal       = 1
    open.ticket                 = GetIniInt    (file, section, "open.ticket"      );                   // int      open.ticket       = 123456
+   open.signal                 = GetIniInt    (file, section, "open.signal"      );                   // int      open.signal       = 1
    open.type                   = GetIniInt    (file, section, "open.type"        );                   // int      open.type         = 0
    open.time                   = GetIniInt    (file, section, "open.time"        );                   // datetime open.time         = 1624924800
    open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
@@ -1523,8 +1549,103 @@ int History.AddRecord(int index, int signal, int ticket, double lots, int openTy
 
 
 /**
+ * Synchronize restored state and runtime vars with the trade server. Called only from RestoreSequence().
+ *
+ * @return bool - success status
+ */
+bool SynchronizeStatus() {
+   if (IsLastError()) return(false);
+   int error;
+
+   // update local open position                                           // TODO: replace by UpdateStatus()
+   if (open.ticket > 0) {
+      open.bid = doubleOr(open.bid, open.price);
+      open.ask = doubleOr(open.ask, open.price);                           // TODO: remove after migration
+
+      if (!SelectTicket(open.ticket, "SynchronizeStatus(1)")) return(false);
+      bool isOpen = !OrderCloseTime();
+
+      if (isOpen) {
+         open.swapM        = OrderSwap();
+         open.commissionM  = OrderCommission();
+         open.grossProfitM = OrderProfit();
+         open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
+         open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+
+         sequence.openZeroProfitU  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);
+         sequence.openGrossProfitU = open.grossProfitU;                    // both directions use Bid prices
+         sequence.openNetProfitU   = open.netProfitU;
+         sequence.openNetProfitM   = open.netProfitM;
+      }
+      else {
+         if (IsError(onPositionClose("SynchronizeStatus(2)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
+         if (!ArchiveClosedPosition(open.ticket, open.signal, NULL, NULL, NULL)) return(false);
+      }
+   }
+
+   // update local closed positions                                        // TODO: remove after migration
+   sequence.closedZeroProfitU = 0;
+   int size = ArrayRange(history, 0);
+   for (int i=0; i < size; i++) {
+      history[i][HI_OPENBID ] = doubleOr(history[i][HI_OPENBID ], history[i][HI_OPENPRICE]);
+      history[i][HI_OPENASK ] = doubleOr(history[i][HI_OPENASK ], history[i][HI_OPENPRICE]);
+      history[i][HI_CLOSEBID] = doubleOr(history[i][HI_CLOSEBID], history[i][HI_CLOSEPRICE]);
+      history[i][HI_CLOSEASK] = doubleOr(history[i][HI_CLOSEASK], history[i][HI_CLOSEPRICE]);
+      sequence.closedZeroProfitU += ifDouble(!history[i][HI_OPENTYPE], history[i][HI_CLOSEBID]-history[i][HI_OPENBID], history[i][HI_OPENBID]-history[i][HI_CLOSEBID]);
+   }
+
+   // detect dangling open positions
+   for (i=OrdersTotal()-1; i >= 0; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
+      if (IsMyOrder(sequence.id)) {
+         if (OrderTicket()!=open.ticket) return(!catch("SynchronizeStatus(3)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+      }
+   }
+
+   // detect dangling closed positions
+   for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
+      if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
+      if (IsPendingOrderType(OrderType()))              continue;          // skip deleted pending orders (atm not possible)
+      if (IsMyOrder(sequence.id)) {
+         if (!IsClosedPosition(OrderTicket())) return(!catch("SynchronizeStatus(4)  "+ sequence.name +" dangling closed position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+      }                                                                    // TODO: add to history
+   }
+
+   // recalculate stats
+   sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
+   sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
+   sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
+   sequence.totalNetProfitM   = sequence.openNetProfitM   + sequence.closedNetProfitM;
+
+   sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
+   sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
+   SS.TotalPL();
+   SS.PLStats();
+
+   return(!catch("SynchronizeStatus(5)"));
+}
+
+
+/**
+ * Whether the specified ticket exists in the local history of closed positions.
+ *
+ * @param  int ticket
+ *
+ * @return bool
+ */
+bool IsClosedPosition(int ticket) {
+   int size = ArrayRange(history, 0);
+   for (int i=0; i < size; i++) {
+      if (history[i][HI_TICKET] == ticket) return(true);
+   }
+   return(false);
+}
+
+
+/**
  * Whether the current sequence was created in the tester. Considers that a test sequence can be loaded into an online
- * chart after the test (for visualization).
+ * chart after the test (for visualization and analysis).
  *
  * @return bool
  */
