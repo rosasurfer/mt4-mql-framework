@@ -35,14 +35,14 @@
  *         ren 4 > 3:  D > C
  *         ren 1 > 4:  A > D
  *
- *       daily PL of all cumulated metrics
  *       add quote unit multiplicator
- *    - move validation of custom "EA.Recorder" to EA
+ *       daily PL of all cumulated metrics
  *    - system variants:
  *       Reverse ZigZag
  *       full session (24h) with trade breaks
  *       partial session (e.g. 09:00-16:00) with trade breaks
  *    - reverse trading option "ZigZag.R" (and Turtle Soup)
+ *    - move validation of custom "EA.Recorder" to EA
  *
  *  - stabilize performance tracking
  *    - add stoploss to every order
@@ -350,7 +350,7 @@ bool IsZigZagSignal(int &signal) {
             }
             lastSignal = signal;
 
-            if (IsVisualMode()) {        // pause the tester according to the debug configuration
+            if (IsVisualMode()) {               // pause the tester according to the debug configuration
                if (test.onReversalPause) Tester.Pause("IsZigZagSignal(2)");
             }
          }
@@ -778,6 +778,7 @@ bool StopSequence(int signal) {
          break;
 
       case NULL:                                                     // explicit stop (manual) or end of test
+         sequence.status = STATUS_STOPPED;
          break;
 
       default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
