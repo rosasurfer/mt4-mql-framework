@@ -120,7 +120,7 @@ int afterInit() {
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       test.onStopPause         = GetConfigBool(section, "OnStopPause",         true);
-      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus",      true);
+      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
    StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
