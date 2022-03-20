@@ -27,11 +27,8 @@
  *
  *       cumulated PL in pip with zero costs
  *       -----------------------------------
- *       migrate running sequences: open positions, closed positions
- *       migrate history files:
- *         ren 3 > 2:  C > D
- *         ren 4 > 3:  D > C
- *         ren 1 > 4:  A > D
+ *       enable recorded metrics: EA.Recorder=2,3,4
+ *
  *
  *       add quote unit multiplicator
  *       daily PL of all cumulated metrics
@@ -1541,61 +1538,27 @@ int History.AddRecord(int index, int ticket, double lots, int openType, datetime
  */
 bool SynchronizeStatus() {
    if (IsLastError()) return(false);
-   int error;
 
-   // update local open position                                           // TODO: replace by UpdateStatus()
+   // update local open/closed positions
    if (open.ticket > 0) {
-      open.bid = doubleOr(open.bid, open.price);
-      open.ask = doubleOr(open.ask, open.price);                           // TODO: remove after migration
-
-      if (!SelectTicket(open.ticket, "SynchronizeStatus(1)")) return(false);
-      bool isOpen = !OrderCloseTime();
-
-      if (isOpen) {
-         open.swapM        = OrderSwap();
-         open.commissionM  = OrderCommission();
-         open.grossProfitM = OrderProfit();
-         open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
-         open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-         open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
-
-         sequence.openZeroProfitU  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);
-         sequence.openGrossProfitU = open.grossProfitU;                    // both directions use Bid prices
-         sequence.openNetProfitU   = open.netProfitU;
-         sequence.openNetProfitM   = open.netProfitM;
-      }
-      else {
-         if (IsError(onPositionClose("SynchronizeStatus(2)  "+ sequence.name +" "+ UpdateStatus.PositionCloseMsg(error), error))) return(false);
-         if (!ArchiveClosedPosition(open.ticket, NULL, NULL, NULL)) return(false);
-      }
-   }
-
-   // update local closed positions                                        // TODO: remove after migration
-   sequence.closedZeroProfitU = 0;
-   int size = ArrayRange(history, 0);
-   for (int i=0; i < size; i++) {
-      history[i][HI_OPENBID ] = doubleOr(history[i][HI_OPENBID ], history[i][HI_OPENPRICE]);
-      history[i][HI_OPENASK ] = doubleOr(history[i][HI_OPENASK ], history[i][HI_OPENPRICE]);
-      history[i][HI_CLOSEBID] = doubleOr(history[i][HI_CLOSEBID], history[i][HI_CLOSEPRICE]);
-      history[i][HI_CLOSEASK] = doubleOr(history[i][HI_CLOSEASK], history[i][HI_CLOSEPRICE]);
-      sequence.closedZeroProfitU += ifDouble(!history[i][HI_OPENTYPE], history[i][HI_CLOSEBID]-history[i][HI_OPENBID], history[i][HI_OPENBID]-history[i][HI_CLOSEBID]);
+      if (!UpdateStatus()) return(false);
    }
 
    // detect dangling open positions
-   for (i=OrdersTotal()-1; i >= 0; i--) {
+   for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
       if (IsMyOrder(sequence.id)) {
-         if (OrderTicket()!=open.ticket) return(!catch("SynchronizeStatus(3)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+         if (OrderTicket() != open.ticket)     return(!catch("SynchronizeStatus(1)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
       }
    }
 
    // detect dangling closed positions
    for (i=OrdersHistoryTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) continue;
-      if (IsPendingOrderType(OrderType()))              continue;          // skip deleted pending orders (atm not possible)
+      if (IsPendingOrderType(OrderType()))              continue;       // skip deleted pending orders (atm not supported)
       if (IsMyOrder(sequence.id)) {
-         if (!IsClosedPosition(OrderTicket())) return(!catch("SynchronizeStatus(4)  "+ sequence.name +" dangling closed position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
-      }                                                                    // TODO: add to history
+         if (!IsClosedPosition(OrderTicket())) return(!catch("SynchronizeStatus(2)  "+ sequence.name +" dangling closed position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+      }                                                                 // TODO: add to history
    }
 
    // recalculate stats
@@ -1609,7 +1572,7 @@ bool SynchronizeStatus() {
    SS.TotalPL();
    SS.PLStats();
 
-   return(!catch("SynchronizeStatus(5)"));
+   return(!catch("SynchronizeStatus(3)"));
 }
 
 
