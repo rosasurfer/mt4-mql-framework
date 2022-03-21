@@ -3090,10 +3090,10 @@ int onInputError(string message) {
  * @param  int direction - trade direction of the record
  * @param  ...
  *
- * @return int - index the record was inserted or EMPTY (-1) in case of errors
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
-   int i = EMPTY;
+   int i;
 
    if (direction == D_LONG) {
       int size = ArraySize(long.ticket);
@@ -3142,7 +3142,9 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
    }
    else return(_EMPTY(catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(ifInt(catch("Orders.AddRecord(4)"), EMPTY, i));
+   if (!catch("Orders.AddRecord(4)"))
+      return(i);
+   return(EMPTY);
 }
 
 
