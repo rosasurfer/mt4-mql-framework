@@ -23,23 +23,28 @@
  *
  * TODO:
  *  - performance tracking
- *    - PL recording
- *       add quote unit multiplicator
- *       daily PL of all cumulated metrics
- *    - system variants
- *       reverse trading option "ZigZag.R" (and Turtle Soup)
- *       full session (24h) with trade breaks
- *       partial session (e.g. 09:00-16:00) with trade breaks
- *    - move validation of custom "EA.Recorder" to EA
+ *    - longterm-stabilization
+ *       shift periodic start/stop conditions to the next session (not only to next day)
+ *       SynchronizeStatus() must handle a dangling open position
+ *       add stoploss to every order
+ *       notifications for price feed outages
+ *       virtual trade option (removes ERR_TRADESERVER_GONE)
+ *    - recording
+ *       configurable quote unit multiplier
+ *       CLI tools to shift or scale histories (for normalization)
+ *       daily variant of cumulated metrics
+ *    - move custom "EA.Recorder" validation to EA
  *
- *  - stabilize performance tracking
- *    - SynchronizeStatus()
- *       handle a dangling open position
- *    - shift periodic time conditions to the next trading session (not only to next day)
- *    - add stoploss to every order
- *    - virtual trade option: removes ERR_TRADESERVER_GONE
- *    - CLI tools to shift or scale histories
- *    - notifications for price feed outages
+ *  - real trading functionality
+ *     stop condition "pip"
+ *     start/stop sequence w/o pickup
+ *     reverse trading
+ *     pickup another sequence: copy-123, mirror-456
+ *
+ *  - system variants
+ *     reverse trading "ZigZag.R" (and Turtle Soup)
+ *     full session (24h) with trade breaks
+ *     partial session (e.g. 09:00-16:00) with trade breaks
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -51,23 +56,22 @@
  *     recorded symbols with descriptions
  *
  *  - input parameter ZigZag.Timeframe
- *  - stop condition "pip"
  *  - ChartInfos: read/display symbol description as long name
  *  - ChartInfos: fix display of symbol with Digits=1 (pip)
  *
  *  - trade breaks
- *     - trading is disabled but the price feed is active
- *     - configuration:
- *        default: auto-config using the SYMBOL configuration
- *        manual override of times and behaviors (per instance => via input parameters)
- *     - default behavior:
- *        no trade commands
- *        synchronize-after if an opposite signal occurred
- *     - manual behavior configuration:
- *        close-before      (default: no)
- *        synchronize-after (default: yes; if no: wait for the next signal)
- *     - better parsing of struct SYMBOL
- *     - config support for session and trade breaks at specific day times
+ *    - trading is disabled but the price feed is active
+ *    - configuration:
+ *       default: auto-config using the SYMBOL configuration
+ *       manual override of times and behaviors (per instance => via input parameters)
+ *    - default behavior:
+ *       no trade commands
+ *       synchronize-after if an opposite signal occurred
+ *    - manual behavior configuration:
+ *       close-before      (default: no)
+ *       synchronize-after (default: yes; if no: wait for the next signal)
+ *    - better parsing of struct SYMBOL
+ *    - config support for session and trade breaks at specific day times
  *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
