@@ -25,20 +25,18 @@
  *  - performance tracking
  *    - longterm-stabilization
  *       shift periodic start/stop conditions to the next session (not only to next day)
- *       SynchronizeStatus() must handle a dangling open position
  *       add stoploss to every order
  *       notifications for price feed outages
- *       virtual trade option (removes ERR_TRADESERVER_GONE)
+ *       virtual trade option (prevents ERR_TRADESERVER_GONE)
  *    - recording
  *       configurable quote unit multiplier
- *       CLI tools to shift or scale histories (for normalization)
- *       daily variant of cumulated metrics
+ *       CLI tools to shift or scale histories (normalization)
+ *       daily variants of cumulated metrics
  *    - move custom "EA.Recorder" validation to EA
  *
  *  - real trading functionality
  *     stop condition "pip"
- *     start/stop sequence w/o pickup
- *     reverse trading
+ *     start/stop sequence with signal pickup
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - system variants
@@ -1538,17 +1536,34 @@ bool SynchronizeStatus() {
    int prevOpenTicket  = open.ticket;
    int prevHistorySize = ArrayRange(history, 0);
 
-   // update local open/closed positions
-   if (open.ticket > 0) {
-      if (!UpdateStatus()) return(false);
-   }
-
-   // detect dangling open positions
+   // detect & handle a dangling open position
    for (int i=OrdersTotal()-1; i >= 0; i--) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) continue;
       if (IsMyOrder(sequence.id)) {
-         if (OrderTicket() != open.ticket) return(!catch("SynchronizeStatus(1)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+         if (IsPendingOrderType(OrderType())) {
+            logWarn("SynchronizeStatus(1)  "+ sequence.name +" unsupported pending order found: #"+ OrderTicket() +", ignoring it...");
+            continue;
+         }
+         if (!open.ticket) {
+            logWarn("SynchronizeStatus(2)  "+ sequence.name +" dangling open position found: #"+ OrderTicket() +", adding to sequence...");
+            open.ticket    = OrderTicket();
+            open.type      = OrderType();
+            open.time      = OrderOpenTime();
+            open.price     = OrderOpenPrice();
+            open.bid       = open.price;
+            open.ask       = open.price;
+            open.slippageP = NULL;
+            // open PL numbers will auto-update in the following UpdateStatus() call
+         }
+         else if (OrderTicket() != open.ticket) {
+            return(!catch("SynchronizeStatus(3)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
+         }
       }
+   }
+
+   // update open position status
+   if (open.ticket > 0) {
+      if (!UpdateStatus()) return(false);
    }
 
    // detect & handle dangling closed positions
@@ -1573,10 +1588,10 @@ bool SynchronizeStatus() {
             double   netProfitM   = grossProfitM + swapM + commissionM;
             double   grossProfitU = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
 
-            logWarn("SynchronizeStatus(2)  "+ sequence.name +" dangling closed position found: #"+ ticket +", adding to history...");
+            logWarn("SynchronizeStatus(4)  "+ sequence.name +" dangling closed position found: #"+ ticket +", adding to sequence...");
             if (!History.AddRecord(index, ticket, lots, openType, openTime, openPrice, openPrice, openPrice, closeTime, closePrice, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM)) return(false);
 
-            // update closed PL data
+            // update closed PL numbers
             sequence.closedZeroProfitU  += grossProfitU;
             sequence.closedGrossProfitU += grossProfitU;
             sequence.closedNetProfitU   += grossProfitU + (swapM + commissionM)/UnitValue(OrderLots());
@@ -1585,7 +1600,7 @@ bool SynchronizeStatus() {
       }
    }
 
-   // recalculate total stats
+   // recalculate total PL numbers
    sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
    sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
    sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
@@ -1597,8 +1612,8 @@ bool SynchronizeStatus() {
    SS.PLStats();
 
    if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
-      return(SaveStatus());                                          // immediately save if positions changed
-   return(!catch("SynchronizeStatus(3)"));
+      return(SaveStatus());                                          // immediately save status if positions changed
+   return(!catch("SynchronizeStatus(5)"));
 }
 
 
