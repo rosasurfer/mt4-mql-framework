@@ -1465,7 +1465,6 @@ bool ReadStatus.ParseHistory(string key, string value) {
    // history.i=ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
    string values[];
    string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))   return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
-   int index = StrToInteger(sId);
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
    int      ticket      = StrToInteger(values[HI_TICKET        ]);
@@ -1485,43 +1484,59 @@ bool ReadStatus.ParseHistory(string key, string value) {
    double   grossProfit =  StrToDouble(values[HI_GROSS_PROFIT_M]);
    double   netProfit   =  StrToDouble(values[HI_NET_PROFIT_M  ]);
 
-   return(History.AddRecord(index, ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit));
+   return(!IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openBid, openAsk, openPrice, closeTime, closeBid, closeAsk, closePrice, slippage, swap, commission, grossProfit, netProfit)));
 }
 
 
 /**
- * Add a record to the history array. Prevents existing data to be overwritten.
+ * Add an order record to the history array. Records are ordered ascending by {OpenTime;Ticket} and the new record is inserted
+ * at the correct position. No data is overwritten.
  *
- * @param  int index - array index to insert the record
- * @param  ...       - record details
+ * @param  int ticket - order record details
+ * @param  ...
  *
- * @return bool - success status
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
-bool History.AddRecord(int index, int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
-   if (index < 0) return(!catch("History.AddRecord(1)  "+ sequence.name +" invalid parameter index: "+ index, ERR_INVALID_PARAMETER));
-
+int History.AddRecord(int ticket, double lots, int openType, datetime openTime, double openBid, double openAsk, double openPrice, datetime closeTime, double closeBid, double closeAsk, double closePrice, double slippage, double swap, double commission, double grossProfit, double netProfit) {
    int size = ArrayRange(history, 0);
-   if (index >= size) ArrayResize(history, index+1);
-   if (history[index][HI_TICKET] != 0) return(!catch("History.AddRecord(2)  "+ sequence.name +" invalid parameter index: "+ index +" (cannot overwrite history["+ index +"] record, ticket #"+ history[index][HI_TICKET] +")", ERR_INVALID_PARAMETER));
 
-   history[index][HI_TICKET        ] = ticket;
-   history[index][HI_LOTS          ] = lots;
-   history[index][HI_OPENTYPE      ] = openType;
-   history[index][HI_OPENTIME      ] = openTime;
-   history[index][HI_OPENBID       ] = openBid;
-   history[index][HI_OPENASK       ] = openAsk;
-   history[index][HI_OPENPRICE     ] = openPrice;
-   history[index][HI_CLOSETIME     ] = closeTime;
-   history[index][HI_CLOSEBID      ] = closeBid;
-   history[index][HI_CLOSEASK      ] = closeAsk;
-   history[index][HI_CLOSEPRICE    ] = closePrice;
-   history[index][HI_SLIPPAGE_P    ] = slippage;
-   history[index][HI_SWAP_M        ] = swap;
-   history[index][HI_COMMISSION_M  ] = commission;
-   history[index][HI_GROSS_PROFIT_M] = grossProfit;
-   history[index][HI_NET_PROFIT_M  ] = netProfit;
+   for (int i=0; i < size; i++) {
+      if (EQ(ticket,   history[i][HI_TICKET  ])) return(_EMPTY(catch("History.AddRecord(1)  "+ sequence.name +" cannot add record, ticket #"+ ticket +" already exists (offset: "+ i +")", ERR_INVALID_PARAMETER)));
+      if (GT(openTime, history[i][HI_OPENTIME])) continue;
+      if (LT(openTime, history[i][HI_OPENTIME])) break;
+      if (LT(ticket,   history[i][HI_TICKET  ])) break;
+   }
 
-   return(!catch("History.AddRecord(3)"));
+   // 'i' now holds the array index to insert at
+   if (i == size) {
+      ArrayResize(history, size+1);                                  // add a new empty slot or...
+   }
+   else {
+      int dim2=ArrayRange(history, 1), from=i*dim2, to=from+dim2;    // ...free an existing slot by shifting existing data
+      ArrayCopy(history, history, to, from);
+   }
+
+   // insert the new data
+   history[i][HI_TICKET        ] = ticket;
+   history[i][HI_LOTS          ] = lots;
+   history[i][HI_OPENTYPE      ] = openType;
+   history[i][HI_OPENTIME      ] = openTime;
+   history[i][HI_OPENBID       ] = openBid;
+   history[i][HI_OPENASK       ] = openAsk;
+   history[i][HI_OPENPRICE     ] = openPrice;
+   history[i][HI_CLOSETIME     ] = closeTime;
+   history[i][HI_CLOSEBID      ] = closeBid;
+   history[i][HI_CLOSEASK      ] = closeAsk;
+   history[i][HI_CLOSEPRICE    ] = closePrice;
+   history[i][HI_SLIPPAGE_P    ] = slippage;
+   history[i][HI_SWAP_M        ] = swap;
+   history[i][HI_COMMISSION_M  ] = commission;
+   history[i][HI_GROSS_PROFIT_M] = grossProfit;
+   history[i][HI_NET_PROFIT_M  ] = netProfit;
+
+   if (!catch("History.AddRecord(2)"))
+      return(i);
+   return(EMPTY);
 }
 
 
@@ -1573,7 +1588,6 @@ bool SynchronizeStatus() {
 
       if (IsMyOrder(sequence.id)) {
          if (!IsLocalClosedPosition(OrderTicket())) {
-            int      index        = ArrayRange(history, 0);
             int      ticket       = OrderTicket();
             double   lots         = OrderLots();
             int      openType     = OrderType();
@@ -1589,7 +1603,7 @@ bool SynchronizeStatus() {
             double   grossProfitU = ifDouble(!openType, closePrice-openPrice, openPrice-closePrice);
 
             logWarn("SynchronizeStatus(4)  "+ sequence.name +" dangling closed position found: #"+ ticket +", adding to sequence...");
-            if (!History.AddRecord(index, ticket, lots, openType, openTime, openPrice, openPrice, openPrice, closeTime, closePrice, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM)) return(false);
+            if (IsEmpty(History.AddRecord(ticket, lots, openType, openTime, openPrice, openPrice, openPrice, closeTime, closePrice, closePrice, closePrice, slippageP, swapM, commissionM, grossProfitM, netProfitM))) return(false);
 
             // update closed PL numbers
             sequence.closedZeroProfitU  += grossProfitU;
