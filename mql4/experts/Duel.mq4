@@ -242,8 +242,8 @@ string   sSequencePlStats = "";
 string   sCycleStats      = "";
 
 // debug settings                                  // configurable via framework config, see afterInit()
-bool     test.onStopPause    = false;              // whether to pause a test after StopSequence()
-bool     test.optimizeStatus = true;               // whether to reduce status file writing in tester
+bool     test.onStopPause        = false;          // whether to pause a test after StopSequence()
+bool     test.reduceStatusWrites = true;           // whether to reduce status file writing in tester
 
 #include <apps/duel/init.mqh>
 #include <apps/duel/deinit.mqh>
@@ -3090,10 +3090,10 @@ int onInputError(string message) {
  * @param  int direction - trade direction of the record
  * @param  ...
  *
- * @return int - index the record was inserted or EMPTY (-1) in case of errors
+ * @return int - index the record was inserted at or EMPTY (-1) in case of errors
  */
 int Orders.AddRecord(int direction, int ticket, int level, double lots, int pendingType, datetime pendingTime, double pendingPrice, int openType, datetime openTime, double openPrice, datetime closeTime, double closePrice, double swap, double commission, double profit) {
-   int i = EMPTY;
+   int i;
 
    if (direction == D_LONG) {
       int size = ArraySize(long.ticket);
@@ -3142,7 +3142,9 @@ int Orders.AddRecord(int direction, int ticket, int level, double lots, int pend
    }
    else return(_EMPTY(catch("Orders.AddRecord(3)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER)));
 
-   return(ifInt(catch("Orders.AddRecord(4)"), EMPTY, i));
+   if (!catch("Orders.AddRecord(4)"))
+      return(i);
+   return(EMPTY);
 }
 
 
@@ -3582,12 +3584,12 @@ double iADR() {
  * @return bool - success status
  */
 bool SaveStatus() {
-   if (last_error != NULL)                        return(false);
-   if (!sequence.id || StrTrim(Sequence.ID)=="")  return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence()) /*&&*/ if (!IsTesting()) return(true);
+   if (last_error != NULL)                       return(false);
+   if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting())         return(true);
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
