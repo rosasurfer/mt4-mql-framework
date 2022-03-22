@@ -29,7 +29,7 @@
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - performance tracking
- *    - longterm-stabilization
+ *    - longterm stabilization
  *       shift periodic start/stop conditions to the next session (not only the next day)
  *       add stoploss to every order
  *       notifications for price feed outages
