@@ -22,9 +22,15 @@
  *
  *
  * TODO:
+ *  - trading functionality
+ *     stop condition "pip"
+ *     reverse trading
+ *     start/stop sequence with signal pickup
+ *     pickup another sequence: copy-123, mirror-456
+ *
  *  - performance tracking
  *    - longterm-stabilization
- *       shift periodic start/stop conditions to the next session (not only to next day)
+ *       shift periodic start/stop conditions to the next session (not only the next day)
  *       add stoploss to every order
  *       notifications for price feed outages
  *       virtual trade option (prevents ERR_TRADESERVER_GONE)
@@ -33,16 +39,6 @@
  *       CLI tools to shift or scale histories (normalization)
  *       daily variants of cumulated metrics
  *    - move custom "EA.Recorder" validation to EA
- *
- *  - real trading functionality
- *     stop condition "pip"
- *     start/stop sequence with signal pickup
- *     pickup another sequence: copy-123, mirror-456
- *
- *  - system variants
- *     reverse trading "ZigZag.R" (and Turtle Soup)
- *     full session (24h) with trade breaks
- *     partial session (e.g. 09:00-16:00) with trade breaks
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -54,10 +50,13 @@
  *     recorded symbols with descriptions
  *
  *  - input parameter ZigZag.Timeframe
+ *  - check Turtle Soup
  *  - ChartInfos: read/display symbol description as long name
  *  - ChartInfos: fix display of symbol with Digits=1 (pip)
  *
  *  - trade breaks
+ *    - full session (24h) with trade breaks
+ *    - partial session (e.g. 09:00-16:00) with trade breaks
  *    - trading is disabled but the price feed is active
  *    - configuration:
  *       default: auto-config using the SYMBOL configuration
