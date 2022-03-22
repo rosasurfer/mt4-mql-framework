@@ -6329,7 +6329,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
 
    double slippage = oe.Slippage(oe);
    if (NE(slippage, 0, digits)) {
-      sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(oe.Type(oe)==OP_BUY, oe.Bid(oe), oe.Ask(oe)), priceFormat);
+      sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(!oe.Type(oe), oe.Bid(oe), oe.Ask(oe)), priceFormat);
       sSlippage   = "slippage: "+ NumberToStr(-slippage, "+."+ (Digits & 1)) +" pip, ";
    }
    int remainder = oe.RemainingTicket(oe);

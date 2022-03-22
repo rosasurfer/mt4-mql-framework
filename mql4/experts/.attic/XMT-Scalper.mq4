@@ -262,7 +262,7 @@ string   sUnitSize            = "-";
 
 // debug settings                               // configurable via framework config, see afterInit()
 bool     test.onPositionOpenPause = false;      // whether to pause a test on PositionOpen events
-bool     test.optimizeStatus      = true;       // whether to minimize status file writing in tester
+bool     test.reduceStatusWrites  = true;       // whether to minimize status file writing in tester
 
 
 /**
@@ -464,7 +464,7 @@ int afterInit() {
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
-      test.optimizeStatus      = GetConfigBool(section, "OptimizeStatus", true);
+      test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
    return(catch("afterInit(1)"));
 }
@@ -672,10 +672,10 @@ bool UpdateRealOrderStatus() {
          real.profit    [i] = OrderProfit();
 
          if (isOpen) {
-            real.openLots       += ifDouble(real.openType[i]==OP_BUY, real.lots[i], -real.lots[i]);
+            real.openLots       += ifDouble(!real.openType[i], real.lots[i], -real.lots[i]);
             real.openCommission += real.commission[i];
             real.openPl         += real.profit    [i];
-            real.openPip        += ifDouble(real.openType[i]==OP_BUY, Bid-real.openPrice[i], real.openPrice[i]-Ask)/Pip;
+            real.openPip        += ifDouble(!real.openType[i], Bid-real.openPrice[i], real.openPrice[i]-Ask)/Pip;
          }
          else /*isClosed*/ {                                      // the position was closed
             onRealPositionClose(i);                               // updates the order record
@@ -683,7 +683,7 @@ bool UpdateRealOrderStatus() {
             real.closedLots       += real.lots      [i];
             real.closedCommission += real.commission[i];
             real.closedPl         += real.profit    [i];
-            real.closedPip        += ifDouble(real.openType[i]==OP_BUY, real.closePrice[i]-real.openPrice[i], real.openPrice[i]-real.closePrice[i])/Pip;
+            real.closedPip        += ifDouble(!real.openType[i], real.closePrice[i]-real.openPrice[i], real.openPrice[i]-real.closePrice[i])/Pip;
             saveStatus = true;
          }
       }
@@ -757,10 +757,10 @@ bool UpdateVirtualOrderStatus() {
          }
 
          if (isOpen) {
-            double openPip       = ifDouble(virt.openType[i]==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
+            double openPip       = ifDouble(!virt.openType[i], Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
             virt.isOpenPosition  = true;
             virt.profit[i]       = openPip * PipValue(virt.lots[i]);
-            virt.openLots       += ifDouble(virt.openType[i]==OP_BUY, virt.lots[i], -virt.lots[i]);
+            virt.openLots       += ifDouble(!virt.openType[i], virt.lots[i], -virt.lots[i]);
             virt.openCommission += virt.commission[i];
             virt.openPl         += virt.profit    [i];
             virt.openPip        += openPip;
@@ -772,7 +772,7 @@ bool UpdateVirtualOrderStatus() {
             virt.closedLots       += virt.lots      [i];
             virt.closedCommission += virt.commission[i];
             virt.closedPl         += virt.profit    [i];
-            virt.closedPip        += ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+            virt.closedPip        += ifDouble(!virt.openType[i], virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
             saveStatus = true;
          }
       }
@@ -891,7 +891,7 @@ bool onRealPositionClose(int i) {
 bool onVirtualPositionClose(int i) {
    // update order log
    virt.closeTime[i] = Tick.time;
-   virt.profit   [i] = ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
+   virt.profit   [i] = ifDouble(!virt.openType[i], virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip * PipValue(virt.lots[i]);
 
    if (IsLogDebug()) {
       // virtual #1 Sell 0.1 GBPUSD "comment" at 1.5457'2 was closed at 1.5457'2 [tp|sl] (market: Bid/Ask)
@@ -1405,13 +1405,13 @@ bool CloseVirtualOrders() {
    if (virt.isOpenPosition) {
       if (virt.openType[i] == OP_UNDEFINED) return(!catch("CloseVirtualOrders(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected open position #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
       // close virtual open position
-      virt.closePrice[i] = ifDouble(virt.openType[i]==OP_BUY, Bid, Ask);
+      virt.closePrice[i] = ifDouble(!virt.openType[i], Bid, Ask);
       onVirtualPositionClose(i);                         // updates virt.closeTime[i] and virt.profit[i]
       virt.closedPositions++;
       virt.closedLots       += virt.lots      [i];
       virt.closedCommission += virt.commission[i];
       virt.closedPl         += virt.profit    [i];
-      virt.closedPip        += ifDouble(virt.openType[i]==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+      virt.closedPip        += ifDouble(!virt.openType[i], virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
    }
    else {
       if (virt.openType[i] != OP_UNDEFINED) return(!catch("CloseVirtualOrders(1)  "+ sequence.name +" illegal order type "+ OperationTypeToStr(virt.openType[i]) +" of expected pending order #"+ virt.ticket[i], ERR_ILLEGAL_STATE));
@@ -1914,11 +1914,11 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int pen
    if (isOpenPosition) {
       if (virt.isOpenPosition) return(!catch("Orders.AddVirtualTicket(3)  "+ sequence.name +" cannot add open position #"+ ticket +" (another open position exists)", ERR_ILLEGAL_STATE));
       virt.isOpenPosition = true;
-      virt.openLots       += ifDouble(openType==OP_BUY, lots, -lots);
+      virt.openLots       += ifDouble(!openType, lots, -lots);
       virt.openCommission += commission;
       virt.openPl         += profit;
       virt.openPlNet       = virt.openCommission + virt.openPl;
-      virt.openPip        += ifDouble(openType==OP_BUY, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
+      virt.openPip        += ifDouble(!openType, Bid-virt.openPrice[i], virt.openPrice[i]-Ask)/Pip;
     //virt.openPipNet      = ...
    }
    if (isClosedPosition) {
@@ -1927,7 +1927,7 @@ bool Orders.AddVirtualTicket(int &ticket, int linkedTicket, double lots, int pen
       virt.closedCommission += commission;
       virt.closedPl         += profit;
       virt.closedPlNet       = virt.closedCommission + virt.closedPl;
-      virt.closedPip        += ifDouble(openType==OP_BUY, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
+      virt.closedPip        += ifDouble(!openType, virt.closePrice[i]-virt.openPrice[i], virt.openPrice[i]-virt.closePrice[i])/Pip;
     //virt.closedPipNet      = ...
    }
    if (isPosition) {
@@ -2517,7 +2517,7 @@ bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
    // in tester skip most status file writes, except file creation and test end
-   if (IsTesting() && test.optimizeStatus) {
+   if (IsTesting() && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;

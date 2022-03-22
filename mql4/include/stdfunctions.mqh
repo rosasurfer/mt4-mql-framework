@@ -3898,8 +3898,7 @@ int Tester.Stop(string caller = "") {
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting()) return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
-
+   if (!This.IsTesting())  return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
 

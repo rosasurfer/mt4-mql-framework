@@ -13,6 +13,7 @@ int onDeinit() {
             success = UpdateStatus();
          }
          if (success) StopSequence(NULL);
+         RecordMetrics();
          ShowStatus();
       }
       return(last_error);
