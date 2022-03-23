@@ -1183,19 +1183,24 @@ bool SaveStatus() {
    WriteIniString(file, section, "sequence.isTest",             /*bool    */ sequence.isTest);
    WriteIniString(file, section, "sequence.name",               /*string  */ sequence.name);
    WriteIniString(file, section, "sequence.status",             /*int     */ sequence.status);
-   WriteIniString(file, section, "sequence.startEquityM",       /*double  */ DoubleToStr(sequence.startEquityM, 2));
-   WriteIniString(file, section, "sequence.openZeroProfitU",    /*double  */ DoubleToStr(sequence.openZeroProfitU, 6));
-   WriteIniString(file, section, "sequence.closedZeroProfitU",  /*double  */ DoubleToStr(sequence.closedZeroProfitU, 6));
-   WriteIniString(file, section, "sequence.totalZeroProfitU",   /*double  */ DoubleToStr(sequence.totalZeroProfitU, 6));
-   WriteIniString(file, section, "sequence.openGrossProfitU",   /*double  */ DoubleToStr(sequence.openGrossProfitU, 6));
-   WriteIniString(file, section, "sequence.closedGrossProfitU", /*double  */ DoubleToStr(sequence.closedGrossProfitU, 6));
-   WriteIniString(file, section, "sequence.totalGrossProfitU",  /*double  */ DoubleToStr(sequence.totalGrossProfitU, 6));
-   WriteIniString(file, section, "sequence.openNetProfitU",     /*double  */ DoubleToStr(sequence.openNetProfitU, 6));
-   WriteIniString(file, section, "sequence.closedNetProfitU",   /*double  */ DoubleToStr(sequence.closedNetProfitU, 6));
-   WriteIniString(file, section, "sequence.totalNetProfitU",    /*double  */ DoubleToStr(sequence.totalNetProfitU, 6));
+   WriteIniString(file, section, "sequence.startEquityM",       /*double  */ DoubleToStr(sequence.startEquityM, 2) + CRLF);
+
+   WriteIniString(file, section, "sequence.openZeroProfitU",    /*double  */ DoubleToStr(sequence.openZeroProfitU, Digits));
+   WriteIniString(file, section, "sequence.closedZeroProfitU",  /*double  */ DoubleToStr(sequence.closedZeroProfitU, Digits));
+   WriteIniString(file, section, "sequence.totalZeroProfitU",   /*double  */ DoubleToStr(sequence.totalZeroProfitU, Digits) + CRLF);
+
+   WriteIniString(file, section, "sequence.openGrossProfitU",   /*double  */ DoubleToStr(sequence.openGrossProfitU, Digits));
+   WriteIniString(file, section, "sequence.closedGrossProfitU", /*double  */ DoubleToStr(sequence.closedGrossProfitU, Digits));
+   WriteIniString(file, section, "sequence.totalGrossProfitU",  /*double  */ DoubleToStr(sequence.totalGrossProfitU, Digits) + CRLF);
+
+   WriteIniString(file, section, "sequence.openNetProfitU",     /*double  */ DoubleToStr(sequence.openNetProfitU, Digits));
+   WriteIniString(file, section, "sequence.closedNetProfitU",   /*double  */ DoubleToStr(sequence.closedNetProfitU, Digits));
+   WriteIniString(file, section, "sequence.totalNetProfitU",    /*double  */ DoubleToStr(sequence.totalNetProfitU, Digits) + CRLF);
+
    WriteIniString(file, section, "sequence.openNetProfitM",     /*double  */ DoubleToStr(sequence.openNetProfitM, 2));
    WriteIniString(file, section, "sequence.closedNetProfitM",   /*double  */ DoubleToStr(sequence.closedNetProfitM, 2));
-   WriteIniString(file, section, "sequence.totalNetProfitM",    /*double  */ DoubleToStr(sequence.totalNetProfitM, 2));
+   WriteIniString(file, section, "sequence.totalNetProfitM",    /*double  */ DoubleToStr(sequence.totalNetProfitM, 2) + CRLF);
+
    WriteIniString(file, section, "sequence.maxNetProfitM",      /*double  */ DoubleToStr(sequence.maxNetProfitM, 2));
    WriteIniString(file, section, "sequence.maxNetDrawdownM",    /*double  */ DoubleToStr(sequence.maxNetDrawdownM, 2) + CRLF);
 
@@ -1210,9 +1215,9 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.swapM",                  /*double  */ DoubleToStr(open.swapM, 2));
    WriteIniString(file, section, "open.commissionM",            /*double  */ DoubleToStr(open.commissionM, 2));
    WriteIniString(file, section, "open.grossProfitM",           /*double  */ DoubleToStr(open.grossProfitM, 2));
-   WriteIniString(file, section, "open.grossProfitU",           /*double  */ DoubleToStr(open.grossProfitU, 6));
+   WriteIniString(file, section, "open.grossProfitU",           /*double  */ DoubleToStr(open.grossProfitU, Digits));
    WriteIniString(file, section, "open.netProfitM",             /*double  */ DoubleToStr(open.netProfitM, 2));
-   WriteIniString(file, section, "open.netProfitU",             /*double  */ DoubleToStr(open.netProfitU, 6) + CRLF);
+   WriteIniString(file, section, "open.netProfitU",             /*double  */ DoubleToStr(open.netProfitU, Digits) + CRLF);
 
    // closed order data
    int size = ArrayRange(history, 0);
@@ -1375,18 +1380,23 @@ bool ReadStatus() {
    sequence.name               = GetIniStringA(file, section, "sequence.name",           "");         // string   sequence.name               = Z.1234
    sequence.status             = GetIniInt    (file, section, "sequence.status"            );         // int      sequence.status             = 1
    sequence.startEquityM       = GetIniDouble (file, section, "sequence.startEquityM"      );         // double   sequence.startEquityM       = 1000.00
+
    sequence.openZeroProfitU    = GetIniDouble (file, section, "sequence.openZeroProfitU"   );         // double   sequence.openZeroProfitU    = 0.12345
    sequence.closedZeroProfitU  = GetIniDouble (file, section, "sequence.closedZeroProfitU" );         // double   sequence.closedZeroProfitU  = -0.23456
    sequence.totalZeroProfitU   = GetIniDouble (file, section, "sequence.totalZeroProfitU"  );         // double   sequence.totalZeroProfitU   = 1.23456
+
    sequence.openGrossProfitU   = GetIniDouble (file, section, "sequence.openGrossProfitU"  );         // double   sequence.openGrossProfitU   = 0.12345
    sequence.closedGrossProfitU = GetIniDouble (file, section, "sequence.closedGrossProfitU");         // double   sequence.closedGrossProfitU = -0.23456
    sequence.totalGrossProfitU  = GetIniDouble (file, section, "sequence.totalGrossProfitU" );         // double   sequence.totalGrossProfitU  = 1.23456
+
    sequence.openNetProfitU     = GetIniDouble (file, section, "sequence.openNetProfitU"    );         // double   sequence.openNetProfitU     = 0.12345
    sequence.closedNetProfitU   = GetIniDouble (file, section, "sequence.closedNetProfitU"  );         // double   sequence.closedNetProfitU   = -0.23456
    sequence.totalNetProfitU    = GetIniDouble (file, section, "sequence.totalNetProfitU"   );         // double   sequence.totalNetProfitU    = 1.23456
+
    sequence.openNetProfitM     = GetIniDouble (file, section, "sequence.openNetProfitM"    );         // double   sequence.openNetProfitM     = 23.45
    sequence.closedNetProfitM   = GetIniDouble (file, section, "sequence.closedNetProfitM"  );         // double   sequence.closedNetProfitM   = 45.67
    sequence.totalNetProfitM    = GetIniDouble (file, section, "sequence.totalNetProfitM"   );         // double   sequence.totalNetProfitM    = 123.45
+
    sequence.maxNetProfitM      = GetIniDouble (file, section, "sequence.maxNetProfitM"     );         // double   sequence.maxNetProfitM      = 23.45
    sequence.maxNetDrawdownM    = GetIniDouble (file, section, "sequence.maxNetDrawdownM"   );         // double   sequence.maxNetDrawdownM    = -11.23
    SS.SequenceName();
