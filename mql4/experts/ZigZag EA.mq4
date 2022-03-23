@@ -18,20 +18,20 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    The term "quote units" refers to the best matching unit. One of pip, quote currency (QC) or index point (IP).
+ *    The term "quote units" refers to the best matching unit. One of pip or quote unit (QU, i.e. currency or index point).
  *
  *
  * TODO:
  *  - trading functionality
- *     stop condition "pip"
  *     reverse trading
  *     start/stop sequence with signal pickup
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - performance tracking
  *    - longterm stabilization
- *       shift periodic start/stop conditions to the next session (not only the next day)
  *       add stoploss to every order
+ *       two ZigZag reversals during the same bar are not recognized (causes large losses)
+ *       shift periodic start/stop conditions to the next session (not only the next day)
  *       notifications for price feed outages
  *       virtual trade option (prevents ERR_TRADESERVER_GONE)
  *    - recording
@@ -70,15 +70,22 @@
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  *
+ *  - log file is created too late, errors before sequence start are lost
+ *
  *  - onInitTemplate error on VM restart
- *     INFO   ZigZag EA::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+ *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
+ *
+ *  - on exceeding the max. open file limit of the terminal (512)
+ *     FATAL  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
+ *     ERROR  GBPJPY,M5  ZigZag::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
+ *            GBPJPY,M5  ZigZag::rsfHistory1::SendSMS(8)  SMS sent to +************: "FATAL:  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE] (12:59:52, ICM-DM-EUR)"
+ *     btw: why not "ZigZag EA"?
  *
  *  - improve handling of network outages (price and/or trade connection)
  *  - "no connection" event, no price feed for 5 minutes, a signal in this time was not detected => EA out of sync
  *
- *  - two ZigZag reversals during the same bar are not recognized and ignored
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
@@ -93,7 +100,7 @@
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
- *  - move all history functionality to the Expander
+ *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64 and terminal=512)
  *  - pass EA.Recorder to the Expander as a string
  *  - build script for all .EX4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
@@ -109,17 +116,17 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";                              // instance to load from a status file, format /T?[0-9]{3}/
+extern string Sequence.ID         = "";         // instance to load from a status file, format /T?[0-9]{3}/
 extern int    ZigZag.Periods      = 40;
 
 extern double Lots                = 0.1;
-extern string StartConditions     = "";                              // @time(datetime|time)
-extern string StopConditions      = "";                              // @time(datetime|time)
-extern double TakeProfit          = 0;                               // TP value
-extern string TakeProfit.Type     = "off* | money | percent | pip";  // can be shortened as long as it's distinct
-extern int    Slippage            = 2;                               // in point
+extern string StartConditions     = "";         // @time(datetime|time)
+extern string StopConditions      = "";         // @time(datetime|time)
+extern double TakeProfit          = 0;          // TP value
+extern string TakeProfit.Type     = "off* | money | percent | pip | quote-currency | index-point";    // can be shortened if distinct
+extern int    Slippage            = 2;          // in point
 
-extern bool   ShowProfitInPercent = true;                            // whether PL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent = true;       // whether PL is displayed in money or percentage terms
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -163,6 +170,8 @@ extern bool   ShowProfitInPercent = true;                            // whether 
 #define TP_TYPE_MONEY                  1        // TakeProfit types
 #define TP_TYPE_PERCENT                2
 #define TP_TYPE_PIP                    3
+#define TP_TYPE_QUOTEUNIT              4
+#define TP_TYPE_INDEXPOINT             5
 
 #define METRIC_CUMULATED_UNITS_ZERO    0        // cumulated PL metrics
 #define METRIC_CUMULATED_UNITS_GROSS   1
@@ -238,12 +247,13 @@ double   stop.profitPct.value;
 double   stop.profitPct.absValue    = INT_MAX;
 string   stop.profitPct.description = "";
 
-bool     stop.profitPip.condition;              // whether a takeprofit condition in pip is active
-double   stop.profitPip.value;
-string   stop.profitPip.description = "";
+bool     stop.profitQu.condition;               // whether a takeprofit condition in quote units is active (pip, index point, quote currency)
+int      stop.profitQu.type;
+double   stop.profitQu.value;
+string   stop.profitQu.description = "";
 
 // other
-string   tpTypeDescriptions[] = {"off", "money", "percent", "pip"};
+string   tpTypeDescriptions[] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
 // caching vars to speed-up ShowStatus()
 string   sLots               = "";
@@ -685,9 +695,13 @@ bool IsStopSignal(int &signal) {
          }
       }
 
-      // stop.profitPip: ----------------------------------------------------------------------------------------------------
-      if (stop.profitPip.condition) {
-         return(!catch("IsStopSignal(4)  stop.profitPip.condition not implemented", ERR_NOT_IMPLEMENTED));
+      // stop.profitQu: -----------------------------------------------------------------------------------------------------
+      if (stop.profitQu.condition) {
+         if (sequence.totalNetProfitU >= stop.profitQu.value) {
+            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitQu.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            signal = SIGNAL_TAKEPROFIT;
+            return(true);
+         }
       }
    }
    return(false);
@@ -756,7 +770,7 @@ bool StopSequence(int signal) {
       case SIGNAL_TAKEPROFIT:
          stop.profitAbs.condition = false;
          stop.profitPct.condition = false;
-         stop.profitPip.condition = false;
+         stop.profitQu.condition  = false;
          sequence.status          = STATUS_STOPPED;
          break;
 
@@ -1221,12 +1235,13 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitAbs.value",        /*double  */ DoubleToStr(stop.profitAbs.value, 2));
    WriteIniString(file, section, "stop.profitAbs.description",  /*string  */ stop.profitAbs.description);
    WriteIniString(file, section, "stop.profitPct.condition",    /*bool    */ stop.profitPct.condition);
-   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".+"));
+   WriteIniString(file, section, "stop.profitPct.value",        /*double  */ NumberToStr(stop.profitPct.value, ".1+"));
    WriteIniString(file, section, "stop.profitPct.absValue",     /*double  */ ifString(stop.profitPct.absValue==INT_MAX, INT_MAX, DoubleToStr(stop.profitPct.absValue, 2)));
    WriteIniString(file, section, "stop.profitPct.description",  /*string  */ stop.profitPct.description);
-   WriteIniString(file, section, "stop.profitPip.condition",    /*bool    */ stop.profitPip.condition);
-   WriteIniString(file, section, "stop.profitPip.value",        /*double  */ DoubleToStr(stop.profitPip.value, 1));
-   WriteIniString(file, section, "stop.profitPip.description",  /*string  */ stop.profitPip.description + CRLF);
+   WriteIniString(file, section, "stop.profitQu.condition",     /*bool    */ stop.profitQu.condition);
+   WriteIniString(file, section, "stop.profitQu.type",          /*int     */ stop.profitQu.type);
+   WriteIniString(file, section, "stop.profitQu.value",         /*double  */ NumberToStr(stop.profitQu.value, ".1+"));
+   WriteIniString(file, section, "stop.profitQu.description",   /*string  */ stop.profitQu.description + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -1418,9 +1433,10 @@ bool ReadStatus() {
    stop.profitPct.absValue    = GetIniDouble (file, section, "stop.profitPct.absValue", INT_MAX);     // double   stop.profitPct.absValue    = 0.00
    stop.profitPct.description = GetIniStringA(file, section, "stop.profitPct.description",   "");     // string   stop.profitPct.description = text
 
-   stop.profitPip.condition   = GetIniBool   (file, section, "stop.profitPip.condition"        );     // bool     stop.profitPip.condition   = 1
-   stop.profitPip.value       = GetIniDouble (file, section, "stop.profitPip.value"            );     // double   stop.profitPip.value       = 10.00
-   stop.profitPip.description = GetIniStringA(file, section, "stop.profitPip.description",   "");     // string   stop.profitPip.description = text
+   stop.profitQu.condition    = GetIniBool   (file, section, "stop.profitQu.condition"      );        // bool     stop.profitQu.condition    = 1
+   stop.profitQu.type         = GetIniInt    (file, section, "stop.profitQu.type"           );        // int      stop.profitQu.type         = 4
+   stop.profitQu.value        = GetIniDouble (file, section, "stop.profitQu.value"          );        // double   stop.profitQu.value        = 1.23456
+   stop.profitQu.description  = GetIniStringA(file, section, "stop.profitQu.description", "");        // string   stop.profitQu.description  = text
 
    return(!catch("ReadStatus(8)"));
 }
@@ -1693,9 +1709,10 @@ bool     prev.stop.profitPct.condition;
 double   prev.stop.profitPct.value;
 double   prev.stop.profitPct.absValue;
 string   prev.stop.profitPct.description = "";
-bool     prev.stop.profitPip.condition;
-double   prev.stop.profitPip.value;
-string   prev.stop.profitPip.description = "";
+bool     prev.stop.profitQu.condition;
+int      prev.stop.profitQu.type;
+double   prev.stop.profitQu.value;
+string   prev.stop.profitQu.description = "";
 
 int      prev.recordMode;
 bool     prev.recordInternal;
@@ -1742,9 +1759,10 @@ void BackupInputs() {
    prev.stop.profitPct.value       = stop.profitPct.value;
    prev.stop.profitPct.absValue    = stop.profitPct.absValue;
    prev.stop.profitPct.description = stop.profitPct.description;
-   prev.stop.profitPip.condition   = stop.profitPip.condition;
-   prev.stop.profitPip.value       = stop.profitPip.value;
-   prev.stop.profitPip.description = stop.profitPip.description;
+   prev.stop.profitQu.condition    = stop.profitQu.condition;
+   prev.stop.profitQu.type         = stop.profitQu.type;
+   prev.stop.profitQu.value        = stop.profitQu.value;
+   prev.stop.profitQu.description  = stop.profitQu.description;
 
    prev.recordMode                 = recordMode;
    prev.recordInternal             = recordInternal;
@@ -1791,9 +1809,10 @@ void RestoreInputs() {
    stop.profitPct.value       = prev.stop.profitPct.value;
    stop.profitPct.absValue    = prev.stop.profitPct.absValue;
    stop.profitPct.description = prev.stop.profitPct.description;
-   stop.profitPip.condition   = prev.stop.profitPip.condition;
-   stop.profitPip.value       = prev.stop.profitPip.value;
-   stop.profitPip.description = prev.stop.profitPip.description;
+   stop.profitQu.condition    = prev.stop.profitQu.condition;
+   stop.profitQu.type         = prev.stop.profitQu.type;
+   stop.profitQu.value        = prev.stop.profitQu.value;
+   stop.profitQu.description  = prev.stop.profitQu.description;
 
    recordMode                 = prev.recordMode;
    recordInternal             = prev.recordInternal;
@@ -1923,31 +1942,36 @@ bool ValidateInputs() {
    }
 
    // TakeProfit (nothing to do)
-   // TakeProfit.Type
+
+   // TakeProfit.Type: "off* | money | percent | pip | quote-currency | index-point"
    sValue = StrToLower(TakeProfit.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], "|", sValues, NULL), type;
+      int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("off",     sValue)) type = NULL;
-   else if (StrStartsWith("money",   sValue)) type = TP_TYPE_MONEY;
+   if      (StrStartsWith("off",            sValue)) stop.profitQu.type = NULL;
+   else if (StrStartsWith("money",          sValue)) stop.profitQu.type = TP_TYPE_MONEY;
+   else if (StrStartsWith("quote-currency", sValue)) stop.profitQu.type = TP_TYPE_QUOTEUNIT;
+   else if (sValue == "qc")                          stop.profitQu.type = TP_TYPE_QUOTEUNIT;
+   else if (StrStartsWith("index-points",   sValue)) stop.profitQu.type = TP_TYPE_INDEXPOINT;
+   else if (sValue == "ip")                          stop.profitQu.type = TP_TYPE_INDEXPOINT;
    else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent", sValue)) type = TP_TYPE_PERCENT;
-   else if (StrStartsWith("pip",     sValue)) type = TP_TYPE_PIP;
+   else if (StrStartsWith("percent",        sValue)) stop.profitQu.type = TP_TYPE_PERCENT;
+   else if (StrStartsWith("pip",            sValue)) stop.profitQu.type = TP_TYPE_PIP;
    else                                                  return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
    stop.profitPct.description = "";
-   stop.profitPip.condition   = false;
-   stop.profitPip.description = "";
+   stop.profitQu.condition    = false;
+   stop.profitQu.description  = "";
 
-   switch (type) {
+   switch (stop.profitQu.type) {
       case TP_TYPE_MONEY:
          stop.profitAbs.condition   = true;
          stop.profitAbs.value       = NormalizeDouble(TakeProfit, 2);
-         stop.profitAbs.description = "profit("+ DoubleToStr(stop.profitAbs.value, 2) +")";
+         stop.profitAbs.description = "profit("+ DoubleToStr(stop.profitAbs.value, 2) +" "+ AccountCurrency() +")";
          break;
 
       case TP_TYPE_PERCENT:
@@ -1958,12 +1982,25 @@ bool ValidateInputs() {
          break;
 
       case TP_TYPE_PIP:
-         stop.profitPip.condition   = true;
-         stop.profitPip.value       = NormalizeDouble(TakeProfit, 1);
-         stop.profitPip.description = "profit("+ NumberToStr(stop.profitPip.value, ".+") +" pip)";
+         stop.profitQu.condition    = true;
+         stop.profitQu.value        = NormalizeDouble(TakeProfit*Pip, Digits);
+         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, ".+") +" pip)";
+         break;
+
+      case TP_TYPE_QUOTEUNIT:
+         stop.profitQu.condition    = true;
+         stop.profitQu.value        = NormalizeDouble(TakeProfit, Digits);
+         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, PriceFormat) +" "+ StrRight(Symbol(), 3) +")";
+         break;
+
+      case TP_TYPE_INDEXPOINT:
+         stop.profitQu.condition    = true;
+         stop.profitQu.value        = NormalizeDouble(TakeProfit, Digits);
+         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, ".+") +" index points)";
          break;
    }
-   TakeProfit.Type = tpTypeDescriptions[type];
+   tpTypeDescriptions[TP_TYPE_QUOTEUNIT] = StrRight(Symbol(), 3);
+   TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
    int metrics;
@@ -2125,8 +2162,8 @@ void SS.StartStopConditions() {
       if (stop.profitPct.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPct.condition, "@", "!") + stop.profitPct.description;
       }
-      if (stop.profitPip.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitPip.condition, "@", "!") + stop.profitPip.description;
+      if (stop.profitQu.description != "") {
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitQu.condition, "@", "!") + stop.profitQu.description;
       }
       if (sValue == "") sStopConditions = "-";
       else              sStopConditions = sValue;
