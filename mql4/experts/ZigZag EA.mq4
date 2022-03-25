@@ -18,13 +18,13 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    The term "quote units" refers to the best matching unit. One of pip or quote unit (QU, i.e. currency or index point).
+ *    The term "quote units" refers to the best matching unit. One of pip, quote currency or index point.
  *
  *
  * TODO:
  *  - trading functionality
- *     reverse trading
  *     start/stop sequence with signal pickup
+ *     reverse trading
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - performance tracking
@@ -584,9 +584,16 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.swapM        = OrderSwap();
    open.commissionM  = OrderCommission();
    open.grossProfitM = OrderProfit();
-   open.grossProfitU = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+
+   if (!OrderLots()) {                 // it may be a hedge counterpart with Lots=0.0 (#465291275 Buy 0.0 US500 at 4'522.30, closed...
+      open.grossProfitU = NULL;        // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
+      open.netProfitU   = NULL;
+   }
+   else {
+      open.grossProfitU = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
+      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+   }
 
    // update history
    int i = ArrayRange(history, 0);
@@ -811,9 +818,16 @@ bool UpdateStatus() {
       open.swapM        = OrderSwap();
       open.commissionM  = OrderCommission();
       open.grossProfitM = OrderProfit();
-      open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+
+      if (!OrderLots()) {                 // if already closed it may be a hedge counterpart with Lots=0.0 (#465291275 Buy 0.0 US500 at 4'522.30, closed...
+         open.grossProfitU = NULL;        // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
+         open.netProfitU   = NULL;
+      }
+      else {
+         open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+         open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+      }
 
       if (isOpen) {
          sequence.openZeroProfitU  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
@@ -1633,7 +1647,7 @@ bool SynchronizeStatus() {
             // update closed PL numbers
             sequence.closedZeroProfitU  += grossProfitU;
             sequence.closedGrossProfitU += grossProfitU;
-            sequence.closedNetProfitU   += grossProfitU + (swapM + commissionM)/UnitValue(OrderLots());
+            sequence.closedNetProfitU   += grossProfitU + MathDiv(swapM + commissionM, UnitValue(lots));
             sequence.closedNetProfitM   += netProfitM;
          }
       }
@@ -2103,6 +2117,8 @@ bool RemoveSequenceData() {
  * @return double - unit value or NULL (0) in case of errors (in tester the value may be not exact)
  */
 double UnitValue(double lots = 1.0) {
+   if (!lots) return(0);
+
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
    if (error || !tickValue)   return(!catch("UnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_INVALID_MARKET_DATA)));
