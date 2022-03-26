@@ -135,7 +135,7 @@ int onInitRecompile() {                                        // same requireme
 int afterInit() {
    if (!SetLogfile(GetLogFilename())) return(last_error);
 
-   string section = ProgramName();
+   string section = StrTrim(ProgramName());
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {
