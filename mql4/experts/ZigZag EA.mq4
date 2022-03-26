@@ -4,16 +4,16 @@
  *
  * Input parameters:
  * -----------------
- * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers (separated by comma).
+ * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers separated by comma.
  *    "off": Nothing is recorded.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
- *    "1":   Records a timeseries depicting cumulated theoretical PL with zero spread and no costs and in quote units.              OK
- *    "2":   Records a timeseries depicting cumulated PL after spread but before all other costs (gross) in quote units.            OK
- *    "3":   Records a timeseries depicting cumulated PL after all costs (net) in quote units.                                      OK
- *    "4":   Records a timeseries depicting cumulated PL after all costs (net) in account currency (like "on" except base value).   OK
+ *    "1":   Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.                   OK
+ *    "2":   Records a timeseries depicting PL after spread but before all other costs (gross) in quote units.             OK
+ *    "3":   Records a timeseries depicting PL after all costs (net) in quote units.                                       OK
+ *    "4":   Records a timeseries depicting PL after all costs (net) in account currency (like "on" except base value).    OK
  *
- *    "5":   Records a timeseries depicting daily theoretical PL with zero spread and no costs in quote units.
+ *    "5":   Records a timeseries depicting theoretical daily PL with zero spread and no costs in quote units.
  *    "6":   Records a timeseries depicting daily PL after spread but before all other costs (gross) in quote units.
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
@@ -25,15 +25,16 @@
  *  - trading functionality
  *     start/stop sequence with signal pickup
  *     reverse trading
+ *     support multiple units and targets (add new metrics)
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - performance tracking
  *    - longterm stabilization
  *       add stoploss to every order
  *       two ZigZag reversals during the same bar are not recognized (causes large losses)
- *       shift periodic start/stop conditions to the next session (not only the next day)
- *       notifications for price feed outages
  *       virtual trade option (prevents ERR_TRADESERVER_GONE)
+ *       notifications for price feed outages
+ *       shift periodic start/stop conditions to the next session (not only the next day)
  *    - recording
  *       configurable quote unit multiplier
  *       CLI tools to shift or scale histories (normalization)
@@ -84,7 +85,7 @@
  *     btw: why not "ZigZag EA"?
  *
  *  - improve handling of network outages (price and/or trade connection)
- *  - "no connection" event, no price feed for 5 minutes, a signal in this time was not detected => EA out of sync
+ *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
  *
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - input option to pick-up the last signal on start
@@ -136,52 +137,52 @@ extern bool   ShowProfitInPercent = true;       // whether PL is displayed in mo
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID                  107        // unique strategy id between 101-1023 (10 bit)
+#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
 
-#define SID_MIN                      100        // valid range of sequence id values
-#define SID_MAX                      999
+#define SID_MIN                   100           // valid range of sequence id values
+#define SID_MAX                   999
 
-#define STATUS_WAITING                 1        // sequence status values
-#define STATUS_PROGRESSING             2
-#define STATUS_STOPPED                 3
+#define STATUS_WAITING              1           // sequence status values
+#define STATUS_PROGRESSING          2
+#define STATUS_STOPPED              3
 
 #define SIGNAL_LONG  TRADE_DIRECTION_LONG       // 1 start/stop/resume signal types
 #define SIGNAL_SHORT TRADE_DIRECTION_SHORT      // 2
-#define SIGNAL_TIME                    3
-#define SIGNAL_TAKEPROFIT              4
+#define SIGNAL_TIME                 3
+#define SIGNAL_TAKEPROFIT           4
 
-#define HI_TICKET                      0        // order history indexes
-#define HI_LOTS                        1
-#define HI_OPENTYPE                    2
-#define HI_OPENTIME                    3
-#define HI_OPENBID                     4
-#define HI_OPENASK                     5
-#define HI_OPENPRICE                   6
-#define HI_CLOSETIME                   7
-#define HI_CLOSEBID                    8
-#define HI_CLOSEASK                    9
-#define HI_CLOSEPRICE                 10
-#define HI_SLIPPAGE_P                 11        // P: in pip
-#define HI_SWAP_M                     12        // M: in account currency (money)
-#define HI_COMMISSION_M               13        // U: in quote units
-#define HI_GROSS_PROFIT_M             14
-#define HI_NET_PROFIT_M               15
+#define HI_TICKET                   0           // order history indexes
+#define HI_LOTS                     1
+#define HI_OPENTYPE                 2
+#define HI_OPENTIME                 3
+#define HI_OPENBID                  4
+#define HI_OPENASK                  5
+#define HI_OPENPRICE                6
+#define HI_CLOSETIME                7
+#define HI_CLOSEBID                 8
+#define HI_CLOSEASK                 9
+#define HI_CLOSEPRICE              10
+#define HI_SLIPPAGE_P              11           // P: in pip
+#define HI_SWAP_M                  12           // M: in account currency (money)
+#define HI_COMMISSION_M            13           // U: in quote units
+#define HI_GROSS_PROFIT_M          14
+#define HI_NET_PROFIT_M            15
 
-#define TP_TYPE_MONEY                  1        // TakeProfit types
-#define TP_TYPE_PERCENT                2
-#define TP_TYPE_PIP                    3
-#define TP_TYPE_QUOTEUNIT              4
-#define TP_TYPE_INDEXPOINT             5
+#define TP_TYPE_MONEY               1           // TakeProfit types
+#define TP_TYPE_PERCENT             2
+#define TP_TYPE_PIP                 3
+#define TP_TYPE_QUOTEUNIT           4
+#define TP_TYPE_INDEXPOINT          5
 
-#define METRIC_CUMULATED_UNITS_ZERO    0        // cumulated PL metrics
-#define METRIC_CUMULATED_UNITS_GROSS   1
-#define METRIC_CUMULATED_UNITS_NET     2
-#define METRIC_CUMULATED_MONEY_NET     3
+#define METRIC_TOTAL_UNITS_ZERO     0           // cumulated PL metrics
+#define METRIC_TOTAL_UNITS_GROSS    1
+#define METRIC_TOTAL_UNITS_NET      2
+#define METRIC_TOTAL_MONEY_NET      3
 
-#define METRIC_DAILY_UNITS_ZERO        4        // daily PL metrics
-#define METRIC_DAILY_UNITS_GROSS       5
-#define METRIC_DAILY_UNITS_NET         6
-#define METRIC_DAILY_MONEY_NET         7
+#define METRIC_DAILY_UNITS_ZERO     4           // daily PL metrics
+#define METRIC_DAILY_UNITS_GROSS    5
+#define METRIC_DAILY_UNITS_NET      6
+#define METRIC_DAILY_MONEY_NET      7
 
 // sequence data
 int      sequence.id;                           // instance id between 100-999
@@ -306,10 +307,10 @@ int onTick() {
  */
 void RecordMetrics() {
    if (recordCustom) {
-      if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) recorder.currValue[METRIC_CUMULATED_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
-      if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) recorder.currValue[METRIC_CUMULATED_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
-      if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) recorder.currValue[METRIC_CUMULATED_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
-      if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) recorder.currValue[METRIC_CUMULATED_MONEY_NET  ] = sequence.totalNetProfitM;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) recorder.currValue[METRIC_TOTAL_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) recorder.currValue[METRIC_TOTAL_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) recorder.currValue[METRIC_TOTAL_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
+      if (recorder.enabled[METRIC_TOTAL_MONEY_NET  ]) recorder.currValue[METRIC_TOTAL_MONEY_NET  ] = sequence.totalNetProfitM;
    }
 }
 
@@ -1022,53 +1023,53 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
 
    switch (i) {
       // --------------------------------------------------------------------------------------------------------------------
-      case METRIC_CUMULATED_UNITS_ZERO:         // OK
+      case METRIC_TOTAL_UNITS_ZERO:             // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, no spread";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, cum. in pip, no spread"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, no spread";
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD in pip, no spread"
 
-      case METRIC_CUMULATED_UNITS_GROSS:        // OK
+      case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, gross";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, gross";
          return(true);
 
-      case METRIC_CUMULATED_UNITS_NET:          // OK
+      case METRIC_TOTAL_UNITS_NET:              // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in pip, net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, net";
          return(true);
 
-      case METRIC_CUMULATED_MONEY_NET:          // OK
+      case METRIC_TOTAL_MONEY_NET:              // OK
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", cum. in "+ AccountCurrency() +", net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in "+ AccountCurrency() +", net";
          return(true);
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, no spread";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD, daily pip, no spread"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, no spread";
+         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD daily pip, no spread"
 
       case METRIC_DAILY_UNITS_GROSS:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, gross";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, gross";
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily pip, net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, net";
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +", daily in "+ AccountCurrency() +", net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in daily "+ AccountCurrency() +", net";
          return(true);
    }
    return(false);
