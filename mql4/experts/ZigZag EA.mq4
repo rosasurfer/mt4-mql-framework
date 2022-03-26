@@ -5,7 +5,7 @@
  * Input parameters:
  * -----------------
  * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers separated by comma.
- *    "off": Nothing is recorded.
+ *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
  *    "1":   Records a timeseries depicting theoretical PL with zero spread and no costs in quote units.                   OK
@@ -30,15 +30,14 @@
  *
  *  - performance tracking
  *    - longterm stabilization
- *       add stoploss to every order
- *       two ZigZag reversals during the same bar are not recognized (causes large losses)
+ *       two ZigZag reversals during the same bar are not recognized (may cause losses)   04.01.2022 01:39 EURUSD,M1 Periods=18
  *       virtual trade option (prevents ERR_TRADESERVER_GONE)
  *       notifications for price feed outages
  *       shift periodic start/stop conditions to the next session (not only the next day)
  *    - recording
  *       configurable quote unit multiplier
  *       CLI tools to shift or scale histories (normalization)
- *       daily variants of cumulated metrics
+ *       daily variants of total metrics
  *    - move custom "EA.Recorder" validation to EA
  *
  *  - status display
@@ -192,7 +191,7 @@ string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquityM;
 
-double   sequence.openZeroProfitU;              // PL with zero spread and costs
+double   sequence.openZeroProfitU;              // PL with zero spread and zero costs
 double   sequence.closedZeroProfitU;
 double   sequence.totalZeroProfitU;             // open + close
 
@@ -218,6 +217,7 @@ datetime open.time;
 double   open.bid;
 double   open.ask;
 double   open.price;
+double   open.stoploss;
 double   open.slippageP;
 double   open.swapM;
 double   open.commissionM;
@@ -333,7 +333,7 @@ bool IsZigZagSignal(int &signal) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagData(0, trend, reversal)) return(false);
+      if (!GetZigZagTrend(0, trend, reversal)) return(false);
       if (Abs(trend) == reversal) {
          if (trend > 0) {
             if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
@@ -360,7 +360,7 @@ bool IsZigZagSignal(int &signal) {
 
 
 /**
- * Get trend data of the ZigZag indicator at the specified bar offset.
+ * Get ZigZag trend data at the specified bar offset.
  *
  * @param  _In_  int bar            - bar offset
  * @param  _Out_ int &combinedTrend - combined trend value at the bar offset
@@ -368,10 +368,23 @@ bool IsZigZagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigZagData(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagTrend(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
+}
+
+
+/**
+ * Get a ZigZag channel value at the specified bar offset.
+ *
+ * @param  int bar  - bar offset
+ * @param  int mode - one of: ZigZag.MODE_UPPER_BAND | ZigZag.MODE_LOWER_BAND
+ *
+ * @return double - channel value or NULL (0) in case of errors
+ */
+double GetZigZagChannel(int bar, int mode) {
+   return(icZigZag(NULL, ZigZag.Periods, false, false, mode, bar));
 }
 
 
@@ -427,7 +440,7 @@ bool StartSequence(int signal) {
    double   bid         = Bid;
    double   ask         = Ask;
    double   price       = NULL;
-   double   stopLoss    = NULL;
+   double   stopLoss    = CalculateStopLoss(signal);
    double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ sequence.name;
@@ -447,6 +460,7 @@ bool StartSequence(int signal) {
    open.ask          = ask;
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
+   open.stoploss     = oe.StopLoss  (oe);
    open.slippageP    = -oe.Slippage (oe);
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
@@ -518,7 +532,7 @@ bool ReverseSequence(int signal) {
    // open new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
-   double   stopLoss    = NULL;
+   double   stopLoss    = CalculateStopLoss(signal);
    double   takeProfit  = NULL;
    datetime expires     = NULL;
    string   comment     = "ZigZag."+ sequence.name;
@@ -535,6 +549,7 @@ bool ReverseSequence(int signal) {
    open.type         = oe.Type      (oe);
    open.time         = oe.OpenTime  (oe);
    open.price        = oe.OpenPrice (oe);
+   open.stoploss     = oe.StopLoss  (oe);
    open.slippageP    = oe.Slippage  (oe);
    open.swapM        = oe.Swap      (oe);
    open.commissionM  = oe.Commission(oe);
@@ -650,11 +665,37 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.netProfitU   = NULL;
 
    //double multiplier = 0.01;
-   //if (recorder.enabled[METRIC_CUMULATED_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.1)  zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_CUMULATED_UNITS_GROSS]) debug("ArchiveClosedPosition(0.2) grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_CUMULATED_UNITS_NET  ]) debug("ArchiveClosedPosition(0.3)   netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_CUMULATED_MONEY_NET  ]) debug("ArchiveClosedPosition(0.4)   netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
+   //if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.1)  zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) debug("ArchiveClosedPosition(0.2) grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) debug("ArchiveClosedPosition(0.3)   netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
+   //if (recorder.enabled[METRIC_TOTAL_MONEY_NET  ]) debug("ArchiveClosedPosition(0.4)   netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
    return(!catch("ArchiveClosedPosition(4)"));
+}
+
+
+/**
+ * Calculate a desaster stop for a position. The stop is put at the Donchian channel band opposite to the specified direction.
+ *
+ * @param  int direction - trade direction
+ *
+ * @return double - SL value or NULL (0) in case of errors
+ */
+double CalculateStopLoss(int direction) {
+   if (last_error != NULL)                                return(NULL);
+   if (direction!=SIGNAL_LONG && direction!=SIGNAL_SHORT) return(!catch("CalculateStopLoss(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   double stoploss = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
+   if (!stoploss) return(NULL);
+
+   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+
+   if (direction == SIGNAL_LONG) {
+      stoploss -= tickSize;                                    // move stop the min. possible amount below the channel
+   }
+   else {
+      stoploss += MathMax(4*tickSize, (stoploss-Bid)*0.05);    // move stop 5% of the current distance above the channel, as the channel is Bid and the stop gets triggered by Ask
+   }
+   return(NormalizeDouble(stoploss, Digits));
 }
 
 
@@ -860,7 +901,7 @@ bool UpdateStatus() {
  * @return string - log message or an empty string in case of errors
  */
 string UpdateStatus.PositionCloseMsg(int &error) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.8692") was [unexpectedly ]closed at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
+   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("Z.8692") was [unexpectedly ]closed [by SL ]at 1.5457'2 (market: Bid/Ask[, so: 47.7%/169.20/354.40])
    error = NO_ERROR;
 
    int    ticket     = OrderTicket();
@@ -868,31 +909,44 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    double lots       = OrderLots();
    double openPrice  = OrderOpenPrice();
    double closePrice = OrderClosePrice();
+   bool   closedBySl = IsClosedBySL(open.stoploss);
 
    string sType       = OperationTypeDescription(type);
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = sequence.name;
-   string unexpected  = ifString(__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && IsTesting()), "", "unexpectedly ");
+   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (IsTesting() && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
+   string sBySL       = ifString(closedBySl, "by SL ", "");
+   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was "+ sUnexpected +"closed "+ sBySL +"at "+ sClosePrice;
 
-   if (__CoreFunction==CF_INIT || (__CoreFunction==CF_DEINIT && IsTesting())) {
-      unexpected = "";
-   }
-   else {
-      unexpected = "unexpectedly ";
-   }
+   string sStopout = "";
+   if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
+   else if (closedBySl)                               error = ERR_ORDER_CHANGED;
+   else if (__CoreFunction==CF_INIT)                  error = NO_ERROR;
+   else if (IsTesting() && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else                                               error = ERR_CONCURRENT_MODIFICATION;
 
-   string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was "+ unexpected +"closed at "+ sClosePrice;
-   string sStopout    = "";
-
-   if (StrStartsWithI(OrderComment(), "so:")) {
-      sStopout = ", "+ OrderComment();
-      error = ERR_MARGIN_STOPOUT;
-   }                                                  // CF_INIT: called from SynchronizeStatus() after reload
-   else if (__CoreFunction!=CF_INIT && (!IsTesting() || __CoreFunction!=CF_DEINIT)) {
-      error = ERR_CONCURRENT_MODIFICATION;
-   }
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
+}
+
+
+/**
+ * Whether the currently selected order was closed by the specified stoploss.
+ *
+ * @param  double stoploss - the stoploss price
+ *
+ * @return bool
+ */
+bool IsClosedBySL(double stoploss) {
+   bool closedBySL = false;
+
+   if (stoploss && OrderType()<=OP_SELL && OrderCloseTime()) {
+      if      (StrEndsWithI(OrderComment(), "[sl]"))  closedBySL = true;
+      else if (StrStartsWithI(OrderComment(), "so:")) closedBySL = false;
+      else if (OrderType() == OP_BUY)                 closedBySL = LE(OrderClosePrice(), stoploss, Digits);
+      else                                            closedBySL = GE(OrderClosePrice(), stoploss, Digits);
+   }
+   return(closedBySL);
 }
 
 
@@ -905,11 +959,15 @@ string UpdateStatus.PositionCloseMsg(int &error) {
  * @return int - error status, i.e. whether to interrupt program execution
  */
 int onPositionClose(string message, int error) {
-   if (!error)      return(logInfo(message));         // no error
-   if (IsTesting()) return(catch(message, error));    // treat everything as a terminating error
+   if (!error) return(logInfo(message));              // no error
+
+   if (error == ERR_ORDER_CHANGED)                    // expected in a fast market: a SL was triggered
+      return(!logNotice(message, error));             // continue
+
+   if (IsTesting()) return(catch(message, error));    // tester: treat everything else as terminating
 
    logWarn(message, error);                           // online
-   if (error == ERR_CONCURRENT_MODIFICATION)          // most probably manually closed
+   if (error == ERR_CONCURRENT_MODIFICATION)          // unexpected: most probably manually closed
       return(NO_ERROR);                               // continue
    return(error);
 }
@@ -1226,6 +1284,7 @@ bool SaveStatus() {
    WriteIniString(file, section, "open.bid",                    /*double  */ DoubleToStr(open.bid, Digits));
    WriteIniString(file, section, "open.ask",                    /*double  */ DoubleToStr(open.ask, Digits));
    WriteIniString(file, section, "open.price",                  /*double  */ DoubleToStr(open.price, Digits));
+   WriteIniString(file, section, "open.stoploss",               /*double  */ DoubleToStr(open.stoploss, Digits));
    WriteIniString(file, section, "open.slippageP",              /*double  */ DoubleToStr(open.slippageP, 1));
    WriteIniString(file, section, "open.swapM",                  /*double  */ DoubleToStr(open.swapM, 2));
    WriteIniString(file, section, "open.commissionM",            /*double  */ DoubleToStr(open.commissionM, 2));
@@ -1423,6 +1482,7 @@ bool ReadStatus() {
    open.bid                    = GetIniDouble (file, section, "open.bid"         );                   // double   open.bid          = 1.24363
    open.ask                    = GetIniDouble (file, section, "open.ask"         );                   // double   open.ask          = 1.24363
    open.price                  = GetIniDouble (file, section, "open.price"       );                   // double   open.price        = 1.24363
+   open.stoploss               = GetIniDouble (file, section, "open.stoploss"    );                   // double   open.stoploss     = 1.24363
    open.slippageP              = GetIniDouble (file, section, "open.slippageP"   );                   // double   open.slippageP    = 1.0
    open.swapM                  = GetIniDouble (file, section, "open.swapM"       );                   // double   open.swapM        = -1.23
    open.commissionM            = GetIniDouble (file, section, "open.commissionM" );                   // double   open.commissionM  = -5.50
@@ -1605,6 +1665,7 @@ bool SynchronizeStatus() {
             open.type      = OrderType();
             open.time      = OrderOpenTime();
             open.price     = OrderOpenPrice();
+            open.stoploss  = OrderStopLoss();
             open.bid       = open.price;
             open.ask       = open.price;
             open.slippageP = NULL;

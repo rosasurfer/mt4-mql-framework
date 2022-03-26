@@ -6949,12 +6949,12 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
                           "",                               // string ____________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
-                          0,                                // int    ZigZag.Width
+                          1,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
                           false,                            // bool   ZigZag.ShowTrail
 
                           "",                               // string ____________________
-                          false,                            // bool   Donchian.ShowFullChannel
+                          true,                             // bool   Donchian.ShowFullChannel
                           false,                            // bool   Donchian.ShowStopSegments
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
                           markFirstCrossing,                // bool   Donchian.MarkFirstCrossing
