@@ -22,16 +22,6 @@
  *
  *
  * TODO:
- *  - shift periodic time conditions to the next session (not only the next day)
- *     check IsStartSignal()
- *     check IsStopSignal()
- *     check StartSequence(SIGNAL_TIME)
- *     check StopSequence(SIGNAL_TIME)
- *     check ReverseSequence()
- *     check SaveStatus()
- *     check ReadStatus()
- *     define/check cases of interruptions (caused by shutdown/outages/fatal errors)
- *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
  *     StartVirtualSequence()
@@ -200,6 +190,9 @@ extern bool   ShowProfitInPercent = true;                   // whether PL is dis
 #define METRIC_DAILY_UNITS_NET      6
 #define METRIC_DAILY_MONEY_NET      7
 
+// general
+int      tradingMode;
+
 // sequence data
 int      sequence.id;                           // instance id between 100-999
 datetime sequence.created;
@@ -271,7 +264,6 @@ double   stop.profitQu.value;
 string   stop.profitQu.description = "";
 
 // other
-int      tradingMode;
 string   tradingModeDescriptions[] = {"", "regular", "virtual"};
 string   tpTypeDescriptions     [] = {"off", "money", "percent", "pip", "quote currency", "index points"};
 
@@ -511,10 +503,10 @@ bool StartSequence(int signal) {
 
    // update start/stop conditions
    start.time.condition = false;
-   stop.time.condition  = stop.time.isDaily;
+   stop.time.condition = stop.time.isDaily;
    if (stop.time.isDaily) {
-      datetime now = TimeServer();                          // convert a relative start time to the next absolute time in
-      stop.time.value %= DAYS;                              // the future:
+      datetime now = TimeServer();                          // convert a periodic stop time to the next absolute time in
+      stop.time.value %= DAYS;                              // the future
       stop.time.value += (now - (now % DAY));               // relative + Midnight (possibly in the past)
       if (stop.time.value < now) stop.time.value += 1*DAY;
    }
@@ -762,8 +754,8 @@ bool IsStopSignal(int &signal) {
    // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
    if (stop.time.condition) {
       datetime now = TimeServer();
-      if (stop.time.isDaily) /*&&*/ if (stop.time.value < 1*DAY) {      // convert a relative stop time to an absolute one
-         stop.time.value += (now - (now % DAY));                        // relative + Midnight (possibly in the past)
+      if (stop.time.isDaily && stop.time.value < 1*DAY) {         // convert a relative stop time to an absolute time
+         stop.time.value += (now - (now % DAY));                  // relative + Midnight (possibly in the past)
       }
       if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
@@ -836,7 +828,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                                         // a progressing sequence may have an open position to close
+      if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
          double bid = Bid, ask = Ask;
@@ -857,13 +849,17 @@ bool StopSequence(int signal) {
       case SIGNAL_TIME:
          start.time.condition = start.time.isDaily;
          if (start.time.isDaily) {
-            datetime now = TimeServer();                             // convert a relative start time to the next absolute time in
-            start.time.value %= DAYS;                                // the future:
-            start.time.value += (now - (now % DAY));                 // relative + Midnight (possibly in the past)
-            if (start.time.value < now) start.time.value += 1*DAY;   // TODO: 1 day is not enough, shift to next trading session
+            datetime now = TimeServer();
+            start.time.value %= DAYS;                       // move a periodic start time to the next trade time in the future
+            start.time.value += (now - (now % DAY));        // relative time + Midnight (possibly in the past)
+            int dow = TimeDayOfWeekEx(start.time.value);
+            while (start.time.value <= now || dow==SATURDAY || dow==SUNDAY) {
+               start.time.value += 1*DAY;
+               dow = TimeDayOfWeekEx(start.time.value);
+            }
          }
-         stop.time.condition  = false;
-         sequence.status      = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
+         stop.time.condition = false;
+         sequence.status     = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
       case SIGNAL_TAKEPROFIT:
@@ -873,7 +869,7 @@ bool StopSequence(int signal) {
          sequence.status          = STATUS_STOPPED;
          break;
 
-      case NULL:                                                     // explicit stop (manual) or end of test
+      case NULL:                                            // explicit stop (manual) or end of test
          sequence.status = STATUS_STOPPED;
          break;
 
@@ -884,7 +880,7 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
+   if (IsTesting()) {                                       // pause or stop the tester according to the debug configuration
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(5)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(6)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(7)"); }
@@ -1290,15 +1286,14 @@ bool SaveStatus() {
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
    if (IsTestSequence() && !IsTesting())         return(true);
 
-   // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most status file writes, except file creation, sequence stop and test end
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
    }
 
    string section="", separator="", file=GetStatusFilename();
-   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;             // an empty line as additional section separator
+   if (!IsFile(file, MODE_SYSTEM)) separator = CRLF;            // an empty line as additional section separator
 
    // [General]
    section = "General";
@@ -1323,6 +1318,9 @@ bool SaveStatus() {
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
    EmptyIniSectionA(file, section);                             // orphaned status file records the section is emptied before writing to it.
+
+   // general
+   WriteIniString(file, section, "tradingMode",                 /*int     */ tradingMode + CRLF);
 
    // sequence data
    WriteIniString(file, section, "sequence.id",                 /*int     */ sequence.id);
@@ -1395,8 +1393,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.profitQu.type",          /*int     */ stop.profitQu.type);
    WriteIniString(file, section, "stop.profitQu.value",         /*double  */ NumberToStr(stop.profitQu.value, ".1+"));
    WriteIniString(file, section, "stop.profitQu.description",   /*string  */ stop.profitQu.description + CRLF);
-
-   WriteIniString(file, section, "tradingMode",                 /*int     */ tradingMode + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -1525,6 +1521,9 @@ bool ReadStatus() {
 
    // [Runtime status]
    section = "Runtime status";
+   // general
+   tradingMode                 = GetIniInt    (file, section, "tradingMode");                         // int      tradingMode                 = 1
+
    // sequence data
    sequence.id                 = GetIniInt    (file, section, "sequence.id"                );         // int      sequence.id                 = 1234
    sequence.created            = GetIniInt    (file, section, "sequence.created"           );         // datetime sequence.created            = 1624924800 (Mon, 2021.05.12 13:22:34)
@@ -1600,8 +1599,6 @@ bool ReadStatus() {
    stop.profitQu.type         = GetIniInt    (file, section, "stop.profitQu.type"           );        // int      stop.profitQu.type         = 4
    stop.profitQu.value        = GetIniDouble (file, section, "stop.profitQu.value"          );        // double   stop.profitQu.value        = 1.23456
    stop.profitQu.description  = GetIniStringA(file, section, "stop.profitQu.description", "");        // string   stop.profitQu.description  = text
-
-   tradingMode                = GetIniInt    (file, section, "tradingMode");                          // int      tradingMode                = 1
 
    return(!catch("ReadStatus(8)"));
 }
@@ -1854,6 +1851,8 @@ string   prev.EA.Recorder = "";
 
 
 // backed-up runtime variables affected by changing input parameters
+int      prev.tradingMode;
+
 int      prev.sequence.id;
 datetime prev.sequence.created;
 bool     prev.sequence.isTest;
@@ -1881,8 +1880,6 @@ int      prev.stop.profitQu.type;
 double   prev.stop.profitQu.value;
 string   prev.stop.profitQu.description = "";
 
-int      prev.tradingMode;
-
 int      prev.recordMode;
 bool     prev.recordInternal;
 bool     prev.recordCustom;
@@ -1907,6 +1904,8 @@ void BackupInputs() {
    prev.EA.Recorder         = StringConcatenate(EA.Recorder, "");
 
    // backup runtime variables affected by changing input parameters
+   prev.tradingMode                = tradingMode;
+
    prev.sequence.id                = sequence.id;
    prev.sequence.created           = sequence.created;
    prev.sequence.isTest            = sequence.isTest;
@@ -1934,8 +1933,6 @@ void BackupInputs() {
    prev.stop.profitQu.value        = stop.profitQu.value;
    prev.stop.profitQu.description  = stop.profitQu.description;
 
-   prev.tradingMode                = tradingMode;
-
    prev.recordMode                 = recordMode;
    prev.recordInternal             = recordInternal;
    prev.recordCustom               = recordCustom;
@@ -1960,6 +1957,8 @@ void RestoreInputs() {
    EA.Recorder         = prev.EA.Recorder;
 
    // restore runtime variables
+   tradingMode                = prev.tradingMode;
+
    sequence.id                = prev.sequence.id;
    sequence.created           = prev.sequence.created;
    sequence.isTest            = prev.sequence.isTest;
@@ -1986,8 +1985,6 @@ void RestoreInputs() {
    stop.profitQu.type         = prev.stop.profitQu.type;
    stop.profitQu.value        = prev.stop.profitQu.value;
    stop.profitQu.description  = prev.stop.profitQu.description;
-
-   tradingMode                = prev.tradingMode;
 
    recordMode                 = prev.recordMode;
    recordInternal             = prev.recordInternal;
@@ -2093,8 +2090,11 @@ bool ValidateInputs() {
             if (start.time.condition)                    return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
             if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
-            start.time.value       = DateTime2(pt, DATE_OF_ERA);
-            start.time.isDaily     = !pt[PT_HAS_DATE];
+            datetime dtValue = DateTime2(pt, DATE_OF_ERA);
+            start.time.isDaily = !pt[PT_HAS_DATE];
+            if (!start.time.isDaily || (start.time.value % DAY != dtValue % DAY)) {
+               start.time.value = dtValue;               // don't overwrite a daily value having the same relative offset
+            }
             start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
          }
@@ -2122,8 +2122,11 @@ bool ValidateInputs() {
          if (key == "@time") {
             if (stop.time.condition)                     return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
             if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
-            stop.time.value       = DateTime2(pt, DATE_OF_ERA);
-            stop.time.isDaily     = !pt[PT_HAS_DATE];
+            dtValue = DateTime2(pt, DATE_OF_ERA);
+            stop.time.isDaily = !pt[PT_HAS_DATE];
+            if (!stop.time.isDaily || (stop.time.value % DAY != dtValue % DAY)) {
+               stop.time.value = dtValue;                // don't overwrite a daily value having the same relative offset
+            }
             stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
          }
