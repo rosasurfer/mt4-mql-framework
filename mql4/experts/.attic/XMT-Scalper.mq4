@@ -3034,8 +3034,8 @@ bool ValidateInputs() {
    // --- OK ----------------------------------------------------------------------------------------------------------------
 
    // apply validated inputs and status variables
-   Sequence.ID              = _Sequence.ID;     sequence.id = _sequence.id;
-   TradingMode              = _TradingMode;     tradingMode = _tradingMode; SS.SequenceName();
+   Sequence.ID              = _Sequence.ID; sequence.id = _sequence.id;
+   TradingMode              = _TradingMode; tradingMode = _tradingMode; SS.SequenceName();
    EntryIndicator           = _EntryIndicator;
    IndicatorTimeframe       = _IndicatorTimeframe;
    IndicatorPeriods         = _IndicatorPeriods;
