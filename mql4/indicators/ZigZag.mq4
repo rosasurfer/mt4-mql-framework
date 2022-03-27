@@ -78,7 +78,7 @@ extern bool   Signal.onReversal.SMS          = false;
 #define MODE_LOWER_BAND_VISIBLE    ZigZag.MODE_LOWER_BAND      //  3: visible lower channel band segments
 #define MODE_UPPER_CROSS           ZigZag.MODE_UPPER_CROSS     //  4: upper channel crossings
 #define MODE_LOWER_CROSS           ZigZag.MODE_LOWER_CROSS     //  5: lower channel crossings
-#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: ZigZag leg reversal offset
+#define MODE_REVERSAL              ZigZag.MODE_REVERSAL        //  6: bar offset of the current ZigZag reversal from the previous ZigZag extreme
 #define MODE_COMBINED_TREND        ZigZag.MODE_TREND           //  7: combined MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers
 #define MODE_UPPER_BAND            8                           //  8: full upper Donchian channel band
 #define MODE_LOWER_BAND            9                           //  9: full lower Donchian channel band
@@ -315,7 +315,7 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(combinedTrend,    Bars, ShiftedBars,  0);
    }
 
-   // check data pumping so the reversal handler can skip possibly errornous signals
+   // check data pumping on every tick so the reversal handler can skip errornous signals
    IsPossibleDataPumping();
 
    // calculate start bar
@@ -378,7 +378,7 @@ int onTick() {
             int prevZZ = ProcessUpperCross(bar);                  // first process the upper crossing
 
             if (unknownTrend[bar] > 0) {                          // then process the lower crossing
-               SetTrend(prevZZ-1, bar, -1, false);                // (it always marks a new down leg)
+               SetTrend(prevZZ-1, bar, -1, false);                // it always marks a new down leg
                semaphoreOpen[bar] = lowerCrossExit[bar];
             }
             else {
@@ -391,7 +391,7 @@ int onTick() {
             prevZZ = ProcessLowerCross(bar);                      // first process the lower crossing
 
             if (unknownTrend[bar] > 0) {                          // then process the upper crossing
-               SetTrend(prevZZ-1, bar, 1, false);                 // (it always marks a new up leg)
+               SetTrend(prevZZ-1, bar, 1, false);                 // it always marks a new up leg
                semaphoreOpen[bar] = upperCrossExit[bar];
             }
             else {
@@ -598,8 +598,8 @@ bool IsUpperCrossFirst(int bar) {
 
 
 /**
- * Get the bar offset of the last ZigZag point preceeding the specified startbar. The chart's youngest ZigZag point is
- * unfinished and always subject to change.
+ * Get the bar offset of the last ZigZag point preceeding the specified startbar. If this is the chart's youngest ZigZag
+ * point, then it's unfinished and subject to change.
  *
  * @param  int bar - startbar offset
  *
@@ -777,7 +777,7 @@ bool onReversal(int direction, int bar) {
 
 
 /**
- * Whether the current tick possibly occurred during data pumping.
+ * Whether the current tick may have occurred during data pumping.
  *
  * @return bool
  */
