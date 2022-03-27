@@ -30,7 +30,6 @@
  *
  *  - performance tracking
  *    - longterm stabilization
- *       two ZigZag reversals during the same bar are not recognized (may cause losses)   04.01.2022 01:39 EURUSD,M1 Periods=18
  *       virtual trade option (prevents ERR_TRADESERVER_GONE)
  *       notifications for price feed outages
  *       shift periodic start/stop conditions to the next session (not only the next day)
@@ -334,7 +333,8 @@ bool IsZigZagSignal(int &signal) {
    }
    else {
       if (!GetZigZagTrend(0, trend, reversal)) return(false);
-      if (Abs(trend) == reversal) {
+
+      if (Abs(trend)==reversal || !reversal) {     // reversal=0 describes a double crossing, trend is +1 or -1
          if (trend > 0) {
             if (lastSignal != SIGNAL_LONG)  signal = SIGNAL_LONG;
          }
@@ -347,7 +347,7 @@ bool IsZigZagSignal(int &signal) {
             }
             lastSignal = signal;
 
-            if (IsVisualMode()) {               // pause the tester according to the debug configuration
+            if (IsVisualMode()) {                  // pause the tester according to the debug configuration
                if (test.onReversalPause) Tester.Pause("IsZigZagSignal(2)");
             }
          }
@@ -363,8 +363,8 @@ bool IsZigZagSignal(int &signal) {
  * Get ZigZag trend data at the specified bar offset.
  *
  * @param  _In_  int bar            - bar offset
- * @param  _Out_ int &combinedTrend - combined trend value at the bar offset
- * @param  _Out_ int &reversal      - reversal bar value at the bar offset
+ * @param  _Out_ int &combinedTrend - combined trend value (MODE_KNOWN_TREND + MODE_UNKNOWN_TREND buffers)
+ * @param  _Out_ int &reversal      - bar offset of the current ZigZag reversal to the previous ZigZag extreme
  *
  * @return bool - success status
  */
