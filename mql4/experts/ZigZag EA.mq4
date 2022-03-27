@@ -22,8 +22,22 @@
  *
  *
  * TODO:
- *  - virtual trade option (prevents ERR_TRADESERVER_GONE)
+ *  - shift periodic time conditions to the next session (not only the next day)
+ *     check IsStartSignal()
+ *     check IsStopSignal()
+ *     check StartSequence(SIGNAL_TIME)
+ *     check StopSequence(SIGNAL_TIME)
+ *     check ReverseSequence()
+ *     check SaveStatus()
+ *     check ReadStatus()
+ *     define/check cases of interruptions (caused by shutdown/outages/fatal errors)
  *
+ *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
+ *     update sequence.name
+ *     StartVirtualSequence()
+ *     ReverseVirtualSequence()
+ *     StopVirtualSequence()
+ *     UpdateVirtualStatus()
  *
  *  - trading functionality
  *     start/stop sequence with signal pickup
@@ -33,7 +47,6 @@
  *
  *  - performance tracking
  *    - longterm stabilization
- *       shift periodic time conditions to the next session (not only the next day)
  *       notifications for price feed outages
  *    - recording
  *       configurable quote unit multiplier
@@ -71,7 +84,7 @@
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  *
- *  - log file is created too late, errors before sequence start are lost
+ *  - the log file is created too late, errors before sequence start are lost
  *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
@@ -88,7 +101,6 @@
  *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
  *
  *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
- *  - input option to pick-up the last signal on start
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
@@ -102,7 +114,7 @@
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64 and terminal=512)
- *  - pass EA.Recorder to the Expander as a string
+ *  - pass input "EA.Recorder" to the Expander as a string
  *  - build script for all .EX4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
@@ -292,14 +304,14 @@ int onTick() {
    int startSignal, stopSignal, zigzagSignal;
 
    if (sequence.status != STATUS_STOPPED) {
-      IsZigZagSignal(zigzagSignal);                                  // check ZigZag on every tick
+      IsZigZagSignal(zigzagSignal);                   // must be checked every tick to not miss signals
 
       if (sequence.status == STATUS_WAITING) {
          if      (IsStopSignal(stopSignal))   StopSequence(stopSignal);
          else if (IsStartSignal(startSignal)) StartSequence(startSignal);
       }
       else if (sequence.status == STATUS_PROGRESSING) {
-         if (UpdateStatus()) {                                       // update order status and PL
+         if (UpdateStatus()) {
             if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
             else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
          }
@@ -437,6 +449,7 @@ bool StartSequence(int signal) {
    if (last_error != NULL)                          return(false);
    if (sequence.status != STATUS_WAITING)           return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (tradingMode == TRADINGMODE_VIRTUAL)          return(StartVirtualSequence(signal));
 
    SetLogfile(GetLogFilename());                               // flush the log on start
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
@@ -513,6 +526,18 @@ bool StartSequence(int signal) {
 
 
 /**
+ * Start a waiting virtual sequence.
+ *
+ * @param  int signal - trade signal causing the call
+ *
+ * @return bool - success status
+ */
+bool StartVirtualSequence(int signal) {
+   return(false);
+}
+
+
+/**
  * Reverse a progressing sequence.
  *
  * @param  int signal - trade signal causing the call
@@ -521,6 +546,7 @@ bool StartSequence(int signal) {
  */
 bool ReverseSequence(int signal) {
    if (last_error != NULL)                          return(false);
+   if (tradingMode == TRADINGMODE_VIRTUAL)          return(ReverseVirtualSequence(signal));
    if (sequence.status != STATUS_PROGRESSING)       return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
 
@@ -586,6 +612,18 @@ bool ReverseSequence(int signal) {
    SS.PLStats();
 
    return(SaveStatus());
+}
+
+
+/**
+ * Reverse a progressing virtual sequence.
+ *
+ * @param  int signal - trade signal causing the call
+ *
+ * @return bool - success status
+ */
+bool ReverseVirtualSequence(int signal) {
+   return(false);
 }
 
 
@@ -794,6 +832,7 @@ double stop.profitPct.AbsValue() {
  */
 bool StopSequence(int signal) {
    if (last_error != NULL)                                                     return(false);
+   if (tradingMode == TRADINGMODE_VIRTUAL)                                     return(StopVirtualSequence(signal));
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
@@ -855,12 +894,25 @@ bool StopSequence(int signal) {
 
 
 /**
+ * Stop a waiting or progressing virtual sequence. Close open positions (if any).
+ *
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
+ *
+ * @return bool - success status
+ */
+bool StopVirtualSequence(int signal) {
+   return(false);
+}
+
+
+/**
  * Update order status and PL.
  *
  * @return bool - success status
  */
 bool UpdateStatus() {
    if (last_error != NULL)                    return(false);
+   if (tradingMode == TRADINGMODE_VIRTUAL)    return(UpdateVirtualStatus());
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    int error;
 
@@ -874,8 +926,8 @@ bool UpdateStatus() {
       open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
 
       if (!OrderLots()) {                 // if already closed it may be a hedge counterpart with Lots=0.0 (#465291275 Buy 0.0 US500 at 4'522.30, closed...
-         open.grossProfitU = NULL;        // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
-         open.netProfitU   = NULL;
+         open.grossProfitU = 0;           // ...at 4'522.30, commission=0.00, swap=0.00, profit=0.00, magicNumber=448817408, comment="close hedge by #465308924")
+         open.netProfitU   = 0;
       }
       else {
          open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
@@ -901,6 +953,16 @@ bool UpdateStatus() {
       else if (sequence.totalNetProfitM < sequence.maxNetDrawdownM) { sequence.maxNetDrawdownM = sequence.totalNetProfitM; SS.PLStats(); }
    }
    return(!catch("UpdateStatus(4)"));
+}
+
+
+/**
+ * Update virtual order status and PL.
+ *
+ * @return bool - success status
+ */
+bool UpdateVirtualStatus() {
+   return(false);
 }
 
 
