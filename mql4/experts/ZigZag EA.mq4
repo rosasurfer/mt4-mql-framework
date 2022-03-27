@@ -690,13 +690,12 @@ double CalculateStopLoss(int direction) {
    double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
 
    if (direction == SIGNAL_LONG) {
-      stoploss -= tickSize;                                 // move stop the min. possible amount below the channel
+      stoploss -= tickSize;                           // move stop a min. amount below the channel
    }
    else {
-      double dist1 = (stoploss-Bid)*0.05;                   // min. 5% of the current distance
-      double dist2 = tickSize * 5;                          // min. 5 ticks
-      double dist3 = Ask - Bid;                             // min. the current spread
-      stoploss += MathMax(dist1, MathMax(dist2, dist3));    // move stop a min. amount above the channel, as the channel is Bid and the stop gets triggered by Ask
+      double dist1 = (stoploss-Bid)*0.05;             // min. 5% of the current distance
+      double dist2 = (Ask - Bid) + 5*tickSize;        // min. 5 ticks above the spread
+      stoploss += MathMax(dist1, dist2);              // move stop a min. amount above the channel, as the channel is Bid and the stop gets triggered by Ask
    }
    return(NormalizeDouble(stoploss, Digits));
 }
