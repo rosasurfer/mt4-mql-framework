@@ -108,7 +108,7 @@ int onInitTemplate() {
       RestoreSequence();
       return(last_error);
    }
-   return(catch("onInitTemplate(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitTemplate(1)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -117,13 +117,13 @@ int onInitTemplate() {
  *
  * @return int - error status
  */
-int onInitRecompile() {                                        // same requirements as for onInitTemplate()
-   // restore sequence id from the chart
-   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
+int onInitRecompile() {
+   // restore sequence id from the chart                       // same as for onInitTemplate()
+   if (RestoreChartStatus()) {
       RestoreSequence();
       return(last_error);
    }
-   return(catch("onInitRecompile(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitRecompile(1)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
