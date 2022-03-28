@@ -22,10 +22,6 @@
  *
  *
  * TODO:
-    - savestatus nach datetime update
-    - datetime update loggen
-    GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)")
-
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="471";...
@@ -436,13 +432,15 @@ bool IsStartSignal(int &signal) {
       datetime now = TimeServer();
       if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative start time to an absolute one
          start.time.value += (now - (now % DAY));                       // relative + Midnight (possibly in the past)
+         if (IsLogDebug()) logDebug("IsStartSignal(1)  "+ sequence.name +" moving start time to "+ GmtTimeFormat(start.time.value, "%a, %Y.%m.%d %H:%M:%S"));
+         SaveStatus();
       }
       if (now < start.time.value) return(false);
    }
 
    // ZigZag signal: --------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsStartSignal(1)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
       return(true);
    }
    return(false);
@@ -528,10 +526,11 @@ bool StartSequence(int signal) {
       stop.time.value %= DAYS;                              // the future
       stop.time.value += (now - (now % DAY));               // relative + Midnight (possibly in the past)
       if (stop.time.value < now) stop.time.value += 1*DAY;
+      if (IsLogDebug()) logDebug("StartSequence(4)  "+ sequence.name +" moving stop time to "+ GmtTimeFormat(stop.time.value, "%a, %Y.%m.%d %H:%M:%S"));
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StartSequence(4)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("StartSequence(5)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
    return(SaveStatus());
 }
 
@@ -774,6 +773,8 @@ bool IsStopSignal(int &signal) {
       datetime now = TimeServer();
       if (stop.time.isDaily && stop.time.value < 1*DAY) {         // convert a relative stop time to an absolute time
          stop.time.value += (now - (now % DAY));                  // relative + Midnight (possibly in the past)
+         if (IsLogDebug()) logDebug("IsStopSignal(1)  "+ sequence.name +" moving stop time to "+ GmtTimeFormat(stop.time.value, "%a, %Y.%m.%d %H:%M:%S"));
+         SaveStatus();
       }
       if (now >= stop.time.value) {
          signal = SIGNAL_TIME;
@@ -875,6 +876,7 @@ bool StopSequence(int signal) {
                start.time.value += 1*DAY;
                dow = TimeDayOfWeekEx(start.time.value);
             }
+            if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" moving start time to "+ GmtTimeFormat(start.time.value, "%a, %Y.%m.%d %H:%M:%S"));
          }
          stop.time.condition = false;
          sequence.status     = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
@@ -891,19 +893,19 @@ bool StopSequence(int signal) {
          sequence.status = STATUS_STOPPED;
          break;
 
-      default: return(!catch("StopSequence(3)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+      default: return(!catch("StopSequence(4)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(4)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    if (IsTesting()) {                                       // pause or stop the tester according to the debug configuration
-      if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(5)"); }
-      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(6)"); }
-      else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(7)"); }
+      if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
+      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
+      else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
    }
-   return(!catch("StopSequence(8)"));
+   return(!catch("StopSequence(9)"));
 }
 
 
