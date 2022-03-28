@@ -131,10 +131,11 @@ int onInitTemplate() {
       if (RestoreSequence()) {
          ComputeTargets();
          SS.All();
-         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
+      return(last_error);
    }
-   return(last_error);
+   return(catch("onInitTemplate(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -143,16 +144,17 @@ int onInitTemplate() {
  *
  * @return int - error status
  */
-int onInitRecompile() {                                     // same requirements as for onInitTemplate()
-   // restore sequence id from the chart
+int onInitRecompile() {
+   // restore sequence id from the chart                    // same as for onInitTemplate()
    if (FindSequenceId()) {
       if (RestoreSequence()) {
          ComputeTargets();
          SS.All();
-         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
+         logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
+      return(last_error);
    }
-   return(last_error);
+   return(catch("onInitRecompile(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 

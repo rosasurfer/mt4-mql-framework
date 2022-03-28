@@ -78,8 +78,8 @@
  *
  *  - onInitTemplate error on VM restart
  *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
- *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
- *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
+ *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="471";...
+ *     FATAL  ZigZag EA::onInitTemplate(2)  could not restore sequence id from anywhere, aborting...  [ERR_RUNTIME_ERROR]
  *
  *  - SL of long position is too close
  *            ZigZag EA::rsfLib::OrderSendEx(20)  opened #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'535.30, sl=4'532.49 (market: 4'534.60/4'535.30) after 0.219 s
