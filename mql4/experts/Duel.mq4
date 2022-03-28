@@ -3617,8 +3617,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
    WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
-   WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
-   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)"));
+   WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + ifString(Sessionbreak.StartTime, GmtTimeFormat(Sessionbreak.StartTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime   + ifString(Sessionbreak.EndTime,   GmtTimeFormat(Sessionbreak.EndTime,   " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                        // conditional section separator
 
    // [Runtime status]
@@ -3717,8 +3717,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.lossPct.absValue",       /*double  */ ifString(stop.lossPct.absValue==INT_MIN, INT_MIN, DoubleToStr(stop.lossPct.absValue, 2)));
    WriteIniString(file, section, "stop.lossPct.description",    /*string  */ stop.lossPct.description + CRLF);
 
-   WriteIniString(file, section, "sessionbreak.starttime",      /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
+   WriteIniString(file, section, "sessionbreak.starttime",      /*datetime*/ sessionbreak.starttime + ifString(sessionbreak.starttime, GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime   + ifString(sessionbreak.endtime,   GmtTimeFormat(sessionbreak.endtime,   " (%a, %Y.%m.%d %H:%M:%S)"), "") + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }

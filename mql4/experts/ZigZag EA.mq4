@@ -22,6 +22,28 @@
  *
  *
  * TODO:
+    - savestatus nach datetime update
+    - datetime update loggen
+    GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)")
+
+ *  - onInitTemplate error on VM restart
+ *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
+ *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="471";...
+ *     FATAL  ZigZag EA::onInitTemplate(2)  could not restore sequence id from anywhere, aborting...  [ERR_RUNTIME_ERROR]
+ *
+ *  - SL of long position is too close
+ *            ZigZag EA::rsfLib::OrderSendEx(20)  opened #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'535.30, sl=4'532.49 (market: 4'534.60/4'535.30) after 0.219 s
+ *     INFO   ZigZag EA::IsZigZagSignal(1)  Z.812 short reversal (market: 4'532.30/4'533.20)
+ *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'532.30, sl=4'532.49 (market: 4'532.30/4'533.20) after 0.172 s  [ERR_INVALID_TRADE_PARAMETERS]
+ *
+ *  - IsStopSignal()
+ *     daily startTime: absolut = Mon, 03:00
+ *     daily stopTime:  absolue = Mon, 22:00
+ *     EA in STATUS_WAITING stops due to an error and is re-activated at Tue, 10:00
+ *     stop-time condition is immediately triggered and next start-time is set to Wed, 03:00 => instead it must not stop
+ *
+ *  - the log file is created too late, errors before sequence start are lost
+ *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
  *     StartVirtualSequence()
@@ -74,17 +96,9 @@
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
  *
- *  - the log file is created too late, errors before sequence start are lost
- *
- *  - onInitTemplate error on VM restart
- *     INFO   ZigZag EA:::::::::::::::::::::::::::::::::::::::::::::::::
- *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="471";...
- *     FATAL  ZigZag EA::onInitTemplate(2)  could not restore sequence id from anywhere, aborting...  [ERR_RUNTIME_ERROR]
- *
- *  - SL of long position is too close
- *            ZigZag EA::rsfLib::OrderSendEx(20)  opened #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'535.30, sl=4'532.49 (market: 4'534.60/4'535.30) after 0.219 s
- *     INFO   ZigZag EA::IsZigZagSignal(1)  Z.812 short reversal (market: 4'532.30/4'533.20)
- *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'532.30, sl=4'532.49 (market: 4'532.30/4'533.20) after 0.172 s  [ERR_INVALID_TRADE_PARAMETERS]
+ *  - During terminal shutdown global string vars may already be destroyed. What about string arrays?
+ *     terminal 1: INFO   XTIUSD,M1  ZigZag EA::onDeinitClose(1)  Z.649 terminal shutdown in status "progressing", profit:..                             <- two empty spaces
+ *     terminal 2: INFO   US30,M1    ZigZag EA::onDeinitClose(1)  Z.712 terminal shutdown in status "progressing", profit: -322.48 (+25.41/-641.56)
  *
  *  - on exceeding the max. open file limit of the terminal (512)
  *     FATAL  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
