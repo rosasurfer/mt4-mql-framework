@@ -2560,8 +2560,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "MaxSlippage",               DoubleToStr(MaxSlippage, 1));
    WriteIniString(file, section, "StopOnTotalProfit",         DoubleToStr(StopOnTotalProfit, 2));
    WriteIniString(file, section, "StopOnTotalLoss",           DoubleToStr(StopOnTotalLoss, 2));
-   WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime);
-   WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime);
+   WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime + ifString(Sessionbreak.StartTime, GmtTimeFormat(Sessionbreak.StartTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime   + ifString(Sessionbreak.EndTime,   GmtTimeFormat(Sessionbreak.EndTime,   " (%a, %Y.%m.%d %H:%M:%S)"), ""));
 
    WriteIniString(file, section, "ChannelBug",                ChannelBug);
    WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug);
