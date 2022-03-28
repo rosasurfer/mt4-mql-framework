@@ -81,6 +81,11 @@
  *            ZigZag EA::initTemplate(0)  inputs: Sequence.ID="6471";...
  *     FATAL  ZigZag EA::start(9)  [ERR_ILLEGAL_STATE]
  *
+ *  - SL of long position is too close
+ *            ZigZag EA::rsfLib::OrderSendEx(20)  opened #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'535.30, sl=4'532.49 (market: 4'534.60/4'535.30) after 0.219 s
+ *     INFO   ZigZag EA::IsZigZagSignal(1)  Z.812 short reversal (market: 4'532.30/4'533.20)
+ *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'532.30, sl=4'532.49 (market: 4'532.30/4'533.20) after 0.172 s  [ERR_INVALID_TRADE_PARAMETERS]
+ *
  *  - on exceeding the max. open file limit of the terminal (512)
  *     FATAL  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
  *     ERROR  GBPJPY,M5  ZigZag::rsfHistory1::catch(1)  recursion: SendEmail(8)->FileOpen()  [ERR_CANNOT_OPEN_FILE]
@@ -726,16 +731,15 @@ double CalculateStopLoss(int direction) {
    double stoploss = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
    if (!stoploss) return(NULL);
 
+   // move stop a min. amount above/below the channel
    double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double dist1    = MathAbs(Bid-stoploss) * 0.1;
+   double dist2    = (Ask-Bid) + 10*tickSize;         // that's min. 10% of the current distance and min. 10 ticks more than the spread
+   double minDist  = MathMax(dist1, dist2);
 
-   if (direction == SIGNAL_LONG) {
-      stoploss -= tickSize;                           // move stop a min. amount below the channel
-   }
-   else {
-      double dist1 = (stoploss-Bid)*0.05;             // min. 5% of the current distance
-      double dist2 = (Ask - Bid) + 5*tickSize;        // min. 5 ticks above the spread
-      stoploss += MathMax(dist1, dist2);              // move stop a min. amount above the channel, as the channel is Bid and the stop gets triggered by Ask
-   }
+   if (direction == SIGNAL_LONG) stoploss -= minDist;
+   else                          stoploss += minDist;
+
    return(NormalizeDouble(stoploss, Digits));
 }
 
