@@ -19,8 +19,8 @@ int onInit() {
  */
 int onInitUser() {
    // check for and validate a specified sequence id
-   if (ValidateInputs.SID()) {
-      RestoreSequence();                                       // a valid sequence id was specified
+   if (ValidateInputs.SID()) {                                 // a valid sequence id was specified and restored
+      RestoreSequence();                                       // the sequence was restored
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
       if (ValidateInputs()) {
@@ -80,9 +80,8 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence id from the chart
-   if (FindSequenceId()) {                                  // on success a sequence id was restored
-      if (RestoreSequence()) {
+   if (RestoreSequenceId()) {                               // a sequence id was found and restored
+      if (RestoreSequence()) {                              // the sequence was restored
          logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
       return(last_error);
@@ -97,8 +96,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   // restore sequence id from the chart                    // same as for onInitTemplate()
-   if (FindSequenceId()) {
+   if (RestoreSequenceId()) {                               // same as for onInitTemplate()
       if (RestoreSequence()) {
          logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }

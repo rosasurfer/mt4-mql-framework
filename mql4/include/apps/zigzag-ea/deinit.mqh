@@ -86,7 +86,7 @@ int onDeinitRemove() {
    if (sequence.status != STATUS_STOPPED) {
       logInfo("onDeinitRemove(1)  "+ sequence.name +" expert removed in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
-   RemoveSequenceData();                                             // remove the sequence data stored in the chart
+   RemoveSequenceId();                                               // remove a stored sequence id
    return(NO_ERROR);
 }
 
