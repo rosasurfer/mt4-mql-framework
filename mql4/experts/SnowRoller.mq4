@@ -1091,43 +1091,123 @@ void RedrawStartStop() {
 
 
 /**
- * Store the sequence id in the chart before recompilation or terminal restart.
+ * Store the current sequence id in the terminal (for template changes, terminal restart, recompilation etc).
  *
  * @return bool - success status
  */
-bool StoreChartStatus() {
-   return(Chart.StoreString(ProgramName() +".runtime.Sequence.ID", Sequence.ID));
+bool StoreSequenceId() {
+   string name = ProgramName() +".Sequence.ID";
+   string value = ifString(sequence.isTest, "T", "") + sequence.id;
+
+   Sequence.ID = value;                                              // store in input parameter
+
+   if (__isChart) {
+      Chart.StoreString(name, value);                                // store in chart
+      SetWindowStringA(__ExecutionContext[EC.hChart], name, value);  // store in chart window
+   }
+   return(!catch("StoreSequenceId(1)"));
 }
 
 
 /**
- * Restore a sequence id found in the chart after recompilation or terminal restart.
+ * Find and restore a stored sequence id (for template changes, terminal restart, recompilation etc).
  *
- * @return bool - whether a sequence id was found and restored
+ * @return bool - whether a sequence id was successfully restored
  */
-bool RestoreChartStatus() {
-   string label = ProgramName() +".runtime.Sequence.ID", sValue="";
-   bool isTest = false;
+bool RestoreSequenceId() {
+   bool isError, muteErrors=false;
 
-   if (Chart.RestoreString(label, sValue)) {
-      if (StrStartsWith(sValue, "T")) {
-         isTest = true;
-         sValue = StrSubstr(sValue, 1);
+   // check input parameter
+   string value = Sequence.ID;
+   if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
+   isError = muteErrors;
+   if (isError) return(false);
+
+   if (__isChart) {
+      // check chart window
+      string name = ProgramName() +".Sequence.ID";
+      value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
+      muteErrors = false;
+      if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
+      isError = muteErrors;
+      if (isError) return(false);
+
+      // check chart
+      if (Chart.RestoreString(name, value, false)) {
+         muteErrors = false;
+         if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
       }
-      int iValue = StrToInteger(sValue);
-      if (!iValue) {
-         sequence.status = STATUS_UNDEFINED;
-      }
-      else {
-         sequence.id     = iValue;
-         Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
-         sequence.isTest = isTest;
-         sequence.status = STATUS_WAITING;
-         SS.SequenceName();
-      }
-      return(iValue != 0);
    }
    return(false);
+}
+
+
+/**
+ * Remove a stored sequence id.
+ *
+ * @return bool - success status
+ */
+bool RemoveSequenceId() {
+   if (__isChart) {
+      // chart window
+      string name = ProgramName() +".Sequence.ID";
+      RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
+
+      // chart
+      Chart.RestoreString(name, name, true);
+
+      // additionally remove a chart status for chart commands
+      name = ProgramName() +".status";
+      if (ObjectFind(name) != -1) ObjectDelete(name);
+   }
+   return(!catch("RemoveSequenceId(1)"));
+}
+
+
+/**
+ * Parse and apply the passed sequence id value (format: /T?[0-9]{4,}/).
+ *
+ * @param  _In_    string value  - stringyfied sequence id
+ * @param  _InOut_ bool   error  - in:  whether to mute a parse error (TRUE) or to trigger a fatal error (FALSE)
+ *                                 out: whether a parsing error occurred (stored in last_error)
+ * @param  _In_    string caller - caller identification (for error messages)
+ *
+ * @return bool - whether the sequence id was successfully applied
+ */
+bool ApplySequenceId(string value, bool &error, string caller) {
+   string valueBak = value;
+   bool muteErrors = error!=0;
+   error = false;
+
+   value = StrTrim(value);
+   if (!StringLen(value)) return(false);
+
+   bool isTest = false;
+   int sequenceId = 0;
+
+   if (StrStartsWith(value, "T")) {
+      isTest = true;
+      value = StrSubstr(value, 1);
+   }
+
+   if (!StrIsDigit(value)) {
+      error = true;
+      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
+   }
+
+   int iValue = StrToInteger(value);
+   if (iValue < SID_MIN || iValue > SID_MAX) {
+      error = true;
+      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->ApplySequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
+   }
+
+   sequence.isTest = isTest;
+   sequence.id     = iValue;
+   Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+   SS.SequenceName();
+   return(true);
 }
 
 
@@ -6121,25 +6201,17 @@ bool IsStopLossTriggered(int type, double price) {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4,}/i). Called only from onInitUser().
+ * Validate and apply the input parameter "Sequence.ID".
  *
- * @return bool - whether the input sequence id is was valid and restored (the status file is not checked)
+ * @return bool - whether a sequence id was successfully restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
-   string sValue = StrTrim(Sequence.ID);
-   if (!StringLen(sValue)) return(false);
+   bool errorFlag = true;
 
-   if (StrStartsWithI(sValue, "T")) {
-      sequence.isTest = true;
-      sValue = StrTrim(StrSubstr(sValue, 1));
+   if (!ApplySequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
+      if (errorFlag) onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
+      return(false);
    }
-
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
-   int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
-
-   sequence.id = iValue;
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
    return(true);
 }
 

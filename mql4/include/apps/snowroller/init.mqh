@@ -19,9 +19,9 @@ int onInit() {
  */
 int onInitUser() {
    // check for a specified sequence id
-   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
+   if (ValidateInputs.SID()) {                                 // a valid sequence id was specified and restored
       sequence.status = STATUS_WAITING;
-      RestoreSequence();
+      RestoreSequence();                                       // the sequence was restored
       return(last_error);
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
@@ -103,9 +103,8 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence id from the chart
-   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
-      RestoreSequence();
+   if (RestoreSequenceId()) {                                  // a sequence id was found and restored
+      RestoreSequence();                                       // the sequence was restored
       return(last_error);
    }
    return(catch("onInitTemplate(1)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
@@ -118,8 +117,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   // restore sequence id from the chart                       // same as for onInitTemplate()
-   if (RestoreChartStatus()) {
+   if (RestoreSequenceId()) {                                  // same as for onInitTemplate()
       RestoreSequence();
       return(last_error);
    }

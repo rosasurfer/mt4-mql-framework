@@ -19,8 +19,8 @@ int onInit() {
  */
 int onInitUser() {
    // check for and validate a specified sequence id
-   if (ValidateInputs.SID()) {
-      if (RestoreSequence()) {                                       // a valid sequence id was specified and restored
+   if (ValidateInputs.SID()) {                                       // a valid sequence id was specified and restored
+      if (RestoreSequence()) {                                       // the sequence was restored
          ComputeTargets();
          SS.All();
          logInfo("onInitUser(1)  "+ sequence.name +" restored in status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +" from file "+ DoubleQuoteStr(GetStatusFilename(true)));
@@ -126,9 +126,8 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence id from the chart
-   if (FindSequenceId()) {                                  // on success a sequence id was restored
-      if (RestoreSequence()) {
+   if (RestoreSequenceId()) {                               // a sequence id was found and restored
+      if (RestoreSequence()) {                              // the sequence was restored
          ComputeTargets();
          SS.All();
          logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
@@ -145,8 +144,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   // restore sequence id from the chart                    // same as for onInitTemplate()
-   if (FindSequenceId()) {
+   if (RestoreSequenceId()) {                               // same as for onInitTemplate()
       if (RestoreSequence()) {
          ComputeTargets();
          SS.All();

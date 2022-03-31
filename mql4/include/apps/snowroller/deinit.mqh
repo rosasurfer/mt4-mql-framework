@@ -39,7 +39,7 @@ int onDeinitChartClose() {
    }
    else {
       // online
-      StoreChartStatus();                                            // for profile changes and terminal restart
+      StoreSequenceId();                                          // for profile changes and terminal restart
    }
    return(catch("onDeinitChartClose(1)"));
 }
@@ -77,8 +77,19 @@ int onDeinitUndefined() {
  * @return int - error status
  */
 int onDeinitRecompile() {
-   StoreChartStatus();
+   StoreSequenceId();
    return(-1);                                                       // -1: skip all other deinit tasks
+}
+
+
+/**
+ * Called when the expert is manually removed (Chart->Expert->Remove) or replaced.
+ *
+ * @return int - error status
+ */
+int onDeinitRemove() {
+   RemoveSequenceId();                                               // remove a stored sequence id
+   return(NO_ERROR);
 }
 
 
@@ -88,6 +99,6 @@ int onDeinitRecompile() {
  * @return int - error status
  */
 int onDeinitClose() {
-   StoreChartStatus();
+   StoreSequenceId();
    return(last_error);
 }
