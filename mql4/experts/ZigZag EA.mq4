@@ -22,11 +22,6 @@
  *
  *
  * TODO:
- *  - ReverseSequence(): SL of open position is executed since UpdateStatus()
- *            ZigZag EA::rsfLib::OrderSendEx(20)  opened #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'535.30, sl=4'532.49 (market: 4'534.60/4'535.30) after 0.219 s
- *     INFO   ZigZag EA::IsZigZagSignal(1)  Z.812 short reversal (market: 4'532.30/4'533.20)
- *     FATAL  ZigZag EA::rsfLib::OrderCloseEx(43)  error while trying to close #465393642 Buy 1 US500 "ZigZag.Z.812" at 4'532.30, sl=4'532.49 (market: 4'532.30/4'533.20) after 0.172 s  [ERR_INVALID_TRADE_PARAMETERS]
- *
  *  - IsStartSignal() / IsStopSignal()
  *     daily startTime: absolut = Mon, 03:00
  *     daily stopTime:  absolue = Mon, 22:00
@@ -306,7 +301,7 @@ int onTick() {
    int startSignal, stopSignal, zigzagSignal;
 
    if (sequence.status != STATUS_STOPPED) {
-      IsZigZagSignal(zigzagSignal);                   // must be checked every tick to not miss signals
+      IsZigZagSignal(zigzagSignal);                      // must be checked on every tick to not miss signals
 
       if (sequence.status == STATUS_WAITING) {
          if      (IsStopSignal(stopSignal))   StopSequence(stopSignal);
@@ -558,15 +553,16 @@ bool ReverseSequence(int signal) {
    double bid = Bid, ask = Ask;
 
    if (open.ticket > 0) {
-      // either continue in the same direction...
+      // continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
          logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
          return(true);
       }
       // ...or close the open position
-      int oeFlags, oe[];
-      if (!OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
-      if (!ArchiveClosedPosition(open.ticket, bid, ask, -oe.Slippage(oe)))   return(false);
+      int oe[], oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;                  // expect an SL triggered in between (and position already closed)
+      bool success = OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe);
+      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS)                                                                            return(!SetLastError(oe.Error(oe)));
+      if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, -oe.Slippage(oe), 0))) return(false);
    }
 
    // open new position
