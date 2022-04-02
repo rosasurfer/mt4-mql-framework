@@ -642,26 +642,25 @@ int log2Terminal(string message, int error, int level) {
 
 
 /**
- * Configure the use of a custom logfile (simple wrapper for the MT4Expander function).
+ * Configure a custom logfile for the program. During init cycles an open file is auto-closed and needs to be reopened after
+ * the cycle using this function.
  *
- * @param  string filename - full filename to enable or an empty string to disable the custom logfile
+ * - If the passed value is empty the custom logfile is disabled and an open file is closed.
+ * - If the passed value is non-empty the custom logfile is enabled and opened. If the flag INIT_BUFFERED_LOG of the program
+ *   is set the log buffer is flushed and all buffered logmessages are written to the newly opened file.
+ *
+ * @param  string filename - full filename or an empty string
  *
  * @return bool - success status
  */
 bool SetLogfile(string filename) {
-   int loglevel     = log(NULL, NULL, LOG_OFF);         // Make sure the configuration of the LogfileAppender is initialized
-   int loglevelFile = log2File(NULL, NULL, LOG_OFF);    // as the Expander cannot yet read it.
+   int loglevel = log(NULL, NULL, LOG_OFF);                    // Make sure needed loglevels are initialized as the Expander
+   int loglevelFile = log2File(NULL, NULL, LOG_OFF);           // can't yet read the config.
 
-   if (StringLen(filename) > 0) {
-      if (loglevel!=LOG_OFF && loglevelFile!=LOG_OFF) {
-         string prevName = ec_LogFilename(__ExecutionContext);
-         if (filename != prevName) {
-            if (IsLogDebug()) debug("SetLogfile(1)  \""+ filename +"\"");        // only to DebugView (for quick control)
-         }
-      }
-      else {                                                                     // only to DebugView (for quick control)
-         if (IsLogDebug()) debug("SetLogfile(2)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
-      }
+   // dev: show used logfile path
+   if (IsLogDebug() && StringLen(filename)) {
+      if (loglevel==LOG_OFF || loglevelFile==LOG_OFF)          debug("SetLogfile(1)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
+      else if (filename != ec_LogFilename(__ExecutionContext)) debug("SetLogfile(2)  \""+ filename +"\"");
    }
    return(SetLogfileA(__ExecutionContext, filename));
 }

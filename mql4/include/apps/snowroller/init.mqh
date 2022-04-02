@@ -131,7 +131,7 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (!SetLogfile(GetLogFilename())) return(last_error);
+   SetLogfile(GetLogFilename());                               // open the logfile (flushes the buffer)
 
    string section = StrTrim(ProgramName());
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);

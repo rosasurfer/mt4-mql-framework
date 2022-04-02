@@ -1006,7 +1006,6 @@ bool StartSequence(int signal) {
       MessageBoxEx(ProgramName() +"::StartSequence()", "Cannot start EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
-   SetLogfile(GetLogFilename());                                  // flush the logbuffer
    if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    sequence.status      = STATUS_PROGRESSING;
@@ -1052,7 +1051,6 @@ bool ResumeSequence(int signal) {
       MessageBoxEx(ProgramName() +"::ResumeSequence()", "Cannot resume EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
-   SetLogfile(GetLogFilename());                                  // flush the logbuffer
    if (IsLogInfo()) logInfo("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
    double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, longOpenPrice, shortOpenPrice;

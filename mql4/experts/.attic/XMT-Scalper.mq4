@@ -448,6 +448,8 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
+   SetLogfile(GetLogFilename());                            // open the logfile (flushes the buffer)
+
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
@@ -458,8 +460,7 @@ int afterInit() {
    orderMagicNumber = CalculateMagicNumber();
    SS.All();
 
-   if (!SetLogfile(GetLogFilename())) return(last_error);
-   if (!InitMetrics())                return(last_error);
+   if (!InitMetrics()) return(last_error);
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
