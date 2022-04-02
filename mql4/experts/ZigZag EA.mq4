@@ -22,13 +22,11 @@
  *
  *
  * TODO:
- *  - IsStartSignal() / IsStopSignal()
+ *  - IsStartSignal() / IsStopSignal(), see stash "28.03.2022 check start/stop times"
  *     daily startTime: absolut = Mon, 03:00
- *     daily stopTime:  absolue = Mon, 22:00
+ *     daily stopTime:  absolut = Mon, 22:00
  *     EA in STATUS_WAITING stops due to an error and is re-activated at Tue, 10:00
  *     stop-time condition is immediately triggered and next start-time is set to Wed, 03:00 => instead it must not stop
- *
- *  - the log file is opened too late, log messages/errors before sequence start (flushing) are lost
  *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
@@ -450,7 +448,6 @@ bool StartSequence(int signal) {
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
    if (tradingMode == TRADINGMODE_VIRTUAL)          return(StartVirtualSequence(signal));
 
-   SetLogfile(GetLogFilename());                               // flush the log on start
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
 
    sequence.status = STATUS_PROGRESSING;

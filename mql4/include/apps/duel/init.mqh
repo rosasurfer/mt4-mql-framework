@@ -126,8 +126,8 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   if (RestoreSequenceId()) {                               // a sequence id was found and restored
-      if (RestoreSequence()) {                              // the sequence was restored
+   if (RestoreSequenceId()) {                            // a sequence id was found and restored
+      if (RestoreSequence()) {                           // the sequence was restored
          ComputeTargets();
          SS.All();
          logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
@@ -144,7 +144,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   if (RestoreSequenceId()) {                               // same as for onInitTemplate()
+   if (RestoreSequenceId()) {                            // same as for onInitTemplate()
       if (RestoreSequence()) {
          ComputeTargets();
          SS.All();
@@ -162,15 +162,14 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   bool sequenceWasStarted = (ArraySize(long.ticket) || ArraySize(short.ticket));
-   if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+   SetLogfile(GetLogFilename());                         // open the logfile (flushes the buffer)
 
-   if (IsTesting()) {                                       // read test configuration
+   if (IsTesting()) {                                    // read test configuration
       string section          = "Tester."+ StrTrim(ProgramName());
       test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
       test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
    }
 
-   StoreSequenceId();                                       // store the sequence id for other templates/restart/recompilation etc.
+   StoreSequenceId();                                    // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }
