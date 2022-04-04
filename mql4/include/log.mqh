@@ -657,11 +657,11 @@ bool SetLogfile(string filename) {
    int loglevel = log(NULL, NULL, LOG_OFF);                    // Make sure needed loglevels are initialized as the Expander
    int loglevelFile = log2File(NULL, NULL, LOG_OFF);           // can't yet read the config.
 
-   // dev: show used logfile path
-   if (IsLogDebug() && StringLen(filename)) {
-      if (loglevel==LOG_OFF || loglevelFile==LOG_OFF)          debug("SetLogfile(1)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
-      else if (filename != ec_LogFilename(__ExecutionContext)) debug("SetLogfile(2)  \""+ filename +"\"");
-   }
+   // dev: temporary debug message
+   //if (IsLogDebug() && StringLen(filename)) {
+   //   if (loglevel==LOG_OFF || loglevelFile==LOG_OFF)          debug("SetLogfile(1)  skipping ("+ ifString(loglevel==LOG_OFF, "log", "log2File") +"=off)");
+   //   else if (filename != ec_LogFilename(__ExecutionContext)) debug("SetLogfile(2)  \""+ filename +"\"");
+   //}
    return(SetLogfileA(__ExecutionContext, filename));
 }
 
