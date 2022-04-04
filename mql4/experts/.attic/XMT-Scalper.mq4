@@ -275,7 +275,7 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   sessionbreak.active = IsSessionBreak();
+   sessionbreak.active = IsTradeSessionBreak();
 
    if (tradingMode == TRADINGMODE_REGULAR) onTick.RegularTrading();
    else                                    onTick.VirtualTrading();
@@ -989,7 +989,7 @@ bool IsEntrySignal(int &signal) {
  *
  * @return bool
  */
-bool IsSessionBreak() {
+bool IsTradeSessionBreak() {
    if (last_error != NO_ERROR) return(false);
 
    datetime serverTime = TimeServer();
@@ -1026,7 +1026,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradeSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check

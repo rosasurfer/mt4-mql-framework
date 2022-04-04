@@ -165,7 +165,7 @@ string   stop.lossPct.description = "";
 datetime sessionbreak.starttime;                   // configurable via inputs and framework config
 datetime sessionbreak.endtime;
 bool     sessionbreak.waiting;                     // whether the sequence waits to resume during or after a session break
-int      sessionbreak.startSignal;                 // start signal occurred during sessionbreak
+int      sessionbreak.startSignal;                 // a start signal which occurred during the sessionbreak
 
 // --- gridbase management -----------------
 int      gridbase.event [];                        // gridbase event id
@@ -2362,7 +2362,7 @@ bool IsStartSignal(int &signal) {
    string message = "";
    bool triggered, resuming = (sequence.maxLevel != 0);
 
-   if (IsSessionBreak()) {
+   if (IsTradeSessionBreak()) {
       // -- start.trend during sessionbreak: satisfied on trend change in direction of the sequence -------------------------
       if (start.conditions && start.trend.condition) {
          if (IsBarOpen(start.trend.timeframe)) {
@@ -2571,7 +2571,7 @@ bool IsStopSignal(int &signal) {
       }
 
       // session break ------------------------------------------------------------------------------------------------------
-      if (IsSessionBreak()) {
+      if (IsTradeSessionBreak()) {
          if (IsLogInfo()) logInfo("IsStopSignal(8)  "+ sequence.name +" stop condition \"sessionbreak from "+ GmtTimeFormat(sessionbreak.starttime, "%Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%Y.%m.%d %H:%M:%S") +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
          signal = SIGNAL_SESSION_BREAK;
          return(true);
@@ -2583,52 +2583,55 @@ bool IsStopSignal(int &signal) {
 
 /**
  * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
- * and sessionbreak.endtime are up-to-date (sessionbreak.waiting is not modified).
+ * and sessionbreak.endtime are always up-to-date (sessionbreak.waiting is not modified).
  *
  * @return bool
  */
-bool IsSessionBreak() {
-   if (IsLastError()) return(false);
+bool IsTradeSessionBreak() {
+   if (last_error != NULL) return(false);
 
-   datetime serverTime = TimeServer();
+   datetime srvNow = TimeServer();
 
-   // check whether to recalculate sessionbreak times
-   if (serverTime >= sessionbreak.endtime) {
-      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
-      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
-      if (!startOffset && !endOffset)
-         return(false);                                           // skip session breaks if both values are set to Midnight
+   // check whether to recalculate sessionbreak start/end times
+   if (srvNow >= sessionbreak.endtime) {
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start offset in seconds since Midnight server time
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end offset in seconds since Midnight server time
 
-      // calculate today's sessionbreak end time
-      datetime fxtNow  = ServerToFxtTime(serverTime);
-      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
-      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
+      // calculate today's theoretical sessionbreak end time in SRV and FXT
+      datetime srvMidnight = srvNow - srvNow % DAYS;              // today's Midnight in SRV
+      datetime srvEndTime  = srvMidnight + endOffset;             // today's theoretical sessionbreak end time in SRV
+      datetime fxtNow      = ServerToFxtTime(srvNow);
+      datetime fxtMidnight = fxtNow - fxtNow % DAYS;              // today's Midnight in FXT
+      datetime fxtEndTime  = fxtMidnight + endOffset;             // today's theoretical sessionbreak end time in FXT
 
-      // determine the next regular sessionbreak end time
-      int dow = TimeDayOfWeekEx(fxtTime);
-      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
-         fxtTime += 1*DAY;
-         dow = TimeDayOfWeekEx(fxtTime);
+      // determine the next real sessionbreak end time in SRV
+      int dow = TimeDayOfWeekEx(fxtEndTime);
+      while (srvEndTime <= srvNow || dow==SATURDAY || dow==SUNDAY) {
+         srvEndTime += 1*DAY;
+         fxtEndTime += 1*DAY;
+         dow = TimeDayOfWeekEx(fxtEndTime);
       }
-      datetime fxtResumeTime = fxtTime;
-      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
+      sessionbreak.endtime = srvEndTime;
 
-      // determine the corresponding sessionbreak start time
-      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
-      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
+      // determine the corresponding (before end) sessionbreak start time
+      srvMidnight           = srvEndTime - srvEndTime % DAYS;     // the resume day's Midnight in SRV
+      datetime srvStartTime = srvMidnight + startOffset;          // the resume day's theoretical sessionbreak start time in SRV
+      fxtMidnight           = fxtEndTime - fxtEndTime % DAYS;     // the resume day's Midnight in FXT
+      datetime fxtStartTime = fxtMidnight + startOffset;          // the resume day's theoretical sessionbreak start time in FXT
 
-      dow = TimeDayOfWeekEx(fxtTime);
-      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
-         fxtTime -= 1*DAY;
-         dow = TimeDayOfWeekEx(fxtTime);
+      dow = TimeDayOfWeekEx(fxtStartTime);
+      while (srvStartTime > srvEndTime || dow==SATURDAY || dow==SUNDAY || (dow==MONDAY && fxtStartTime==fxtMidnight)) {
+         srvStartTime -= 1*DAY;
+         fxtStartTime -= 1*DAY;
+         dow = TimeDayOfWeekEx(fxtStartTime);
       }
-      sessionbreak.starttime = FxtToServerTime(fxtTime);
+      sessionbreak.starttime = srvStartTime;
 
-      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradeSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(srvNow >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
-   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
+   return(srvNow >= sessionbreak.starttime);                      // here sessionbreak.endtime is always in the future
 }
 
 
