@@ -22,12 +22,6 @@
  *
  *
  * TODO:
- *  - IsStartSignal() / IsStopSignal(), see stash "28.03.2022 check start/stop times"
- *     daily startTime: absolut = Mon, 03:00
- *     daily stopTime:  absolut = Mon, 22:00
- *     EA in STATUS_WAITING stops due to an error and is re-activated at Tue, 10:00
- *     stop-time condition is immediately triggered and next start-time is set to Wed, 03:00 => instead it must not stop
- *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
  *     StartVirtualSequence()
@@ -296,19 +290,17 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   int startSignal, stopSignal, zigzagSignal;
-
    if (sequence.status != STATUS_STOPPED) {
-      IsZigZagSignal(zigzagSignal);                      // must be checked on every tick to not miss signals
+      int signal, zzSignal;
+      IsZigZagSignal(zzSignal);                                   // check ZigZag on every tick (not a BarOpen event)
 
       if (sequence.status == STATUS_WAITING) {
-         if      (IsStopSignal(stopSignal))   StopSequence(stopSignal);
-         else if (IsStartSignal(startSignal)) StartSequence(startSignal);
+         if (IsStartSignal(signal)) StartSequence(signal);
       }
       else if (sequence.status == STATUS_PROGRESSING) {
          if (UpdateStatus()) {
-            if (IsStopSignal(stopSignal))  StopSequence(stopSignal);
-            else if (zigzagSignal != NULL) ReverseSequence(zigzagSignal);
+            if (IsStopSignal(signal))  StopSequence(signal);
+            else if (zzSignal != NULL) ReverseSequence(zzSignal);
          }
       }
       RecordMetrics();
@@ -405,6 +397,143 @@ double GetZigZagChannel(int bar, int mode) {
 
 
 /**
+ * Whether the current time is outside of the specified trading time range. At weekends always true.
+ *
+ * @param  _In_    int      tradingFrom   - daily trading start time offset in seconds
+ * @param  _In_    int      tradingTo     - daily trading stop time offset in seconds
+ * @param  _InOut_ datetime prevStopTime  - last stop time preceeding 'nextStartTime'
+ * @param  _InOut_ datetime nextStartTime - next start time (after return always in the future)
+ *
+ * @return bool
+ */
+bool IsTradingBreak(int tradingFrom, int tradingTo, datetime &prevStopTime, datetime &nextStartTime) {
+   datetime srvNow = TimeServer();
+
+   // check whether to recalculate start/stop times
+   if (srvNow >= nextStartTime) {
+      int startOffset = tradingFrom % DAYS;
+      int stopOffset  = tradingTo % DAYS;
+
+      // calculate today's theoretical start time in SRV and FXT
+      datetime srvMidnight  = srvNow - srvNow % DAYS;                // today's Midnight in SRV
+      datetime srvStartTime = srvMidnight + startOffset;             // today's theoretical start time in SRV
+      datetime fxtNow       = ServerToFxtTime(srvNow);
+      datetime fxtMidnight  = fxtNow - fxtNow % DAYS;                // today's Midnight in FXT
+      datetime fxtStartTime = fxtMidnight + startOffset;             // today's theoretical start time in FXT
+
+      // determine the next real start time in SRV
+      int dow = TimeDayOfWeekEx(fxtStartTime);
+      while (srvStartTime <= srvNow || dow==SATURDAY || dow==SUNDAY) {
+         srvStartTime += 1*DAY;
+         fxtStartTime += 1*DAY;
+         dow = TimeDayOfWeekEx(fxtStartTime);
+      }
+      nextStartTime = srvStartTime;
+
+      // determine the preceeding stop time
+      srvMidnight          = srvStartTime - srvStartTime % DAYS;     // the start day's Midnight in SRV
+      datetime srvStopTime = srvMidnight + stopOffset;               // the start day's theoretical stop time in SRV
+      fxtMidnight          = fxtStartTime - fxtStartTime % DAYS;     // the start day's Midnight in FXT
+      datetime fxtStopTime = fxtMidnight + stopOffset;               // the start day's theoretical stop time in FXT
+
+      dow = TimeDayOfWeekEx(fxtStopTime);
+      while (srvStopTime > srvStartTime || dow==SATURDAY || dow==SUNDAY || (dow==MONDAY && fxtStopTime==fxtMidnight)) {
+         srvStopTime -= 1*DAY;
+         fxtStopTime -= 1*DAY;
+         dow = TimeDayOfWeekEx(fxtStopTime);
+      }
+      prevStopTime = srvStopTime;
+
+      if (IsLogDebug()) logDebug("IsTradingBreak(1)  "+ sequence.name +" recalculated "+ ifString(srvNow >= prevStopTime, "current", "next") +" stop of \""+ TimeToStr(startOffset, TIME_MINUTES) +"-"+ TimeToStr(stopOffset, TIME_MINUTES) +"\" as "+ GmtTimeFormat(prevStopTime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(nextStartTime, "%a, %Y.%m.%d %H:%M:%S"));
+   }
+
+   // perform the actual check
+   return(srvNow >= prevStopTime);                                   // here nextStartTime is always in the future
+}
+
+
+datetime tradeSession.startOffset = D'1970.01.01 00:04:00';
+datetime tradeSession.stopOffset  = D'1970.01.01 23:56:00';
+datetime tradeSession.startTime;
+datetime tradeSession.stopTime;
+
+
+/**
+ * Whether the current time is outside of the broker's trade session.
+ *
+ * @return bool
+ */
+bool IsTradeSessionBreak() {
+   return(IsTradingBreak(tradeSession.startOffset, tradeSession.stopOffset, tradeSession.stopTime, tradeSession.startTime));
+}
+
+
+datetime strategy.startTime;
+datetime strategy.stopTime;
+
+
+/**
+ * Whether the current time is outside of the strategy's trading times.
+ *
+ * @return bool
+ */
+bool IsStrategyBreak() {
+   return(IsTradingBreak(start.time.value, stop.time.value, strategy.stopTime, strategy.startTime));
+}
+
+
+// start/stop time variants:
+// +------+----------+----------+---------------------------------------------+----------------------+--------------------------------------------------+
+// | case | startime | stoptime | behavior                                    | validation           | adjustment                                       |
+// +------+----------+----------+---------------------------------------------+----------------------+--------------------------------------------------+
+// |  1   | -        | -        | immediate start, never stop                 |                      |                                                  |
+// |  2   | fix      | -        | defined start, never stop                   |                      | after start disable starttime condition          |
+// |  3   | -        | fix      | immediate start, defined stop               |                      | after stop disable stoptime condition            |
+// |  4   | fix      | fix      | defined start, defined stop                 | starttime < stoptime | after start/stop disable corresponding condition |
+// +------+----------+----------+---------------------------------------------+----------------------+--------------------------------------------------+
+// |  5   | daily    | -        | next start, never stop                      |                      | after start disable starttime condition          |
+// |  6   | -        | daily    | immediate start, next stop after start      |                      |                                                  |
+// |  7   | daily    | daily    | immediate|next start, next stop after start |                      |                                                  |
+// +------+----------+----------+---------------------------------------------+----------------------+--------------------------------------------------+
+// |  8   | fix      | daily    | defined start, next stop after start        |                      | after start disable starttime condition          |
+// |  9   | daily    | fix      | next start if before stop, defined stop     |                      | after stop disable stoptime condition            |
+// +------+----------+----------+---------------------------------------------+----------------------+--------------------------------------------------+
+
+
+/**
+ * Whether the expert is able and allowed to trade at the current time.
+ *
+ * @return bool
+ */
+bool IsTradingTime() {
+   if (IsTradeSessionBreak()) return(false);
+
+   if (!start.time.condition && !stop.time.condition) {     // case 1
+      return(!catch("IsTradingTime(1)  start.time=(empty) + stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   else if (!stop.time.condition) {                         // case 2 or 5
+      return(!catch("IsTradingTime(2)  stop.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   else if (!start.time.condition) {                        // case 3 or 6
+      return(!catch("IsTradingTime(3)  start.time=(empty) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   else if (!start.time.isDaily && !stop.time.isDaily) {    // case 4
+      return(!catch("IsTradingTime(4)  start.time=(fix) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   else if (start.time.isDaily && stop.time.isDaily) {      // case 7
+      if (IsStrategyBreak()) return(false);
+   }
+   else if (stop.time.isDaily) {                            // case 8
+      return(!catch("IsTradingTime(5)  start.time=(fix) + stop.time=(daily) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   else {                                                   // case 9
+      return(!catch("IsTradingTime(6)  start.time=(daily) + stop.time=(fix) not implemented", ERR_NOT_IMPLEMENTED));
+   }
+   return(true);
+}
+
+
+/**
  * Whether a start condition is satisfied for a sequence.
  *
  * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
@@ -416,20 +545,71 @@ bool IsStartSignal(int &signal) {
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
    // start.time: -----------------------------------------------------------------------------------------------------------
-   if (start.time.condition) {
-      datetime now = TimeServer();
-      if (start.time.isDaily) /*&&*/ if (start.time.value < 1*DAY) {    // convert a relative start time to an absolute one
-         start.time.value += (now - (now % DAY));                       // relative + Midnight (possibly in the past)
-         if (IsLogDebug()) logDebug("IsStartSignal(1)  "+ sequence.name +" moving start time to "+ GmtTimeFormat(start.time.value, "%a, %Y.%m.%d %H:%M:%S"));
-         SaveStatus();
-      }
-      if (now < start.time.value) return(false);
+   if (!IsTradingTime()) {
+      return(false);
    }
 
    // ZigZag signal: --------------------------------------------------------------------------------------------------------
    if (IsZigZagSignal(signal)) {
-      if (IsLogNotice()) logNotice("IsStartSignal(2)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+      bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
+      int loglevel = ifInt(sequenceWasStarted, LOG_INFO, LOG_NOTICE);
+      log("IsStartSignal(2)  "+ sequence.name +" ZigZag "+ ifString(signal==SIGNAL_LONG, "long", "short") +" reversal (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")", NULL, loglevel);
       return(true);
+   }
+   return(false);
+}
+
+
+/**
+ * Whether a stop condition is satisfied for a sequence.
+ *
+ * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
+ *
+ * @return bool
+ */
+bool IsStopSignal(int &signal) {
+   signal = NULL;
+   if (last_error || (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING)) return(false);
+
+   if (sequence.status == STATUS_PROGRESSING) {
+      // stop.profitAbs: ----------------------------------------------------------------------------------------------------
+      if (stop.profitAbs.condition) {
+         if (sequence.totalNetProfitM >= stop.profitAbs.value) {
+            signal = SIGNAL_TAKEPROFIT;
+            if (IsLogNotice()) logNotice("IsStopSignal(1)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            return(true);
+         }
+      }
+
+      // stop.profitPct: ----------------------------------------------------------------------------------------------------
+      if (stop.profitPct.condition) {
+         if (stop.profitPct.absValue == INT_MAX)
+            stop.profitPct.absValue = stop.profitPct.AbsValue();
+
+         if (sequence.totalNetProfitM >= stop.profitPct.absValue) {
+            signal = SIGNAL_TAKEPROFIT;
+            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            return(true);
+         }
+      }
+
+      // stop.profitQu: -----------------------------------------------------------------------------------------------------
+      if (stop.profitQu.condition) {
+         if (sequence.totalNetProfitU >= stop.profitQu.value) {
+            signal = SIGNAL_TAKEPROFIT;
+            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitQu.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+            return(true);
+         }
+      }
+   }
+
+   // stop.time: ------------------------------------------------------------------------------------------------------------
+   if (stop.time.condition) {
+      if (!IsTradingTime()) {
+         signal = SIGNAL_TIME;
+         if (IsLogInfo()) logInfo("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.time.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
+         return(true);
+      }
    }
    return(false);
 }
@@ -505,15 +685,11 @@ bool StartSequence(int signal) {
    SS.TotalPL();
    SS.PLStats();
 
-   // update start/stop conditions
-   start.time.condition = false;
-   stop.time.condition = stop.time.isDaily;
-   if (stop.time.isDaily) {
-      datetime now = TimeServer();                          // convert a periodic stop time to the next absolute time in
-      stop.time.value %= DAYS;                              // the future
-      stop.time.value += (now - (now % DAY));               // relative + Midnight (possibly in the past)
-      if (stop.time.value < now) stop.time.value += 1*DAY;
-      if (IsLogDebug()) logDebug("StartSequence(4)  "+ sequence.name +" moving stop time to "+ GmtTimeFormat(stop.time.value, "%a, %Y.%m.%d %H:%M:%S"));
+   // update start conditions
+   if (start.time.condition) {
+      if (!start.time.isDaily || !stop.time.condition) {                                     // see start/stop time variants
+         start.time.condition = false;
+      }
    }
    SS.StartStopConditions();
 
@@ -746,66 +922,6 @@ double CalculateStopLoss(int direction) {
 
 
 /**
- * Whether a stop condition is satisfied for a sequence.
- *
- * @param  _Out_ int &signal - variable receiving the identifier of a satisfied condition
- *
- * @return bool
- */
-bool IsStopSignal(int &signal) {
-   signal = NULL;
-   if (last_error || (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING)) return(false);
-
-   // stop.time: satisfied at/after the specified time ----------------------------------------------------------------------
-   if (stop.time.condition) {
-      datetime now = TimeServer();
-      if (stop.time.isDaily && stop.time.value < 1*DAY) {         // convert a relative stop time to an absolute time
-         stop.time.value += (now - (now % DAY));                  // relative + Midnight (possibly in the past)
-         if (IsLogDebug()) logDebug("IsStopSignal(1)  "+ sequence.name +" moving stop time to "+ GmtTimeFormat(stop.time.value, "%a, %Y.%m.%d %H:%M:%S"));
-         SaveStatus();
-      }
-      if (now >= stop.time.value) {
-         signal = SIGNAL_TIME;
-         return(true);
-      }
-   }
-
-   if (sequence.status == STATUS_PROGRESSING) {
-      // stop.profitAbs: ----------------------------------------------------------------------------------------------------
-      if (stop.profitAbs.condition) {
-         if (sequence.totalNetProfitM >= stop.profitAbs.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(2)  "+ sequence.name +" stop condition \"@"+ stop.profitAbs.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            signal = SIGNAL_TAKEPROFIT;
-            return(true);
-         }
-      }
-
-      // stop.profitPct: ----------------------------------------------------------------------------------------------------
-      if (stop.profitPct.condition) {
-         if (stop.profitPct.absValue == INT_MAX)
-            stop.profitPct.absValue = stop.profitPct.AbsValue();
-
-         if (sequence.totalNetProfitM >= stop.profitPct.absValue) {
-            if (IsLogNotice()) logNotice("IsStopSignal(3)  "+ sequence.name +" stop condition \"@"+ stop.profitPct.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            signal = SIGNAL_TAKEPROFIT;
-            return(true);
-         }
-      }
-
-      // stop.profitQu: -----------------------------------------------------------------------------------------------------
-      if (stop.profitQu.condition) {
-         if (sequence.totalNetProfitU >= stop.profitQu.value) {
-            if (IsLogNotice()) logNotice("IsStopSignal(4)  "+ sequence.name +" stop condition \"@"+ stop.profitQu.description +"\" satisfied (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
-            signal = SIGNAL_TAKEPROFIT;
-            return(true);
-         }
-      }
-   }
-   return(false);
-}
-
-
-/**
  * Return the absolute value of a percentage type TakeProfit condition.
  *
  * @return double - absolute value or INT_MAX if no percentage TakeProfit was configured
@@ -823,9 +939,9 @@ double stop.profitPct.AbsValue() {
 
 
 /**
- * Stop a waiting or progressing sequence. Close open positions (if any).
+ * Stop a waiting progressing sequence and close open positions (if any).
  *
- * @param  int signal - signal which triggered the stop condition or NULL on explicit (i.e. manual) stop
+ * @param  int signal - signal which triggered the stop condition or NULL on explicit stop (i.e. manual)
  *
  * @return bool - success status
  */
@@ -835,7 +951,7 @@ bool StopSequence(int signal) {
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                                // a progressing sequence may have an open position to close
+      if (open.ticket > 0) {                                // close open positions
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
          double bid = Bid, ask = Ask;
@@ -854,20 +970,10 @@ bool StopSequence(int signal) {
    // update stop conditions and status
    switch (signal) {
       case SIGNAL_TIME:
-         start.time.condition = start.time.isDaily;
-         if (start.time.isDaily) {
-            datetime now = TimeServer();
-            start.time.value %= DAYS;                       // move a periodic start time to the next trade time in the future
-            start.time.value += (now - (now % DAY));        // relative time + Midnight (possibly in the past)
-            int dow = TimeDayOfWeekEx(start.time.value);
-            while (start.time.value <= now || dow==SATURDAY || dow==SUNDAY) {
-               start.time.value += 1*DAY;
-               dow = TimeDayOfWeekEx(start.time.value);
-            }
-            if (IsLogDebug()) logDebug("StopSequence(3)  "+ sequence.name +" moving start time to "+ GmtTimeFormat(start.time.value, "%a, %Y.%m.%d %H:%M:%S"));
+         if (!stop.time.isDaily) {
+            stop.time.condition = false;                    // see start/stop time variants
          }
-         stop.time.condition = false;
-         sequence.status     = ifInt(start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
+         sequence.status = ifInt(start.time.condition && start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
          break;
 
       case SIGNAL_TAKEPROFIT:
@@ -888,7 +994,7 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                       // pause or stop the tester according to the debug configuration
+   if (IsTesting()) {                                       // pause/stop the tester according to the debug configuration
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -2091,12 +2197,10 @@ bool ValidateInputs() {
             int pt[];
             if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
             datetime dtValue = DateTime2(pt, DATE_OF_ERA);
-            start.time.isDaily = !pt[PT_HAS_DATE];
-            if (!start.time.isDaily || (start.time.value % DAY != dtValue % DAY)) {
-               start.time.value = dtValue;               // don't overwrite a daily value having the same relative offset
-            }
-            start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             start.time.condition   = true;
+            start.time.value       = dtValue;
+            start.time.isDaily     = !pt[PT_HAS_DATE];
+            start.time.description = "time("+ TimeToStr(start.time.value, ifInt(start.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
          }
          else                                            return(!onInputError("ValidateInputs(15)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
       }
@@ -2123,14 +2227,15 @@ bool ValidateInputs() {
             if (stop.time.condition)                     return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
             if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
-            stop.time.isDaily = !pt[PT_HAS_DATE];
-            if (!stop.time.isDaily || (stop.time.value % DAY != dtValue % DAY)) {
-               stop.time.value = dtValue;                // don't overwrite a daily value having the same relative offset
-            }
-            stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
             stop.time.condition   = true;
+            stop.time.value       = dtValue;
+            stop.time.isDaily     = !pt[PT_HAS_DATE];
+            stop.time.description = "time("+ TimeToStr(stop.time.value, ifInt(stop.time.isDaily, TIME_MINUTES, TIME_DATE|TIME_MINUTES)) +")";
+            if (start.time.condition && !start.time.isDaily && !stop.time.isDaily) {
+               if (start.time.value >= stop.time.value)  return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid times in Start/StopConditions: "+ start.time.description +" / "+ stop.time.description +" (start time must preceed stop time)"));
+            }
          }
-         else                                            return(!onInputError("ValidateInputs(22)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+         else                                            return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
       }
    }
 
@@ -2149,10 +2254,10 @@ bool ValidateInputs() {
    else if (sValue == "qc")                          stop.profitQu.type = TP_TYPE_QUOTEUNIT;
    else if (StrStartsWith("index-points",   sValue)) stop.profitQu.type = TP_TYPE_INDEXPOINT;
    else if (sValue == "ip")                          stop.profitQu.type = TP_TYPE_INDEXPOINT;
-   else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(23)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    else if (StrStartsWith("percent",        sValue)) stop.profitQu.type = TP_TYPE_PERCENT;
    else if (StrStartsWith("pip",            sValue)) stop.profitQu.type = TP_TYPE_PIP;
-   else                                                  return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
+   else                                                  return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
    stop.profitPct.condition   = false;
@@ -2198,10 +2303,10 @@ bool ValidateInputs() {
    // EA.Recorder
    int metrics;
    if (!init_RecorderValidateInput(metrics))             return(false);
-   if (recordCustom && metrics > 8)                      return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   if (recordCustom && metrics > 8)                      return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
 
    SS.All();
-   return(!catch("ValidateInputs(26)"));
+   return(!catch("ValidateInputs(27)"));
 }
 
 
@@ -2405,7 +2510,7 @@ void SS.StartStopConditions() {
       // start conditions
       string sValue = "";
       if (start.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition || start.time.isDaily, "@", "!") + start.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(start.time.condition, "@", "!") + start.time.description;
       }
       if (sValue == "") sStartConditions = "-";
       else              sStartConditions = sValue;
@@ -2413,7 +2518,7 @@ void SS.StartStopConditions() {
       // stop conditions
       sValue = "";
       if (stop.time.description != "") {
-         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition || stop.time.isDaily, "@", "!") + stop.time.description;
+         sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.time.condition, "@", "!") + stop.time.description;
       }
       if (stop.profitAbs.description != "") {
          sValue = sValue + ifString(sValue=="", "", " | ") + ifString(stop.profitAbs.condition, "@", "!") + stop.profitAbs.description;
