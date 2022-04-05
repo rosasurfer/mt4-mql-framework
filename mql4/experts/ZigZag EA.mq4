@@ -23,18 +23,17 @@
  *
  * TODO:
  *  - visualization
- *     configurable base value: id=1000
  *     shift DAX
- *     rename groups/instruments
+ *     rename groups/instruments/history descriptions
  *
  *  - performance tracking
- *    - longterm stabilization
- *       notifications for price feed outages
  *    - recording
  *       configurable quote unit multiplier
  *       CLI tools to shift or scale histories (normalization)
  *       daily variants of metrics
  *       move custom metric validation to EA
+ *    - longterm stabilization
+ *       notifications for price feed outages
  *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
@@ -47,7 +46,7 @@
  *     start/stop sequence with signal pickup
  *     reverse trading
  *     support multiple units and targets (add new metrics)
- *     pickup another sequence: copy-123, mirror-456
+ *     pickup of another sequence: copy-123, mirror-456
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -1244,7 +1243,7 @@ int CreateSequenceId() {
  * @param  _Out_ string symbolDescr  - timeseries description
  * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
  * @param  _Out_ int    symbolDigits - timeseries digits
- * @param  _Out_ double baseValue    - timeseries base value
+ * @param  _Out_ double baseValue    - timeseries base value (if zero recorder defaults are used)
  * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
  * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
  *
@@ -1255,11 +1254,14 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
    string ids[];
-   Explode(EA.Recorder, ",", ids, NULL);
+   int size = Explode(EA.Recorder, ",", ids, NULL);
+   for (int n=0; n < size; n++) {
+      ids[n] = ""+ StrToInteger(ids[n]);                                      // cut-off a specified base value
+   }
 
    enabled      = StringInArray(ids, ""+ (i+1));
    symbolGroup  = "";
-   baseValue    = 1000.0;
+   baseValue    = NULL;
    hstDirectory = "";
    hstFormat    = NULL;
 
