@@ -22,6 +22,20 @@
  *
  *
  * TODO:
+ *  - visualization
+ *     configurable base value: id=1000
+ *     shift DAX
+ *     rename groups/instruments
+ *
+ *  - performance tracking
+ *    - longterm stabilization
+ *       notifications for price feed outages
+ *    - recording
+ *       configurable quote unit multiplier
+ *       CLI tools to shift or scale histories (normalization)
+ *       daily variants of metrics
+ *       move custom metric validation to EA
+ *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
  *     update sequence.name
  *     StartVirtualSequence()
@@ -34,15 +48,6 @@
  *     reverse trading
  *     support multiple units and targets (add new metrics)
  *     pickup another sequence: copy-123, mirror-456
- *
- *  - performance tracking
- *    - longterm stabilization
- *       notifications for price feed outages
- *    - recording
- *       configurable quote unit multiplier
- *       CLI tools to shift or scale histories (normalization)
- *       daily variants of total metrics
- *    - move custom "EA.Recorder" validation to EA
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -73,10 +78,6 @@
  *       synchronize-after (default: yes; if no: wait for the next signal)
  *    - better parsing of struct SYMBOL
  *    - config support for session and trade breaks at specific day times
- *
- *  - During terminal shutdown global string vars may already be destroyed. What about string arrays?
- *     terminal 1: INFO   XTIUSD,M1  ZigZag EA::onDeinitClose(1)  Z.649 terminal shutdown in status "progressing", profit:..                             <- that's two empty spaces
- *     terminal 2: INFO   US30,M1    ZigZag EA::onDeinitClose(1)  Z.712 terminal shutdown in status "progressing", profit: -322.48 (+25.41/-641.56)
  *
  *  - on exceeding the max. open file limit of the terminal (512)
  *     FATAL  GBPJPY,M5  ZigZag::rsfHistory1::HistoryFile1.Open(12)->FileOpen("history/XTrade-Live/zGBPJP_581C30.hst", FILE_READ|FILE_WRITE) => -1 (zGBPJP_581C,M30)  [ERR_CANNOT_OPEN_FILE]
@@ -1253,10 +1254,10 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
-   string sIds[];
-   Explode(EA.Recorder, ",", sIds, NULL);
+   string ids[];
+   Explode(EA.Recorder, ",", ids, NULL);
 
-   enabled      = StringInArray(sIds, ""+ (i+1));
+   enabled      = StringInArray(ids, ""+ (i+1));
    symbolGroup  = "";
    baseValue    = 1000.0;
    hstDirectory = "";
@@ -1267,50 +1268,50 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       case METRIC_TOTAL_UNITS_ZERO:             // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, no spread";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD in pip, no spread"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, zero spread";
+         return(true);                                                        // "ZigZag(40,H1) 1 EURUSD in pip, zero spread"
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, gross";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, gross";
          return(true);
 
       case METRIC_TOTAL_UNITS_NET:              // OK
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in pip, net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, net";
          return(true);
 
       case METRIC_TOTAL_MONEY_NET:              // OK
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in "+ AccountCurrency() +", net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
          return(true);
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, no spread";
-         return(true);                                                        // "ZigZag(40,H1) 3 x EURUSD daily pip, no spread"
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, zero spread";
+         return(true);                                                        // "ZigZag(40,H1) 3 EURUSD daily pip, zero spread"
 
       case METRIC_DAILY_UNITS_GROSS:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, gross";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, gross";
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbolDigits = 1;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" daily pip, net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, net";
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
          symbolDigits = 2;
          symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 x "+ Symbol() +" in daily "+ AccountCurrency() +", net";
+         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ AccountCurrency() +", net";
          return(true);
    }
    return(false);
