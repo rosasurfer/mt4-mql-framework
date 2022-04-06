@@ -6,7 +6,6 @@
  * -----------------
  * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metrics separated by comma. For metric syntax
  *                descriptions see "mql4/include/core/expert.mqh".
- *
  *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
@@ -25,8 +24,14 @@
  *
  * TODO:
  *  - visualization
- *     shift DAX
  *     rename groups/instruments/history descriptions
+ *
+ *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
+ *     update sequence.name
+ *     StartVirtualSequence()
+ *     ReverseVirtualSequence()
+ *     StopVirtualSequence()
+ *     UpdateVirtualStatus()
  *
  *  - performance tracking
  *    - recording
@@ -36,13 +41,6 @@
  *       move custom metric validation to EA
  *    - longterm stabilization
  *       notifications for price feed outages
- *
- *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
- *     update sequence.name
- *     StartVirtualSequence()
- *     ReverseVirtualSequence()
- *     StopVirtualSequence()
- *     UpdateVirtualStatus()
  *
  *  - trading functionality
  *     start/stop sequence with signal pickup
@@ -1138,7 +1136,7 @@ bool IsClosedBySL(double stoploss) {
 
 
 /**
- * Error handler for unexpected closing of the current position.
+ * Error handler for an unexpected close of the current position.
  *
  * @param  string message - error message
  * @param  int    error   - error code
@@ -1146,16 +1144,16 @@ bool IsClosedBySL(double stoploss) {
  * @return int - error status, i.e. whether to interrupt program execution
  */
 int onPositionClose(string message, int error) {
-   if (!error) return(logInfo(message));              // no error
+   if (!error) return(logInfo(message));                    // no error
 
-   if (error == ERR_ORDER_CHANGED)                    // expected in a fast market: a SL was triggered
-      return(!logNotice(message, error));             // continue
+   if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
+      return(!logNotice(message, error));                   // continue
 
-   if (IsTesting()) return(catch(message, error));    // tester: treat everything else as terminating
+   if (IsTesting()) return(catch(message, error));          // tester: treat everything else as terminating
 
-   logWarn(message, error);                           // online
-   if (error == ERR_CONCURRENT_MODIFICATION)          // unexpected: most probably manually closed
-      return(NO_ERROR);                               // continue
+   logWarn(message, error);                                 // online
+   if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
+      return(NO_ERROR);                                     // continue
    return(error);
 }
 
