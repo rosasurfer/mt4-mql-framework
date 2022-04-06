@@ -5454,25 +5454,27 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    if (This.IsTesting() && IsStopped())
       oeFlags |= F_ERS_EXECUTION_STOPPING;
 
-   // filter the flagged errors and only log them
-   if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(logInfo(message, error));
-   if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(logInfo(message, error));
-   if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_PARAMETER        && oeFlags & F_ERR_INVALID_PARAMETER       ) return(logInfo(message, error));
-   if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(logInfo(message, error));
-   if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(logInfo(message, error));
-   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(logWarn(message, error));   // LOG_WARN
-   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(logWarn(message, error));   // LOG_WARN
-   if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(logInfo(message, error));
-   if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(logInfo(message, error));
-   if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(logInfo(message, error));
-   if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(logInfo(message, error));
-   if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(logInfo(message, error));
-   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(logWarn(message, error));   // LOG_WARN
-   if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(logInfo(message, error));
-   if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(logInfo(message, error));
-   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(logWarn(message, error));   // LOG_WARN
+   // filter the flagged errors and log them accordingly
+   int loglevel = ifInt(oeFlags & F_LOG_NOTICE, LOG_NOTICE, LOG_INFO);
+
+   if (error==ERR_CONCURRENT_MODIFICATION  && oeFlags & F_ERR_CONCURRENT_MODIFICATION ) return(log(message, error, loglevel));
+   if (error==ERS_EXECUTION_STOPPING       && oeFlags & F_ERS_EXECUTION_STOPPING      ) return(log(message, error, loglevel));
+   if (error==ERS_HISTORY_UPDATE           && oeFlags & F_ERS_HISTORY_UPDATE          ) return(log(message, error, loglevel));
+   if (error==ERR_INVALID_PARAMETER        && oeFlags & F_ERR_INVALID_PARAMETER       ) return(log(message, error, loglevel));
+   if (error==ERR_INVALID_STOP             && oeFlags & F_ERR_INVALID_STOP            ) return(log(message, error, loglevel));
+   if (error==ERR_INVALID_TICKET           && oeFlags & F_ERR_INVALID_TICKET          ) return(log(message, error, loglevel));
+   if (error==ERR_INVALID_TRADE_PARAMETERS && oeFlags & F_ERR_INVALID_TRADE_PARAMETERS) return(log(message, error, loglevel));
+   if (error==ERR_MARKET_CLOSED            && oeFlags & F_ERR_MARKET_CLOSED           ) return(log(message, error, Max(loglevel, LOG_WARN)));
+   if (error==ERR_NO_CONNECTION            && oeFlags & F_ERR_NO_CONNECTION           ) return(log(message, error, Max(loglevel, LOG_WARN)));
+   if (error==ERR_NO_RESULT                && oeFlags & F_ERR_NO_RESULT               ) return(log(message, error, loglevel));
+   if (error==ERR_OFF_QUOTES               && oeFlags & F_ERR_OFF_QUOTES              ) return(log(message, error, loglevel));
+   if (error==ERR_ORDER_CHANGED            && oeFlags & F_ERR_ORDER_CHANGED           ) return(log(message, error, loglevel));
+   if (error==ERR_SERIES_NOT_AVAILABLE     && oeFlags & F_ERR_SERIES_NOT_AVAILABLE    ) return(log(message, error, loglevel));
+   if (error==ERS_TERMINAL_NOT_YET_READY   && oeFlags & F_ERS_TERMINAL_NOT_YET_READY  ) return(log(message, error, loglevel));
+   if (error==ERR_TRADE_DISABLED           && oeFlags & F_ERR_TRADE_DISABLED          ) return(log(message, error, Max(loglevel, LOG_WARN)));
+   if (error==ERR_TRADE_MODIFY_DENIED      && oeFlags & F_ERR_TRADE_MODIFY_DENIED     ) return(log(message, error, loglevel));
+   if (error==ERR_STOP_DISTANCE_VIOLATED   && oeFlags & F_ERR_STOP_DISTANCE_VIOLATED  ) return(log(message, error, loglevel));
+   if (error==ERR_TRADESERVER_GONE         && oeFlags & F_ERR_TRADESERVER_GONE        ) return(log(message, error, Max(loglevel, LOG_WARN)));
 
    // trigger a fatal error for everything else
    return(catch(message, error));
