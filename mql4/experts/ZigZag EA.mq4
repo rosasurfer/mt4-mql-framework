@@ -4,7 +4,9 @@
  *
  * Input parameters:
  * -----------------
- * • EA.Recorder:  Recorded metrics, one of "on", "off" or a combination of custom metric identifiers separated by comma.
+ * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metrics separated by comma. For metric syntax
+ *                descriptions see "mql4/include/core/expert.mqh".
+ *
  *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
