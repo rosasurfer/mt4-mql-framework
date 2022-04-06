@@ -27,7 +27,7 @@ string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal;
 bool   recordCustom;
 
-double recorder.defaultBaseValue = 1000.0;
+double recorder.defaultBaseValue = 5000.0;
 bool   recorder.initialized      = false;
 bool   recorder.enabled     [];              // whether a metric is enabled
 string recorder.symbol      [];
