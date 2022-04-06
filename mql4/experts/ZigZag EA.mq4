@@ -1492,12 +1492,12 @@ bool SaveStatus() {
 
    // start/stop conditions
    WriteIniString(file, section, "start.time.condition",        /*bool    */ start.time.condition);
-   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value + ifString(start.time.value, GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "start.time.value",            /*datetime*/ start.time.value + ifString(start.time.value, ifString(start.time.isDaily, " ("+ TimeToStr(start.time.value, TIME_MINUTES) +")", GmtTimeFormat(start.time.value, " (%a, %Y.%m.%d %H:%M:%S)")), ""));
    WriteIniString(file, section, "start.time.isDaily",          /*bool    */ start.time.isDaily);
    WriteIniString(file, section, "start.time.description",      /*string  */ start.time.description + CRLF);
 
    WriteIniString(file, section, "stop.time.condition",         /*bool    */ stop.time.condition);
-   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value + ifString(stop.time.value, GmtTimeFormat(stop.time.value, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "stop.time.value",             /*datetime*/ stop.time.value + ifString(stop.time.value, ifString(stop.time.isDaily, " ("+ TimeToStr(stop.time.value, TIME_MINUTES) +")", GmtTimeFormat(stop.time.value, " (%a, %Y.%m.%d %H:%M:%S)")), ""));
    WriteIniString(file, section, "stop.time.isDaily",           /*bool    */ stop.time.isDaily);
    WriteIniString(file, section, "stop.time.description",       /*string  */ stop.time.description + CRLF);
 
