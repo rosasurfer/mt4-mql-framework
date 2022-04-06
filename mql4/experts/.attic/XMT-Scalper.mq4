@@ -275,7 +275,7 @@ int onTick() {
    if (ChannelBug) GetIndicatorValues(dNull, dNull, dNull);       // if the channel bug is enabled indicators must be tracked every tick
    if (__isChart)  CalculateSpreads();                            // for the visible spread status display
 
-   sessionbreak.active = IsSessionBreak();
+   sessionbreak.active = IsTradeSessionBreak();
 
    if (tradingMode == TRADINGMODE_REGULAR) onTick.RegularTrading();
    else                                    onTick.VirtualTrading();
@@ -448,6 +448,8 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
+   SetLogfile(GetLogFilename());                            // open the logfile (flushes the buffer)
+
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
    else                     { minBarSize = MinBarSize*Pip; sMinBarSize = DoubleToStr(MinBarSize, 1) +" pip"; }
@@ -458,8 +460,7 @@ int afterInit() {
    orderMagicNumber = CalculateMagicNumber();
    SS.All();
 
-   if (!SetLogfile(GetLogFilename())) return(last_error);
-   if (!InitMetrics())                return(last_error);
+   if (!InitMetrics()) return(last_error);
 
    if (IsTesting()) {                                       // read test configuration
       string section = ProgramName() +".Tester";
@@ -988,7 +989,7 @@ bool IsEntrySignal(int &signal) {
  *
  * @return bool
  */
-bool IsSessionBreak() {
+bool IsTradeSessionBreak() {
    if (last_error != NO_ERROR) return(false);
 
    datetime serverTime = TimeServer();
@@ -1025,7 +1026,7 @@ bool IsSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradeSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
@@ -2560,8 +2561,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "MaxSlippage",               DoubleToStr(MaxSlippage, 1));
    WriteIniString(file, section, "StopOnTotalProfit",         DoubleToStr(StopOnTotalProfit, 2));
    WriteIniString(file, section, "StopOnTotalLoss",           DoubleToStr(StopOnTotalLoss, 2));
-   WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime);
-   WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime);
+   WriteIniString(file, section, "Sessionbreak.StartTime",    Sessionbreak.StartTime + ifString(Sessionbreak.StartTime, GmtTimeFormat(Sessionbreak.StartTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "Sessionbreak.EndTime",      Sessionbreak.EndTime   + ifString(Sessionbreak.EndTime,   GmtTimeFormat(Sessionbreak.EndTime,   " (%a, %Y.%m.%d %H:%M:%S)"), ""));
 
    WriteIniString(file, section, "ChannelBug",                ChannelBug);
    WriteIniString(file, section, "TakeProfitBug",             TakeProfitBug);
@@ -3034,8 +3035,8 @@ bool ValidateInputs() {
    // --- OK ----------------------------------------------------------------------------------------------------------------
 
    // apply validated inputs and status variables
-   Sequence.ID              = _Sequence.ID;     sequence.id = _sequence.id;
-   TradingMode              = _TradingMode;     tradingMode = _tradingMode; SS.SequenceName();
+   Sequence.ID              = _Sequence.ID; sequence.id = _sequence.id;
+   TradingMode              = _TradingMode; tradingMode = _tradingMode; SS.SequenceName();
    EntryIndicator           = _EntryIndicator;
    IndicatorTimeframe       = _IndicatorTimeframe;
    IndicatorPeriods         = _IndicatorPeriods;

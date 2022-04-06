@@ -19,9 +19,9 @@ int onInit() {
  */
 int onInitUser() {
    // check for a specified sequence id
-   if (ValidateInputs.SID()) {                                 // on success a sequence id was specified and restored
+   if (ValidateInputs.SID()) {                                 // a valid sequence id was specified and restored
       sequence.status = STATUS_WAITING;
-      RestoreSequence();
+      RestoreSequence();                                       // the sequence was restored
       return(last_error);
    }
    else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
@@ -33,7 +33,7 @@ int onInitUser() {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.cycle   = 1;
-         sequence.created = TimeServer();
+         sequence.created = GetLocalTime();
          sequence.status  = STATUS_WAITING;
          SaveStatus();
 
@@ -103,12 +103,11 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence id from the chart
-   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
-      RestoreSequence();
+   if (RestoreSequenceId()) {                                  // a sequence id was found and restored
+      RestoreSequence();                                       // the sequence was restored
       return(last_error);
    }
-   return(catch("onInitTemplate(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitTemplate(1)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -117,13 +116,12 @@ int onInitTemplate() {
  *
  * @return int - error status
  */
-int onInitRecompile() {                                        // same requirements as for onInitTemplate()
-   // restore sequence id from the chart
-   if (RestoreChartStatus()) {                                 // on success a sequence id was restored
+int onInitRecompile() {
+   if (RestoreSequenceId()) {                                  // same as for onInitTemplate()
       RestoreSequence();
       return(last_error);
    }
-   return(catch("onInitRecompile(1)  could not restore sequence id from chart profile, aborting...", ERR_RUNTIME_ERROR));
+   return(catch("onInitRecompile(1)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -133,9 +131,9 @@ int onInitRecompile() {                                        // same requireme
  * @return int - error status
  */
 int afterInit() {
-   if (!SetLogfile(GetLogFilename())) return(last_error);
+   SetLogfile(GetLogFilename());                               // open the logfile (flushes the buffer)
 
-   string section = ProgramName();
+   string section = StrTrim(ProgramName());
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (IsTesting()) {

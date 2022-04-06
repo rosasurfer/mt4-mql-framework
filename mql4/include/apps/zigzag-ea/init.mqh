@@ -18,22 +18,22 @@ int onInit() {
  * @return int - error status
  */
 int onInitUser() {
-   // check for and validate a specified sequence id
-   if (ValidateInputs.SID()) {
-      RestoreSequence();                                       // a valid sequence id was specified
+   // check for & validate a specified sequence id
+   if (ValidateInputs.SID()) {                     // a sequence id was restored
+      RestoreSequence();                           // the sequence was restored
    }
-   else if (StrTrim(Sequence.ID) == "") {                      // no sequence id was specified
+   else if (StrTrim(Sequence.ID) == "") {          // no sequence id was specified
       if (ValidateInputs()) {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = TimeServer();
+         sequence.created = GetLocalTime();
          sequence.status  = STATUS_WAITING;
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
       }
    }
-   //else {}                                                   // an invalid sequence id was specified
+   //else {}                                       // an invalid sequence id was specified
    return(last_error);
 }
 
@@ -80,13 +80,13 @@ int onInitSymbolChange() {
  * @return int - error status
  */
 int onInitTemplate() {
-   // restore sequence id from the chart
-   if (FindSequenceId()) {                                  // on success a sequence id was restored
-      if (RestoreSequence()) {
+   if (RestoreSequenceId()) {                      // a sequence id was found and restored
+      if (RestoreSequence()) {                     // the sequence was restored
          logInfo("onInitTemplate(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
+      return(last_error);
    }
-   return(last_error);
+   return(catch("onInitTemplate(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -95,14 +95,14 @@ int onInitTemplate() {
  *
  * @return int - error status
  */
-int onInitRecompile() {                                     // same requirements as for onInitTemplate()
-   // restore sequence id from the chart
-   if (FindSequenceId()) {
+int onInitRecompile() {
+   if (RestoreSequenceId()) {                      // same as for onInitTemplate()
       if (RestoreSequence()) {
          logInfo("onInitRecompile(1)  "+ sequence.name +" restored in status \""+ StatusDescription(sequence.status) +"\" from file \""+ GetStatusFilename(true) +"\"");
       }
+      return(last_error);
    }
-   return(last_error);
+   return(catch("onInitRecompile(2)  could not restore sequence id from anywhere, aborting...", ERR_RUNTIME_ERROR));
 }
 
 
@@ -112,17 +112,16 @@ int onInitRecompile() {                                     // same requirements
  * @return int - error status
  */
 int afterInit() {
-   if (IsTesting() || !IsTestSequence()) {
-      bool sequenceWasStarted = (open.ticket || ArrayRange(history, 0));
-      if (sequenceWasStarted) SetLogfile(GetLogFilename());    // don't create the logfile before StartSequence()
+   SetLogfile(GetLogFilename());                   // open the logfile (flushes the buffer)
 
+   if (IsTesting()) {                              // read debug config
       string section = "Tester."+ StrTrim(ProgramName());
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       test.onStopPause         = GetConfigBool(section, "OnStopPause",         true);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
-   StoreSequenceId();                                          // store the sequence id for other templates/restart/recompilation etc.
+   StoreSequenceId();                              // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }
 
