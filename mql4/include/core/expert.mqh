@@ -1,17 +1,16 @@
 
-//////////////////////////////////////////////// Additional Input Parameters ////////////////////////////////////////////////
+//////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | {int},..."; // on=internal, off, {int}=custom metrics
-
-extern datetime Test.StartTime         = 0;                       // time to start a test
-extern double   Test.StartPrice        = 0;                       // price to start a test
-extern bool     Test.ExternalReporting = false;                   // whether to send PositionOpen/Close events to the Expander
+extern string   EA.Recorder            = "on | off* | 1,2,3=1000,...";  // on=std-equity | off | custom-metrics, format: {uint}[={double}]
+                                                                                                                      // {uint}:   metric id (required)
+extern datetime Test.StartTime         = 0;                             // time to start a test                       // {double}: recording base value (optional)
+extern double   Test.StartPrice        = 0;                             // price to start a test
+extern bool     Test.ExternalReporting = false;                         // whether to send PositionOpen/Close events to the Expander
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/JoinInts.mqh>
 
 #define __lpSuperContext NULL
 int     __CoreFunction = NULL;               // currently executed MQL core function: CF_INIT | CF_START | CF_DEINIT
@@ -28,7 +27,8 @@ string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal;
 bool   recordCustom;
 
-bool   recorder.initialized = false;
+double recorder.defaultBaseValue = 5000.0;
+bool   recorder.initialized      = false;
 bool   recorder.enabled     [];              // whether a metric is enabled
 string recorder.symbol      [];
 string recorder.symbolDescr [];
@@ -655,14 +655,14 @@ bool init_Recorder() {
  * @param  string symbolDescr  - symbol description
  * @param  string symbolGroup  - symbol group (if empty recorder defaults are used)
  * @param  int    symbolDigits - digits of the timeseries to record
- * @param  double baseValue    - nominal base value of the timeseries
+ * @param  double baseValue    - nominal base value of the timeseries (if zero recorder defaults are used)
  * @param  string hstDirectory - history directory of the timeseries to record (if empty recorder defaults are used)
  * @param  int    hstFormat    - history format of the timeseries to recorded (if empty recorder defaults are used)
  *
  * @return bool - success status
  */
 bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double baseValue, string hstDirectory, int hstFormat) {
-   enabled = enabled !=0;
+   enabled = enabled!=0;                  // (bool) int
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
    symbolGroup  = init_RecorderSymbolGroup ("init_RecorderAddSymbol(2)", symbolGroup);  if (!StringLen(symbolGroup))  return(false);
@@ -704,7 +704,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    recorder.symbolDescr [i] = symbolDescr;
    recorder.symbolGroup [i] = symbolGroup;
    recorder.symbolDigits[i] = symbolDigits;
-   recorder.baseValue   [i] = baseValue;
+   recorder.baseValue   [i] = doubleOr(baseValue, doubleOr(recorder.baseValue[i], recorder.defaultBaseValue));
    recorder.currValue   [i] = NULL;
    recorder.hstDirectory[i] = hstDirectory;
    recorder.hstFormat   [i] = hstFormat;
@@ -836,7 +836,7 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
 bool init_RecorderValidateInput(int &metrics) {
    bool isInitParameters = (ProgramInitReason()==IR_PARAMETERS);
 
-   string sValues[], sValue = StrToLower(EA.Recorder);
+   string sValues[], sValue = StrToLower(EA.Recorder);   // "on | off* | 1,2,3=1000,..."
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
@@ -858,16 +858,30 @@ bool init_RecorderValidateInput(int &metrics) {
       EA.Recorder    = recordModeDescr[recordMode];
    }
    else {
+      string sValueBak = sValue;
       int ids[]; ArrayResize(ids, 0);
       size = Explode(sValue, ",", sValues, NULL);
 
-      for (int i=0; i < size; i++) {
-         sValue = StrTrim(sValues[i]);
-         if (sValue == "")            continue;
-         if (!StrIsDigit(sValue))     return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be digits)",   ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+      // foreach (sValues as custom-metric)
+      for (int i=0; i < size; i++) {                     // metric syntax: {uint}[={double}]       // {uint}:   metric id (required)
+         sValue = StrTrim(sValues[i]);                                                             // {double}: recording base value (optional)
+         if (sValue == "") continue;
+
          int iValue = StrToInteger(sValue);
-         if (!iValue)                 return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (ids must be positive)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
-         if (IntInArray(ids, iValue)) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate ids)",        ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (iValue <= 0)                    return(_false(log("init_RecorderValidateInput(1)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric ids must be positive digits)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         if (IntInArray(ids, iValue))        return(_false(log("init_RecorderValidateInput(2)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (duplicate metric ids)",               ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+
+         string sid = iValue;
+         sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
+
+         double baseValue = 0;                           // if zero recorder.defaultBaseValue will be used
+         if (sValue != "") {                             // use specified base value instead of the default
+            if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            sValue = StrTrim(StrRight(sValue, -1));
+            if (!StrIsNumeric(sValue))       return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be numeric)",             ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            baseValue = StrToDouble(sValue);
+            if (baseValue <= 0)              return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be positive)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+         }
          ArrayPushInt(ids, iValue);
 
          if (ArraySize(recorder.symbol) < iValue) {
@@ -882,15 +896,16 @@ bool init_RecorderValidateInput(int &metrics) {
             ArrayResize(recorder.hstFormat,    iValue);
             ArrayResize(recorder.hSet,         iValue);
          }
-         recorder.enabled[iValue-1] = true;
+         recorder.enabled  [iValue-1] = true;
+         recorder.baseValue[iValue-1] = baseValue;
       }
-      if (!ArraySize(ids))            return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+      if (!ArraySize(ids))                   return(_false(log("init_RecorderValidateInput(6)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing metric ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
       recordMode     = RECORDING_CUSTOM;
       recordInternal = false;
       recordCustom   = true;
       metrics        = ArraySize(recorder.symbol);
-      EA.Recorder    = JoinInts(ids, ",");
+      EA.Recorder    = StrReplace(sValueBak, " ", "");
    }
    ec_SetRecordMode(__ExecutionContext, recordMode);
 
@@ -943,7 +958,7 @@ bool start_Recorder() {
       if (!recorder.enabled[i]) continue;
 
       if (!recorder.hSet[i]) {
-         // online: prefer to continue existing history
+         // online: prefer to continue an existing history
          if (!IsTesting()) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Get(recorder.symbol[i], recorder.hstDirectory[i]);

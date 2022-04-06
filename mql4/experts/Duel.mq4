@@ -811,7 +811,7 @@ bool IsStartSignal(int &signal) {
    signal = NULL;
    if (last_error || sequence.status!=STATUS_WAITING) return(false);
 
-   if (IsSessionBreak()) {
+   if (IsTradeSessionBreak()) {
       return(false);
    }
 
@@ -943,52 +943,55 @@ double stop.lossPct.AbsValue() {
 
 /**
  * Whether the current server time falls into a sessionbreak. After function return the global vars sessionbreak.starttime
- * and sessionbreak.endtime are up-to-date.
+ * and sessionbreak.endtime are always up-to-date.
  *
  * @return bool
  */
-bool IsSessionBreak() {
-   if (IsLastError()) return(false);
+bool IsTradeSessionBreak() {
+   if (last_error != NULL) return(false);
 
-   datetime serverTime = TimeServer();
+   datetime srvNow = TimeServer();
 
-   // check whether to recalculate sessionbreak times
-   if (serverTime >= sessionbreak.endtime) {
-      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start time in seconds since Midnight
-      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end time in seconds since Midnight
-      if (!startOffset && !endOffset)
-         return(false);                                           // skip session breaks if both values are set to Midnight
+   // check whether to recalculate sessionbreak start/end times
+   if (srvNow >= sessionbreak.endtime) {
+      int startOffset = Sessionbreak.StartTime % DAYS;            // sessionbreak start offset in seconds since Midnight server time
+      int endOffset   = Sessionbreak.EndTime % DAYS;              // sessionbreak end offset in seconds since Midnight server time
 
-      // calculate today's sessionbreak end time
-      datetime fxtNow  = ServerToFxtTime(serverTime);
-      datetime today   = fxtNow - fxtNow%DAYS;                    // today's Midnight in FXT
-      datetime fxtTime = today + endOffset;                       // today's sessionbreak end time in FXT
+      // calculate today's theoretical sessionbreak end time in SRV and FXT
+      datetime srvMidnight = srvNow - srvNow % DAYS;              // today's Midnight in SRV
+      datetime srvEndTime  = srvMidnight + endOffset;             // today's theoretical sessionbreak end time in SRV
+      datetime fxtNow      = ServerToFxtTime(srvNow);
+      datetime fxtMidnight = fxtNow - fxtNow % DAYS;              // today's Midnight in FXT
+      datetime fxtEndTime  = fxtMidnight + endOffset;             // today's theoretical sessionbreak end time in FXT
 
-      // determine the next regular sessionbreak end time
-      int dow = TimeDayOfWeekEx(fxtTime);
-      while (fxtTime <= fxtNow || dow==SATURDAY || dow==SUNDAY) {
-         fxtTime += 1*DAY;
-         dow = TimeDayOfWeekEx(fxtTime);
+      // determine the next real sessionbreak end time in SRV
+      int dow = TimeDayOfWeekEx(fxtEndTime);
+      while (srvEndTime <= srvNow || dow==SATURDAY || dow==SUNDAY) {
+         srvEndTime += 1*DAY;
+         fxtEndTime += 1*DAY;
+         dow = TimeDayOfWeekEx(fxtEndTime);
       }
-      datetime fxtResumeTime = fxtTime;
-      sessionbreak.endtime = FxtToServerTime(fxtResumeTime);
+      sessionbreak.endtime = srvEndTime;
 
-      // determine the corresponding sessionbreak start time
-      datetime resumeDay = fxtResumeTime - fxtResumeTime%DAYS;    // resume day's Midnight in FXT
-      fxtTime = resumeDay + startOffset;                          // resume day's sessionbreak start time in FXT
+      // determine the corresponding (before end) sessionbreak start time
+      srvMidnight           = srvEndTime - srvEndTime % DAYS;     // the resume day's Midnight in SRV
+      datetime srvStartTime = srvMidnight + startOffset;          // the resume day's theoretical sessionbreak start time in SRV
+      fxtMidnight           = fxtEndTime - fxtEndTime % DAYS;     // the resume day's Midnight in FXT
+      datetime fxtStartTime = fxtMidnight + startOffset;          // the resume day's theoretical sessionbreak start time in FXT
 
-      dow = TimeDayOfWeekEx(fxtTime);
-      while (fxtTime >= fxtResumeTime || dow==SATURDAY || dow==SUNDAY) {
-         fxtTime -= 1*DAY;
-         dow = TimeDayOfWeekEx(fxtTime);
+      dow = TimeDayOfWeekEx(fxtStartTime);
+      while (srvStartTime > srvEndTime || dow==SATURDAY || dow==SUNDAY || (dow==MONDAY && fxtStartTime==fxtMidnight)) {
+         srvStartTime -= 1*DAY;
+         fxtStartTime -= 1*DAY;
+         dow = TimeDayOfWeekEx(fxtStartTime);
       }
-      sessionbreak.starttime = FxtToServerTime(fxtTime);
+      sessionbreak.starttime = srvStartTime;
 
-      if (IsLogDebug()) logDebug("IsSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradeSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(srvNow >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
-   return(serverTime >= sessionbreak.starttime);                  // here sessionbreak.endtime is always in the future
+   return(srvNow >= sessionbreak.starttime);                      // here sessionbreak.endtime is always in the future
 }
 
 
@@ -1006,7 +1009,6 @@ bool StartSequence(int signal) {
       MessageBoxEx(ProgramName() +"::StartSequence()", "Cannot start EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
-   SetLogfile(GetLogFilename());                                  // flush the logbuffer
    if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
 
    sequence.status      = STATUS_PROGRESSING;
@@ -1052,7 +1054,6 @@ bool ResumeSequence(int signal) {
       MessageBoxEx(ProgramName() +"::ResumeSequence()", "Cannot resume EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
-   SetLogfile(GetLogFilename());                                  // flush the logbuffer
    if (IsLogInfo()) logInfo("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
 
    double oldGridbase=sequence.gridbase, oldStopPrice=sequence.stopPrice, longOpenPrice, shortOpenPrice;
@@ -1224,7 +1225,7 @@ bool StopSequence(int signal) {
    SS.StopConditions();
    SaveStatus();
 
-   if (IsTesting()) {                                                // pause or stop the tester according to the debug configuration
+   if (IsTesting()) {                                                // pause/stop the tester according to the debug configuration
       if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
       else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
@@ -2840,25 +2841,17 @@ void RestoreInputs() {
 
 
 /**
- * Syntactically validate and restore a specified sequence id (format: /T?[0-9]{4}/). Called only from onInitUser().
+ * Validate and apply the input parameter "Sequence.ID".
  *
- * @return bool - whether input was valid and 'sequence.id'/'sequence.isTest' were restored (the status file is not checked)
+ * @return bool - whether a sequence id was successfully restored (the status file is not checked)
  */
 bool ValidateInputs.SID() {
-   string sValue = StrTrim(Sequence.ID);
-   if (!StringLen(sValue)) return(false);
+   bool errorFlag = true;
 
-   if (StrStartsWith(sValue, "T")) {
-      sequence.isTest = true;
-      sValue = StrTrim(StrSubstr(sValue, 1));
+   if (!ApplySequenceId(Sequence.ID, errorFlag, "ValidateInputs.SID(1)")) {
+      if (errorFlag) onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: \""+ Sequence.ID +"\"");
+      return(false);
    }
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
-   int iValue = StrToInteger(sValue);
-   if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  "+ sequence.name +" invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
-
-   sequence.id = iValue;
-   Sequence.ID = ifString(IsTestSequence(), "T", "") + sequence.id;
-   SS.SequenceName();
    return(true);
 }
 
@@ -3617,8 +3610,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "Martingale.Multiplier",       /*double  */ NumberToStr(Martingale.Multiplier, ".+"));
    WriteIniString(file, section, "StopConditions",              /*string  */ SaveStatus.ConditionsToStr(sStopConditions));    // contains only active conditions
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool    */ ShowProfitInPercent);
-   WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + GmtTimeFormat(Sessionbreak.StartTime, " (%H:%M:%S)"));
-   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime + GmtTimeFormat(Sessionbreak.EndTime, " (%H:%M:%S)"));
+   WriteIniString(file, section, "Sessionbreak.StartTime",      /*datetime*/ Sessionbreak.StartTime + ifString(Sessionbreak.StartTime, GmtTimeFormat(Sessionbreak.StartTime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "Sessionbreak.EndTime",        /*datetime*/ Sessionbreak.EndTime   + ifString(Sessionbreak.EndTime,   GmtTimeFormat(Sessionbreak.EndTime,   " (%a, %Y.%m.%d %H:%M:%S)"), ""));
    WriteIniString(file, section, "EA.Recorder",                 /*string  */ EA.Recorder + separator);                        // conditional section separator
 
    // [Runtime status]
@@ -3717,8 +3710,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "stop.lossPct.absValue",       /*double  */ ifString(stop.lossPct.absValue==INT_MIN, INT_MIN, DoubleToStr(stop.lossPct.absValue, 2)));
    WriteIniString(file, section, "stop.lossPct.description",    /*string  */ stop.lossPct.description + CRLF);
 
-   WriteIniString(file, section, "sessionbreak.starttime",      /*datetime*/ sessionbreak.starttime + GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"));
-   WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime + GmtTimeFormat(sessionbreak.endtime, " (%a, %Y.%m.%d %H:%M:%S)") + CRLF);
+   WriteIniString(file, section, "sessionbreak.starttime",      /*datetime*/ sessionbreak.starttime + ifString(sessionbreak.starttime, GmtTimeFormat(sessionbreak.starttime, " (%a, %Y.%m.%d %H:%M:%S)"), ""));
+   WriteIniString(file, section, "sessionbreak.endtime",        /*datetime*/ sessionbreak.endtime   + ifString(sessionbreak.endtime,   GmtTimeFormat(sessionbreak.endtime,   " (%a, %Y.%m.%d %H:%M:%S)"), "") + CRLF);
 
    return(!catch("SaveStatus(2)"));
 }
@@ -4162,40 +4155,51 @@ bool ReadStatus.ParseOrder(string key, string value) {
 
 
 /**
- * Store the current sequence id in the chart (for new templates, terminal restart, recompilation etc).
+ * Store the current sequence id in the terminal (for template changes, terminal restart, recompilation etc).
  *
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   if (!__isChart) return(false);
-   return(Chart.StoreString(ProgramName() +".Sequence.ID", ifString(sequence.isTest, "T", "") + sequence.id));
+   string name = ProgramName() +".Sequence.ID";
+   string value = ifString(sequence.isTest, "T", "") + sequence.id;
+
+   Sequence.ID = value;                                              // store in input parameter
+
+   if (__isChart) {
+      Chart.StoreString(name, value);                                // store in chart
+      SetWindowStringA(__ExecutionContext[EC.hChart], name, value);  // store in chart window
+   }
+   return(!catch("StoreSequenceId(1)"));
 }
 
 
 /**
- * Find and restore a sequence id found in the chart (for new templates, terminal restart, recompilation etc).
+ * Find and restore a stored sequence id (for template changes, terminal restart, recompilation etc).
  *
- * @return bool - whether a sequence id was found and successfully restored
+ * @return bool - whether a sequence id was successfully restored
  */
-bool FindSequenceId() {
-   string sValue = "";
+bool RestoreSequenceId() {
+   bool isError, muteErrors=false;
 
-   if (Chart.RestoreString(ProgramName() +".Sequence.ID", sValue)) {
-      bool isTest = false;
+   // check input parameter
+   string value = Sequence.ID;
+   if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(1)")) return(true);
+   isError = muteErrors;
+   if (isError) return(false);
 
-      if (StrStartsWith(sValue, "T")) {
-         isTest = true;
-         sValue = StrSubstr(sValue, 1);
-      }
-      if (StrIsDigit(sValue)) {
-         int iValue = StrToInteger(sValue);
-         if (iValue > 0) {
-            sequence.id     = iValue;
-            sequence.isTest = isTest;
-            Sequence.ID     = ifString(isTest, "T", "") + sequence.id;
-            SS.SequenceName();
-            return(true);
-         }
+   if (__isChart) {
+      // check chart window
+      string name = ProgramName() +".Sequence.ID";
+      value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
+      muteErrors = false;
+      if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
+      isError = muteErrors;
+      if (isError) return(false);
+
+      // check chart
+      if (Chart.RestoreString(name, value, false)) {
+         muteErrors = false;
+         if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(3)")) return(true);
       }
    }
    return(false);
@@ -4203,17 +4207,71 @@ bool FindSequenceId() {
 
 
 /**
- * Remove stored sequence data from the chart.
+ * Remove a stored sequence id.
  *
  * @return bool - success status
  */
-bool RemoveSequenceData() {
-   if (!__isChart) return(false);
+bool RemoveSequenceId() {
+   if (__isChart) {
+      // chart window
+      string name = ProgramName() +".Sequence.ID";
+      RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
-   string label = "Duel.status";
-   if (ObjectFind(label) != -1)
-      ObjectDelete(label);
-   Chart.RestoreString(ProgramName() +".Sequence.ID", label);
+      // chart
+      Chart.RestoreString(name, name, true);
+
+      // additionally remove a chart status for chart commands
+      name = ProgramName() +".status";
+      if (ObjectFind(name) != -1) ObjectDelete(name);
+   }
+   return(!catch("RemoveSequenceId(1)"));
+}
+
+
+
+/**
+ * Parse and apply the passed sequence id value (format: /T?[0-9]{4}/).
+ *
+ * @param  _In_    string value  - stringyfied sequence id
+ * @param  _InOut_ bool   error  - in:  whether to mute a parse error (TRUE) or to trigger a fatal error (FALSE)
+ *                                 out: whether a parsing error occurred (stored in last_error)
+ * @param  _In_    string caller - caller identification (for error messages)
+ *
+ * @return bool - whether the sequence id was successfully applied
+ */
+bool ApplySequenceId(string value, bool &error, string caller) {
+   string valueBak = value;
+   bool muteErrors = error!=0;
+   error = false;
+
+   value = StrTrim(value);
+   if (!StringLen(value)) return(false);
+
+   bool isTest = false;
+   int sequenceId = 0;
+
+   if (StrStartsWith(value, "T")) {
+      isTest = true;
+      value = StrSubstr(value, 1);
+   }
+
+   if (!StrIsDigit(value)) {
+      error = true;
+      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));
+   }
+
+   int iValue = StrToInteger(value);
+   if (iValue < SID_MIN || iValue > SID_MAX) {
+      error = true;
+      if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
+      return(!catch(caller +"->ApplySequenceId(2)  invalid sequence id value: \""+ valueBak +"\" (range error)", ERR_INVALID_PARAMETER));
+   }
+
+   sequence.isTest = isTest;
+   sequence.id     = iValue;
+   Sequence.ID     = ifString(IsTestSequence(), "T", "") + sequence.id;
+   SS.SequenceName();
    return(true);
 }
 

@@ -4069,7 +4069,7 @@ bool EventListener.NewTick() {
 
 
 /**
- * Return the current trade server time. In tester the time is modeled. Different from the last known tick time which is only
+ * Return the current trade server time. In tester this time is modeled. Different from the last known tick time which is only
  * updated on new ticks.
  *
  * @param  bool watchLastTick [optional] - account for a server clock being fast wich happens quite often (default: yes)
@@ -4077,6 +4077,8 @@ bool EventListener.NewTick() {
  * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
  */
 datetime TimeServer(bool watchLastTick = true) {
+   watchLastTick = watchLastTick!=0;         // (bool) int
+
    static bool isLibrary = -1;
    if (isLibrary == -1) isLibrary = IsLibrary();
 
@@ -6949,12 +6951,12 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
                           "",                               // string ____________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
-                          0,                                // int    ZigZag.Width
+                          1,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
                           false,                            // bool   ZigZag.ShowTrail
 
                           "",                               // string ____________________
-                          false,                            // bool   Donchian.ShowFullChannel
+                          true,                             // bool   Donchian.ShowFullChannel
                           false,                            // bool   Donchian.ShowStopSegments
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
                           markFirstCrossing,                // bool   Donchian.MarkFirstCrossing
