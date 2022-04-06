@@ -2,9 +2,9 @@
 //////////////////////////////////////////////// Additional input parameters ////////////////////////////////////////////////
 
 extern string   ______________________________;
-extern string   EA.Recorder            = "on | off* | 1,2,3=1000,...";  // on=std-equity | off | 1,...=custom-metrics, format: {uint}[={double}]
-
-extern datetime Test.StartTime         = 0;                             // time to start a test
+extern string   EA.Recorder            = "on | off* | 1,2,3=1000,...";  // on=std-equity | off | custom-metrics, format: {uint}[={double}]
+                                                                                                                      // {uint}:   metric id (required)
+extern datetime Test.StartTime         = 0;                             // time to start a test                       // {double}: recording base value (optional)
 extern double   Test.StartPrice        = 0;                             // price to start a test
 extern bool     Test.ExternalReporting = false;                         // whether to send PositionOpen/Close events to the Expander
 
@@ -863,7 +863,7 @@ bool init_RecorderValidateInput(int &metrics) {
       size = Explode(sValue, ",", sValues, NULL);
 
       // foreach (sValues as custom-metric)
-      for (int i=0; i < size; i++) {                     // metric format: {uint}[={double}]       // {uint}:   metric id (required)
+      for (int i=0; i < size; i++) {                     // metric syntax: {uint}[={double}]       // {uint}:   metric id (required)
          sValue = StrTrim(sValues[i]);                                                             // {double}: recording base value (optional)
          if (sValue == "") continue;
 
