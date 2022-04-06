@@ -732,9 +732,11 @@ bool ReverseSequence(int signal) {
          return(true);
       }
       // ...or close the open position
-      int oe[], oeFlags = F_ERR_INVALID_TRADE_PARAMETERS;                  // expect an SL triggered in between (and position already closed)
+      int oe[], oeFlags=F_ERR_INVALID_TRADE_PARAMETERS | F_LOG_NOTICE;     // the SL may be triggered/position closed between UpdateStatus() and ReverseSequence()
+
       bool success = OrderCloseEx(open.ticket, NULL, Slippage, CLR_NONE, oeFlags, oe);
-      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS)                                                                            return(!SetLastError(oe.Error(oe)));
+      if (!success && oe.Error(oe)!=ERR_INVALID_TRADE_PARAMETERS) return(!SetLastError(oe.Error(oe)));
+
       if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, -oe.Slippage(oe), 0))) return(false);
    }
 
