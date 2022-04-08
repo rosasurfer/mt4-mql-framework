@@ -24,6 +24,8 @@
  *
  * TODO:
  *  - visualization
+ *     a chart profile per instrument
+ *     quote unit multiplier with tmp. input RecorderAutoScale=FALSE
  *     rename groups/instruments/history descriptions
  *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
@@ -35,8 +37,8 @@
  *
  *  - performance tracking
  *    - recording
- *       configurable quote unit multiplier
- *       CLI tools to shift or scale histories (normalization)
+ *       CLI tools to scale history files
+ *        mt4-scaleHst FILE (+|-|*|/) <value> [--from=<datetime>] [--to=<datetime>] [--help]
  *       daily variants of metrics
  *       move custom metric validation to EA
  *    - longterm stabilization
