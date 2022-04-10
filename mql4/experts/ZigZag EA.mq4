@@ -37,8 +37,6 @@
  *
  *  - performance tracking
  *    - recording
- *       CLI tools to scale history files
- *        mt4-scaleHst FILE (+|-|*|/) <value> [--from=<datetime>] [--to=<datetime>] [--help]
  *       daily variants of metrics
  *       move custom metric validation to EA
  *    - longterm stabilization
