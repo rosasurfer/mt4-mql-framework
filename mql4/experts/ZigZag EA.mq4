@@ -23,30 +23,28 @@
  *
  *
  * TODO:
- *  - visualization
- *     a chart profile per instrument
- *     quote unit multiplier with tmp. input RecorderAutoScale=FALSE
- *     rename groups/instruments/history descriptions
+ *  - automatic quote unit multiplier with tmp. input RecorderAutoScale=FALSE
  *
- *  - virtual trading option (prevents ERR_TRADESERVER_GONE)
+ *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
  *     update sequence.name
  *     StartVirtualSequence()
  *     ReverseVirtualSequence()
  *     StopVirtualSequence()
  *     UpdateVirtualStatus()
  *
- *  - performance tracking
- *    - recording
- *       daily variants of metrics
- *       move custom metric validation to EA
- *    - longterm stabilization
- *       notifications for price feed outages
- *
  *  - trading functionality
- *     start/stop sequence with signal pickup
  *     reverse trading
+ *     start/stop sequence with signal pickup
  *     support multiple units and targets (add new metrics)
- *     pickup of another sequence: copy-123, mirror-456
+ *     pickup another sequence: copy-123, mirror-456
+ *
+ *  - performance tracking
+ *    - notifications for price feed outages
+ *    - record daily metric variants
+ *
+ *  - visualization
+ *     a chart profile per instrument
+ *     rename groups/instruments/history descriptions
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -99,6 +97,7 @@
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
+ *  - move custom metric validation to EA
  *  - permanent spread logging to a separate logfile
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64 and terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
