@@ -23,8 +23,6 @@
  *
  *
  * TODO:
- *  - automatic quote unit multiplier with tmp. input RecorderAutoScale=FALSE
- *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
  *     update sequence.name
  *     StartVirtualSequence()
@@ -115,18 +113,19 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Sequence.ID         = "";                     // instance to load from a status file, format /T?[0-9]{3}/
-extern string TradingMode         = "regular* | virtual";   // can be shortened if distinct
+extern string Sequence.ID          = "";                    // instance to load from a status file, format /T?[0-9]{3}/
+extern string TradingMode          = "regular* | virtual";  // can be shortened if distinct
 
-extern int    ZigZag.Periods      = 40;
-extern double Lots                = 0.1;
-extern string StartConditions     = "";                     // @time(datetime|time)
-extern string StopConditions      = "";                     // @time(datetime|time)
-extern double TakeProfit          = 0;                      // TP value
-extern string TakeProfit.Type     = "off* | money | percent | pip | quote-currency | index-point";    // can be shortened if distinct
-extern int    Slippage            = 2;                      // in point
+extern int    ZigZag.Periods       = 40;
+extern double Lots                 = 0.1;
+extern string StartConditions      = "";                    // @time(datetime|time)
+extern string StopConditions       = "";                    // @time(datetime|time)
+extern double TakeProfit           = 0;                     // TP value
+extern string TakeProfit.Type      = "off* | money | percent | pip | quote-currency | index-point";    // can be shortened if distinct
+extern int    Slippage             = 2;                     // in point
 
-extern bool   ShowProfitInPercent = true;                   // whether PL is displayed in money or percentage terms
+extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
+extern bool   EA.RecorderAutoScale = false;                 // use adaptive multiplier for metrics in quote units
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -313,9 +312,9 @@ int onTick() {
  */
 void RecordMetrics() {
    if (recordCustom) {
-      if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) recorder.currValue[METRIC_TOTAL_UNITS_ZERO ] = sequence.totalZeroProfitU /Pip;
-      if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) recorder.currValue[METRIC_TOTAL_UNITS_GROSS] = sequence.totalGrossProfitU/Pip;
-      if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) recorder.currValue[METRIC_TOTAL_UNITS_NET  ] = sequence.totalNetProfitU  /Pip;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) recorder.currValue[METRIC_TOTAL_UNITS_ZERO ] = sequence.totalZeroProfitU;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) recorder.currValue[METRIC_TOTAL_UNITS_GROSS] = sequence.totalGrossProfitU;
+      if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) recorder.currValue[METRIC_TOTAL_UNITS_NET  ] = sequence.totalNetProfitU;
       if (recorder.enabled[METRIC_TOTAL_MONEY_NET  ]) recorder.currValue[METRIC_TOTAL_MONEY_NET  ] = sequence.totalNetProfitM;
    }
 }
@@ -886,11 +885,6 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.netProfitM   = NULL;
    open.netProfitU   = NULL;
 
-   //double multiplier = 0.01;
-   //if (recorder.enabled[METRIC_TOTAL_UNITS_ZERO ]) debug("ArchiveClosedPosition(0.1)  zeroProfitU="+ DoubleToStr(sequence.totalZeroProfitU /Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_TOTAL_UNITS_GROSS]) debug("ArchiveClosedPosition(0.2) grossProfitU="+ DoubleToStr(sequence.totalGrossProfitU/Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_TOTAL_UNITS_NET  ]) debug("ArchiveClosedPosition(0.3)   netProfitU="+ DoubleToStr(sequence.totalNetProfitU  /Pip*multiplier, 2));
-   //if (recorder.enabled[METRIC_TOTAL_MONEY_NET  ]) debug("ArchiveClosedPosition(0.4)   netProfitM="+ DoubleToStr(sequence.totalNetProfitM, 2));
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
@@ -1238,19 +1232,20 @@ int CreateSequenceId() {
 /**
  * Return custom symbol definitions for metrics to be recorded by this instance.
  *
- * @param  _In_  int    i            - zero-based index of the timeseries (position in the recorder)
- * @param  _Out_ bool   enabled      - whether the metric is active and should be recorded
- * @param  _Out_ string symbol       - unique timeseries symbol
- * @param  _Out_ string symbolDescr  - timeseries description
- * @param  _Out_ string symbolGroup  - timeseries group (if empty recorder defaults are used)
- * @param  _Out_ int    symbolDigits - timeseries digits
- * @param  _Out_ double baseValue    - timeseries base value (if zero recorder defaults are used)
- * @param  _Out_ string hstDirectory - history directory of the timeseries (if empty recorder defaults are used)
- * @param  _Out_ int    hstFormat    - history format of the timeseries (if empty recorder defaults are used)
+ * @param  _In_  int    i             - zero-based index of the timeseries (position in the recorder)
+ * @param  _Out_ bool   enabled       - whether the metric is active and should be recorded
+ * @param  _Out_ string symbol        - unique timeseries symbol
+ * @param  _Out_ string symbolDescr   - timeseries description
+ * @param  _Out_ string symbolGroup   - timeseries group (if empty recorder defaults are used)
+ * @param  _Out_ int    symbolDigits  - timeseries digits
+ * @param  _Out_ double hstBase       - history base value (if zero recorder defaults are used)
+ * @param  _Out_ int    hstMultiplier - multiplier applied to the recorded history values (if zero recorder defaults are used)
+ * @param  _Out_ string hstDirectory  - history directory of the timeseries (if empty recorder defaults are used)
+ * @param  _Out_ int    hstFormat     - history format of the timeseries (if empty recorder defaults are used)
  *
  * @return bool - whether to add a definition for the specified index
  */
-bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &baseValue, string &hstDirectory, int &hstFormat) {
+bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
    if (IsLastError()) return(false);
    if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
 
@@ -1260,61 +1255,81 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
       ids[n] = ""+ StrToInteger(ids[n]);                                      // cut-off a specified base value
    }
 
-   enabled      = StringInArray(ids, ""+ (i+1));
-   symbolGroup  = "";
-   baseValue    = NULL;
-   hstDirectory = "";
-   hstFormat    = NULL;
+   enabled       = StringInArray(ids, ""+ (i+1));
+   symbolGroup   = "";
+   hstBase       = NULL;
+   hstMultiplier = NULL;
+   hstDirectory  = "";
+   hstFormat     = NULL;
+
+   int quoteUnitMultiplier = 1;                                               // use absolute value: e.g. 1.23 QU => 1.23 index points or quote currency
+   if (!EA.RecorderAutoScale || Digits!=2 || Close[0] < 500) {
+      quoteUnitMultiplier = Round(MathPow(10, Digits & (~1)));                // convert to pip:     e.g. 1.23 QU => 123.0 pip
+   }
+
+   static string sQuoteUnits = ""; if (!StringLen(sQuoteUnits)) {
+      if (quoteUnitMultiplier != 1)                                          sQuoteUnits = "pip";
+      else if (StrEndsWith(Symbol(), "EUR") || StrEndsWith(Symbol(), "USD")) sQuoteUnits = "quote currency";
+      else                                                                   sQuoteUnits = "index points";
+   }
 
    switch (i) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_UNITS_ZERO:             // OK
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";     // "zEURUS_123A"
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, zero spread";
-         return(true);                                                        // "ZigZag(40,H1) 1 EURUSD in pip, zero spread"
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";    // "zEURUS_123A"
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", zero spread";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 1 EURUSD in pip, zero spread"
+         hstMultiplier = quoteUnitMultiplier;
+         return(true);
 
       case METRIC_TOTAL_UNITS_GROSS:            // OK
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, gross";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"B";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", gross";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_TOTAL_UNITS_NET:              // OK
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in pip, net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"C";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", net";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbolDigits = 2;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
+         symbolDigits  = 2;
+         hstMultiplier = 1;
          return(true);
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, zero spread";
-         return(true);                                                        // "ZigZag(40,H1) 3 EURUSD daily pip, zero spread"
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", zero spread";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily pip, zero spread"
+         hstMultiplier = quoteUnitMultiplier;
+         return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, gross";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", gross";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
-         symbolDigits = 1;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily pip, net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", net";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
+         hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
-         symbolDigits = 2;
-         symbol       = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
-         symbolDescr  = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ AccountCurrency() +", net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ AccountCurrency() +", net";
+         symbolDigits  = 2;
+         hstMultiplier = 1;
          return(true);
    }
    return(false);
@@ -1431,7 +1446,8 @@ bool SaveStatus() {
    WriteIniString(file, section, "TakeProfit.Type",             /*string*/ TakeProfit.Type);
    WriteIniString(file, section, "Slippage",                    /*int   */ Slippage);
    WriteIniString(file, section, "ShowProfitInPercent",         /*bool  */ ShowProfitInPercent);
-   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder + separator);                       // conditional section separator
+   WriteIniString(file, section, "EA.Recorder",                 /*string*/ EA.Recorder);
+   WriteIniString(file, section, "EA.RecorderAutoScale",        /*bool  */ EA.RecorderAutoScale + separator);              // conditional section separator
 
    // [Runtime status]
    section = "Runtime status";                                  // On deletion of pending orders the number of stored order records decreases. To prevent
@@ -1610,32 +1626,34 @@ bool ReadStatus() {
 
    // [Inputs]
    section = "Inputs";
-   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",         "");             // string Sequence.ID         = T1234
-   string sTradingMode         = GetIniStringA(file, section, "TradingMode",         "");             // string TradingMode         = regular
-   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"         );             // int    ZigZag.Periods      = 40
-   string sLots                = GetIniStringA(file, section, "Lots",                "");             // double Lots                = 0.1
-   string sStartConditions     = GetIniStringA(file, section, "StartConditions",     "");             // string StartConditions     = @time(datetime|time)
-   string sStopConditions      = GetIniStringA(file, section, "StopConditions",      "");             // string StopConditions      = @time(datetime|time)
-   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",          "");             // double TakeProfit          = 3.0
-   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",     "");             // string TakeProfit.Type     = off* | money | percent | pip
-   int    iSlippage            = GetIniInt    (file, section, "Slippage"               );             // int    Slippage            = 2
-   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent", "");             // bool   ShowProfitInPercent = 1
-   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",         "");             // string EA.Recorder         = 1,2,4
+   string sSequenceID          = GetIniStringA(file, section, "Sequence.ID",          "");            // string Sequence.ID          = T1234
+   string sTradingMode         = GetIniStringA(file, section, "TradingMode",          "");            // string TradingMode          = regular
+   int    iZigZagPeriods       = GetIniInt    (file, section, "ZigZag.Periods"          );            // int    ZigZag.Periods       = 40
+   string sLots                = GetIniStringA(file, section, "Lots",                 "");            // double Lots                 = 0.1
+   string sStartConditions     = GetIniStringA(file, section, "StartConditions",      "");            // string StartConditions      = @time(datetime|time)
+   string sStopConditions      = GetIniStringA(file, section, "StopConditions",       "");            // string StopConditions       = @time(datetime|time)
+   string sTakeProfit          = GetIniStringA(file, section, "TakeProfit",           "");            // double TakeProfit           = 3.0
+   string sTakeProfitType      = GetIniStringA(file, section, "TakeProfit.Type",      "");            // string TakeProfit.Type      = off* | money | percent | pip
+   int    iSlippage            = GetIniInt    (file, section, "Slippage"                );            // int    Slippage             = 2
+   string sShowProfitInPercent = GetIniStringA(file, section, "ShowProfitInPercent",  "");            // bool   ShowProfitInPercent  = 1
+   string sEaRecorder          = GetIniStringA(file, section, "EA.Recorder",          "");            // string EA.Recorder          = 1,2,4
+   string sEaRecorderAutoScale = GetIniStringA(file, section, "EA.RecorderAutoScale", "");            // bool   EA.RecorderAutoScale = 0
 
    if (!StrIsNumeric(sLots))                 return(!catch("ReadStatus(5)  "+ sequence.name +" invalid input parameter Lots "+ DoubleQuoteStr(sLots) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    if (!StrIsNumeric(sTakeProfit))           return(!catch("ReadStatus(6)  "+ sequence.name +" invalid input parameter TakeProfit "+ DoubleQuoteStr(sTakeProfit) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
 
-   Sequence.ID         = sSequenceID;
-   TradingMode         = sTradingMode;
-   Lots                = StrToDouble(sLots);
-   ZigZag.Periods      = iZigZagPeriods;
-   StartConditions     = sStartConditions;
-   StopConditions      = sStopConditions;
-   TakeProfit          = StrToDouble(sTakeProfit);
-   TakeProfit.Type     = sTakeProfitType;
-   Slippage            = iSlippage;
-   ShowProfitInPercent = StrToBool(sShowProfitInPercent);
-   EA.Recorder         = sEaRecorder;
+   Sequence.ID          = sSequenceID;
+   TradingMode          = sTradingMode;
+   Lots                 = StrToDouble(sLots);
+   ZigZag.Periods       = iZigZagPeriods;
+   StartConditions      = sStartConditions;
+   StopConditions       = sStopConditions;
+   TakeProfit           = StrToDouble(sTakeProfit);
+   TakeProfit.Type      = sTakeProfitType;
+   Slippage             = iSlippage;
+   ShowProfitInPercent  = StrToBool(sShowProfitInPercent);
+   EA.Recorder          = sEaRecorder;
+   EA.RecorderAutoScale = StrToBool(sEaRecorderAutoScale);
 
    // [Runtime status]
    section = "Runtime status";
@@ -1966,7 +1984,7 @@ string   prev.TakeProfit.Type = "";
 int      prev.Slippage;
 bool     prev.ShowProfitInPercent;
 string   prev.EA.Recorder = "";
-
+bool     prev.EA.RecorderAutoScale;
 
 // backed-up runtime variables affected by changing input parameters
 int      prev.tradingMode;
@@ -2009,17 +2027,18 @@ bool     prev.recordCustom;
  */
 void BackupInputs() {
    // backup input parameters, also accessed for comparison in ValidateInputs()
-   prev.Sequence.ID         = StringConcatenate(Sequence.ID, "");    // string inputs are references to internal C literals and must be copied to break the reference
-   prev.TradingMode         = StringConcatenate(TradingMode, "");
-   prev.ZigZag.Periods      = ZigZag.Periods;
-   prev.Lots                = Lots;
-   prev.StartConditions     = StringConcatenate(StartConditions, "");
-   prev.StopConditions      = StringConcatenate(StopConditions, "");
-   prev.TakeProfit          = TakeProfit;
-   prev.TakeProfit.Type     = StringConcatenate(TakeProfit.Type, "");
-   prev.Slippage            = Slippage;
-   prev.ShowProfitInPercent = ShowProfitInPercent;
-   prev.EA.Recorder         = StringConcatenate(EA.Recorder, "");
+   prev.Sequence.ID          = StringConcatenate(Sequence.ID, "");   // string inputs are references to internal C literals and must be copied to break the reference
+   prev.TradingMode          = StringConcatenate(TradingMode, "");
+   prev.ZigZag.Periods       = ZigZag.Periods;
+   prev.Lots                 = Lots;
+   prev.StartConditions      = StringConcatenate(StartConditions, "");
+   prev.StopConditions       = StringConcatenate(StopConditions, "");
+   prev.TakeProfit           = TakeProfit;
+   prev.TakeProfit.Type      = StringConcatenate(TakeProfit.Type, "");
+   prev.Slippage             = Slippage;
+   prev.ShowProfitInPercent  = ShowProfitInPercent;
+   prev.EA.Recorder          = StringConcatenate(EA.Recorder, "");
+   prev.EA.RecorderAutoScale = EA.RecorderAutoScale;
 
    // backup runtime variables affected by changing input parameters
    prev.tradingMode                = tradingMode;
@@ -2062,17 +2081,18 @@ void BackupInputs() {
  */
 void RestoreInputs() {
    // restore input parameters
-   Sequence.ID         = prev.Sequence.ID;
-   TradingMode         = prev.TradingMode;
-   ZigZag.Periods      = prev.ZigZag.Periods;
-   Lots                = prev.Lots;
-   StartConditions     = prev.StartConditions;
-   StopConditions      = prev.StopConditions;
-   TakeProfit          = prev.TakeProfit;
-   TakeProfit.Type     = prev.TakeProfit.Type;
-   Slippage            = prev.Slippage;
-   ShowProfitInPercent = prev.ShowProfitInPercent;
-   EA.Recorder         = prev.EA.Recorder;
+   Sequence.ID          = prev.Sequence.ID;
+   TradingMode          = prev.TradingMode;
+   ZigZag.Periods       = prev.ZigZag.Periods;
+   Lots                 = prev.Lots;
+   StartConditions      = prev.StartConditions;
+   StopConditions       = prev.StopConditions;
+   TakeProfit           = prev.TakeProfit;
+   TakeProfit.Type      = prev.TakeProfit.Type;
+   Slippage             = prev.Slippage;
+   ShowProfitInPercent  = prev.ShowProfitInPercent;
+   EA.Recorder          = prev.EA.Recorder;
+   EA.RecorderAutoScale = prev.EA.RecorderAutoScale;
 
    // restore runtime variables
    tradingMode                = prev.tradingMode;
@@ -2628,15 +2648,16 @@ int ShowStatus(int error = NO_ERROR) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Sequence.ID=",         DoubleQuoteStr(Sequence.ID),     ";", NL,
-                            "TradingMode=",         DoubleQuoteStr(TradingMode),     ";", NL,
-                            "ZigZag.Periods=",      ZigZag.Periods,                  ";", NL,
-                            "Lots=",                NumberToStr(Lots, ".1+"),        ";", NL,
-                            "StartConditions=",     DoubleQuoteStr(StartConditions), ";", NL,
-                            "StopConditions=",      DoubleQuoteStr(StopConditions),  ";", NL,
-                            "TakeProfit=",          NumberToStr(TakeProfit, ".1+"),  ";", NL,
-                            "TakeProfit.Type=",     DoubleQuoteStr(TakeProfit.Type), ";", NL,
-                            "Slippage=",            Slippage,                        ";", NL,
-                            "ShowProfitInPercent=", BoolToStr(ShowProfitInPercent),  ";")
+   return(StringConcatenate("Sequence.ID=",          DoubleQuoteStr(Sequence.ID),     ";", NL,
+                            "TradingMode=",          DoubleQuoteStr(TradingMode),     ";", NL,
+                            "ZigZag.Periods=",       ZigZag.Periods,                  ";", NL,
+                            "Lots=",                 NumberToStr(Lots, ".1+"),        ";", NL,
+                            "StartConditions=",      DoubleQuoteStr(StartConditions), ";", NL,
+                            "StopConditions=",       DoubleQuoteStr(StopConditions),  ";", NL,
+                            "TakeProfit=",           NumberToStr(TakeProfit, ".1+"),  ";", NL,
+                            "TakeProfit.Type=",      DoubleQuoteStr(TakeProfit.Type), ";", NL,
+                            "Slippage=",             Slippage,                        ";", NL,
+                            "ShowProfitInPercent=",  BoolToStr(ShowProfitInPercent),  ";", NL,
+                            "EA.RecorderAutoScale=", BoolToStr(EA.RecorderAutoScale), ";")
    );
 }
