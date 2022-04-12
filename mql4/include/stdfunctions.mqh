@@ -5502,10 +5502,10 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Format a value representing a pip range of the current symbol. Depending on the symbol and the size of the value the
- * resulting string is in money or subpip notation.
+ * Format a value representing a pip distance of the current symbol. Depending on symbol and symbol price the resulting
+ * string is the pip amount converted to pips, subpips or quote units (e.g. index points).
  *
- * @param  double value                         - price range in pip
+ * @param  double value                         - pip distance
  * @param  bool   thousandsSeparator [optional] - whether to use the thousands separator "'" (default: no)
  * @param  bool   appendSuffix       [optional] - whether to append the suffix " pip" to the formatted value (default: no)
  *
@@ -5521,7 +5521,7 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
       return(sValue);                                                // "-1.#INF0000" => Infinite
 
    if (Digits==2 && Close[0]>=500) {
-      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23
+      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units/index points
    }
    else {
       sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip

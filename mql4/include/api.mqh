@@ -926,7 +926,7 @@ int      onDeinitUndefined();;
 string   PeriodToStr(int period);;
 string   ProgramTypeDescription(int type);;
 string   ProgramTypeToStr(int type);;
-bool     Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &baseValue, string &hstDirectory, int &hstFormat);;
+bool     Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, int &hstBase, double &hstMultiplier, string &hstDirectory, int &hstFormat);;
 bool     RemoveTickTimer(int timerId);;
 double   RemoveWindowDoubleA(int hWnd, string name);;
 int      RemoveWindowIntegerA(int hWnd, string name);;
