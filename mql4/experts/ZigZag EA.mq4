@@ -4,8 +4,8 @@
  *
  * Input parameters:
  * -----------------
- * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metrics separated by comma. For metric syntax
- *                descriptions see "mql4/include/core/expert.mqh".
+ * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metric ids separated by comma. For metric id syntax
+ *                descriptions see input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
  *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
@@ -19,7 +19,7 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    The term "quote units" refers to the best matching unit. One of pip, quote currency or index point.
+ *    The term "quote units" refers to the best matching unit. One of pip, quote currency or index points.
  *
  *
  * TODO:
