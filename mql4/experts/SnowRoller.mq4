@@ -626,11 +626,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.baseValue[0]) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.hstBase[0]) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = recorder.baseValue[0];
+      result = recorder.hstBase[0];
    }
 
    if (!catch("CalculateStartEquity(1)"))
