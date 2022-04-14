@@ -981,7 +981,7 @@ bool start_Recorder() {
          }
       }
       if (recordInternal) value = AccountEquity() - AccountCredit();
-      else                value = (recorder.hstBase[i] + recorder.currValue[i]) * recorder.hstMultiplier[i];
+      else                value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
 
