@@ -97,7 +97,7 @@
  *  - implement GetAccountCompany() and read the name from the server file if not connected
  *  - move custom metric validation to EA
  *  - permanent spread logging to a separate logfile
- *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64 and terminal=512)
+ *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
  *  - build script for all .EX4 files after deployment
  *  - ToggleOpenOrders() works only after ToggleHistory()
