@@ -23,6 +23,9 @@
  *
  *
  * TODO:
+ *  - StartVirtualSequence()
+ *
+ *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
  *     StartVirtualSequence()
  *     ReverseVirtualSequence()
@@ -630,7 +633,7 @@ bool StartSequence(int signal) {
    sequence.status = STATUS_PROGRESSING;
    if (!sequence.startEquityM) sequence.startEquityM = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
-   // open new position
+   // open a new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   bid         = Bid;
    double   ask         = Ask;
@@ -646,9 +649,8 @@ bool StartSequence(int signal) {
    int ticket = OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe);
    if (!ticket) return(!SetLastError(oe.Error(oe)));
 
+   // store the position data
    double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
-
-   // store position data
    open.ticket       = ticket;
    open.type         = type;
    open.bid          = bid;
@@ -703,7 +705,59 @@ bool StartSequence(int signal) {
  * @return bool - success status
  */
 bool StartVirtualSequence(int signal) {
-   return(!catch("StartVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
+   if (IsLogInfo()) logInfo("StartVirtualSequenceSequence(1)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
+
+   sequence.status = STATUS_PROGRESSING;
+   if (!sequence.startEquityM) sequence.startEquityM = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
+
+   // create a virtual position
+   int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+   int ticket = CreateVirtualTicket();                      // TODO: generate log message
+
+   // store the position data
+   open.ticket       = ticket;
+   open.type         = type;
+   open.bid          = Bid;
+   open.ask          = Ask;
+   open.time         = Tick.time;
+   open.price        = ifDouble(type, Bid, Ask);
+   open.stoploss     = NULL;
+   open.slippageP    = 0;
+   open.swapM        = 0;
+   open.commissionM  = 0;
+   open.grossProfitM = (Bid-Ask) * UnitValue(Lots);
+   open.grossProfitU = Bid-Ask;
+   open.netProfitM   = open.grossProfitM;
+   open.netProfitU   = open.grossProfitU;
+
+   // update PL numbers
+   sequence.openZeroProfitU  = 0;
+   sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
+
+   sequence.openGrossProfitU  = open.grossProfitU;
+   sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
+
+   sequence.openNetProfitU  = open.netProfitU;
+   sequence.totalNetProfitU = sequence.openNetProfitU + sequence.closedNetProfitU;
+
+   sequence.openNetProfitM  = open.netProfitM;
+   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
+
+   sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
+   sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
+   SS.TotalPL();
+   SS.PLStats();
+
+   // update start conditions
+   if (start.time.condition) {
+      if (!start.time.isDaily || !stop.time.condition) {    // see start/stop time variants
+         start.time.condition = false;
+      }
+   }
+   SS.StartStopConditions();
+
+   if (IsLogInfo()) logInfo("StartVirtualSequence(2)  "+ sequence.name +" sequence started ("+ SignalToStr(signal) +")");
+   return(SaveStatus());
 }
 
 
@@ -1225,6 +1279,22 @@ int CreateSequenceId() {
       }
    }
    return(sequenceId);
+}
+
+
+/**
+ * Generate a new virtual ticket number.
+ *
+ * @return int - virtual ticket or NULL in case of errors
+ */
+int CreateVirtualTicket() {
+   int size = ArrayRange(history, 0);
+   int ticket = NULL;
+
+   for (int i=0; i < size; i++) {
+      ticket = Max(ticket, history[i][HI_TICKET]);
+   }
+   return(Max(ticket, open.ticket, 1));
 }
 
 
@@ -2471,7 +2541,7 @@ bool ApplySequenceId(string value, bool &error, string caller) {
 
 
 /**
- * Return the quote unit value of the specified lot amount in account currency. As PipValue but for a full quote unit.
+ * Return the quote unit value of the specified lot amount in account currency. Same as PipValue() but for a full quote unit.
  *
  * @param  double lots [optional] - lot amount (default: 1 lot)
  *
