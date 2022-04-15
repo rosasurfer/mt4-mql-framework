@@ -23,9 +23,6 @@
  *
  *
  * TODO:
- *  - StartVirtualSequence()
- *     VirtualOrderSend() with virtual log message
- *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
  *     ReverseVirtualSequence()
  *     StopVirtualSequence()
@@ -704,14 +701,14 @@ bool StartSequence(int signal) {
  * @return bool - success status
  */
 bool StartVirtualSequence(int signal) {
-   if (IsLogInfo()) logInfo("StartVirtualSequenceSequence(1)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
+   if (IsLogInfo()) logInfo("StartVirtualSequence(1)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
 
    sequence.status = STATUS_PROGRESSING;
    if (!sequence.startEquityM) sequence.startEquityM = NormalizeDouble(AccountEquity() - AccountCredit() + GetExternalAssets(), 2);
 
    // create a virtual position
    int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = CreateVirtualTicket();                            // TODO: generate log message
+   int ticket = VirtualOrderSend(type, Lots, "ZigZag."+ sequence.name);
 
    // store the position data
    open.ticket       = ticket;
@@ -1282,18 +1279,32 @@ int CreateSequenceId() {
 
 
 /**
- * Generate a new virtual ticket number.
+ * Emulate sending of a virtual order for the specified parameters.
+ *
+ * @param  int    type    - trade operation type
+ * @param  double lots    - trade volume in lots
+ * @param  string comment - order comment
  *
  * @return int - virtual ticket or NULL in case of errors
  */
-int CreateVirtualTicket() {
+int VirtualOrderSend(int type, double lots, string comment) {
    int size = ArrayRange(history, 0);
    int ticket = NULL;
 
    for (int i=0; i < size; i++) {
       ticket = Max(ticket, history[i][HI_TICKET]);
    }
-   return(Max(ticket, open.ticket, 1));
+   ticket = Max(ticket, open.ticket, 1);
+
+   if (IsLogInfo()) {
+      string sType  = OperationTypeDescription(type);
+      string sLots  = NumberToStr(lots, ".+");
+      string sPrice = NumberToStr(ifDouble(type, Bid, Ask), PriceFormat);
+      string sBid   = NumberToStr(Bid, PriceFormat);
+      string sAsk   = NumberToStr(Ask, PriceFormat);
+      logInfo("VirtualOrderSend(1)  opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \""+ comment +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
+   }
+   return(ticket);
 }
 
 
