@@ -1475,13 +1475,10 @@ int CreateSequenceId() {
  * @return int - virtual ticket or NULL in case of errors
  */
 int VirtualOrderSend(int type) {
+   int ticket = open.ticket;
    int size = ArrayRange(history, 0);
-   int ticket = NULL;
-
-   for (int i=0; i < size; i++) {
-      ticket = Max(ticket, history[i][HI_TICKET]);
-   }
-   ticket = Max(ticket, open.ticket, 1);
+   if (size > 0) ticket = Max(ticket, history[size-1][HI_TICKET]);
+   ticket++;
 
    if (IsLogInfo()) {
       string sType  = OperationTypeDescription(type);
