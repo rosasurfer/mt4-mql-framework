@@ -23,11 +23,9 @@
  *
  *
  * TODO:
- *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
- *     ReverseVirtualSequence()
- *     StopVirtualSequence()
- *     virtual orders need a virtual SL too
  *
+ *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
+ *     StopVirtualSequence()
  *
  *  - trading functionality
  *     reverse trading
@@ -195,7 +193,7 @@ string   sequence.name = "";
 int      sequence.status;
 double   sequence.startEquityM;
 
-double   sequence.openZeroProfitU;              // PL with zero spread and zero costs
+double   sequence.openZeroProfitU;              // theoretical PL with zero spread and zero transaction costs
 double   sequence.closedZeroProfitU;
 double   sequence.totalZeroProfitU;             // open + close
 
@@ -709,7 +707,7 @@ bool StartVirtualSequence(int signal) {
 
    // create a virtual position
    int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = VirtualOrderSend(type, Lots, "ZigZag."+ sequence.name);
+   int ticket = VirtualOrderSend(type);
 
    // store the position data
    open.ticket       = ticket;
@@ -722,10 +720,10 @@ bool StartVirtualSequence(int signal) {
    open.slippageP    = 0;
    open.swapM        = 0;
    open.commissionM  = 0;
-   open.grossProfitM = (Bid-Ask) * QuoteUnitValue(Lots);
    open.grossProfitU = Bid-Ask;
-   open.netProfitM   = open.grossProfitM;
+   open.grossProfitM = open.grossProfitU * QuoteUnitValue(Lots);
    open.netProfitU   = open.grossProfitU;
+   open.netProfitM   = open.grossProfitM;
 
    // update PL numbers
    sequence.openZeroProfitU  = 0;
@@ -767,9 +765,9 @@ bool StartVirtualSequence(int signal) {
  */
 bool ReverseSequence(int signal) {
    if (last_error != NULL)                          return(false);
-   if (tradingMode == TRADINGMODE_VIRTUAL)          return(ReverseVirtualSequence(signal));
    if (sequence.status != STATUS_PROGRESSING)       return(!catch("ReverseSequence(1)  "+ sequence.name +" cannot reverse "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("ReverseSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (tradingMode == TRADINGMODE_VIRTUAL)          return(ReverseVirtualSequence(signal));
 
    double bid = Bid, ask = Ask;
 
@@ -788,7 +786,7 @@ bool ReverseSequence(int signal) {
       if (!ArchiveClosedPosition(open.ticket, ifDouble(success, bid, 0), ifDouble(success, ask, 0), ifDouble(success, -oe.Slippage(oe), 0))) return(false);
    }
 
-   // open new position
+   // open a new position
    int      type        = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
    double   price       = NULL;
    double   stopLoss    = CalculateStopLoss(signal);
@@ -800,8 +798,8 @@ bool ReverseSequence(int signal) {
 
    if (!OrderSendEx(Symbol(), type, Lots, price, Slippage, stopLoss, takeProfit, comment, magicNumber, expires, markerColor, oeFlags, oe)) return(!SetLastError(oe.Error(oe)));
 
+   // store the new position data
    double currentBid = MarketInfo(Symbol(), MODE_BID), currentAsk = MarketInfo(Symbol(), MODE_ASK);
-
    open.bid          = bid;
    open.ask          = ask;
    open.ticket       = oe.Ticket    (oe);
@@ -847,7 +845,55 @@ bool ReverseSequence(int signal) {
  * @return bool - success status
  */
 bool ReverseVirtualSequence(int signal) {
-   return(!catch("ReverseVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
+   if (open.ticket > 0) {
+      // continue in the same direction...
+      if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
+         logWarn("ReverseVirtualSequence(1)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open virtual "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
+         return(true);
+      }
+      // ...or close and archive the open position
+      VirtualOrderClose(open.ticket);
+      ArchiveClosedVirtualPosition(open.ticket);
+   }
+
+   // create a virtual position
+   int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
+   int ticket = VirtualOrderSend(type);
+
+   // store the position data
+   open.ticket       = ticket;
+   open.type         = type;
+   open.bid          = Bid;
+   open.ask          = Ask;
+   open.time         = Tick.time;
+   open.price        = ifDouble(type, Bid, Ask);
+   open.stoploss     = NULL;
+   open.slippageP    = 0;
+   open.swapM        = 0;
+   open.commissionM  = 0;
+   open.grossProfitU = Bid-Ask;
+   open.grossProfitM = open.grossProfitU * QuoteUnitValue(Lots);
+   open.netProfitU   = open.grossProfitU;
+   open.netProfitM   = open.grossProfitM;
+
+   // update PL numbers
+   sequence.openZeroProfitU  = 0;
+   sequence.totalZeroProfitU = sequence.openZeroProfitU + sequence.closedZeroProfitU;
+
+   sequence.openGrossProfitU  = open.grossProfitU;
+   sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
+
+   sequence.openNetProfitU  = open.netProfitU;
+   sequence.totalNetProfitU = sequence.openNetProfitU + sequence.closedNetProfitU;
+
+   sequence.openNetProfitM  = open.netProfitM;
+   sequence.totalNetProfitM = sequence.openNetProfitM + sequence.closedNetProfitM;
+
+   sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
+   sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
+   SS.TotalPL();
+   SS.PLStats();
+   return(SaveStatus());
 }
 
 
@@ -936,6 +982,82 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.netProfitU   = NULL;
 
    return(!catch("ArchiveClosedPosition(4)"));
+}
+
+
+/**
+ * Add trade details of the specified virtual ticket to the local history and reset open position data.
+ *
+ * @param int ticket - closed ticket
+ *
+ * @return bool - success status
+ */
+bool ArchiveClosedVirtualPosition(int ticket) {
+   if (last_error != NULL)                    return(false);
+   if (sequence.status != STATUS_PROGRESSING) return(!catch("ArchiveClosedVirtualPosition(1)  "+ sequence.name +" cannot archive virtual position of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (ticket != open.ticket)                 return(!catch("ArchiveClosedVirtualPosition(2)  "+ sequence.name +" ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
+
+   // update now closed position data
+   open.swapM        = 0;
+   open.commissionM  = 0;
+   open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+   open.grossProfitM = open.grossProfitU * QuoteUnitValue(Lots);
+   open.netProfitU   = open.grossProfitU;
+   open.netProfitM   = open.grossProfitM;
+
+   // update history
+   int i = ArrayRange(history, 0);
+   ArrayResize(history, i + 1);
+   history[i][HI_TICKET        ] = ticket;
+   history[i][HI_LOTS          ] = Lots;
+   history[i][HI_OPENTYPE      ] = open.type;
+   history[i][HI_OPENTIME      ] = open.time;
+   history[i][HI_OPENBID       ] = open.bid;
+   history[i][HI_OPENASK       ] = open.ask;
+   history[i][HI_OPENPRICE     ] = open.price;
+   history[i][HI_CLOSETIME     ] = Tick.time;
+   history[i][HI_CLOSEBID      ] = Bid;
+   history[i][HI_CLOSEASK      ] = Ask;
+   history[i][HI_CLOSEPRICE    ] = ifDouble(!open.type, Bid, Ask);
+   history[i][HI_SLIPPAGE_P    ] = open.slippageP;
+   history[i][HI_SWAP_M        ] = open.swapM;
+   history[i][HI_COMMISSION_M  ] = open.commissionM;
+   history[i][HI_GROSS_PROFIT_M] = open.grossProfitM;
+   history[i][HI_NET_PROFIT_M  ] = open.netProfitM;
+
+   // update PL numbers
+   sequence.openZeroProfitU    = 0;                                           // both directions use Bid prices
+   sequence.closedZeroProfitU += ifDouble(!open.type, history[i][HI_CLOSEBID]-open.bid, open.bid-history[i][HI_CLOSEBID]);
+   sequence.totalZeroProfitU   = sequence.closedZeroProfitU;
+
+   sequence.openGrossProfitU    = 0;
+   sequence.closedGrossProfitU += open.grossProfitU;
+   sequence.totalGrossProfitU   = sequence.closedGrossProfitU;
+
+   sequence.openNetProfitU    = 0;
+   sequence.closedNetProfitU += open.netProfitU;
+   sequence.totalNetProfitU   = sequence.closedNetProfitU;
+
+   sequence.openNetProfitM    = 0;
+   sequence.closedNetProfitM += open.netProfitM;
+   sequence.totalNetProfitM   = sequence.closedNetProfitM;
+
+   // reset open position data
+   open.ticket       = NULL;
+   open.type         = NULL;
+   open.time         = NULL;
+   open.bid          = NULL;
+   open.ask          = NULL;
+   open.price        = NULL;
+   open.slippageP    = NULL;
+   open.swapM        = NULL;
+   open.commissionM  = NULL;
+   open.grossProfitM = NULL;
+   open.grossProfitU = NULL;
+   open.netProfitM   = NULL;
+   open.netProfitU   = NULL;
+
+   return(!catch("ArchiveClosedVirtualPosition(3)"));
 }
 
 
@@ -1302,15 +1424,13 @@ int CreateSequenceId() {
 
 
 /**
- * Emulate sending of a virtual order for the specified parameters.
+ * Emulate opening of a virtual market position with the specified parameters.
  *
- * @param  int    type    - trade operation type
- * @param  double lots    - trade volume in lots
- * @param  string comment - order comment
+ * @param  int type - trade operation type
  *
  * @return int - virtual ticket or NULL in case of errors
  */
-int VirtualOrderSend(int type, double lots, string comment) {
+int VirtualOrderSend(int type) {
    int size = ArrayRange(history, 0);
    int ticket = NULL;
 
@@ -1321,13 +1441,37 @@ int VirtualOrderSend(int type, double lots, string comment) {
 
    if (IsLogInfo()) {
       string sType  = OperationTypeDescription(type);
-      string sLots  = NumberToStr(lots, ".+");
+      string sLots  = NumberToStr(Lots, ".+");
       string sPrice = NumberToStr(ifDouble(type, Bid, Ask), PriceFormat);
       string sBid   = NumberToStr(Bid, PriceFormat);
       string sAsk   = NumberToStr(Ask, PriceFormat);
-      logInfo("VirtualOrderSend(1)  opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \""+ comment +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
+      logInfo("VirtualOrderSend(1)  opened virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ sequence.name +"\" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")");
    }
    return(ticket);
+}
+
+
+/**
+ * Emulate closing of a virtual position with the specified parameters.
+ *
+ * @param  int ticket - order ticket
+ *
+ * @return bool - success status
+ */
+bool VirtualOrderClose(int ticket) {
+   if (ticket != open.ticket) return(!catch("VirtualOrderClose(1)  "+ sequence.name +" ticket/open.ticket mis-match: "+ ticket +"/"+ open.ticket, ERR_ILLEGAL_STATE));
+
+   if (IsLogInfo()) {
+      string sType       = OperationTypeDescription(open.type);
+      string sLots       = NumberToStr(Lots, ".+");
+      string sOpenPrice  = NumberToStr(open.price, PriceFormat);
+      double closePrice  = ifDouble(!open.type, Bid, Ask);
+      string sClosePrice = NumberToStr(closePrice, PriceFormat);
+      string sBid        = NumberToStr(Bid, PriceFormat);
+      string sAsk        = NumberToStr(Ask, PriceFormat);
+      logInfo("VirtualOrderClose(2)  closed virtual #"+ ticket +" "+ sType +" "+ sLots +" "+ Symbol() +" \"ZigZag."+ sequence.name +"\" from "+ sOpenPrice +" at "+ sClosePrice +" (market: "+ sBid +"/"+ sAsk +")");
+   }
+   return(true);
 }
 
 
