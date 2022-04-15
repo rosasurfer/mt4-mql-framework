@@ -23,10 +23,6 @@
  *
  *
  * TODO:
- *
- *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
- *     StopVirtualSequence()
- *
  *  - trading functionality
  *     reverse trading
  *     start/stop sequence with signal pickup
@@ -1114,11 +1110,12 @@ double stop.profitPct.AbsValue() {
  */
 bool StopSequence(int signal) {
    if (last_error != NULL)                                                     return(false);
-   if (tradingMode == TRADINGMODE_VIRTUAL)                                     return(StopVirtualSequence(signal));
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_PROGRESSING) return(!catch("StopSequence(1)  "+ sequence.name +" cannot stop "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (tradingMode == TRADINGMODE_VIRTUAL)                                     return(StopVirtualSequence(signal));
 
+   // close open positions
    if (sequence.status == STATUS_PROGRESSING) {
-      if (open.ticket > 0) {                                // close open positions
+      if (open.ticket > 0) {
          if (IsLogInfo()) logInfo("StopSequence(2)  "+ sequence.name +" stopping ("+ SignalToStr(signal) +")");
 
          double bid = Bid, ask = Ask;
@@ -1161,7 +1158,8 @@ bool StopSequence(int signal) {
    if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
-   if (IsTesting()) {                                       // pause/stop the tester according to the debug configuration
+   // pause/stop the tester according to the debug configuration
+   if (IsTesting()) {
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -1178,7 +1176,53 @@ bool StopSequence(int signal) {
  * @return bool - success status
  */
 bool StopVirtualSequence(int signal) {
-   return(!catch("StopVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
+   // close open positions
+   if (sequence.status == STATUS_PROGRESSING) {
+      if (open.ticket > 0) {
+         VirtualOrderClose(open.ticket);
+         ArchiveClosedVirtualPosition(open.ticket);
+
+         sequence.maxNetProfitM   = MathMax(sequence.maxNetProfitM, sequence.totalNetProfitM);
+         sequence.maxNetDrawdownM = MathMin(sequence.maxNetDrawdownM, sequence.totalNetProfitM);
+         SS.TotalPL();
+         SS.PLStats();
+      }
+   }
+
+   // update stop conditions and status
+   switch (signal) {
+      case SIGNAL_TIME:
+         if (!stop.time.isDaily) {
+            stop.time.condition = false;                    // see start/stop time variants
+         }
+         sequence.status = ifInt(start.time.condition && start.time.isDaily, STATUS_WAITING, STATUS_STOPPED);
+         break;
+
+      case SIGNAL_TAKEPROFIT:
+         stop.profitAbs.condition = false;
+         stop.profitPct.condition = false;
+         stop.profitQu.condition  = false;
+         sequence.status          = STATUS_STOPPED;
+         break;
+
+      case NULL:                                            // explicit stop (manual) or end of test
+         sequence.status = STATUS_STOPPED;
+         break;
+
+      default: return(!catch("StopVirtualSequence(1)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   }
+   SS.StartStopConditions();
+
+   if (IsLogInfo()) logInfo("StopVirtualSequence(2)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   SaveStatus();
+
+   // pause/stop the tester according to the debug configuration
+   if (IsTesting()) {
+      if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
+      else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
+      else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
+   }
+   return(!catch("StopVirtualSequence(3)"));
 }
 
 
