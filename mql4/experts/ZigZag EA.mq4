@@ -24,10 +24,9 @@
  *
  * TODO:
  *  - StartVirtualSequence()
- *
+ *     VirtualOrderSend() with virtual log message
  *
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
- *     StartVirtualSequence()
  *     ReverseVirtualSequence()
  *     StopVirtualSequence()
  *     UpdateVirtualStatus()
@@ -664,7 +663,7 @@ bool StartSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/QuoteUnitValue(Lots);
 
    // update PL numbers
    sequence.openZeroProfitU  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid);    // both directions use Bid prices
@@ -712,7 +711,7 @@ bool StartVirtualSequence(int signal) {
 
    // create a virtual position
    int type   = ifInt(signal==SIGNAL_LONG, OP_BUY, OP_SELL);
-   int ticket = CreateVirtualTicket();                      // TODO: generate log message
+   int ticket = CreateVirtualTicket();                            // TODO: generate log message
 
    // store the position data
    open.ticket       = ticket;
@@ -725,7 +724,7 @@ bool StartVirtualSequence(int signal) {
    open.slippageP    = 0;
    open.swapM        = 0;
    open.commissionM  = 0;
-   open.grossProfitM = (Bid-Ask) * UnitValue(Lots);
+   open.grossProfitM = (Bid-Ask) * QuoteUnitValue(Lots);
    open.grossProfitU = Bid-Ask;
    open.netProfitM   = open.grossProfitM;
    open.netProfitU   = open.grossProfitU;
@@ -750,7 +749,7 @@ bool StartVirtualSequence(int signal) {
 
    // update start conditions
    if (start.time.condition) {
-      if (!start.time.isDaily || !stop.time.condition) {    // see start/stop time variants
+      if (!start.time.isDaily || !stop.time.condition) {          // see start/stop time variants
          start.time.condition = false;
       }
    }
@@ -818,7 +817,7 @@ bool ReverseSequence(int signal) {
    open.grossProfitM = oe.Profit    (oe);
    open.grossProfitU = ifDouble(!type, currentBid-open.price, open.price-currentAsk);
    open.netProfitM   = open.grossProfitM + open.swapM + open.commissionM;
-   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(Lots);
+   open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/QuoteUnitValue(Lots);
 
    // update PL numbers
    sequence.openZeroProfitU  = ifDouble(!type, currentBid-open.bid, open.bid-currentBid); // both directions use Bid prices
@@ -882,7 +881,7 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    }
    else {
       open.grossProfitU = ifDouble(!OrderType(), OrderClosePrice()-OrderOpenPrice(), OrderOpenPrice()-OrderClosePrice());
-      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+      open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/QuoteUnitValue(OrderLots());
    }
 
    // update history
@@ -1089,7 +1088,7 @@ bool UpdateStatus() {
       }
       else {
          open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
-         open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/UnitValue(OrderLots());
+         open.netProfitU   = open.grossProfitU + (open.swapM + open.commissionM)/QuoteUnitValue(OrderLots());
       }
 
       if (isOpen) {
@@ -1991,7 +1990,7 @@ bool SynchronizeStatus() {
             // update closed PL numbers
             sequence.closedZeroProfitU  += grossProfitU;
             sequence.closedGrossProfitU += grossProfitU;
-            sequence.closedNetProfitU   += grossProfitU + MathDiv(swapM + commissionM, UnitValue(lots));
+            sequence.closedNetProfitU   += grossProfitU + MathDiv(swapM + commissionM, QuoteUnitValue(lots));
             sequence.closedNetProfitM   += netProfitM;
          }
       }
@@ -2547,17 +2546,17 @@ bool ApplySequenceId(string value, bool &error, string caller) {
  *
  * @return double - unit value or NULL (0) in case of errors (in tester the value may be not exact)
  */
-double UnitValue(double lots = 1.0) {
+double QuoteUnitValue(double lots = 1.0) {
    if (!lots) return(0);
 
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
-   if (error || !tickValue)   return(!catch("UnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_INVALID_MARKET_DATA)));
+   if (error || !tickValue)   return(!catch("QuoteUnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_INVALID_MARKET_DATA)));
 
    static double tickSize; if (!tickSize) {
       tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       error = GetLastError();
-      if (error || !tickSize) return(!catch("UnitValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_INVALID_MARKET_DATA)));
+      if (error || !tickSize) return(!catch("QuoteUnitValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_INVALID_MARKET_DATA)));
    }
    return(tickValue/tickSize * lots);
 }
