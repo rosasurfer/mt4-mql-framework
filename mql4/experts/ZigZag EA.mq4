@@ -24,7 +24,6 @@
  *
  * TODO:
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
- *     update sequence.name
  *     StartVirtualSequence()
  *     ReverseVirtualSequence()
  *     StopVirtualSequence()
@@ -36,13 +35,13 @@
  *     support multiple units and targets (add new metrics)
  *     pickup another sequence: copy-123, mirror-456
  *
- *  - performance tracking
- *    - notifications for price feed outages
- *    - record daily metric variants
- *
  *  - visualization
  *     a chart profile per instrument
  *     rename groups/instruments/history descriptions
+ *
+ *  - performance tracking
+ *    - notifications for price feed outages
+ *    - daily metric variants
  *
  *  - status display
  *     parameter: ZigZag.Periods
@@ -704,7 +703,7 @@ bool StartSequence(int signal) {
  * @return bool - success status
  */
 bool StartVirtualSequence(int signal) {
-   return(false);
+   return(!catch("StartVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -797,7 +796,7 @@ bool ReverseSequence(int signal) {
  * @return bool - success status
  */
 bool ReverseVirtualSequence(int signal) {
-   return(false);
+   return(!catch("ReverseVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1006,7 +1005,7 @@ bool StopSequence(int signal) {
  * @return bool - success status
  */
 bool StopVirtualSequence(int signal) {
-   return(false);
+   return(!catch("StopVirtualSequence(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -1067,7 +1066,7 @@ bool UpdateStatus() {
  * @return bool - success status
  */
 bool UpdateVirtualStatus() {
-   return(false);
+   return(!catch("UpdateVirtualStatus(1)", ERR_NOT_IMPLEMENTED));
 }
 
 
@@ -2513,6 +2512,14 @@ void SS.All() {
  */
 void SS.SequenceName() {
    sequence.name = "Z."+ sequence.id;
+
+   switch (tradingMode) {
+      case TRADINGMODE_REGULAR:
+         break;
+      case TRADINGMODE_VIRTUAL:
+         sequence.name = "V"+ sequence.name;
+         break;
+   }
 }
 
 
