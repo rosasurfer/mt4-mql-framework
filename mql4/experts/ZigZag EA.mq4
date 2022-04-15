@@ -26,7 +26,8 @@
  *  - virtual trading option (prevents ERR_TRADESERVER_GONE, allows local realtime tracking)
  *     ReverseVirtualSequence()
  *     StopVirtualSequence()
- *     UpdateVirtualStatus()
+ *     virtual orders need a virtual SL too
+ *
  *
  *  - trading functionality
  *     reverse trading
@@ -1066,8 +1067,8 @@ bool StopVirtualSequence(int signal) {
  */
 bool UpdateStatus() {
    if (last_error != NULL)                    return(false);
-   if (tradingMode == TRADINGMODE_VIRTUAL)    return(UpdateVirtualStatus());
    if (sequence.status != STATUS_PROGRESSING) return(!catch("UpdateStatus(1)  "+ sequence.name +" cannot update order status of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (tradingMode == TRADINGMODE_VIRTUAL)    return(UpdateVirtualStatus());
    int error;
 
    if (open.ticket > 0) {
@@ -1116,7 +1117,29 @@ bool UpdateStatus() {
  * @return bool - success status
  */
 bool UpdateVirtualStatus() {
-   return(!catch("UpdateVirtualStatus(1)", ERR_NOT_IMPLEMENTED));
+   if (!open.ticket) return(!catch("UpdateVirtualStatus(1)  "+ sequence.name +" no open ticket found", ERR_ILLEGAL_STATE));
+
+   open.swapM        = 0;
+   open.commissionM  = 0;
+   open.grossProfitU = ifDouble(!open.type, Bid-open.price, open.price-Ask);
+   open.grossProfitM = open.grossProfitU * QuoteUnitValue(Lots);
+   open.netProfitU   = open.grossProfitU;
+   open.netProfitM   = open.grossProfitM;
+
+   sequence.openZeroProfitU  = ifDouble(!open.type, Bid-open.bid, open.bid-Bid);    // both directions use Bid prices
+   sequence.openGrossProfitU = open.grossProfitU;
+   sequence.openNetProfitU   = open.netProfitU;
+   sequence.openNetProfitM   = open.netProfitM;
+
+   sequence.totalZeroProfitU  = sequence.openZeroProfitU  + sequence.closedZeroProfitU;
+   sequence.totalGrossProfitU = sequence.openGrossProfitU + sequence.closedGrossProfitU;
+   sequence.totalNetProfitU   = sequence.openNetProfitU   + sequence.closedNetProfitU;
+   sequence.totalNetProfitM   = sequence.openNetProfitM   + sequence.closedNetProfitM; SS.TotalPL();
+
+   if      (sequence.totalNetProfitM > sequence.maxNetProfitM  ) { sequence.maxNetProfitM   = sequence.totalNetProfitM; SS.PLStats(); }
+   else if (sequence.totalNetProfitM < sequence.maxNetDrawdownM) { sequence.maxNetDrawdownM = sequence.totalNetProfitM; SS.PLStats(); }
+
+   return(!catch("UpdateVirtualStatus(2)"));
 }
 
 
