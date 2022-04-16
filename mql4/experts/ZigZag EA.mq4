@@ -23,20 +23,28 @@
  *
  *
  * TODO:
+ *  - virtual trading
+ *     analyze PL differences DAX,M1 2022.01.04
+ *     adjust virtual commissions
+ *
  *  - trading functionality
- *     reverse trading
  *     start/stop sequence with signal pickup
+ *     reverse trading
  *     support multiple units and targets (add new metrics)
+ *     analyze channel contraction
  *     pickup another sequence: copy-123, mirror-456
  *
  *  - visualization
  *     a chart profile per instrument
  *     rename groups/instruments/history descriptions
+ *     ChartInfos: read/display symbol description as long name
+ *     ChartInfos: fix display of symbol with Digits=1 (pip)
  *
  *  - performance tracking
  *    - notifications for price feed outages
  *    - daily metric variants
  *
+ *  - input parameter ZigZag.Timeframe
  *  - status display
  *     parameter: ZigZag.Periods
  *     current position
@@ -45,11 +53,7 @@
  *     total commission
  *     track and display total slippage
  *     recorded symbols with descriptions
- *
- *  - input parameter ZigZag.Timeframe
- *  - check Turtle Soup
- *  - ChartInfos: read/display symbol description as long name
- *  - ChartInfos: fix display of symbol with Digits=1 (pip)
+ *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
  *    - full session (24h) with trade breaks
@@ -93,7 +97,6 @@
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
  *  - build script for all .EX4 files after deployment
- *  - ToggleOpenOrders() works only after ToggleHistory()
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
@@ -770,7 +773,7 @@ bool ReverseSequence(int signal) {
    if (open.ticket > 0) {
       // continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position");
+         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
          return(true);
       }
       // ...or close the open position
@@ -2168,8 +2171,7 @@ bool SynchronizeStatus() {
             open.stoploss  = OrderStopLoss();
             open.bid       = open.price;
             open.ask       = open.price;
-            open.slippageP = NULL;
-            // open PL numbers will auto-update in the following UpdateStatus() call
+            open.slippageP = NULL;                                   // open PL numbers will auto-update in the following UpdateStatus() call
          }
          else if (OrderTicket() != open.ticket) {
             return(!catch("SynchronizeStatus(3)  "+ sequence.name +" dangling open position found: #"+ OrderTicket(), ERR_RUNTIME_ERROR));
@@ -2196,7 +2198,7 @@ bool SynchronizeStatus() {
             double   openPrice    = OrderOpenPrice();
             datetime closeTime    = OrderCloseTime();
             double   closePrice   = OrderClosePrice();
-            double   slippageP    = NULL;
+            double   slippageP    = 0;
             double   swapM        = OrderSwap();
             double   commissionM  = OrderCommission();
             double   grossProfitM = OrderProfit();
@@ -2227,7 +2229,7 @@ bool SynchronizeStatus() {
    SS.PLStats();
 
    if (open.ticket!=prevOpenTicket || ArrayRange(history, 0)!=prevHistorySize)
-      return(SaveStatus());                                          // immediately save status if positions changed
+      return(SaveStatus());                                          // immediately save status if orders changed
    return(!catch("SynchronizeStatus(5)"));
 }
 
