@@ -2618,6 +2618,18 @@ bool ValidateInputs() {
    if (!init_RecorderValidateInput(metrics))             return(false);
    if (recordCustom && metrics > 8)                      return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
 
+   // tmp. overwrite recorder.hstMultiplier of metrics 1,2,3,5,6,7 (remove together with input "EA.RecorderAutoScale")
+   int hstMultiplier = 1;
+   if (!EA.RecorderAutoScale || Digits!=2 || Close[0] < 500) {
+      hstMultiplier = Round(MathPow(10, Digits & (~1)));
+   }
+   if (metrics > 0) recorder.hstMultiplier[0] = hstMultiplier;
+   if (metrics > 1) recorder.hstMultiplier[1] = hstMultiplier;
+   if (metrics > 2) recorder.hstMultiplier[2] = hstMultiplier;
+   if (metrics > 4) recorder.hstMultiplier[4] = hstMultiplier;
+   if (metrics > 5) recorder.hstMultiplier[5] = hstMultiplier;
+   if (metrics > 6) recorder.hstMultiplier[6] = hstMultiplier;
+
    SS.All();
    return(!catch("ValidateInputs(27)"));
 }

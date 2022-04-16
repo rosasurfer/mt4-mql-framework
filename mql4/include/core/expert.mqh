@@ -984,7 +984,7 @@ bool start_Recorder() {
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
 
-      if (i==0) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
+      //if (i==0) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
       //if (i==3) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
