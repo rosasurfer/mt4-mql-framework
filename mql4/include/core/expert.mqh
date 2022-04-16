@@ -866,7 +866,6 @@ bool init_RecorderValidateInput(int &metrics) {
       int ids[]; ArrayResize(ids, 0);
       size = Explode(sValue, ",", sValues, NULL);
 
-      // foreach (sValues as custom-metric)
       for (int i=0; i < size; i++) {                     // metric syntax: {uint}[={double}]       // {uint}:   metric id (required)
          sValue = StrTrim(sValues[i]);                                                             // {double}: recording base value (optional)
          if (sValue == "") continue;
@@ -878,7 +877,7 @@ bool init_RecorderValidateInput(int &metrics) {
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
-         double hstBase = 0;                             // if zero recorder.defaultHstBase will be used
+         double hstBase = recorder.defaultHstBase;
          if (sValue != "") {                             // use specified base value instead of the default
             if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));
@@ -984,6 +983,9 @@ bool start_Recorder() {
       else                value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
+
+      if (i==0) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
+      //if (i==3) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);
