@@ -715,7 +715,7 @@ bool StartVirtualSequence(int signal) {
    open.ask          = Ask;
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
-   open.stoploss     = NULL;
+   open.stoploss     = 0;
    open.slippageP    = 0;
    open.swapM        = 0;
    open.commissionM  = 0;
@@ -866,7 +866,7 @@ bool ReverseVirtualSequence(int signal) {
    open.ask          = Ask;
    open.time         = Tick.time;
    open.price        = ifDouble(type, Bid, Ask);
-   open.stoploss     = NULL;
+   open.stoploss     = 0;
    open.slippageP    = 0;
    open.swapM        = 0;
    open.commissionM  = 0;
@@ -972,6 +972,7 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.bid          = NULL;
    open.ask          = NULL;
    open.price        = NULL;
+   open.stoploss     = NULL;
    open.slippageP    = NULL;
    open.swapM        = NULL;
    open.commissionM  = NULL;
@@ -979,7 +980,6 @@ bool ArchiveClosedPosition(int ticket, double bid, double ask, double slippage) 
    open.grossProfitU = NULL;
    open.netProfitM   = NULL;
    open.netProfitU   = NULL;
-
    return(!catch("ArchiveClosedPosition(4)"));
 }
 
