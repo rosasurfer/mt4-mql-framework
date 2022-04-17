@@ -17,11 +17,12 @@ int     __CoreFunction = NULL;               // currently executed MQL core func
 double  __rates[][6];                        // current price series
 int     __tickTimerId;                       // timer id for virtual ticks
 
-// PL recorder modes
+// recorder modes
 #define RECORDING_OFF         0              // recording off
 #define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
 #define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
 
+// recorder management
 int    recordMode;
 string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal;
@@ -29,7 +30,9 @@ bool   recordCustom;
 
 double recorder.defaultHstBase = 5000.0;
 bool   recorder.initialized    = false;
+
 bool   recorder.enabled      [];             // whether a metric is enabled
+bool   recorder.debug        [];
 string recorder.symbol       [];
 string recorder.symbolDescr  [];
 string recorder.symbolGroup  [];
@@ -689,6 +692,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    if (i >= size) {
       size = i + 1;
       ArrayResize(recorder.enabled,       size);
+      ArrayResize(recorder.debug,         size);
       ArrayResize(recorder.symbol,        size);
       ArrayResize(recorder.symbolDescr,   size);
       ArrayResize(recorder.symbolGroup,   size);
@@ -703,6 +707,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
    recorder.enabled      [i] = enabled;
+ //recorder.debug        [i] = ...              // keep existing value, possibly from afterInit()
    recorder.symbol       [i] = symbol;
    recorder.symbolDescr  [i] = symbolDescr;
    recorder.symbolGroup  [i] = symbolGroup;
@@ -754,7 +759,6 @@ string init_RecorderNewSymbol() {
          }
       }
    }
-
    return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
 }
 
@@ -819,7 +823,7 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
       if (!configValue) {
          string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
          int iValue = GetConfigInt(section, "HistoryFormat", 401);
-         if (iValue!=400 && iValue!=401) return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+         if (iValue!=400 && iValue!=401)      return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
          configValue = iValue;
       }
       hstFormat = configValue;
@@ -889,6 +893,7 @@ bool init_RecorderValidateInput(int &metrics) {
 
          if (ArraySize(recorder.symbol) < iValue) {
             ArrayResize(recorder.enabled,       iValue);
+            ArrayResize(recorder.debug,         iValue);
             ArrayResize(recorder.symbol,        iValue);
             ArrayResize(recorder.symbolDescr,   iValue);
             ArrayResize(recorder.symbolGroup,   iValue);
@@ -984,8 +989,9 @@ bool start_Recorder() {
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
 
-      //if (i==0) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
-      //if (i==3) debug("start_Recorder(0.1."+ i +")  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
+      if (recorder.debug[i]) {
+         debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
+      }
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);

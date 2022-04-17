@@ -113,15 +113,21 @@ int onInitRecompile() {
  */
 int afterInit() {
    SetLogfile(GetLogFilename());                   // open the logfile (flushes the buffer)
+   StoreSequenceId();                              // store the sequence id for templates changes/restart/recompilation etc.
 
-   if (IsTesting()) {                              // read debug config
-      string section = "Tester."+ StrTrim(ProgramName());
+   // read debug config
+   string section = ifString(IsTesting(), "Tester.", "") + StrTrim(ProgramName());
+   if (IsTesting()) {
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       test.onStopPause         = GetConfigBool(section, "OnStopPause",         true);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",  true);
    }
-   StoreSequenceId();                              // store the sequence id for other templates/restart/recompilation etc.
+
+   int size = ArraySize(recorder.symbol);
+   for (int i=0; i < size; i++) {
+      recorder.debug[i] = GetConfigBool(section, "DebugRecorder."+ i, false);
+   }
    return(catch("afterInit(1)"));
 }
 
