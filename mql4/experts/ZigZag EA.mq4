@@ -1552,23 +1552,23 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    hstDirectory  = "";
    hstFormat     = NULL;
 
-   int quoteUnitMultiplier = 1;                                               // use absolute value: e.g. 1.23 QU => 1.23 index points or quote currency
+   int quoteUnitMultiplier = 1;                                               // use absolute value: e.g. 1.23 QU => 1.23 quote currency or index points
    if (!EA.RecorderAutoScale || Digits!=2 || Close[0] < 500) {
       quoteUnitMultiplier = Round(MathPow(10, Digits & (~1)));                // convert to pip:     e.g. 1.23 QU => 123.0 pip
    }
 
    static string sQuoteUnits = ""; if (!StringLen(sQuoteUnits)) {
       if (quoteUnitMultiplier != 1)                                          sQuoteUnits = "pip";
-      else if (StrEndsWith(Symbol(), "EUR") || StrEndsWith(Symbol(), "USD")) sQuoteUnits = "quote currency";
+      else if (StrEndsWith(Symbol(), "EUR") || StrEndsWith(Symbol(), "USD")) sQuoteUnits = "QC";         // quote currency
       else                                                                   sQuoteUnits = "index points";
    }
 
    switch (i) {
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_TOTAL_UNITS_ZERO:             // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";    // "zEURUS_123A"
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"A";    // "zUS500_123A"
          symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 1 EURUSD in pip, zero spread"
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 1 US500 in index points, zero spread"
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
@@ -1587,37 +1587,37 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
          return(true);
 
       case METRIC_TOTAL_MONEY_NET:              // OK
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in "+ AccountCurrency() +", net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"D";    // in account currency
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" in AC, net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);
 
       // --------------------------------------------------------------------------------------------------------------------
       case METRIC_DAILY_UNITS_ZERO:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", zero spread";
-         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily pip, zero spread"
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"E";    // "zEURUS_456A"
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", zero spread";
+         symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);            // "ZigZag(40,H1) 3 EURUSD daily in pip, zero spread"
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_GROSS:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"F";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", gross";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", gross";
          symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_UNITS_NET:
          symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"G";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ sQuoteUnits +", net";
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in "+ sQuoteUnits +", net";
          symbolDigits  = ifInt(quoteUnitMultiplier==1, Digits, 1);
          hstMultiplier = quoteUnitMultiplier;
          return(true);
 
       case METRIC_DAILY_MONEY_NET:
-         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";
-         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily "+ AccountCurrency() +", net";
+         symbol        = "z"+ StrLeft(Symbol(), 5) +"_"+ sequence.id +"H";    // in account currency
+         symbolDescr   = "ZigZag("+ ZigZag.Periods +","+ PeriodDescription() +") 1 "+ Symbol() +" daily in AC, net";
          symbolDigits  = 2;
          hstMultiplier = 1;
          return(true);
