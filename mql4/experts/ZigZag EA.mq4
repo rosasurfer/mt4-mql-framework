@@ -2615,8 +2615,8 @@ bool ValidateInputs() {
 
    // EA.Recorder
    int metrics;
-   if (!init_RecorderValidateInput(metrics))             return(false);
-   if (recordCustom && metrics > 8)                      return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   if (!init_RecorderValidateInput(metrics)) return(false);
+   if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
 
    // tmp. overwrite recorder.hstMultiplier of metrics 1,2,3,5,6,7 (remove together with input "EA.RecorderAutoScale")
    int hstMultiplier = 1;
