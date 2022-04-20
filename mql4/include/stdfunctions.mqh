@@ -996,10 +996,16 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (_symbol=="_WTI"   )   result = "WTI";
                 break;
 
-      case '#': if      (_symbol=="#DAX.XEI" ) result = "DAX";
-                else if (_symbol=="#DJI.XDJ" ) result = "DJIA";
-                else if (_symbol=="#DJT.XDJ" ) result = "DJTA";
-                else if (_symbol=="#SPX.X.XP") result = "SP500";
+      case '#': if      (StrStartsWith(_symbol, "#DAX."))    result = "DAX";
+                else if (StrStartsWith(_symbol, "#DJ30_"))   result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJI."))    result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJT."))    result = "DJTA";
+                else if (StrStartsWith(_symbol, "#GER40_"))  result = "DAX";
+                else if (StrStartsWith(_symbol, "#JP225_"))  result = "JP225";
+                else if (StrStartsWith(_symbol, "#SPX."))    result = "SP500";
+                else if (StrStartsWith(_symbol, "#US100_"))  result = "NAS100";
+                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUS2000";
+                else if (StrStartsWith(_symbol, "#US500_"))  result = "SP500";
                 break;
 
       case '0':
