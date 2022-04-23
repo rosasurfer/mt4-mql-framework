@@ -4,6 +4,7 @@
  * @return int - error status
  */
 int onInit() {
+   //debug("onInit(0.1)  Point="+ NumberToStr(Point, ".1+") +"  Digits="+ Digits +"  MODE_POINT="+ NumberToStr(MarketInfo(Symbol(), MODE_POINT), ".1+") +"  MODE_DIGITS="+ NumberToStr(MarketInfo(Symbol(), MODE_DIGITS), ".1+"));
    hWndTerminal = GetTerminalMainWindow();
 
    if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()

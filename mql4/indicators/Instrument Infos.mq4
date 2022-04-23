@@ -3,19 +3,17 @@
  *
  *
  * TODO:
- *  - rename "Point size" to "Resolution"
- *  - fix usage of PipPoints
+ *  - replace usage of PipPoints by PipTicks
+ *  - FxPro: if all symbols are unsubscribed and trading is disabled (e.g. weekend) a template reload enables the full display
  *  - drop EXECUTION_CONTEXT.subpipdigits
  *  - drop SubPipPriceFormat
- *  - reformat init_Globals()
  *  - implement MarketInfoEx()
  *  - change "Pip value" to "Pip/Point/Tick value"
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
  *  - normalize quote prices to best-matching unit (pip/index point)
  *  - implement trade server configuration
  *  - fix symbol configuration bugs using trade server overrides
- *  - add money volatility per "IndexPoint/Pip/Tick" of the smallest trade unit
- *  - introduce MODE_POINTSIZE as alias for MODE_POINT
+ *  - add money volatility per "Index Point/Pip/Tick" of the smallest trade unit
  *  - add futures expiration times
  *  - add trade sessions
  *  - ChartInfos: fix quote and spread display
@@ -40,10 +38,10 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
-#define I_POINT                1
+#define I_DIGITS               1
 #define I_TICKSIZE             2
 #define I_PIPVALUE             3
 #define I_ADR                  4
@@ -131,7 +129,7 @@ int CreateChartObjects() {
    else GetLastError();
 
    // text labels: lines with some additional margin-top
-   int marginTop[] = {I_POINT, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
+   int marginTop[] = {I_DIGITS, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGINREQUIRED, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
    int size   = ArraySize(labels);
    int yCoord = yPos+4;
 
@@ -167,13 +165,13 @@ int UpdateInstrumentInfos() {
    color  fgFontColor     = ifInt(tradeAllowed, fgFontColorEnabled, fgFontColorDisabled);
 
                                                                             ObjectSetText(labels[I_TRADEALLOWED  ], "Trading enabled: "+ ifString(tradeAllowed, "yes", "no"),                        fgFontSize, fgFontName, fgFontColor);
-                                                                            ObjectSetText(labels[I_POINT         ], "Point size: "     +                         NumberToStr(Point,    PriceFormat), fgFontSize, fgFontName, fgFontColor);
+                                                                            ObjectSetText(labels[I_DIGITS        ], "Digits:      "    +                         Digits,                             fgFontSize, fgFontName, fgFontColor);
    double tickSize        = MarketInfo(symbol, MODE_TICKSIZE );             ObjectSetText(labels[I_TICKSIZE      ], "Tick size:  "     +                         NumberToStr(tickSize, PriceFormat), fgFontSize, fgFontName, fgFontColor);
    double tickValue       = MarketInfo(symbol, MODE_TICKVALUE);
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR(), vola = adr/Close[0] * 100;              ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR(), vola = adr/Close[0] * 100;              ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,   "n/a", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
