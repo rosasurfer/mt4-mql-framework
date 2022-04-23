@@ -4062,7 +4062,7 @@ bool EventListener.NewTick() {
    static int  lastTick, lastVol;
 
    // Mehrfachaufrufe während desselben Ticks erkennen
-   if (Tick == lastTick)
+   if (Ticks == lastTick)
       return(lastResult);
 
    // Es reicht immer, den Tick nur anhand des Volumens des aktuellen Timeframes zu bestimmen.
@@ -6306,7 +6306,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icALMA(1)", error));
-      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6342,7 +6342,7 @@ bool icChartInfos() {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icChartInfos(1)", error));
-      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6386,7 +6386,7 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icFATL(1)", error));
-      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6434,7 +6434,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icHalfTrend(1)", error));
-      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6485,7 +6485,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icJMA(1)", error));
-      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6544,7 +6544,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMACD(1)", error));
-      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6595,7 +6595,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMovingAverage(1)", error));
-      logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6644,7 +6644,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icNonLagMA(1)", error));
-      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6689,7 +6689,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icRSI(1)", error));
-      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6733,7 +6733,7 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSATL(1)", error));
-      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6782,7 +6782,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperSmoother(1)", error));
-      logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6833,7 +6833,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
-      logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6882,7 +6882,7 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTriEMA(1)", error));
-      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6927,7 +6927,7 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTrix(1)", error));
-      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6992,7 +6992,7 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icZigZag(1)", error));
-      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts

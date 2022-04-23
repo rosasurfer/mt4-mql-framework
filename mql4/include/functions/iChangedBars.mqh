@@ -42,7 +42,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    }
 
    // always return the same result for the same tick
-   if (Tick == data[i][CB.Tick])
+   if (Ticks == data[i][CB.Tick])
       return(data[i][CB.ChangedBars]);
 
    /*
@@ -99,7 +99,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    }
 
    // store all data
-   data[i][CB.Tick        ] = Tick;
+   data[i][CB.Tick        ] = Ticks;
    data[i][CB.Bars        ] = bars;
    data[i][CB.ChangedBars ] = changedBars;
    data[i][CB.FirstBarTime] = firstBarTime;

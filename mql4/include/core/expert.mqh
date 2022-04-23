@@ -247,7 +247,7 @@ int start() {
    }
 
    // resolve tick status
-   Tick++;                                                                       // simple counter, the value is meaningless
+   Ticks++;                                                                      // simple counter, the value is meaningless
    Tick.time = MarketInfo(Symbol(), MODE_TIME);
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
@@ -330,7 +330,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(6)")) return(last_error);
    }
 
@@ -990,7 +990,7 @@ bool start_Recorder() {
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
 
-      if (recorder.debug[i]) debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Tick +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
+      if (recorder.debug[i]) debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Ticks +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);

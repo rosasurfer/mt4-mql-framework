@@ -23,7 +23,7 @@ double   Pip;                                                     // Betrag eine
 int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
 int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
+int      Ticks;                                                   // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
 int      ChangedBars;                                             // indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts always -1)
