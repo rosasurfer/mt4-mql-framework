@@ -3,11 +3,12 @@
  *
  *
  * TODO:
+ *  - remove unitsize calculation
+ *
  *  - rewrite "Margin hedged" display: from 0% (full reduction on full hedge) to 100% (no reduction on full hedge)
  *  - rename "Point size" to "Resolution"
  *  - rename "Total" to "Total costs"
  *  - remove weekly and monthly ADR
- *  - remove unitsize calculation
  *  - normalize quote prices to best-matching unit (pip/index point)
  *  - implement trade server configuration
  *  - implement MarketInfoEx()
@@ -26,8 +27,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Volatility.UsedLeverage    =  1;        // 1: unleveraged => 1:1
-extern int Unitsize.TargetPerformance = 10;        // in percent
+extern int Volatility.Leverage = 1;             // used leverage for vola calculation (default: 1:1)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,7 +42,7 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LOTS","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
@@ -50,25 +50,24 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
 #define I_PIPVALUE             3
 #define I_ADR                  4
 #define I_VOLA                 5
-#define I_LOTS                 6
-#define I_STOPLEVEL            7
-#define I_FREEZELEVEL          8
-#define I_LOTSIZE              9
-#define I_MINLOT              10
-#define I_LOTSTEP             11
-#define I_MAXLOT              12
-#define I_MARGINREQUIRED      13
-#define I_MARGINHEDGED        14
-#define I_SPREAD              15
-#define I_COMMISSION          16
-#define I_TOTALFEES           17
-#define I_SWAPLONG            18
-#define I_SWAPSHORT           19
-#define I_ACCOUNT_LEVERAGE    20
-#define I_STOPOUT_LEVEL       21
-#define I_SERVER_NAME         22
-#define I_SERVER_TIMEZONE     23
-#define I_SERVER_SESSION      24
+#define I_STOPLEVEL            6
+#define I_FREEZELEVEL          7
+#define I_LOTSIZE              8
+#define I_MINLOT               9
+#define I_LOTSTEP             10
+#define I_MAXLOT              11
+#define I_MARGINREQUIRED      12
+#define I_MARGINHEDGED        13
+#define I_SPREAD              14
+#define I_COMMISSION          15
+#define I_TOTALFEES           16
+#define I_SWAPLONG            17
+#define I_SWAPSHORT           18
+#define I_ACCOUNT_LEVERAGE    19
+#define I_STOPOUT_LEVEL       20
+#define I_SERVER_NAME         21
+#define I_SERVER_TIMEZONE     22
+#define I_SERVER_SESSION      23
 
 
 /**
@@ -78,12 +77,9 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","LO
  */
 int onInit() {
    // validate inputs
-   // Volatility.UsedLeverage
-   if (Volatility.UsedLeverage < 1)     return(catch("onInit(1)  invalid input parameter Volatility.UsedLeverage: "+ Volatility.UsedLeverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
-   // Unitsize.TargetPerformance
-   if (Unitsize.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Unitsize.TargetPerformance: "+ Unitsize.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (Volatility.Leverage < 1) return(catch("onInit(1)  invalid input parameter Volatility.Leverage: "+ Volatility.Leverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
 
-   SetIndexLabel(0, NULL);              // "Data" window
+   SetIndexLabel(0, NULL);      // "Data" window
    CreateChartObjects();
    return(catch("onInit(1)"));
 }
@@ -183,10 +179,8 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",                                                            fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateVola(Volatility.UsedLeverage);         ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.UsedLeverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
-   double unitsize        = CalculateLots(Unitsize.TargetPerformance);
-   double leverage        = CalculateLeverage(unitsize);                    ObjectSetText(labels[I_LOTS          ], "Unitsize:   "     + ifString(!unitsize, "(not enough money)", NumberToStr(Unitsize.TargetPerformance, ".0+") +"%/ADR = "+ NumberToStr(unitsize, ".0+") +" lot  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",                                                        fgFontSize, fgFontName, fgFontColor);
+   double vola            = CalculateVola(Volatility.Leverage);             ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.Leverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -198,7 +192,7 @@ int UpdateInstrumentInfos() {
 
    double marginRequired  = MarketInfo(symbol, MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = NULL;
    double lotValue        = MathDiv(Close[0], tickSize) * tickValue;
-          leverage        = MathDiv(lotValue, marginRequired);              ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(!marginRequired, "", NumberToStr(marginRequired, ",'.2+R") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
+   double leverage        = MathDiv(lotValue, marginRequired);              ObjectSetText(labels[I_MARGINREQUIRED], "Margin required: "+ ifString(!marginRequired, "", NumberToStr(marginRequired, ",'.2+R") +" "+ accountCurrency +"  (1:"+ Round(leverage) +")"), fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
    double marginHedged    = MarketInfo(symbol, MODE_MARGINHEDGED);
           marginHedged    = MathDiv(marginHedged, lotSize) * 100;           ObjectSetText(labels[I_MARGINHEDGED  ], "Margin hedged:  " + ifString(!marginRequired, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                  fgFontSize, fgFontName, ifInt(!marginRequired, fgFontColorDisabled, fgFontColor));
 
@@ -280,6 +274,9 @@ double iADR() {
       adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
    }
    return(adr);
+
+   CalculateLots(NULL);
+   CalculateLeverage(NULL);
 }
 
 
