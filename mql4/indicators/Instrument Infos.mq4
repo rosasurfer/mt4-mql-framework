@@ -4,7 +4,9 @@
  *
  * TODO:
  *  - replace usage of PipPoints by PipTicks
- *  - FxPro: if all symbols are unsubscribed and trading is disabled (e.g. weekend) a template reload enables the full display
+ *  - FxPro:
+ *     if all symbols are unsubscribed and trading is disabled (e.g. weekend) a template reload enables the full display
+ *     #GER40_M22: Point=0.1  PriceFormat=",'R.0'"  NumberToStr(Point, PriceFormat) => 0
  *  - drop EXECUTION_CONTEXT.subpipdigits
  *  - drop SubPipPriceFormat
  *  - implement MarketInfoEx()
@@ -16,7 +18,6 @@
  *  - add money volatility per "Index Point/Pip/Tick" of the smallest trade unit
  *  - add futures expiration times
  *  - add trade sessions
- *  - ChartInfos: fix quote and spread display
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
