@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - move "Volatility" to the end of ADR line
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
  *  - rename "Point size" to "Resolution"
  *  - rename "Total" to "Total costs"
@@ -39,32 +38,31 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGINREQUIRED","MARGINHEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","STOPOUT_LEVEL","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_POINT                1
 #define I_TICKSIZE             2
 #define I_PIPVALUE             3
 #define I_ADR                  4
-#define I_VOLA                 5
-#define I_STOPLEVEL            6
-#define I_FREEZELEVEL          7
-#define I_LOTSIZE              8
-#define I_MINLOT               9
-#define I_LOTSTEP             10
-#define I_MAXLOT              11
-#define I_MARGINREQUIRED      12
-#define I_MARGINHEDGED        13
-#define I_SPREAD              14
-#define I_COMMISSION          15
-#define I_TOTALFEES           16
-#define I_SWAPLONG            17
-#define I_SWAPSHORT           18
-#define I_ACCOUNT_LEVERAGE    19
-#define I_STOPOUT_LEVEL       20
-#define I_SERVER_NAME         21
-#define I_SERVER_TIMEZONE     22
-#define I_SERVER_SESSION      23
+#define I_STOPLEVEL            5
+#define I_FREEZELEVEL          6
+#define I_LOTSIZE              7
+#define I_MINLOT               8
+#define I_LOTSTEP              9
+#define I_MAXLOT              10
+#define I_MARGINREQUIRED      11
+#define I_MARGINHEDGED        12
+#define I_SPREAD              13
+#define I_COMMISSION          14
+#define I_TOTALFEES           15
+#define I_SWAPLONG            16
+#define I_SWAPSHORT           17
+#define I_ACCOUNT_LEVERAGE    18
+#define I_STOPOUT_LEVEL       19
+#define I_SERVER_NAME         20
+#define I_SERVER_TIMEZONE     21
+#define I_SERVER_SESSION      22
 
 
 /**
@@ -173,8 +171,7 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true, true)),                         fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateVola();                                ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR(), vola = adr/Close[0] * 100;              ObjectSetText(labels[I_ADR           ], "ADR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -269,8 +266,9 @@ double iADR() {
    }
    return(adr);
 
-   CalculateLots(NULL);
    CalculateLeverage(NULL);
+   CalculateLots(NULL);
+   CalculateVola();
 }
 
 
