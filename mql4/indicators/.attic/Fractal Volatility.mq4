@@ -147,7 +147,7 @@ double Volatility(int bar) {
          }
          break;
    }
-   return(NormalizeDouble(vola/Pips, 1));
+   return(NormalizeDouble(vola/Pip, 1));
 }
 
 
