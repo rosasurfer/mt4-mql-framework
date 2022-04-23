@@ -26,7 +26,7 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
          sUpperValue = NumberToStr(upperValue, PipPriceFormat);
          sLowerValue = NumberToStr(lowerValue, PipPriceFormat);
       }
-      else if (digits == SubPipDigits) {
+      else if (digits == PipDigits+1) {
          sUpperValue = NumberToStr(upperValue, SubPipPriceFormat);
          sLowerValue = NumberToStr(lowerValue, SubPipPriceFormat);
       }

@@ -20,7 +20,7 @@ bool     __STATUS_OFF;                                            // Programm ko
 int      __STATUS_OFF.reason;                                     // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
 
 double   Pip;                                                     // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
-int      PipDigits, SubPipDigits;                                 // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
+int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
 int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
