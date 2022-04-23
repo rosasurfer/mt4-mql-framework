@@ -2471,15 +2471,13 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       type=int
       <content>
       Number of digits after the decimal point for prices of the current symbol.<br/>
-      <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
 
-      <br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
       <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim &Ouml;ffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-          Nur ein Reload des Templates korrigiert die falschen Werte.</li>
-      <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
+          Nur ein weiterer init-Cycle korrigiert die falschen Werte.</li>
+      <li>In den Terminalversionen ???-??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
       <li>Die Variablen Digits und Point k&ouml;nnen vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
       <br/>
@@ -2592,15 +2590,13 @@ The current bar which is the last in the array is indexed as 0. The oldest bar, 
       type=double
       <content>
       The price resolution of prices of the current symbol in the quote currency.<br/>
-      <b>See also</b> <a href="help://common_MarketInfo">MarketInfo()</a>.
 
-      <br/>
       <br/>
       <span style="color:red">Bugs:</span>
       <br/>
       <li>Die Variablen Digits und Point sind in <span class="function">init()</span> beim &Ouml;ffnen eines neuen Charts und beim Accountwechsel u.U. falsch gesetzt.
-          Nur ein Reload des Templates korrigiert die falschen Werte.</li>
-      <li>Ab Terminalversion ??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
+          Nur ein weiterer init-Cycle korrigiert die falschen Werte.</li>
+      <li>In den Terminalversionen ???-??? ist in Offline-Charts die Variable Digits permanent auf 5 und die Variable Point permanent auf 0.0000'1 gesetzt.</li>
       <li>Die Variablen Digits und Point k&ouml;nnen vom Broker u.U. falsch gesetzt worden sein (z.B. S&P500 bei Forex Ltd).</li>
       <br/>
       <br/>

@@ -23,12 +23,12 @@ double   Pip;                                                     // Betrag eine
 int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
 int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
-int      Ticks;                                                   // number of times MQL::start() was called (value survives timeframe changes)
+int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts always -1)
-int      UnchangedBars, ValidBars;                                // indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts always -1)
-int      ShiftedBars;                                             // indicators: non-zero in offline charts only                                (in experts and scripts always -1)
+int      ChangedBars;                                             // in indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts: always -1)
+int      UnchangedBars, ValidBars;                                // in indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts: always -1)
+int      ShiftedBars;                                             // in indicators: non-zero in offline charts only                                (in experts and scripts: always -1)
 
 int      last_error;                                              // last error of the current execution
 int      prev_error;                                              // last error of the previous start() call
