@@ -21,7 +21,7 @@ int      __STATUS_OFF.reason;                                     // Ursache für
 
 double   Pip;                                                     // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits, SubPipDigits;                                 // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
-int      PipPoint, PipPoints;                                     // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
+int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
 string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
 int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
 datetime Tick.time;                                               // server time of the last received tick

@@ -3,15 +3,17 @@
  *
  *
  * TODO:
- *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
+ *  - rename global var Tick to Ticks
  *  - rename "Point size" to "Resolution"
+ *  - fix usage of PipPoints, SubPipDigits, SubPipPriceFormat
+ *  - reformat init_Globals()
+ *  - implement MarketInfoEx()
+ *  - change "Pip value" to "Pip/Point/Tick value"
+ *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
  *  - normalize quote prices to best-matching unit (pip/index point)
  *  - implement trade server configuration
- *  - implement MarketInfoEx()
  *  - fix symbol configuration bugs using trade server overrides
- *  - change "Pip value" to "Pip/Point/Tick value"
  *  - add money volatility per "IndexPoint/Pip/Tick" of the smallest trade unit
- *  - rename global var Tick to Ticks
  *  - introduce MODE_POINTSIZE as alias for MODE_POINT
  *  - add futures expiration times
  *  - add trade sessions
