@@ -1392,11 +1392,11 @@ bool StartSequence(int signal) {
 
    // calculate new gridbase and set it after start/stop data
    if (!gridbase)                                                 // use an existing pre-set gridbase
-      gridbase = startPrice - sequence.level*GridSize*Pips;
+      gridbase = startPrice - sequence.level*GridSize*Pip;
    ResetGridbase(startTime, gridbase);                            // make sure the gridbase event follows the start event
 
    // open start positions if configured, and update start price according to real gridbase or realized price
-   if (!StartLevel) startPrice = NormalizeDouble(gridbase + sequence.level*GridSize*Pips, Digits);
+   if (!StartLevel) startPrice = NormalizeDouble(gridbase + sequence.level*GridSize*Pip, Digits);
    else if (!RestorePositions(startTime, startPrice)) return(false);
 
    sequence.start.price[0] = startPrice;
@@ -1664,7 +1664,7 @@ bool StopSequence(int signal) {
          int    newSequenceLevel = 0;
          if (AutoRestart == "Continue") {                   // continue after TP at level 1 if configured
             newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
-            newGridbase      = stopPrice - newSequenceLevel*GridSize*Pips;
+            newGridbase      = stopPrice - newSequenceLevel*GridSize*Pip;
          }
          if (!ResetSequence(newGridbase, newSequenceLevel)) return(false);
          if (AutoRestart == "Continue") StartSequence(NULL);
@@ -2678,7 +2678,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
 
          if (!orders.closeTime[i]) {                                       // order is open, check the SL of level 1 orders
             if (Abs(level) == 1) {
-               double stoploss = gridbase + (level-levelStep)*GridSize*Pips;
+               double stoploss = gridbase + (level-levelStep)*GridSize*Pip;
                if (NE(orders.stopLoss[i], stoploss, Digits)) {
                   int error = ModifyStopLoss(i, gridbase, stoploss);
                   if (error > 0)       return(false);
@@ -2962,7 +2962,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
    if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pip, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
    int counter, ticket, oe[];
    if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
    else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
@@ -3108,8 +3108,8 @@ int Grid.TrailPendingOrder(int i) {
    int      level        = orders.level[i];
    double   gridbase     = GetGridbase();
    datetime pendingTime;
-   double   pendingPrice = NormalizeDouble(gridbase +          level  * GridSize * Pips, Digits);
-   double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
+   double   pendingPrice = NormalizeDouble(gridbase +          level  * GridSize * Pip, Digits);
+   double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pip, Digits);
 
    if (!SelectTicket(ticket, "Grid.TrailPendingOrder(4)", true)) return(NULL);
    datetime prevPendingTime  = OrderOpenTime();
@@ -3456,7 +3456,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    double   lots        = sequence.unitsize;
    double   price       = NULL;
    int      slippage    = 1;
-   double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
+   double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -3517,9 +3517,9 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  "+ sequence.name +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
-   double   stopPrice   = GetGridbase() + level*GridSize*Pips;
+   double   stopPrice   = GetGridbase() + level*GridSize*Pip;
    int      slippage    = NULL;
-   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
+   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -3575,9 +3575,9 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  "+ sequence.name +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
-   double   limitPrice  = GetGridbase() + level*GridSize*Pips;
+   double   limitPrice  = GetGridbase() + level*GridSize*Pip;
    int      slippage    = NULL;
-   double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
+   double   stopLoss    = limitPrice - Sign(level)*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -4826,7 +4826,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(!catch("ReadStatus.ParseOrder(16)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
    if (pendingType!=OP_UNDEFINED) {
       if (EQ(pendingPrice, 0))                                           return(!catch("ReadStatus.ParseOrder(17)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
-      if (NE(pendingPrice, gridbase+level*GridSize*Pips, Digits))        return(!catch("ReadStatus.ParseOrder(18)  gridbase/pending order price mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
+      if (NE(pendingPrice, gridbase+level*GridSize*Pip, Digits))         return(!catch("ReadStatus.ParseOrder(18)  gridbase/pending order price mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
    }
 
    // type
@@ -4888,7 +4888,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (!StrIsNumeric(sStopLoss))                                         return(!catch("ReadStatus.ParseOrder(39)  illegal order stoploss "+ DoubleQuoteStr(sStopLoss) +" in order record", ERR_INVALID_FILE_FORMAT));
    double stopLoss = StrToDouble(sStopLoss);
    if (LE(stopLoss, 0))                                                  return(!catch("ReadStatus.ParseOrder(40)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
-   if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pips, Digits)) return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
+   if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pip, Digits))  return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
 
    // closedBySL
    string sClosedBySL = StrTrim(values[14]);

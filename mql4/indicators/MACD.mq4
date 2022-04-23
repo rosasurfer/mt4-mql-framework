@@ -297,7 +297,7 @@ int onTick() {
       }
 
       // final MACD
-      bufferMACD[bar] = (fastMA - slowMA)/Pips;
+      bufferMACD[bar] = (fastMA - slowMA)/Pip;
       if (isCentUnit) bufferMACD[bar] /= 100;
 
       if (bufferMACD[bar] > 0) {
