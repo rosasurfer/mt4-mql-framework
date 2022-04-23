@@ -3,8 +3,7 @@
  *
  *
  * TODO:
- *  - remove unitsize calculation
- *
+ *  - move "Volatility" to end of ADR/ATR line
  *  - rewrite "Margin hedged" display: from 0% (full reduction on full hedge) to 100% (no reduction on full hedge)
  *  - rename "Point size" to "Resolution"
  *  - rename "Total" to "Total costs"
@@ -27,7 +26,6 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Volatility.Leverage = 1;             // used leverage for vola calculation (default: 1:1)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -76,10 +74,7 @@ string labels[] = {"TRADEALLOWED","POINT","TICKSIZE","PIPVALUE","ADR","VOLA","ST
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
-   if (Volatility.Leverage < 1) return(catch("onInit(1)  invalid input parameter Volatility.Leverage: "+ Volatility.Leverage +" (min. 1)", ERR_INVALID_INPUT_PARAMETER));
-
-   SetIndexLabel(0, NULL);      // "Data" window
+   SetIndexLabel(0, NULL);             // "Data" window
    CreateChartObjects();
    return(catch("onInit(1)"));
 }
@@ -179,8 +174,8 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",                                                        fgFontSize, fgFontName, fgFontColor);
-   double vola            = CalculateVola(Volatility.Leverage);             ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR  (1:"+ NumberToStr(Volatility.Leverage, ".0+") +")"), fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",     fgFontSize, fgFontName, fgFontColor);
+   double vola            = CalculateVola();                                ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints; ObjectSetText(labels[I_FREEZELEVEL   ], "Freeze level: "   +                         DoubleToStr(freezeLevel, Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
@@ -281,18 +276,16 @@ double iADR() {
 
 
 /**
- * Calculate and return the performance volatility of a position per ADR using the specified leverage. Allows to compare the
- * effective volatility of different instruments.
+ * Calculate the performance volatility of an unleveraged position per ADR. Allows to compare the effective volatility of
+ * different instruments.
  *
- * @param  double leverage - used leverage
- *
- * @return double - performance volatility (i.e. equity change) in percent or NULL in case of errors
+ * @return double - equity change of an unleveraged position in percent or NULL in case of errors
  */
-double CalculateVola(double leverage) {
+double CalculateVola() {
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    double lotValue  = MathDiv(Close[0], tickSize) * tickValue;          // value of 1 lot in account currency
-   double vola      = MathDiv(leverage, lotValue) * tickValue * MathDiv(iADR(), tickSize);
+   double vola      = MathDiv(1, lotValue) * tickValue * MathDiv(iADR(), tickSize);
    return(vola * 100);
 }
 
