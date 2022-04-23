@@ -90,7 +90,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    error = NO_ERROR;
 
    // always return the same result for the same tick
-   if (Tick == data[i][CR.Tick])
+   if (Ticks == data[i][CR.Tick])
       return(data[i][CR.ChangedBars]);
 
    datetime firstBarTime=0, lastBarTime=0;
@@ -128,7 +128,7 @@ int iCopyRates(double &target[][], string symbol="0", int timeframe=NULL) {
    }
 
    // store all data
-   data[i][CR.Tick        ] = Tick;
+   data[i][CR.Tick        ] = Ticks;
    data[i][CR.Bars        ] = bars;
    data[i][CR.ChangedBars ] = changedBars;
    data[i][CR.FirstBarTime] = firstBarTime;

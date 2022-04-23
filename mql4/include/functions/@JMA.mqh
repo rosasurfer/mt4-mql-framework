@@ -67,7 +67,7 @@ double JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, doubl
 
    if (bar==iStartbar && iStartbar < iMaxBar) {
       // restore values
-      //debug("JMASeries(0.2)  Tick="+ Tick +"  bar="+ bar +"  restore");
+      //debug("JMASeries(0.2)  Tick="+ Ticks +"  bar="+ bar +"  restore");
       datetime dtNew = Time[iStartbar+1];
       datetime dtOld = dtTime[h];
       if (dtNew != dtOld) return(!catch("JMASeries(5)  h="+ h +", invalid parameter iStartbar: "+ iStartbar +" (too "+ ifString(dtNew > dtOld, "small", "large") +")", ERR_INVALID_PARAMETER));
@@ -89,7 +89,7 @@ double JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, doubl
    if (bar == 1) {
       if (iStartbar!=1 || Time[iStartbar+2]==dtTime[h]) {
          // store values
-         //debug("JMASeries(0.1)  Tick="+ Tick +"  bar="+ bar +"  backup");
+         //debug("JMASeries(0.1)  Tick="+ Ticks +"  bar="+ bar +"  backup");
          for (i=127; i >= 0; i--) dList128ABak[h][i] = dList128A[h][i];
          for (i=127; i >= 0; i--) dList128BBak[h][i] = dList128B[h][i];
          for (i=10;  i >= 0; i--) dRing11Bak  [h][i] = dRing11  [h][i];

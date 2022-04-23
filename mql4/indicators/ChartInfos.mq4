@@ -3687,7 +3687,7 @@ bool QC.HandleLfxTerminalMessages() {
  *                "LFX:{iTicket]:profit={dValue}" - der PL der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
-   //debug("ProcessLfxTerminalMessage(1)  tick="+ Tick +"  msg=\""+ message +"\"");
+   //debug("ProcessLfxTerminalMessage(1)  tick="+ Ticks +"  msg=\""+ message +"\"");
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix

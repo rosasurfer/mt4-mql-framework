@@ -182,7 +182,7 @@ bool init_Globals() {
    PipPriceFormat    = StringConcatenate(",'R.", PipDigits);
    SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
    PriceFormat       = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-   Tick              = __ExecutionContext[EC.ticks       ];
+   Ticks             = __ExecutionContext[EC.ticks       ];
    Tick.time         = __ExecutionContext[EC.currTickTime];
 
    N_INF = MathLog(0);                                               // negative infinity
@@ -215,7 +215,7 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   Tick++;                                                                          // einfacher Zähler, der konkrete Werte hat keine Bedeutung
+   Ticks++;                                                                         // einfacher Zähler, der konkrete Werte hat keine Bedeutung
    Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
                                                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    if (!Tick.time) {
@@ -364,7 +364,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(9)")) return(last_error);
    }
 

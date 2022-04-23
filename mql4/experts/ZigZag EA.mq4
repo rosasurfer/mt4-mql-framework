@@ -332,7 +332,7 @@ bool IsZigZagSignal(int &signal) {
    static int lastTick, lastResult, lastSignal;
    int trend, reversal;
 
-   if (Tick == lastTick) {
+   if (Ticks == lastTick) {
       signal = lastResult;
    }
    else {
@@ -356,7 +356,7 @@ bool IsZigZagSignal(int &signal) {
             }
          }
       }
-      lastTick   = Tick;
+      lastTick   = Ticks;
       lastResult = signal;
    }
    return(signal != NULL);

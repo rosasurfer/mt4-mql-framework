@@ -113,7 +113,7 @@ int start() {
    }
    __CoreFunction = CF_START;
 
-   Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ChangedBars    = -1;                                                       // in scripts not available
@@ -122,7 +122,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 

@@ -3,7 +3,6 @@
  *
  *
  * TODO:
- *  - rename global var Tick to Ticks
  *  - rename "Point size" to "Resolution"
  *  - fix usage of PipPoints
  *  - drop EXECUTION_CONTEXT.subpipdigits

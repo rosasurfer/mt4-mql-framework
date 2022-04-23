@@ -492,7 +492,7 @@ int onTick() {
    if (track.signals) {
       int  size    = ArrayRange(signal.config, 0);
       bool success = false;
-      //debug("onTick(1)  Tick="+ Tick);
+      //debug("onTick(1)  Tick="+ Ticks);
 
       for (int i=0; i < size; i++) {
          if (signal.config[i][SIGNAL_CONFIG_ENABLED] != 0) {
@@ -1012,8 +1012,8 @@ bool BarRangeSignal.Check(int index) {
    static int  lastTick;
    static bool lastTick.new, tick.new;
 
-   if (Tick != lastTick) {
-      lastTick = Tick;
+   if (Ticks != lastTick) {
+      lastTick = Ticks;
       if (tick.new) lastTick.new = true;
       tick.new = EventListener.NewTick();
    }

@@ -311,8 +311,8 @@ int onTick() {
    else if (sequence.status == STATUS_PROGRESSING) {
       bool gridChanged = false;                                   // whether the current gridbase or gridlevel changed
       if (UpdateStatus(gridChanged)) {
-         if (IsStopSignal(signal))        StopSequence(signal);
-         else if (Tick==1 || gridChanged) UpdatePendingOrders();
+         if (IsStopSignal(signal))         StopSequence(signal);
+         else if (Ticks==1 || gridChanged) UpdatePendingOrders();
       }
    }
 
@@ -817,7 +817,7 @@ bool ConfirmFirstTickTrade(string caller, string message) {
       return(true);                       // will differ and the calling logic must correctly interprete the first result.
 
    bool result;
-   if (Tick > 1 || IsTesting()) {
+   if (Ticks > 1 || IsTesting()) {
       result = true;
    }
    else {
@@ -1330,7 +1330,7 @@ bool StartSequence(int signal) {
    if (IsLastError())                     return(false);
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
       return(_false(StopSequence(NULL)));
 
    sequence.status = STATUS_STARTING;
@@ -1439,7 +1439,7 @@ bool StopSequence(int signal) {
 
    // a progressing sequence has open orders to close
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
+      if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
          return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       sequence.status = STATUS_STOPPING;
@@ -1860,7 +1860,7 @@ bool ResumeSequence(int signal) {
    if (IsLastError())                                                      return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
@@ -2959,7 +2959,7 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
 
    int pendingType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pip, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
@@ -3036,7 +3036,7 @@ bool Grid.AddPosition(int level) {
 
    int oe[], orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(orderType) +" order now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(orderType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    int ticket = SubmitMarketOrder(orderType, level, oe);
@@ -3100,7 +3100,7 @@ int Grid.TrailPendingOrder(int i) {
    if (orders.type[i] != OP_UNDEFINED)        return(!catch("Grid.TrailPendingOrder(2)  "+ sequence.name +" cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
    if (orders.closeTime[i] != 0)              return(!catch("Grid.TrailPendingOrder(3)  "+ sequence.name +" cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    // calculate changing data
@@ -3171,7 +3171,7 @@ int Grid.DeleteOrder(int i) {
    if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING) return(catch("Grid.DeleteOrder(1)  "+ sequence.name +" cannot delete order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (orders.type[i] != OP_UNDEFINED)                                          return(catch("Grid.DeleteOrder(2)  "+ sequence.name +" cannot delete "+ ifString(orders.closeTime[i], "closed", "open") +" "+ OperationTypeDescription(orders.type[i]) +" order", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
@@ -3220,7 +3220,7 @@ int Grid.DeleteLimit(int i) {
    if (i < 0 || i >= ArraySize(orders.ticket))                                          return(catch("Grid.DeleteLimit(2)  "+ sequence.name +" invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
    if (orders.type[i]==OP_UNDEFINED || orders.type[i] > OP_SELL || orders.closeTime[i]) return(catch("Grid.DeleteLimit(3)  "+ sequence.name +" cannot delete limit of "+ ifString(orders.closeTime[i], "closed", "open") +" "+ OperationTypeDescription(orders.type[i]) +" order", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteLimit()", "Do you really want to delete the limit of the position at level "+ orders.level[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteLimit()", "Do you really want to delete the limit of the position at level "+ orders.level[i] +" now?"))
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the limit already being executed
