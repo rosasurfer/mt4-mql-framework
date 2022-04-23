@@ -7,7 +7,6 @@
  *  - rewrite "Margin hedged" display: from 0% (full reduction on full hedge) to 100% (no reduction on full hedge)
  *  - rename "Point size" to "Resolution"
  *  - rename "Total" to "Total costs"
- *  - remove weekly and monthly ADR
  *  - normalize quote prices to best-matching unit (pip/index point)
  *  - implement trade server configuration
  *  - implement MarketInfoEx()
@@ -174,7 +173,7 @@ int UpdateInstrumentInfos() {
    double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
    double pipValue        = PipPoints * pointValue;                         ObjectSetText(labels[I_PIPVALUE      ], "Pip value:  "     + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency), fgFontSize, fgFontName, fgFontColor);
 
-   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  D="     + ifString(!adr,      "", PipToStr(adr/Pip, true, true)) +"     W=      MN=",     fgFontSize, fgFontName, fgFontColor);
+   double adr             = iADR();                                         ObjectSetText(labels[I_ADR           ], "ATR(20):  "       + ifString(!adr,      "", PipToStr(adr/Pip, true, true)),                         fgFontSize, fgFontName, fgFontColor);
    double vola            = CalculateVola();                                ObjectSetText(labels[I_VOLA          ], "Volatility:   "   + ifString(!vola,     "", NumberToStr(NormalizeDouble(vola, 2), ".0+") +"%/ADR"), fgFontSize, fgFontName, fgFontColor);
 
    double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL  )/PipPoints; ObjectSetText(labels[I_STOPLEVEL     ], "Stop level:    "  +                         DoubleToStr(stopLevel,   Digits & 1) +" pip", fgFontSize, fgFontName, fgFontColor);
