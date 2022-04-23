@@ -5,7 +5,6 @@
  * TODO:
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
  *  - rename "Point size" to "Resolution"
- *  - rename "Total" to "Total costs"
  *  - normalize quote prices to best-matching unit (pip/index point)
  *  - implement trade server configuration
  *  - implement MarketInfoEx()
@@ -122,7 +121,7 @@ int CreateChartObjects() {
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xPos    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+166);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+136);
       ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
       RegisterObject(label);
    }
@@ -191,7 +190,7 @@ int UpdateInstrumentInfos() {
    double commission      = GetCommission();
    double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), (Digits & 1) + 1);
                                                                             ObjectSetText(labels[I_COMMISSION    ], "Commission:  "    + ifString(!commission, "-", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(commissionPip, ".1+") +" pip"), fgFontSize, fgFontName, fgFontColor);
-                                                                            ObjectSetText(labels[I_TOTALFEES     ], "Total:           "+ ifString(!commission, "-", NumberToStr(spreadPip + commissionPip, ".1+") +" pip"),                                              fgFontSize, fgFontName, fgFontColor);
+                                                                            ObjectSetText(labels[I_TOTALFEES     ], "Total cost:     " + ifString(!commission, "-", NumberToStr(spreadPip + commissionPip, ".1+") +" pip"),                                              fgFontSize, fgFontName, fgFontColor);
    int    swapMode        = MarketInfo(symbol, MODE_SWAPTYPE );
    double swapLong        = MarketInfo(symbol, MODE_SWAPLONG );
    double swapShort       = MarketInfo(symbol, MODE_SWAPSHORT);
