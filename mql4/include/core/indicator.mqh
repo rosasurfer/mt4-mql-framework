@@ -170,15 +170,14 @@ bool init_Globals() {
    //
    // TODO: implement workaround in MT4Expander
    //
-   __isChart         = (__ExecutionContext[EC.hChart] != 0);
-   PipDigits         = Digits & (~1);
-   PipPoints         = MathRound(MathPow(10, Digits & 1));
-   Pip               = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
-   PipPriceFormat    = StringConcatenate(",'R.", PipDigits);
-   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat       = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
-   Ticks             = __ExecutionContext[EC.ticks       ];
-   Tick.time         = __ExecutionContext[EC.currTickTime];
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   PipDigits      = Digits & (~1);
+   PipPoints      = MathRound(MathPow(10, Digits & 1));
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat = ",'R."+ PipDigits;
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
+   Ticks          = __ExecutionContext[EC.ticks       ];
+   Tick.time      = __ExecutionContext[EC.currTickTime];
 
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity
