@@ -1,5 +1,24 @@
 /**
- * Display instrument specifications and properties.
+ * Display instrument specifications and trade server infos.
+ *
+ *
+ * TODO:
+ *  - rewrite "Margin hedged" display: from 0% (full reduction on full hedge) to 100% (no reduction on full hedge)
+ *  - rename "Point size" to "Resolution"
+ *  - rename "Total" to "Total costs"
+ *  - remove weekly and monthly ADR
+ *  - remove unitsize calculation
+ *  - normalize quote prices to best-matching unit (pip/index point)
+ *  - implement trade server configuration
+ *  - implement MarketInfoEx()
+ *  - fix symbol configuration bugs using trade server overrides
+ *  - change "Pip value" to "Pip/Point/Tick value"
+ *  - add money volatility per "IndexPoint/Pip/Tick" of the smallest trade unit
+ *  - rename global var Tick to Ticks
+ *  - introduce MODE_POINTSIZE as alias for MODE_POINT
+ *  - add futures expiration times
+ *  - add trade sessions
+ *  - ChartInfos: fix quote and spread display
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -7,8 +26,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Volatility.UsedLeverage    =  1;     // 1: unleveraged => 1:1
-extern int Unitsize.TargetPerformance = 10;     // in percent
+extern int Volatility.UsedLeverage    =  1;        // 1: unleveraged => 1:1
+extern int Unitsize.TargetPerformance = 10;        // in percent
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -64,7 +83,7 @@ int onInit() {
    // Unitsize.TargetPerformance
    if (Unitsize.TargetPerformance <= 0) return(catch("onInit(2)  invalid input parameter Unitsize.TargetPerformance: "+ Unitsize.TargetPerformance +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
 
-   SetIndexLabel(0, NULL);          // "Data" window
+   SetIndexLabel(0, NULL);              // "Data" window
    CreateChartObjects();
    return(catch("onInit(1)"));
 }

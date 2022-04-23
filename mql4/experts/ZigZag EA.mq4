@@ -23,6 +23,8 @@
  *
  *
  * TODO:
+ *  - H1 inside bars on #GER40_M22 are broken
+ *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
  *     adjust virtual commissions
