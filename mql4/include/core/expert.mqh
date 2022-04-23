@@ -557,7 +557,7 @@ bool CheckErrors(string caller, int error = NULL) {
  */
 bool init_Globals() {
    __isChart         = (__ExecutionContext[EC.hChart] != 0);
-   PipDigits         = Digits & (~1);                        SubPipDigits      = PipDigits+1;
+   PipDigits         = Digits & (~1);
    PipPoints         = MathRound(MathPow(10, Digits & 1));
    Pip               = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
    PipPriceFormat    = StringConcatenate(",'R.", PipDigits);

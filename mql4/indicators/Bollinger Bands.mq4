@@ -162,7 +162,7 @@ int onInit() {
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
    SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
-   IndicatorDigits(SubPipDigits);
+   IndicatorDigits(Digits | 1);
 
    // drawing options and styles
    int startDraw = MA.Periods;

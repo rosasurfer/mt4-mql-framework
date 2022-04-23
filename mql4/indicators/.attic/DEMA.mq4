@@ -111,7 +111,7 @@ int onInit() {
    IndicatorShortName(shortName);                              // chart tooltips and context menu
    SetIndexLabel(MODE_DEMA,  shortName);                       // chart tooltips and "Data" window
    SetIndexLabel(MODE_EMA_1, NULL);
-   IndicatorDigits(SubPipDigits);
+   IndicatorDigits(Digits | 1);
 
 
    // (4) drawing options and styles

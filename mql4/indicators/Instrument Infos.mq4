@@ -5,7 +5,9 @@
  * TODO:
  *  - rename global var Tick to Ticks
  *  - rename "Point size" to "Resolution"
- *  - fix usage of PipPoints, SubPipDigits, SubPipPriceFormat
+ *  - fix usage of PipPoints
+ *  - drop EXECUTION_CONTEXT.subpipdigits
+ *  - drop SubPipPriceFormat
  *  - reformat init_Globals()
  *  - implement MarketInfoEx()
  *  - change "Pip value" to "Pip/Point/Tick value"
