@@ -23,7 +23,7 @@
  *
  *
  * TODO:
- *  - H1 inside bars on #GER40_M22 are broken
+ *  - H1 IBs on #GER40_* are calculated and positioned from M30 (somehow caused by quote sessions starting at 03:30)
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
