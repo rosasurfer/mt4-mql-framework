@@ -5352,20 +5352,20 @@ string TradeCommandToStr(int cmd) {
  *
  * Mask parameters:
  *
- *   n        = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
- *   n.d      = number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
- *   n.       = number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
- *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
- *    .d'     = all left and number of right digits plus 1 additional subpip digit,
+ *   n        = specified number of digits left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
+ *   n.d      = specified number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *   n.       = specified number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
+ *    .d      = all left and specified number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
+ *    .d'     = all left and specified number of right digits plus 1 separate subpip digit,
  *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d: all left and minimum number of right digits,
- *              e.g. NumberToStr(123.456, ".2+") => "123.456"
- *  +n.d      = + anywhere left of n.: plus sign for positive values
- *    R       = anywhere: round result at the last displayed digit,
+ *    .d+     = "+" char anywhere right of .d: all left and minimum number of right digits,
+ *              e.g. NumberToStr(123.45, ".3+") => "123.450"
+ *  +n.d      = "+" char anywhere left of n.: plus sign for positive values
+ *    R       = "R" char anywhere: round result at the last displayed digit,
  *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
- *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
- *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
- *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
+ *    ;       = switch thousands and decimal separators (European format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
+ *    ,       = insert thousands separators, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
+ *    ,<char> = insert thousands separators using <char>, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
  *
  * @param  double value
  * @param  string mask
@@ -5418,8 +5418,8 @@ string NumberToStr(double value, string mask) {
    }
    if (!nDigit) nLeft = -1;
 
-   // Anzahl der rechten Stellen
-   int nRight, nSubpip;
+   // Anzahl der rechten Stellen und Position des Subpip-Separators
+   int nRight, nSubpip=-1;
    if (dotGiven) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
@@ -5433,14 +5433,14 @@ string NumberToStr(double value, string mask) {
             continue;
          }
          else {
-            if  (chr == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
+            if  (chr == '+')  nRight = Max(nRight + (nSubpip > -1), CountDecimals(value));
             else if (!nDigit) nRight = CountDecimals(value);
             break;
          }
       }
       if (nDigit) {
-         if (nSubpip >  0) nRight++;
-         if (nSubpip == 8) nSubpip = 0;
+         if (nSubpip > -1) nRight++;
+         if (nSubpip == 0) nSubpip = -1;     // no subpip separator directly after the decimal point
          nRight = Min(nRight, 8);
       }
    }
@@ -5495,8 +5495,9 @@ string NumberToStr(double value, string mask) {
    }
 
    // Subpip-Separator einfügen
-   if (nSubpip > 0)
+   if (nSubpip > -1) {
       outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrSubstr(outStr, nSubpip-nRight));
+   }
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);

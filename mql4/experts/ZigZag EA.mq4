@@ -40,7 +40,6 @@
  *     a chart profile per instrument
  *     rename groups/instruments/history descriptions
  *     ChartInfos: read/display symbol description as long name
- *     ChartInfos: fix display of symbol with Digits=1 (pip)
  *
  *  - performance tracking
  *    - notifications for price feed outages

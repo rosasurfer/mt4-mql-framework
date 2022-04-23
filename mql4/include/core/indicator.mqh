@@ -146,7 +146,7 @@ int init() {
    if (!error && !__STATUS_OFF) {
       if (initReason == INITREASON_PARAMETERS) {
          Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
-      }                                            // TODO: Nicht im Tester-Chart. Oder nicht etwa doch?
+      }                                            // TODO: Nicht im Tester-Chart. Oder etwa doch?
    }
    CheckErrors("init(16)");
    return(last_error);
@@ -159,19 +159,14 @@ int init() {
  * @return bool - success status
  */
 bool init_Globals() {
+   // Terminal bug 1: On opening of a new chart window and on account change the global vars Digits and Point are set to the
+   //                 values stored in the applied template, irrespective of the real symbol properties. This affects only
+   //                 the first init() call, in start() corrected values have been applied.
    //
-   // Terminal bug 1: On opening of a new chart window and on account change the global constants Digits and Point are in
-   //                 init() always set to 5 and 0.00001, irrespective of the actual symbol. Only a reload of
-   //                 the chart template fixes the wrong values.
+   // Terminal bug 2: In terminals build ???-??? above bug is permanent and the built-in vars Digits and Point are unusable.
    //
-   // Terminal bug 2: Since terminal version ??? bug #1 can't be fixed anymore by reloading the chart template. The issue is
-   //                 permanent and Digits and Point become unusable.
-   //
-   // It was observed that Digits and/or Point have been configured incorrectly by the broker (e.g. S&P500 on Forex Ltd).
-   //
-   // Workaround: On init() the true Digits and Point values must be read manually from the current symbol's properties in
-   //             "symbols.raw". To work around broker configuration errors there should be a way to overwrite specific
-   //             properties via the framework configuration.
+   // Workaround: In init() correct Digits and Point values must be read from "symbols.raw". To work around broker configura-
+   //             tion errors there should be a way to overwrite specific properties via the framework configuration.
    //
    // TODO: implement workaround in MT4Expander
    //
