@@ -12,16 +12,16 @@ int init() {
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
-   __isChart         = (__ExecutionContext[EC.hChart] != 0);
-   __lpSuperContext  = __ExecutionContext[EC.superContext];
-   PipDigits         = Digits & (~1);
-   PipPoints         = MathRound(MathPow(10, Digits & 1));
-   Pip               = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
-   PipPriceFormat    = StringConcatenate(",'R.", PipDigits);                              // TODO: lost in deinit()
-   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");                            // ...
-   PriceFormat       = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);    // ...
-   prev_error        = NO_ERROR;
-   last_error        = NO_ERROR;
+   __isChart        = (__ExecutionContext[EC.hChart] != 0);
+   __lpSuperContext = __ExecutionContext[EC.superContext];
+   PipDigits        = Digits & (~1);
+   PipPoints        = MathRound(MathPow(10, Digits & 1));
+   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat   = ",'R."+ PipDigits;                                                  // TODO: lost in deinit()
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");   // ...
+
+   prev_error       = NO_ERROR;
+   last_error       = NO_ERROR;
 
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity

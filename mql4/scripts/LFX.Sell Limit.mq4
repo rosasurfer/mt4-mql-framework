@@ -65,14 +65,14 @@ int onInit() {
    TakeProfitPrice = NormalizeDouble(TakeProfitPrice, Digits|1);
    if (TakeProfitPrice != 0) {
       if (TakeProfitPrice < 0)           return(HandleScriptError("onInit(6)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
-      if (TakeProfitPrice >= LimitPrice) return(HandleScriptError("onInit(7)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice >= LimitPrice) return(HandleScriptError("onInit(7)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, PriceFormat) +"\n(must be lower than the LimitPrice "+ NumberToStr(LimitPrice, PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
    // StopLossPrice
    StopLossPrice = NormalizeDouble(StopLossPrice, Digits|1);
    if (StopLossPrice != 0) {
       if (StopLossPrice < 0)             return(HandleScriptError("onInit(8)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, ".+") +"\n(can't be negative)", ERR_INVALID_INPUT_PARAMETER));
-      if (StopLossPrice <= LimitPrice)   return(HandleScriptError("onInit(9)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (StopLossPrice <= LimitPrice)   return(HandleScriptError("onInit(9)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, PriceFormat) +"\n(must be higher than the LimitPrice "+ NumberToStr(LimitPrice, PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
    }
 
 
@@ -106,12 +106,12 @@ int onStart() {
 
    // (1) Sicherheitsabfrage
    if ((limitType==OP_SELLLIMIT && LimitPrice <= Close[0]) || (limitType==OP_SELLSTOP && LimitPrice >= Close[0])) {
-      if (TakeProfitPrice && TakeProfitPrice >= Close[0]) return(HandleScriptError("onStart(1)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
-      if (StopLossPrice   && StopLossPrice   <= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, SubPipPriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], SubPipPriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (TakeProfitPrice && TakeProfitPrice >= Close[0]) return(HandleScriptError("onStart(1)", "Illegal parameter TakeProfitPrice: "+ NumberToStr(TakeProfitPrice, PriceFormat) +"\n(must be lower than the current price "+ NumberToStr(Close[0], PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
+      if (StopLossPrice   && StopLossPrice   <= Close[0]) return(HandleScriptError("onStart(2)", "Illegal parameter StopLossPrice: "+ NumberToStr(StopLossPrice, PriceFormat) +"\n(must be higher than the current price "+ NumberToStr(Close[0], PriceFormat) +")", ERR_INVALID_INPUT_PARAMETER));
 
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
-                        +"The limit of "+ NumberToStr(LimitPrice, SubPipPriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], SubPipPriceFormat) +").\n\n"
+                        +"The limit of "+ NumberToStr(LimitPrice, PriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], PriceFormat) +").\n\n"
                         +"Do you really want to sell "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?",
                         ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
@@ -123,9 +123,9 @@ int onStart() {
       PlaySoundEx("Windows Notify.wav");
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"Do you really want to place a "+ OperationTypeDescription(limitType) +" order for "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?\n\n"
-                        +                                   "Limit: "+      NumberToStr(LimitPrice,      SubPipPriceFormat)
-                        + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, SubPipPriceFormat))
-                        + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   SubPipPriceFormat)),
+                        +                                   "Limit: "+      NumberToStr(LimitPrice,      PriceFormat)
+                        + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, PriceFormat))
+                        + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   PriceFormat)),
                         ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)

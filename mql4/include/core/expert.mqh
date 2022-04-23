@@ -556,13 +556,12 @@ bool CheckErrors(string caller, int error = NULL) {
  * @return bool - success status
  */
 bool init_Globals() {
-   __isChart         = (__ExecutionContext[EC.hChart] != 0);
-   PipDigits         = Digits & (~1);
-   PipPoints         = MathRound(MathPow(10, Digits & 1));
-   Pip               = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
-   PipPriceFormat    = StringConcatenate(",'R.", PipDigits);
-   SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat       = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   PipDigits      = Digits & (~1);
+   PipPoints      = MathRound(MathPow(10, Digits & 1));
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat = ",'R."+ PipDigits;
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
    N_INF = MathLog(0);                                                        // negative infinity
    P_INF = -N_INF;                                                            // positive infinity

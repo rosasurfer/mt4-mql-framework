@@ -4,7 +4,10 @@
  * @return int - error status
  */
 int onInit() {
-   //debug("onInit(0.1)  Point="+ NumberToStr(Point, ".1+") +"  Digits="+ Digits +"  MODE_POINT="+ NumberToStr(MarketInfo(Symbol(), MODE_POINT), ".1+") +"  MODE_DIGITS="+ NumberToStr(MarketInfo(Symbol(), MODE_DIGITS), ".1+"));
+   double mPoint  = MarketInfo(Symbol(), MODE_POINT);
+   int    mDigits = MarketInfo(Symbol(), MODE_DIGITS);
+   debug("onInit(0.1)  Digits/MODE_DIGITS="+ Digits +"/"+ mDigits +"  Point/MODE_POINT="+ NumberToStr(Point, ".1+") +"/"+ NumberToStr(mPoint, ".1+") +"  PriceFormat="+ DoubleQuoteStr(PriceFormat) +"  mPointToStr(PriceFormat)="+ NumberToStr(mPoint, PriceFormat));
+
    hWndTerminal = GetTerminalMainWindow();
 
    if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()

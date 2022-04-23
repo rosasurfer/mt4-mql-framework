@@ -3,12 +3,9 @@
  *
  *
  * TODO:
- *  - replace usage of PipPoints by PipTicks
- *  - FxPro:
- *     if all symbols are unsubscribed and trading is disabled (e.g. weekend) a template reload enables the full display
- *     #GER40_M22: Point=0.1  PriceFormat=",'R.0'"  NumberToStr(Point, PriceFormat) => 0
  *  - drop EXECUTION_CONTEXT.subpipdigits
- *  - drop SubPipPriceFormat
+ *  - replace usage of PipPoints by PipTicks
+ *  - FxPro: if at the weekend all symbols are unsubscribed (trading disabled) a template reload enables the full display
  *  - implement MarketInfoEx()
  *  - change "Pip value" to "Pip/Point/Tick value"
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
@@ -74,6 +71,11 @@ string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVE
 int onInit() {
    SetIndexLabel(0, NULL);             // "Data" window
    CreateChartObjects();
+
+   double mPoint  = MarketInfo(Symbol(), MODE_POINT);
+   int    mDigits = MarketInfo(Symbol(), MODE_DIGITS);
+   debug("onInit(0.1)  Digits/MODE_DIGITS="+ Digits +"/"+ mDigits +"  Point/MODE_POINT="+ NumberToStr(Point, ".1+") +"/"+ NumberToStr(mPoint, ".1+") +"  PriceFormat="+ DoubleQuoteStr(PriceFormat) +"  mPointToStr(PriceFormat)="+ NumberToStr(mPoint, PriceFormat));
+
    return(catch("onInit(1)"));
 }
 
@@ -84,6 +86,10 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   double mPoint  = MarketInfo(Symbol(), MODE_POINT);
+   int    mDigits = MarketInfo(Symbol(), MODE_DIGITS);
+   if (Ticks == 1) debug("onTick(0.1)  Digits/MODE_DIGITS="+ Digits +"/"+ mDigits +"  Point/MODE_POINT="+ NumberToStr(Point, ".1+") +"/"+ NumberToStr(mPoint, ".1+") +"  PriceFormat="+ DoubleQuoteStr(PriceFormat) +"  mPointToStr(PriceFormat)="+ NumberToStr(mPoint, PriceFormat));
+
    UpdateInstrumentInfos();
    return(last_error);
 }
