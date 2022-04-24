@@ -52,7 +52,6 @@
 
    int      ec_Digits               (int ec[]);
    int      ec_PipDigits            (int ec[]);
-   int      ec_SubPipDigits         (int ec[]);
    double   ec_Pip                  (int ec[]);
    double   ec_Point                (int ec[]);
    int      ec_PipPoints            (int ec[]);

@@ -199,10 +199,6 @@ string  signal.sms.receiver = "";
  * @return int - error status
  */
 int onTick() {
-   double mPoint  = MarketInfo(Symbol(), MODE_POINT);
-   int    mDigits = MarketInfo(Symbol(), MODE_DIGITS);
-   if (Ticks == 1) debug("onTick(0.1)  Digits/MODE_DIGITS="+ Digits +"/"+ mDigits +"  Point/MODE_POINT="+ NumberToStr(Point, ".1+") +"/"+ NumberToStr(mPoint, ".1+") +"  PriceFormat="+ DoubleQuoteStr(PriceFormat) +"  mPointToStr(PriceFormat)="+ NumberToStr(mPoint, PriceFormat));
-
    mm.done            = false;
    positions.analyzed = false;
 
