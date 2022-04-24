@@ -807,7 +807,6 @@ int      ec_SetMqlError           (int &ec[], int error);;
 int      ec_SetProgramCoreFunction(int &ec[], int id);;
 int      ec_SetRecordMode         (int &ec[], int mode);;
 datetime ec_Started               (int &ec[]);;
-int      ec_SubPipDigits          (int &ec[]);;
 bool     ec_SuperContext          (int &ec[], int &target[]);;
 string   ec_Symbol                (int &ec[]);;
 int      ec_TestBarModel          (int &ec[]);;

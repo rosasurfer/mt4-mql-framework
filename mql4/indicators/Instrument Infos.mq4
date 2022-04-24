@@ -3,8 +3,6 @@
  *
  *
  * TODO:
- *  - drop EXECUTION_CONTEXT.subpipdigits
- *
  *  - replace usage of PipPoints by PipTicks
  *  - FxPro: if at the weekend all symbols are unsubscribed (trading disabled) a template reload enables the full display
  *  - implement MarketInfoEx()
