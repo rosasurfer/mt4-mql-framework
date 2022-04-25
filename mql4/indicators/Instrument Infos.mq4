@@ -15,6 +15,9 @@
  *  - add trade sessions
  *  - FxPro: if all symbols are unsubscribed at a weekend (trading disabled) a template reload enables the full display
  *  - remove debug messages "...Digits/MODE_DIGITS..."
+ *
+ *
+ *  - get an instrument's base currency: https://www.mql5.com/en/code/28029#
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -36,7 +39,7 @@ color  fgFontColorDisabled = Gray;
 string fgFontName          = "Tahoma";
 int    fgFontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGIN_INITIAL","MARGIN_MINLOT","MARGIN_HEDGED","SPREAD","COMMISSION","TOTALFEES","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","ACCOUNT_STOPOUT","ACCOUNT_REQUIRED","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGIN_INITIAL","MARGIN_MINLOT","MARGIN_HEDGED","SPREAD","COMMISSION","TOTAL_COST","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","ACCOUNT_STOPOUT","ACCOUNT_REQUIRED","FULL_LOAD","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_DIGITS               1
@@ -54,15 +57,16 @@ string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVE
 #define I_MARGIN_HEDGED       13
 #define I_SPREAD              14
 #define I_COMMISSION          15
-#define I_TOTALFEES           16
+#define I_TOTAL_COST          16
 #define I_SWAPLONG            17
 #define I_SWAPSHORT           18
 #define I_ACCOUNT_LEVERAGE    19
 #define I_ACCOUNT_STOPOUT     20
 #define I_ACCOUNT_REQUIRED    21
-#define I_SERVER_NAME         22
-#define I_SERVER_TIMEZONE     23
-#define I_SERVER_SESSION      24
+#define I_FULL_LOAD           22
+#define I_SERVER_NAME         23
+#define I_SERVER_TIMEZONE     24
+#define I_SERVER_SESSION      25
 
 
 /**
@@ -125,8 +129,8 @@ int CreateChartObjects() {
       ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xPos    );
-      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+122);          // line height: 14 pt
+      ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+136);          // line height: 14 pt
       ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
       RegisterObject(label);
    }
@@ -224,43 +228,46 @@ int UpdateInstrumentInfos() {
 
    int    accountLeverage   = AccountLeverage();
    int    accountStopout    = AccountStopoutLevel();
-   int    requiredUnits     = 20;                        // 20 x minLot
-   int    marginUtilization = 50;                        // 50%
-   double fullyLoadedUnits  = requiredUnits * minLot;
-   double fullyLoadedMargin = marginInitial * fullyLoadedUnits;
-   double accountRequired   = fullyLoadedMargin / marginUtilization * 100;
+   int    requiredUnits     = 20;                                    // 20 x minLot
+   int    marginUtilization = 50;                                    // max. 50% margin utilization
+   double fullLoadUnits     = requiredUnits * minLot;
+   double fullLoadMargin    = marginInitial * fullLoadUnits;
+   double accountRequired   = fullLoadMargin / marginUtilization * 100;
+   double unleveragedLots   = MathDiv(accountRequired, lotValue);
+   double fullLoadLeverage  = MathDiv(fullLoadUnits, unleveragedLots);
 
    // populate display
-   ObjectSetText(labels[I_TRADEALLOWED    ], "Trading enabled: "    + ifString(tradingEnabled, "yes", "no"),                                                                                                                          fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_TRADEALLOWED    ], "Trading enabled: "     + ifString(tradingEnabled, "yes", "no"),                                                                                                                          fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_DIGITS          ], "Digits:      "        +                         Digits,                                                                                                                                 fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_TICKSIZE        ], "Tick size:  "         +                         NumberToStr(tickSize, PriceFormat),                                                                                                     fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_PIPVALUE        ], "Pip value:  "         + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency),                                                                                   fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_DIGITS          ], "Digits:      "         +                         Digits,                                                                                                                                 fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_TICKSIZE        ], "Tick size:  "          +                         NumberToStr(tickSize, PriceFormat),                                                                                                     fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_PIPVALUE        ], "Pip value:  "          + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency),                                                                                   fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_ADR             ], "ADR(20):  "           + ifString(!adr,   "n/a", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(volaADR, 2), ".0+") +"%"),                                            fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_ADR             ], "ADR(20):  "            + ifString(!adr,   "n/a", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(volaADR, 2), ".0+") +"%"),                                            fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_STOPLEVEL       ], "Stop level:    "      +                         DoubleToStr(stopLevel,   Digits & 1) +" pip",                                                                                           fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_FREEZELEVEL     ], "Freeze level: "       +                         DoubleToStr(freezeLevel, Digits & 1) +" pip",                                                                                           fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_STOPLEVEL       ], "Stop level:    "       +                         DoubleToStr(stopLevel,   Digits & 1) +" pip",                                                                                           fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_FREEZELEVEL     ], "Freeze level: "        +                         DoubleToStr(freezeLevel, Digits & 1) +" pip",                                                                                           fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_LOTSIZE         ], "Lot size:  "          + ifString(!lotSize,  "", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)),                                                                             fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_MINLOT          ], "Min lot:   "          + ifString(!minLot,   "", NumberToStr(minLot,  ".+")),                                                                                                            fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_LOTSTEP         ], "Lot step: "           + ifString(!lotStep,  "", NumberToStr(lotStep, ".+")),                                                                                                            fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_MAXLOT          ], "Max lot:  "           + ifString(!maxLot,   "", NumberToStr(maxLot,  ",'.+")),                                                                                                          fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_LOTSIZE         ], "Lot size:  "           + ifString(!lotSize,  "", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)),                                                                             fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_MINLOT          ], "Min lot:   "           + ifString(!minLot,   "", NumberToStr(minLot,  ".+")),                                                                                                            fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_LOTSTEP         ], "Lot step: "            + ifString(!lotStep,  "", NumberToStr(lotStep, ".+")),                                                                                                            fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_MAXLOT          ], "Max lot:  "            + ifString(!maxLot,   "", NumberToStr(maxLot,  ",'.+")),                                                                                                          fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_MARGIN_INITIAL  ], "Margin initial:      "+ ifString(!marginInitial, "", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                                   fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_MARGIN_MINLOT   ], "Margin minLot:   "    + ifString(!marginMinLot,  "", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                                         fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_MARGIN_HEDGED   ], "Margin hedged:  "     + ifString(!marginInitial, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                                                        fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_MARGIN_INITIAL  ], "Margin initial:      " + ifString(!marginInitial, "", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                                   fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_MARGIN_MINLOT   ], "Margin minLot:   "     + ifString(!marginMinLot,  "", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                                         fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_MARGIN_HEDGED   ], "Margin hedged:  "      + ifString(!marginInitial, "", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                                                        fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_SPREAD          ], "Spread:        "      + PipToStr(spreadPip, true, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadPip, adr)*Pip * 100, 1) +"% of ADR"),                                     fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_COMMISSION      ], "Commission:  "        + ifString(!commission, "-", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(NormalizeDouble(commissionPip, 2), ".1+") +" pip"),             fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_TOTALFEES       ], "Total cost:    "      + ifString(!commission, "-", NumberToStr(NormalizeDouble(spreadPip + commissionPip, 2), ".1+") +" pip"),                                                          fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_SPREAD          ], "Spread:        "       + PipToStr(spreadPip, true, true) + ifString(!adr, "", " = "+ DoubleToStr(MathDiv(spreadPip, adr)*Pip * 100, 1) +"% of ADR"),                                     fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_COMMISSION      ], "Commission:  "         + ifString(!commission, "-", DoubleToStr(commission, 2) +" "+ accountCurrency +" = "+ NumberToStr(NormalizeDouble(commissionPip, 2), ".1+") +" pip"),             fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_TOTAL_COST      ], "Total cost:    "       + ifString(!commission, "-", NumberToStr(NormalizeDouble(spreadPip + commissionPip, 2), ".1+") +" pip"),                                                          fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_SWAPLONG        ], "Swap long:  "         + sSwapLong,                                                                                                                                                      fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "         + sSwapShort,                                                                                                                                                     fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_SWAPLONG        ], "Swap long:  "          + sSwapLong,                                                                                                                                                      fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_SWAPSHORT       ], "Swap short: "          + sSwapShort,                                                                                                                                                     fgFontSize, fgFontName, fgFontColor);
 
-   ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage: "   + ifString(!accountLeverage, "", "1:"+ accountLeverage),                                                                                                          fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_ACCOUNT_STOPOUT ], "Account stopout:  "   + ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),                      fgFontSize, fgFontName, fgFontColor);
-   ObjectSetText(labels[I_ACCOUNT_REQUIRED], "Account required:  "  + NumberToStr(MathRound(accountRequired), ",'.2") +" "+ accountCurrency +" ("+ requiredUnits +"x"+ NumberToStr(minLot, ".+") +" @"+ marginUtilization +"% m.u.)", fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_ACCOUNT_LEVERAGE], "Account leverage: "    + ifString(!accountLeverage, "", "1:"+ accountLeverage),                                                                                                          fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_ACCOUNT_STOPOUT ], "Account stopout:  "    + ifString(!accountLeverage, "", ifString(AccountStopoutMode()==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),                      fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_ACCOUNT_REQUIRED], "Account required: "    + NumberToStr(MathRound(accountRequired), ",'.2") +" "+ accountCurrency +" ("+ requiredUnits +"x"+ NumberToStr(minLot, ".+") +" @"+ marginUtilization +"% m.u.)", fgFontSize, fgFontName, fgFontColor);
+   ObjectSetText(labels[I_FULL_LOAD       ], "On full load:         "+ "1:"+ Round(fullLoadLeverage),                                                                                                                                  fgFontSize, fgFontName, fgFontColor);
 
 
    string serverName      = GetAccountServer();    ObjectSetText(labels[I_SERVER_NAME     ], "Server:               "+ serverName, fgFontSize, fgFontName, ifInt(!StringLen(serverName), fgFontColorDisabled, fgFontColor));
