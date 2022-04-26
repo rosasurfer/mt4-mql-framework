@@ -5242,7 +5242,7 @@ string MessageBoxButtonToStr(int id) {
  *
  * @param  string value
  *
- * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
+ * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungültig ist
  */
 int StrToOperationType(string value) {
    string str = StrToUpper(StrTrim(value));
