@@ -225,26 +225,6 @@ bool IsLibrary() {
 
 
 /**
- * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
- *
- * @param  string caller  - location identifier of the caller
- * @param  string message - Fehlermeldung
- * @param  int    error   - zu setzender Fehlercode
- *
- * @return int - derselbe Fehlercode
- */
-int HandleScriptError(string caller, string message, int error) {
-   if (StringLen(caller) > 0)
-      caller = " :: "+ caller;
-
-   PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
-
-   return(SetLastError(error));
-}
-
-
-/**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string caller           - location identifier of the caller
@@ -300,7 +280,6 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   HandleScriptError(NULL, NULL, NULL);
 }
 
 
