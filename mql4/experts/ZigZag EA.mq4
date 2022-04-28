@@ -19,18 +19,19 @@
  *    "7":   Records a timeseries depicting daily PL after all costs (net) in quote units.
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
- *    The term "quote units" refers to the best matching unit. One of pip, quote currency or index points.
+ *    Timeseries in "quote units" are recorded in the best matching unit (one of pip, quote currency or index points).
  *
  *
  * TODO:
- *  - H1 IBs on #GER40_* are calculated and positioned from M30 (somehow caused by quote sessions starting at 03:30)
+ *  - ChartInfos: unitsize calculation using a configured leverage
+ *  - manual sequence with start/stop and signal pickup
+ *  - rename ClosePositions to CloseOrders
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
  *     adjust virtual commissions
  *
  *  - trading functionality
- *     start/stop sequence with signal pickup
  *     reverse trading
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
@@ -42,9 +43,11 @@
  *     ChartInfos: read/display symbol description as long name
  *
  *  - performance tracking
- *    - notifications for price feed outages
- *    - daily metric variants
+ *     notifications for price feed outages
+ *     daily metric variants
  *
+ *  - realtime tick charts
+ *  - realtime equity charts
  *  - input parameter ZigZag.Timeframe
  *  - status display
  *     parameter: ZigZag.Periods
@@ -57,6 +60,7 @@
  *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
+ *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
  *    - full session (24h) with trade breaks
  *    - partial session (e.g. 09:00-16:00) with trade breaks
  *    - trading is disabled but the price feed is active
@@ -101,6 +105,8 @@
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
+ *  - Superbars: H1 IBs on #GER40_* are calculated and positioned from M30 (somehow caused by quote sessions starting at 03:30)
+ *  - Superbars: ETH/RTH separation for Frankfurt session
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - on restart delete dead screen sockets
  */
