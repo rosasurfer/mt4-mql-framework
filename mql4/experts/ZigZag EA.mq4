@@ -46,7 +46,7 @@
  *     notifications for price feed outages
  *     daily metric variants
  *
- *  - realtime tick charts
+ *  - much better realtime tick charts (built-in charts are useless)
  *  - realtime equity charts
  *  - input parameter ZigZag.Timeframe
  *  - status display

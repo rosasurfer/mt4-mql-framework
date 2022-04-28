@@ -13,6 +13,11 @@
  *
  *
  * TODO:
+ *  - drop obsolete input Donchian.ShowStopSegments
+ *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
+ *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
+ *  - rename input Donchian.MarkFirstCrossing to Donchian.DrawFirstCrossing
+ *
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
@@ -20,7 +25,6 @@
  *
  *  - onReversal = onLeg?
  *  - add signal onZigZagBreakout
- *  - process input Donchian.ShowStopSegments
  *  - a visible buffer for the mid channel?
  *  - add auto-configuration
  *  - restore default values (type, hide channel and trail)
