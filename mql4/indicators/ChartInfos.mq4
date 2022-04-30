@@ -4,7 +4,7 @@
  *
  *  - The current price and spread.
  *  - In terminal builds <= 509 the current instrument name.
- *  - The calculated unitsize according to the configured risk profiles.
+ *  - The calculated unitsize according to the configured risk profile, see CalculateUnitSize().
  *  - The open position and the used leverage.
  *  - The current account stopout level.
  *  - A warning in different colors when the account's open order limit is approached.
@@ -17,6 +17,7 @@
  *               limit monitoring and notifications
  *
  * TODO:
+ *  - unitsize calculation using a configured leverage
  *  - set order tracker sound on stopout to "margin-call"
  */
 #include <stddefines.mqh>
@@ -52,22 +53,23 @@ extern string Signal.SMS     = "on | off | auto*";
 // chart infos
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
 
-// unitsize calculation
+// unitsize calculation, see CalculateUnitSize()
 bool   mm.done;                                                   // processing flag
+double mm.equity;                                                 // equity value used for calculations, incl. external assets and floating losses (but not floating/unrealized profits)
+
+double mm.cfgLeverage;
+double mm.cfgRiskPercent;
+double mm.cfgRiskRange;
+bool   mm.cfgRiskRangeIsADR;                                      // whether the price range is configured as "ADR"
+
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
-double mm.risk;                                                   // configured position risk in %
-double mm.pipRange;                                               // configured target range in pip
-bool   mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
-double mm.unitSize;                                               // calculated unitsize according to risk and pip target
-double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
-double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
-double mm.externalAssets;                                         // additional assets not hold in the broker's account
-double mm.equity;                                                 // total applied equity value
-                                                                  //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
-                                                                  //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
-                                                                  //  - enthält offene Verluste ungehedgter Positionen
-                                                                  //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (unrealisiert)
+double mm.leveragedLots;                                          // leveraged unitsize
+double mm.leveragedLotsNormalized;                                // leveraged unitsize normalized to MODE_LOTSTEP
+double mm.leverage;                                               // resulting leverage
+double mm.riskPercent;                                            // resulting risk
+double mm.riskRange;                                              // resulting price range
+
 // configuration of custom positions
 #define POSITION_CONFIG_TERM_size      40                         // in Bytes
 #define POSITION_CONFIG_TERM_doubleSize 5                         // in Doubles
@@ -1199,31 +1201,44 @@ bool UpdateSpread() {
 
 
 /**
- * Update the display of the calculated unitsize for the configured risk profile (bottom-right).
+ * Calculate and update the displayed unitsize for the configured risk profile (bottom-right).
  *
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                               return(true);                     // skip in tester
-   if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
-   if (!mm.done)                                  return(true);
-
-   string sUnitSize="", sPipRange="";
-   if (mode.intern && mm.risk && mm.pipRange) {
-      if (mm.pipRangeIsADR) {
-         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ NumberToStr(MathRound(mm.pipRange/100), ",'.2");
-         else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
-      }
-      else {
-         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ",'.2+");
-         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ",'.+") +" pip";
-      }                           // R - risk / pip range                                    L - leverage                                       unitsize
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ",'.+"), " lot");
+   if (IsTesting())             return(true);            // skip in tester
+   if (!mm.done) {
+      if (!CalculateUnitSize()) return(false);           // on error
+      if (!mm.done)             return(true);            // on terminal not yet ready
    }
-   ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
+
+   string text = "";
+
+   if (mode.intern) {
+      if (mm.riskPercent != NULL) {
+         text = StringConcatenate("R ", DoubleToStr(mm.riskPercent, 0), "%/");
+      }
+
+      if (mm.riskRange != NULL) {
+         double range = mm.riskRange;
+         if (mm.cfgRiskRangeIsADR) {
+            if (range >= 1) range = MathRound(range);
+            else            range = NormalizeDouble(range, PipDigits);
+            text = StringConcatenate(text, "ADR=");
+         }
+         if (range >= 1) string sRange = NumberToStr(range, ",'.2+");
+         else                   sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
+         text = StringConcatenate(text, sRange);
+      }
+
+      if (mm.leverage != NULL) {
+         text = StringConcatenate(text, "     L", DoubleToStr(mm.leverage, 1), "      ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
+      }
+   }
+   ObjectSetText(label.unitSize, text, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
@@ -1235,13 +1250,15 @@ bool UpdateUnitSize() {
  * @return bool - success status
  */
 bool UpdatePositions() {
-   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (!positions.analyzed) {
+      if (!AnalyzePositions())   return(false);                // on error
+   }
    if (mode.intern && !mm.done) {
-      if (!CalculateUnitSize())                             return(false);
-      if (!mm.done)                                         return(true);
+      if (!CalculateUnitSize())  return(false);                // on error
+      if (!mm.done)              return(true);                 // on terminal not yet ready
    }
 
-   // (1) Gesamtpositionsanzeige unten rechts
+   // Gesamtpositionsanzeige unten rechts
    string sCurrentLeverage="", sCurrentPosition="";
    if      (!isPosition   ) sCurrentPosition = " ";
    else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
@@ -1256,11 +1273,10 @@ bool UpdatePositions() {
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                       // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
-
-   // (2) PendingOrder-Marker unten rechts ein-/ausblenden
+   // PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -1269,13 +1285,12 @@ bool UpdatePositions() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
          ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-         ObjectSetText(label, "n", 6, "Webdings", Orange);              // Webdings: runder Marker, orange="Notice"
+         ObjectSetText(label, "n", 6, "Webdings", Orange);     // Webdings: runder Marker, orange="Notice"
          RegisterObject(label);
       }
    }
 
-
-   // (3) Einzelpositionsanzeige unten links
+   // Einzelpositionsanzeige unten links
    static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
    static bool lastAbsoluteProfits;
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
@@ -1311,7 +1326,7 @@ bool UpdatePositions() {
 
       // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
-         for (int col=0; col < 8; col++) {                           // alle Spalten testen: mit und ohne absoluten Beträgen
+         for (int col=0; col < 8; col++) {                     // alle Spalten testen: mit und ohne absoluten Beträgen
             label = StringConcatenate(label.position, ".line", lines, "_col", col);
             if (ObjectFind(label) != -1)
                ObjectDelete(label);
@@ -1323,7 +1338,7 @@ bool UpdatePositions() {
    if (mode.extern) positions = lfxOrders.openPositions;
    else             positions = iePositions;
 
-   // (3.1) zusätzlich benötigte Zeilen hinzufügen
+   // zusätzlich benötigte Zeilen hinzufügen
    while (lines < positions) {
       lines++;
       for (col=0; col < cols; col++) {
@@ -1339,7 +1354,7 @@ bool UpdatePositions() {
       }
    }
 
-   // (3.2) nicht benötigte Zeilen löschen
+   // nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.position, ".line", lines, "_col", col);
@@ -1349,13 +1364,12 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (3.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
+   // Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
    string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
    color  fontColor;
    int    line;
 
-
-   // (4.1) Anzeige interne/externe Positionsdaten
+   // Anzeige interne/externe Positionsdaten
    if (!mode.extern) {
       for (int i=iePositions-1; i >= 0; i--) {
          line++;
@@ -1419,7 +1433,7 @@ bool UpdatePositions() {
       }
    }
 
-   // (4.2) Anzeige Remote-Positionsdaten
+   // Anzeige Remote-Positionsdaten
    if (mode.extern) {
       fontColor = positions.fontColor.remote;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
@@ -1783,67 +1797,103 @@ bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex
 
 
 /**
- * Calculate the unitsize according to the configured risk profile.
+ * Calculate the unitsize according to the configured profile. Calculation is risk-based and/or leverage-based.
+ *
+ *  - Default configuration settings for risk-based calculation:
+ *    [Unitsize]
+ *    Default.RiskPercent = <numeric>                    ; risked percent of account equity
+ *    Default.RiskRange   = (<numeric> [pip] | ADR)      ; price range (absolute, in pip or the value "ADR") for the risked percent
+ *
+ *  - Default configuration settings for leverage-based calculation:
+ *    [Unitsize]
+ *    Default.Leverage = <numeric>                       ; leverage per unit
+ *
+ *  - Symbol-specific configuration:
+ *    [Unitsize]
+ *    GBPUSD.RiskPercent = <numeric>                     ; per symbol: risked percent of account equity
+ *    EURUSD.Leverage    = <numeric>                     ; per symbol: leverage per unit
+ *
+ * The default settings apply if no symbol-specific settings are provided. For symbol-specific settings the term "Default"
+ * is replaced by the broker's symbol name or the symbol's standard name. The broker's symbol name has preference over the
+ * standard name. E.g. if a broker offers the symbol "EURUSDm" and the configuration provides the settings "Default.Leverage",
+ * "EURUSD.Leverage" and "EURUSDm.Leverage" the calculation uses the settings for "EURUSDm".
+ *
+ * If both risk and leverage settings are provided the resulting unitsize is the smaller of both calculations.
+ * The configuration is read in onInit().
  *
  * @return bool - success status
  */
 bool CalculateUnitSize() {
-   if (mode.extern || mm.done) return(true);                                  // only for internal account
+   if (mode.extern || mm.done) return(true);                         // skip for external accounts
 
-   mm.lotValue         = 0;
-   mm.unleveragedLots  = 0;                                                   // unleveraged unitsize
-   mm.unitSize         = 0;                                                   // unitsize for the configured risk
-   mm.normUnitSize     = 0;                                                   // normalized unitsize
-   mm.unitSizeLeverage = 0;                                                   // leverage of the calculated unitsize
-   mm.equity           = 0;                                                   // currently used equity value incl. extern assets
+   // @see declaration of global vars mm.* for their descriptions
+   mm.lotValue                = 0;
+   mm.unleveragedLots         = 0;
+   mm.leveragedLots           = 0;
+   mm.leveragedLotsNormalized = 0;
+   mm.leverage                = 0;
+   mm.riskPercent             = 0;
+   mm.riskRange               = 0;
 
-   // calculate lot values and unitsizes
-   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
-      int error = GetLastError();
-      if (error || !Close[0] || !tickSize || !tickValue || !marginRequired) { // can happen on terminal start, on change of account or template, or in offline charts
-         if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
-            return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-         return(!catch("CalculateUnitSize(1)", error));
-      }
-   double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double pipValue       = PipPoints * pointValue;                            // pip value in account currency
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   if (mode.intern) {
-      double accountEquity = AccountEquity()-AccountCredit();
-         if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
-      mm.equity = accountEquity + externalAssets;
+   // recalculate equity used for calculations
+   double accountEquity = AccountEquity()-AccountCredit();
+   if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
+   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number, false);
+
+   // recalculate lot value and unleveraged unitsize
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   int error = GetLastError();
+   if (error || !Close[0] || !tickSize || !tickValue || !mm.equity) {   // may happen on terminal start, on account change, on template change or in offline charts
+      if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
+         return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+      return(!catch("CalculateUnitSize(1)", error));
    }
-   else {
-      mm.equity = externalAssets;                                             // TODO: wrong, not updated as GetExternalAssets() caches the result
+   mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
+   mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
+
+   // recalculate the unitsize
+   if (mm.cfgRiskPercent && mm.cfgRiskRange) {
+      double riskedAmount = mm.equity * mm.cfgRiskPercent/100;          // risked amount in account currency
+      double ticks        = mm.cfgRiskRange/tickSize;                   // risk range in tick
+      double riskPerTick  = riskedAmount/ticks;                         // risked amount per tick
+      mm.leveragedLots    = riskPerTick/tickValue;                      // resulting unitsize
+      mm.leverage         = mm.leveragedLots/mm.unleveragedLots;        // resulting leverage
+      mm.riskPercent      = mm.cfgRiskPercent;
+      mm.riskRange        = mm.cfgRiskRange;
    }
 
-   mm.lotValue        = Close[0]/tickSize * tickValue;                        // value of 1 lot in account currency
-   mm.unleveragedLots = mm.equity/mm.lotValue;                                // unleveraged unitsize
+   if (mm.cfgLeverage != NULL) {
+      if (!mm.leverage || mm.leverage > mm.cfgLeverage) {               // if both risk and leverage are configured the smaller result of both calculations is used
+         mm.leverage      = mm.cfgLeverage;
+         mm.leveragedLots = mm.unleveragedLots * mm.leverage;           // resulting unitsize
 
-   if (mm.risk && mm.pipRange) {
-      double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
-      mm.unitSize         = risk/mm.pipRange/pipValue;                        // unitsize for risk and pip target
-      mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
-
-      // normalize the calculated unitsize
-      if (mm.unitSize > 0) {                                                                                                  // max. 6.7% per step
-         if      (mm.unitSize <=    0.03) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);     //     0-0.03: multiple of   0.001
-         else if (mm.unitSize <=   0.075) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);     // 0.03-0.075: multiple of   0.002
-         else if (mm.unitSize <=    0.1 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);     //  0.075-0.1: multiple of   0.005
-         else if (mm.unitSize <=    0.3 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: multiple of   0.01
-         else if (mm.unitSize <=    0.75) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: multiple of   0.02
-         else if (mm.unitSize <=    1.2 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: multiple of   0.05
-         else if (mm.unitSize <=   10.  ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);     //     1.2-10: multiple of   0.1
-         else if (mm.unitSize <=   30.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );     //      12-30: multiple of   1
-         else if (mm.unitSize <=   75.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );     //      30-75: multiple of   2
-         else if (mm.unitSize <=  120.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );     //     75-120: multiple of   5
-         else if (mm.unitSize <=  300.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );     //    120-300: multiple of  10
-         else if (mm.unitSize <=  750.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );     //    300-750: multiple of  20
-         else if (mm.unitSize <= 1200.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );     //   750-1200: multiple of  50
-         else                             mm.normUnitSize =       MathRound(MathRound(mm.unitSize/100    ) * 100       );     //   1200-...: multiple of 100
+         if (mm.cfgRiskRange != NULL) {
+            ticks          = mm.cfgRiskRange/tickSize;                  // risk range in tick
+            riskPerTick    = mm.leveragedLots * tickValue;              // risked amount per tick
+            riskedAmount   = riskPerTick * ticks;                       // total risked amount
+            mm.riskPercent = riskedAmount/mm.equity * 100;              // resulting risked percent for the configured range
+            mm.riskRange   = mm.cfgRiskRange;
+         }
       }
+   }
+
+   // normalize the result to a sound value
+   if (mm.leveragedLots > 0) {                                                                                                                  // max. 6.7% per step
+      if      (mm.leveragedLots <=    0.03) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.001) *   0.001, 3);     //     0-0.03: multiple of   0.001
+      else if (mm.leveragedLots <=   0.075) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.002) *   0.002, 3);     // 0.03-0.075: multiple of   0.002
+      else if (mm.leveragedLots <=    0.1 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.005) *   0.005, 3);     //  0.075-0.1: multiple of   0.005
+      else if (mm.leveragedLots <=    0.3 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.01 ) *   0.01 , 2);     //    0.1-0.3: multiple of   0.01
+      else if (mm.leveragedLots <=    0.75) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.02 ) *   0.02 , 2);     //   0.3-0.75: multiple of   0.02
+      else if (mm.leveragedLots <=    1.2 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.05 ) *   0.05 , 2);     //   0.75-1.2: multiple of   0.05
+      else if (mm.leveragedLots <=   10.  ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.1  ) *   0.1  , 1);     //     1.2-10: multiple of   0.1
+      else if (mm.leveragedLots <=   30.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  1    ) *   1       );     //      12-30: multiple of   1
+      else if (mm.leveragedLots <=   75.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  2    ) *   2       );     //      30-75: multiple of   2
+      else if (mm.leveragedLots <=  120.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  5    ) *   5       );     //     75-120: multiple of   5
+      else if (mm.leveragedLots <=  300.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 10    ) *  10       );     //    120-300: multiple of  10
+      else if (mm.leveragedLots <=  750.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 20    ) *  20       );     //    300-750: multiple of  20
+      else if (mm.leveragedLots <= 1200.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 50    ) *  50       );     //   750-1200: multiple of  50
+      else                                  mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/100    ) * 100       );     //   1200-...: multiple of 100
    }
 
    mm.done = true;
