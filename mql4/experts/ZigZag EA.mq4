@@ -23,9 +23,12 @@
  *
  *
  * TODO:
- *  - ChartInfos: unitsize calculation using a configured leverage
+ *  - ChartInfos: don't recalculate on every tick (every few seconds is sufficient)
+ *
  *  - manual sequence with start/stop and signal pickup
- *  - rename ClosePositions to CloseOrders
+ *  - CustomPositions.LogTickets(): include lotsizes
+ *  - ClosePositions: parse ticket strings including lotsizes
+ *  - ClosePositions: rename to CloseOrders
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -105,7 +108,7 @@
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
- *  - Superbars: H1 IBs on #GER40_* are calculated and positioned from M30 (somehow caused by quote sessions starting at 03:30)
+ *  - Superbars: H1 IBs on #GER40* are drawn at M30 (quote sessions start at 03:30)
  *  - Superbars: ETH/RTH separation for Frankfurt session
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - on restart delete dead screen sockets
