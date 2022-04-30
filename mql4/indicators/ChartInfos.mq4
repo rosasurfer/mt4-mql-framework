@@ -1222,12 +1222,12 @@ bool UpdateUnitSize() {
       if (mm.riskRange != NULL) {
          double range = mm.riskRange;
          if (mm.cfgRiskRangeIsADR) {
-            if (range >= 1) range = MathRound(range);
-            else            range = NormalizeDouble(range, PipDigits);
+            if (Close[0] > 300 && range >= 3) range = MathRound(range);
+            else                              range = NormalizeDouble(range, PipDigits);
             text = StringConcatenate(text, "ADR=");
          }
-         if (range >= 1) string sRange = NumberToStr(range, ",'.2+");
-         else                   sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
+         if (Close[0] > 300 && range >= 3) string sRange = NumberToStr(range, ",'.2+");
+         else                                     sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
          text = StringConcatenate(text, sRange);
       }
 
