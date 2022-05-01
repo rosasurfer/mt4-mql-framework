@@ -13,7 +13,7 @@ int onInit() {
 
    // read config: displayed price
    string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
-   if (!IsVisualModeFix()) {                                                  // in tester is always bid displayed (sufficient and faster)
+   if (!IsVisualModeFix()) {                                                  // in tester always display the Bid price (sufficient and faster)
       section = "ChartInfos";
       key     = "DisplayedPrice."+ stdSymbol;
       sValue  = StrToLower(GetConfigString(section, key, "median"));

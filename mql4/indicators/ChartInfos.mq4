@@ -17,7 +17,8 @@
  *               limit monitoring and notifications
  *
  * TODO:
- *  - unitsize calculation using a configured leverage
+ *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *  - FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - set order tracker sound on stopout to "margin-call"
  */
 #include <stddefines.mqh>
