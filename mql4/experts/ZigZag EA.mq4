@@ -23,12 +23,15 @@
  *
  *
  * TODO:
- *  - ChartInfos: don't recalculate on every tick (every few seconds is sufficient)
- *
- *  - manual sequence with start/stop and signal pickup
  *  - CustomPositions.LogTickets(): include lotsizes
  *  - ClosePositions: parse ticket strings including lotsizes
  *  - ClosePositions: rename to CloseOrders
+ *
+ *  - ChartInfos
+ *     don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
+ *
+ *  - manual sequence with start/stop and signal pickup
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
