@@ -152,7 +152,7 @@ int onStart() {
          msg = "Do you really want to close "+ sPendingOrders + sAnd + sOpenPositions +"?";
       }
       else {
-         msg = "Do you really want to close all "+ (sizeOfPendingOrders + sizeOfOpenPositions) +" open tickets?";
+         msg = "Do you really want to close all "+ (sizeOfPendingOrders + sizeOfOpenPositions) +" open orders?";
       }
 
       int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
