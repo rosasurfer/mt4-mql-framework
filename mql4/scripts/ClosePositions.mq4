@@ -62,9 +62,15 @@ int onInit() {
    size = Explode(sValue, ",", sValues, NULL);
    for (i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
-      if (StringLen(sValue) > 0) {
-         if (StrStartsWith(sValue, "#"))
-            sValue = StrTrim(StrSubstr(sValue, 1));
+      if (sValue == "(NULL)") {
+         ArrayPushInt(closeTickets, 0);                           // add an never matching ticket to mark existing input
+      }
+      else if (sValue != "") {
+         if (StrStartsWith(sValue, "#")) {
+            sValue = StrSubstr(sValue, 1);                        // cut the hash char
+            sValue = StrLeftTo(sValue, ":");                      // cut an optional lotsize after ":"
+            sValue = StrTrim(sValue);
+         }
          if (!StrIsDigit(sValue)) return(catch("onInit(2)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
          if (iValue <= 0)         return(catch("onInit(3)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
@@ -162,7 +168,7 @@ int onStart() {
       }
    }
    else {
-      MessageBox("No matching tickets found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching orders found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }
