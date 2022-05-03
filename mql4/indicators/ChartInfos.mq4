@@ -1588,11 +1588,11 @@ bool Positions.LogTickets() {
 /**
  * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
  *
- * @param  bool logTickets - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
+ * @param  bool logTickets [optional] - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
-bool AnalyzePositions(bool logTickets=false) {
+bool AnalyzePositions(bool logTickets = false) {
    logTickets = logTickets!=0;
    if (logTickets)         positions.analyzed = false;                           // vorm Loggen werden die Positionen immer re-evaluiert
    if (mode.extern)        positions.analyzed = true;
@@ -1788,10 +1788,21 @@ bool AnalyzePositions(bool logTickets=false) {
  */
 bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
    isVirtual = isVirtual!=0;
+   string sIndex="-", sComment="";
 
    if (ArraySize(tickets) > 0) {
-      if (commentIndex > -1) logDebug("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      else                   logDebug("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      if (commentIndex > -1) {
+         sIndex = commentIndex;
+         if (StringLen(positions.config.comments[commentIndex]) > 0) {
+            sComment = "\""+ positions.config.comments[commentIndex] +"\" = ";
+         }
+      }
+      string sPosition = TicketsToStr.Position(tickets);
+      sPosition = ifString(sPosition=="0 lot", "", sPosition +" = ");
+
+      string sTickets = TicketsToStr.Lots(tickets, NULL);
+
+      logDebug("LogTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
    }
    return(true);
 }
@@ -4457,8 +4468,7 @@ string InputsToStr() {
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    bool     SortOpenTickets(int &keys[][]);
-   string   StringsToStr      (string array[], string separator);
-   string   TicketsToStr         (int array[], string separator);
+   string   StringsToStr(string array[], string separator);
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import
