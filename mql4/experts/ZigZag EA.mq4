@@ -23,8 +23,6 @@
  *
  *
  * TODO:
- *  - CustomPositions.LogTickets(): include lotsizes
- *  - ClosePositions: parse ticket strings including lotsizes
  *  - ClosePositions: rename to CloseOrders
  *  - Superbars: fix ETH session on BTCUSD
  *
