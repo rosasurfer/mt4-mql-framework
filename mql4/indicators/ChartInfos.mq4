@@ -1739,7 +1739,7 @@ bool AnalyzePositions(bool logTickets = false) {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
-         if (logTickets) AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
+         if (logTickets) LogTickets(customTickets, confLineIndex);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -1770,7 +1770,7 @@ bool AnalyzePositions(bool logTickets = false) {
       positions.config[i][4] = termCache2;
    }
 
-   if (logTickets) AnalyzePositions.LogTickets(false, tickets, -1);
+   if (logTickets) LogTickets(tickets, -1);
 
    // verbleibende Position(en) speichern
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, 0, 0, -1))
@@ -1782,15 +1782,15 @@ bool AnalyzePositions(bool logTickets = false) {
 
 
 /**
- * Loggt die Tickets jeder Zeile der Positionsanzeige.
+ * Loggt die Tickets einer Zeile der Positionsanzeige.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
-   isVirtual = isVirtual!=0;
-   string sIndex="-", sComment="";
-
+bool LogTickets(int tickets[], int commentIndex) {
    if (ArraySize(tickets) > 0) {
+      string sIndex = "-";
+      string sComment = "";
+
       if (commentIndex > -1) {
          sIndex = commentIndex;
          if (StringLen(positions.config.comments[commentIndex]) > 0) {
