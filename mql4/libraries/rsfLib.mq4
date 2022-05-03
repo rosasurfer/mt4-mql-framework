@@ -5257,7 +5257,7 @@ string PricesToStr(double values[], string separator = ", ") {
 
 
 /**
- * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize.
+ * Convert an array of order tickets to a human-readable string, additionally containing the lotsize per ticket.
  *
  * @param  int    tickets[]
  * @param  string separator - separator (default: ", ")
@@ -5297,7 +5297,7 @@ string TicketsToStr.Lots(int tickets[], string separator = ", ") {
 
 
 /**
- * Convert an array with order tickets to a human-readable string, additionally containing the ticket lotsize and symbol.
+ * Convert an array of order tickets to a human-readable string, additionally containing symbol and lotsize per ticket.
  *
  * @param  int    tickets[]
  * @param  string separator - separator (default: ", ")
@@ -5337,7 +5337,7 @@ string TicketsToStr.LotsSymbols(int tickets[], string separator = ", ") {
 
 
 /**
- * Resolve the total position size of all passed order tickets and convert them to a human-readable string.
+ * Resolve the total position of the passed tickets and convert it to a human-readable string.
  *
  * @param  int tickets[]
  *
@@ -5372,9 +5372,9 @@ string TicketsToStr.Position(int tickets[]) {
    bool isPosition = longPosition || shortPosition;
 
    string result = "";
-   if (!isPosition)         result = "(none)";
-   else if (!totalPosition) result = "±"+ NumberToStr(longPosition,  ".+")                                                                          +" lots (hedged)";
-   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ±"+ NumberToStr(hedgedPosition, ".+")) +" lots";
+   if (!isPosition)         result = "0 lot";
+   else if (!totalPosition) result = "±"+ NumberToStr(longPosition,  ".+")                                                                          +" lot (hedged)";
+   else                     result =      NumberToStr(totalPosition, ".+") + ifString(!hedgedPosition, "", " ±"+ NumberToStr(hedgedPosition, ".+")) +" lot";
 
    return(result);
 }
