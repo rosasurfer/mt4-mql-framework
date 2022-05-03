@@ -23,7 +23,6 @@
  *
  *
  * TODO:
- *  - ClosePositions: rename to CloseOrders
  *  - Superbars: fix ETH session on BTCUSD
  *
  *  - ChartInfos
