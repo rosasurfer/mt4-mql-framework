@@ -23,11 +23,12 @@
  *
  *
  * TODO:
- *  - Superbars: fix ETH session on BTCUSD
+ *  - Superbars
+ *     fix ETH session on BTCUSD
+ *     ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *
- *  - ChartInfos
- *     don't recalculate unitsize on every tick (every few seconds is sufficient)
- *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
+ *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
+ *  - in-chart news hints (to not forget untypical ones like press conferences)
  *
  *  - manual sequence with start/stop and signal pickup
  *
@@ -109,8 +110,9 @@
  *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
- *  - Superbars: H1 IBs on #GER40* are drawn at M30 (quote sessions start at 03:30)
- *  - Superbars: ETH/RTH separation for Frankfurt session
+ *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
+ *  - Tickchart-Creator: incorrect High/Lows (doesn't track/record lost ticks)
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - on restart delete dead screen sockets
  */
