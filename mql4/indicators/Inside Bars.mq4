@@ -1,8 +1,7 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and SR levels of the specified timeframes in the chart. Additionally to the standard MT4 timeframes the
- * indicator supports the timeframes H2, H3, H6 and H8.
+ * Marks inside bars and the corresponding projection levels of the specified timeframes in the chart.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -10,8 +9,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes         = "D1";                 // one or more comma-separated timeframes to analyze
-extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all available)
+extern string Timeframes         = "D1";                 // one or more timeframes to analyze, separated by comma
+extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all)
 extern string ___a__________________________;
 
 extern string Signal.onInsideBar = "on | off | auto*";
@@ -41,13 +40,13 @@ extern string Signal.SMS         = "on | off | auto*";
 #define CLOSE     4
 #define VOLUME    5
 
-double ratesM1 [][6];                                    // rates for each required timeframe
+double ratesM1 [][6];                                    // arrays for required timeframes
 double ratesM5 [][6];
 double ratesM15[][6];
 double ratesM30[][6];
 double ratesH1 [][6];
 
-int    changedBarsM1;                                    // ChangedBars for each required timeframe
+int    changedBarsM1;                                    // ChangedBars for the required timeframes
 int    changedBarsM5;
 int    changedBarsM15;
 int    changedBarsM30;
@@ -89,16 +88,15 @@ int onInit() {
    fTimeframes = NULL;
    for (int i=0; i < size; i++) {
       sValue = sValues[i];
-      int timeframe = StrToTimeframe(sValue, F_CUSTOM_TIMEFRAME|F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1)        return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
-      if (timeframe > PERIOD_MN1) return(catch("onInit(2)  Unsupported timeframe "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes) +" (max. MN1)", ERR_INVALID_INPUT_PARAMETER));
+      int timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+      if (timeframe == -1)  return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
       fTimeframes |= TimeframeFlag(timeframe);
       sValues[i] = TimeframeDescription(timeframe);
    }
    Timeframes = JoinStrings(sValues, ",");
 
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(3)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.InsideBars < -1) return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
 
    // signaling
@@ -122,7 +120,7 @@ int onInit() {
    string text = ProgramName() +": "+ Timeframes + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
-   return(catch("onInit(4)"));
+   return(catch("onInit(3)"));
 }
 
 
@@ -139,11 +137,7 @@ int onTick() {
    if (fTimeframes & F_PERIOD_M15 && 1) CheckInsideBarsM15();
    if (fTimeframes & F_PERIOD_M30 && 1) CheckInsideBarsM30();
    if (fTimeframes & F_PERIOD_H1  && 1) CheckInsideBarsH1();
-   if (fTimeframes & F_PERIOD_H2  && 1) CheckInsideBarsH2();
-   if (fTimeframes & F_PERIOD_H3  && 1) CheckInsideBarsH3();
    if (fTimeframes & F_PERIOD_H4  && 1) CheckInsideBarsH4();
-   if (fTimeframes & F_PERIOD_H6  && 1) CheckInsideBarsH6();
-   if (fTimeframes & F_PERIOD_H8  && 1) CheckInsideBarsH8();
    if (fTimeframes & F_PERIOD_D1  && 1) CheckInsideBarsD1();
    if (fTimeframes & F_PERIOD_W1  && 1) CheckInsideBarsW1();
    if (fTimeframes & F_PERIOD_MN1 && 1) CheckInsideBarsMN1();
@@ -303,108 +297,6 @@ bool CheckInsideBarsH1() {
 
 
 /**
- * Check rates for H2 inside bars.
- *
- * @return bool - success status
- */
-bool CheckInsideBarsH2() {
-   int bars = ArrayRange(ratesH1, 0);
-   int changedBars = changedBarsH1, more;
-
-   if (changedBars > 1) {
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H2)) return(true);                 // same as changedBars = 1
-         more = 1;                                                // check for one H2 inside bar only
-         bars = 5;                                                // covers hours of 2 finished H2 bars
-      }
-      else {                                                      // update history
-         DeleteInsideBars(PERIOD_H2);                             // delete existing bars
-         more = maxInsideBars;
-      }
-
-      datetime openTimeH1, openTimeH2, pOpenTimeH2, ppOpenTimeH2;
-      double high, pHigh, low, pLow;
-
-      for (int i, h2=-1; i < bars; i++) {                         // h2: H2 bar index
-         openTimeH1 = ratesH1[i][TIME];
-         openTimeH2 = openTimeH1 - (openTimeH1 % (2*HOURS));      // opentime of the containing H2 bar
-
-         if (openTimeH2 == pOpenTimeH2) {                         // the current H1 bar belongs to the same H2 bar
-            high = MathMax(ratesH1[i][HIGH], high);
-            low  = MathMin(ratesH1[i][LOW], low);
-         }
-         else {                                                   // the current H1 bar belongs to a new H2 bar
-            if (h2 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H2, ppOpenTimeH2, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h2++;
-            ppOpenTimeH2 = pOpenTimeH2;
-            pOpenTimeH2  = openTimeH2;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesH1[i][HIGH];
-            low          = ratesH1[i][LOW];
-         }
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Check rates for H3 inside bars.
- *
- * @return bool - success status
- */
-bool CheckInsideBarsH3() {
-   int bars = ArrayRange(ratesH1, 0);
-   int changedBars = changedBarsH1, more;
-
-   if (changedBars > 1) {
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H3)) return(true);                 // same as changedBars = 1
-         more = 1;                                                // check for one H3 inside bar only
-         bars = 7;                                                // covers hours of 2 finished H3 bars
-      }
-      else {                                                      // update history
-         DeleteInsideBars(PERIOD_H3);                             // delete existing bars
-         more = maxInsideBars;
-      }
-
-      datetime openTimeH1, openTimeH3, pOpenTimeH3, ppOpenTimeH3;
-      double high, pHigh, low, pLow;
-
-      for (int i, h3=-1; i < bars; i++) {                         // h3: H3 bar index
-         openTimeH1 = ratesH1[i][TIME];
-         openTimeH3 = openTimeH1 - (openTimeH1 % (3*HOURS));      // opentime of the containing H3 bar
-
-         if (openTimeH3 == pOpenTimeH3) {                         // the current H1 bar belongs to the same H3 bar
-            high = MathMax(ratesH1[i][HIGH], high);
-            low  = MathMin(ratesH1[i][LOW], low);
-         }
-         else {                                                   // the current H1 bar belongs to a new H3 bar
-            if (h3 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H3, ppOpenTimeH3, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h3++;
-            ppOpenTimeH3 = pOpenTimeH3;
-            pOpenTimeH3  = openTimeH3;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesH1[i][HIGH];
-            low          = ratesH1[i][LOW];
-         }
-      }
-   }
-   return(true);
-}
-
-
-/**
  * Check rates for H4 inside bars.
  *
  * @return bool - success status
@@ -444,108 +336,6 @@ bool CheckInsideBarsH4() {
             h4++;
             ppOpenTimeH4 = pOpenTimeH4;
             pOpenTimeH4  = openTimeH4;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesH1[i][HIGH];
-            low          = ratesH1[i][LOW];
-         }
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Check rates for H6 inside bars.
- *
- * @return bool - success status
- */
-bool CheckInsideBarsH6() {
-   int bars = ArrayRange(ratesH1, 0);
-   int changedBars = changedBarsH1, more;
-
-   if (changedBars > 1) {
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H6)) return(true);                 // same as changedBars = 1
-         more = 1;                                                // check for one H6 inside bar only
-         bars = 13;                                               // covers hours of 2 finished H6 bars
-      }
-      else {                                                      // update history
-         DeleteInsideBars(PERIOD_H6);                             // delete existing bars
-         more = maxInsideBars;
-      }
-
-      datetime openTimeH1, openTimeH6, pOpenTimeH6, ppOpenTimeH6;
-      double high, pHigh, low, pLow;
-
-      for (int i, h6=-1; i < bars; i++) {                         // h6: H6 bar index
-         openTimeH1 = ratesH1[i][TIME];
-         openTimeH6 = openTimeH1 - (openTimeH1 % (6*HOURS));      // opentime of the containing H6 bar
-
-         if (openTimeH6 == pOpenTimeH6) {                         // the current H1 bar belongs to the same H6 bar
-            high = MathMax(ratesH1[i][HIGH], high);
-            low  = MathMin(ratesH1[i][LOW], low);
-         }
-         else {                                                   // the current H1 bar belongs to a new H6 bar
-            if (h6 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H6, ppOpenTimeH6, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h6++;
-            ppOpenTimeH6 = pOpenTimeH6;
-            pOpenTimeH6  = openTimeH6;
-            pHigh        = high;
-            pLow         = low;
-            high         = ratesH1[i][HIGH];
-            low          = ratesH1[i][LOW];
-         }
-      }
-   }
-   return(true);
-}
-
-
-/**
- * Check rates for H8 inside bars.
- *
- * @return bool - success status
- */
-bool CheckInsideBarsH8() {
-   int bars = ArrayRange(ratesH1, 0);
-   int changedBars = changedBarsH1, more;
-
-   if (changedBars > 1) {
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H8)) return(true);                 // same as changedBars = 1
-         more = 1;                                                // check for one H8 inside bar only
-         bars = 17;                                               // covers hours of 2 finished H8 bars
-      }
-      else {                                                      // update history
-         DeleteInsideBars(PERIOD_H8);                             // delete existing bars
-         more = maxInsideBars;
-      }
-
-      datetime openTimeH1, openTimeH8, pOpenTimeH8, ppOpenTimeH8;
-      double high, pHigh, low, pLow;
-
-      for (int i, h8=-1; i < bars; i++) {                         // h8: H8 bar index
-         openTimeH1 = ratesH1[i][TIME];
-         openTimeH8 = openTimeH1 - (openTimeH1 % (8*HOURS));      // opentime of the containing H8 bar
-
-         if (openTimeH8 == pOpenTimeH8) {                         // the current H1 bar belongs to the same H8 bar
-            high = MathMax(ratesH1[i][HIGH], high);
-            low  = MathMin(ratesH1[i][LOW], low);
-         }
-         else {                                                   // the current H1 bar belongs to a new H8 bar
-            if (h8 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H8, ppOpenTimeH8, pHigh, pLow);
-               more--;
-               if (!more) break;
-            }
-            h8++;
-            ppOpenTimeH8 = pOpenTimeH8;
-            pOpenTimeH8  = openTimeH8;
             pHigh        = high;
             pLow         = low;
             high         = ratesH1[i][HIGH];
@@ -860,10 +650,11 @@ bool GetRates() {
       //debug("GetRates(4)  M30 => "+ changed +" of "+ ArrayRange(ratesM30, 0) +" bars changed");
    }
 
-   if (fTimeframes & (F_PERIOD_H1|F_PERIOD_H2|F_PERIOD_H3|F_PERIOD_H4|F_PERIOD_H6|F_PERIOD_H8|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
+   if (fTimeframes & (F_PERIOD_H1|F_PERIOD_H4|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesH1, NULL, PERIOD_H1);
       if (changed < 0) return(false);
       changedBarsH1 = changed;
+      debug("GetRates(5)  H1 => "+ changed +" of "+ ArrayRange(ratesH1, 0) +" bars changed");
    }
    return(true);
 }
