@@ -423,8 +423,7 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) {
-      logDebug("MessageBoxEx(1)  "+ message);
-      logDebug("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
+      logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStr(button) +")");
    }
    return(button);
 }
