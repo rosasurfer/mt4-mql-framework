@@ -23,10 +23,7 @@
  *
  *
  * TODO:
- *  - manual start/stop with signal pickup
- *     regular start waiting for the next ZigZag signal
- *     on start: open position of the current direction
- *     on stop: stop sequence
+ *  - manual start/stop
  *     breakeven stop, maybe trailing stop
  *     stop on reverse signal => continue with manual start
  *
@@ -65,6 +62,7 @@
  *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
+ *    - BTCUSD: weekend sessions are not recognized, immediate IsStopSignal(4) stop condition satisfied (SIGNAL_TIME)
  *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
  *    - full session (24h) with trade breaks
  *    - partial session (e.g. 09:00-16:00) with trade breaks
@@ -145,6 +143,7 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
@@ -300,9 +299,11 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
+   if (__isChart) HandleCommands();                            // process chart commands
+
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
-      IsZigZagSignal(zzSignal);                                   // check ZigZag on every tick (not a BarOpen event)
+      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (not a BarOpen event)
 
       if (sequence.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartSequence(signal);
@@ -316,6 +317,76 @@ int onTick() {
       RecordMetrics();
    }
    return(catch("onTick(1)"));
+}
+
+
+/**
+ * Dispatch incoming commands.
+ *
+ * @param  string commands[] - received commands
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string commands[]) {
+   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
+   string cmd = commands[0];
+
+   if (cmd == "start") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            int trend, iNull;
+            if (!GetZigZagTrend(0, trend, iNull)) return(false);
+            return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
+      }
+   }
+
+   else if (cmd == "stop") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_PROGRESSING:
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            return(StopSequence(NULL));
+      }
+   }
+
+   //else if (cmd == "resume") {
+   //   switch (sequence.status) {
+   //      case STATUS_STOPPED:
+   //         logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+   //         return(ResumeSequence(NULL));
+   //   }
+   //}
+   else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+
+   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
+}
+
+
+/**
+ * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
+ *
+ * @param  _InOut_ string &commands[] - array to add the received command to
+ *
+ * @return bool
+ */
+bool EventListener_ChartCommand(string &commands[]) {
+   if (!__isChart) return(false);
+
+   static string label="", mutex=""; if (!StringLen(label)) {
+      label = "EA.command";
+      mutex = "mutex."+ label;
+   }
+
+   // check for existing commands in a non-synchronized way (read-only) to prevent aquiring the lock on every tick
+   if (ObjectFind(label) == 0) {
+      if (AquireLock(mutex, true)) {                                 // now aquire the lock (read-write)
+         ArrayPushString(commands, ObjectDescription(label));
+         ObjectDelete(label);
+         return(ReleaseLock(mutex));
+      }
+   }
+   return(false);
 }
 
 
@@ -1697,7 +1768,25 @@ string StatusDescription(int status) {
 
 
 /**
- * Return a human-readable presentation of a signal constant.
+ * Return a readable presentation of a sequence status code.
+ *
+ * @param  int status
+ *
+ * @return string
+ */
+string StatusToStr(int status) {
+   switch (status) {
+      case NULL              : return("(NULL)"            );
+      case STATUS_WAITING    : return("STATUS_WAITING"    );
+      case STATUS_PROGRESSING: return("STATUS_PROGRESSING");
+      case STATUS_STOPPED    : return("STATUS_STOPPED"    );
+   }
+   return(_EMPTY_STR(catch("StatusToStr(1)  "+ sequence.name +" invalid parameter status: "+ status, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return a readable presentation of a signal constant.
  *
  * @param  int signal
  *
