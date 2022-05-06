@@ -23,6 +23,8 @@
  *
  *
  * TODO:
+ *  - FATAL ValidateInputs(23) Z.530 invalid input parameter StopConditions: "@profit(0.0005 pip)" [ERR_INVALID_PARAMETER]
+ *
  *  - ChartInfos
  *     onPositionOpen() log slippage
  *     prevent duplicate event logging of multiple terminals
@@ -1835,7 +1837,7 @@ bool SaveStatus() {
 
 
 /**
- * Return a string representation of only active start/stop conditions to be stored by SaveStatus().
+ * Return a string representation of active start/stop conditions to be stored by SaveStatus().
  *
  * @param  string sConditions - active and inactive conditions
  *
@@ -1850,8 +1852,9 @@ string SaveStatus.ConditionsToStr(string sConditions) {
 
    for (int i=0; i < size; i++) {
       expr = StrTrim(values[i]);
-      if (!StringLen(expr))              continue;              // skip empty conditions
-      if (StringGetChar(expr, 0) == '!') continue;              // skip disabled conditions
+      if (!StringLen(expr))               continue;            // skip empty conditions
+      if (StringGetChar(expr, 0) == '!')  continue;            // skip disabled conditions
+      if (StrStartsWith(expr, "@profit")) continue;            // skip TP condition          // TODO: integrate input TakeProfit into StopConditions
       result = StringConcatenate(result, " | ", expr);
    }
    if (StringLen(result) > 0) {
