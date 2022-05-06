@@ -23,8 +23,6 @@
  *
  *
  * TODO:
- *  - FATAL ValidateInputs(23) Z.530 invalid input parameter StopConditions: "@profit(0.0005 pip)" [ERR_INVALID_PARAMETER]
- *
  *  - ChartInfos
  *     onPositionOpen() log slippage
  *     prevent duplicate event logging of multiple terminals
@@ -131,7 +129,7 @@ extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
 extern string StopConditions       = "";                    // @time(datetime|time)
 extern double TakeProfit           = 0;                     // TP value
-extern string TakeProfit.Type      = "off* | money | percent | pip | quote-currency | index-point";    // can be shortened if distinct
+extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";      // can be shortened if distinct
 extern int    Slippage             = 2;                     // in point
 
 extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
@@ -183,7 +181,6 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #define TP_TYPE_PERCENT             2
 #define TP_TYPE_PIP                 3
 #define TP_TYPE_QUOTEUNIT           4
-#define TP_TYPE_INDEXPOINT          5
 
 #define METRIC_TOTAL_UNITS_ZERO     0           // cumulated PL metrics
 #define METRIC_TOTAL_UNITS_GROSS    1
@@ -2569,22 +2566,19 @@ bool ValidateInputs() {
 
    // TakeProfit (nothing to do)
 
-   // TakeProfit.Type: "off* | money | percent | pip | quote-currency | index-point"
+   // TakeProfit.Type: "off* | money | percent | pip | quote-unit"
    sValue = StrToLower(TakeProfit.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if      (StrStartsWith("off",            sValue)) stop.profitQu.type = NULL;
-   else if (StrStartsWith("money",          sValue)) stop.profitQu.type = TP_TYPE_MONEY;
-   else if (StrStartsWith("quote-currency", sValue)) stop.profitQu.type = TP_TYPE_QUOTEUNIT;
-   else if (sValue == "qc")                          stop.profitQu.type = TP_TYPE_QUOTEUNIT;
-   else if (StrStartsWith("index-points",   sValue)) stop.profitQu.type = TP_TYPE_INDEXPOINT;
-   else if (sValue == "ip")                          stop.profitQu.type = TP_TYPE_INDEXPOINT;
+   if      (StrStartsWith("off",        sValue)) stop.profitQu.type = NULL;
+   else if (StrStartsWith("money",      sValue)) stop.profitQu.type = TP_TYPE_MONEY;
+   else if (StrStartsWith("quote-unit", sValue)) stop.profitQu.type = TP_TYPE_QUOTEUNIT;
    else if (StringLen(sValue) < 2)                       return(!onInputError("ValidateInputs(24)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
-   else if (StrStartsWith("percent",        sValue)) stop.profitQu.type = TP_TYPE_PERCENT;
-   else if (StrStartsWith("pip",            sValue)) stop.profitQu.type = TP_TYPE_PIP;
+   else if (StrStartsWith("percent", sValue))    stop.profitQu.type = TP_TYPE_PERCENT;
+   else if (StrStartsWith("pip",     sValue))    stop.profitQu.type = TP_TYPE_PIP;
    else                                                  return(!onInputError("ValidateInputs(25)  "+ sequence.name +" invalid parameter TakeProfit.Type: "+ DoubleQuoteStr(TakeProfit.Type)));
    stop.profitAbs.condition   = false;
    stop.profitAbs.description = "";
@@ -2610,22 +2604,15 @@ bool ValidateInputs() {
       case TP_TYPE_PIP:
          stop.profitQu.condition    = true;
          stop.profitQu.value        = NormalizeDouble(TakeProfit*Pip, Digits);
-         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, ".+") +" pip)";
+         stop.profitQu.description  = "profit("+ NumberToStr(TakeProfit, ".+") +" pip)";
          break;
 
       case TP_TYPE_QUOTEUNIT:
          stop.profitQu.condition    = true;
          stop.profitQu.value        = NormalizeDouble(TakeProfit, Digits);
-         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, PriceFormat) +" "+ StrRight(Symbol(), 3) +")";
-         break;
-
-      case TP_TYPE_INDEXPOINT:
-         stop.profitQu.condition    = true;
-         stop.profitQu.value        = NormalizeDouble(TakeProfit, Digits);
-         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, ".+") +" index points)";
+         stop.profitQu.description  = "profit("+ NumberToStr(stop.profitQu.value, PriceFormat) +" point)";
          break;
    }
-   tpTypeDescriptions[TP_TYPE_QUOTEUNIT] = StrRight(Symbol(), 3);
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
