@@ -1217,7 +1217,7 @@ bool UpdateUnitSize() {
 
    if (mode.intern) {
       if (mm.riskPercent != NULL) {
-         text = StringConcatenate("R ", DoubleToStr(mm.riskPercent, 0), "%/");
+         text = StringConcatenate("R", DoubleToStr(mm.riskPercent, 0), "%/");
       }
 
       if (mm.riskRange != NULL) {
@@ -1246,7 +1246,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Aktualisiert die Positionsanzeigen unten rechts (Gesamtposition) und unten links (detaillierte Einzelpositionen).
+ * Update the position display bottom-right (total postion) and bottom-left (custom positions).
  *
  * @return bool - success status
  */
@@ -1259,17 +1259,25 @@ bool UpdatePositions() {
       if (!mm.done)              return(true);                 // on terminal not yet ready
    }
 
-   // Gesamtpositionsanzeige unten rechts
-   string sCurrentLeverage="", sCurrentPosition="";
-   if      (!isPosition   ) sCurrentPosition = " ";
-   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
+   // total position bottom-right
+   string sCurrentPosition = "";
+   if      (!isPosition)    sCurrentPosition = " ";
+   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:    ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
-      // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
-      double currentLeverage;
-      if (!mm.equity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
-      else            currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
-      sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "    ");
-      sCurrentPosition = StringConcatenate("Position:    " , sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      string sUnits = "";
+      double currentUnits;
+      if (mm.leveragedLotsNormalized != 0) {
+         currentUnits = MathAbs(totalPosition)/mm.leveragedLotsNormalized;
+         sUnits = StringConcatenate("U", DoubleToStr(currentUnits, 1), "    ");
+      }
+      string sRisk = "";
+      if (mm.riskPercent && currentUnits) {
+         sRisk = StringConcatenate("R", DoubleToStr(mm.riskPercent * currentUnits, 0), "%    ");
+      }
+      string sCurrentLeverage = "";
+      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", DoubleToStr(MathAbs(totalPosition)/mm.unleveragedLots, 1), "    ");
+
+      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 

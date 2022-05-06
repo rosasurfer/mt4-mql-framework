@@ -23,24 +23,21 @@
  *
  *
  * TODO:
- *  - Superbars
- *     fix ETH session on BTCUSD
- *     ETH/RTH separation for Frankfurt session with 17:35 CET hint
- *
- *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
- *  - in-chart news hints (to not forget untypical ones like press conferences)
- *
- *  - manual sequence with start/stop and signal pickup
- *
- *  - virtual trading
- *     analyze PL differences DAX,M1 2022.01.04
- *     adjust virtual commissions
+ *  - ChartInfos
+ *     onPositionOpen() log slippage
+ *     prevent duplicate event logging of multiple terminals
+ *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *
  *  - trading functionality
+ *     manual sequence with start/stop and signal pickup
  *     reverse trading
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
  *     pickup another sequence: copy-123, mirror-456
+ *
+ *  - virtual trading
+ *     analyze PL differences DAX,M1 2022.01.04
+ *     adjust virtual commissions
  *
  *  - visualization
  *     a chart profile per instrument
@@ -107,13 +104,15 @@
  *  - move all history functionality to the Expander (fixes MQL max. open file limit of program=64/terminal=512)
  *  - pass input "EA.Recorder" to the Expander as a string
  *  - build script for all .EX4 files after deployment
- *  - ChartInfos::onPositionOpen() doesn't log slippage
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
+ *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
+ *  - Superbars: fix ETH session on BTCUSD
  *  - Tickchart-Creator: incorrect High/Lows (doesn't track/record lost ticks)
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - in-chart news hints (to not forget untypical ones like press conferences)
  *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
