@@ -29,7 +29,6 @@
  *     on stop: stop sequence
  *     breakeven stop, maybe trailing stop
  *     stop on reverse signal => continue with manual start
- *     convert chart commands to work with multiple EAs
  *
  *  - trading functionality
  *     input parameter ZigZag.Timeframe
