@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // check chart for SnowRoller
+   // check chart for an active EA
    if (ObjectFind("EA.status") == 0) {
       SendChartCommand("EA.command", "startstopdisplay");
    }

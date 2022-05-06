@@ -20,11 +20,11 @@ int onStart() {
    string sid="", status="", label="EA.status";
    bool isActive = false;
 
-   // check chart for a running EA
+   // check chart for an active EA
    if (ObjectFind(label) == 0) {
       string text = StrTrim(ObjectDescription(label));                  // format: {sid}|{status}
-      sid    = StrLeftTo(text, "|");
-      status = StrRightFrom(text, "|");
+      sid      = StrLeftTo(text, "|");
+      status   = StrRightFrom(text, "|");
       isActive = (status!="" && status!="undefined");
    }
 
@@ -32,7 +32,7 @@ int onStart() {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to resume EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "stop");
    }

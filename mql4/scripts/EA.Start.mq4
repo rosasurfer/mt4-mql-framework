@@ -20,7 +20,7 @@ int onStart() {
    string sid="", status="", label="EA.status";
    bool isActive = false;
 
-   // check chart for a running EA
+   // check chart for an active EA
    if (ObjectFind(label) == 0) {
       string text = StrTrim(ObjectDescription(label));                  // format: {sid}|{status}
       sid      = StrLeftTo(text, "|");
