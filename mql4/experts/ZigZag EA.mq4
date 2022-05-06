@@ -29,6 +29,7 @@
  *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *
  *  - trading functionality
+ *     input parameter ZigZag.Timeframe
  *     manual sequence with start/stop and signal pickup
  *     reverse trading
  *     support multiple units and targets (add new metrics)
@@ -48,9 +49,6 @@
  *     notifications for price feed outages
  *     daily metric variants
  *
- *  - much better realtime tick charts (built-in charts are useless)
- *  - realtime equity charts
- *  - input parameter ZigZag.Timeframe
  *  - status display
  *     parameter: ZigZag.Periods
  *     current position
@@ -96,6 +94,8 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - realtime equity charts
+ *  - much better realtime tick charts (built-in charts are useless)
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
@@ -2532,7 +2532,7 @@ bool ValidateInputs() {
    }
 
    // StopConditions: @time(datetime|time)
-   if (!isInitParameters || StartConditions!=prev.StartConditions) {
+   if (!isInitParameters || StopConditions!=prev.StopConditions) {
       stop.time.condition = false;                       // on initParameters conditions are re-enabled on change only
       sizeOfExprs = Explode(StopConditions, "|", exprs, NULL);
 
