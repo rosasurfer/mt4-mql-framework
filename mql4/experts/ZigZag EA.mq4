@@ -23,18 +23,24 @@
  *
  *
  * TODO:
+ *  - manual start/stop with signal pickup
+ *     regular start waiting for the next ZigZag signal
+ *     on start: open position of the current direction
+ *     on stop: stop sequence
+ *     breakeven stop, maybe trailing stop
+ *     stop on reverse signal => continue with manual start
+ *     convert chart commands to work with multiple EAs
+ *
+ *  - trading functionality
+ *     input parameter ZigZag.Timeframe
+ *     reverse trading
+ *     support multiple units and targets (add new metrics)
+ *     analyze channel contraction
+ *
  *  - ChartInfos
  *     onPositionOpen() log slippage
  *     prevent duplicate event logging of multiple terminals
  *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
- *
- *  - trading functionality
- *     input parameter ZigZag.Timeframe
- *     manual sequence with start/stop and signal pickup
- *     reverse trading
- *     support multiple units and targets (add new metrics)
- *     analyze channel contraction
- *     pickup another sequence: copy-123, mirror-456
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -2946,6 +2952,14 @@ int ShowStatus(int error = NO_ERROR) {
    // 3 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, text);
    if (__CoreFunction == CF_INIT) WindowRedraw();
+
+   // store status in the chart to enable sending of chart commands
+   string label = "EA.status";
+   if (ObjectFind(label) != 0) {
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   }
+   ObjectSetText(label, StringConcatenate(Sequence.ID, "|", StatusDescription(sequence.status)));
 
    error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;

@@ -291,7 +291,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
    static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
+      label = "EA.command";
       mutex = "mutex."+ label;
    }
 
@@ -318,14 +318,14 @@ bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
    string cmd = commands[0];
 
-   if (StrCompareI(cmd, "start")) {
+   if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
             logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StartSequence(NULL));
       }
    }
-   else if (StrCompareI(cmd, "stop")) {
+   else if (cmd == "stop") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
@@ -333,17 +333,17 @@ bool onCommand(string commands[]) {
             return(StopSequence(NULL));
       }
    }
-   else if (StrCompareI(cmd, "resume")) {
+   else if (cmd == "resume") {
       switch (sequence.status) {
          case STATUS_STOPPED:
             logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(ResumeSequence(NULL));
       }
    }
-   else if (StrCompareI(cmd, "ToggleOpenOrders")) {
+   else if (cmd == "toggleOpenOrders") {
       return(ToggleOpenOrders());
    }
-   else if (StrCompareI(cmd, "ToggleTradeHistory")) {
+   else if (cmd == "toggleTradeHistory") {
       return(ToggleTradeHistory());
    }
    else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
@@ -4363,17 +4363,17 @@ int ShowStatus(int error = NO_ERROR) {
                                    sCycleStats
    );
 
-   // 4 lines margin-top for instrument and indicator legends
+   // 3 lines margin-top for instrument and indicator legends
    Comment(NL, NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // store status in the chart to enable remote access by scripts
-   string label = "Duel.status";
+   // store status in the chart to enable sending of chart commands
+   string label = "EA.status";
    if (ObjectFind(label) != 0) {
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   ObjectSetText(label, StringConcatenate(sequence.id, "|", StatusDescription(sequence.status)));
+   ObjectSetText(label, StringConcatenate(Sequence.ID, "|", StatusDescription(sequence.status)));
 
    error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
