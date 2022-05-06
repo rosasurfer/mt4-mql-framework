@@ -1,7 +1,7 @@
 /**
- * Duel.Resume
+ * EA.Resume
  *
- * Send a command to an active Duel instance to resume the current sequence.
+ * Send a "resume" command to a supporting EA.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,19 +16,19 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // active Duel instances maintain a chart object holding the instance id and the current instance status
+   // supporting EAs maintain a chart object holding the instance id and the instance status
    string sid="", status="", label="EA.status";
-   bool isResumable = false;
+   bool isActive = false;
 
-   // check chart for a matching Duel instance
+   // check chart for an active EA
    if (ObjectFind(label) == 0) {
       string text = StrTrim(ObjectDescription(label));                  // format: {sid}|{status}
-      sid    = StrLeftTo(text, "|");
-      status = StrToLower(StrLeftTo(StrRightFrom(text, "|"), "|"));
-      if (status == "stopped") isResumable = true;
+      sid      = StrLeftTo(text, "|");
+      status   = StrRightFrom(text, "|");
+      isActive = (status!="" && status!="undefined");
    }
 
-   if (isResumable) {
+   if (isActive) {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
@@ -38,7 +38,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No resumable Duel instance found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No active EA instance found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }
