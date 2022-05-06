@@ -17,8 +17,8 @@ int __DeinitFlags[];
  */
 int onStart() {
    // check chart for SnowRoller
-   if (ObjectFind("SnowRoller.status") == 0) {
-      SendChartCommand("SnowRoller.command", "startstopdisplay");
+   if (ObjectFind("EA.status") == 0) {
+      SendChartCommand("EA.command", "startstopdisplay");
    }
    else {
       PlaySoundEx("Windows Chord.wav");

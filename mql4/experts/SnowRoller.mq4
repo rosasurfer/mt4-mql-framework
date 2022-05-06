@@ -338,7 +338,6 @@ bool onCommand(string commands[]) {
 
    string cmd = commands[0];
 
-   // wait
    if (cmd == "wait") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -352,7 +351,6 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   // start
    if (cmd == "start") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -368,7 +366,6 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   // stop
    if (cmd == "stop") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -2302,7 +2299,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
    static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
+      label = "EA.command";
       mutex = "mutex."+ label;
    }
 
@@ -3811,17 +3808,15 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // store status in chart to enable remote control by scripts
-   string label = "SnowRoller.status";
+   // store status in the chart to enable sending of chart commands
+   string label = "EA.status";
    if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-         return(catch("ShowStatus(2)"));
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
-   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
+   ObjectSetText(label, StringConcatenate(Sequence.ID, "|", StatusDescription(sequence.status)));
 
-   error = intOr(catch("ShowStatus(3)"), error);
+   error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
 }
