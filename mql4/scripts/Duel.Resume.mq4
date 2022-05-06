@@ -17,7 +17,7 @@ int __DeinitFlags[];
  */
 int onStart() {
    // active Duel instances maintain a chart object holding the instance id and the current instance status
-   string sid="", status="", label="Duel.status";
+   string sid="", status="", label="EA.status";
    bool isResumable = false;
 
    // check chart for a matching Duel instance
@@ -34,7 +34,7 @@ int onStart() {
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
       int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to resume Duel instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
-      SendChartCommand("Duel.command", "resume");
+      SendChartCommand("EA.command", "resume");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
