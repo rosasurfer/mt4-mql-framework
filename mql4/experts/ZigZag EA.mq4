@@ -1,11 +1,18 @@
 /**
- * ZigZag EA
+ * ZigZag EA - a modified version of the system traded by the "Turtle traders" of Richard Dennis
  *
  *
- * Input parameters:
- * -----------------
- * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metric ids separated by comma. For metric id syntax
- *                descriptions see input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
+ * The ZigZag indicator that comes with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be
+ * used to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a
+ * custom and greatly enhanced version of the ZigZag indicator (signals are still the same).
+ *
+ *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
+ *
+ *
+ * Input parameters
+ * ----------------
+ * • EA.Recorder: Recorded metrics, one of "on", "off" or one/more custom metric ids separated by comma. For the syntax of
+ *                metric ids see the input parameter "EA.Recorder" in "mql4/include/core/expert.mqh".
  *    "off": Recording is disabled.
  *    "on":  Records a standard timeseries depicting the EA's regular equity graph after all costs.
  *
@@ -20,6 +27,18 @@
  *    "8":   Records a timeseries depicting daily PL after all costs (net) in account currency.
  *
  *    Timeseries in "quote units" are recorded in the best matching unit (one of pip, quote currency or index points).
+ *
+ *
+ * Manual control
+ * --------------
+ * The EA can be manually controlled via the following scripts (online and in tester):
+ *
+ *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
+ *               arrives the EA starts trading.
+ *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
+ *               trend and doesn't wait for the next signal. Nothing changes if a position is already open.
+ *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for ZigZag signals. Nothing
+ *               changes if the EA is already stopped.
  *
  *
  * TODO:
@@ -37,6 +56,7 @@
  *     onPositionOpen() log slippage
  *     prevent duplicate event logging of multiple terminals
  *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
+ *     skip managed orders
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
