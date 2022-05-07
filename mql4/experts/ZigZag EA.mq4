@@ -34,7 +34,7 @@
  * The EA can be manually controlled via the following scripts (online and in tester):
  *
  *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
- *               arrives the EA starts trading.
+ *               arrives the EA starts trading. Nothing changes if the RA is already in status "waiting".
  *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
  *               trend and doesn't wait for the next signal. Nothing changes if a position is already open.
  *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for ZigZag signals. Nothing
@@ -47,6 +47,7 @@
  *     stop on reverse signal => continue with manual start
  *
  *  - trading functionality
+ *     manage an existing manual order ticket
  *     input parameter ZigZag.Timeframe
  *     reverse trading
  *     support multiple units and targets (add new metrics)
@@ -183,7 +184,7 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #define SIGNAL_TIME                 3
 #define SIGNAL_TAKEPROFIT           4
 
-#define HI_TICKET                   0           // order history indexes
+#define HI_TICKET                   0           // trade history indexes
 #define HI_LOTS                     1
 #define HI_OPENTYPE                 2
 #define HI_OPENTIME                 3
@@ -322,7 +323,7 @@ int onTick() {
 
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
-      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (not a BarOpen event)
+      IsZigZagSignal(zzSignal);                                // check ZigZag on every tick (signals occur anytime)
 
       if (sequence.status == STATUS_WAITING) {
          if (IsStartSignal(signal)) StartSequence(signal);
@@ -353,9 +354,9 @@ bool onCommand(string commands[]) {
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
+         case STATUS_STOPPED:
             logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
-            int trend, iNull;
-            if (!GetZigZagTrend(0, trend, iNull)) return(false);
+            int trend = GetZigZagTrend(0);
             return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
       }
    }
@@ -369,13 +370,14 @@ bool onCommand(string commands[]) {
       }
    }
 
-   //else if (cmd == "resume") {
-   //   switch (sequence.status) {
-   //      case STATUS_STOPPED:
-   //         logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
-   //         return(ResumeSequence(NULL));
-   //   }
-   //}
+   else if (cmd == "resume") {
+      switch (sequence.status) {
+         case STATUS_STOPPED:
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            sequence.status = STATUS_WAITING;
+            return(SaveStatus());
+      }
+   }
    else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
    return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
@@ -440,7 +442,7 @@ bool IsZigZagSignal(int &signal) {
       signal = lastResult;
    }
    else {
-      if (!GetZigZagTrend(0, trend, reversal)) return(false);
+      if (!GetZigZagTrendData(0, trend, reversal)) return(false);
 
       if (Abs(trend)==reversal || !reversal) {     // reversal=0 describes a double crossing, trend is +1 or -1
          if (trend > 0) {
@@ -476,10 +478,24 @@ bool IsZigZagSignal(int &signal) {
  *
  * @return bool - success status
  */
-bool GetZigZagTrend(int bar, int &combinedTrend, int &reversal) {
+bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
    combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
    reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
+}
+
+
+/**
+ * Get the length of the ZigZag trend at the specified bar offset.
+ *
+ * @param  int bar - bar offset
+ *
+ * @return int - trend length or NULL (0) in case of errors
+ */
+int GetZigZagTrend(int bar) {
+   int trend, iNull;
+   if (!GetZigZagTrendData(bar, trend, iNull)) return(NULL);
+   return(trend % 100000);
 }
 
 
@@ -729,17 +745,17 @@ bool IsStopSignal(int &signal) {
 
 
 /**
- * Start a waiting sequence.
+ * Start a waiting or restart a stopped sequence.
  *
  * @param  int signal - trade signal causing the call
  *
  * @return bool - success status
  */
 bool StartSequence(int signal) {
-   if (last_error != NULL)                          return(false);
-   if (sequence.status != STATUS_WAITING)           return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
-   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT) return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
-   if (tradingMode == TRADINGMODE_VIRTUAL)          return(StartVirtualSequence(signal));
+   if (last_error != NULL)                                                 return(false);
+   if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
+   if (signal!=SIGNAL_LONG && signal!=SIGNAL_SHORT)                        return(!catch("StartSequence(2)  "+ sequence.name +" invalid parameter signal: "+ signal, ERR_INVALID_PARAMETER));
+   if (tradingMode == TRADINGMODE_VIRTUAL)                                 return(StartVirtualSequence(signal));
 
    if (IsLogInfo()) logInfo("StartSequence(3)  "+ sequence.name +" starting ("+ SignalToStr(signal) +")");
 
