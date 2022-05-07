@@ -62,7 +62,6 @@
  *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
- *    - BTCUSD: weekend sessions are not recognized, immediate IsStopSignal(4) stop condition satisfied (SIGNAL_TIME)
  *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
  *    - full session (24h) with trade breaks
  *    - partial session (e.g. 09:00-16:00) with trade breaks
@@ -477,17 +476,23 @@ double GetZigZagChannel(int bar, int mode) {
 }
 
 
+#define MODE_TRADESERVER   1
+#define MODE_STRATEGY      2
+
+
 /**
- * Whether the current time is outside of the specified trading time range. At weekends always true.
+ * Whether the current time is outside of the specified trading time range.
  *
- * @param  _In_    int      tradingFrom   - daily trading start time offset in seconds
- * @param  _In_    int      tradingTo     - daily trading stop time offset in seconds
- * @param  _InOut_ datetime prevStopTime  - last stop time preceeding 'nextStartTime'
- * @param  _InOut_ datetime nextStartTime - next start time (after return always in the future)
+ * @param  _In_    int      tradingFrom    - daily trading start time offset in seconds
+ * @param  _In_    int      tradingTo      - daily trading stop time offset in seconds
+ * @param  _InOut_ datetime &stopTime      - last stop time preceeding 'nextStartTime'
+ * @param  _InOut_ datetime &nextStartTime - next start time in the future
+ * @param  _In_    int      mode           - one of MODE_TRADESERVER | MODE_STRATEGY
  *
  * @return bool
  */
-bool IsTradingBreak(int tradingFrom, int tradingTo, datetime &prevStopTime, datetime &nextStartTime) {
+bool IsTradingBreak(int tradingFrom, int tradingTo, datetime &stopTime, datetime &nextStartTime, int mode) {
+   if (mode!=MODE_TRADESERVER && mode!=MODE_STRATEGY) return(!catch("IsTradingBreak(1)  "+ sequence.name +" invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
    datetime srvNow = TimeServer();
 
    // check whether to recalculate start/stop times
@@ -503,11 +508,15 @@ bool IsTradingBreak(int tradingFrom, int tradingTo, datetime &prevStopTime, date
       datetime fxtStartTime = fxtMidnight + startOffset;             // today's theoretical start time in FXT
 
       // determine the next real start time in SRV
+      bool skipWeekend = (Symbol() != "BTCUSD");                     // BTCUSD trades at weekends           // TODO: make configurable
       int dow = TimeDayOfWeekEx(fxtStartTime);
-      while (srvStartTime <= srvNow || dow==SATURDAY || dow==SUNDAY) {
+      bool isWeekend = (dow==SATURDAY || dow==SUNDAY);
+
+      while (srvStartTime <= srvNow || (isWeekend && skipWeekend)) {
          srvStartTime += 1*DAY;
          fxtStartTime += 1*DAY;
          dow = TimeDayOfWeekEx(fxtStartTime);
+         isWeekend = (dow==SATURDAY || dow==SUNDAY);
       }
       nextStartTime = srvStartTime;
 
@@ -518,23 +527,26 @@ bool IsTradingBreak(int tradingFrom, int tradingTo, datetime &prevStopTime, date
       datetime fxtStopTime = fxtMidnight + stopOffset;               // the start day's theoretical stop time in FXT
 
       dow = TimeDayOfWeekEx(fxtStopTime);
-      while (srvStopTime > srvStartTime || dow==SATURDAY || dow==SUNDAY || (dow==MONDAY && fxtStopTime==fxtMidnight)) {
+      isWeekend = (dow==SATURDAY || dow==SUNDAY);
+
+      while (srvStopTime > srvStartTime || (isWeekend && skipWeekend) || (dow==MONDAY && fxtStopTime==fxtMidnight)) {
          srvStopTime -= 1*DAY;
          fxtStopTime -= 1*DAY;
          dow = TimeDayOfWeekEx(fxtStopTime);
+         isWeekend = (dow==SATURDAY || dow==SUNDAY);                 // BTCUSD trades at weekends           // TODO: make configurable
       }
-      prevStopTime = srvStopTime;
+      stopTime = srvStopTime;
 
-      if (IsLogDebug()) logDebug("IsTradingBreak(1)  "+ sequence.name +" recalculated "+ ifString(srvNow >= prevStopTime, "current", "next") +" stop of \""+ TimeToStr(startOffset, TIME_MINUTES) +"-"+ TimeToStr(stopOffset, TIME_MINUTES) +"\" as "+ GmtTimeFormat(prevStopTime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(nextStartTime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradingBreak(2)  "+ sequence.name +" recalculated "+ ifString(srvNow >= stopTime, "current", "next") + ifString(mode==MODE_TRADESERVER, " trade session", " strategy") +" stop \""+ TimeToStr(startOffset, TIME_MINUTES) +"-"+ TimeToStr(stopOffset, TIME_MINUTES) +"\" as "+ GmtTimeFormat(stopTime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(nextStartTime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check
-   return(srvNow >= prevStopTime);                                   // here nextStartTime is always in the future
+   return(srvNow >= stopTime);                                       // nextStartTime is in the future of stopTime
 }
 
 
-datetime tradeSession.startOffset = D'1970.01.01 00:04:00';
-datetime tradeSession.stopOffset  = D'1970.01.01 23:56:00';
+datetime tradeSession.startOffset = D'1970.01.01 00:05:00';
+datetime tradeSession.stopOffset  = D'1970.01.01 23:55:00';
 datetime tradeSession.startTime;
 datetime tradeSession.stopTime;
 
@@ -545,7 +557,7 @@ datetime tradeSession.stopTime;
  * @return bool
  */
 bool IsTradeSessionBreak() {
-   return(IsTradingBreak(tradeSession.startOffset, tradeSession.stopOffset, tradeSession.stopTime, tradeSession.startTime));
+   return(IsTradingBreak(tradeSession.startOffset, tradeSession.stopOffset, tradeSession.stopTime, tradeSession.startTime, MODE_TRADESERVER));
 }
 
 
@@ -559,7 +571,7 @@ datetime strategy.stopTime;
  * @return bool
  */
 bool IsStrategyBreak() {
-   return(IsTradingBreak(start.time.value, stop.time.value, strategy.stopTime, strategy.startTime));
+   return(IsTradingBreak(start.time.value, stop.time.value, strategy.stopTime, strategy.startTime, MODE_STRATEGY));
 }
 
 
