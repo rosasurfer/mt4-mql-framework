@@ -166,7 +166,7 @@ bool OrderTracker.Configure() {
       orderTracker.enabled = false;
    }
    else if (sValue == "auto") {
-      orderTracker.enabled = GetConfigBool("EventTracker", "Track.Orders");
+      orderTracker.enabled = GetConfigBool("ChartInfos", "Track.Orders");
    }
    else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
