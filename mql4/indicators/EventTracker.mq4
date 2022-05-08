@@ -80,9 +80,9 @@ int    orders.knownOrders.ticket[];                                  // vom letz
 int    orders.knownOrders.type  [];
 string orders.accountAlias = "";                                     // Verwendung in ausgehenden Messages
 
-#define CLOSE_TYPE_TP               1                                // TakeProfit
-#define CLOSE_TYPE_SL               2                                // StopLoss
-#define CLOSE_TYPE_SO               3                                // StopOut (Margin-Call)
+#define CLOSED_BY_TP                1                                // TakeProfit
+#define CLOSED_BY_SL                2                                // StopLoss
+#define CLOSED_BY_SO                3                                // StopOut (margin call)
 
 
 // Price-Events
@@ -591,9 +591,9 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
             int    closeType, closeData[2];
             string comment = StrToLower(StrTrim(OrderComment()));
 
-            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
-            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
-            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSED_BY_SO; }     // Margin Stopout erkennen
+            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSED_BY_TP; }
+            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSED_BY_SL; }
             else {
                if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
                   closedByLimit = false;                                                              // gem‰ﬂ MT4-Standard
@@ -601,7 +601,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
                   else                 { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
                   if (closedByLimit) {
                      autoClosed = true;
-                     closeType  = CLOSE_TYPE_TP;
+                     closeType  = CLOSED_BY_TP;
                   }
                }
                if (!EQ(OrderStopLoss(), 0)) {
@@ -610,7 +610,7 @@ bool CheckPositions(int failedOrders[], int openedPositions[], int closedPositio
                   else                 { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
                   if (closedByLimit) {
                      autoClosed = true;
-                     closeType  = CLOSE_TYPE_SL;
+                     closeType  = CLOSED_BY_SL;
                   }
                }
             }
