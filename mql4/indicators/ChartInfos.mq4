@@ -171,11 +171,11 @@ int     tickTimerId;                                              // ID eines gg
 int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
-bool    orderTracker.enabled;
-double  trackedOrders[][2];                                       // tracked pending orders: {ticket, orderType}
-
 #define OI_TICKET       0                                         // order tracker indexes
 #define OI_TYPE         1
+
+bool    orderTracker.enabled;
+double  trackedOrders[][2];                                       // {ticket, orderType}
 
 // types for server-side closed positions
 #define CLOSED_BY_TP    1                                         // TakeProfit
@@ -222,14 +222,12 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      if (mode.intern && orderTracker.enabled) {                                    // monitor manual limit orders
+      if (mode.intern && orderTracker.enabled) {                                    // monitor execution of order limits
          int failedOrders   [];    ArrayResize(failedOrders,    0);                 // {ticket}
          int openedPositions[];    ArrayResize(openedPositions, 0);                 // {ticket}
          int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {ticket, closedBy=NULL|CLOSED_BY_TP|CLOSED_BY_SL|CLOSED_BY_SO}
 
-         if (!OrderTracker.CheckPositions(failedOrders, openedPositions, closedPositions))
-            return(last_error);
-
+         if (!MonitorOpenOrders(failedOrders, openedPositions, closedPositions)) return(last_error);
          if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
@@ -4096,44 +4094,41 @@ bool RestoreRuntimeStatus() {
 
 
 /**
- * Monitor execution of pending order limits.
+ * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
+ * are not monitored as this is the responsibility of the EA.
  *
- * @param  _Out_ int failedOrders   []    - tickets of failed executions (cancellations)
- * @param  _Out_ int openedPositions[]    - tickets of opened positions (entry limit executed)
- * @param  _Out_ int closedPositions[][2] - tickets of closed positions (exit limit executed)
+ * @param  _Out_ int failedOrders   []   - tickets of failed executions (order cancellations)
+ * @param  _Out_ int openedPositions[]   - tickets of opened positions (entry limit executed)
+ * @param  _Out_ int closedPositions[][] - tickets of closed positions (exit limit executed)
  *
  * @return bool - success status
  */
-bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
+bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
    /*
-   PositionOpen
-   ------------
-   - ist Ausführung einer Pending-Order
-   - Pending-Order muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders auf Statusänderung prüfen:              über bekannte Orders iterieren
-     (2) alle unbekannten Pending-Orders registrieren:                         über alle Tickets(MODE_TRADES) iterieren
+   monitor execution of entry limits (pendings must be known before)
+   -----------------------------------------------------------------
+   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
+   - alle unbekannten Pending-Orders registrieren:                               über alle Tickets(MODE_TRADES) iterieren
 
-   PositionClose
-   -------------
-   - ist Schließung einer Position
-   - Position muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:   über bekannte Orders iterieren
-     (2) alle unbekannten Positionen mit und ohne Exit-Limit registrieren:     über alle Tickets(MODE_TRADES) iterieren
-         (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
+   monitor execution of exit limits (positions must be known before)
+   -----------------------------------------------------------------
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
+   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           über alle Tickets(MODE_TRADES) iterieren
+     (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
 
-   beides zusammen
-   ---------------
-     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:            über bekannte Orders iterieren
-     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen: über bekannte Orders iterieren
-     (2)   alle unbekannten Pending-Orders und Positionen registrieren:        über alle Tickets(MODE_TRADES) iterieren
-           - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
+   monitor both together
+   ---------------------
+   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
+   - alle unbekannten Pending-Orders und Positionen registrieren:                über alle Tickets(MODE_TRADES) iterieren
    */
-   int sizeOfOrders = ArrayRange(trackedOrders, 0), type;
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
-   for (int i=sizeOfOrders-1; i >= 0; i--) {
-      if (!SelectTicket(trackedOrders[i][OI_TICKET], "OrderTracker.CheckPositions(1)")) return(false);
-      type = OrderType();
+   int sizeOfTrackedOrders = ArrayRange(trackedOrders, 0);
+
+   for (int i=sizeOfTrackedOrders-1; i >= 0; i--) {
+      if (!SelectTicket(trackedOrders[i][OI_TICKET], "MonitorOpenOrders(1)")) return(false);
+      int type = OrderType();
 
       if (trackedOrders[i][OI_TYPE] > OP_SELL) {
          // (1.1) beim letzten Aufruf Pending-Order
@@ -4145,7 +4140,7 @@ bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], in
 
                // geschlossene Pending-Order aus der Überwachung entfernen
                ArraySpliceDoubles(trackedOrders, i, 1);
-               sizeOfOrders--;
+               sizeOfTrackedOrders--;
             }
          }
          else {
@@ -4197,7 +4192,7 @@ bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], in
                ArrayPushInts(closedPositions, closeData);                  // Position wurde automatisch geschlossen
             }
             ArraySpliceDoubles(trackedOrders, i, 1);                       // geschlossene Position aus der Überwachung entfernen
-            sizeOfOrders--;
+            sizeOfTrackedOrders--;
          }
       }
    }
@@ -4212,21 +4207,22 @@ bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], in
             ordersTotal = -1;                                              // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
             break;
          }
-         for (int n=0; n < sizeOfOrders; n++) {
+         if (OrderMagicNumber() != 0) continue;                            // skip orders managed by an EA
+
+         for (int n=0; n < sizeOfTrackedOrders; n++) {
             if (trackedOrders[n][OI_TICKET] == OrderTicket())              // Order bereits bekannt
                break;
          }
-         if (n >= sizeOfOrders) {                                          // Order unbekannt: in Überwachung aufnehmen
-            ArrayResize(trackedOrders, sizeOfOrders+1);
-            trackedOrders[sizeOfOrders][OI_TICKET] = OrderTicket();
-            trackedOrders[sizeOfOrders][OI_TYPE  ] = OrderType();
-            sizeOfOrders++;
+         if (n >= sizeOfTrackedOrders) {                                   // Order unbekannt: in Überwachung aufnehmen
+            ArrayResize(trackedOrders, sizeOfTrackedOrders+1);
+            trackedOrders[sizeOfTrackedOrders][OI_TICKET] = OrderTicket();
+            trackedOrders[sizeOfTrackedOrders][OI_TYPE  ] = OrderType();
+            sizeOfTrackedOrders++;
          }
       }
-      if (ordersTotal == OrdersTotal())
-         break;
+      if (ordersTotal == OrdersTotal()) break;
    }
-   return(!catch("OrderTracker.CheckPositions(2)"));
+   return(!catch("MonitorOpenOrders(2)"));
 }
 
 
