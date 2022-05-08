@@ -42,22 +42,24 @@
  *
  *
  * TODO:
+ *  - ChartInfos::onPositionOpen/Close() log slippage
+ *  - Instrument Infos: remove maxLeverage constraint
+ *
  *  - manual start/stop
- *     breakeven stop, maybe trailing stop
  *     stop on reverse signal => continue with manual start
+ *     breakeven stop
+ *     trailing stop
  *
  *  - trading functionality
+ *     reverse trading and command EA.Reverse
  *     manage an existing manual order ticket
  *     input parameter ZigZag.Timeframe
- *     reverse trading
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
  *
  *  - ChartInfos
- *     onPositionOpen() log slippage
  *     prevent duplicate event logging of multiple terminals
  *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
- *     skip managed orders
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -150,7 +152,7 @@ extern string TradingMode          = "regular* | virtual";  // can be shortened 
 extern int    ZigZag.Periods       = 40;
 extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
-extern string StopConditions       = "";                    // @time(datetime|time)
+extern string StopConditions       = "";                    // @time(datetime|time) | @breakeven(on-profit) | @trail([on-profit:]stepsize)
 extern double TakeProfit           = 0;                     // TP value
 extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";      // can be shortened if distinct
 extern int    Slippage             = 2;                     // in point
