@@ -172,14 +172,12 @@ int     tickTimerId;                                              // ID eines gg
 int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
-#define OI_TICKET          0                                      // order tracker indexes
-#define OI_ORDERTYPE       1
-#define OI_OPENLIMIT       2
-#define OI_TAKEPROFIT      3
-#define OI_STOPLOSS        4
+#define TI_TICKET          0                                      // order tracker indexes
+#define TI_ORDERTYPE       1
+#define TI_ENTRYLIMIT      2
 
 bool    orderTracker.enabled;
-double  trackedOrders[][5];                                       // {ticket, orderType, openLimit, takeProfit, stopLoss}
+double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
 
 // types for server-side closed positions
 #define CLOSE_TAKEPROFIT   1
@@ -227,14 +225,14 @@ int onTick() {
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
       if (mode.intern && orderTracker.enabled) {                                    // monitor execution of order limits
-         int failedOrders   [];    ArrayResize(failedOrders,    0);                 // {ticket}
-         int openedPositions[];    ArrayResize(openedPositions, 0);                 // {ticket}
-         int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {ticket, closedBy=NULL|CLOSED_BY_TP|CLOSED_BY_SL|CLOSED_BY_SO}
+         double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
+         int    closedPositions[][2]; ArrayResize(closedPositions, 0);              // {ticket, closedType}
+         int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
 
-         if (!MonitorOpenOrders(failedOrders, openedPositions, closedPositions)) return(last_error);
-         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
+         if (!MonitorOpenOrders(openedPositions, closedPositions, failedOrders)) return(last_error);
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
+         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
       }
    }
    return(last_error);
@@ -4097,17 +4095,23 @@ bool RestoreRuntimeStatus() {
 }
 
 
+// data array indexes for PositionOpen/PositionClose events
+#define TICKET       0
+#define ENTRYLIMIT   1
+#define CLOSETYPE    1
+
+
 /**
  * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
  * are not monitored as this is the responsibility of the EA.
  *
- * @param  _Out_ int failedOrders   []   - tickets of failed executions (order cancellations)
- * @param  _Out_ int openedPositions[]   - tickets of opened positions (entry limit executed)
- * @param  _Out_ int closedPositions[][] - tickets of closed positions (exit limit executed)
+ * @param  _Out_ double &openedPositions[][] - executed entry limits: {ticket, entryLimit}
+ * @param  _Out_ int    &closedPositions[][] - executed exit limits:  {ticket, closeType}
+ * @param  _Out_ int    &failedOrders   []   - failed executions:     {ticket}
  *
  * @return bool - success status
  */
-bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
+bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], int &failedOrders[]) {
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------
@@ -4129,69 +4133,62 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
 
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
    int sizeOfTrackedOrders = ArrayRange(trackedOrders, 0);
+   double dData[2];
 
    for (int i=sizeOfTrackedOrders-1; i >= 0; i--) {
-      if (!SelectTicket(trackedOrders[i][OI_TICKET], "MonitorOpenOrders(1)")) return(false);
+      if (!SelectTicket(trackedOrders[i][TI_TICKET], "MonitorOpenOrders(1)")) return(false);
       int orderType = OrderType();
 
-      if (trackedOrders[i][OI_ORDERTYPE] > OP_SELL) {                      // last time a pending order
-         if (orderType == trackedOrders[i][OI_ORDERTYPE]) {                // still pending
-            trackedOrders[i][OI_OPENLIMIT ] = OrderOpenPrice();            // track entry/exit limit changes
-            trackedOrders[i][OI_TAKEPROFIT] = OrderTakeProfit();
-            trackedOrders[i][OI_STOPLOSS  ] = OrderStopLoss();
+      if (trackedOrders[i][TI_ORDERTYPE] > OP_SELL) {                      // last time a pending order
+         if (orderType == trackedOrders[i][TI_ORDERTYPE]) {                // still pending
+            trackedOrders[i][TI_ENTRYLIMIT] = OrderOpenPrice();            // track entry limit changes
 
             if (OrderCloseTime() != 0) {
                if (OrderComment() != "cancelled") {                        // cancelled: client-side cancellation
-                  ArrayPushInt(failedOrders, trackedOrders[i][OI_TICKET]); // otherwise: server-side cancellation, "deleted [no money]" etc.
+                  ArrayPushInt(failedOrders, trackedOrders[i][TI_TICKET]); // otherwise: server-side cancellation, "deleted [no money]" etc.
                }
                ArraySpliceDoubles(trackedOrders, i, 1);                    // remove cancelled order from monitoring
                sizeOfTrackedOrders--;
             }
          }
          else {                                                            // now an open or closed position
-            trackedOrders[i][OI_ORDERTYPE] = orderType;
-            ArrayPushInt(openedPositions, trackedOrders[i][OI_TICKET]);
-            i++;
-            continue;                                                      // ausgeführte Order in (1.2) nochmal prüfen, anstatt hier die Logik zu duplizieren
+            trackedOrders[i][TI_ORDERTYPE] = orderType;
+            int size = ArrayRange(openedPositions, 0);
+            ArrayResize(openedPositions, size+1);
+            openedPositions[size][TICKET    ] = trackedOrders[i][TI_TICKET    ];
+            openedPositions[size][ENTRYLIMIT] = trackedOrders[i][TI_ENTRYLIMIT];
+            i++;                                                           // reset loop counter and check order again for an immediate close
+            continue;
          }
       }
       else {                                                               // (1.2) last time an open position
-         trackedOrders[i][OI_TAKEPROFIT] = OrderTakeProfit();              // track exit limit changes
-         trackedOrders[i][OI_STOPLOSS  ] = OrderStopLoss();
-
-         if (OrderCloseTime() != 0) {                                      // now closed
-            // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
-            bool   closedByLimit=false, autoClosed=false;
-            int    closeType, closeData[2];
+         if (OrderCloseTime() != 0) {                                      // now closed: check for client-side or server-side close (i.e. exit limit, stopout)
+            bool serverSideClose = false;
+            int closeType;
             string comment = StrToLower(StrTrim(OrderComment()));
 
-            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_STOPOUT;    } // margin call
-            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TAKEPROFIT; }
-            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_STOPLOSS;   }
+            if      (StrStartsWith(comment, "so:" )) { serverSideClose=true; closeType=CLOSE_STOPOUT;    }
+            else if (StrEndsWith  (comment, "[tp]")) { serverSideClose=true; closeType=CLOSE_TAKEPROFIT; }
+            else if (StrEndsWith  (comment, "[sl]")) { serverSideClose=true; closeType=CLOSE_STOPLOSS;   }
             else {
-               if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
-                  closedByLimit = false;                                                              // gemäß MT4-Standard
-                  if (orderType == OP_BUY) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
-                  else                     { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
-                  if (closedByLimit) {
-                     autoClosed = true;
-                     closeType  = CLOSE_TAKEPROFIT;
+               if (!EQ(OrderTakeProfit(), 0)) {                            // some brokers don't update the order comment accordingly
+                  if (ifBool(orderType==OP_BUY, OrderClosePrice() >= OrderTakeProfit(), OrderClosePrice() <= OrderTakeProfit())) {
+                     serverSideClose = true;
+                     closeType       = CLOSE_TAKEPROFIT;
                   }
                }
                if (!EQ(OrderStopLoss(), 0)) {
-                  closedByLimit = false;
-                  if (orderType == OP_BUY) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
-                  else                     { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
-                  if (closedByLimit) {
-                     autoClosed = true;
-                     closeType  = CLOSE_STOPLOSS;
+                  if (ifBool(orderType==OP_BUY, OrderClosePrice() <= OrderStopLoss(), OrderClosePrice() >= OrderStopLoss())) {
+                     serverSideClose = true;
+                     closeType       = CLOSE_STOPLOSS;
                   }
                }
             }
-            if (autoClosed) {
-               closeData[0] = trackedOrders[i][OI_TICKET];
-               closeData[1] = closeType;
-               ArrayPushInts(closedPositions, closeData);                  // Position wurde automatisch geschlossen
+            if (serverSideClose) {
+               size = ArrayRange(closedPositions, 0);
+               ArrayResize(closedPositions, size+1);
+               closedPositions[size][TICKET   ] = trackedOrders[i][TI_TICKET];
+               closedPositions[size][CLOSETYPE] = closeType;
             }
             ArraySpliceDoubles(trackedOrders, i, 1);                       // remove closed position from monitoring
             sizeOfTrackedOrders--;
@@ -4212,15 +4209,13 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
          if (OrderMagicNumber() != 0) continue;                            // skip orders managed by an EA
 
          for (int n=0; n < sizeOfTrackedOrders; n++) {
-            if (trackedOrders[n][OI_TICKET] == OrderTicket()) break;       // Order bereits bekannt
+            if (trackedOrders[n][TI_TICKET] == OrderTicket()) break;       // Order bereits bekannt
          }
          if (n >= sizeOfTrackedOrders) {                                   // Order unbekannt: in Überwachung aufnehmen
             ArrayResize(trackedOrders, sizeOfTrackedOrders+1);
-            trackedOrders[sizeOfTrackedOrders][OI_TICKET    ] = OrderTicket();
-            trackedOrders[sizeOfTrackedOrders][OI_ORDERTYPE ] = OrderType();
-            trackedOrders[sizeOfTrackedOrders][OI_OPENLIMIT ] = ifDouble(OrderType() > OP_SELL, OrderOpenPrice(), 0);
-            trackedOrders[sizeOfTrackedOrders][OI_TAKEPROFIT] = OrderTakeProfit();
-            trackedOrders[sizeOfTrackedOrders][OI_STOPLOSS  ] = OrderStopLoss();
+            trackedOrders[sizeOfTrackedOrders][TI_TICKET    ] = OrderTicket();
+            trackedOrders[sizeOfTrackedOrders][TI_ORDERTYPE ] = OrderType();
+            trackedOrders[sizeOfTrackedOrders][TI_ENTRYLIMIT] = ifDouble(OrderType() > OP_SELL, OrderOpenPrice(), 0);
             sizeOfTrackedOrders++;
          }
       }
@@ -4233,18 +4228,20 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
 /**
  * Handle a PositionOpen event.
  *
- * @param  int tickets[] - ticket ids of the opened positions
+ * @param  double data[][] - executed entry limits: {ticket, entryLimit}
  *
  * @return bool - success status
  */
-bool onPositionOpen(int tickets[]) {
+bool onPositionOpen(double data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
-   int size = ArraySize(tickets);
+   int size = ArrayRange(data, 0);
    if (!isLogInfo || !size) return(true);
 
    OrderPush();
    for (int i=0; i < size; i++) {
-      if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
+      if (!SelectTicket(data[i][TICKET], "onPositionOpen(1)")) return(false);
+      if (OrderType() > OP_SELL)                               continue;      // skip pending orders (should not have been passed)
+      if (OrderMagicNumber() != 0)                             continue;      // skip orders managed by an EA (should not have been passed)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4261,13 +4258,11 @@ bool onPositionOpen(int tickets[]) {
             int    pipDigits   = digits & (~1);
             string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            string sSlippage   = "";
-            double slippage    = 0;
-            if (NE(slippage, 0, digits)) {
-               sPrice    = sPrice +" instead of "+ NumberToStr(Bid, priceFormat);
-               sSlippage = " (slippage: "+ NumberToStr(-slippage, "+."+ (digits & 1)) +" pip)";
+            double slippage    = NormalizeDouble(ifDouble(OrderType()==OP_BUY, data[i][ENTRYLIMIT]-OrderOpenPrice(), OrderOpenPrice()-data[i][ENTRYLIMIT]), digits);
+            if (NE(slippage, 0)) {
+               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
             }
-            string message = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice + sSlippage;
+            string message = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
             logInfo("onPositionOpen(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4284,20 +4279,23 @@ bool onPositionOpen(int tickets[]) {
 /**
  * Handle a PositionClose event.
  *
- * @param  int tickets[][] - ticket ids of the closed positions
+ * @param  int data[][] - executed exit limits: {ticket, closeType}
  *
  * @return bool - success status
  */
-bool onPositionClose(int tickets[][]) {
+bool onPositionClose(int data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
-   int size = ArrayRange(tickets, 0);
+   int size = ArrayRange(data, 0);
    if (!isLogInfo || !size) return(true);
 
-   string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   string sCloseTypeDescr[] = {"", " [tp]", " [sl]", " [so]"};
    OrderPush();
 
    for (int i=0; i < size; i++) {
-      if (!SelectTicket(tickets[i][0], "onPositionClose(1)")) continue;
+      if (!SelectTicket(data[i][TICKET], "onPositionClose(1)")) return(false);
+      if (OrderType() > OP_SELL)                                continue;     // skip pending orders (should not have been passed)
+      if (!OrderCloseTime())                                    continue;     // skip open positions (should not have been passed)
+      if (OrderMagicNumber() != 0)                              continue;     // skip orders managed by an EA (should not have been passed)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4306,7 +4304,7 @@ bool onPositionClose(int tickets[][]) {
          string event = "rsf::PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            // position closed: #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2] ([slippage: -2.8 pip, ]TakeProfit)
+            // position closed: #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (slippage: -2.8 pip)] [tp]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
@@ -4315,15 +4313,16 @@ bool onPositionClose(int tickets[][]) {
             string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
             string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
             string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
-            string sSlippage   = "";
             double slippage    = 0;
-            if (NE(slippage, 0, digits)) {
-               sClosePrice = sClosePrice +" instead of "+ NumberToStr(Bid, priceFormat);
-               sSlippage   = "slippage: "+ NumberToStr(-slippage, "+."+ (digits & 1)) +" pip";
+            if      (data[i][CLOSETYPE] == CLOSE_TAKEPROFIT) slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderTakeProfit(), OrderTakeProfit()-OrderClosePrice()), digits);
+            else if (data[i][CLOSETYPE] == CLOSE_STOPLOSS)   slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderStopLoss(),   OrderStopLoss()-OrderClosePrice()),   digits);
+            if (NE(slippage, 0)) {
+               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
             }
-            string sCloseType  = sCloseTypeDescr[tickets[i][1]];
-            if (StringLen(sSlippage) || StringLen(sCloseType)) {
-               sCloseType = " ("+ sSlippage + ifString(StringLen(sSlippage) && StringLen(sCloseType), ", ", "") + sCloseType +")";
+            string sCloseType = sCloseTypeDescr[data[i][CLOSETYPE]];
+            if (data[i][CLOSETYPE] == CLOSE_STOPOUT) {
+               sComment   = "";
+               sCloseType = " ["+ OrderComment() +"]";
             }
             string message = "position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" from "+ sOpenPrice +" at "+ sClosePrice + sCloseType;
             logInfo("onPositionClose(2)  "+ message);
@@ -4474,6 +4473,7 @@ string InputsToStr() {
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
    int      ArrayInsertDoubles    (double &array[], int offset, double values[]);
    int      ArrayPushDouble       (double &array[], double value);
+   int      ArrayPushDoubles      (double &array[], double values[]);
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
