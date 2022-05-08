@@ -42,7 +42,6 @@
  *
  *
  * TODO:
- *  - ChartInfos::onPositionOpen/Close() log slippage
  *  - Instrument Infos: remove maxLeverage constraint
  *
  *  - manual start/stop
