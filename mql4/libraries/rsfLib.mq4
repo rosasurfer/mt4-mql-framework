@@ -1050,12 +1050,12 @@ int ArrayPushInt(int &array[], int value) {
 
 
 /**
- * Fügt ein Integer-Array am Ende eines zweidimensionalen Integer-Arrays an.
+ * Append an integer array to the end of a 2-dimensional integer array.
  *
- * @param  int array[][] - zu erweiterndes Array ein-dimensionaler Arrays
- * @param  int value[]   - hinzuzufügendes Array (Größe muß zum zu erweiternden Array passen)
+ * @param  int array[][] - array to extend
+ * @param  int value[]   - array to append (size must match the 2nd dimension of the array to extend)
  *
- * @return int - neue Größe der ersten Dimension des Arrays oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
  */
 int ArrayPushInts(int array[][], int value[]) {
    if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushInts(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
@@ -1088,6 +1088,29 @@ int ArrayPushDouble(double &array[], double value) {
    array[size] = value;
 
    return(size+1);
+}
+
+
+/**
+ * Append a double array to the end of a 2-dimensional double array.
+ *
+ * @param  double array[][] - array to extend
+ * @param  double value[]   - array to append (size must match the 2nd dimension of the array to extend)
+ *
+ * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
+ */
+int ArrayPushDoubles(double array[][], double value[]) {
+   if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushDoubles(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(value) != 1) return(_EMPTY(catch("ArrayPushDoubles(2)  too many dimensions of parameter value: "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAY)));
+   int dim1 = ArrayRange(array, 0);
+   int dim2 = ArrayRange(array, 1);
+   if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushDoubles(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAY)));
+
+   ArrayResize(array, dim1+1);
+   int src  = GetDoublesAddress(value);
+   int dest = GetDoublesAddress(array) + dim1*dim2*8;
+   CopyMemory(dest, src, dim2*8);
+   return(dim1+1);
 }
 
 
@@ -1499,18 +1522,18 @@ int ArraySpliceBools(bool array[], int offset, int length) {
 
 
 /**
- * Entfernt einen Teil aus einem Integer-Array.
+ * Remove a number of elements from an integer array. If the array is 1-dimensional the function operates on element indexes.
+ * If the array is 2-dimensional the function operates on row indexes.
  *
- * @param  int array[][] - ein- oder zweidimensionales Integer-Array
- * @param  int offset    - Startindex der zu entfernenden Elemente
- * @param  int length    - Anzahl der zu entfernenden Elemente
+ * @param  int array[][] - source array
+ * @param  int offset    - start offset of the elements/rows to remove
+ * @param  int length    - number of elements/rows to remove
  *
- * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - number of removed elements/rows or EMPTY (-1) in case of errors
  */
 int ArraySpliceInts(int array[], int offset, int length) {
    int dims = ArrayDimension(array);
    if (dims > 2)        return(_EMPTY(catch("ArraySpliceInts(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
-
    int dim1 = ArrayRange(array, 0), dim2=0;
    if (dims > 1) dim2 = ArrayRange(array, 1);
 
@@ -1522,7 +1545,7 @@ int ArraySpliceInts(int array[], int offset, int length) {
    if (length == 0) return(0);
 
    if (offset+length < dim1) {
-      if (dims == 1) ArrayCopy(array, array, offset,       offset+length      );    // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+      if (dims == 1) ArrayCopy(array, array, offset,       offset+length      ); // copy remaining elements from the end
       else           ArrayCopy(array, array, offset*dim2, (offset+length)*dim2);
    }
    else {
@@ -1535,32 +1558,37 @@ int ArraySpliceInts(int array[], int offset, int length) {
 
 
 /**
- * Entfernt einen Teil aus einem Double-Array.
+ * Remove a number of elements from a double array. If the array is 1-dimensional the function operates on element indexes.
+ * If the array is 2-dimensional the function operates on row indexes.
  *
- * @param  double array[] - Double-Array
- * @param  int    offset  - Startindex zu entfernender Elemente
- * @param  int    length  - Anzahl der zu entfernenden Elemente
+ * @param  double array[][] - source array
+ * @param  int    offset    - start offset of the elements/rows to remove
+ * @param  int    length    - number of elements/rows to remove
  *
- * @return int - Anzahl der entfernten Elemente oder EMPTY (-1), falls ein Fehler auftrat
+ * @return int - number of removed elements/rows or EMPTY (-1) in case of errors
  */
 int ArraySpliceDoubles(double array[], int offset, int length) {
-   if (ArrayDimension(array) > 1) return(_EMPTY(catch("ArraySpliceDoubles(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
-   int size = ArraySize(array);
-   if (offset < 0)                return(_EMPTY(catch("ArraySpliceDoubles(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
-   if (offset > size-1)           return(_EMPTY(catch("ArraySpliceDoubles(3)  invalid parameter offset: "+ offset +" for sizeOf(array) = "+ size, ERR_INVALID_PARAMETER)));
-   if (length < 0)                return(_EMPTY(catch("ArraySpliceDoubles(4)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
+   int dims = ArrayDimension(array);
+   if (dims > 2)        return(_EMPTY(catch("ArraySpliceDoubles(1)  too many dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   int dim1 = ArrayRange(array, 0), dim2=0;
+   if (dims > 1) dim2 = ArrayRange(array, 1);
 
-   if (size   == 0) return(0);
+   if (offset < 0)      return(_EMPTY(catch("ArraySpliceDoubles(2)  invalid parameter offset: "+ offset, ERR_INVALID_PARAMETER)));
+   if (offset > dim1-1) return(_EMPTY(catch("ArraySpliceDoubles(3)  invalid parameter offset: "+ offset +" for array["+ dim1 +"]"+ ifString(dims==1, "", "[]"), ERR_INVALID_PARAMETER)));
+   if (length < 0)      return(_EMPTY(catch("ArraySpliceDoubles(4)  invalid parameter length: "+ length, ERR_INVALID_PARAMETER)));
+
+   if (dim1   == 0) return(0);
    if (length == 0) return(0);
 
-   if (offset+length < size) {
-      ArrayCopy(array, array, offset, offset+length);                // ArrayCopy(), wenn die zu entfernenden Elemente das Ende nicht einschließen
+   if (offset+length < dim1) {
+      if (dims == 1) ArrayCopy(array, array, offset,       offset+length      ); // copy remaining elements from the end
+      else           ArrayCopy(array, array, offset*dim2, (offset+length)*dim2);
    }
    else {
-      length = size - offset;
+      length = dim1 - offset;
    }
-   ArrayResize(array, size-length);
 
+   ArrayResize(array, dim1-length);
    return(length);
 }
 

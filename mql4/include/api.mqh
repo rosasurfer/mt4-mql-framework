@@ -579,6 +579,7 @@ int      ArrayPopInt(int &array[]);;
 string   ArrayPopString(string &array[]);;
 int      ArrayPushBool(bool &array[], bool value);;
 int      ArrayPushDouble(double &array[], double value);;
+int      ArrayPushDoubles(double &array[][], doubel &value[]);;
 int      ArrayPushInt(int &array[], int value);;
 int      ArrayPushInts(int &array[][], int &value[]);;
 int      ArrayPushString(string &array[], string value);;
