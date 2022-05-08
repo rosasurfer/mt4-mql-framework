@@ -4240,8 +4240,8 @@ bool onPositionOpen(double data[][]) {
    OrderPush();
    for (int i=0; i < size; i++) {
       if (!SelectTicket(data[i][TICKET], "onPositionOpen(1)")) return(false);
-      if (OrderType() > OP_SELL)                               continue;      // skip pending orders (should not have been passed)
-      if (OrderMagicNumber() != 0)                             continue;      // skip orders managed by an EA (should not have been passed)
+      if (OrderType() > OP_SELL)                               continue;      // skip pending orders (should not happen)
+      if (OrderMagicNumber() != 0)                             continue;      // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4250,7 +4250,7 @@ bool onPositionOpen(double data[][]) {
          string event = "rsf::PositionOpen::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            // position opened: #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (slippage: -2.8 pip)]
+            // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (slippage: -2.8 pip)]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
@@ -4262,7 +4262,7 @@ bool onPositionOpen(double data[][]) {
             if (NE(slippage, 0)) {
                sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
             }
-            string message = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
+            string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
             logInfo("onPositionOpen(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4293,9 +4293,9 @@ bool onPositionClose(int data[][]) {
 
    for (int i=0; i < size; i++) {
       if (!SelectTicket(data[i][TICKET], "onPositionClose(1)")) return(false);
-      if (OrderType() > OP_SELL)                                continue;     // skip pending orders (should not have been passed)
-      if (!OrderCloseTime())                                    continue;     // skip open positions (should not have been passed)
-      if (OrderMagicNumber() != 0)                              continue;     // skip orders managed by an EA (should not have been passed)
+      if (OrderType() > OP_SELL)                                continue;     // skip pending orders (should not happen)
+      if (!OrderCloseTime())                                    continue;     // skip open positions (should not happen)
+      if (OrderMagicNumber() != 0)                              continue;     // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4304,7 +4304,7 @@ bool onPositionClose(int data[][]) {
          string event = "rsf::PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            // position closed: #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (slippage: -2.8 pip)] [tp]
+            // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (slippage: -2.8 pip)] [tp]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
@@ -4324,7 +4324,7 @@ bool onPositionClose(int data[][]) {
                sComment   = "";
                sCloseType = " ["+ OrderComment() +"]";
             }
-            string message = "position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" from "+ sOpenPrice +" at "+ sClosePrice + sCloseType;
+            string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" from "+ sOpenPrice +" at "+ sClosePrice + sCloseType;
             logInfo("onPositionClose(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
