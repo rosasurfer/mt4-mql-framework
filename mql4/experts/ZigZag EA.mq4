@@ -29,25 +29,27 @@
  *    Timeseries in "quote units" are recorded in the best matching unit (one of pip, quote currency or index points).
  *
  *
- * Manual control
- * --------------
- * The EA can be manually controlled via the following scripts (online and in tester):
+ * External control
+ * ----------------
+ * The EA can be controlled externally via execution of the following scripts (online and in tester):
  *
  *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
- *               arrives the EA starts trading. Nothing changes if the RA is already in status "waiting".
+ *               arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
  *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
  *               trend and doesn't wait for the next signal. Nothing changes if a position is already open.
- *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for ZigZag signals. Nothing
- *               changes if the EA is already stopped.
+ *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
+ *               Nothing changes if the EA is already stopped.
  *
  *
  * TODO:
  *  - merge development:mql4/experts/README.md into master
  *
  *  - Instrument Infos: remove maxLeverage constraint
+ *  - Superbars: fix processing of weekend data
  *
  *  - manual start/stop
  *     stop on reverse signal => continue with manual start
+ *     fix command EA.Resume
  *     breakeven stop
  *     trailing stop
  *
