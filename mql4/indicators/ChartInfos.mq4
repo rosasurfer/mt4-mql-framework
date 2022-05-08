@@ -20,6 +20,7 @@
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
  *  - FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - set order tracker sound on stopout to "margin-call"
+ *  - PositionOpen/PositionClose events during change of chart timeframe/symbol are not detected
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -171,16 +172,19 @@ int     tickTimerId;                                              // ID eines gg
 int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
-#define OI_TICKET       0                                         // order tracker indexes
-#define OI_TYPE         1
+#define OI_TICKET          0                                      // order tracker indexes
+#define OI_ORDERTYPE       1
+#define OI_OPENLIMIT       2
+#define OI_TAKEPROFIT      3
+#define OI_STOPLOSS        4
 
 bool    orderTracker.enabled;
-double  trackedOrders[][2];                                       // {ticket, orderType}
+double  trackedOrders[][5];                                       // {ticket, orderType, openLimit, takeProfit, stopLoss}
 
 // types for server-side closed positions
-#define CLOSED_BY_TP    1                                         // TakeProfit
-#define CLOSED_BY_SL    2                                         // StopLoss
-#define CLOSED_BY_SO    3                                         // StopOut (margin call)
+#define CLOSE_TAKEPROFIT   1
+#define CLOSE_STOPLOSS     2
+#define CLOSE_STOPOUT      3                                      // margin call
 
 // Konfiguration der Signalisierung
 bool    signal.sound;
@@ -4105,19 +4109,19 @@ bool RestoreRuntimeStatus() {
  */
 bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
    /*
-   monitor execution of entry limits (pendings must be known before)
-   -----------------------------------------------------------------
+   monitoring of entry limits (pendings must be known before)
+   ----------------------------------------------------------
    - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
    - alle unbekannten Pending-Orders registrieren:                               über alle Tickets(MODE_TRADES) iterieren
 
-   monitor execution of exit limits (positions must be known before)
-   -----------------------------------------------------------------
+   monitoring of exit limits (positions must be known before)
+   ----------------------------------------------------------
    - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
    - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           über alle Tickets(MODE_TRADES) iterieren
      (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
 
-   monitor both together
-   ---------------------
+   both together
+   -------------
    - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
    - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
    - alle unbekannten Pending-Orders und Positionen registrieren:                über alle Tickets(MODE_TRADES) iterieren
@@ -4128,61 +4132,59 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
 
    for (int i=sizeOfTrackedOrders-1; i >= 0; i--) {
       if (!SelectTicket(trackedOrders[i][OI_TICKET], "MonitorOpenOrders(1)")) return(false);
-      int type = OrderType();
+      int orderType = OrderType();
 
-      if (trackedOrders[i][OI_TYPE] > OP_SELL) {
-         // (1.1) beim letzten Aufruf Pending-Order
-         if (type == trackedOrders[i][OI_TYPE]) {
-            // immer noch Pending-Order
+      if (trackedOrders[i][OI_ORDERTYPE] > OP_SELL) {                      // last time a pending order
+         if (orderType == trackedOrders[i][OI_ORDERTYPE]) {                // still pending
+            trackedOrders[i][OI_OPENLIMIT ] = OrderOpenPrice();            // track entry/exit limit changes
+            trackedOrders[i][OI_TAKEPROFIT] = OrderTakeProfit();
+            trackedOrders[i][OI_STOPLOSS  ] = OrderStopLoss();
+
             if (OrderCloseTime() != 0) {
-               if (OrderComment() != "cancelled")
-                  ArrayPushInt(failedOrders, trackedOrders[i][OI_TICKET]); // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
-
-               // geschlossene Pending-Order aus der Überwachung entfernen
-               ArraySpliceDoubles(trackedOrders, i, 1);
+               if (OrderComment() != "cancelled") {                        // cancelled: client-side cancellation
+                  ArrayPushInt(failedOrders, trackedOrders[i][OI_TICKET]); // otherwise: server-side cancellation, "deleted [no money]" etc.
+               }
+               ArraySpliceDoubles(trackedOrders, i, 1);                    // remove cancelled order from monitoring
                sizeOfTrackedOrders--;
             }
          }
-         else {
-            // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(openedPositions, trackedOrders[i][OI_TICKET]);    // Pending-Order wurde ausgeführt
-            trackedOrders[i][OI_TYPE] = type;
+         else {                                                            // now an open or closed position
+            trackedOrders[i][OI_ORDERTYPE] = orderType;
+            ArrayPushInt(openedPositions, trackedOrders[i][OI_TICKET]);
             i++;
-            continue;                                                      // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
+            continue;                                                      // ausgeführte Order in (1.2) nochmal prüfen, anstatt hier die Logik zu duplizieren
          }
       }
-      else {
-         // (1.2) beim letzten Aufruf offene Position
-         if (!OrderCloseTime()) {
-            // immer noch offene Position
-         }
-         else {
-            // jetzt geschlossene Position
+      else {                                                               // (1.2) last time an open position
+         trackedOrders[i][OI_TAKEPROFIT] = OrderTakeProfit();              // track exit limit changes
+         trackedOrders[i][OI_STOPLOSS  ] = OrderStopLoss();
+
+         if (OrderCloseTime() != 0) {                                      // now closed
             // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
             bool   closedByLimit=false, autoClosed=false;
             int    closeType, closeData[2];
             string comment = StrToLower(StrTrim(OrderComment()));
 
-            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSED_BY_SO; }     // Margin Stopout erkennen
-            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSED_BY_TP; }
-            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSED_BY_SL; }
+            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_STOPOUT;    } // margin call
+            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TAKEPROFIT; }
+            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_STOPLOSS;   }
             else {
                if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
                   closedByLimit = false;                                                              // gemäß MT4-Standard
-                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
-                  else                 { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
+                  if (orderType == OP_BUY) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
+                  else                     { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
                   if (closedByLimit) {
                      autoClosed = true;
-                     closeType  = CLOSED_BY_TP;
+                     closeType  = CLOSE_TAKEPROFIT;
                   }
                }
                if (!EQ(OrderStopLoss(), 0)) {
                   closedByLimit = false;
-                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
-                  else                 { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
+                  if (orderType == OP_BUY) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
+                  else                     { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
                   if (closedByLimit) {
                      autoClosed = true;
-                     closeType  = CLOSED_BY_SL;
+                     closeType  = CLOSE_STOPLOSS;
                   }
                }
             }
@@ -4191,7 +4193,7 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
                closeData[1] = closeType;
                ArrayPushInts(closedPositions, closeData);                  // Position wurde automatisch geschlossen
             }
-            ArraySpliceDoubles(trackedOrders, i, 1);                       // geschlossene Position aus der Überwachung entfernen
+            ArraySpliceDoubles(trackedOrders, i, 1);                       // remove closed position from monitoring
             sizeOfTrackedOrders--;
          }
       }
@@ -4210,13 +4212,15 @@ bool MonitorOpenOrders(int &failedOrders[], int &openedPositions[], int &closedP
          if (OrderMagicNumber() != 0) continue;                            // skip orders managed by an EA
 
          for (int n=0; n < sizeOfTrackedOrders; n++) {
-            if (trackedOrders[n][OI_TICKET] == OrderTicket())              // Order bereits bekannt
-               break;
+            if (trackedOrders[n][OI_TICKET] == OrderTicket()) break;       // Order bereits bekannt
          }
          if (n >= sizeOfTrackedOrders) {                                   // Order unbekannt: in Überwachung aufnehmen
             ArrayResize(trackedOrders, sizeOfTrackedOrders+1);
-            trackedOrders[sizeOfTrackedOrders][OI_TICKET] = OrderTicket();
-            trackedOrders[sizeOfTrackedOrders][OI_TYPE  ] = OrderType();
+            trackedOrders[sizeOfTrackedOrders][OI_TICKET    ] = OrderTicket();
+            trackedOrders[sizeOfTrackedOrders][OI_ORDERTYPE ] = OrderType();
+            trackedOrders[sizeOfTrackedOrders][OI_OPENLIMIT ] = ifDouble(OrderType() > OP_SELL, OrderOpenPrice(), 0);
+            trackedOrders[sizeOfTrackedOrders][OI_TAKEPROFIT] = OrderTakeProfit();
+            trackedOrders[sizeOfTrackedOrders][OI_STOPLOSS  ] = OrderStopLoss();
             sizeOfTrackedOrders++;
          }
       }
