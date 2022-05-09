@@ -42,8 +42,6 @@
  *
  *
  * TODO:
- *  - merge development:mql4/experts/README.md into master
- *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
