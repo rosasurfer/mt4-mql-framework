@@ -2,9 +2,9 @@
  * ZigZag EA - a modified version of the system traded by the "Turtle traders" of Richard Dennis
  *
  *
- * The ZigZag indicator that comes with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be
- * used to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a
- * fixed and greatly enhanced version of the ZigZag indicator (most signals are still the same).
+ * The ZigZag indicator coming with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be used
+ * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a fixed
+ * and greatly enhanced version of the ZigZag indicator (most signals are still the same).
  *
  *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
  *
