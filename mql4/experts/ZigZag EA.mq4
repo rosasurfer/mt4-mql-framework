@@ -46,6 +46,7 @@
  *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
+ *  - Insidebars: on BTCUSD detection of BarOpen,H1 is broken
  *
  *  - manual start/stop
  *     stop on reverse signal => continue with manual start
