@@ -1149,7 +1149,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
-                if      (              _symbol=="UKOIL"  )     result = "BRENT";
+                if      (              _symbol=="UK100"  )     result = "FTSE";
+                else if (              _symbol=="UKOIL"  )     result = "BRENT";
                 else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
