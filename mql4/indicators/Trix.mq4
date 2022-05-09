@@ -184,7 +184,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
       changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
    int bar, startbar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars
@@ -195,7 +195,7 @@ int onTick() {
 
    for (bar=startbar; bar >= 0; bar--) {
       if (!thirdEma[bar+1]) {
-         debug("onTick(0."+ Tick +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startbar="+ startbar);
+         debug("onTick(0."+ Ticks +")  thirdEma["+ (bar+1) +"]=NULL  ShiftedBars="+ ShiftedBars +"  ChangedBars="+ ChangedBars +"  startbar="+ startbar);
          continue;
       }
       // Trix main value

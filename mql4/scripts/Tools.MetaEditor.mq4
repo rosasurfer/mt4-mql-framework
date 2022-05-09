@@ -17,14 +17,11 @@ int __DeinitFlags[];
  */
 int onStart() {
    string file = TerminalPath() +"/metaeditor.exe";
-   if (!IsFile(file, MODE_SYSTEM))
-      return(HandleScriptError("", "File not found: "+ DoubleQuoteStr(file), ERR_RUNTIME_ERROR));
-
+   if (!IsFile(file, MODE_SYSTEM)) return(catch("onStart(1)  file not found: "+ DoubleQuoteStr(file), ERR_FILE_NOT_FOUND));
 
    // WinExec() kehrt ohne zu warten zurück
    int result = WinExec(file, SW_SHOWNORMAL);
-   if (result < 32)
-      return(catch("onStart(1)->kernel32::WinExec(cmd="+ DoubleQuoteStr(file) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(catch("onStart(2)->kernel32::WinExec(cmd="+ DoubleQuoteStr(file) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
-   return(catch("onStart(2)"));
+   return(catch("onStart(3)"));
 }

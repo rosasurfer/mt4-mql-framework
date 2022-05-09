@@ -423,8 +423,7 @@ int MessageBoxEx(string caption, string message, int flags = MB_OK) {
    else            button = MessageBoxA(GetTerminalMainWindow(), message, caption, flags|MB_TOPMOST|MB_SETFOREGROUND);
 
    if (!(flags & MB_DONT_LOG)) {
-      logDebug("MessageBoxEx(1)  "+ message);
-      logDebug("MessageBoxEx(2)  response: "+ MessageBoxButtonToStr(button));
+      logDebug("MessageBoxEx(1)  "+ message +" (response: "+ MessageBoxButtonToStr(button) +")");
    }
    return(button);
 }
@@ -996,10 +995,16 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (_symbol=="_WTI"   )   result = "WTI";
                 break;
 
-      case '#': if      (_symbol=="#DAX.XEI" ) result = "DAX";
-                else if (_symbol=="#DJI.XDJ" ) result = "DJIA";
-                else if (_symbol=="#DJT.XDJ" ) result = "DJTA";
-                else if (_symbol=="#SPX.X.XP") result = "SP500";
+      case '#': if      (StrStartsWith(_symbol, "#DAX."))    result = "DAX";
+                else if (StrStartsWith(_symbol, "#DJ30_"))   result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJI."))    result = "DJIA";
+                else if (StrStartsWith(_symbol, "#DJT."))    result = "DJTA";
+                else if (StrStartsWith(_symbol, "#GER40_"))  result = "DAX";
+                else if (StrStartsWith(_symbol, "#JP225_"))  result = "JP225";
+                else if (StrStartsWith(_symbol, "#SPX."))    result = "SP500";
+                else if (StrStartsWith(_symbol, "#US100_"))  result = "NAS100";
+                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUS2000";
+                else if (StrStartsWith(_symbol, "#US500_"))  result = "SP500";
                 break;
 
       case '0':
@@ -1144,7 +1149,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 break;
 
       case 'U':
-                if      (              _symbol=="UKOIL"  )     result = "BRENT";
+                if      (              _symbol=="UK100"  )     result = "FTSE";
+                else if (              _symbol=="UKOIL"  )     result = "BRENT";
                 else if (              _symbol=="US2000" )     result = "RUS2000";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
@@ -4056,7 +4062,7 @@ bool EventListener.NewTick() {
    static int  lastTick, lastVol;
 
    // Mehrfachaufrufe während desselben Ticks erkennen
-   if (Tick == lastTick)
+   if (Ticks == lastTick)
       return(lastResult);
 
    // Es reicht immer, den Tick nur anhand des Volumens des aktuellen Timeframes zu bestimmen.
@@ -5236,7 +5242,7 @@ string MessageBoxButtonToStr(int id) {
  *
  * @param  string value
  *
- * @return int - OperationType-Code oder -1, wenn der Bezeichner ungültig ist (OP_UNDEFINED)
+ * @return int - OperationType-Code oder OP_UNDEFINED (-1), wenn der Bezeichner ungültig ist
  */
 int StrToOperationType(string value) {
    string str = StrToUpper(StrTrim(value));
@@ -5346,20 +5352,20 @@ string TradeCommandToStr(int cmd) {
  *
  * Mask parameters:
  *
- *   n        = number of digits to the left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
- *   n.d      = number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
- *   n.       = number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
- *    .d      = all left and number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
- *    .d'     = all left and number of right digits plus 1 additional subpip digit,
+ *   n        = specified number of digits left of the decimal point, e.g. NumberToStr(123.456, "5") => "123"
+ *   n.d      = specified number of left and right digits, e.g. NumberToStr(123.456, "5.2") => "123.45"
+ *   n.       = specified number of left and all right digits, e.g. NumberToStr(123.456, "2.") => "23.456"
+ *    .d      = all left and specified number of right digits, e.g. NumberToStr(123.456, ".2") => "123.45"
+ *    .d'     = all left and specified number of right digits plus 1 separate subpip digit,
  *              e.g. NumberToStr(123.45678, ".4'") => "123.4567'8"
- *    .d+     = + anywhere right of .d: all left and minimum number of right digits,
- *              e.g. NumberToStr(123.456, ".2+") => "123.456"
- *  +n.d      = + anywhere left of n.: plus sign for positive values
- *    R       = anywhere: round result at the last displayed digit,
+ *    .d+     = "+" char anywhere right of .d: all left and minimum number of right digits,
+ *              e.g. NumberToStr(123.45, ".3+") => "123.450"
+ *  +n.d      = "+" char anywhere left of n.: plus sign for positive values
+ *    R       = "R" char anywhere: round result at the last displayed digit,
  *              e.g. NumberToStr(123.456, "R3.2") => "123.46" or NumberToStr(123.7, "R3") => "124"
- *    ;       = Separatoren tauschen (Europäisches Format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
- *    ,       = Tausender-Separatoren einfügen, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
- *    ,<char> = Tausender-Separatoren einfügen und auf <char> setzen, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
+ *    ;       = switch thousands and decimal separators (European format), e.g. NumberToStr(123456.789, "6.2;") => "123456,78"
+ *    ,       = insert thousands separators, e.g. NumberToStr(123456.789, "6.2,") => "123,456.78"
+ *    ,<char> = insert thousands separators using <char>, e.g. NumberToStr(123456.789, ",'6.2") => "123'456.78"
  *
  * @param  double value
  * @param  string mask
@@ -5412,8 +5418,8 @@ string NumberToStr(double value, string mask) {
    }
    if (!nDigit) nLeft = -1;
 
-   // Anzahl der rechten Stellen
-   int nRight, nSubpip;
+   // Anzahl der rechten Stellen und Position des Subpip-Separators
+   int nRight, nSubpip=-1;
    if (dotGiven) {
       nDigit = false;
       for (i=dotPos+1; i < maskLen; i++) {
@@ -5427,14 +5433,14 @@ string NumberToStr(double value, string mask) {
             continue;
          }
          else {
-            if  (chr == '+') nRight = Max(nRight + (nSubpip>0), CountDecimals(value));   // (int) bool
+            if  (chr == '+')  nRight = Max(nRight + (nSubpip > -1), CountDecimals(value));
             else if (!nDigit) nRight = CountDecimals(value);
             break;
          }
       }
       if (nDigit) {
-         if (nSubpip >  0) nRight++;
-         if (nSubpip == 8) nSubpip = 0;
+         if (nSubpip > -1) nRight++;
+         if (nSubpip == 0) nSubpip = -1;     // no subpip separator directly after the decimal point
          nRight = Min(nRight, 8);
       }
    }
@@ -5489,8 +5495,9 @@ string NumberToStr(double value, string mask) {
    }
 
    // Subpip-Separator einfügen
-   if (nSubpip > 0)
+   if (nSubpip > -1) {
       outStr = StringConcatenate(StrLeft(outStr, nSubpip-nRight), "'", StrSubstr(outStr, nSubpip-nRight));
+   }
 
    // Vorzeichen etc. anfügen
    outStr = StringConcatenate(leadSign, outStr);
@@ -5502,10 +5509,10 @@ string NumberToStr(double value, string mask) {
 
 
 /**
- * Format a value representing a pip range of the current symbol. Depending on the symbol and the size of the value the
- * resulting string is in money or subpip notation.
+ * Format a value representing a pip distance of the current symbol. Depending on symbol and symbol price the resulting
+ * string is the pip amount converted to pips, subpips or quote units (e.g. index points).
  *
- * @param  double value                         - price range in pip
+ * @param  double value                         - pip distance
  * @param  bool   thousandsSeparator [optional] - whether to use the thousands separator "'" (default: no)
  * @param  bool   appendSuffix       [optional] - whether to append the suffix " pip" to the formatted value (default: no)
  *
@@ -5521,7 +5528,7 @@ string PipToStr(double value, bool thousandsSeparator=false, bool appendSuffix=f
       return(sValue);                                                // "-1.#INF0000" => Infinite
 
    if (Digits==2 && Close[0]>=500) {
-      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23
+      sValue = NumberToStr(value/100, sSeparator +"R.2");            // 123 pip => 1.23 quote units/index points
    }
    else {
       sValue = NumberToStr(value, sSeparator +"R."+ (Digits & 1));   // 123 pip
@@ -6300,7 +6307,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icALMA(1)", error));
-      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icALMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6336,7 +6343,7 @@ bool icChartInfos() {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icChartInfos(1)", error));
-      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icChartInfos(2)  "+ PeriodDescription() +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6380,7 +6387,7 @@ double icFATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icFATL(1)", error));
-      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icFATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6428,7 +6435,7 @@ double icHalfTrend(int timeframe, int periods, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icHalfTrend(1)", error));
-      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icHalfTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6479,7 +6486,7 @@ double icJMA(int timeframe, int periods, int phase, string appliedPrice, int iBu
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icJMA(1)", error));
-      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icJMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6538,7 +6545,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMACD(1)", error));
-      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMACD(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6589,7 +6596,7 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icMovingAverage(1)", error));
-      logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icMovingAverage(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6638,7 +6645,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icNonLagMA(1)", error));
-      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6683,7 +6690,7 @@ double icRSI(int timeframe, int periods, string appliedPrice, int iBuffer, int i
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icRSI(1)", error));
-      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icRSI(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6727,7 +6734,7 @@ double icSATL(int timeframe, int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSATL(1)", error));
-      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSATL(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6776,7 +6783,7 @@ double icSuperSmoother(int timeframe, int periods, string appliedPrice, int iBuf
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperSmoother(1)", error));
-      logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperSmoother(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6827,7 +6834,7 @@ double icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icSuperTrend(1)", error));
-      logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icSuperTrend(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6876,7 +6883,7 @@ double icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, in
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTriEMA(1)", error));
-      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTriEMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6921,7 +6928,7 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icTrix(1)", error));
-      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icTrix(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6986,7 +6993,7 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("icZigZag(1)", error));
-      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("icZigZag(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts

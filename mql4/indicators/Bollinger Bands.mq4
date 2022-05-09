@@ -162,7 +162,7 @@ int onInit() {
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
    SetIndexLabel(MODE_LOWER, "LowerBand("+ MA.Periods +")");
-   IndicatorDigits(SubPipDigits);
+   IndicatorDigits(Digits | 1);
 
    // drawing options and styles
    int startDraw = MA.Periods;
@@ -222,7 +222,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startbar = Min(changedBars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // recalculate changed bars

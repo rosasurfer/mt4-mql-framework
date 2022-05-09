@@ -17,28 +17,32 @@ int     __CoreFunction = NULL;               // currently executed MQL core func
 double  __rates[][6];                        // current price series
 int     __tickTimerId;                       // timer id for virtual ticks
 
-// PL recorder modes
+// recorder modes
 #define RECORDING_OFF         0              // recording off
 #define RECORDING_INTERNAL    1              // recording of a single internal PL timeseries
 #define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
 
+// recorder management
 int    recordMode;
 string recordModeDescr[] = {"off", "internal", "custom"};
 bool   recordInternal;
 bool   recordCustom;
 
-double recorder.defaultBaseValue = 5000.0;
-bool   recorder.initialized      = false;
-bool   recorder.enabled     [];              // whether a metric is enabled
-string recorder.symbol      [];
-string recorder.symbolDescr [];
-string recorder.symbolGroup [];
-int    recorder.symbolDigits[];
-double recorder.baseValue   [];
-double recorder.currValue   [];
-string recorder.hstDirectory[];
-int    recorder.hstFormat   [];
-int    recorder.hSet        [];
+double recorder.defaultHstBase = 5000.0;
+bool   recorder.initialized    = false;
+
+bool   recorder.enabled      [];             // whether a metric is enabled
+bool   recorder.debug        [];
+string recorder.symbol       [];
+string recorder.symbolDescr  [];
+string recorder.symbolGroup  [];
+int    recorder.symbolDigits [];
+double recorder.currValue    [];
+double recorder.hstBase      [];
+int    recorder.hstMultiplier[];
+string recorder.hstDirectory [];
+int    recorder.hstFormat    [];
+int    recorder.hSet         [];
 
 // test management
 bool   test.initialized = false;
@@ -243,7 +247,7 @@ int start() {
    }
 
    // resolve tick status
-   Tick++;                                                                       // simple counter, the value is meaningless
+   Ticks++;                                                                      // simple counter, the value is meaningless
    Tick.time = MarketInfo(Symbol(), MODE_TIME);
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
@@ -326,7 +330,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(6)")) return(last_error);
    }
 
@@ -553,11 +557,11 @@ bool CheckErrors(string caller, int error = NULL) {
  */
 bool init_Globals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipDigits      = Digits & (~1);
+   PipPoints      = MathRound(MathPow(10, Digits & 1));
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat = ",'R."+ PipDigits;
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
    N_INF = MathLog(0);                                                        // negative infinity
    P_INF = -N_INF;                                                            // positive infinity
@@ -615,15 +619,15 @@ string init_MarketInfo() {
 bool init_Recorder() {
    if (!recorder.initialized) {
       if (recordMode && !IsOptimization()) {
-         int i=0, symbolDigits, hstFormat;
+         int i=0, symbolDigits, hstMultiplier, hstFormat;
          bool enabled;
-         double baseValue;
+         double hstBase;
          string symbol="", symbolDescr="", symbolGroup="", hstDirectory="";
 
          if (recordCustom) {
             // fetch symbol definitions from the EA to record custom metrics
-            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, baseValue, hstDirectory, hstFormat)) {
-               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, baseValue, hstDirectory, hstFormat)) return(false);
+            while (Recorder_GetSymbolDefinitionA(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) {
+               if (!init_RecorderAddSymbol(i, enabled, symbol, symbolDescr, symbolGroup, symbolDigits, hstBase, hstMultiplier, hstDirectory, hstFormat)) return(false);
                i++;
             }
             if (IsLastError()) return(false);
@@ -633,7 +637,7 @@ bool init_Recorder() {
             symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);        // sizeof(SYMBOL.description) = 64 chars
             symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");   // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
-            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, 0, "", NULL)) return(false);
+            if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL, "", NULL)) return(false);
          }
       }
       else {
@@ -649,19 +653,20 @@ bool init_Recorder() {
 /**
  * Create a symbol definition from the passed data and add it to the specified position of the PL recorder.
  *
- * @param  int    i            - zero-based index of the symbol (position in the recorder)
- * @param  bool   enabled      - whether the related metric is active and recorded
- * @param  string symbol       - symbol
- * @param  string symbolDescr  - symbol description
- * @param  string symbolGroup  - symbol group (if empty recorder defaults are used)
- * @param  int    symbolDigits - digits of the timeseries to record
- * @param  double baseValue    - nominal base value of the timeseries (if zero recorder defaults are used)
- * @param  string hstDirectory - history directory of the timeseries to record (if empty recorder defaults are used)
- * @param  int    hstFormat    - history format of the timeseries to recorded (if empty recorder defaults are used)
+ * @param  int    i             - zero-based index of the symbol (position in the recorder)
+ * @param  bool   enabled       - whether the related metric is active and recorded
+ * @param  string symbol        - symbol
+ * @param  string symbolDescr   - symbol description
+ * @param  string symbolGroup   - symbol group (if empty recorder defaults are used)
+ * @param  int    symbolDigits  - digits of the timeseries to record
+ * @param  double hstBase       - nominal base value of the timeseries (if zero recorder defaults are used)
+ * @param  int    hstMultiplier - multiplier for the timeseries (if zero recorder defaults are used)
+ * @param  string hstDirectory  - history directory of the timeseries to record (if empty recorder defaults are used)
+ * @param  int    hstFormat     - history format of the timeseries to recorded (if empty recorder defaults are used)
  *
  * @return bool - success status
  */
-bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double baseValue, string hstDirectory, int hstFormat) {
+bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDescr, string symbolGroup, int symbolDigits, double hstBase, int hstMultiplier, string hstDirectory, int hstFormat) {
    enabled = enabled!=0;                  // (bool) int
    if (i < 0) return(!catch("init_RecorderAddSymbol(1)  invalid parameter i: "+ i, ERR_INVALID_PARAMETER));
 
@@ -686,29 +691,33 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    int size = ArraySize(recorder.symbol);
    if (i >= size) {
       size = i + 1;
-      ArrayResize(recorder.enabled,      size);
-      ArrayResize(recorder.symbol,       size);
-      ArrayResize(recorder.symbolDescr,  size);
-      ArrayResize(recorder.symbolGroup,  size);
-      ArrayResize(recorder.symbolDigits, size);
-      ArrayResize(recorder.baseValue,    size);
-      ArrayResize(recorder.currValue,    size);
-      ArrayResize(recorder.hstDirectory, size);
-      ArrayResize(recorder.hstFormat,    size);
-      ArrayResize(recorder.hSet,         size);
+      ArrayResize(recorder.enabled,       size);
+      ArrayResize(recorder.debug,         size);
+      ArrayResize(recorder.symbol,        size);
+      ArrayResize(recorder.symbolDescr,   size);
+      ArrayResize(recorder.symbolGroup,   size);
+      ArrayResize(recorder.symbolDigits,  size);
+      ArrayResize(recorder.currValue,     size);
+      ArrayResize(recorder.hstBase,       size);
+      ArrayResize(recorder.hstMultiplier, size);
+      ArrayResize(recorder.hstDirectory,  size);
+      ArrayResize(recorder.hstFormat,     size);
+      ArrayResize(recorder.hSet,          size);
    }
    if (StringLen(recorder.symbol[i]) != 0) return(!catch("init_RecorderAddSymbol(6)  invalid parameter i: "+ i +" (cannot overwrite recorder.symbol["+ i +"]: \""+ recorder.symbol[i] +"\")", ERR_INVALID_PARAMETER));
 
-   recorder.enabled     [i] = enabled;
-   recorder.symbol      [i] = symbol;
-   recorder.symbolDescr [i] = symbolDescr;
-   recorder.symbolGroup [i] = symbolGroup;
-   recorder.symbolDigits[i] = symbolDigits;
-   recorder.baseValue   [i] = doubleOr(baseValue, doubleOr(recorder.baseValue[i], recorder.defaultBaseValue));
-   recorder.currValue   [i] = NULL;
-   recorder.hstDirectory[i] = hstDirectory;
-   recorder.hstFormat   [i] = hstFormat;
-   recorder.hSet        [i] = NULL;
+   recorder.enabled      [i] = enabled;
+ //recorder.debug        [i] = ...              // keep existing value, possibly from afterInit()
+   recorder.symbol       [i] = symbol;
+   recorder.symbolDescr  [i] = symbolDescr;
+   recorder.symbolGroup  [i] = symbolGroup;
+   recorder.symbolDigits [i] = symbolDigits;
+   recorder.currValue    [i] = NULL;
+   recorder.hstBase      [i] = doubleOr(hstBase, doubleOr(recorder.hstBase[i], recorder.defaultHstBase));
+   recorder.hstMultiplier[i] = intOr(hstMultiplier, intOr(recorder.hstMultiplier[i], 1));
+   recorder.hstDirectory [i] = hstDirectory;
+   recorder.hstFormat    [i] = hstFormat;
+   recorder.hSet         [i] = NULL;
 
    return(true);
 }
@@ -750,7 +759,6 @@ string init_RecorderNewSymbol() {
          }
       }
    }
-
    return(name + StrPadLeft(""+ (maxId+1), 3, "0"));
 }
 
@@ -815,7 +823,7 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
       if (!configValue) {
          string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
          int iValue = GetConfigInt(section, "HistoryFormat", 401);
-         if (iValue!=400 && iValue!=401) return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
+         if (iValue!=400 && iValue!=401)      return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
          configValue = iValue;
       }
       hstFormat = configValue;
@@ -862,7 +870,6 @@ bool init_RecorderValidateInput(int &metrics) {
       int ids[]; ArrayResize(ids, 0);
       size = Explode(sValue, ",", sValues, NULL);
 
-      // foreach (sValues as custom-metric)
       for (int i=0; i < size; i++) {                     // metric syntax: {uint}[={double}]       // {uint}:   metric id (required)
          sValue = StrTrim(sValues[i]);                                                             // {double}: recording base value (optional)
          if (sValue == "") continue;
@@ -874,30 +881,32 @@ bool init_RecorderValidateInput(int &metrics) {
          string sid = iValue;
          sValue = StrTrim(StrRight(sValue, -StringLen(sid)));
 
-         double baseValue = 0;                           // if zero recorder.defaultBaseValue will be used
+         double hstBase = recorder.defaultHstBase;
          if (sValue != "") {                             // use specified base value instead of the default
             if (!StrStartsWith(sValue, "=")) return(_false(log("init_RecorderValidateInput(3)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric format error, not \"{uint}[={double}]\")", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
             sValue = StrTrim(StrRight(sValue, -1));
             if (!StrIsNumeric(sValue))       return(_false(log("init_RecorderValidateInput(4)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be numeric)",             ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
-            baseValue = StrToDouble(sValue);
-            if (baseValue <= 0)              return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be positive)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
+            hstBase = StrToDouble(sValue);
+            if (hstBase <= 0)                return(_false(log("init_RecorderValidateInput(5)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (metric base values must be positive)",            ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
          }
          ArrayPushInt(ids, iValue);
 
          if (ArraySize(recorder.symbol) < iValue) {
-            ArrayResize(recorder.enabled,      iValue);
-            ArrayResize(recorder.symbol,       iValue);
-            ArrayResize(recorder.symbolDescr,  iValue);
-            ArrayResize(recorder.symbolGroup,  iValue);
-            ArrayResize(recorder.symbolDigits, iValue);
-            ArrayResize(recorder.baseValue,    iValue);
-            ArrayResize(recorder.currValue,    iValue);
-            ArrayResize(recorder.hstDirectory, iValue);
-            ArrayResize(recorder.hstFormat,    iValue);
-            ArrayResize(recorder.hSet,         iValue);
+            ArrayResize(recorder.enabled,       iValue);
+            ArrayResize(recorder.debug,         iValue);
+            ArrayResize(recorder.symbol,        iValue);
+            ArrayResize(recorder.symbolDescr,   iValue);
+            ArrayResize(recorder.symbolGroup,   iValue);
+            ArrayResize(recorder.symbolDigits,  iValue);
+            ArrayResize(recorder.currValue,     iValue);
+            ArrayResize(recorder.hstBase,       iValue);
+            ArrayResize(recorder.hstMultiplier, iValue);
+            ArrayResize(recorder.hstDirectory,  iValue);
+            ArrayResize(recorder.hstFormat,     iValue);
+            ArrayResize(recorder.hSet,          iValue);
          }
-         recorder.enabled  [iValue-1] = true;
-         recorder.baseValue[iValue-1] = baseValue;
+         recorder.enabled[iValue-1] = true;
+         recorder.hstBase[iValue-1] = hstBase;
       }
       if (!ArraySize(ids))                   return(_false(log("init_RecorderValidateInput(6)  invalid parameter EA.Recorder: \""+ EA.Recorder +"\" (missing metric ids)", ERR_INVALID_PARAMETER, ifInt(isInitParameters, LOG_ERROR, LOG_FATAL)), SetLastError(ifInt(isInitParameters, NO_ERROR, ERR_INVALID_PARAMETER))));
 
@@ -976,9 +985,11 @@ bool start_Recorder() {
          }
       }
       if (recordInternal) value = AccountEquity() - AccountCredit();
-      else                value = recorder.baseValue[i] + recorder.currValue[i];
+      else                value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
 
       if (IsTesting()) flags = HST_BUFFER_TICKS;
+
+      if (recorder.debug[i]) debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Ticks +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
 
       if      (i <  7) success = HistorySet1.AddTick(recorder.hSet[i], Tick.time, value, flags);
       else if (i < 14) success = HistorySet2.AddTick(recorder.hSet[i], Tick.time, value, flags);

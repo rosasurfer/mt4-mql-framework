@@ -82,11 +82,11 @@ int init() {
  */
 bool init_Globals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
-   PipDigits      = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints      = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips           = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");
-   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);
+   PipDigits      = Digits & (~1);
+   PipPoints      = MathRound(MathPow(10, Digits & 1));
+   Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat = ",'R."+ PipDigits;
+   PriceFormat    = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");
 
    N_INF = MathLog(0);                                               // negative infinity
    P_INF = -N_INF;                                                   // positive infinity
@@ -112,7 +112,7 @@ int start() {
    }
    __CoreFunction = CF_START;
 
-   Tick++;                                                                    // einfache Zähler, die konkreten Werte haben keine Bedeutung
+   Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
    Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
    Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
    ChangedBars    = -1;                                                       // in scripts not available
@@ -121,7 +121,7 @@ int start() {
 
    ArrayCopyRates(__rates);
 
-   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Tick, Tick.time, Bid, Ask) != NO_ERROR) {
+   if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
       if (CheckErrors("start(2)")) return(last_error);
    }
 
@@ -225,26 +225,6 @@ bool IsLibrary() {
 
 
 /**
- * Handler für im Script auftretende Fehler. Zur Zeit wird der Fehler nur angezeigt.
- *
- * @param  string caller  - location identifier of the caller
- * @param  string message - Fehlermeldung
- * @param  int    error   - zu setzender Fehlercode
- *
- * @return int - derselbe Fehlercode
- */
-int HandleScriptError(string caller, string message, int error) {
-   if (StringLen(caller) > 0)
-      caller = " :: "+ caller;
-
-   PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
-
-   return(SetLastError(error));
-}
-
-
-/**
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string caller           - location identifier of the caller
@@ -300,7 +280,6 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // suppress compiler warnings
    __DummyCalls();
-   HandleScriptError(NULL, NULL, NULL);
 }
 
 

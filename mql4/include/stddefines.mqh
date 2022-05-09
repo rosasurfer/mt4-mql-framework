@@ -19,16 +19,16 @@ bool     __STATUS_HISTORY_UPDATE;                                 // History-Upd
 bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)
 int      __STATUS_OFF.reason;                                     // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
 
-double   Pip, Pips;                                               // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
-int      PipDigits, SubPipDigits;                                 // Digits eines Pips/Subpips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
-int      PipPoint, PipPoints;                                     // Dezimale Auflösung eines Pips des aktuellen Symbols (Anzahl der möglichen Werte je Pip: 1 oder 10)
-string   PriceFormat="", PipPriceFormat="", SubPipPriceFormat=""; // Preisformate des aktuellen Symbols für NumberToStr()
-int      Tick;                                                    // number of times MQL::start() was called (value survives timeframe changes)
+double   Pip;                                                     // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
+int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
+int      PipPoints;                                               // Dezimale Auflösung eines Pips des aktuellen Symbols (mögliche Werte: 1 oder 10)
+string   PriceFormat="", PipPriceFormat="";                       // Preisformate des aktuellen Symbols für NumberToStr()
+int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts always -1)
-int      UnchangedBars, ValidBars;                                // indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts always -1)
-int      ShiftedBars;                                             // indicators: non-zero in offline charts only                                (in experts and scripts always -1)
+int      ChangedBars;                                             // in indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts: always -1)
+int      UnchangedBars, ValidBars;                                // in indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts: always -1)
+int      ShiftedBars;                                             // in indicators: non-zero in offline charts only                                (in experts and scripts: always -1)
 
 int      last_error;                                              // last error of the current execution
 int      prev_error;                                              // last error of the previous start() call

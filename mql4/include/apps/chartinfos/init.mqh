@@ -13,7 +13,7 @@ int onInit() {
 
    // read config: displayed price
    string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
-   if (!IsVisualModeFix()) {                                                  // in tester is always bid displayed (sufficient and faster)
+   if (!IsVisualModeFix()) {                                                  // in tester always display the Bid price (sufficient and faster)
       section = "ChartInfos";
       key     = "DisplayedPrice."+ stdSymbol;
       sValue  = StrToLower(GetConfigString(section, key, "median"));
@@ -24,39 +24,13 @@ int onInit() {
    else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    if (mode.intern) {
-      mm.risk     = 0;                                                        // default: unitsize calculation disabled
-      mm.pipRange = 0;
+      // read config: unitsize calculation, see ChartInfos::CalculateUnitSize()
+      if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(last_error); mm.cfgLeverage    = StrToDouble(sValue);
+      if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(last_error); mm.cfgRiskPercent = StrToDouble(sValue);
+      if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
 
-      // read config: unitsize calculation
-      section = "Unitsize";
-      string defaultRiskKey="Default.Risk", symbolRiskKey=stdSymbol +".Risk", symbolRangeKey=stdSymbol +".PipRange";
-      string sDefaultRisk = GetConfigString(section, defaultRiskKey); bool isDefaultRisk = (sDefaultRisk != "");
-      string sSymbolRisk  = GetConfigString(section, symbolRiskKey);  bool isSymbolRisk  = (sSymbolRisk  != "");
-      string sSymbolRange = GetConfigString(section, symbolRangeKey); bool isSymbolRange = (sSymbolRange != "");
-
-      if ((isDefaultRisk || isSymbolRisk) && isSymbolRange) {
-         key    = ifString(isSymbolRisk, symbolRiskKey, defaultRiskKey);
-         sValue = ifString(isSymbolRisk, sSymbolRisk,   sDefaultRisk);
-
-         if (!StrIsNumeric(sValue)) return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
-         double dValue = StrToDouble(sValue);
-         if (dValue <= 0)           return(catch("onInit(3)  invalid configuration value ["+ section +"]->"+ key +": "+ sValue +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-         mm.risk = dValue;
-
-         key    = symbolRangeKey;
-         sValue = sSymbolRange;
-         if (StrCompareI(sValue, "ADR")) {
-            mm.pipRange = iADR()/Pip;
-            mm.pipRangeIsADR = true;
-         }
-         else {
-            if (!StrIsNumeric(sValue)) return(catch("onInit(4)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValue) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
-            dValue = StrToDouble(sValue);
-            if (dValue <= 0)           return(catch("onInit(5)  invalid configuration value ["+ section +"]->"+ key +": "+ sValue +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
-            mm.pipRange = dValue;
-            mm.pipRangeIsADR = false;
-         }
-      }
+      mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
+      if (mm.cfgRiskRangeIsADR) mm.cfgRiskRange = iADR();
 
       // order tracker
       if (!OrderTracker.Configure()) return(last_error);
@@ -192,7 +166,7 @@ bool OrderTracker.Configure() {
       orderTracker.enabled = false;
    }
    else if (sValue == "auto") {
-      orderTracker.enabled = GetConfigBool("EventTracker", "Track.Orders");
+      orderTracker.enabled = GetConfigBool("ChartInfos", "Track.Orders");
    }
    else return(!catch("OrderTracker.Configure(1)  invalid input parameter Track.Orders: "+ DoubleQuoteStr(Track.Orders), ERR_INVALID_INPUT_PARAMETER));
 
@@ -208,4 +182,85 @@ bool OrderTracker.Configure() {
       SetWindowIntegerA(hWndTerminal, name, counter);
    }
    return(!catch("OrderTracker.Configure(2)"));
+}
+
+
+/**
+ * Find the applicable configuration for the [UnitSize] calculation and return the configured value.
+ *
+ * @param _In_  string id     - unitsize configuration identifier
+ * @param _Out_ string &value - configuration value
+ *
+ * @return bool - success status
+ */
+bool ReadUnitSizeConfigValue(string id, string &value) {
+   string section="Unitsize", sValue="";
+   value = "";
+
+   string key = Symbol() +"."+ id;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+
+   key = StdSymbol() +"."+ id;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+
+   key = "Default."+ id;
+   if (IsConfigKey(section, key)) {
+      if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
+      value = sValue;
+      return(true);
+   }
+
+   return(true);     // success also if no configuration was found (returns an empty string)
+}
+
+
+/**
+ * Validate the specified [UnitSize] configuration key and return the configured value.
+ *
+ * @param _In_  string section - configuration section
+ * @param _In_  string key     - configuration key
+ * @param _Out_ string &value  - configured value
+ *
+ * @return bool - success status
+ */
+bool ValidateUnitSizeConfigValue(string section, string key, string &value) {
+   string sValue = GetConfigString(section, key), sValueBak = sValue;
+
+   if (StrEndsWithI(key, ".RiskPercent") || StrEndsWithI(key, ".Leverage")) {
+      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(1)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+      double dValue = StrToDouble(sValue);
+      if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(2)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+      value = sValue;
+      return(true);
+   }
+
+   if (StrEndsWithI(key, ".RiskRange")) {
+      if (StrCompareI(sValue, "ADR")) {
+         value = sValue;
+         return(true);
+      }
+      if (!StrEndsWith(sValue, "pip")) {
+         if (!StrIsNumeric(sValue)) return(!catch("GetUnitSizeConfigValue(3)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric)", ERR_INVALID_CONFIG_VALUE));
+         dValue = StrToDouble(sValue);
+         if (dValue < 0)            return(!catch("GetUnitSizeConfigValue(4)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+         value = sValue;
+         return(true);
+      }
+      sValue = StrTrim(StrLeft(sValue, -3));
+      if (!StrIsNumeric(sValue))    return(!catch("GetUnitSizeConfigValue(5)  invalid configuration value ["+ section +"]->"+ key +": "+ DoubleQuoteStr(sValueBak) +" (non-numeric pip value)", ERR_INVALID_CONFIG_VALUE));
+      dValue = StrToDouble(sValue);
+      if (dValue < 0)               return(!catch("GetUnitSizeConfigValue(6)  invalid configuration value ["+ section +"]->"+ key +": "+ sValueBak +" (non-positive)", ERR_INVALID_CONFIG_VALUE));
+      value = dValue * Pip;
+      return(true);
+   }
+
+   return(!catch("GetUnitSizeConfigValue(7)  unsupported [UnitSize] config key: "+ DoubleQuoteStr(key), ERR_INVALID_PARAMETER));
 }
