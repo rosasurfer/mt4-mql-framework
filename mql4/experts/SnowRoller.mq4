@@ -311,8 +311,8 @@ int onTick() {
    else if (sequence.status == STATUS_PROGRESSING) {
       bool gridChanged = false;                                   // whether the current gridbase or gridlevel changed
       if (UpdateStatus(gridChanged)) {
-         if (IsStopSignal(signal))        StopSequence(signal);
-         else if (Tick==1 || gridChanged) UpdatePendingOrders();
+         if (IsStopSignal(signal))         StopSequence(signal);
+         else if (Ticks==1 || gridChanged) UpdatePendingOrders();
       }
    }
 
@@ -338,7 +338,6 @@ bool onCommand(string commands[]) {
 
    string cmd = commands[0];
 
-   // wait
    if (cmd == "wait") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -352,7 +351,6 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   // start
    if (cmd == "start") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -368,7 +366,6 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   // stop
    if (cmd == "stop") {
       if (IsTestSequence() && !IsTesting())
          return(true);
@@ -626,11 +623,11 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.baseValue[0]) {
+   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.hstBase[0]) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
-      result = recorder.baseValue[0];
+      result = recorder.hstBase[0];
    }
 
    if (!catch("CalculateStartEquity(1)"))
@@ -817,7 +814,7 @@ bool ConfirmFirstTickTrade(string caller, string message) {
       return(true);                       // will differ and the calling logic must correctly interprete the first result.
 
    bool result;
-   if (Tick > 1 || IsTesting()) {
+   if (Ticks > 1 || IsTesting()) {
       result = true;
    }
    else {
@@ -1330,7 +1327,7 @@ bool StartSequence(int signal) {
    if (IsLastError())                     return(false);
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("StartSequence()", "Do you really want to start a new \""+ StrToLower(TradeDirectionDescription(sequence.direction)) +"\" sequence now?"))
       return(_false(StopSequence(NULL)));
 
    sequence.status = STATUS_STARTING;
@@ -1392,11 +1389,11 @@ bool StartSequence(int signal) {
 
    // calculate new gridbase and set it after start/stop data
    if (!gridbase)                                                 // use an existing pre-set gridbase
-      gridbase = startPrice - sequence.level*GridSize*Pips;
+      gridbase = startPrice - sequence.level*GridSize*Pip;
    ResetGridbase(startTime, gridbase);                            // make sure the gridbase event follows the start event
 
    // open start positions if configured, and update start price according to real gridbase or realized price
-   if (!StartLevel) startPrice = NormalizeDouble(gridbase + sequence.level*GridSize*Pips, Digits);
+   if (!StartLevel) startPrice = NormalizeDouble(gridbase + sequence.level*GridSize*Pip, Digits);
    else if (!RestorePositions(startTime, startPrice)) return(false);
 
    sequence.start.price[0] = startPrice;
@@ -1439,7 +1436,7 @@ bool StopSequence(int signal) {
 
    // a progressing sequence has open orders to close
    else if (sequence.status == STATUS_PROGRESSING) {
-      if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
+      if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("StopSequence()", "Do you really want to stop sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
          return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       sequence.status = STATUS_STOPPING;
@@ -1664,7 +1661,7 @@ bool StopSequence(int signal) {
          int    newSequenceLevel = 0;
          if (AutoRestart == "Continue") {                   // continue after TP at level 1 if configured
             newSequenceLevel = ifInt(sequence.direction==D_LONG, 1, -1);
-            newGridbase      = stopPrice - newSequenceLevel*GridSize*Pips;
+            newGridbase      = stopPrice - newSequenceLevel*GridSize*Pip;
          }
          if (!ResetSequence(newGridbase, newSequenceLevel)) return(false);
          if (AutoRestart == "Continue") StartSequence(NULL);
@@ -1860,7 +1857,7 @@ bool ResumeSequence(int signal) {
    if (IsLastError())                                                      return(false);
    if (sequence.status!=STATUS_WAITING && sequence.status!=STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("ResumeSequence()", "Do you really want to resume sequence "+ sequence.name +"."+ NumberToStr(sequence.level, "+.") +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    datetime startTime;
@@ -2302,7 +2299,7 @@ bool EventListener_ChartCommand(string &commands[]) {
    if (!__isChart) return(false);
 
    static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
+      label = "EA.command";
       mutex = "mutex."+ label;
    }
 
@@ -2678,7 +2675,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
 
          if (!orders.closeTime[i]) {                                       // order is open, check the SL of level 1 orders
             if (Abs(level) == 1) {
-               double stoploss = gridbase + (level-levelStep)*GridSize*Pips;
+               double stoploss = gridbase + (level-levelStep)*GridSize*Pip;
                if (NE(orders.stopLoss[i], stoploss, Digits)) {
                   int error = ModifyStopLoss(i, gridbase, stoploss);
                   if (error > 0)       return(false);
@@ -2959,10 +2956,10 @@ int Grid.AddPendingOrder(int level, int offset=-1) {
 
    int pendingType = ifInt(sequence.direction==D_LONG, OP_BUYSTOP, OP_SELLSTOP);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPendingOrder()", "Do you really want to submit a new "+ OperationTypeDescription(pendingType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
-   double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pips, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
+   double gridbase=GetGridbase(), price=gridbase + level*GridSize*Pip, bid=MarketInfo(Symbol(), MODE_BID), ask=MarketInfo(Symbol(), MODE_ASK);
    int counter, ticket, oe[];
    if (sequence.direction == D_LONG) pendingType = ifInt(GT(price, bid, Digits), OP_BUYSTOP, OP_BUYLIMIT);
    else                              pendingType = ifInt(LT(price, ask, Digits), OP_SELLSTOP, OP_SELLLIMIT);
@@ -3036,7 +3033,7 @@ bool Grid.AddPosition(int level) {
 
    int oe[], orderType = ifInt(sequence.direction==D_LONG, OP_BUY, OP_SELL);
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(orderType) +" order now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.AddPosition()", "Do you really want to submit a Market "+ OperationTypeDescription(orderType) +" order now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    int ticket = SubmitMarketOrder(orderType, level, oe);
@@ -3100,7 +3097,7 @@ int Grid.TrailPendingOrder(int i) {
    if (orders.type[i] != OP_UNDEFINED)        return(!catch("Grid.TrailPendingOrder(2)  "+ sequence.name +" cannot trail "+ OperationTypeDescription(orders.type[i]) +" position #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
    if (orders.closeTime[i] != 0)              return(!catch("Grid.TrailPendingOrder(3)  "+ sequence.name +" cannot trail cancelled "+ OperationTypeDescription(orders.type[i]) +" order #"+ orders.ticket[i], ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.TrailPendingOrder()", "Do you really want to modify the "+ OperationTypeDescription(orders.pendingType[i]) +" order #"+ orders.ticket[i] +" now?"))
       return(!SetLastError(ERR_CANCELLED_BY_USER));
 
    // calculate changing data
@@ -3108,8 +3105,8 @@ int Grid.TrailPendingOrder(int i) {
    int      level        = orders.level[i];
    double   gridbase     = GetGridbase();
    datetime pendingTime;
-   double   pendingPrice = NormalizeDouble(gridbase +          level  * GridSize * Pips, Digits);
-   double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pips, Digits);
+   double   pendingPrice = NormalizeDouble(gridbase +          level  * GridSize * Pip, Digits);
+   double   stopLoss     = NormalizeDouble(pendingPrice - Sign(level) * GridSize * Pip, Digits);
 
    if (!SelectTicket(ticket, "Grid.TrailPendingOrder(4)", true)) return(NULL);
    datetime prevPendingTime  = OrderOpenTime();
@@ -3171,7 +3168,7 @@ int Grid.DeleteOrder(int i) {
    if (sequence.status!=STATUS_PROGRESSING && sequence.status!=STATUS_STOPPING) return(catch("Grid.DeleteOrder(1)  "+ sequence.name +" cannot delete order of "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (orders.type[i] != OP_UNDEFINED)                                          return(catch("Grid.DeleteOrder(2)  "+ sequence.name +" cannot delete "+ ifString(orders.closeTime[i], "closed", "open") +" "+ OperationTypeDescription(orders.type[i]) +" order", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteOrder()", "Do you really want to cancel the "+ OperationTypeDescription(orders.pendingType[i]) +" order at level "+ orders.level[i] +" now?"))
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    if (orders.ticket[i] > 0) {
@@ -3220,7 +3217,7 @@ int Grid.DeleteLimit(int i) {
    if (i < 0 || i >= ArraySize(orders.ticket))                                          return(catch("Grid.DeleteLimit(2)  "+ sequence.name +" invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
    if (orders.type[i]==OP_UNDEFINED || orders.type[i] > OP_SELL || orders.closeTime[i]) return(catch("Grid.DeleteLimit(3)  "+ sequence.name +" cannot delete limit of "+ ifString(orders.closeTime[i], "closed", "open") +" "+ OperationTypeDescription(orders.type[i]) +" order", ERR_ILLEGAL_STATE));
 
-   if (Tick==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteLimit()", "Do you really want to delete the limit of the position at level "+ orders.level[i] +" now?"))
+   if (Ticks==1) /*&&*/ if (!ConfirmFirstTickTrade("Grid.DeleteLimit()", "Do you really want to delete the limit of the position at level "+ orders.level[i] +" now?"))
       return(SetLastError(ERR_CANCELLED_BY_USER));
 
    int oe[], oeFlags  = F_ERR_INVALID_TRADE_PARAMETERS;     // accept the limit already being executed
@@ -3456,7 +3453,7 @@ int SubmitMarketOrder(int type, int level, int &oe[]) {
    double   lots        = sequence.unitsize;
    double   price       = NULL;
    int      slippage    = 1;
-   double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pips;
+   double   stopLoss    = GetGridbase() + (level-Sign(level))*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -3517,9 +3514,9 @@ int SubmitStopOrder(int type, int level, int &oe[]) {
    if (type==OP_SELLSTOP && level >= 0)                                         return(_NULL(catch("SubmitStopOrder(4)  "+ sequence.name +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
-   double   stopPrice   = GetGridbase() + level*GridSize*Pips;
+   double   stopPrice   = GetGridbase() + level*GridSize*Pip;
    int      slippage    = NULL;
-   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pips;
+   double   stopLoss    = stopPrice - Sign(level)*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -3575,9 +3572,9 @@ int SubmitLimitOrder(int type, int level, int &oe[]) {
    if (type==OP_SELLLIMIT && level >= 0)                                        return(_NULL(catch("SubmitLimitOrder(4)  "+ sequence.name +" invalid parameter level "+ level +" for "+ OperationTypeDescription(type), ERR_INVALID_PARAMETER)));
 
    double   lots        = sequence.unitsize;
-   double   limitPrice  = GetGridbase() + level*GridSize*Pips;
+   double   limitPrice  = GetGridbase() + level*GridSize*Pip;
    int      slippage    = NULL;
-   double   stopLoss    = limitPrice - Sign(level)*GridSize*Pips;
+   double   stopLoss    = limitPrice - Sign(level)*GridSize*Pip;
    double   takeProfit  = NULL;
    int      magicNumber = CreateMagicNumber(level); if (!magicNumber) return(0);
    datetime expires     = NULL;
@@ -3811,17 +3808,15 @@ int ShowStatus(int error = NO_ERROR) {
    Comment(NL, NL, NL, msg);
    if (__CoreFunction == CF_INIT) WindowRedraw();
 
-   // store status in chart to enable remote control by scripts
-   string label = "SnowRoller.status";
+   // store status in the chart to enable sending of chart commands
+   string label = "EA.status";
    if (ObjectFind(label) != 0) {
-      if (!ObjectCreate(label, OBJ_LABEL, 0, 0, 0))
-         return(catch("ShowStatus(2)"));
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
       ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    }
-   if (sequence.status == STATUS_UNDEFINED) ObjectDelete(label);
-   else                                     ObjectSetText(label, StringConcatenate(Sequence.ID, "|", sequence.status));
+   ObjectSetText(label, StringConcatenate(Sequence.ID, "|", StatusDescription(sequence.status)));
 
-   error = intOr(catch("ShowStatus(3)"), error);
+   error = intOr(catch("ShowStatus(2)"), error);
    isRecursion = false;
    return(error);
 }
@@ -4826,7 +4821,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (pendingType==OP_UNDEFINED && NE(pendingPrice, 0))                 return(!catch("ReadStatus.ParseOrder(16)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
    if (pendingType!=OP_UNDEFINED) {
       if (EQ(pendingPrice, 0))                                           return(!catch("ReadStatus.ParseOrder(17)  pending order type/price mis-match "+ OperationTypeToStr(pendingType) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
-      if (NE(pendingPrice, gridbase+level*GridSize*Pips, Digits))        return(!catch("ReadStatus.ParseOrder(18)  gridbase/pending order price mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
+      if (NE(pendingPrice, gridbase+level*GridSize*Pip, Digits))         return(!catch("ReadStatus.ParseOrder(18)  gridbase/pending order price mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(pendingPrice, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
    }
 
    // type
@@ -4888,7 +4883,7 @@ bool ReadStatus.ParseOrder(string value) {
    if (!StrIsNumeric(sStopLoss))                                         return(!catch("ReadStatus.ParseOrder(39)  illegal order stoploss "+ DoubleQuoteStr(sStopLoss) +" in order record", ERR_INVALID_FILE_FORMAT));
    double stopLoss = StrToDouble(sStopLoss);
    if (LE(stopLoss, 0))                                                  return(!catch("ReadStatus.ParseOrder(40)  illegal order stoploss "+ NumberToStr(stopLoss, PriceFormat) +" in order record", ERR_INVALID_FILE_FORMAT));
-   if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pips, Digits)) return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
+   if (NE(stopLoss, gridbase+(level-Sign(level))*GridSize*Pip, Digits))  return(!catch("ReadStatus.ParseOrder(41)  gridbase/stoploss mis-match "+ NumberToStr(gridbase, PriceFormat) +"/"+ NumberToStr(stopLoss, PriceFormat) +" (level "+ level +") in order record", ERR_INVALID_FILE_FORMAT));
 
    // closedBySL
    string sClosedBySL = StrTrim(values[14]);

@@ -13,6 +13,11 @@
  *
  *
  * TODO:
+ *  - drop obsolete input Donchian.ShowStopSegments
+ *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
+ *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
+ *  - rename input Donchian.MarkFirstCrossing to Donchian.DrawFirstCrossing
+ *
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
@@ -20,7 +25,6 @@
  *
  *  - onReversal = onLeg?
  *  - add signal onZigZagBreakout
- *  - process input Donchian.ShowStopSegments
  *  - a visible buffer for the mid channel?
  *  - add auto-configuration
  *  - restore default values (type, hide channel and trail)
@@ -321,7 +325,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startbar = Min(bars-1, Bars-zigzagPeriods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {

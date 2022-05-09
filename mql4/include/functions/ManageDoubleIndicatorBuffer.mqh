@@ -17,7 +17,7 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
 
    if (id < 0)                                                 return(!catch("ManageDoubleIndicatorBuffer(1)  invalid parameter id: "+ id, ERR_INVALID_PARAMETER));
    if (__ExecutionContext[EC.programCoreFunction] != CF_START) return(!catch("ManageDoubleIndicatorBuffer(2)  id="+ id +", invalid calling context: "+ ProgramTypeDescription(__ExecutionContext[EC.programType]) +"::"+ CoreFunctionDescription(__ExecutionContext[EC.programCoreFunction]), ERR_ILLEGAL_STATE));
-   if (!Bars)                                                  return(!catch("ManageDoubleIndicatorBuffer(3)  id="+ id +", Tick="+ Tick +"  Bars=0", ERR_ILLEGAL_STATE));
+   if (!Bars)                                                  return(!catch("ManageDoubleIndicatorBuffer(3)  id="+ id +", Tick="+ Ticks +"  Bars=0", ERR_ILLEGAL_STATE));
 
    // maintain a metadata array {id => data[]} to support multiple buffers
    #define IB.Tick            0                                      // last Tick value for detecting multiple calls during the same tick
@@ -33,7 +33,7 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
    datetime prevNewestBarTime = data[id][IB.NewestBarTime];
    datetime prevOldestBarTime = data[id][IB.OldestBarTime];
 
-   if (Tick == prevTick) return(true);                               // execute only once per tick
+   if (Ticks == prevTick) return(true);                              // execute only once per tick
 
    if (Bars == prevBars) {
       // the number of Bars didn't change
@@ -42,7 +42,7 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
       }
       else if (Time[Bars-1] != prevOldestBarTime) {                  // the oldest bar changed and bars have been shifted off the end (e.g. in self-updating offline charts when MAX_CHART_BARS is hit on each new bar)
          if (!ShiftedBars || Time[ShiftedBars]!=prevNewestBarTime) {
-            return(!catch("ManageDoubleIndicatorBuffer(4)  id="+ id +", Tick="+ Tick +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", ShiftedBars="+ ShiftedBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_ILLEGAL_STATE));
+            return(!catch("ManageDoubleIndicatorBuffer(4)  id="+ id +", Tick="+ Ticks +", Bars unchanged but oldest bar changed, hit the timeseries MAX_CHART_BARS? (Bars="+ Bars +", ShiftedBars="+ ShiftedBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +")", ERR_ILLEGAL_STATE));
          }
       }
    }
@@ -53,24 +53,24 @@ bool ManageDoubleIndicatorBuffer(int id, double buffer[], double emptyValue = 0)
       else {
          if (Bars > prevBars) {                                      // the number of Bars increased (new bars have been inserted or appended anywhere)
             if (prevBars && Time[Bars-1]!=prevOldestBarTime) {       // the oldest bar changed: bars have been added at the end (data pumping)
-               return(!catch("ManageDoubleIndicatorBuffer(5)  id="+ id +", Tick="+ Tick +", Bars increased and oldest bar changed but no full recalculation (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", ValidBars="+ ValidBars +")", ERR_ILLEGAL_STATE));
+               return(!catch("ManageDoubleIndicatorBuffer(5)  id="+ id +", Tick="+ Ticks +", Bars increased and oldest bar changed but no full recalculation (Bars="+ Bars +", prevBars="+ prevBars +", oldestBarTime="+ TimeToStr(Time[Bars-1], TIME_FULL) +", prevOldestBarTime="+ TimeToStr(prevOldestBarTime, TIME_FULL) +", ValidBars="+ ValidBars +")", ERR_ILLEGAL_STATE));
             }
          }
          else /*Bars < prevBars*/ {                                  // the number of Bars decreased (e.g. in online charts after MAX_CHART_BARS + ~1200 bars)
             for (int i=0; i < Bars; i++) {
                if (Time[i] == prevNewestBarTime) break;              // find the index of previous Time[0] aka prevNewestBarTime
             }
-            if (i == Bars) return(!catch("ManageDoubleIndicatorBuffer(6)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" but previous Time[0] not found", ERR_ILLEGAL_STATE));
+            if (i == Bars) return(!catch("ManageDoubleIndicatorBuffer(6)  id="+ id +", Tick="+ Ticks +", Bars decreased from "+ prevBars +" to "+ Bars +" but previous Time[0] not found", ERR_ILLEGAL_STATE));
             if (i > 0) {                                             // manually shift the content according to the found Time[0] offset
                ResizeDoubleIndicatorBuffer(buffer, ArraySize(buffer)+i, emptyValue);
             }
-            if (IsLogInfo()) logInfo("ManageDoubleIndicatorBuffer(6.1)  id="+ id +", Tick="+ Tick +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
+            if (IsLogInfo()) logInfo("ManageDoubleIndicatorBuffer(6.1)  id="+ id +", Tick="+ Ticks +", Bars decreased from "+ prevBars +" to "+ Bars +" (previous Time[0] bar found at offset "+ i +")");
          }
       }
       ResizeDoubleIndicatorBuffer(buffer, Bars, emptyValue);
    }
 
-   data[id][IB.Tick         ] = Tick;
+   data[id][IB.Tick         ] = Ticks;
    data[id][IB.Bars         ] = Bars;
    data[id][IB.NewestBarTime] = Time[0];
    data[id][IB.OldestBarTime] = Time[Bars-1];

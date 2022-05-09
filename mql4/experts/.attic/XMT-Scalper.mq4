@@ -1432,10 +1432,10 @@ bool CloseVirtualOrders() {
  */
 bool CalculateSpreads() {
    static bool lastResult = false;
-   static int  lastTick; if (Tick == lastTick) {
+   static int  lastTick; if (Ticks == lastTick) {
       return(lastResult);
    }
-   lastTick      = Tick;
+   lastTick      = Ticks;
    currentSpread = NormalizeDouble((Ask-Bid)/Pip, 1);
 
    if (IsTesting()) {
@@ -1478,13 +1478,13 @@ bool CalculateSpreads() {
  */
 bool GetIndicatorValues(double &channelHigh, double &channelLow, double &channelMean) {
    static double lastHigh, lastLow, lastMean;
-   static int lastTick; if (Tick == lastTick) {
+   static int lastTick; if (Ticks == lastTick) {
       channelHigh = lastHigh;                   // return cached values
       channelLow  = lastLow;
       channelMean = lastMean;
       return(true);
    }
-   lastTick = Tick;
+   lastTick = Ticks;
 
    if (EntryIndicator == 1) {
       channelHigh = iMA(Symbol(), IndicatorTimeframe, IndicatorPeriods, 0, MODE_LWMA, PRICE_HIGH, 0);

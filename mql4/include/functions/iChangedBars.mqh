@@ -1,13 +1,13 @@
 /**
  * Return the number of changed bars of the specified timeseries since the last tick. Equivalent to resolving the number of
- * changed bars in indicators for the chart period by computing:
+ * changed bars in indicators for the current chart timeframe by computing:
  *
  *   UnchangedBars = IndicatorCounted()
  *   ChangedBars   = Bars - UnchangedBars
  *   Bars          = ChangedBars + UnchangedBars
  *
- * This function can be used when IndicatorCounted() is not available, i.e. in experts or in indicators with timeframes
- * different from the current one.
+ * This function can be used if IndicatorCounted() is not available, i.e. in experts or in indicators with the requested
+ * timeframe different from the current chart timeframe.
  *
  * @param  string symbol    [optional] - symbol of the timeseries (default: the current chart symbol)
  * @param  int    timeframe [optional] - timeframe of the timeseries (default: the current chart timeframe)
@@ -42,7 +42,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    }
 
    // always return the same result for the same tick
-   if (Tick == data[i][CB.Tick])
+   if (Ticks == data[i][CB.Tick])
       return(data[i][CB.ChangedBars]);
 
    /*
@@ -99,7 +99,7 @@ int iChangedBars(string symbol="0", int timeframe=NULL) {
    }
 
    // store all data
-   data[i][CB.Tick        ] = Tick;
+   data[i][CB.Tick        ] = Ticks;
    data[i][CB.Bars        ] = bars;
    data[i][CB.ChangedBars ] = changedBars;
    data[i][CB.FirstBarTime] = firstBarTime;

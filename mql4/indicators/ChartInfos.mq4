@@ -4,7 +4,7 @@
  *
  *  - The current price and spread.
  *  - In terminal builds <= 509 the current instrument name.
- *  - The calculated unitsize according to the configured risk profiles.
+ *  - The calculated unitsize according to the configured risk profile, see CalculateUnitSize().
  *  - The open position and the used leverage.
  *  - The current account stopout level.
  *  - A warning in different colors when the account's open order limit is approached.
@@ -17,7 +17,10 @@
  *               limit monitoring and notifications
  *
  * TODO:
+ *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *  - FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - set order tracker sound on stopout to "margin-call"
+ *  - PositionOpen/PositionClose events during change of chart timeframe/symbol are not detected
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -52,22 +55,23 @@ extern string Signal.SMS     = "on | off | auto*";
 // chart infos
 int displayedPrice = PRICE_MEDIAN;                                // price type: Bid | Ask | Median (default)
 
-// unitsize calculation
+// unitsize calculation, see CalculateUnitSize()
 bool   mm.done;                                                   // processing flag
+double mm.equity;                                                 // equity value used for calculations, incl. external assets and floating losses (but not floating/unrealized profits)
+
+double mm.cfgLeverage;
+double mm.cfgRiskPercent;
+double mm.cfgRiskRange;
+bool   mm.cfgRiskRangeIsADR;                                      // whether the price range is configured as "ADR"
+
 double mm.lotValue;                                               // value of 1 lot in account currency
 double mm.unleveragedLots;                                        // unleveraged unitsize
-double mm.risk;                                                   // configured position risk in %
-double mm.pipRange;                                               // configured target range in pip
-bool   mm.pipRangeIsADR;                                          // whether the ADR is used as the target range
-double mm.unitSize;                                               // calculated unitsize according to risk and pip target
-double mm.normUnitSize;                                           // mm.unitSize normalized to MODE_LOTSTEP
-double mm.unitSizeLeverage;                                       // leverage of the calculated unitsize
-double mm.externalAssets;                                         // additional assets not hold in the broker's account
-double mm.equity;                                                 // total applied equity value
-                                                                  //  - enthält externe Assets                                                       !!! doppelte Spreads und      !!!
-                                                                  //  - enthält offene Gewinne/Verluste gehedgter Positionen (gehedgt = realisiert)  !!! Commissions herausrechnen !!!
-                                                                  //  - enthält offene Verluste ungehedgter Positionen
-                                                                  //  - enthält jedoch nicht offene Gewinne ungehedgter Positionen (unrealisiert)
+double mm.leveragedLots;                                          // leveraged unitsize
+double mm.leveragedLotsNormalized;                                // leveraged unitsize normalized to MODE_LOTSTEP
+double mm.leverage;                                               // resulting leverage
+double mm.riskPercent;                                            // resulting risk
+double mm.riskRange;                                              // resulting price range
+
 // configuration of custom positions
 #define POSITION_CONFIG_TERM_size      40                         // in Bytes
 #define POSITION_CONFIG_TERM_doubleSize 5                         // in Doubles
@@ -168,14 +172,17 @@ int     tickTimerId;                                              // ID eines gg
 int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
-bool    orderTracker.enabled;
-int     orderTracker.tickets[];                                   // order tickets known at the last call
-int     orderTracker.types  [];                                   // types of known orders
+#define TI_TICKET          0                                      // order tracker indexes
+#define TI_ORDERTYPE       1
+#define TI_ENTRYLIMIT      2
 
-// Close-Typen für automatisch geschlossene Positionen
-#define CLOSE_TYPE_TP               1                             // TakeProfit
-#define CLOSE_TYPE_SL               2                             // StopLoss
-#define CLOSE_TYPE_SO               3                             // StopOut (Margin-Call)
+bool    orderTracker.enabled;
+double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
+
+// types for server-side closed positions
+#define CLOSE_TAKEPROFIT   1
+#define CLOSE_STOPLOSS     2
+#define CLOSE_STOPOUT      3                                      // margin call
 
 // Konfiguration der Signalisierung
 bool    signal.sound;
@@ -187,7 +194,6 @@ string  signal.mail.sender   = "";
 string  signal.mail.receiver = "";
 bool    signal.sms;
 string  signal.sms.receiver = "";
-
 
 #include <apps/chartinfos/init.mqh>
 #include <apps/chartinfos/deinit.mqh>
@@ -218,17 +224,15 @@ int onTick() {
       if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
       if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
 
-      if (mode.intern && orderTracker.enabled) {                                    // order tracking
-         int failedOrders   [];    ArrayResize(failedOrders,    0);
-         int openedPositions[];    ArrayResize(openedPositions, 0);
-         int closedPositions[][2]; ArrayResize(closedPositions, 0);                 // {Ticket, CloseType=[CLOSE_TYPE_TP|CLOSE_TYPE_SL|CLOSE_TYPE_SO]}
+      if (mode.intern && orderTracker.enabled) {                                    // monitor execution of order limits
+         double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
+         int    closedPositions[][2]; ArrayResize(closedPositions, 0);              // {ticket, closedType}
+         int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
 
-         if (!OrderTracker.CheckPositions(failedOrders, openedPositions, closedPositions))
-            return(last_error);
-
-         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
+         if (!MonitorOpenOrders(openedPositions, closedPositions, failedOrders)) return(last_error);
          if (ArraySize(openedPositions) > 0) onPositionOpen (openedPositions);
          if (ArraySize(closedPositions) > 0) onPositionClose(closedPositions);
+         if (ArraySize(failedOrders   ) > 0) onOrderFail    (failedOrders);
       }
    }
    return(last_error);
@@ -244,8 +248,7 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   ArrayResize(orderTracker.tickets, 0);
-   ArrayResize(orderTracker.types,   0);
+   ArrayResize(trackedOrders, 0);
    return(onInit());
 }
 
@@ -1199,68 +1202,90 @@ bool UpdateSpread() {
 
 
 /**
- * Update the display of the calculated unitsize for the configured risk profile (bottom-right).
+ * Calculate and update the displayed unitsize for the configured risk profile (bottom-right).
  *
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())                               return(true);                     // skip in tester
-   if (!mm.done) /*&&*/ if (!CalculateUnitSize()) return(false);
-   if (!mm.done)                                  return(true);
-
-   string sUnitSize="", sPipRange="";
-   if (mode.intern && mm.risk && mm.pipRange) {
-      if (mm.pipRangeIsADR) {
-         if (Digits==2 && Bid>=500) sPipRange = "ADR="+ NumberToStr(MathRound(mm.pipRange/100), ",'.2");
-         else                       sPipRange = "ADR="+ DoubleToStr(mm.pipRange, 0) +" pip";
-      }
-      else {
-         if (Digits==2 && Bid>=500) sPipRange = NumberToStr(NormalizeDouble(mm.pipRange/100, 3), ",'.2+");
-         else                       sPipRange = NumberToStr(NormalizeDouble(mm.pipRange, 1), ",'.+") +" pip";
-      }                           // R - risk / pip range                                    L - leverage                                       unitsize
-      sUnitSize = StringConcatenate("R ", NumberToStr(mm.risk, ".+"), "%/", sPipRange, "     L", DoubleToStr(mm.unitSizeLeverage, 1), "      ", NumberToStr(mm.normUnitSize, ",'.+"), " lot");
+   if (IsTesting())             return(true);            // skip in tester
+   if (!mm.done) {
+      if (!CalculateUnitSize()) return(false);           // on error
+      if (!mm.done)             return(true);            // on terminal not yet ready
    }
-   ObjectSetText(label.unitSize, sUnitSize, 9, "Tahoma", SlateGray);
+
+   string text = "";
+
+   if (mode.intern) {
+      if (mm.riskPercent != NULL) {
+         text = StringConcatenate("R", DoubleToStr(mm.riskPercent, 0), "%/");
+      }
+
+      if (mm.riskRange != NULL) {
+         double range = mm.riskRange;
+         if (mm.cfgRiskRangeIsADR) {
+            if (Close[0] > 300 && range >= 3) range = MathRound(range);
+            else                              range = NormalizeDouble(range, PipDigits);
+            text = StringConcatenate(text, "ADR=");
+         }
+         if (Close[0] > 300 && range >= 3) string sRange = NumberToStr(range, ",'.2+");
+         else                                     sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
+         text = StringConcatenate(text, sRange);
+      }
+
+      if (mm.leverage != NULL) {
+         text = StringConcatenate(text, "     L", DoubleToStr(mm.leverage, 1), "      ", NumberToStr(mm.leveragedLotsNormalized, ".+"), " lot");
+      }
+   }
+   ObjectSetText(label.unitSize, text, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                  // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)       // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateUnitSize(1)", error));
 }
 
 
 /**
- * Aktualisiert die Positionsanzeigen unten rechts (Gesamtposition) und unten links (detaillierte Einzelpositionen).
+ * Update the position display bottom-right (total postion) and bottom-left (custom positions).
  *
  * @return bool - success status
  */
 bool UpdatePositions() {
-   if (!positions.analyzed) /*&&*/ if (!AnalyzePositions()) return(false);
+   if (!positions.analyzed) {
+      if (!AnalyzePositions())   return(false);                // on error
+   }
    if (mode.intern && !mm.done) {
-      if (!CalculateUnitSize())                             return(false);
-      if (!mm.done)                                         return(true);
+      if (!CalculateUnitSize())  return(false);                // on error
+      if (!mm.done)              return(true);                 // on terminal not yet ready
    }
 
-   // (1) Gesamtpositionsanzeige unten rechts
-   string sCurrentLeverage="", sCurrentPosition="";
-   if      (!isPosition   ) sCurrentPosition = " ";
-   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:   ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
+   // total position bottom-right
+   string sCurrentPosition = "";
+   if      (!isPosition)    sCurrentPosition = " ";
+   else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:    ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
-      // Leverage der aktuellen Position = MathAbs(totalPosition)/mm.unleveragedLots
-      double currentLeverage;
-      if (!mm.equity) currentLeverage = MathAbs(totalPosition)/((AccountEquity()-AccountCredit())/mm.lotValue);  // Workaround bei negativer AccountBalance:
-      else            currentLeverage = MathAbs(totalPosition)/mm.unleveragedLots;                               // die unrealisierten Gewinne werden mit einbezogen !!!
-      sCurrentLeverage = StringConcatenate("L", DoubleToStr(currentLeverage, 1), "    ");
-      sCurrentPosition = StringConcatenate("Position:    " , sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      string sUnits = "";
+      double currentUnits;
+      if (mm.leveragedLotsNormalized != 0) {
+         currentUnits = MathAbs(totalPosition)/mm.leveragedLotsNormalized;
+         sUnits = StringConcatenate("U", DoubleToStr(currentUnits, 1), "    ");
+      }
+      string sRisk = "";
+      if (mm.riskPercent && currentUnits) {
+         sRisk = StringConcatenate("R", DoubleToStr(mm.riskPercent * currentUnits, 0), "%    ");
+      }
+      string sCurrentLeverage = "";
+      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", DoubleToStr(MathAbs(totalPosition)/mm.unleveragedLots, 1), "    ");
+
+      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                       // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
-
-   // (2) PendingOrder-Marker unten rechts ein-/ausblenden
+   // PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -1269,13 +1294,12 @@ bool UpdatePositions() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
          ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-         ObjectSetText(label, "n", 6, "Webdings", Orange);              // Webdings: runder Marker, orange="Notice"
+         ObjectSetText(label, "n", 6, "Webdings", Orange);     // Webdings: runder Marker, orange="Notice"
          RegisterObject(label);
       }
    }
 
-
-   // (3) Einzelpositionsanzeige unten links
+   // Einzelpositionsanzeige unten links
    static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
    static bool lastAbsoluteProfits;
    if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
@@ -1311,7 +1335,7 @@ bool UpdatePositions() {
 
       // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
-         for (int col=0; col < 8; col++) {                           // alle Spalten testen: mit und ohne absoluten Beträgen
+         for (int col=0; col < 8; col++) {                     // alle Spalten testen: mit und ohne absoluten Beträgen
             label = StringConcatenate(label.position, ".line", lines, "_col", col);
             if (ObjectFind(label) != -1)
                ObjectDelete(label);
@@ -1323,7 +1347,7 @@ bool UpdatePositions() {
    if (mode.extern) positions = lfxOrders.openPositions;
    else             positions = iePositions;
 
-   // (3.1) zusätzlich benötigte Zeilen hinzufügen
+   // zusätzlich benötigte Zeilen hinzufügen
    while (lines < positions) {
       lines++;
       for (col=0; col < cols; col++) {
@@ -1339,7 +1363,7 @@ bool UpdatePositions() {
       }
    }
 
-   // (3.2) nicht benötigte Zeilen löschen
+   // nicht benötigte Zeilen löschen
    while (lines > positions) {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.position, ".line", lines, "_col", col);
@@ -1349,13 +1373,12 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // (3.3) Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+   // Zeilen von unten nach oben schreiben: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
    string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
    color  fontColor;
    int    line;
 
-
-   // (4.1) Anzeige interne/externe Positionsdaten
+   // Anzeige interne/externe Positionsdaten
    if (!mode.extern) {
       for (int i=iePositions-1; i >= 0; i--) {
          line++;
@@ -1372,7 +1395,7 @@ bool UpdatePositions() {
 
          // Nur History
          if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
@@ -1386,7 +1409,7 @@ bool UpdatePositions() {
 
          // Directional oder Hedged
          else {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
             // Hedged
             if (positions.iData[i][I_POSITION_TYPE] == POSITION_HEDGE) {
                ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
@@ -1419,17 +1442,17 @@ bool UpdatePositions() {
       }
    }
 
-   // (4.2) Anzeige Remote-Positionsdaten
+   // Anzeige Remote-Positionsdaten
    if (mode.extern) {
       fontColor = positions.fontColor.remote;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
          if (lfxOrders.bCache[i][BC.isOpenPosition]) {
             line++;
-            // "{Type}: {Lots}   BE|Dist: {Price|Pips}   Profit: [{Amount} ]{Percent}   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), SubPipPriceFormat),             positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),                   positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
             ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),                          positions.fontSize, positions.fontName, fontColor);
@@ -1573,11 +1596,11 @@ bool Positions.LogTickets() {
 /**
  * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
  *
- * @param  bool logTickets - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
+ * @param  bool logTickets [optional] - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
  *
  * @return bool - Erfolgsstatus
  */
-bool AnalyzePositions(bool logTickets=false) {
+bool AnalyzePositions(bool logTickets = false) {
    logTickets = logTickets!=0;
    if (logTickets)         positions.analyzed = false;                           // vorm Loggen werden die Positionen immer re-evaluiert
    if (mode.extern)        positions.analyzed = true;
@@ -1724,7 +1747,7 @@ bool AnalyzePositions(bool logTickets=false) {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
-         if (logTickets) AnalyzePositions.LogTickets(isCustomVirtual, customTickets, confLineIndex);
+         if (logTickets) LogTickets(customTickets, confLineIndex);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -1755,7 +1778,7 @@ bool AnalyzePositions(bool logTickets=false) {
       positions.config[i][4] = termCache2;
    }
 
-   if (logTickets) AnalyzePositions.LogTickets(false, tickets, -1);
+   if (logTickets) LogTickets(tickets, -1);
 
    // verbleibende Position(en) speichern
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, 0, 0, -1))
@@ -1767,83 +1790,130 @@ bool AnalyzePositions(bool logTickets=false) {
 
 
 /**
- * Loggt die Tickets jeder Zeile der Positionsanzeige.
+ * Loggt die Tickets einer Zeile der Positionsanzeige.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool AnalyzePositions.LogTickets(bool isVirtual, int tickets[], int commentIndex) {
-   isVirtual = isVirtual!=0;
-
+bool LogTickets(int tickets[], int commentIndex) {
    if (ArraySize(tickets) > 0) {
-      if (commentIndex > -1) logDebug("LogTickets(2)  conf("+ commentIndex +") = \""+ positions.config.comments[commentIndex] +"\" = "+ TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
-      else                   logDebug("LogTickets(3)  conf(none) = "                                                                  + TicketsToStr.Position(tickets) +" = "+ TicketsToStr(tickets, NULL));
+      string sIndex = "-";
+      string sComment = "";
+
+      if (commentIndex > -1) {
+         sIndex = commentIndex;
+         if (StringLen(positions.config.comments[commentIndex]) > 0) {
+            sComment = "\""+ positions.config.comments[commentIndex] +"\" = ";
+         }
+      }
+      string sPosition = TicketsToStr.Position(tickets);
+      sPosition = ifString(sPosition=="0 lot", "", sPosition +" = ");
+
+      string sTickets = TicketsToStr.Lots(tickets, NULL);
+
+      logDebug("LogTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
    }
    return(true);
 }
 
 
 /**
- * Calculate the unitsize according to the configured risk profile.
+ * Calculate the unitsize according to the configured profile. Calculation is risk-based and/or leverage-based.
+ *
+ *  - Default configuration settings for risk-based calculation:
+ *    [Unitsize]
+ *    Default.RiskPercent = <numeric>                    ; risked percent of account equity
+ *    Default.RiskRange   = (<numeric> [pip] | ADR)      ; price range (absolute, in pip or the value "ADR") for the risked percent
+ *
+ *  - Default configuration settings for leverage-based calculation:
+ *    [Unitsize]
+ *    Default.Leverage = <numeric>                       ; leverage per unit
+ *
+ *  - Symbol-specific configuration:
+ *    [Unitsize]
+ *    GBPUSD.RiskPercent = <numeric>                     ; per symbol: risked percent of account equity
+ *    EURUSD.Leverage    = <numeric>                     ; per symbol: leverage per unit
+ *
+ * The default settings apply if no symbol-specific settings are provided. For symbol-specific settings the term "Default"
+ * is replaced by the broker's symbol name or the symbol's standard name. The broker's symbol name has preference over the
+ * standard name. E.g. if a broker offers the symbol "EURUSDm" and the configuration provides the settings "Default.Leverage",
+ * "EURUSD.Leverage" and "EURUSDm.Leverage" the calculation uses the settings for "EURUSDm".
+ *
+ * If both risk and leverage settings are provided the resulting unitsize is the smaller of both calculations.
+ * The configuration is read in onInit().
  *
  * @return bool - success status
  */
 bool CalculateUnitSize() {
-   if (mode.extern || mm.done) return(true);                                  // only for internal account
+   if (mode.extern || mm.done) return(true);                         // skip for external accounts
 
-   mm.lotValue         = 0;
-   mm.unleveragedLots  = 0;                                                   // unleveraged unitsize
-   mm.unitSize         = 0;                                                   // unitsize for the configured risk
-   mm.normUnitSize     = 0;                                                   // normalized unitsize
-   mm.unitSizeLeverage = 0;                                                   // leverage of the calculated unitsize
-   mm.equity           = 0;                                                   // currently used equity value incl. extern assets
+   // @see declaration of global vars mm.* for their descriptions
+   mm.lotValue                = 0;
+   mm.unleveragedLots         = 0;
+   mm.leveragedLots           = 0;
+   mm.leveragedLotsNormalized = 0;
+   mm.leverage                = 0;
+   mm.riskPercent             = 0;
+   mm.riskRange               = 0;
 
-   // calculate lot values and unitsizes
-   double tickSize       = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue      = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double marginRequired = MarketInfo(Symbol(), MODE_MARGINREQUIRED); if (marginRequired == -92233720368547760.) marginRequired = 0;
-      int error = GetLastError();
-      if (error || !Close[0] || !tickSize || !tickValue || !marginRequired) { // can happen on terminal start, on change of account or template, or in offline charts
-         if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
-            return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
-         return(!catch("CalculateUnitSize(1)", error));
-      }
-   double pointValue     = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double pipValue       = PipPoints * pointValue;                            // pip value in account currency
-   double externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-   if (mode.intern) {
-      double accountEquity = AccountEquity()-AccountCredit();
-         if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
-      mm.equity = accountEquity + externalAssets;
+   // recalculate equity used for calculations
+   double accountEquity = AccountEquity()-AccountCredit();
+   if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
+   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number, false);
+
+   // recalculate lot value and unleveraged unitsize
+   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
+   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
+   int error = GetLastError();
+   if (error || !Close[0] || !tickSize || !tickValue || !mm.equity) {   // may happen on terminal start, on account change, on template change or in offline charts
+      if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
+         return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+      return(!catch("CalculateUnitSize(1)", error));
    }
-   else {
-      mm.equity = externalAssets;                                             // TODO: wrong, not updated as GetExternalAssets() caches the result
+   mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
+   mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
+
+   // recalculate the unitsize
+   if (mm.cfgRiskPercent && mm.cfgRiskRange) {
+      double riskedAmount = mm.equity * mm.cfgRiskPercent/100;          // risked amount in account currency
+      double ticks        = mm.cfgRiskRange/tickSize;                   // risk range in tick
+      double riskPerTick  = riskedAmount/ticks;                         // risked amount per tick
+      mm.leveragedLots    = riskPerTick/tickValue;                      // resulting unitsize
+      mm.leverage         = mm.leveragedLots/mm.unleveragedLots;        // resulting leverage
+      mm.riskPercent      = mm.cfgRiskPercent;
+      mm.riskRange        = mm.cfgRiskRange;
    }
 
-   mm.lotValue        = Close[0]/tickSize * tickValue;                        // value of 1 lot in account currency
-   mm.unleveragedLots = mm.equity/mm.lotValue;                                // unleveraged unitsize
+   if (mm.cfgLeverage != NULL) {
+      if (!mm.leverage || mm.leverage > mm.cfgLeverage) {               // if both risk and leverage are configured the smaller result of both calculations is used
+         mm.leverage      = mm.cfgLeverage;
+         mm.leveragedLots = mm.unleveragedLots * mm.leverage;           // resulting unitsize
 
-   if (mm.risk && mm.pipRange) {
-      double risk = mm.risk/100 * mm.equity;                                  // risked amount in account currency
-      mm.unitSize         = risk/mm.pipRange/pipValue;                        // unitsize for risk and pip target
-      mm.unitSizeLeverage = mm.unitSize/mm.unleveragedLots;                   // leverage of the calculated unitsize
-
-      // normalize the calculated unitsize
-      if (mm.unitSize > 0) {                                                                                                  // max. 6.7% per step
-         if      (mm.unitSize <=    0.03) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.001) *   0.001, 3);     //     0-0.03: multiple of   0.001
-         else if (mm.unitSize <=   0.075) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.002) *   0.002, 3);     // 0.03-0.075: multiple of   0.002
-         else if (mm.unitSize <=    0.1 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.005) *   0.005, 3);     //  0.075-0.1: multiple of   0.005
-         else if (mm.unitSize <=    0.3 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.01 ) *   0.01 , 2);     //    0.1-0.3: multiple of   0.01
-         else if (mm.unitSize <=    0.75) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.02 ) *   0.02 , 2);     //   0.3-0.75: multiple of   0.02
-         else if (mm.unitSize <=    1.2 ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.05 ) *   0.05 , 2);     //   0.75-1.2: multiple of   0.05
-         else if (mm.unitSize <=   10.  ) mm.normUnitSize = NormalizeDouble(MathRound(mm.unitSize/  0.1  ) *   0.1  , 1);     //     1.2-10: multiple of   0.1
-         else if (mm.unitSize <=   30.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  1    ) *   1       );     //      12-30: multiple of   1
-         else if (mm.unitSize <=   75.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  2    ) *   2       );     //      30-75: multiple of   2
-         else if (mm.unitSize <=  120.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/  5    ) *   5       );     //     75-120: multiple of   5
-         else if (mm.unitSize <=  300.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 10    ) *  10       );     //    120-300: multiple of  10
-         else if (mm.unitSize <=  750.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 20    ) *  20       );     //    300-750: multiple of  20
-         else if (mm.unitSize <= 1200.  ) mm.normUnitSize =       MathRound(MathRound(mm.unitSize/ 50    ) *  50       );     //   750-1200: multiple of  50
-         else                             mm.normUnitSize =       MathRound(MathRound(mm.unitSize/100    ) * 100       );     //   1200-...: multiple of 100
+         if (mm.cfgRiskRange != NULL) {
+            ticks          = mm.cfgRiskRange/tickSize;                  // risk range in tick
+            riskPerTick    = mm.leveragedLots * tickValue;              // risked amount per tick
+            riskedAmount   = riskPerTick * ticks;                       // total risked amount
+            mm.riskPercent = riskedAmount/mm.equity * 100;              // resulting risked percent for the configured range
+            mm.riskRange   = mm.cfgRiskRange;
+         }
       }
+   }
+
+   // normalize the result to a sound value
+   if (mm.leveragedLots > 0) {                                                                                                                  // max. 6.7% per step
+      if      (mm.leveragedLots <=    0.03) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.001) *   0.001, 3);     //     0-0.03: multiple of   0.001
+      else if (mm.leveragedLots <=   0.075) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.002) *   0.002, 3);     // 0.03-0.075: multiple of   0.002
+      else if (mm.leveragedLots <=    0.1 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.005) *   0.005, 3);     //  0.075-0.1: multiple of   0.005
+      else if (mm.leveragedLots <=    0.3 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.01 ) *   0.01 , 2);     //    0.1-0.3: multiple of   0.01
+      else if (mm.leveragedLots <=    0.75) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.02 ) *   0.02 , 2);     //   0.3-0.75: multiple of   0.02
+      else if (mm.leveragedLots <=    1.2 ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.05 ) *   0.05 , 2);     //   0.75-1.2: multiple of   0.05
+      else if (mm.leveragedLots <=   10.  ) mm.leveragedLotsNormalized = NormalizeDouble(MathRound(mm.leveragedLots/  0.1  ) *   0.1  , 1);     //     1.2-10: multiple of   0.1
+      else if (mm.leveragedLots <=   30.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  1    ) *   1       );     //      12-30: multiple of   1
+      else if (mm.leveragedLots <=   75.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  2    ) *   2       );     //      30-75: multiple of   2
+      else if (mm.leveragedLots <=  120.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/  5    ) *   5       );     //     75-120: multiple of   5
+      else if (mm.leveragedLots <=  300.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 10    ) *  10       );     //    120-300: multiple of  10
+      else if (mm.leveragedLots <=  750.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 20    ) *  20       );     //    300-750: multiple of  20
+      else if (mm.leveragedLots <= 1200.  ) mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/ 50    ) *  50       );     //   750-1200: multiple of  50
+      else                                  mm.leveragedLotsNormalized =       MathRound(MathRound(mm.leveragedLots/100    ) * 100       );     //   1200-...: multiple of 100
    }
 
    mm.done = true;
@@ -2876,7 +2946,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
             ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize), 2)   );
             ArrayPushDouble(customSwaps,       0                                             );
-            ArrayPushDouble(customProfits,     (Bid-openPrice)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customProfits,     (Bid-openPrice)/Pip * PipValue(lotsize, true));  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customLongPosition  = NormalizeDouble(customLongPosition + lotsize,             3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -2923,7 +2993,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
             ArrayPushDouble(customOpenPrices,  openPrice                                     );
             ArrayPushDouble(customCommissions, NormalizeDouble(-GetCommission(lotsize), 2)   );
             ArrayPushDouble(customSwaps,       0                                             );
-            ArrayPushDouble(customProfits,     (openPrice-Ask)/Pips * PipValue(lotsize, true)); // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+            ArrayPushDouble(customProfits,     (openPrice-Ask)/Pip * PipValue(lotsize, true));  // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
             customShortPosition = NormalizeDouble(customShortPosition + lotsize,            3);
             customTotalPosition = NormalizeDouble(customLongPosition - customShortPosition, 3);
          }
@@ -3229,7 +3299,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    }
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
-   // - kein direktionaler Anteil:  BE-Distance in Pips berechnen
+   // - kein direktionaler Anteil:  BE-Distance in Pip berechnen
    // - direktionaler Anteil:       Breakeven unter Berücksichtigung des Profits eines gehedgten Anteils berechnen
 
 
@@ -3291,7 +3361,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       // BE-Distance und Profit berechnen
       pipValue = PipValue(hedgedLots, true);                                           // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0) {
-         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLots/Pips + (commission+swap)/pipValue, 8);
+         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLots/Pip + (commission+swap)/pipValue, 8);
          hedgedProfit = pipDistance * pipValue;
       }
 
@@ -3380,7 +3450,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.dData[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pips, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pip, Digits);
       return(!catch("StorePosition(5)"));
    }
 
@@ -3443,7 +3513,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.dData[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pips - openPrice/totalPosition, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
       return(!catch("StorePosition(7)"));
    }
 
@@ -3687,7 +3757,7 @@ bool QC.HandleLfxTerminalMessages() {
  *                "LFX:{iTicket]:profit={dValue}" - der PL der angegebenen Position hat sich geändert
  */
 bool ProcessLfxTerminalMessage(string message) {
-   //debug("ProcessLfxTerminalMessage(1)  tick="+ Tick +"  msg=\""+ message +"\"");
+   //debug("ProcessLfxTerminalMessage(1)  tick="+ Ticks +"  msg=\""+ message +"\"");
 
    // Da hier in kurzer Zeit sehr viele Messages eingehen können, werden sie zur Beschleunigung statt mit Explode() manuell zerlegt.
    // LFX-Prefix
@@ -4025,114 +4095,103 @@ bool RestoreRuntimeStatus() {
 }
 
 
+// data array indexes for PositionOpen/PositionClose events
+#define TICKET       0
+#define ENTRYLIMIT   1
+#define CLOSETYPE    1
+
+
 /**
- * Prüft, ob seit dem letzten Aufruf eine Pending-Order oder ein Close-Limit ausgeführt wurden.
+ * Monitor execution of pending order limits and opening/closing of positions. Orders with a magic number (managed by an EA)
+ * are not monitored as this is the responsibility of the EA.
  *
- * @param  _Out_ int failedOrders   []    - Array zur Aufnahme der Tickets fehlgeschlagener Pening-Orders
- * @param  _Out_ int openedPositions[]    - Array zur Aufnahme der Tickets neuer offener Positionen
- * @param  _Out_ int closedPositions[][2] - Array zur Aufnahme der Tickets neuer geschlossener Positionen
+ * @param  _Out_ double &openedPositions[][] - executed entry limits: {ticket, entryLimit}
+ * @param  _Out_ int    &closedPositions[][] - executed exit limits:  {ticket, closeType}
+ * @param  _Out_ int    &failedOrders   []   - failed executions:     {ticket}
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], int &closedPositions[][]) {
+bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], int &failedOrders[]) {
    /*
-   PositionOpen
-   ------------
-   - ist Ausführung einer Pending-Order
-   - Pending-Order muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders auf Statusänderung prüfen:              über bekannte Orders iterieren
-     (2) alle unbekannten Pending-Orders registrieren:                         über alle Tickets(MODE_TRADES) iterieren
+   monitoring of entry limits (pendings must be known before)
+   ----------------------------------------------------------
+   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
+   - alle unbekannten Pending-Orders registrieren:                               über alle Tickets(MODE_TRADES) iterieren
 
-   PositionClose
+   monitoring of exit limits (positions must be known before)
+   ----------------------------------------------------------
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
+   - alle unbekannten Positionen mit und ohne Exit-Limit registrieren:           über alle Tickets(MODE_TRADES) iterieren
+     (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
+
+   both together
    -------------
-   - ist Schließung einer Position
-   - Position muß vorher bekannt sein
-     (1) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:   über bekannte Orders iterieren
-     (2) alle unbekannten Positionen mit und ohne Exit-Limit registrieren:     über alle Tickets(MODE_TRADES) iterieren
-         (limitlose Positionen können durch Stopout geschlossen werden/worden sein)
-
-   beides zusammen
-   ---------------
-     (1.1) alle bekannten Pending-Orders auf Statusänderung prüfen:            über bekannte Orders iterieren
-     (1.2) alle bekannten Pending-Orders und Positionen auf OrderClose prüfen: über bekannte Orders iterieren
-     (2)   alle unbekannten Pending-Orders und Positionen registrieren:        über alle Tickets(MODE_TRADES) iterieren
-           - nach (1), um neue Orders nicht sofort zu prüfen (unsinnig)
+   - alle bekannten Pending-Orders auf Statusänderung prüfen:                    über bekannte Orders iterieren
+   - alle bekannten Pending-Orders und Positionen auf OrderClose prüfen:         über bekannte Orders iterieren
+   - alle unbekannten Pending-Orders und Positionen registrieren:                über alle Tickets(MODE_TRADES) iterieren
    */
 
-   int type, knownSize = ArraySize(orderTracker.tickets);
-
-
    // (1) über alle bekannten Orders iterieren (rückwärts, um beim Entfernen von Elementen die Schleife einfacher managen zu können)
-   for (int i=knownSize-1; i >= 0; i--) {
-      if (!SelectTicket(orderTracker.tickets[i], "OrderTracker.CheckPositions(1)"))
-         return(false);
-      type = OrderType();
+   int sizeOfTrackedOrders = ArrayRange(trackedOrders, 0);
+   double dData[2];
 
-      if (orderTracker.types[i] > OP_SELL) {
-         // (1.1) beim letzten Aufruf Pending-Order
-         if (type == orderTracker.types[i]) {
-            // immer noch Pending-Order
+   for (int i=sizeOfTrackedOrders-1; i >= 0; i--) {
+      if (!SelectTicket(trackedOrders[i][TI_TICKET], "MonitorOpenOrders(1)")) return(false);
+      int orderType = OrderType();
+
+      if (trackedOrders[i][TI_ORDERTYPE] > OP_SELL) {                      // last time a pending order
+         if (orderType == trackedOrders[i][TI_ORDERTYPE]) {                // still pending
+            trackedOrders[i][TI_ENTRYLIMIT] = OrderOpenPrice();            // track entry limit changes
+
             if (OrderCloseTime() != 0) {
-               if (OrderComment() != "cancelled")
-                  ArrayPushInt(failedOrders, orderTracker.tickets[i]);           // keine regulär gestrichene Pending-Order: "deleted [no money]" etc.
-
-               // geschlossene Pending-Order aus der Überwachung entfernen
-               ArraySpliceInts(orderTracker.tickets, i, 1);
-               ArraySpliceInts(orderTracker.types,   i, 1);
-               knownSize--;
+               if (OrderComment() != "cancelled") {                        // cancelled: client-side cancellation
+                  ArrayPushInt(failedOrders, trackedOrders[i][TI_TICKET]); // otherwise: server-side cancellation, "deleted [no money]" etc.
+               }
+               ArraySpliceDoubles(trackedOrders, i, 1);                    // remove cancelled order from monitoring
+               sizeOfTrackedOrders--;
             }
          }
-         else {
-            // jetzt offene oder bereits geschlossene Position
-            ArrayPushInt(openedPositions, orderTracker.tickets[i]);              // Pending-Order wurde ausgeführt
-            orderTracker.types[i] = type;
-            i++;
-            continue;                                                            // ausgeführte Order in Zweig (1.2) nochmal prüfen (anstatt hier die Logik zu duplizieren)
+         else {                                                            // now an open or closed position
+            trackedOrders[i][TI_ORDERTYPE] = orderType;
+            int size = ArrayRange(openedPositions, 0);
+            ArrayResize(openedPositions, size+1);
+            openedPositions[size][TICKET    ] = trackedOrders[i][TI_TICKET    ];
+            openedPositions[size][ENTRYLIMIT] = trackedOrders[i][TI_ENTRYLIMIT];
+            i++;                                                           // reset loop counter and check order again for an immediate close
+            continue;
          }
       }
-      else {
-         // (1.2) beim letzten Aufruf offene Position
-         if (!OrderCloseTime()) {
-            // immer noch offene Position
-         }
-         else {
-            // jetzt geschlossene Position
-            // prüfen, ob die Position manuell oder automatisch geschlossen wurde (durch ein Close-Limit oder durch Stopout)
-            bool   closedByLimit=false, autoClosed=false;
-            int    closeType, closeData[2];
+      else {                                                               // (1.2) last time an open position
+         if (OrderCloseTime() != 0) {                                      // now closed: check for client-side or server-side close (i.e. exit limit, stopout)
+            bool serverSideClose = false;
+            int closeType;
             string comment = StrToLower(StrTrim(OrderComment()));
 
-            if      (StrStartsWith(comment, "so:" )) { autoClosed=true; closeType=CLOSE_TYPE_SO; }    // Margin Stopout erkennen
-            else if (StrEndsWith  (comment, "[tp]")) { autoClosed=true; closeType=CLOSE_TYPE_TP; }
-            else if (StrEndsWith  (comment, "[sl]")) { autoClosed=true; closeType=CLOSE_TYPE_SL; }
+            if      (StrStartsWith(comment, "so:" )) { serverSideClose=true; closeType=CLOSE_STOPOUT;    }
+            else if (StrEndsWith  (comment, "[tp]")) { serverSideClose=true; closeType=CLOSE_TAKEPROFIT; }
+            else if (StrEndsWith  (comment, "[sl]")) { serverSideClose=true; closeType=CLOSE_STOPLOSS;   }
             else {
-               if (!EQ(OrderTakeProfit(), 0)) {                                                       // manche Broker setzen den OrderComment bei getriggertem Limit nicht
-                  closedByLimit = false;                                                              // gemäß MT4-Standard
-                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() >= OrderTakeProfit()); }
-                  else                 { closedByLimit = (OrderClosePrice() <= OrderTakeProfit()); }
-                  if (closedByLimit) {
-                     autoClosed = true;
-                     closeType  = CLOSE_TYPE_TP;
+               if (!EQ(OrderTakeProfit(), 0)) {                            // some brokers don't update the order comment accordingly
+                  if (ifBool(orderType==OP_BUY, OrderClosePrice() >= OrderTakeProfit(), OrderClosePrice() <= OrderTakeProfit())) {
+                     serverSideClose = true;
+                     closeType       = CLOSE_TAKEPROFIT;
                   }
                }
                if (!EQ(OrderStopLoss(), 0)) {
-                  closedByLimit = false;
-                  if (type == OP_BUY ) { closedByLimit = (OrderClosePrice() <= OrderStopLoss()); }
-                  else                 { closedByLimit = (OrderClosePrice() >= OrderStopLoss()); }
-                  if (closedByLimit) {
-                     autoClosed = true;
-                     closeType  = CLOSE_TYPE_SL;
+                  if (ifBool(orderType==OP_BUY, OrderClosePrice() <= OrderStopLoss(), OrderClosePrice() >= OrderStopLoss())) {
+                     serverSideClose = true;
+                     closeType       = CLOSE_STOPLOSS;
                   }
                }
             }
-            if (autoClosed) {
-               closeData[0] = orderTracker.tickets[i];
-               closeData[1] = closeType;
-               ArrayPushInts(closedPositions, closeData);            // Position wurde automatisch geschlossen
+            if (serverSideClose) {
+               size = ArrayRange(closedPositions, 0);
+               ArrayResize(closedPositions, size+1);
+               closedPositions[size][TICKET   ] = trackedOrders[i][TI_TICKET];
+               closedPositions[size][CLOSETYPE] = closeType;
             }
-            ArraySpliceInts(orderTracker.tickets, i, 1);             // geschlossene Position aus der Überwachung entfernen
-            ArraySpliceInts(orderTracker.types,   i, 1);
-            knownSize--;
+            ArraySpliceDoubles(trackedOrders, i, 1);                       // remove closed position from monitoring
+            sizeOfTrackedOrders--;
          }
       }
    }
@@ -4143,45 +4202,46 @@ bool OrderTracker.CheckPositions(int &failedOrders[], int &openedPositions[], in
       int ordersTotal = OrdersTotal();
 
       for (i=0; i < ordersTotal; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                      // FALSE: während des Auslesens wurde von dritter Seite eine Order geschlossen oder gelöscht
-            ordersTotal = -1;                                                    // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
+         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) {                // FALSE: während des Auslesens wurde von dritter Seite eine Order geschlossen oder gelöscht
+            ordersTotal = -1;                                              // Abbruch und via while-Schleife alles nochmal verarbeiten, bis for() fehlerfrei durchläuft
             break;
          }
-         for (int n=0; n < knownSize; n++) {
-            if (orderTracker.tickets[n] == OrderTicket())                        // Order bereits bekannt
-               break;
+         if (OrderMagicNumber() != 0) continue;                            // skip orders managed by an EA
+
+         for (int n=0; n < sizeOfTrackedOrders; n++) {
+            if (trackedOrders[n][TI_TICKET] == OrderTicket()) break;       // Order bereits bekannt
          }
-         if (n >= knownSize) {                                                   // Order unbekannt: in Überwachung aufnehmen
-            ArrayPushInt(orderTracker.tickets, OrderTicket());
-            ArrayPushInt(orderTracker.types,   OrderType());
-            knownSize++;
+         if (n >= sizeOfTrackedOrders) {                                   // Order unbekannt: in Überwachung aufnehmen
+            ArrayResize(trackedOrders, sizeOfTrackedOrders+1);
+            trackedOrders[sizeOfTrackedOrders][TI_TICKET    ] = OrderTicket();
+            trackedOrders[sizeOfTrackedOrders][TI_ORDERTYPE ] = OrderType();
+            trackedOrders[sizeOfTrackedOrders][TI_ENTRYLIMIT] = ifDouble(OrderType() > OP_SELL, OrderOpenPrice(), 0);
+            sizeOfTrackedOrders++;
          }
       }
-
-      if (ordersTotal == OrdersTotal())
-         break;
+      if (ordersTotal == OrdersTotal()) break;
    }
-
-   return(!catch("OrderTracker.CheckPositions(2)"));
+   return(!catch("MonitorOpenOrders(2)"));
 }
 
 
 /**
  * Handle a PositionOpen event.
  *
- * @param  int tickets[] - ticket ids of the opened positions
+ * @param  double data[][] - executed entry limits: {ticket, entryLimit}
  *
  * @return bool - success status
  */
-bool onPositionOpen(int tickets[]) {
-   // #1 Sell 0.1 GBPUSD at 1.5457'2 ("L.8692.+3")
+bool onPositionOpen(double data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
-   int size = ArraySize(tickets);
-   if (!size || !isLogInfo) return(true);
+   int size = ArrayRange(data, 0);
+   if (!isLogInfo || !size) return(true);
 
    OrderPush();
    for (int i=0; i < size; i++) {
-      if (!SelectTicket(tickets[i], "onPositionOpen(1)")) return(false);
+      if (!SelectTicket(data[i][TICKET], "onPositionOpen(1)")) return(false);
+      if (OrderType() > OP_SELL)                               continue;      // skip pending orders (should not happen)
+      if (OrderMagicNumber() != 0)                             continue;      // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4190,14 +4250,19 @@ bool onPositionOpen(int tickets[]) {
          string event = "rsf::PositionOpen::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
+            // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (slippage: -2.8 pip)]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
+            string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
             int    pipDigits   = digits & (~1);
-            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
-            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
-            string message     = "position opened: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() +" at "+ sPrice + comment;
+            double slippage    = NormalizeDouble(ifDouble(OrderType()==OP_BUY, data[i][ENTRYLIMIT]-OrderOpenPrice(), OrderOpenPrice()-data[i][ENTRYLIMIT]), digits);
+            if (NE(slippage, 0)) {
+               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+            }
+            string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
             logInfo("onPositionOpen(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4214,20 +4279,23 @@ bool onPositionOpen(int tickets[]) {
 /**
  * Handle a PositionClose event.
  *
- * @param  int tickets[][] - ticket ids of the closed positions
+ * @param  int data[][] - executed exit limits: {ticket, closeType}
  *
  * @return bool - success status
  */
-bool onPositionClose(int tickets[][]) {
+bool onPositionClose(int data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
-   int size = ArrayRange(tickets, 0);
-   if (!size || !isLogInfo) return(true);
+   int size = ArrayRange(data, 0);
+   if (!isLogInfo || !size) return(true);
 
-   string sCloseTypeDescr[] = {"", " (TakeProfit)", " (StopLoss)", " (StopOut)"};
+   string sCloseTypeDescr[] = {"", " [tp]", " [sl]", " [so]"};
    OrderPush();
 
    for (int i=0; i < size; i++) {
-      if (!SelectTicket(tickets[i][0], "onPositionClose(1)")) continue;
+      if (!SelectTicket(data[i][TICKET], "onPositionClose(1)")) return(false);
+      if (OrderType() > OP_SELL)                                continue;     // skip pending orders (should not happen)
+      if (!OrderCloseTime())                                    continue;     // skip open positions (should not happen)
+      if (OrderMagicNumber() != 0)                              continue;     // skip orders managed by an EA (should not happen)
 
       bool isMySymbol=(OrderSymbol()==Symbol()), isOtherListener=false;
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
@@ -4236,15 +4304,27 @@ bool onPositionClose(int tickets[][]) {
          string event = "rsf::PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
+            // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (slippage: -2.8 pip)] [tp]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
+            string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
             int    digits      = MarketInfo(OrderSymbol(), MODE_DIGITS);
             int    pipDigits   = digits & (~1);
-            string priceFormat = StringConcatenate(",'R.", pipDigits, ifString(digits==pipDigits, "", "'"));
+            string priceFormat = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
             string sOpenPrice  = NumberToStr(OrderOpenPrice(), priceFormat);
             string sClosePrice = NumberToStr(OrderClosePrice(), priceFormat);
-            string comment     = ifString(StringLen(OrderComment()), " ("+ DoubleQuoteStr(OrderComment()) +")", "");
-            string message     = "position closed: #"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + comment +" open="+ sOpenPrice +" close="+ sClosePrice + sCloseTypeDescr[tickets[i][1]];
+            double slippage    = 0;
+            if      (data[i][CLOSETYPE] == CLOSE_TAKEPROFIT) slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderTakeProfit(), OrderTakeProfit()-OrderClosePrice()), digits);
+            else if (data[i][CLOSETYPE] == CLOSE_STOPLOSS)   slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderStopLoss(),   OrderStopLoss()-OrderClosePrice()),   digits);
+            if (NE(slippage, 0)) {
+               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+            }
+            string sCloseType = sCloseTypeDescr[data[i][CLOSETYPE]];
+            if (data[i][CLOSETYPE] == CLOSE_STOPOUT) {
+               sComment   = "";
+               sCloseType = " ["+ OrderComment() +"]";
+            }
+            string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" from "+ sOpenPrice +" at "+ sClosePrice + sCloseType;
             logInfo("onPositionClose(2)  "+ message);
             eventLogged = SetOrderEventLogged(event, true);
          }
@@ -4393,7 +4473,8 @@ string InputsToStr() {
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
    int      ArrayInsertDoubles    (double &array[], int offset, double values[]);
    int      ArrayPushDouble       (double &array[], double value);
-   int      ArraySpliceInts       (int    &array[], int offset, int length);
+   int      ArrayPushDoubles      (double &array[], double values[]);
+   int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      DeleteRegisteredObjects();
@@ -4406,8 +4487,7 @@ string InputsToStr() {
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    bool     SortOpenTickets(int &keys[][]);
-   string   StringsToStr      (string array[], string separator);
-   string   TicketsToStr         (int array[], string separator);
+   string   StringsToStr(string array[], string separator);
    string   TicketsToStr.Lots    (int array[], string separator);
    string   TicketsToStr.Position(int array[]);
 #import

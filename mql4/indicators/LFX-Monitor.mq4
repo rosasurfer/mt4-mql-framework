@@ -966,7 +966,7 @@ int ShowStatus(int error = NO_ERROR) {
    // animation
    int   chars     = ArraySize(animationChars);
    color fontColor = ifInt(Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
-   ObjectSetText(statusLabelAnimation, animationChars[Tick % chars], statusFontSize, statusFontName, fontColor);
+   ObjectSetText(statusLabelAnimation, animationChars[Ticks % chars], statusFontSize, statusFontName, fontColor);
 
    // calculated values
    int size = ArraySize(syntheticSymbols);

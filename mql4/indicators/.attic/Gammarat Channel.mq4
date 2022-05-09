@@ -228,13 +228,13 @@ int onTick() {
 
    int bars = Min(requestedBars, maxTmaBars);                  // actual number of TMA bars to be updated w/o a channel
    int tmaStartbar = bars - 1;                                 // non-repainting TMA startbar w/o a channel
-   if (tmaStartbar < 0)        return(logInfo("onTick(2)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (tmaStartbar < 0)        return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
    int tmaStartbarRP = Max(tmaStartbar, maHalfLength);         // repainting TMA startbar
 
    int maxChannelBars = maxTmaBars - maPeriods + 1;            // max. possible channel bars                      TODO: adjust to final algorithm
    bars = Min(requestedBars, maxChannelBars);                  // actual number of channel bars to be updated
    int channelStartbarNRP = bars - 1;
-   if (channelStartbarNRP < 0) return(logInfo("onTick(3)  Tick="+ Tick, ERR_HISTORY_INSUFFICIENT));
+   if (channelStartbarNRP < 0) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate TMA and Gammarat channel
    if (true || RepaintingMode) {

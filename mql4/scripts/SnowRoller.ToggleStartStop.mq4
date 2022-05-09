@@ -4,7 +4,7 @@
  * Send a chart command to SnowRoller to toggle the display of sequence start/stop markers.
  */
 #include <stddefines.mqh>
-int   __InitFlags[];
+int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
@@ -16,9 +16,9 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // check chart for SnowRoller
-   if (ObjectFind("SnowRoller.status") == 0) {
-      SendChartCommand("SnowRoller.command", "startstopdisplay");
+   // check chart for an active EA
+   if (ObjectFind("EA.status") == 0) {
+      SendChartCommand("EA.command", "startstopdisplay");
    }
    else {
       PlaySoundEx("Windows Chord.wav");

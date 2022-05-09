@@ -15,20 +15,16 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
    static double   lastLowerValue;
    static datetime lastBarOpenTime;
 
-   upperValue = NormalizeDouble(upperValue, digits);
-   lowerValue = NormalizeDouble(lowerValue, digits);
+   upperValue = NormalizeDouble(upperValue, 8);
+   lowerValue = NormalizeDouble(lowerValue, 8);
 
    // update if values or bar changed
    if (upperValue!=lastUpperValue || lowerValue!=lastLowerValue || barOpenTime!=lastBarOpenTime) {
       string sUpperValue="", sLowerValue="";
 
-      if (digits == PipDigits) {
-         sUpperValue = NumberToStr(upperValue, PipPriceFormat);
-         sLowerValue = NumberToStr(lowerValue, PipPriceFormat);
-      }
-      else if (digits == SubPipDigits) {
-         sUpperValue = NumberToStr(upperValue, SubPipPriceFormat);
-         sLowerValue = NumberToStr(lowerValue, SubPipPriceFormat);
+      if (digits == Digits) {
+         sUpperValue = NumberToStr(upperValue, PriceFormat);
+         sLowerValue = NumberToStr(lowerValue, PriceFormat);
       }
       else {
          sUpperValue = DoubleToStr(upperValue, digits);

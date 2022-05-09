@@ -14,11 +14,12 @@ int init() {
    // globale Variablen initialisieren
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __lpSuperContext = __ExecutionContext[EC.superContext];
-   PipDigits        = Digits & (~1);                                        SubPipDigits      = PipDigits+1;
-   PipPoints        = MathRound(MathPow(10, Digits & 1));                   PipPoint          = PipPoints;
-   Pips             = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits); Pip               = Pips;
-   PipPriceFormat   = StringConcatenate(",'R.", PipDigits);                 SubPipPriceFormat = StringConcatenate(PipPriceFormat, "'");   // TODO: lost in deinit()
-   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, SubPipPriceFormat);                                                     // TODO: lost in deinit()
+   PipDigits        = Digits & (~1);
+   PipPoints        = MathRound(MathPow(10, Digits & 1));
+   Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
+   PipPriceFormat   = ",'R."+ PipDigits;                                                  // TODO: lost in deinit()
+   PriceFormat      = ifString(Digits==PipDigits, PipPriceFormat, PipPriceFormat +"'");   // ...
+
    prev_error       = NO_ERROR;
    last_error       = NO_ERROR;
 

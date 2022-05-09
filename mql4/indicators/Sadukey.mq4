@@ -386,7 +386,7 @@ double iMTF(int iBuffer, int iBar) {
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
          return(!catch("iMTF(1)", error));
-      logWarn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Tick +")", ERS_HISTORY_UPDATE);
+      logWarn("iMTF(2)  "+ TimeframeDescription(dataTimeframe) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                       // TODO: synchronize execution contexts

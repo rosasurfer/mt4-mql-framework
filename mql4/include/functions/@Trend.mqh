@@ -153,9 +153,8 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
    // update if value, trend direction or bar changed
    if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
-      if      (digits == PipDigits)    sValue = NumberToStr(value, PipPriceFormat);
-      else if (digits == SubPipDigits) sValue = NumberToStr(value, SubPipPriceFormat);
-      else                             sValue = DoubleToStr(value, digits);
+      if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
+      else                  sValue = DoubleToStr(value, digits);
 
       if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
 
