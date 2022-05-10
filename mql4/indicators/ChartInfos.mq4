@@ -4250,7 +4250,7 @@ bool onPositionOpen(double data[][]) {
          string event = "rsf::PositionOpen::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (slippage: -2.8 pip)]
+            // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (better|worse: -2.8 pip)]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
@@ -4260,7 +4260,7 @@ bool onPositionOpen(double data[][]) {
             string sPrice      = NumberToStr(OrderOpenPrice(), priceFormat);
             double slippage    = NormalizeDouble(ifDouble(OrderType()==OP_BUY, data[i][ENTRYLIMIT]-OrderOpenPrice(), OrderOpenPrice()-data[i][ENTRYLIMIT]), digits);
             if (NE(slippage, 0)) {
-               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+               sPrice = sPrice +" instead of "+ NumberToStr(data[i][ENTRYLIMIT], priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
             }
             string message = "#"+ OrderTicket() +" "+ sType +" "+ sLots +" "+ OrderSymbol() + sComment +" at "+ sPrice;
             logInfo("onPositionOpen(2)  "+ message);
@@ -4304,7 +4304,7 @@ bool onPositionClose(int data[][]) {
          string event = "rsf::PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
-            // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (slippage: -2.8 pip)] [tp]
+            // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (better|worse: -2.8 pip)] [tp]
             string sType       = OperationTypeDescription(OrderType());
             string sLots       = NumberToStr(OrderLots(), ".+");
             string sComment    = ifString(StringLen(OrderComment()), " \""+ OrderComment() +"\"", "");
@@ -4317,7 +4317,7 @@ bool onPositionClose(int data[][]) {
             if      (data[i][CLOSETYPE] == CLOSE_TAKEPROFIT) slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderTakeProfit(), OrderTakeProfit()-OrderClosePrice()), digits);
             else if (data[i][CLOSETYPE] == CLOSE_STOPLOSS)   slippage = NormalizeDouble(ifDouble(OrderType()==OP_BUY, OrderClosePrice()-OrderStopLoss(),   OrderStopLoss()-OrderClosePrice()),   digits);
             if (NE(slippage, 0)) {
-               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" (slippage: "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
+               sClosePrice = sClosePrice +" instead of "+ NumberToStr(ifDouble(data[i][CLOSETYPE]==CLOSE_TAKEPROFIT, OrderTakeProfit(), OrderStopLoss()), priceFormat) +" ("+ ifString(GT(slippage, 0), "better", "worse") +": "+ NumberToStr(slippage/Pip, "+."+ (digits & 1)) +" pip)";
             }
             string sCloseType = sCloseTypeDescr[data[i][CLOSETYPE]];
             if (data[i][CLOSETYPE] == CLOSE_STOPOUT) {
