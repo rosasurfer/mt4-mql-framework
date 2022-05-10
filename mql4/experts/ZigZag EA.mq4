@@ -36,7 +36,8 @@
  *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
  *               arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
  *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
- *               trend and doesn't wait for the next signal. Nothing changes if a position is already open.
+ *               trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
+ *               start the EA in a predefined direction. Nothing changes if a position is already open.
  *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
  *               Nothing changes if the EA is already stopped.
  *
@@ -365,11 +366,29 @@ bool onCommand(string commands[]) {
       }
    }
 
+   else if (cmd == "start:long") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_STOPPED:
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            return(StartSequence(SIGNAL_LONG));
+      }
+   }
+
+   else if (cmd == "start:short") {
+      switch (sequence.status) {
+         case STATUS_WAITING:
+         case STATUS_STOPPED:
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            return(StartSequence(SIGNAL_SHORT));
+      }
+   }
+
    else if (cmd == "stop") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             return(StopSequence(NULL));
       }
    }
@@ -377,14 +396,14 @@ bool onCommand(string commands[]) {
    else if (cmd == "resume") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
             sequence.status = STATUS_WAITING;
             return(SaveStatus());
       }
    }
-   else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
 }
 
 
