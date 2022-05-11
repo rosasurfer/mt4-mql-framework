@@ -2015,8 +2015,6 @@ bool CustomPositions.ReadConfig() {
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
 
-   debug("CustomPositions.ReadConfig(0.1)  symbol="+ symbol +"  stdSymbol="+ stdSymbol);
-
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
          if (SearchStringArrayI(keys, keys[i]) == i) {               // bei gleichnamigen Schlüsseln wird nur der erste verarbeitet
