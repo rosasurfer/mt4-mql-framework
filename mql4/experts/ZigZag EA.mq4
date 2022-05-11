@@ -53,6 +53,7 @@
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
+ *  - visual/audible confirmations for manual orders
  *
  *  - trading functionality
  *     breakeven stop

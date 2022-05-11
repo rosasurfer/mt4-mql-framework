@@ -951,9 +951,7 @@ string StdSymbol() {
    static string lastSymbol="", lastResult="";
 
     if (lastResult != "") {
-      if (Symbol() == lastSymbol) {
-         return(lastResult);
-      }
+      if (Symbol() == lastSymbol) return(lastResult);
    }
    lastSymbol = Symbol();
    lastResult = FindStandardSymbol(Symbol());
@@ -1118,7 +1116,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
                 break;
 
-      case 'N': if      (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
+      case 'N': if (                   _symbol=="NAS100" )     result = "NASDAQ";
+                else if (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
                 else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
                 else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
                 else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";

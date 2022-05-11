@@ -1246,7 +1246,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update the position display bottom-right (total postion) and bottom-left (custom positions).
+ * Update the position display bottom-right (total position) and bottom-left (custom positions).
  *
  * @return bool - success status
  */
@@ -2014,6 +2014,8 @@ bool CustomPositions.ReadConfig() {
    string file     = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(false);
    string section  = "CustomPositions";
    int    keysSize = GetIniKeys(file, section, keys);
+
+   debug("CustomPositions.ReadConfig(0.1)  symbol="+ symbol +"  stdSymbol="+ stdSymbol);
 
    for (int i=0; i < keysSize; i++) {
       if (StrStartsWithI(keys[i], symbol) || StrStartsWithI(keys[i], stdSymbol)) {
