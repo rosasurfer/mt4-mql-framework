@@ -141,7 +141,7 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 114}, y=46, fontSize=115, sizeofX=ArraySize(x);
+   int x[]={2, 70, 120}, y=50, fontSize=47, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
