@@ -43,26 +43,20 @@
  *
  *
  * TODO:
+ *  - stop on reverse signal
+ *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *
- *  - manual start/stop
- *     stop on reverse signal => continue with manual start
- *     fix command EA.Resume
+ *  - trading functionality
  *     breakeven stop
  *     trailing stop
- *
- *  - trading functionality
  *     reverse trading and command EA.Reverse
- *     manage an existing manual order ticket
+ *     manage a manual order ticket
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
- *
- *  - ChartInfos
- *     prevent duplicate event logging of multiple terminals
- *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -135,6 +129,8 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *  - ChartInfos: prevent duplicate event logging of multiple terminals
+ *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - Superbars: fix ETH session on BTCUSD
@@ -172,9 +168,8 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
-
-#define SID_MIN                   100           // valid range of sequence id values
+#define STRATEGY_ID               107           // unique strategy id (between 101-1023, 10 bit)
+#define SID_MIN                   100           // range of valid sequence id values
 #define SID_MAX                   999
 
 #define STATUS_WAITING              1           // sequence status values
@@ -931,7 +926,7 @@ bool ReverseSequence(int signal) {
    if (open.ticket > 0) {
       // continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
+         logNotice("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
          return(true);
       }
       // ...or close the open position
@@ -1219,7 +1214,7 @@ bool ArchiveClosedVirtualPosition(int ticket) {
 
 
 /**
- * Calculate a desaster stop for a position. The stop is put at the Donchian channel band opposite to the specified direction.
+ * Calculate a desaster stop for a position. The stop is put behind the Donchian channel band opposite to the specified direction.
  *
  * @param  int direction - trade direction
  *
@@ -1229,17 +1224,17 @@ double CalculateStopLoss(int direction) {
    if (last_error != NULL)                                return(NULL);
    if (direction!=SIGNAL_LONG && direction!=SIGNAL_SHORT) return(!catch("CalculateStopLoss(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   double stoploss = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
-   if (!stoploss) return(NULL);
+   double channelBand = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
+   if (!channelBand) return(NULL);
 
-   // move stop a min. amount above/below the channel
-   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double dist1    = MathAbs(Bid-stoploss) * 0.1;
-   double dist2    = (Ask-Bid) + 10*tickSize;         // that's min. 10% of the current distance and min. 10 ticks more than the spread
+   // calaculate a min. distance from the channel
+   double dist1    = MathAbs(Bid-channelBand) * 0.2;        // that's min. 20% of the current price distance...
+   double dist2    = 5 * (Ask-Bid);                         // and min. 5 times of the current spread
    double minDist  = MathMax(dist1, dist2);
 
-   if (direction == SIGNAL_LONG) stoploss -= minDist;
-   else                          stoploss += minDist;
+   // move stoploss this min. distance away from the band
+   if (direction == SIGNAL_LONG) double stoploss = channelBand - minDist;
+   else                                 stoploss = channelBand + minDist;
 
    return(NormalizeDouble(stoploss, Digits));
 }
