@@ -47,6 +47,8 @@
  *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - no SL on signals in opposite direction
  *  - manage an existing manual order
+ *  - track and display total slippage
+ *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
@@ -79,7 +81,6 @@
  *     current spread
  *     number of trades
  *     total commission
- *     track and display total slippage
  *     recorded symbols with descriptions
  *     ToggleOpenOrders() works only after ToggleHistory()
  *
@@ -109,7 +110,6 @@
  *  - improve handling of network outages (price and/or trade connection)
  *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
  *
- *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
