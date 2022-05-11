@@ -44,6 +44,9 @@
  *
  * TODO:
  *  - stop on reverse signal
+ *  - signals MANUAL_LONG|MANUAL_SHORT
+ *  - no SL on signals in opposite direction
+ *  - manage an existing manual order
  *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
@@ -53,7 +56,6 @@
  *     breakeven stop
  *     trailing stop
  *     reverse trading and command EA.Reverse
- *     manage a manual order ticket
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
@@ -151,9 +153,9 @@ extern string TradingMode          = "regular* | virtual";  // can be shortened 
 extern int    ZigZag.Periods       = 40;
 extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
-extern string StopConditions       = "";                    // @time(datetime|time) | @breakeven(on-profit) | @trail([on-profit:]stepsize)
+extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
 extern double TakeProfit           = 0;                     // TP value
-extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";      // can be shortened if distinct
+extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";            // can be shortened if distinct        // TODO: redefine point as index point
 extern int    Slippage             = 2;                     // in point
 
 extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
@@ -1214,7 +1216,7 @@ bool ArchiveClosedVirtualPosition(int ticket) {
 
 
 /**
- * Calculate a desaster stop for a position. The stop is put behind the Donchian channel band opposite to the specified direction.
+ * Calculate a desaster stop for a position. The stop is put behind the Donchian channel band opposite to the trade direction.
  *
  * @param  int direction - trade direction
  *
@@ -1227,12 +1229,12 @@ double CalculateStopLoss(int direction) {
    double channelBand = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
    if (!channelBand) return(NULL);
 
-   // calaculate a min. distance from the channel
+   // calculate a min. distance from the channel
    double dist1    = MathAbs(Bid-channelBand) * 0.2;        // that's min. 20% of the current price distance...
-   double dist2    = 5 * (Ask-Bid);                         // and min. 5 times of the current spread
+   double dist2    = 4 * (Ask-Bid);                         // and min. 4 times the current spread
    double minDist  = MathMax(dist1, dist2);
 
-   // move stoploss this min. distance away from the band
+   // move stoploss this min. distance away
    if (direction == SIGNAL_LONG) double stoploss = channelBand - minDist;
    else                                 stoploss = channelBand + minDist;
 
@@ -1891,7 +1893,7 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
 
@@ -2080,11 +2082,11 @@ bool ReadStatus() {
 
    // [General]
    section = "General";
-   string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
+   string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678 (demo)
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
