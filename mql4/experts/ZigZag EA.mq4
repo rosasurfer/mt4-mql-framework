@@ -33,13 +33,13 @@
  * ----------------
  * The EA can be controlled externally via execution of the following scripts (online and in tester):
  *
- *  • EA.Wait:   When a "wait" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
- *               arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
- *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
- *               trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
- *               start the EA in a predefined direction. Nothing changes if a position is already open.
- *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
- *               Nothing changes if the EA is already stopped.
+ *  • EA.Wait:  When a "wait" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
+ *              arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
+ *  • EA.Start: When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
+ *              trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
+ *              start the EA in a predefined direction. Nothing changes if a position is already open.
+ *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
+ *              Nothing changes if the EA is already stopped.
  *
  *
  * TODO:
@@ -55,8 +55,10 @@
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - visual/audible confirmations for manual orders
+ *  - support command "wait" in status "progressing"
  *
  *  - trading functionality
+ *     rewrite and test all @profit() conditions
  *     breakeven stop
  *     trailing stop
  *     reverse trading and command EA.Reverse
