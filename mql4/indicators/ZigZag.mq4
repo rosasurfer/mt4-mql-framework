@@ -756,7 +756,7 @@ bool onReversal(int direction, int bar) {
 
    // check wether the event was already signaled
    int    hWnd  = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetTerminalMainWindow());
-   string sEvent = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +".onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
+   string sEvent = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
    bool isSignaled = false;
    if (hWnd > 0) isSignaled = (GetWindowIntegerA(hWnd, sEvent) != 0);
 
