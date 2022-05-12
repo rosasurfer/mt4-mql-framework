@@ -33,7 +33,7 @@
  * ----------------
  * The EA can be controlled externally via execution of the following scripts (online and in tester):
  *
- *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
+ *  • EA.Wait:   When a "wait" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
  *               arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
  *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
  *               trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
@@ -45,10 +45,11 @@
  * TODO:
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
- *  - no SL on signals in opposite direction
+ *  - wider SL on manual positions in opposite direction
  *  - manage an existing manual order
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
+ *  - reduce slippage on short reversal: enter market via StopSell
  *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
@@ -391,7 +392,7 @@ bool onCommand(string commands[]) {
       }
    }
 
-   else if (cmd == "resume") {
+   else if (cmd == "wait") {
       switch (sequence.status) {
          case STATUS_STOPPED:
             logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
