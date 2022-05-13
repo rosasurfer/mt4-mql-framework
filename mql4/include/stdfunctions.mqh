@@ -977,22 +977,17 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
+   if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
+   else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
+
    if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
+   else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
 
    string result = "";
 
    switch (StringGetChar(_symbol, 0)) {
-      case '_': if      (_symbol=="_BRENT" )   result = "BRENT";
-                else if (_symbol=="_DJI"   )   result = "DJIA";
-                else if (_symbol=="_DJT"   )   result = "DJTA";
-                else if (_symbol=="_N225"  )   result = "NIKKEI";
-                else if (_symbol=="_NQ100" )   result = "NASDAQ";
-                else if (_symbol=="_NQCOMP")   result = "NASCOMP";
-                else if (_symbol=="_SP500" )   result = "SP500";
-                else if (_symbol=="_WTI"   )   result = "WTI";
-                break;
-
       case '#': if      (StrStartsWith(_symbol, "#DAX."))    result = "DAX";
                 else if (StrStartsWith(_symbol, "#DJ30_"))   result = "DJIA";
                 else if (StrStartsWith(_symbol, "#DJI."))    result = "DJIA";
@@ -1046,6 +1041,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
                 else if (              _symbol=="DE40")        result = "DAX";
+                else if (              _symbol=="DJI ")        result = "DJIA";
+                else if (              _symbol=="DJT" )        result = "DJTA";
                 else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
@@ -1116,9 +1113,12 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
                 break;
 
-      case 'N': if (                   _symbol=="NAS100" )     result = "NASDAQ";
+      case 'N': if      (              _symbol=="N225"   )     result = "NIKKEI";
+                else if (              _symbol=="NAS100" )     result = "NASDAQ";
                 else if (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
                 else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
+                else if (              _symbol=="NQ100"  )     result = "NASDAQ";
+                else if (              _symbol=="NQCOMP" )     result = "NASCOMP";
                 else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
                 else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";
                 else if (StrStartsWith(_symbol, "NZDJPY"))     result = "NZDJPY";
