@@ -1001,7 +1001,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "#JP225_"))  result = "NIKKEI";
                 else if (StrStartsWith(_symbol, "#SPX."))    result = "SP500";
                 else if (StrStartsWith(_symbol, "#US100_"))  result = "NASDAQ";
-                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUSSEL";
+                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUSSELL";
                 else if (StrStartsWith(_symbol, "#US500_"))  result = "SP500";
                 break;
 
@@ -1134,7 +1134,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'Q': break;
 
-      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUSSEL";
+      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUSSELL";
                 break;
 
       case 'S': if      (              _symbol=="S&P_500"   )  result = "SP500";
@@ -1150,7 +1150,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'U':
                 if      (              _symbol=="UK100"  )     result = "FTSE";
                 else if (              _symbol=="UKOIL"  )     result = "BRENT";
-                else if (              _symbol=="US2000" )     result = "RUSSEL";
+                else if (              _symbol=="US2000" )     result = "RUSSELL";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
