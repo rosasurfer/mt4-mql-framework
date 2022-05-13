@@ -3198,7 +3198,7 @@ string GetSymbolNameStrict(string symbol) {
 
       case 'Q': break;
 
-      case 'R': if (symbol == "RUS2000") return("Russel 2000");
+      case 'R': if (symbol == "RUSSELL") return("Russell 2000");
                 break;
 
       case 'S': if (symbol == "SEKJPY" ) return("SEK/JPY"  );
@@ -3328,7 +3328,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
    if (symbol == "NIK225"  ) return("Nikkei 225"              );
    if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
-   if (symbol == "RUS2000" ) return("Russel 2000"             );
+   if (symbol == "RUSSELL" ) return("Russell 2000"            );
    if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
    if (symbol == "USDX"    ) return("USD Index (ICE)"         );
