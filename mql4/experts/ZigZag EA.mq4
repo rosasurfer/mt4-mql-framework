@@ -43,6 +43,9 @@
  *
  *
  * TODO:
+ *  - don't write to log file of a stopped test
+ *  - don't create metric symbols in a stopped test
+ *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - wider SL on manual positions in opposite direction
@@ -54,7 +57,7 @@
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
- *  - visual/audible confirmations for manual orders
+ *  - visual/audible confirmations for manual orders (to better detect execution errors)
  *  - support command "wait" in status "progressing"
  *
  *  - trading functionality

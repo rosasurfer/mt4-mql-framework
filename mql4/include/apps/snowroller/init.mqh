@@ -33,7 +33,7 @@ int onInitUser() {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.cycle   = 1;
-         sequence.created = GetLocalTime();
+         sequence.created = TimeLocal();
          sequence.status  = STATUS_WAITING;
          SaveStatus();
 

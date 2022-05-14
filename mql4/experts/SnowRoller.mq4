@@ -1716,7 +1716,7 @@ bool ResetSequence(double gridbase, int level) {
    //sequence.id           = ...                         // unchanged
    sequence.cycle++;                                     // increase restart cycle
    //sequence.name         = ...                         // unchanged
-   sequence.created        = GetLocalTime();
+   sequence.created        = TimeLocal();
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;

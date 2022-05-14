@@ -6605,7 +6605,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
                if (!remainder) return(_false(Order.HandleError("OrderCloseByEx(19)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseByEx(20)")));
             }
 
-            else /*(largerBySmaller)*/ {                                         // in Strategy Tester
+            else /*(largerBySmaller)*/ {                                         // in tester
                // no reference available
                if (!SelectTicket(larger, "OrderCloseByEx(21)", NULL, O_POP)) return(!oe.setError(oe, ERR_INVALID_TICKET));
                int      remainderType        = OrderType();
