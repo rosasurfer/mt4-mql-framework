@@ -31,7 +31,7 @@ int onInitUser() {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = GetLocalTime();
+         sequence.created = TimeLocal();
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
