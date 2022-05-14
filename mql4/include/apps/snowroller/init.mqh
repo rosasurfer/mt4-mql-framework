@@ -117,7 +117,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int onInitRecompile() {
-   if (RestoreSequenceId()) {                                  // same as for onInitTemplate()
+   if (RestoreSequenceId()) {                         // same as for onInitTemplate()
       RestoreSequence();
       return(last_error);
    }
@@ -131,7 +131,9 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   SetLogfile(GetLogFilename());                               // open the logfile (flushes the buffer)
+   if (IsTesting() || !IsTestSequence()) {            // open the log file (flushes the log buffer) but don't touch the file
+      SetLogfile(GetLogFilename());                   // of a finished test (i.e. a test loaded into an online chart)
+   }
 
    string section = StrTrim(ProgramName());
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
@@ -150,7 +152,7 @@ int afterInit() {
    }
    else if (IsTestSequence()) {
       // a finished test loaded into an online chart
-      sequence.status = STATUS_STOPPED;                        // TODO: move to SynchronizeStatus()
+      sequence.status = STATUS_STOPPED;               // TODO: move to SynchronizeStatus()
    }
    return(last_error);
 }
