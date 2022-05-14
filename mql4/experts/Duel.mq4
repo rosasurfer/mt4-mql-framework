@@ -3579,7 +3579,7 @@ double iADR() {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);
+   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.reduceStatusWrites) {

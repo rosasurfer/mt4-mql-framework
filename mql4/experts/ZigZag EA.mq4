@@ -43,9 +43,6 @@
  *
  *
  * TODO:
- *  - don't write to log file of a stopped test
- *  - don't change status file of a stopped test
- *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - wider SL on manual positions in opposite direction
@@ -1889,9 +1886,9 @@ string SignalToStr(int signal) {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);
+   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
 
-   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most status file writes, except file creation, sequence stop and test end
+   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
