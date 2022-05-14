@@ -43,6 +43,8 @@
  *
  *
  * TODO:
+ *  - fix cmd Chart.ToggleOpenOrders
+ *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
  *  - wider SL on manual positions in opposite direction
@@ -86,7 +88,6 @@
  *     number of trades
  *     total commission
  *     recorded symbols with descriptions
- *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
  *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
@@ -140,7 +141,6 @@
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - Superbars: fix ETH session on BTCUSD
- *  - Tickchart-Creator: incorrect High/Lows (doesn't track/record lost ticks)
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - in-chart news hints (to not forget untypical ones like press conferences)
  *  - on restart delete dead screen sockets
@@ -355,13 +355,13 @@ int onTick() {
  */
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmd = commands[0];
+   string cmdBak = commands[0], cmd = StrToLower(cmdBak);
 
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             int trend = GetZigZagTrend(0);
             return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
       }
@@ -371,7 +371,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StartSequence(SIGNAL_LONG));
       }
    }
@@ -380,7 +380,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StartSequence(SIGNAL_SHORT));
       }
    }
@@ -389,7 +389,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StopSequence(NULL));
       }
    }
@@ -397,14 +397,181 @@ bool onCommand(string commands[]) {
    else if (cmd == "wait") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             sequence.status = STATUS_WAITING;
             return(SaveStatus());
       }
    }
-   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
+   else if (cmd == "toggleopenorders") {
+      debug("onCommand(0.1)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+      return(false);
+   }
+
+   else if (cmd == "toggletradehistory") {
+      return(ToggleTradeHistory());
+   }
+   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmdBak)));
+
+   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmdBak) +" in status "+ StatusToStr(sequence.status)));
+}
+
+
+/**
+ * Toggle the display of closed trades.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                        // Without any closed trades the status must be reset to enable
+         showHistory = false;                               // the "off" section to clear existing markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove all closed trade markers (from this EA or another program)
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current "ShowTradeHistory" display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed "ShowTradeHistory" display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
+   int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
+
+   // process the local trade history
+   int orders = ArrayRange(history, 0), closedTrades = 0;
+
+   for (int i=0; i < orders; i++) {
+      int      ticket     = history[i][HI_TICKET    ];
+      int      type       = history[i][HI_OPENTYPE  ];
+      double   lots       = history[i][HI_LOTS      ];
+      datetime openTime   = history[i][HI_OPENTIME  ];
+      double   openPrice  = history[i][HI_OPENPRICE ];
+      datetime closeTime  = history[i][HI_CLOSETIME ];
+      double   closePrice = history[i][HI_CLOSEPRICE];
+
+      if (!closeTime)                    continue;             // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
+
+      sOpenPrice  = NumberToStr(openPrice, PriceFormat);
+      sClosePrice = NumberToStr(closePrice, PriceFormat);
+
+      // open marker
+      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR, iOpenColors[type]);
+         ObjectSetText(openLabel, sequence.name);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, iLineColors[type]);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
+         ObjectSetText(closeLabel, sequence.name);
+      }
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
