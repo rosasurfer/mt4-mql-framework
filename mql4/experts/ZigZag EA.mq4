@@ -44,7 +44,7 @@
  *
  * TODO:
  *  - don't write to log file of a stopped test
- *  - don't create metric symbols in a stopped test
+ *  - don't change status file of a stopped test
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
@@ -1698,8 +1698,10 @@ bool VirtualOrderClose(int ticket) {
  * @return bool - whether to add a definition for the specified index
  */
 bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
-   if (IsLastError()) return(false);
-   if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   enabled = false;
+   if (IsLastError())                    return(false);
+   if (!sequence.id)                     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting()) return(false);                       // never record anything in a stopped test
 
    string ids[];
    int size = Explode(EA.Recorder, ",", ids, NULL);
@@ -2785,9 +2787,11 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
-   int metrics;
-   if (!init_RecorderValidateInput(metrics)) return(false);
-   if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   if (!IsTestSequence() || IsTesting()) {      // never init the recorder of a stopped test
+      int metrics;
+      if (!init_RecorderValidateInput(metrics)) return(false);
+      if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   }
 
    // tmp. overwrite recorder.hstMultiplier of metrics 1,2,3,5,6,7 (remove together with input "EA.RecorderAutoScale")
    int hstMultiplier = 1;
