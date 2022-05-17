@@ -1,7 +1,5 @@
 /**
- * 4 Bar Indi.mq4
- * Mahadi Hasan Razu, 2021
- * https://www.mql5.com/en/users/hermesmercury
+ * 4 Bar Fractal
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -28,29 +26,33 @@ double up[];
 double down[];
 
 
-//+------------------------------------------------------------------+
-//| Custom indicator initialization function                         |
-//+------------------------------------------------------------------+
+/**
+ * Initialization
+ *
+ * @return int - error status
+ */
 int onInit() {
-   SetIndexBuffer(0, up);   SetIndexStyle (0, DRAW_ARROW); SetIndexArrow (0, 241); SetIndexLabel (0, "Buy");
-   SetIndexBuffer(1, down); SetIndexStyle (1, DRAW_ARROW); SetIndexArrow (1, 242); SetIndexLabel (1, "Sell");
+   SetIndexBuffer(0, up);   SetIndexStyle (0, DRAW_ARROW); SetIndexArrow (0, 241);
+   SetIndexBuffer(1, down); SetIndexStyle (1, DRAW_ARROW); SetIndexArrow (1, 242);
 
    IndicatorShortName(WindowExpertName());
    return(0);
 }
 
 
-//+------------------------------------------------------------------+
-//| Custom indicator iteration function                              |
-//+------------------------------------------------------------------+
+/**
+ * Main function
+ *
+ * @return int - error status
+ */
 int onTick() {
    for (int bar=1; bar <= ChangedBars; bar++) {
       if (bar+3 <= Bars) {
          if (Close[bar] > Open[bar] && Close[bar] > High[bar+1] && Close[bar] > High[bar+3]) {
-            up[bar-1] = Low[bar-1] - 0.5*iATR(NULL, NULL, 10, bar);
+            up[bar] = Low[bar] - 0.5*iATR(NULL, NULL, 10, bar);
          }
          if (Close[bar] < Open[bar] && Close[bar] < Low[bar+1] && Close[bar] < Low[bar+3]) {
-            down[bar-1] = High[bar-1] + 0.5*iATR(NULL, NULL, 10, bar);
+            down[bar] = High[bar] + 0.5*iATR(NULL, NULL, 10, bar);
          }
       }
    }
