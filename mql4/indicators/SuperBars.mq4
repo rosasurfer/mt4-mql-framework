@@ -1,8 +1,8 @@
 /**
  * SuperBars
  *
- * Draws bars of higher timeframes on the chart. The active timeframe can be changed with the scripts "SuperBars.TimeframeUp"
- * and "SuperBars.TimeframeDown".
+ * Draws rectangles of trading sessions and/or higher timeframes on the chart. The active timeframe can be changed with the
+ * scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
  *
  * With input parameter "AutoConfiguration" enabled (default) inputs found in the MetaTrader framework configuration override
  * manual inputs. Additional auto-config settings:
@@ -15,13 +15,16 @@
  *  Legend.FontSize              = {int}              ; font size
  *  Legend.FontColor             = {color}            ; font color (web color name, integer or RGB triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
- *  MaxBars.H1                   = {int}              ; max. number of H1 superbars (performance, default: all)
- *  ErrorSound                   = {string}           ; sound played when timeframe cycling is at min/max (default: none)
+ *  MaxBars.H1                   = {int}              ; max. number of H1 superbars to draw (default: all available)
+ *  ErrorSound                   = {string}           ; sound if timeframe cycling is at upper/lower limit (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
  * TODO:
  *  - doesn't work on offline charts
+ *  - fix processing of weekend data
+ *  - ETH/RTH separation for Frankfurt session with 17:35 CET hint
+ *  - fix ETH session on BTCUSD
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};

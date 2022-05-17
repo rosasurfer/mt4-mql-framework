@@ -43,6 +43,7 @@
  *
  *
  * TODO:
+ *  - rename MACD to "MACD.rsf" and ZigZag to "ZigZag.rsf"
  *  - fix cmd Chart.ToggleOpenOrders
  *
  *  - stop on reverse signal
@@ -56,7 +57,7 @@
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
- *  - visual/audible confirmations for manual orders (to better detect execution errors)
+ *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - support command "wait" in status "progressing"
  *
  *  - trading functionality
@@ -142,7 +143,7 @@
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - Superbars: fix ETH session on BTCUSD
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
- *  - in-chart news hints (to not forget untypical ones like press conferences)
+ *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
  *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
