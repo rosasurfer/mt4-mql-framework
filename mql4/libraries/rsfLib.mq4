@@ -30,10 +30,7 @@ int __DeinitFlags[];
 #include <timezones.mqh>
 #include <win32api.mqh>
 #include <functions/ExplodeStrings.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinBools.mqh>
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>

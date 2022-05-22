@@ -340,7 +340,7 @@ int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, i
 int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
 int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
 int      InitializeByteBuffer(int &buffer[], int bytes);;
-bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTimeFxt=NULL, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv);;
+bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true);;
 bool     IsBarOpen(int timeframe = NULL);;
 double   JMASeries(int h, int iDin, int iOldestBar, int iStartBar, int iPhase, int iPeriods, double dPrice, int iBar);;
 string   JoinBools(bool &values[], string separator = ", ");;
@@ -355,35 +355,35 @@ bool     ParseTime(string value, int flags, int &result[]);;
 
 
 // include/structs/rsf/Bar.mqh
-datetime bar.Time      (/*BAR*/double bar[]);;
-double   bar.Open      (/*BAR*/double bar[]);;
-double   bar.Low       (/*BAR*/double bar[]);;
-double   bar.High      (/*BAR*/double bar[]);;
-double   bar.Close     (/*BAR*/double bar[]);;
-int      bar.Volume    (/*BAR*/double bar[]);;
+datetime bar.Time      (double bar[]);;
+double   bar.Open      (double bar[]);;
+double   bar.Low       (double bar[]);;
+double   bar.High      (double bar[]);;
+double   bar.Close     (double bar[]);;
+int      bar.Volume    (double bar[]);;
 
-datetime bar.setTime   (/*BAR*/double &bar[], datetime time  );;
-double   bar.setOpen   (/*BAR*/double &bar[], double   open  );;
-double   bar.setLow    (/*BAR*/double &bar[], double   low   );;
-double   bar.setHigh   (/*BAR*/double &bar[], double   high  );;
-double   bar.setClose  (/*BAR*/double &bar[], double   close );;
-int      bar.setVolume (/*BAR*/double &bar[], int      volume);;
+datetime bar.setTime   (double &bar[], datetime time);;
+double   bar.setOpen   (double &bar[], double   open);;
+double   bar.setLow    (double &bar[], double    low);;
+double   bar.setHigh   (double &bar[], double   high);;
+double   bar.setClose  (double &bar[], double  close);;
+int      bar.setVolume (double &bar[], int    volume);;
 
-datetime bars.Time     (/*BAR*/double bar[][], int i);;
-double   bars.Open     (/*BAR*/double bar[][], int i);;
-double   bars.Low      (/*BAR*/double bar[][], int i);;
-double   bars.High     (/*BAR*/double bar[][], int i);;
-double   bars.Close    (/*BAR*/double bar[][], int i);;
-int      bars.Volume   (/*BAR*/double bar[][], int i);;
+datetime bars.Time     (double bar[][], int i);;
+double   bars.Open     (double bar[][], int i);;
+double   bars.Low      (double bar[][], int i);;
+double   bars.High     (double bar[][], int i);;
+double   bars.Close    (double bar[][], int i);;
+int      bars.Volume   (double bar[][], int i);;
 
-datetime bars.setTime  (/*BAR*/double &bar[][], int i, datetime time  );;
-double   bars.setOpen  (/*BAR*/double &bar[][], int i, double   open  );;
-double   bars.setLow   (/*BAR*/double &bar[][], int i, double   low   );;
-double   bars.setHigh  (/*BAR*/double &bar[][], int i, double   high  );;
-double   bars.setClose (/*BAR*/double &bar[][], int i, double   close );;
-int      bars.setVolume(/*BAR*/double &bar[][], int i, int      volume);;
+datetime bars.setTime  (double &bar[][], int i, datetime time);;
+double   bars.setOpen  (double &bar[][], int i, double   open);;
+double   bars.setLow   (double &bar[][], int i, double    low);;
+double   bars.setHigh  (double &bar[][], int i, double   high);;
+double   bars.setClose (double &bar[][], int i, double  close);;
+int      bars.setVolume(double &bar[][], int i, int    volume);;
 
-string   BAR.toStr     (/*BAR*/double bar[]);;
+string   BAR.toStr     (double bar[]);;
 
 
 // include/structs/rsf/OrderExecution.mqh
