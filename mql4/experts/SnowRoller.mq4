@@ -1154,8 +1154,8 @@ bool RemoveSequenceId() {
       // chart
       Chart.RestoreString(name, name, true);
 
-      // additionally remove a chart status for chart commands
-      name = ProgramName() +".status";
+      // remove a chart status for chart commands
+      name = "EA.status";
       if (ObjectFind(name) != -1) ObjectDelete(name);
    }
    return(!catch("RemoveSequenceId(1)"));
