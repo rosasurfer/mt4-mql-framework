@@ -3,7 +3,7 @@
  *
  *
  * The ZigZag indicator coming with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be used
- * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a fixed
+ * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a custom
  * and greatly enhanced version of the ZigZag indicator (most signals are still the same).
  *
  *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
@@ -43,8 +43,9 @@
  *
  *
  * TODO:
- *  - Superbars: workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  *  - rename MACD to "MACD.rsf" and ZigZag to "ZigZag.rsf"
+ *  - Instrument Infos: remove maxLeverage constraint
+ *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - fix cmd Chart.ToggleOpenOrders
  *
  *  - on account change:
@@ -62,8 +63,6 @@
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
- *  - Instrument Infos: remove maxLeverage constraint
- *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - support command "wait" in status "progressing"
  *
@@ -3063,8 +3062,8 @@ bool RemoveSequenceId() {
       // chart
       Chart.RestoreString(name, name, true);
 
-      // additionally remove a chart status for chart commands
-      name = ProgramName() +".status";
+      // remove a chart status for chart commands
+      name = "EA.status";
       if (ObjectFind(name) != -1) ObjectDelete(name);
    }
    return(!catch("RemoveSequenceId(1)"));
