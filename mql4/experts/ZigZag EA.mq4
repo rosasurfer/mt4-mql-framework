@@ -43,8 +43,16 @@
  *
  *
  * TODO:
+ *  - Superbars: workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  *  - rename MACD to "MACD.rsf" and ZigZag to "ZigZag.rsf"
  *  - fix cmd Chart.ToggleOpenOrders
+ *
+ *  - on account change:
+ *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
+ *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
+ *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=6, hTimer=0C178498)  [win32:997]
+ *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=4 (references non-existing window hWnd=00190390)
+ *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=4, hTimer=0C178518)  [win32:997]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
@@ -55,7 +63,6 @@
  *  - reduce slippage on short reversal: enter market via StopSell
  *
  *  - Instrument Infos: remove maxLeverage constraint
- *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - support command "wait" in status "progressing"
@@ -141,7 +148,6 @@
  *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
- *  - Superbars: fix ETH session on BTCUSD
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
  *  - on restart delete dead screen sockets
