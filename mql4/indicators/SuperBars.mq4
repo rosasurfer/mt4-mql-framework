@@ -1,11 +1,11 @@
 /**
  * SuperBars
  *
- * Draws rectangles of trading sessions and/or higher timeframes on the chart. The active timeframe can be changed with the
- * scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
+ * Draws rectangles of trading sessions and/or higher timeframe periods on the chart. The active higher timeframe can be
+ * changed by executing the scripts "SuperBars.TimeframeUp" or "SuperBars.TimeframeDown".
  *
- * With input parameter "AutoConfiguration" enabled (default) inputs found in the MetaTrader framework configuration override
- * manual inputs. Additional auto-config settings:
+ * With input parameter "AutoConfiguration" enabled (default) inputs found in the framework configuration override manual
+ * inputs. Additional auto-config settings:
  *
  * [SuperBars]
  *  Legend.Corner                = {int}              ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
@@ -22,9 +22,8 @@
  *
  * TODO:
  *  - doesn't work on offline charts
- *  - fix processing of weekend data
  *  - ETH/RTH separation for Frankfurt session with 17:35 CET hint
- *  - fix ETH session on BTCUSD
+ *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -38,6 +37,7 @@ extern color  UnchangedBars.Color = Lavender;         // unchanged bars
 extern color  CloseMarker.Color   = Gray;             // bar close marker
 extern color  ETH.Color           = LemonChiffon;     // ETH sessions
 extern string ETH.Symbols         = "";               // comma-separated list of symbols with RTH/ETH sessions
+extern string Weekend.Symbols     = "";               // comma-separated list of symbols with weekend data
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -60,6 +60,7 @@ extern string ETH.Symbols         = "";               // comma-separated list of
 int    superTimeframe;                                // the currently active super bar period
 double maxChangeUnchanged = 0.05;                     // max. price change in % for a superbar to be drawn as unchanged
 bool   ethEnabled;                                    // whether CME sessions are enabled
+bool   weekendEnabled;                                // whether weekend data is enabled
 int    maxBarsH1;                                     // max. number of H1 superbars to draw (performance)
 
 string legendLabel      = "";
@@ -96,14 +97,24 @@ int onInit() {
       ETH.Color           = GetConfigColor(indicator, "ETH.Color",           ETH.Color);
    }
    // ETH.Symbols
-   string values[], sValue = StrTrim(ETH.Symbols);
+   string sValue = StrTrim(ETH.Symbols), symbol=Symbol(), stdSymbol=StdSymbol(), sValues[];
    if (AutoConfiguration) sValue = GetConfigString(indicator, "ETH.Symbols", sValue);
    if (StringLen(sValue) > 0) {
-      int size = Explode(StrToLower(sValue), ",", values, NULL);
+      int size = Explode(StrToLower(sValue), ",", sValues, NULL);
       for (int i=0; i < size; i++) {
-         values[i] = StrTrim(values[i]);
+         sValues[i] = StrTrim(sValues[i]);
       }
-      ethEnabled = (StringInArrayI(values, Symbol()) || StringInArrayI(values, StdSymbol()));
+      ethEnabled = (StringInArrayI(sValues, symbol) || StringInArrayI(sValues, stdSymbol));
+   }
+   // Weekend.Symbols
+   sValue = StrTrim(Weekend.Symbols);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Weekend.Symbols", sValue);
+   if (StringLen(sValue) > 0) {
+      size = Explode(StrToLower(sValue), ",", sValues, NULL);
+      for (i=0; i < size; i++) {
+         sValues[i] = StrTrim(sValues[i]);
+      }
+      weekendEnabled = (StringInArrayI(sValues, symbol) || StringInArrayI(sValues, stdSymbol));
    }
 
    // read external configuration
@@ -148,8 +159,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   HandleCommands();                                                 // process incoming commands
-   UpdateSuperBars();                                                // update superbars
+   HandleCommands();                                     // process incoming commands
+   UpdateSuperBars();                                    // update superbars
    return(last_error);
 }
 
@@ -170,7 +181,7 @@ bool onCommand(string commands[]) {
    if (cmd == "Timeframe=Down") return(SwitchSuperTimeframe(STF_DOWN));
 
    logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
-   return(true);                                                     // continue anyway
+   return(true);
 }
 
 
@@ -321,7 +332,7 @@ bool CheckTimeframeAvailability() {
  * @return bool - success status
  */
 bool UpdateSuperBars() {
-   // on a supertimeframe change delete the superbars of the previously active timeframe
+   // on change of the supertimeframe delete superbars of the previously active timeframe
    static int lastSuperTimeframe;
    bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
 
@@ -359,7 +370,6 @@ bool UpdateSuperBars() {
          break;
    }
 
-
    // With enabled ETH sessions the range of ChangedBars must include the range of iChangedBars(PERIOD_M15).
    int  changedBars=ChangedBars, timeframe=superTimeframe;
    bool drawETH;
@@ -385,25 +395,23 @@ bool UpdateSuperBars() {
       }
    }
 
-
    // update superbars
    // ----------------
-   //  - Drawing range is ChangedBars but we don't use a loop over the ChangedBars.
-   //  - The youngest - still open - SuperBar is limited on the right by Bar[0] and grows with progression of time.
-   //  - The oldest SuperBar exceedes ChangedBars on the left if Bars > ChangedBars (the regular runtime case).
-   //  - In the following a "super session" doesn't mean 24h but the superbar period.
+   //  - drawing range is ChangedBars but we don't use a loop over it
+   //  - the youngest (still unfinished) SuperBar is limited on the right by Bar[0] and grows with progression of time
+   //  - the oldest SuperBar exceedes ChangedBars on the left if Bars > ChangedBars (the regular case)
+   //  - "super session" doesn't mean 24h but the superbar period
    datetime openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv;
-   int      openBar, closeBar, lastChartBar=Bars-1;
+   int openBar, closeBar, lastChartBar=Bars-1;
 
    // loop over all superbars from young to old (right to left)
    for (int i=0; i < maxBars; i++) {
-      if (!iPreviousPeriodTimes(timeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv))
-         return(false);
+      if (!iPreviousPeriodTimes(timeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
 
-      // From chart timeframe PERIOD_D1 times in the rates array are set only to full days. The timezone offset may shift the start of a month wrongly to the
-      // previous or the next month. Must be fixed if the start of month falls in the middle of a week (no need for fixing if start of month falls on a weekend).
+      // In periods >= PERIOD_D1 timeseries times are set to full days only. The wrong timezone offset can shift the start of such a period wrongly
+      // to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
       if (Period()==PERIOD_D1) /*&&*/ if (timeframe >= PERIOD_MN1) {
-         if (openTimeSrv  < openTimeFxt ) /*&&*/ if (TimeDayOfWeekEx(openTimeSrv )!=SUNDAY  ) openTimeSrv  = openTimeFxt;     // Sunday bar:  server timezone west of FXT
+         if (openTimeSrv  < openTimeFxt ) /*&&*/ if (TimeDayOfWeekEx(openTimeSrv )!=SUNDAY  ) openTimeSrv  = openTimeFxt;     // Sunday bar:   server timezone west of FXT
          if (closeTimeSrv > closeTimeFxt) /*&&*/ if (TimeDayOfWeekEx(closeTimeSrv)!=SATURDAY) closeTimeSrv = closeTimeFxt;    // Saturday bar: server timezone east of FXT
       }
 
@@ -427,30 +435,28 @@ bool UpdateSuperBars() {
 
 
 /**
- * Draw a single Superbar.
+ * Draw a single superbar.
  *
- * @param  _In_    int      openBar     - chart period bar offset of the SuperBar's open bar
- * @param  _In_    int      closeBar    - chart period bar offset of the SuperBar's close bar
- * @param  _In_    datetime openTimeFxt - super session starttime in FXT
- * @param  _In_    datetime openTimeSrv - super session starttime in server time
- * @param  _InOut_ bool     &drawETH    - Variable signaling whether the ETH session of a D1 superbar can be drawn. If all
- *                                        available M15 data is processed the variable switches to FALSE irrespective of
- *                                        further D1 SuperBars.
+ * @param  _In_    int      openBar     - chart bar offset of the SuperBar's open bar
+ * @param  _In_    int      closeBar    - chart bar offset of the SuperBar's close bar
+ * @param  _In_    datetime openTimeFxt - super period starttime in FXT
+ * @param  _In_    datetime openTimeSrv - super period starttime in server time
+ * @param  _InOut_ bool     &drawETH    - Whether the ETH period of a D1 superbar is to be drawn. Switches to FALSE once all
+ *                                        available M15 data is processed, irrespective of further D1 SuperBars.
  * @return bool - success status
  */
 bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime openTimeSrv, bool &drawETH) {
-   // draw superbar session
-   // resolve High and Low bar offset
+   // resolve High and Low offset
    int highBar = iHighest(NULL, NULL, MODE_HIGH, openBar-closeBar+1, closeBar);
    int lowBar  = iLowest (NULL, NULL, MODE_LOW , openBar-closeBar+1, closeBar);
 
    // resolve bar color
    color barColor = UnchangedBars.Color;
-   if (openBar < Bars-1) double openPrice = Close[openBar+1];                       // use previous Close as Open if available
+   if (openBar < Bars-1) double openPrice = Close[openBar+1];        // use previous Close as Open if available
    else                         openPrice = Open [openBar];
    double ratio = openPrice/Close[closeBar]; if (ratio < 1) ratio = 1/ratio;
    ratio = 100 * (ratio-1);
-   if (ratio > maxChangeUnchanged) {                                                // a change smaller is considered "unchanged"
+   if (ratio > maxChangeUnchanged) {                                 // a change smaller is considered "unchanged"
       if      (openPrice < Close[closeBar]) barColor = UpBars.Color;
       else if (openPrice > Close[closeBar]) barColor = DownBars.Color;
    }
@@ -467,27 +473,30 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    }
 
    // draw Superbar
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-      int closeBar_j = closeBar; /*_j as justified*/                                // Widen rectangles by one bar to the right to make consecutives bars touch each other,
-      if (closeBar > 0) closeBar_j--;                                               // but not for the youngest - still open - SuperBar.
-   if (ObjectCreate (label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[closeBar_j], Low[lowBar])) {
+   int justifiedCloseBar = closeBar;
+   if (closeBar > 0) {                                               // check for consecutive bars and widen rectangles to the right to make bars touch each other
+      if (Time[closeBar] + Period()*MINUTES >= Time[closeBar-1]) {
+         justifiedCloseBar--;
+      }
+   }
+   if (ObjectFind   (label) == 0) ObjectDelete(label);
+   if (ObjectCreate (label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[justifiedCloseBar], Low[lowBar])) {
       ObjectSet     (label, OBJPROP_COLOR, barColor);
-      ObjectSet     (label, OBJPROP_BACK , true    );
+      ObjectSet     (label, OBJPROP_BACK,  true);
       RegisterObject(label);
    }
    else GetLastError();
 
    // draw close marker
-   if (closeBar > 0) {                                                              // except for the youngest - still unfinished - SuperBar
-      int centerBar = (openBar+closeBar)/2;                                         // TODO: draw close marker for the youngest bar after market-close (weekend)
+   if (closeBar > 0) {                                               // except for the youngest (still unfinished) SuperBar
+      int centerBar = (openBar+closeBar)/2;                          // TODO: draw close marker for the youngest bar after market-close (weekend)
 
       if (centerBar > closeBar) {
          string labelWithPrice="", labelWithoutPrice=label +" Close";
 
-         if (ObjectFind(labelWithoutPrice) == 0) {                                  // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-            labelWithPrice = ObjectDescription(labelWithoutPrice);                  // holding in the description the dynamic and variable name of the visible marker (2nd object).
-            if (ObjectFind(labelWithPrice) == 0)                                    // This way an existing marker can be found and replaced, even if the dynamic name changes.
+         if (ObjectFind(labelWithoutPrice) == 0) {                   // Every marker consists of two objects: an invisible label (1st object) with a fixed name
+            labelWithPrice = ObjectDescription(labelWithoutPrice);   // holding in the description the dynamic name of the visible marker (2nd object).
+            if (ObjectFind(labelWithPrice) == 0)                     // This way an existing marker can be found and replaced even if the dynamic name changes.
                ObjectDelete(labelWithPrice);
             ObjectDelete(labelWithoutPrice);
          }
@@ -500,10 +509,10 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          } else GetLastError();
 
          if (ObjectCreate (labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet     (labelWithPrice, OBJPROP_RAY  , false);
+            ObjectSet     (labelWithPrice, OBJPROP_RAY,   false);
             ObjectSet     (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet     (labelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
-            ObjectSet     (labelWithPrice, OBJPROP_BACK , true);
+            ObjectSet     (labelWithPrice, OBJPROP_BACK,  true);
             RegisterObject(labelWithPrice);
          } else GetLastError();
       }
@@ -511,24 +520,24 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
 
    // draw ETH session if enough M15 data is available
-   while (drawETH) {                                                                // the loop declares just a block which can be more easily left via "break"
+   while (drawETH) {                                                             // the loop declares just a block which can be more easily left via "break"
       // resolve High and Low
-      datetime ethOpenTimeSrv  = openTimeSrv;                                       // as regular starttime of a 24h session (00:00 FXT)
-      datetime ethCloseTimeSrv = openTimeSrv + 16*HOURS + 30*MINUTES;               // CME opening time                      (16:30 FXT)
+      datetime ethOpenTimeSrv  = openTimeSrv;                                    // as regular starttime of a 24h session (00:00 FXT)
+      datetime ethCloseTimeSrv = openTimeSrv + 16*HOURS + 30*MINUTES;            // CME opening time                      (16:30 FXT)
 
-      int ethOpenBar  = openBar;                                                    // regular open bar of a 24h session
-      int ethCloseBar = iBarShiftPrevious(NULL, NULL, ethCloseTimeSrv-1*SECOND);    // here openBar is always >= closeBar (checked above)
+      int ethOpenBar  = openBar;                                                 // regular open bar of a 24h session
+      int ethCloseBar = iBarShiftPrevious(NULL, NULL, ethCloseTimeSrv-1*SECOND); // here openBar is always >= closeBar (checked above)
          if (ethCloseBar == EMPTY_VALUE) return(false);
-         if (ethOpenBar <= ethCloseBar) break;                                      // stop if openBar not greater as closeBar (no place for drawing)
+         if (ethOpenBar <= ethCloseBar) break;                                   // stop if openBar not greater as closeBar (no place for drawing)
 
       int ethM15openBar = iBarShiftNext(NULL, PERIOD_M15, ethOpenTimeSrv);
          if (ethM15openBar == EMPTY_VALUE) return(false);
-         if (ethM15openBar == -1)          break;                                   // HISTORY_UPDATE in progress
+         if (ethM15openBar == -1)          break;                                // HISTORY_UPDATE in progress
 
       int ethM15closeBar = iBarShiftPrevious(NULL, PERIOD_M15, ethCloseTimeSrv-1*SECOND);
          if (ethM15closeBar == EMPTY_VALUE)    return(false);
-         if (ethM15closeBar == -1) { drawETH = false; break; }                      // available data is enough, stop drawing of further ETH sessions
-         if (ethM15openBar < ethM15closeBar) break;                                 // available data contains a gap
+         if (ethM15closeBar == -1) { drawETH = false; break; }                   // available data is enough, stop drawing of further ETH sessions
+         if (ethM15openBar < ethM15closeBar) break;                              // available data contains a gap
 
       int ethM15highBar = iHighest(NULL, PERIOD_M15, MODE_HIGH, ethM15openBar-ethM15closeBar+1, ethM15closeBar);
       int ethM15lowBar  = iLowest (NULL, PERIOD_M15, MODE_LOW , ethM15openBar-ethM15closeBar+1, ethM15closeBar);
@@ -543,20 +552,18 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       string ethBgLabel = label +" ETH background";
 
       // drwa ETH background (creates an optical whole in the Superbar)
-      if (ObjectFind(ethBgLabel) == 0)
-         ObjectDelete(ethBgLabel);
+      if (ObjectFind(ethBgLabel) == 0) ObjectDelete(ethBgLabel);
       if (ObjectCreate(ethBgLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
          ObjectSet     (ethBgLabel, OBJPROP_COLOR, barColor);
-         ObjectSet     (ethBgLabel, OBJPROP_BACK, true);                            // Colors of overlapping shapes are mixed with the chart background color according to
-         RegisterObject(ethBgLabel);                                                // gdi32::SetROP2(HDC hdc, R2_NOTXORPEN); see example at function end.
-      }                                                                             // As MQL4 can't read the chart background color, we use a trick: A color mixed with itself
-                                                                                    // gives White. White mixed with another color gives again the original color.
-      // draw ETH bar (fills the whole with the ETH color)                          // With this we create an "optical whole" in the color of the chart background in the SuperBar.
-      if (ObjectFind(ethLabel) == 0)                                                // Then we draw the ETH bar into this "whole". It's color doesn't get mixed with the "whole"'s color
-         ObjectDelete(ethLabel);                                                    // Presumably because the terminal uses a different drawing mode for this mixing.
+         ObjectSet     (ethBgLabel, OBJPROP_BACK, true);
+         RegisterObject(ethBgLabel);                                             // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      }                                                                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+                                                                                 // White. White mixed with another color gives again the original color. With this we create an "optical whole" in the color
+      // draw ETH bar (fills the whole with the ETH color)                       // of the chart background in the SuperBar. Then we draw the ETH bar into this "whole". It's color doesn't get mixed with the
+      if (ObjectFind(ethLabel) == 0) ObjectDelete(ethLabel);                     // "whole"'s color Presumably because the terminal uses a different drawing mode for this mixing.
       if (ObjectCreate(ethLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
          ObjectSet     (ethLabel, OBJPROP_COLOR, ETH.Color);
-         ObjectSet     (ethLabel, OBJPROP_BACK, true);
+         ObjectSet     (ethLabel, OBJPROP_BACK,  true);
          RegisterObject(ethLabel);
       }
 
@@ -567,9 +574,9 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          if (ethCenterBar > ethCloseBar) {
             string ethLabelWithPrice="", ethLabelWithoutPrice=ethLabel +" Close";
 
-            if (ObjectFind(ethLabelWithoutPrice) == 0) {                            // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-               ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);         // holding in the description the dynamic and variable name of the visible marker (2nd object).
-               if (ObjectFind(ethLabelWithPrice) == 0)                              // This way an existing ETH marker can be found and replaced, even if the dynamic name changes.
+            if (ObjectFind(ethLabelWithoutPrice) == 0) {                         // Every marker consists of two objects: an invisible label (1st object) with a fixed name
+               ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);      // holding in the description the dynamic and variable name of the visible marker (2nd object).
+               if (ObjectFind(ethLabelWithPrice) == 0)                           // This way an existing ETH marker can be found and replaced, even if the dynamic name changes.
                   ObjectDelete(ethLabelWithPrice);
                ObjectDelete(ethLabelWithoutPrice);
             }
@@ -595,7 +602,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
    /*
    Example for mixing colors according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN):
    -----------------------------------------------------------------------------
-   What color to assign to a shape to make it appear "Green rgb(0,255,0)" after mixing with chart color rgb(48,248,248) and another shape "rose rgb(255,213,213)"?
+   What color to assign to a shape to make it appear "green rgb(0,255,0)" after mixing with chart color rgb(48,248,248) and another shape "rose rgb(255,213,213)"?
 
       Chart R: 11111000  G: 11111000  B: 11111000 = rgb(248,248,248)
     + Rose     11111111     11010101     11010101 = rgb(255,213,213)
@@ -749,6 +756,7 @@ string InputsToStr() {
                             "UnchangedBars.Color=", ColorToStr(UnchangedBars.Color), ";", NL,
                             "CloseMarker.Color=",   ColorToStr(CloseMarker.Color),   ";", NL,
                             "ETH.Color=",           ColorToStr(ETH.Color),           ";", NL,
-                            "ETH.Symbols=",         DoubleQuoteStr(ETH.Symbols),     ";")
+                            "ETH.Symbols=",         DoubleQuoteStr(ETH.Symbols),     ";", NL,
+                            "Weekend.Symbols=",     DoubleQuoteStr(Weekend.Symbols), ";")
    );
 }
