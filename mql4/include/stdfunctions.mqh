@@ -6953,7 +6953,7 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "ZigZag",
+   double value = iCustom(NULL, timeframe, "ZigZag.rsf",
                           "",                               // string ____________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
