@@ -70,11 +70,13 @@
    int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
+   int  GetAsyncKeyState(int vKey);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
    int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);
    int  GetDlgItem(int hDlg, int nIDDlgItem);
+   int  GetKeyState(int vKey);
    int  GetParent(int hWnd);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
