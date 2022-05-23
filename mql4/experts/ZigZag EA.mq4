@@ -43,9 +43,9 @@
  *
  *
  * TODO:
- *  - rename MACD to "MACD.rsf" and ZigZag to "ZigZag.rsf"
- *  - Instrument Infos: remove maxLeverage constraint
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
+ *  - Instrument Infos: remove maxLeverage constraint
+ *  - rename ZigZag to "ZigZag.rsf"
  *  - fix cmd Chart.ToggleOpenOrders
  *
  *  - on account change:
