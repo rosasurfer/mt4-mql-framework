@@ -1,5 +1,5 @@
 /**
- * A MACD (Moving Average Convergence/Divergence) with support for non-standard Moving Average types.
+ * A MACD with support for non-standard Moving Average types.
  *
  *
  * Moving Average types:

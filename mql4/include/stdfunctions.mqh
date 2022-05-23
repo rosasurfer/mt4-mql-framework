@@ -6514,7 +6514,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD",
+   double value = iCustom(NULL, timeframe, "MACD.rsf",
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
