@@ -883,6 +883,7 @@ string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   InputsToStr();;
 string   IntToHexStr(int value);;
+bool     IsAsyncKeyDown(int vKey);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string path, int mode);;
 bool     IsFileA(string path, int mode);;
