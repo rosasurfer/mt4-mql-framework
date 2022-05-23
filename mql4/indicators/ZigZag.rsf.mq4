@@ -807,7 +807,7 @@ bool IsPossibleDataPumping() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   indicatorName = StrTrim(ProgramName()) +"("+ zigzagPeriods + ifString(PeriodStepper.StepSize, "-dyn", "") +")";
+   indicatorName = "ZigZag("+ zigzagPeriods + ifString(PeriodStepper.StepSize, "-dyn", "") +")";
    IndicatorShortName(indicatorName);
    IndicatorDigits(Digits);
 
