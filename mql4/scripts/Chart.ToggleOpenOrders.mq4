@@ -18,14 +18,16 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
+   string sVirtualKey = ifString(IsAsyncKeyDown(VK_LSHIFT), "|VK_LSHIFT", "");
+
    // check chart for an active EA
    string label = "EA.status";
    if (ObjectFind(label) == 0) {
-      SendChartCommand("EA.command", "toggleOpenOrders");
+      SendChartCommand("EA.command", "toggleOpenOrders"+ sVirtualKey);
       return(last_error);
    }
 
    // no EA found
-   SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders");
+   SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders"+ sVirtualKey);
    return(last_error);
 }
