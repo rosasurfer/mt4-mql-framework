@@ -23,8 +23,12 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
+extern int Account.NumberOfUnits        = 20;       // number of units of MODE_MINLOT size
+extern int Account.MaxRiskPerUnit       = 10;       // max. risk per unit in percent
+extern int Account.MaxMarginUtilization = 75;       // max. margin utilization in percent
+extern int Account.MaxLeverage          = 80;       // max. used leverage
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
@@ -184,7 +188,7 @@ int UpdateInstrumentInfos() {
    double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
 
    double adr             = iADR();
-   double volaADR         = adr/Close[0] * 100;
+   double volaPerADR      = adr/Close[0] * 100;                   // instrument volatility per ADR move in percent
 
    int    lotSize         = MarketInfo(symbol, MODE_LOTSIZE);
    double lotValue        = MathDiv(Close[0], tickSize) * tickValue;
@@ -192,7 +196,7 @@ int UpdateInstrumentInfos() {
    double lotStep         = MarketInfo(symbol, MODE_LOTSTEP);
    double maxLot          = MarketInfo(symbol, MODE_MAXLOT);
 
-   double marginInitial   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (Symbol() == "#Germany40")             marginInitial = 751.93;
+   double marginInitial   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (Symbol() == "#Germany40")             marginInitial = 751.93;    // TODO: implement MarketInfoEx() with overrides
                                                                      if (marginInitial == -92233720368547760.) marginInitial = 0;
    double marginMinLot    = marginInitial * minLot;
    double symbolLeverage  = MathDiv(lotValue, marginInitial);
@@ -232,21 +236,21 @@ int UpdateInstrumentInfos() {
       sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD, "+.1R") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
    }
 
-   int    requiredUnits        = 20;                                 // 20 x minLot
-   int    maxMarginUtilization = 75;                                 // max. 75% margin utilization
-   int    maxLeverage          = 80;                                 // max. resulting leverage for required account
+   int    requiredUnits        = Account.NumberOfUnits;              // units of MODE_MINLOT size
+   int    maxMarginUtilization = Account.MaxMarginUtilization;       // max. margin utilization
+   int    maxLeverage          = Account.MaxLeverage;                // max. used total leverage
    double fullLots             = requiredUnits * minLot;
    double fullLotsMargin       = fullLots * marginMaintnc;           // 1: calculate account size using marginMaintenance
    double accountRequired      = MathDiv(fullLotsMargin, maxMarginUtilization) * 100;
 
    fullLotsMargin = fullLots * marginInitial;                        // check whether account has enough buying power
-   if (accountRequired < fullLotsMargin) {
+   if (accountRequired < fullLotsMargin) {                           //
       accountRequired = fullLotsMargin;                              // 2: if not re-calculate account size using marginInitial
    }
 
    double unleveragedLots  = MathDiv(accountRequired, lotValue);
    double fullLotsLeverage = MathDiv(fullLots, unleveragedLots);     // check whether leverage is in limits
-   if (fullLotsLeverage > maxLeverage) {
+   if (fullLotsLeverage > maxLeverage) {                             //
       accountRequired  = MathDiv(fullLots * lotValue, maxLeverage);  // 3: if not calculate account size using maxLeverage
       fullLotsLeverage = maxLeverage;
    }
@@ -258,7 +262,7 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_TICKSIZE          ], "Tick size:  "               +                         NumberToStr(tickSize, PriceFormat),                                                                                         fontSize, fontName, fontColor);
    ObjectSetText(labels[I_PIPVALUE          ], "Pip value:  "               + ifString(!pipValue, "", NumberToStr(pipValue, ".2+R") +" "+ accountCurrency),                                                                       fontSize, fontName, fontColor);
 
-   ObjectSetText(labels[I_ADR               ], "ADR(20):  "                 + ifString(!adr,   "n/a", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(volaADR, 2), ".0+") +"%"),                                fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ADR               ], "ADR(20):  "                 + ifString(!adr,   "n/a", PipToStr(adr/Pip, true, true) +" = "+ NumberToStr(NormalizeDouble(volaPerADR, 2), ".0+") +"%"),                             fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_STOPLEVEL         ], "Stop level:    "            +                         DoubleToStr(stopLevel,   Digits & 1) +" pip",                                                                               fontSize, fontName, fontColor);
    ObjectSetText(labels[I_FREEZELEVEL       ], "Freeze level: "             +                         DoubleToStr(freezeLevel, Digits & 1) +" pip",                                                                               fontSize, fontName, fontColor);
@@ -281,8 +285,8 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_SWAPSHORT         ], "Swap short: "               + sSwapShort,                                                                                                                                         fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_ACCOUNT_LEVERAGE  ], "Account leverage: "         + ifString(!accountLeverage, "", "1:"+ accountLeverage),                                                                                              fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_ACCOUNT_STOPOUT   ], "Account stopout:  "         + ifString(!accountLeverage, "", ifString(stopoutMode==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),                   fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_REQUIREMENTS      ], "Requirements:     "         + requiredUnits +" x "+ NumberToStr(minLot, ".+") +", max. "+ maxMarginUtilization +"% m.u., max. 1:"+ maxLeverage,                                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_ACCOUNT_STOPOUT   ], "Account stopout:   "        + ifString(!accountLeverage, "", ifString(stopoutMode==MSM_PERCENT, accountStopout +"%", accountStopout +".00 "+ accountCurrency)),                   fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_REQUIREMENTS      ], "Requirements:      "        + requiredUnits +" x "+ NumberToStr(minLot, ".+") +", maxMU="+ maxMarginUtilization +"%, maxL=1:"+ maxLeverage,                                       fontSize, fontName, fontColor);
    ObjectSetText(labels[I_ACCOUNT_REQUIRED  ], "Required account: "         + NumberToStr(MathRound(accountRequired), ",'.2") +" "+ accountCurrency +"  (1:"+ Round(fullLotsLeverage) +")",                                       fontSize, fontName, fontColor);
 
 
@@ -403,3 +407,18 @@ double CalculateLeverage(double lots) {
 
    return(leverage);
 }
+
+
+/**
+ * Return a string representation of the input parameters (for logging purposes).
+ *
+ * @return string
+ */
+string InputsToStr() {
+   return(StringConcatenate("Account.NumberOfUnits=",        Account.NumberOfUnits,        ";", NL,
+                            "Account.MaxRiskPerUnit=",       Account.MaxRiskPerUnit,       ";", NL,
+                            "Account.MaxMarginUtilization=", Account.MaxMarginUtilization, ";", NL,
+                            "Account.MaxLeverage=",          Account.MaxLeverage,          ";")
+   );
+}
+
