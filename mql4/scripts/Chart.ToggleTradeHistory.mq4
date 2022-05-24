@@ -8,6 +8,7 @@ int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
 int __DeinitFlags[];
 #include <core/script.mqh>
 #include <stdfunctions.mqh>
+#include <win32api.mqh>
 
 
 /**
@@ -18,14 +19,16 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
+   string sVirtualKey = ifString(IsAsyncKeyDown(VK_LSHIFT), "|VK_LSHIFT", "");
+
    // check chart for an active EA
    string label = "EA.status";
    if (ObjectFind(label) == 0) {
-      SendChartCommand("EA.command", "toggleTradeHistory");
+      SendChartCommand("EA.command", "toggleTradeHistory"+ sVirtualKey);
       return(last_error);
    }
 
    // no active EA found
-   SendChartCommand("ChartInfos.command", "cmd=ToggleTradeHistory");
+   SendChartCommand("ChartInfos.command", "cmd=ToggleTradeHistory"+ sVirtualKey);
    return(last_error);
 }
