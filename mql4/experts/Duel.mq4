@@ -22,10 +22,9 @@
  *    status file. To do this the user enters the sequence id of the status file in the input field "Sequence.ID". For new
  *    sequences the input field stays empty and sequence id and magic numbers are auto-generated.
  *
- * • GridDirection:  The EA supports two different grid modes. In unidirectional mode the EA creates a grid in only one trade
- *    direction (input "long" or "short"). In birectional mode (input "both") the EA creates two separate grids overlaying
- *    each other (one "long" and one "short" grid). A "long" grid consists of only Buy stop or limit orders, a "short" grid
- *    consists of only Sell stop or limit orders.
+ * • GridDirection:  The EA supports two different grid modes. In unidirectional mode (input "long" or "short") it creates a
+ *    grid for a single trade direction. In birectional mode (input "both") it creates a separate grid for each direction.
+ *    A "long" grid consists of BuyStop and/or BuyLimit orders, a "short" grid of SellStop and/or SellLimit orders.
  *
  * • GridVolatility:
  *
@@ -47,11 +46,10 @@ int __DeinitFlags[];
 extern string   Sequence.ID            = "";                                  // instance to load from a file, format /T?[0-9]{4}/
 
 extern string   GridDirection          = "Long | Short | Both*";              //
-extern string   GridVolatility         = "{percent}";                         // drawdown on a price move of 'VolatilityRange' to the losing side
-extern string   VolatilityRange        = "[{number}] [ADR* | AWR | AMR]";     // pip range or multiple of range identifier for 'GridVolatility' (default: [1]ADR)
-extern string   GridSize               = "";                                  // grid spacing in pip or quote currency (2 | 3.4 | 123.00)
+extern string   GridVolatility         = "{percent}";                         // drawdown on a ADR move to the losing side
+extern string   GridSize               = "";                                  // grid spacing in pip or quote unit (2 | 3.4 | 123.00)
 extern double   UnitSize               = 0;                                   // lots at the first grid level
-extern int      MaxUnits               = 15;                                  // max. number of units per direction
+extern int      MaxUnits               = 10;                                  // max. number of units per direction
 
 extern double   Pyramid.Multiplier     = 1;                                   // unitsize multiplier per grid level on the winning side
 extern double   Martingale.Multiplier  = 0;                                   // unitsize multiplier per grid level on the losing side
@@ -2650,7 +2648,7 @@ bool IsTestSequence() {
 string   prev.Sequence.ID = "";
 string   prev.GridDirection = "";
 string   prev.GridVolatility = "";
-string   prev.VolatilityRange = "";
+string   prev.GridVolatilityRange = "";
 string   prev.GridSize = "";
 double   prev.UnitSize;
 int      prev.MaxUnits;
@@ -2716,7 +2714,6 @@ void BackupInputs() {
    prev.Sequence.ID            = StringConcatenate(Sequence.ID, "");       // string inputs are references to internal C literals...
    prev.GridDirection          = StringConcatenate(GridDirection, "");     // ...and must be copied to break the reference
    prev.GridVolatility         = StringConcatenate(GridVolatility, "");
-   prev.VolatilityRange        = StringConcatenate(VolatilityRange, "");
    prev.GridSize               = StringConcatenate(GridSize, "");
    prev.UnitSize               = UnitSize;
    prev.MaxUnits               = MaxUnits;
@@ -2782,7 +2779,6 @@ void RestoreInputs() {
    Sequence.ID            = prev.Sequence.ID;
    GridDirection          = prev.GridDirection;
    GridVolatility         = prev.GridVolatility;
-   VolatilityRange        = prev.VolatilityRange;
    GridSize               = prev.GridSize;
    UnitSize               = prev.UnitSize;
    MaxUnits               = prev.MaxUnits;
@@ -2937,7 +2933,7 @@ bool ValidateInputs() {
    if (LT(UnitSize, 0))                                                  return(!onInputError("ValidateInputs(11)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (too small)"));
    if (NE(UnitSize, NormalizeLots(UnitSize)))                            return(!onInputError("ValidateInputs(12)  "+ sequence.name +" invalid parameter UnitSize: "+ NumberToStr(UnitSize, ".1+") +" (not a multiple of MODE_LOTSTEP="+ NumberToStr(MarketInfo(Symbol(), MODE_LOTSTEP), ".+") +")"));
    if (!sequenceWasStarted) sequence.unitsize = UnitSize;
-   if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize)) return(!onInputError("ValidateInputs(13)  "+ sequence.name +" insufficient parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
+   if (!sequence.gridvola && (!sequence.gridsize || !sequence.unitsize)) return(!onInputError("ValidateInputs(13)  "+ sequence.name +" missing some parameters GridVolatility=0 / GridSize="+ NumberToStr(sequence.gridsize, ".+") +" / UnitSize="+ NumberToStr(sequence.unitsize, ".+")));
    // MaxUnits
    if (MaxUnits < 1)                                                     return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid parameter MaxUnits: "+ MaxUnits));
 
@@ -3602,7 +3598,6 @@ bool SaveStatus() {
    WriteIniString(file, section, "Sequence.ID",                 /*string  */ Sequence.ID);
    WriteIniString(file, section, "GridDirection",               /*string  */ GridDirection);
    WriteIniString(file, section, "GridVolatility",              /*string  */ NumberToStr(NormalizeDouble(sequence.gridvola, 1), ".+") +"%");
-   WriteIniString(file, section, "VolatilityRange",             /*string  */ VolatilityRange);
    WriteIniString(file, section, "GridSize",                    /*string  */ PipToStr(sequence.gridsize));
    WriteIniString(file, section, "UnitSize",                    /*double  */ NumberToStr(sequence.unitsize, ".+"));
    WriteIniString(file, section, "MaxUnits",                    /*int     */ MaxUnits);
@@ -3908,7 +3903,7 @@ bool ReadStatus() {
    string sSequenceID            = GetIniStringA(file, section, "Sequence.ID",            "");        // string   Sequence.ID            = T1234
    string sGridDirection         = GetIniStringA(file, section, "GridDirection",          "");        // string   GridDirection          = Long
    string sGridVolatility        = GetIniStringA(file, section, "GridVolatility",         "");        // string   GridVolatility         = 30%
-   string sVolatilityRange       = GetIniStringA(file, section, "VolatilityRange",        "");        // string   VolatilityRange        = ADR
+   string sGridVolatilityRange   = GetIniStringA(file, section, "GridVolatilityRange",    "");        // string   GridVolatilityRange    = ADR
    string sGridSize              = GetIniStringA(file, section, "GridSize",               "");        // string   GridSize               = 12.00
    string sUnitSize              = GetIniStringA(file, section, "UnitSize",               "");        // double   UnitSize               = 0.01
    int    iMaxUnits              = GetIniInt    (file, section, "MaxUnits"                  );        // int      MaxUnits               = 15
@@ -3928,7 +3923,6 @@ bool ReadStatus() {
    Sequence.ID            = sSequenceID;
    GridDirection          = sGridDirection;
    GridVolatility         = sGridVolatility;
-   VolatilityRange        = sVolatilityRange;
    GridSize               = sGridSize;
    UnitSize               = StrToDouble(sUnitSize);
    MaxUnits               = iMaxUnits;
@@ -4688,7 +4682,6 @@ string InputsToStr() {
    return(StringConcatenate("Sequence.ID=",            DoubleQuoteStr(Sequence.ID),                  ";", NL,
                             "GridDirection=",          DoubleQuoteStr(GridDirection),                ";", NL,
                             "GridVolatility=",         DoubleQuoteStr(GridVolatility),               ";", NL,
-                            "VolatilityRange=",        DoubleQuoteStr(VolatilityRange),              ";", NL,
                             "GridSize=",               DoubleQuoteStr(GridSize),                     ";", NL,
                             "UnitSize=",               NumberToStr(UnitSize, ".1+"),                 ";", NL,
                             "MaxUnits=",               MaxUnits,                                     ";", NL,
