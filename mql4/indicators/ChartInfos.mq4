@@ -1858,7 +1858,7 @@ bool CalculateUnitSize() {
    // recalculate equity used for calculations
    double accountEquity = AccountEquity()-AccountCredit();
    if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
-   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number, false);
+   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    // recalculate lot value and unleveraged unitsize
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
