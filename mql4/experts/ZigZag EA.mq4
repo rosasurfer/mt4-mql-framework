@@ -43,6 +43,7 @@
  *
  *
  * TODO:
+ *  - ChartInfos: prevent duplicate events when running multiple terminals (order events, signals)
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - Instrument Infos: remove maxLeverage constraint
  *  - fix cmd Chart.ToggleOpenOrders
@@ -142,7 +143,6 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - ChartInfos: prevent duplicate event logging of multiple terminals
  *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint

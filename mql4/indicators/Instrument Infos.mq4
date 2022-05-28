@@ -1,10 +1,9 @@
 /**
- * Display instrument specifications and more.
+ * Display instrument specifications and related infos.
  *
  *
  * TODO:
  *  - rewrite "Margin hedged" display: from 0% (full reduction) to 100% (no reduction)
- *  - add money volatility per "Index Point/Pip/Tick" of min-lot
  *  - replace usage of PipPoints by PipTicks
  *  - implement MarketInfoEx()
  *  - change "Pip value" to "Pip/Point/Tick value"
@@ -23,10 +22,12 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int Account.NumberOfUnits        = 20;       // number of units of MODE_MINLOT size
-extern int Account.MaxRiskPerUnit       = 10;       // max. risk per unit in percent
-extern int Account.MaxMarginUtilization = 75;       // max. margin utilization in percent
-extern int Account.MaxLeverage          = 80;       // max. used leverage
+extern int    AccountSize.NumberOfUnits    = 20;   // number of available bullets of MODE_MINLOT size
+extern int    AccountSize.MaxRiskPerUnit   = 10;   // max. risk per unit in percent on an ADR move to the losing side
+extern int    AccountSize.MaxMarginUtilize = 75;   // max. total margin utilization in percent
+extern int    AccountSize.MaxLeverage      = 80;   // max. used total leverage
+
+extern double StopDistance                 = 20;   // distance in pip for range value of minLot size
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +42,7 @@ color  fontColorDisabled = Gray;
 string fontName          = "Tahoma";
 int    fontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","MINLOT","LOTSTEP","MAXLOT","MARGIN_INITIAL","MARGIN_MINLOT","MARGIN_MAINTENANCE","MARGIN_HEDGED","SPREAD","COMMISSION","TOTAL_COST","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","ACCOUNT_STOPOUT","I_REQUIREMENTS","ACCOUNT_REQUIRED","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
+string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","LOTSTEP","MINLOT","STOPDISTANCE","MAXLOT","MARGIN_INITIAL","MARGIN_MINLOT","MARGIN_MAINTENANCE","MARGIN_HEDGED","SPREAD","COMMISSION","TOTAL_COST","SWAPLONG","SWAPSHORT","ACCOUNT_LEVERAGE","ACCOUNT_STOPOUT","I_REQUIREMENTS","ACCOUNT_REQUIRED","SERVER_NAME","SERVER_TIMEZONE","SERVER_SESSION"};
 
 #define I_TRADEALLOWED         0
 #define I_DIGITS               1
@@ -51,25 +52,26 @@ string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVE
 #define I_STOPLEVEL            5
 #define I_FREEZELEVEL          6
 #define I_LOTSIZE              7
-#define I_MINLOT               8
-#define I_LOTSTEP              9
-#define I_MAXLOT              10
-#define I_MARGIN_INITIAL      11
-#define I_MARGIN_MINLOT       12
-#define I_MARGIN_MAINTENANCE  13
-#define I_MARGIN_HEDGED       14
-#define I_SPREAD              15
-#define I_COMMISSION          16
-#define I_TOTAL_COST          17
-#define I_SWAPLONG            18
-#define I_SWAPSHORT           19
-#define I_ACCOUNT_LEVERAGE    20
-#define I_ACCOUNT_STOPOUT     21
-#define I_REQUIREMENTS        22
-#define I_ACCOUNT_REQUIRED    23
-#define I_SERVER_NAME         24
-#define I_SERVER_TIMEZONE     25
-#define I_SERVER_SESSION      26
+#define I_LOTSTEP              8
+#define I_MINLOT               9
+#define I_STOPDISTANCE        10
+#define I_MAXLOT              11
+#define I_MARGIN_INITIAL      12
+#define I_MARGIN_MINLOT       13
+#define I_MARGIN_MAINTENANCE  14
+#define I_MARGIN_HEDGED       15
+#define I_SPREAD              16
+#define I_COMMISSION          17
+#define I_TOTAL_COST          18
+#define I_SWAPLONG            19
+#define I_SWAPSHORT           20
+#define I_ACCOUNT_LEVERAGE    21
+#define I_ACCOUNT_STOPOUT     22
+#define I_REQUIREMENTS        23
+#define I_ACCOUNT_REQUIRED    24
+#define I_SERVER_NAME         25
+#define I_SERVER_TIMEZONE     26
+#define I_SERVER_SESSION      27
 
 
 /**
@@ -115,8 +117,7 @@ int CreateChartObjects() {
 
    // background rectangles
    string label = ProgramName() +"."+ n +".background";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
+   if (ObjectFind(label) == 0) ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
@@ -128,8 +129,7 @@ int CreateChartObjects() {
 
    n++;
    label = ProgramName() +"."+ n +".background";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
+   if (ObjectFind(label) == 0) ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
@@ -141,19 +141,27 @@ int CreateChartObjects() {
 
    // text labels: lines with some additional margin-top
    int marginTop[] = {I_DIGITS, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGIN_INITIAL, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
-   int size   = ArraySize(labels);
-   int yCoord = yPos+4;
+   int size = ArraySize(labels);
+   int xCoord, yCoord = yPos + 4;
 
    for (int i=0; i < size; i++) {
       n++;
       label = ProgramName() +"."+ n +"."+ labels[i];
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
+      if (ObjectFind(label) == 0) ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xPos+6);
+         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+
+         if (labels[i] == "STOPDISTANCE") {
+            xCoord = xPos + 148;
+            yCoord = yCoord - 16;
+         }
+         else {
+            xCoord = xPos + 6;
+         }
          if (IntInArray(marginTop, i)) yCoord += 8;
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*16);
+
+         ObjectSet(label, OBJPROP_XDISTANCE, xCoord);
+         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
          ObjectSetText(label, " ", fontSize, fontName);
          RegisterObject(label);
          labels[i] = label;
@@ -180,37 +188,42 @@ int UpdateInstrumentInfos() {
    int    stopoutMode     = AccountStopoutMode();
 
    // calculate needed values
-   double tickSize        = MarketInfo(symbol, MODE_TICKSIZE);
-   double tickValue       = MarketInfo(symbol, MODE_TICKVALUE);
-   double pointValue      = MathDiv(tickValue, MathDiv(tickSize, Point));
-   double pipValue        = PipPoints * pointValue;
-   double stopLevel       = MarketInfo(symbol, MODE_STOPLEVEL)  /PipPoints;
-   double freezeLevel     = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
+   double tickSize          = MarketInfo(symbol, MODE_TICKSIZE);
+   double tickValue         = MarketInfo(symbol, MODE_TICKVALUE);
+   double pointValue        = MathDiv(tickValue, MathDiv(tickSize, Point));
+   double pipValue          = PipPoints * pointValue;
+   double stopLevel         = MarketInfo(symbol, MODE_STOPLEVEL)  /PipPoints;
+   double freezeLevel       = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
 
-   double adr             = iADR();
-   double volaPerADR      = adr/Close[0] * 100;                   // instrument volatility per ADR move in percent
+   double adr               = iADR();
+   double volaPerADR        = adr/Close[0] * 100;                   // instrument volatility per ADR move in percent
 
-   int    lotSize         = MarketInfo(symbol, MODE_LOTSIZE);
-   double lotValue        = MathDiv(Close[0], tickSize) * tickValue;
-   double minLot          = MarketInfo(symbol, MODE_MINLOT);
-   double lotStep         = MarketInfo(symbol, MODE_LOTSTEP);
-   double maxLot          = MarketInfo(symbol, MODE_MAXLOT);
+   int    lotSize           = MarketInfo(symbol, MODE_LOTSIZE);
+   double lotValue          = MathDiv(Close[0], tickSize) * tickValue;
+   double lotStep           = MarketInfo(symbol, MODE_LOTSTEP);
+   double minLot            = MarketInfo(symbol, MODE_MINLOT);
+   double maxLot            = MarketInfo(symbol, MODE_MAXLOT);
 
-   double marginInitial   = MarketInfo(symbol, MODE_MARGINREQUIRED); if (Symbol() == "#Germany40")             marginInitial = 751.93;    // TODO: implement MarketInfoEx() with overrides
-                                                                     if (marginInitial == -92233720368547760.) marginInitial = 0;
-   double marginMinLot    = marginInitial * minLot;
-   double symbolLeverage  = MathDiv(lotValue, marginInitial);
-   double marginMaintnc   = ifDouble(stopoutMode==MSM_PERCENT, marginInitial * accountStopout/100, marginInitial);
-   double maintncLeverage = MathDiv(lotValue, marginMaintnc);
-   double marginHedged    = MathDiv(MarketInfo(symbol, MODE_MARGINHEDGED), lotSize) * 100;
+   double stopDistance      = StopDistance * Pip;
+   double stopDistanceValue = stopDistance/Pip * pipValue * minLot;
+   double accountEquity     = AccountEquity() - AccountCredit() + GetExternalAssets();
+   double stopDistancePct   = NormalizeDouble(stopDistanceValue / accountEquity * 100, 1);
 
-   double spreadPip       = MarketInfo(symbol, MODE_SPREAD)/PipPoints;
-   double commission      = GetCommission();
-   double commissionPip   = NormalizeDouble(MathDiv(commission, pipValue), Max(Digits+1, 2));
+   double marginInitial     = MarketInfo(symbol, MODE_MARGINREQUIRED); if (Symbol() == "#Germany40")             marginInitial = 751.93;    // TODO: implement MarketInfoEx() with overrides
+                                                                       if (marginInitial == -92233720368547760.) marginInitial = 0;
+   double marginMinLot      = marginInitial * minLot;
+   double symbolLeverage    = MathDiv(lotValue, marginInitial);
+   double marginMaintnc     = ifDouble(stopoutMode==MSM_PERCENT, marginInitial * accountStopout/100, marginInitial);
+   double maintncLeverage   = MathDiv(lotValue, marginMaintnc);
+   double marginHedged      = MathDiv(MarketInfo(symbol, MODE_MARGINHEDGED), lotSize) * 100;
 
-   int    swapMode        = MarketInfo(symbol, MODE_SWAPTYPE);
-   double swapLong        = MarketInfo(symbol, MODE_SWAPLONG);
-   double swapShort       = MarketInfo(symbol, MODE_SWAPSHORT);
+   double spreadPip         = MarketInfo(symbol, MODE_SPREAD)/PipPoints;
+   double commission        = GetCommission();
+   double commissionPip     = NormalizeDouble(MathDiv(commission, pipValue), Max(Digits+1, 2));
+
+   int    swapMode          = MarketInfo(symbol, MODE_SWAPTYPE);
+   double swapLong          = MarketInfo(symbol, MODE_SWAPLONG);
+   double swapShort         = MarketInfo(symbol, MODE_SWAPSHORT);
    double swapLongD, swapShortD, swapLongY, swapShortY;
    string sSwapLong="", sSwapShort="";
 
@@ -236,9 +249,9 @@ int UpdateInstrumentInfos() {
       sSwapShort = ifString(!swapShort, "none", NumberToStr(swapShortD, "+.1R") +" pip = "+ NumberToStr(swapShortY, "+.1R") +"% p.a.");
    }
 
-   int    requiredUnits        = Account.NumberOfUnits;              // units of MODE_MINLOT size
-   int    maxMarginUtilization = Account.MaxMarginUtilization;       // max. margin utilization
-   int    maxLeverage          = Account.MaxLeverage;                // max. used total leverage
+   int    requiredUnits        = AccountSize.NumberOfUnits;          // units of MODE_MINLOT size
+   int    maxMarginUtilization = AccountSize.MaxMarginUtilize;       // max. margin utilization
+   int    maxLeverage          = AccountSize.MaxLeverage;            // max. used total leverage
    double fullLots             = requiredUnits * minLot;
    double fullLotsMargin       = fullLots * marginMaintnc;           // 1: calculate account size using marginMaintenance
    double accountRequired      = MathDiv(fullLotsMargin, maxMarginUtilization) * 100;
@@ -268,9 +281,10 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_FREEZELEVEL       ], "Freeze level: "             +                         DoubleToStr(freezeLevel, Digits & 1) +" pip",                                                                               fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_LOTSIZE           ], "Lot size:  "                + ifString(!lotSize,  "", NumberToStr(lotSize, ",'.+") +" unit"+ Pluralize(lotSize)),                                                                 fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MINLOT            ], "Min lot:   "                + ifString(!minLot,   "", NumberToStr(minLot,  ".+")),                                                                                                fontSize, fontName, fontColor);
    ObjectSetText(labels[I_LOTSTEP           ], "Lot step: "                 + ifString(!lotStep,  "", NumberToStr(lotStep, ".+")),                                                                                                fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MINLOT            ], "Min lot:   "                + ifString(!minLot,   "", NumberToStr(minLot,  ".+")), fontSize, fontName, fontColor);
    ObjectSetText(labels[I_MAXLOT            ], "Max lot:  "                 + ifString(!maxLot,   "", NumberToStr(maxLot,  ",'.+")),                                                                                              fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_STOPDISTANCE      ],                                NumberToStr(StopDistance, ".+") +" pip = "+ NumberToStr(stopDistancePct, ".+") +"%",                                                                fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_MARGIN_INITIAL    ], "Margin initial:            "+ ifString(!marginInitial, "", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                       fontSize, fontName, fontColor);
    ObjectSetText(labels[I_MARGIN_MINLOT     ], "Margin minLot:         "    + ifString(!marginMinLot,  "", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                             fontSize, fontName, fontColor);
@@ -415,10 +429,10 @@ double CalculateLeverage(double lots) {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Account.NumberOfUnits=",        Account.NumberOfUnits,        ";", NL,
-                            "Account.MaxRiskPerUnit=",       Account.MaxRiskPerUnit,       ";", NL,
-                            "Account.MaxMarginUtilization=", Account.MaxMarginUtilization, ";", NL,
-                            "Account.MaxLeverage=",          Account.MaxLeverage,          ";")
+   return(StringConcatenate("AccountSize.NumberOfUnits=",    AccountSize.NumberOfUnits,    ";", NL,
+                            "AccountSize.MaxRiskPerUnit=",   AccountSize.MaxRiskPerUnit,   ";", NL,
+                            "AccountSize.MaxMarginUtilize=", AccountSize.MaxMarginUtilize, ";", NL,
+                            "AccountSize.MaxLeverage=",      AccountSize.MaxLeverage,      ";")
    );
 }
 
