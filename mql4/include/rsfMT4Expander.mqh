@@ -81,6 +81,10 @@
    bool     IsJunctionA(string path);
    bool     IsSymlinkA(string path);
 
+   // math
+   int      DoubleExp(double value);
+   double   MathLog10(double value);
+
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
