@@ -4237,7 +4237,7 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
 bool onPositionOpen(double data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size) return(true);
+   if (!isLogInfo || !size || This.IsTesting()) return(true);
 
    OrderPush();
    for (int i=0; i < size; i++) {
@@ -4288,7 +4288,7 @@ bool onPositionOpen(double data[][]) {
 bool onPositionClose(int data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size) return(true);
+   if (!isLogInfo || !size || This.IsTesting()) return(true);
 
    string sCloseTypeDescr[] = {"", " [tp]", " [sl]", " [so]"};
    OrderPush();
@@ -4349,7 +4349,7 @@ bool onPositionClose(int data[][]) {
  */
 bool onOrderFail(int tickets[]) {
    int size = ArraySize(tickets);
-   if (!size) return(true);
+   if (!size || This.IsTesting()) return(true);
 
    bool eventLogged = false;
    OrderPush();
@@ -4394,6 +4394,8 @@ bool onOrderFail(int tickets[]) {
  * @return bool
  */
 bool IsOrderEventListener(string symbol) {
+   if (!hWndDesktop) return(false);
+
    string name = orderTracker.key + StrToLower(symbol);
    return(GetPropA(hWndDesktop, name) > 0);
 }
@@ -4407,6 +4409,8 @@ bool IsOrderEventListener(string symbol) {
  * @return bool
  */
 bool IsOrderEventLogged(string event) {
+   if (!hWndDesktop) return(false);
+
    string name = orderTracker.key + event;
    return(GetPropA(hWndDesktop, name) != 0);
 }
@@ -4421,6 +4425,8 @@ bool IsOrderEventLogged(string event) {
  * @return bool - success status
  */
 bool SetOrderEventLogged(string event, bool status) {
+   if (!hWndDesktop) return(false);
+
    string name = orderTracker.key + event;
    int value = status!=0;
    return(SetPropA(hWndDesktop, name, status) != 0);

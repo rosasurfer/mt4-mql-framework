@@ -44,7 +44,6 @@
  *
  * TODO:
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
- *  - ChartInfos: prevent duplicate signals when running multiple terminals
  *  - Instrument Infos: remove maxLeverage constraint
  *  - fix cmd Chart.ToggleOpenOrders
  *

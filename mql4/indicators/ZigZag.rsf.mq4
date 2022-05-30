@@ -74,6 +74,7 @@ extern bool   Signal.onReversal.SMS          = false;
 #include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
+#include <win32api.mqh>
 
 // indicator buffer ids
 #define MODE_SEMAPHORE_OPEN        ZigZag.MODE_SEMAPHORE_OPEN  //  0: semaphore open price
@@ -740,7 +741,8 @@ void SetTrend(int from, int to, int value, bool resetReversal) {
 
 
 /**
- * An event handler signaling new ZigZag reversals.
+ * An event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple terminals running in
+ * parallel.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  * @param  int bar       - bar of the reversal (the current or the closed bar)
@@ -755,15 +757,14 @@ bool onReversal(int direction, int bar) {
    if (IsPossibleDataPumping())                 return(true);                 // skip signals during possible data pumping
 
    // check wether the event was already signaled
-   int    hWnd  = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetTerminalMainWindow());
-   string sEvent = "rsf."+ Symbol() +","+ PeriodDescription() +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
+   int hWnd = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetDesktopWindow());
+   string sEvent = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
    bool isSignaled = false;
-   if (hWnd > 0) isSignaled = (GetWindowIntegerA(hWnd, sEvent) != 0);
+   if (hWnd > 0) isSignaled = (GetPropA(hWnd, sEvent) != 0);
 
    int error = NO_ERROR;
 
    if (!isSignaled) {
-      if (hWnd > 0) SetWindowIntegerA(hWnd, sEvent, 1);                       // mark as signaled
       string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal(Periods="+ zigzagPeriods +")  "+ message);
@@ -775,6 +776,7 @@ bool onReversal(int direction, int bar) {
          if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
          if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
       }
+      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
    }
    return(!error);
 }
