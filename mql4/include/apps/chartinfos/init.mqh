@@ -175,11 +175,13 @@ bool OrderTracker.Configure() {
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
 
       // register the indicator as order event listener
-      hWndDesktop      = GetDesktopWindow();
-      orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
-      string name = orderTracker.key + StrToLower(Symbol());
-      int counter = Max(GetPropA(hWndDesktop, name), 0) + 1;
-      SetPropA(hWndDesktop, name, counter);
+      if (!This.IsTesting()) {
+         hWndDesktop = GetDesktopWindow();
+         orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
+         string name = orderTracker.key + StrToLower(Symbol());
+         int counter = Max(GetPropA(hWndDesktop, name), 0) + 1;
+         SetPropA(hWndDesktop, name, counter);
+      }
    }
    return(!catch("OrderTracker.Configure(2)"));
 }
