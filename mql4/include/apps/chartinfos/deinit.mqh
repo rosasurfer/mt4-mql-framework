@@ -15,9 +15,9 @@ int onDeinit() {
 
    // unregister the order event listener
    if (orderTracker.enabled) {
-      string name = "rsf::order-tracker::"+ StrToLower(Symbol());
-      int counter = Max(GetWindowIntegerA(hWndTerminal, name), 1) - 1;
-      SetWindowIntegerA(hWndTerminal, name, counter);
+      string name = orderTracker.key + StrToLower(Symbol());
+      int counter = Max(GetPropA(hWndDesktop, name), 1) - 1;
+      SetPropA(hWndDesktop, name, counter);
    }
 
    QC.StopChannels();
