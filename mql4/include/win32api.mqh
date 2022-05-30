@@ -78,6 +78,7 @@
    int  GetDlgItem(int hDlg, int nIDDlgItem);
    int  GetKeyState(int vKey);
    int  GetParent(int hWnd);
+   int  GetPropA(int hWnd, string lpString);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
@@ -90,8 +91,10 @@
    bool RedrawWindow(int hWnd, int lpRectUpdate, int hRgnUpdate, int flags);
    int  RegisterWindowMessageA(string lpString);
    int  ReleaseDC(int hWnd, int hDC);
+   int  RemovePropA(int hWnd, string lpString);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    int  SetActiveWindow(int hWnd);
+   bool SetPropA(int hWnd, string lpString, int hData);
    bool SetWindowTextA(int hWnd, string lpString);
    bool ShowWindow(int hWnd, int nCmdShow);
 
