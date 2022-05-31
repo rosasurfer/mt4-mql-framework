@@ -741,8 +741,8 @@ void SetTrend(int from, int to, int value, bool resetReversal) {
 
 
 /**
- * An event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple terminals running in
- * parallel.
+ * An event handler signaling new ZigZag reversals. Prevents duplicate signals triggered by multiple parallel running
+ * terminals.
  *
  * @param  int direction - reversal direction: D_LONG | D_SHORT
  * @param  int bar       - bar of the reversal (the current or the closed bar)
@@ -750,7 +750,7 @@ void SetTrend(int from, int to, int value, bool resetReversal) {
  * @return bool - success status
  */
 bool onReversal(int direction, int bar) {
-   if (!signalReversal && !IsLogInfo())         return(false);
+   if (!signalReversal)                         return(false);
    if (ChangedBars > 2)                         return(false);
    if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onReversal(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    if (bar > 1)                                 return(!catch("onReversal(2)  illegal parameter bar: "+ bar, ERR_ILLEGAL_STATE));
@@ -769,13 +769,11 @@ bool onReversal(int direction, int bar) {
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal(Periods="+ zigzagPeriods +")  "+ message);
 
-      if (signalReversal) {
-         message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
-         if (signalReversal.Popup)           Alert(message);                  // before "Sound" to get drowned out by the next sound
-         if (signalReversal.Sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.SoundUp, signalReversal.SoundDown));
-         if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
-         if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
-      }
+      message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
+      if (signalReversal.Popup)           Alert(message);                     // before "Sound" to get drowned out by the next sound
+      if (signalReversal.Sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.SoundUp, signalReversal.SoundDown));
+      if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
+      if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
    }
    return(!error);
