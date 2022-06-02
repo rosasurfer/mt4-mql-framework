@@ -13,7 +13,6 @@
  *
  *
  * TODO:
- *  - drop obsolete input Donchian.ShowStopSegments
  *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
  *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
  *  - rename input Donchian.MarkFirstCrossing to Donchian.DrawFirstCrossing
@@ -46,7 +45,6 @@ extern bool   ZigZag.ShowTrail               = true;                    // wheth
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowFullChannel       = true;                    // whether to display the full Donchian channel
-extern bool   Donchian.ShowStopSegments      = false;                   // whether to display only stop segments of the Donchian channel
 extern bool   Donchian.ShowAllCrossings      = true;                    // whether to display all channel crossings or only crossings exceeding the former High/Low
 extern bool   Donchian.MarkFirstCrossing     = true;                    // whether to mark the first or the last channel crossing price inside a bar
 extern color  Donchian.UpperBand.Color       = DodgerBlue;
@@ -416,14 +414,6 @@ int onTick() {
       if (Donchian.ShowFullChannel) {
          upperBandVisible[bar] = upperBand[bar];
          lowerBandVisible[bar] = lowerBand[bar];
-      }
-      else if (Donchian.ShowStopSegments) {
-         if (knownTrend[bar] < 0 || !reversal[bar]) {
-            upperBandVisible[bar] = upperBand[bar];
-         }
-         if (knownTrend[bar] > 0 || !reversal[bar]) {
-            lowerBandVisible[bar] = lowerBand[bar];
-         }
       }
 
       // populate visible crossing buffers
@@ -827,7 +817,7 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_OPEN,  Semaphores.WingDingsSymbol);
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, Semaphores.WingDingsSymbol);
 
-   drawType = ifInt(Donchian.ShowFullChannel || Donchian.ShowStopSegments, DRAW_LINE, DRAW_NONE);
+   drawType = ifInt(Donchian.ShowFullChannel, DRAW_LINE, DRAW_NONE);
    SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color);
    SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color);
 
@@ -853,7 +843,6 @@ string InputsToStr() {
                             "ZigZag.ShowTrail=",           BoolToStr(ZigZag.ShowTrail),           ";"+ NL,
 
                             "Donchian.ShowFullChannel=",   BoolToStr(Donchian.ShowFullChannel),   ";"+ NL,
-                            "Donchian.ShowStopSegments=",  BoolToStr(Donchian.ShowStopSegments),  ";"+ NL,
                             "Donchian.ShowAllCrossings=",  BoolToStr(Donchian.ShowAllCrossings),  ";"+ NL,
                             "Donchian.MarkFirstCrossing=", BoolToStr(Donchian.MarkFirstCrossing), ";"+ NL,
                             "Donchian.UpperBand.Color=",   ColorToStr(Donchian.UpperBand.Color),  ";"+ NL,
