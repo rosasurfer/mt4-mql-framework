@@ -5,7 +5,7 @@
  *
  *
  * TODO:
- *  - instead of always using M5 check bar aligned of all timeframes and use the largest correctly aligned one
+ *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always using M5)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -124,6 +124,10 @@ int onInit() {
 int onTick() {
    double ratesM1[][6], ratesM5[][6];
    int changedBarsM1, changedBarsM5;
+
+   //if (IsBarOpen(PERIOD_M1))  debug("onTick(0.1)   BarOpen(M1) = 1");
+   //if (IsBarOpen(PERIOD_M5))  debug("onTick(0.2)   BarOpen(M5) = 1");
+   //if (IsBarOpen(PERIOD_M15)) debug("onTick(0.3)   BarOpen(M15) = 1");
 
    if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
 
