@@ -97,11 +97,13 @@
 
    // array functions
    //bool   InitializeCharArray  (char   &values[], int size, char   initValue, int from, int count);
+   //bool   InitializeShortArray (short  &values[], int size, short  initValue, int from, int count);
    //bool   InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);
    //bool   InitializeFloatArray (float  &values[], int size, float  initValue, int from, int count);
    //bool   InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
 
    //bool   ShiftCharIndicatorBuffer  (char   &buffer[], int size, int count, char   emptyValue);
+   //bool   ShiftShortIndicatorBuffer (short  &buffer[], int size, int count, short  emptyValue);
    //bool   ShiftIntIndicatorBuffer   (int    &buffer[], int size, int count, int    emptyValue);
    //bool   ShiftFloatIndicatorBuffer (float  &buffer[], int size, int count, float  emptyValue);
    //bool   ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
