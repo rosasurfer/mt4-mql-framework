@@ -9928,7 +9928,6 @@ ZigZag.Color=16711680
 ZigZag.ShowTrail=1
 Donchian.ShowChannel=1
 Donchian.ShowAllCrossings=1
-Donchian.MarkFirstCrossing=1
 Donchian.UpperBand.Color=16748574
 Donchian.LowerBand.Color=16711935
 </inputs>

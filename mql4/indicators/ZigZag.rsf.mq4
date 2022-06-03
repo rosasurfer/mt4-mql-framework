@@ -15,7 +15,7 @@
  * TODO:
  *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
  *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
- *  - rename input Donchian.MarkFirstCrossing to Donchian.DrawFirstCrossing
+ *  - drop obsolete arrrays upperCrossExit[]/lowerCrossExit[]
  *
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
@@ -46,7 +46,6 @@ extern bool   ZigZag.ShowTrail               = true;                    // wheth
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern bool   Donchian.ShowAllCrossings      = true;                    // whether to display all channel crossings or only crossings exceeding the former High/Low
-extern bool   Donchian.MarkFirstCrossing     = true;                    // whether to mark the first or the last channel crossing price inside a bar
 extern color  Donchian.UpperBand.Color       = DodgerBlue;
 extern color  Donchian.LowerBand.Color       = Magenta;
 
@@ -418,14 +417,8 @@ int onTick() {
 
       // populate visible crossing buffers
       if (Donchian.ShowAllCrossings || (ZigZag.ShowTrail && !unknownTrend[bar])) {
-         if (Donchian.MarkFirstCrossing) {
-            upperCross[bar] = upperCrossEntry[bar];
-            lowerCross[bar] = lowerCrossEntry[bar];
-         }
-         else {
-            upperCross[bar] = upperCrossExit[bar];
-            lowerCross[bar] = lowerCrossExit[bar];
-         }
+         upperCross[bar] = upperCrossEntry[bar];
+         lowerCross[bar] = lowerCrossEntry[bar];
       }
    }
 
@@ -844,7 +837,6 @@ string InputsToStr() {
 
                             "Donchian.ShowChannel=",       BoolToStr(Donchian.ShowChannel),       ";"+ NL,
                             "Donchian.ShowAllCrossings=",  BoolToStr(Donchian.ShowAllCrossings),  ";"+ NL,
-                            "Donchian.MarkFirstCrossing=", BoolToStr(Donchian.MarkFirstCrossing), ";"+ NL,
                             "Donchian.UpperBand.Color=",   ColorToStr(Donchian.UpperBand.Color),  ";"+ NL,
                             "Donchian.LowerBand.Color=",   ColorToStr(Donchian.LowerBand.Color),  ";"+ NL,
 
