@@ -6943,13 +6943,12 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
  * @param  int  timeframe               - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int  periods                 - indicator parameter
  * @param  bool calcAllChannelCrossings - indicator parameter
- * @param  bool markFirstCrossing       - indicator parameter
  * @param  int  iBuffer                 - indicator buffer index of the value to return
  * @param  int  iBar                    - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool markFirstCrossing, int iBuffer, int iBar) {
+double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6964,7 +6963,6 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
                           "",                               // string ____________________
                           true,                             // bool   Donchian.ShowChannel
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
-                          markFirstCrossing,                // bool   Donchian.MarkFirstCrossing
                           DodgerBlue,                       // color  Donchian.UpperBand.Color
                           DodgerBlue,                       // color  Donchian.LowerBand.Color
 
@@ -7149,7 +7147,7 @@ void __DummyCalls() {
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
-   icZigZag(NULL, NULL, NULL, NULL, NULL, NULL);
+   icZigZag(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);

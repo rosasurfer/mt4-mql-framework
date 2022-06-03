@@ -674,8 +674,8 @@ bool IsZigZagSignal(int &signal) {
  * @return bool - success status
  */
 bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
-   reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
+   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_TREND,    bar));
+   reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
 }
 
@@ -703,7 +703,7 @@ int GetZigZagTrend(int bar) {
  * @return double - channel value or NULL (0) in case of errors
  */
 double GetZigZagChannel(int bar, int mode) {
-   return(icZigZag(NULL, ZigZag.Periods, false, false, mode, bar));
+   return(icZigZag(NULL, ZigZag.Periods, false, mode, bar));
 }
 
 
