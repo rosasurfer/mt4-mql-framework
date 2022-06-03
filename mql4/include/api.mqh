@@ -882,6 +882,7 @@ bool     InitializeCharArray  (char   &values[], int size, char   initValue, int
 bool     InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);;
 bool     InitializeFloatArray (float  &values[], int size, float  initValue, int from, int count);;
 bool     InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);;
+bool     InitializeLongArray  (long   &values[], int size, long   initValue, int from, int count);;
 bool     InitializeShortArray (short  &values[], int size, short  initValue, int from, int count);;
 string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
@@ -946,6 +947,7 @@ bool     ShiftCharIndicatorBuffer  (char   &buffer[], int size, int count, char 
 bool     ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);;
 bool     ShiftFloatIndicatorBuffer (float  &buffer[], int size, int count, float  emptyValue);;
 bool     ShiftIntIndicatorBuffer   (int    &buffer[], int size, int count, int    emptyValue);;
+bool     ShiftLongIndicatorBuffer  (long   &buffer[], int size, int count, long   emptyValue);;
 bool     ShiftShortIndicatorBuffer (short  &buffer[], int size, int count, short  emptyValue);;
 int      ShowStatus(int error);;
 string   ShowWindowCmdToStr(int cmdShow);;
