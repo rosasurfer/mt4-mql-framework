@@ -41,14 +41,14 @@
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    /*
    bool SystemTimeToTzSpecificLocalTime(
-      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,  // pointer to time zone of interest
-      LPSYSTEMTIME lpUniversalTime,                   // pointer to universal time of interest
-      LPSYSTEMTIME lpLocalTime                        // pointer to structure to receive local time
+      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,              // pointer to time zone of interest
+      LPSYSTEMTIME lpUniversalTime,                               // pointer to universal time of interest
+      LPSYSTEMTIME lpLocalTime                                    // pointer to structure to receive local time
    );
    */
    int  LoadLibraryA(string lpLibFileName);
    bool MoveFileA(string lpOldFileName, string lpNewFileName);
-   void OutputDebugStringA(string lpMessage);         // funktioniert nur für Admins zuverlässig
+   void OutputDebugStringA(string lpMessage);                     // without admin rights calls are ignored
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, int alertable);

@@ -15,8 +15,9 @@ string JoinBools(bool values[], string separator = ", ") {
    ArrayResize(strings, size);
 
    for (int i=0; i < size; i++) {
-      if (values[i]) strings[i] = "true";
-      else           strings[i] = "false";
+      if      (values[i] == 0) strings[i] = "false";
+      else if (values[i] == 1) strings[i] = "true";
+      else                     strings[i] = values[i];   // <bool> vars may contain non-boolean values
    }
 
    string result = JoinStrings(strings, separator);
