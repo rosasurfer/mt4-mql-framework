@@ -18,7 +18,7 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
-   string sVirtualKey = ifString(IsAsyncKeyDown(VK_LSHIFT), "|VK_LSHIFT", "");
+   string sVirtualKey = ifString(IsVirtualKeyDown(VK_LSHIFT), "|VK_LSHIFT", "");
 
    // check chart for an active EA
    string label = "EA.status";
