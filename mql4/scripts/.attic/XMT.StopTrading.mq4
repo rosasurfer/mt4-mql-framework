@@ -38,7 +38,7 @@ int onStart() {
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
       int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT trade "+ ifString(mode=="virtual-copier", "copier", "mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
-      SendChartCommand("XMT-Scalper.command", "virtual");
+      SendChartCommand("EA.command", "virtual");
    }
    else {
       PlaySoundEx("Windows Chord.wav");

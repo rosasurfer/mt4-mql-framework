@@ -322,7 +322,7 @@ int onTick.RegularTrading() {
  * @return int - error status
  */
 int onTick.VirtualTrading() {
-   if (__isChart) HandleCommands();                               // process chart commands
+   if (__isChart) HandleCommands();                               // process incoming commands
 
    // update virtual and real order status (if any)
    UpdateVirtualOrderStatus();
@@ -1972,34 +1972,6 @@ bool Orders.RemoveRealTicket(int ticket) {
    real.isOpenOrder = false;
 
    return(!catch("Orders.RemoveRealTicket(4)"));
-}
-
-
-/**
- * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
 }
 
 

@@ -254,7 +254,7 @@ bool     test.reduceStatusWrites = true;           // whether to reduce status f
  */
 int onTick() {
    int signal;
-   if (__isChart) HandleCommands();                            // process chart commands
+   if (__isChart) HandleCommands();                            // process incoming commands
 
    if (sequence.status == STATUS_WAITING) {
       if (IsStartSignal(signal)) StartSequence(signal);
@@ -275,33 +275,6 @@ int onTick() {
 
    // dummy call
    MakeScreenshot();
-}
-
-
-/**
- * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = "EA.command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for existing commands in a non-synchronized way (read-only) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      if (AquireLock(mutex, true)) {                                 // now aquire the lock (read-write)
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
 }
 
 
