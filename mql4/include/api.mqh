@@ -131,7 +131,6 @@ double   doubleOr(double value, double altValue);;
 bool     EnumChildWindows(int hWnd, bool recursive = false);;
 bool     EQ(double double1, double double2, int digits = 8);;
 string   ErrorDescription(int error);;
-bool     EventListener.NewTick();;
 string   FileAccessModeToStr(int mode);;
 string   FindStandardSymbol(string symbol, bool strict = false);;
 int      Floor(double value);;

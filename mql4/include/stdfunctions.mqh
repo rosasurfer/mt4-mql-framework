@@ -4048,32 +4048,6 @@ int MarketWatch.Symbols() {
 
 
 /**
- * Prüft, ob der aktuelle Tick ein neuer Tick ist.
- *
- * @return bool - Ergebnis
- */
-bool EventListener.NewTick() {
-   int vol = Volume[0];
-   if (!vol)                                                         // Tick ungültig (z.B. Symbol noch nicht subscribed)
-      return(false);
-
-   static bool lastResult;
-   static int  lastTick, lastVol;
-
-   // Mehrfachaufrufe während desselben Ticks erkennen
-   if (Ticks == lastTick)
-      return(lastResult);
-
-   // Es reicht immer, den Tick nur anhand des Volumens des aktuellen Timeframes zu bestimmen.
-   bool result = (lastVol && vol!=lastVol);                          // wenn der letzte Tick gültig war und sich das aktuelle Volumen geändert hat
-                                                                     // (Optimierung unnötig, da im Normalfall immer beide Bedingungen zutreffen)
-   lastVol    = vol;
-   lastResult = result;
-   return(result);
-}
-
-
-/**
  * Return the current trade server time. In tester this time is modeled. Different from the last known tick time which is only
  * updated on new ticks.
  *
@@ -7100,7 +7074,6 @@ void __DummyCalls() {
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
    ErrorDescription(NULL);
-   EventListener.NewTick();
    FileAccessModeToStr(NULL);
    FindStandardSymbol(NULL);
    Floor(NULL);
