@@ -3,7 +3,7 @@
  *
  *
  * The ZigZag indicator coming with MetaTrader internally uses a Donchian channel for it's calculation. Thus it can be used
- * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a fixed
+ * to implement the Donchian channel system as traded by Richard Dennis in his "Turtle trading" program. This EA uses a custom
  * and greatly enhanced version of the ZigZag indicator (most signals are still the same).
  *
  *  @link  https://vantagepointtrading.com/top-trader-richard-dennis-turtle-trading-strategy/#             ["Turtle Trading"]
@@ -33,36 +33,46 @@
  * ----------------
  * The EA can be controlled externally via execution of the following scripts (online and in tester):
  *
- *  • EA.Resume: When a "resume" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
- *               arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
- *  • EA.Start:  When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
- *               trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
- *               start the EA in a predefined direction. Nothing changes if a position is already open.
- *  • EA.Stop:   When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
- *               Nothing changes if the EA is already stopped.
+ *  • EA.Wait:  When a "wait" command is received a stopped EA starts waiting for new ZigZag signals. When the next signal
+ *              arrives the EA starts trading. Nothing changes if the EA is already in status "waiting".
+ *  • EA.Start: When a "start" command is received the EA immediately opens a position in direction of the current ZigZag
+ *              trend and doesn't wait for the next signal. There are two sub-commands "start:long" and "start:short" to
+ *              start the EA in a predefined direction. Nothing changes if a position is already open.
+ *  • EA.Stop:  When a "stop" command is received the EA closes open positions and stops waiting for new ZigZag signals.
+ *              Nothing changes if the EA is already stopped.
  *
  *
  * TODO:
- *  - Instrument Infos: remove maxLeverage constraint
- *  - Superbars: fix processing of weekend data
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
+ *  - Instrument Infos: remove maxLeverage constraint
+ *  - fix cmd Chart.ToggleOpenOrders
  *
- *  - manual start/stop
- *     stop on reverse signal => continue with manual start
- *     fix command EA.Resume
- *     breakeven stop
- *     trailing stop
+ *  - on account change:
+ *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
+ *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
+ *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=6, hTimer=0C178498)  [win32:997]
+ *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=4 (references non-existing window hWnd=00190390)
+ *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=4, hTimer=0C178518)  [win32:997]
+ *
+ *  - stop on reverse signal
+ *  - signals MANUAL_LONG|MANUAL_SHORT
+ *  - wider SL on manual positions in opposite direction
+ *  - manage an existing manual order
+ *  - track and display total slippage
+ *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
+ *  - reduce slippage on short reversal: enter market via StopSell
+ *
+ *  - visual/audible confirmation for manual orders (to detect execution errors)
+ *  - support command "wait" in status "progressing"
  *
  *  - trading functionality
+ *     rewrite and test all @profit() conditions
+ *     breakeven stop
+ *     trailing stop
  *     reverse trading and command EA.Reverse
- *     manage an existing manual order ticket
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
- *
- *  - ChartInfos
- *     prevent duplicate event logging of multiple terminals
- *     FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -83,9 +93,7 @@
  *     current spread
  *     number of trades
  *     total commission
- *     track and display total slippage
  *     recorded symbols with descriptions
- *     ToggleOpenOrders() works only after ToggleHistory()
  *
  *  - trade breaks
  *    - DAX: Global Prime has a session break at 23:00-23:03 (trade and quotes)
@@ -113,7 +121,6 @@
  *  - improve handling of network outages (price and/or trade connection)
  *  - "no connection" event, no price feed for 5 minutes, signals during this time are not detected => EA out of sync
  *
- *  - reduce slippage on reversal: replace Close+Open by Hedge+CloseBy
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
@@ -135,12 +142,11 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
+ *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
- *  - Superbars: fix ETH session on BTCUSD
- *  - Tickchart-Creator: incorrect High/Lows (doesn't track/record lost ticks)
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
- *  - in-chart news hints (to not forget untypical ones like press conferences)
+ *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
  *  - on restart delete dead screen sockets
  */
 #include <stddefines.mqh>
@@ -155,9 +161,9 @@ extern string TradingMode          = "regular* | virtual";  // can be shortened 
 extern int    ZigZag.Periods       = 40;
 extern double Lots                 = 0.1;
 extern string StartConditions      = "";                    // @time(datetime|time)
-extern string StopConditions       = "";                    // @time(datetime|time) | @breakeven(on-profit) | @trail([on-profit:]stepsize)
+extern string StopConditions       = "";                    // @time(datetime|time)          // TODO: @signal([long|short]), @breakeven(on-profit), @trail([on-profit:]stepsize)
 extern double TakeProfit           = 0;                     // TP value
-extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";      // can be shortened if distinct
+extern string TakeProfit.Type      = "off* | money | percent | pip | quote-unit";            // can be shortened if distinct        // TODO: redefine point as index point
 extern int    Slippage             = 2;                     // in point
 
 extern bool   ShowProfitInPercent  = true;                  // whether PL is displayed in money or percentage terms
@@ -172,9 +178,8 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <functions/ParseTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
-#define STRATEGY_ID               107           // unique strategy id between 101-1023 (10 bit)
-
-#define SID_MIN                   100           // valid range of sequence id values
+#define STRATEGY_ID               107           // unique strategy id (between 101-1023, 10 bit)
+#define SID_MIN                   100           // range of valid sequence id values
 #define SID_MAX                   999
 
 #define STATUS_WAITING              1           // sequence status values
@@ -354,13 +359,13 @@ int onTick() {
  */
 bool onCommand(string commands[]) {
    if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmd = commands[0];
+   string cmdBak = commands[0], cmd = StrToLower(cmdBak);
 
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             int trend = GetZigZagTrend(0);
             return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
       }
@@ -370,7 +375,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StartSequence(SIGNAL_LONG));
       }
    }
@@ -379,7 +384,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StartSequence(SIGNAL_SHORT));
       }
    }
@@ -388,22 +393,189 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             return(StopSequence(NULL));
       }
    }
 
-   else if (cmd == "resume") {
+   else if (cmd == "wait") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
             sequence.status = STATUS_WAITING;
             return(SaveStatus());
       }
    }
-   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
-   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
+   else if (cmd == "toggleopenorders") {
+      debug("onCommand(0.1)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+      return(false);
+   }
+
+   else if (cmd == "toggletradehistory") {
+      return(ToggleTradeHistory());
+   }
+   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmdBak)));
+
+   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmdBak) +" in status "+ StatusToStr(sequence.status)));
+}
+
+
+/**
+ * Toggle the display of closed trades.
+ *
+ * @return bool - success status
+ */
+bool ToggleTradeHistory() {
+   // read current status and toggle it
+   bool showHistory = !GetTradeHistoryDisplayStatus();
+
+   // ON: display closed trades
+   if (showHistory) {
+      int trades = ShowTradeHistory();
+      if (trades == -1) return(false);
+      if (!trades) {                                        // Without any closed trades the status must be reset to enable
+         showHistory = false;                               // the "off" section to clear existing markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove all closed trade markers (from this EA or another program)
+   if (!showHistory) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name) == OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_CLOSED_LONG && clr!=CLR_CLOSED_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_CLOSED) continue;
+               }
+            }
+            else if (ObjectType(name) != OBJ_TREND) continue;
+            ObjectDelete(name);
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetTradeHistoryDisplayStatus(showHistory);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleTradeHistory(1)"));
+}
+
+
+/**
+ * Resolve the current "ShowTradeHistory" display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetTradeHistoryDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed "ShowTradeHistory" display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetTradeHistoryDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetTradeHistoryDisplayStatus(1)"));
+}
+
+
+/**
+ * Display closed trades.
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
+ */
+int ShowTradeHistory() {
+   string openLabel="", lineLabel="", closeLabel="", sOpenPrice="", sClosePrice="", sOperations[]={"buy", "sell"};
+   int iOpenColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, iLineColors[]={Blue, Red};
+
+   // process the local trade history
+   int orders = ArrayRange(history, 0), closedTrades = 0;
+
+   for (int i=0; i < orders; i++) {
+      int      ticket     = history[i][HI_TICKET    ];
+      int      type       = history[i][HI_OPENTYPE  ];
+      double   lots       = history[i][HI_LOTS      ];
+      datetime openTime   = history[i][HI_OPENTIME  ];
+      double   openPrice  = history[i][HI_OPENPRICE ];
+      datetime closeTime  = history[i][HI_CLOSETIME ];
+      double   closePrice = history[i][HI_CLOSEPRICE];
+
+      if (!closeTime)                    continue;             // skip open tickets (should not happen)
+      if (type!=OP_BUY && type!=OP_SELL) continue;             // skip non-trades   (should not happen)
+
+      sOpenPrice  = NumberToStr(openPrice, PriceFormat);
+      sClosePrice = NumberToStr(closePrice, PriceFormat);
+
+      // open marker
+      openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
+      if (ObjectFind(openLabel) == 0)
+         ObjectDelete(openLabel);
+      if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR, iOpenColors[type]);
+         ObjectSetText(openLabel, sequence.name);
+      }
+
+      // trend line
+      lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
+      if (ObjectFind(lineLabel) == 0)
+         ObjectDelete(lineLabel);
+      if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, iLineColors[type]);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+      }
+
+      // close marker
+      closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
+      if (ObjectFind(closeLabel) == 0)
+         ObjectDelete(closeLabel);
+      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
+         ObjectSetText(closeLabel, sequence.name);
+      }
+      closedTrades++;
+   }
+
+   if (!catch("ShowTradeHistory(1)"))
+      return(closedTrades);
+   return(EMPTY);
 }
 
 
@@ -502,8 +674,8 @@ bool IsZigZagSignal(int &signal) {
  * @return bool - success status
  */
 bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_TREND,    bar));
-   reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, false, ZigZag.MODE_REVERSAL, bar));
+   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_TREND,    bar));
+   reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
 }
 
@@ -531,7 +703,7 @@ int GetZigZagTrend(int bar) {
  * @return double - channel value or NULL (0) in case of errors
  */
 double GetZigZagChannel(int bar, int mode) {
-   return(icZigZag(NULL, ZigZag.Periods, false, false, mode, bar));
+   return(icZigZag(NULL, ZigZag.Periods, false, mode, bar));
 }
 
 
@@ -931,7 +1103,7 @@ bool ReverseSequence(int signal) {
    if (open.ticket > 0) {
       // continue in the same direction...
       if ((open.type==OP_BUY && signal==SIGNAL_LONG) || (open.type==OP_SELL && signal==SIGNAL_SHORT)) {
-         logWarn("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
+         logNotice("ReverseSequence(3)  "+ sequence.name +" to "+ ifString(signal==SIGNAL_LONG, "long", "short") +": continuing with already open "+ ifString(signal==SIGNAL_LONG, "long", "short") +" position #"+ open.ticket);
          return(true);
       }
       // ...or close the open position
@@ -1219,7 +1391,7 @@ bool ArchiveClosedVirtualPosition(int ticket) {
 
 
 /**
- * Calculate a desaster stop for a position. The stop is put at the Donchian channel band opposite to the specified direction.
+ * Calculate a desaster stop for a position. The stop is put behind the Donchian channel band opposite to the trade direction.
  *
  * @param  int direction - trade direction
  *
@@ -1229,17 +1401,17 @@ double CalculateStopLoss(int direction) {
    if (last_error != NULL)                                return(NULL);
    if (direction!=SIGNAL_LONG && direction!=SIGNAL_SHORT) return(!catch("CalculateStopLoss(1)  "+ sequence.name +" invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   double stoploss = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
-   if (!stoploss) return(NULL);
+   double channelBand = GetZigZagChannel(0, ifInt(direction==SIGNAL_LONG, ZigZag.MODE_LOWER_BAND, ZigZag.MODE_UPPER_BAND));
+   if (!channelBand) return(NULL);
 
-   // move stop a min. amount above/below the channel
-   double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double dist1    = MathAbs(Bid-stoploss) * 0.1;
-   double dist2    = (Ask-Bid) + 10*tickSize;         // that's min. 10% of the current distance and min. 10 ticks more than the spread
+   // calculate a min. distance from the channel
+   double dist1    = MathAbs(Bid-channelBand) * 0.2;        // that's min. 20% of the current price distance...
+   double dist2    = 4 * (Ask-Bid);                         // and min. 4 times the current spread
    double minDist  = MathMax(dist1, dist2);
 
-   if (direction == SIGNAL_LONG) stoploss -= minDist;
-   else                          stoploss += minDist;
+   // move stoploss this min. distance away
+   if (direction == SIGNAL_LONG) double stoploss = channelBand - minDist;
+   else                                 stoploss = channelBand + minDist;
 
    return(NormalizeDouble(stoploss, Digits));
 }
@@ -1694,8 +1866,10 @@ bool VirtualOrderClose(int ticket) {
  * @return bool - whether to add a definition for the specified index
  */
 bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat) {
-   if (IsLastError()) return(false);
-   if (!sequence.id)  return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   enabled = false;
+   if (IsLastError())                    return(false);
+   if (!sequence.id)                     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
+   if (IsTestSequence() && !IsTesting()) return(false);                       // never record anything in a stopped test
 
    string ids[];
    int size = Explode(EA.Recorder, ",", ids, NULL);
@@ -1883,9 +2057,9 @@ string SignalToStr(int signal) {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);
+   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
 
-   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most status file writes, except file creation, sequence stop and test end
+   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -1896,7 +2070,7 @@ bool SaveStatus() {
 
    // [General]
    section = "General";
-   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber());
+   WriteIniString(file, section, "Account", GetAccountCompanyId() +":"+ GetAccountNumber() +" ("+ ifString(IsDemoFix(), "demo", "real") +")");
    WriteIniString(file, section, "Symbol",  Symbol());
    WriteIniString(file, section, "Created", GmtTimeFormat(sequence.created, "%a, %Y.%m.%d %H:%M:%S") + separator);         // conditional section separator
 
@@ -2085,11 +2259,11 @@ bool ReadStatus() {
 
    // [General]
    section = "General";
-   string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678
+   string sAccount     = GetIniStringA(file, section, "Account", "");                                 // string Account = ICMarkets:12345678 (demo)
    string sSymbol      = GetIniStringA(file, section, "Symbol",  "");                                 // string Symbol  = EURUSD
    string sThisAccount = GetAccountCompanyId() +":"+ GetAccountNumber();
-   if (!StrCompareI(sAccount, sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
-   if (!StrCompareI(sSymbol, Symbol()))      return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(StrLeftTo(sAccount, " ("), sThisAccount)) return(!catch("ReadStatus(3)  "+ sequence.name +" account mis-match: "+ DoubleQuoteStr(sThisAccount) +" vs. "+ DoubleQuoteStr(sAccount) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
+   if (!StrCompareI(sSymbol, Symbol()))                       return(!catch("ReadStatus(4)  "+ sequence.name +" symbol mis-match: "+ Symbol() +" vs. "+ sSymbol +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_CONFIG_VALUE));
 
    // [Inputs]
    section = "Inputs";
@@ -2781,9 +2955,11 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
-   int metrics;
-   if (!init_RecorderValidateInput(metrics)) return(false);
-   if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   if (!IsTestSequence() || IsTesting()) {      // never init the recorder of a stopped test
+      int metrics;
+      if (!init_RecorderValidateInput(metrics)) return(false);
+      if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
+   }
 
    // tmp. overwrite recorder.hstMultiplier of metrics 1,2,3,5,6,7 (remove together with input "EA.RecorderAutoScale")
    int hstMultiplier = 1;
@@ -2884,8 +3060,8 @@ bool RemoveSequenceId() {
       // chart
       Chart.RestoreString(name, name, true);
 
-      // additionally remove a chart status for chart commands
-      name = ProgramName() +".status";
+      // remove a chart status for chart commands
+      name = "EA.status";
       if (ObjectFind(name) != -1) ObjectDelete(name);
    }
    return(!catch("RemoveSequenceId(1)"));

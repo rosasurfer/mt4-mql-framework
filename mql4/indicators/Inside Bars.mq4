@@ -5,7 +5,7 @@
  *
  *
  * TODO:
- *  - istead of always using M5 check bar aligned of all timeframes and use the largest correctly aligned one
+ *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always using M5)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -13,7 +13,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes         = "D1";                 // one or more timeframes to analyze, separated by comma
+extern string Timeframes         = "H1";                 // one or more timeframes to analyze, separated by comma
 extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all)
 extern string ___a__________________________;
 
@@ -124,6 +124,10 @@ int onInit() {
 int onTick() {
    double ratesM1[][6], ratesM5[][6];
    int changedBarsM1, changedBarsM5;
+
+   //if (IsBarOpen(PERIOD_M1))  debug("onTick(0.1)   BarOpen(M1) = 1");
+   //if (IsBarOpen(PERIOD_M5))  debug("onTick(0.2)   BarOpen(M5) = 1");
+   //if (IsBarOpen(PERIOD_M15)) debug("onTick(0.3)   BarOpen(M15) = 1");
 
    if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
 

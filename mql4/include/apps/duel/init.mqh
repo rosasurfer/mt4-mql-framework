@@ -31,7 +31,7 @@ int onInitUser() {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = GetLocalTime();
+         sequence.created = TimeLocal();
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
@@ -162,14 +162,16 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   SetLogfile(GetLogFilename());                         // open the logfile (flushes the buffer)
+   if (IsTesting() || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
+      SetLogfile(GetLogFilename());                // of a finished test (i.e. a test loaded into an online chart)
+   }
 
-   if (IsTesting()) {                                    // read test configuration
+   if (IsTesting()) {                              // read test configuration
       string section          = "Tester."+ StrTrim(ProgramName());
       test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
       test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);
    }
 
-   StoreSequenceId();                                    // store the sequence id for other templates/restart/recompilation etc.
+   StoreSequenceId();                              // store the sequence id for other templates/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }

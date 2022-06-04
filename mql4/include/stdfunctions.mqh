@@ -892,15 +892,15 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
       else {
          string section="Commissions", key=Symbol();
 
-         if (IsAccountConfigKey(section, key)) {                  // use account config of symbol
-            value = GetAccountConfigDouble(section, key);
-            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid account config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+         if (IsConfigKey(section, key)) {                         // check exact symbol
+            value = GetConfigDouble(section, key);
+            if (value < 0) return(_EMPTY(catch("GetCommission(1)  invalid config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
          }
          else {
             key = StdSymbol();
-            if (IsAccountConfigKey(section, key)) {               // use account config of standard symbol
-               value = GetAccountConfigDouble(section, key);
-               if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid account config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
+            if (IsConfigKey(section, key)) {                      // check mapped symbol
+               value = GetConfigDouble(section, key);
+               if (value < 0) return(_EMPTY(catch("GetCommission(2)  invalid config value ["+ section +"] "+ key +" = "+ NumberToStr(value, ".+"), ERR_INVALID_CONFIG_VALUE)));
             }
             else if (isCFD) {
                value = 0;                                         // TODO: implement isCFD
@@ -951,9 +951,7 @@ string StdSymbol() {
    static string lastSymbol="", lastResult="";
 
     if (lastResult != "") {
-      if (Symbol() == lastSymbol) {
-         return(lastResult);
-      }
+      if (Symbol() == lastSymbol) return(lastResult);
    }
    lastSymbol = Symbol();
    lastResult = FindStandardSymbol(Symbol());
@@ -979,31 +977,26 @@ string FindStandardSymbol(string symbol, bool strict = false) {
    if (!StringLen(symbol)) return(_EMPTY_STR(catch("FindStandardSymbol(1)  invalid parameter symbol: "+ DoubleQuoteStr(symbol), ERR_INVALID_PARAMETER)));
 
    string _symbol = StrToUpper(symbol);
+   if      (StrStartsWith(_symbol, "." )) _symbol = StrRight(_symbol, -1);
+   else if (StrStartsWith(_symbol, "_" )) _symbol = StrRight(_symbol, -1);
+
    if      (StrEndsWith(_symbol, "_ASK")) _symbol = StrLeft(_symbol, -4);
    else if (StrEndsWith(_symbol, "_AVG")) _symbol = StrLeft(_symbol, -4);
+   else if (StrEndsWith(_symbol, "^"   )) _symbol = StrLeft(_symbol, -1);
+   else if (StrEndsWith(_symbol, "."   )) _symbol = StrLeft(_symbol, -1);
 
    string result = "";
 
    switch (StringGetChar(_symbol, 0)) {
-      case '_': if      (_symbol=="_BRENT" )   result = "BRENT";
-                else if (_symbol=="_DJI"   )   result = "DJIA";
-                else if (_symbol=="_DJT"   )   result = "DJTA";
-                else if (_symbol=="_N225"  )   result = "NIK225";
-                else if (_symbol=="_NQ100" )   result = "NAS100";
-                else if (_symbol=="_NQCOMP")   result = "NASCOMP";
-                else if (_symbol=="_SP500" )   result = "SP500";
-                else if (_symbol=="_WTI"   )   result = "WTI";
-                break;
-
       case '#': if      (StrStartsWith(_symbol, "#DAX."))    result = "DAX";
                 else if (StrStartsWith(_symbol, "#DJ30_"))   result = "DJIA";
                 else if (StrStartsWith(_symbol, "#DJI."))    result = "DJIA";
                 else if (StrStartsWith(_symbol, "#DJT."))    result = "DJTA";
                 else if (StrStartsWith(_symbol, "#GER40_"))  result = "DAX";
-                else if (StrStartsWith(_symbol, "#JP225_"))  result = "JP225";
+                else if (StrStartsWith(_symbol, "#JP225_"))  result = "NIKKEI";
                 else if (StrStartsWith(_symbol, "#SPX."))    result = "SP500";
-                else if (StrStartsWith(_symbol, "#US100_"))  result = "NAS100";
-                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUS2000";
+                else if (StrStartsWith(_symbol, "#US100_"))  result = "NASDAQ";
+                else if (StrStartsWith(_symbol, "#US2000_")) result = "RUSSELL";
                 else if (StrStartsWith(_symbol, "#US500_"))  result = "SP500";
                 break;
 
@@ -1048,6 +1041,8 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'D': if      (              _symbol=="DE30")        result = "DAX";
                 else if (              _symbol=="DE40")        result = "DAX";
+                else if (              _symbol=="DJI ")        result = "DJIA";
+                else if (              _symbol=="DJT" )        result = "DJTA";
                 else if (StrStartsWith(_symbol, "DXY_"))       result = "USDX";
                 break;
 
@@ -1105,7 +1100,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'I': break;
 
-      case 'J': if      (              _symbol=="JPN225" )     result = "JP225";
+      case 'J': if      (              _symbol=="JPN225" )     result = "NIKKEI";
                 else if (StrStartsWith(_symbol, "JPYLFX"))     result = "JPYLFX";
                 break;
 
@@ -1118,8 +1113,12 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'M': if      (StrStartsWith(_symbol, "MXNJPY"))     result = "MXNJPY";
                 break;
 
-      case 'N': if      (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
+      case 'N': if      (              _symbol=="N225"   )     result = "NIKKEI";
+                else if (              _symbol=="NAS100" )     result = "NASDAQ";
+                else if (StrStartsWith(_symbol, "NOKJPY"))     result = "NOKJPY";
                 else if (StrStartsWith(_symbol, "NOKSEK"))     result = "NOKSEK";
+                else if (              _symbol=="NQ100"  )     result = "NASDAQ";
+                else if (              _symbol=="NQCOMP" )     result = "NASCOMP";
                 else if (StrStartsWith(_symbol, "NZDCAD"))     result = "NZDCAD";
                 else if (StrStartsWith(_symbol, "NZDCHF"))     result = "NZDCHF";
                 else if (StrStartsWith(_symbol, "NZDJPY"))     result = "NZDJPY";
@@ -1135,7 +1134,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
 
       case 'Q': break;
 
-      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUS2000";
+      case 'R': if      (              _symbol=="RUSSEL_2000") result = "RUSSELL";
                 break;
 
       case 'S': if      (              _symbol=="S&P_500"   )  result = "SP500";
@@ -1151,7 +1150,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
       case 'U':
                 if      (              _symbol=="UK100"  )     result = "FTSE";
                 else if (              _symbol=="UKOIL"  )     result = "BRENT";
-                else if (              _symbol=="US2000" )     result = "RUS2000";
+                else if (              _symbol=="US2000" )     result = "RUSSELL";
                 else if (              _symbol=="US30"   )     result = "DJIA";
                 else if (              _symbol=="US500"  )     result = "SP500";
                 else if (StrStartsWith(_symbol, "USDCAD"))     result = "USDCAD";
@@ -1181,7 +1180,7 @@ string FindStandardSymbol(string symbol, bool strict = false) {
                 else if (StrStartsWith(_symbol, "USDTWD"))     result = "USDTWD";
                 else if (              _symbol=="USDX"   )     result = "USDX";
                 else if (StrStartsWith(_symbol, "USDZAR"))     result = "USDZAR";
-                else if (              _symbol=="USTEC"  )     result = "NAS100";
+                else if (              _symbol=="USTEC"  )     result = "NASDAQ";
                 break;
 
       case 'V': if      (StrStartsWith(_symbol, "VIX_"))       result = "VIX";
@@ -6515,7 +6514,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD",
+   double value = iCustom(NULL, timeframe, "MACD.rsf",
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
@@ -6944,17 +6943,16 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
  * @param  int  timeframe               - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int  periods                 - indicator parameter
  * @param  bool calcAllChannelCrossings - indicator parameter
- * @param  bool markFirstCrossing       - indicator parameter
  * @param  int  iBuffer                 - indicator buffer index of the value to return
  * @param  int  iBar                    - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool markFirstCrossing, int iBuffer, int iBar) {
+double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "ZigZag",
+   double value = iCustom(NULL, timeframe, "ZigZag.rsf",
                           "",                               // string ____________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
@@ -6963,10 +6961,8 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, bool m
                           false,                            // bool   ZigZag.ShowTrail
 
                           "",                               // string ____________________
-                          true,                             // bool   Donchian.ShowFullChannel
-                          false,                            // bool   Donchian.ShowStopSegments
+                          true,                             // bool   Donchian.ShowChannel
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
-                          markFirstCrossing,                // bool   Donchian.MarkFirstCrossing
                           DodgerBlue,                       // color  Donchian.UpperBand.Color
                           DodgerBlue,                       // color  Donchian.LowerBand.Color
 
@@ -7151,7 +7147,7 @@ void __DummyCalls() {
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
-   icZigZag(NULL, NULL, NULL, NULL, NULL, NULL);
+   icZigZag(NULL, NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);

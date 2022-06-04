@@ -30,10 +30,7 @@ int __DeinitFlags[];
 #include <timezones.mqh>
 #include <win32api.mqh>
 #include <functions/ExplodeStrings.mqh>
-#include <functions/iBarShiftNext.mqh>
-#include <functions/iBarShiftPrevious.mqh>
 #include <functions/InitializeByteBuffer.mqh>
-#include <functions/iPreviousPeriodTimes.mqh>
 #include <functions/JoinBools.mqh>
 #include <functions/JoinDoubles.mqh>
 #include <functions/JoinDoublesEx.mqh>
@@ -3198,7 +3195,7 @@ string GetSymbolNameStrict(string symbol) {
 
       case 'Q': break;
 
-      case 'R': if (symbol == "RUS2000") return("Russel 2000");
+      case 'R': if (symbol == "RUSSELL") return("Russell 2000");
                 break;
 
       case 'S': if (symbol == "SEKJPY" ) return("SEK/JPY"  );
@@ -3328,7 +3325,7 @@ string GetLongSymbolNameStrict(string symbol) {
    if (symbol == "NASCOMP" ) return("Nasdaq Composite"        );
    if (symbol == "NIK225"  ) return("Nikkei 225"              );
    if (symbol == "NZDLFX"  ) return("NZD (LFX)"               );
-   if (symbol == "RUS2000" ) return("Russel 2000"             );
+   if (symbol == "RUSSELL" ) return("Russell 2000"            );
    if (symbol == "SP500"   ) return("S&P 500"                 );
    if (symbol == "USDLFX"  ) return("USD (LFX)"               );
    if (symbol == "USDX"    ) return("USD Index (ICE)"         );
@@ -6605,7 +6602,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
                if (!remainder) return(_false(Order.HandleError("OrderCloseByEx(19)  cannot find remaining position of close #"+ ticket +" ("+ NumberToStr(ticketLots, ".+") +" lots = smaller) by #"+ opposite +" ("+ NumberToStr(oppositeLots, ".+") +" lots = larger)", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseByEx(20)")));
             }
 
-            else /*(largerBySmaller)*/ {                                         // in Strategy Tester
+            else /*(largerBySmaller)*/ {                                         // in tester
                // no reference available
                if (!SelectTicket(larger, "OrderCloseByEx(21)", NULL, O_POP)) return(!oe.setError(oe, ERR_INVALID_TICKET));
                int      remainderType        = OrderType();

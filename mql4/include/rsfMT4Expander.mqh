@@ -81,6 +81,10 @@
    bool     IsJunctionA(string path);
    bool     IsSymlinkA(string path);
 
+   // math
+   int      DoubleExp(double value);
+   double   MathLog10(double value);
+
    // pointer and memory helpers
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
@@ -92,9 +96,22 @@
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
    // array functions
+   //bool   InitializeBOOLArray  (bool   &values[], int size, int    initValue, int from, int count);
+   //bool   InitializeBoolArray  (bool   &values[], int size, bool   initValue, int from, int count);
+   //bool   InitializeCharArray  (char   &values[], int size, char   initValue, int from, int count);
+   //bool   InitializeShortArray (short  &values[], int size, short  initValue, int from, int count);
    //bool   InitializeIntArray   (int    &values[], int size, int    initValue, int from, int count);
+   //bool   InitializeLongArray  (long   &values[], int size, long   initValue, int from, int count);
+   //bool   InitializeFloatArray (float  &values[], int size, float  initValue, int from, int count);
    //bool   InitializeDoubleArray(double &values[], int size, double initValue, int from, int count);
+
+   //bool   ShiftBOOLIndicatorBuffer  (bool   &buffer[], int size, int count, int    emptyValue);
+   //bool   ShiftBoolIndicatorBuffer  (bool   &buffer[], int size, int count, bool   emptyValue);
+   //bool   ShiftCharIndicatorBuffer  (char   &buffer[], int size, int count, char   emptyValue);
+   //bool   ShiftShortIndicatorBuffer (short  &buffer[], int size, int count, short  emptyValue);
    //bool   ShiftIntIndicatorBuffer   (int    &buffer[], int size, int count, int    emptyValue);
+   //bool   ShiftLongIndicatorBuffer  (long   &buffer[], int size, int count, long   emptyValue);
+   //bool   ShiftFloatIndicatorBuffer (float  &buffer[], int size, int count, float  emptyValue);
    //bool   ShiftDoubleIndicatorBuffer(double &buffer[], int size, int count, double emptyValue);
 
    // string functions
@@ -155,6 +172,7 @@
    // other helpers
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
+   bool     IsAsyncKeyDown(int vKey);
    bool     IsProgramType(int type);
 
    // Empty stubs for optional MQL event handlers. Overwritten by custom MQL implementations.

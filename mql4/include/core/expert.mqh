@@ -23,10 +23,10 @@ int     __tickTimerId;                       // timer id for virtual ticks
 #define RECORDING_CUSTOM      2              // recording of one or more custom timeseries
 
 // recorder management
-int    recordMode;
+int    recordMode        = RECORDING_OFF;
 string recordModeDescr[] = {"off", "internal", "custom"};
-bool   recordInternal;
-bool   recordCustom;
+bool   recordInternal    = false;
+bool   recordCustom      = false;
 
 double recorder.defaultHstBase = 5000.0;
 bool   recorder.initialized    = false;

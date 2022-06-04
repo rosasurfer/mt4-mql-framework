@@ -9917,7 +9917,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=ZigZag.rsf
 flags=339
 window_num=0
 <inputs>
@@ -9926,10 +9926,8 @@ ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=16711680
 ZigZag.ShowTrail=1
-Donchian.ShowFullChannel=1
-Donchian.ShowStopSegments=0
+Donchian.ShowChannel=1
 Donchian.ShowAllCrossings=1
-Donchian.MarkFirstCrossing=1
 Donchian.UpperBand.Color=16748574
 Donchian.LowerBand.Color=16711935
 </inputs>
