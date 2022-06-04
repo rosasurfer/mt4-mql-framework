@@ -3491,7 +3491,6 @@ Returns <span class="const">TRUE</span> if a thread for trading is occupied by a
         type=int
         name=type
         description=Trade operation type. Must be either <a href="help://constants_trading"><span class="const">OP_BUY</span></a> or <a href="help://constants_trading"><span class="const">OP_SELL</span></a>.
-        </description>
       </parameter>
       <parameter>
         type=double
@@ -4747,7 +4746,7 @@ Optional data output mode can be one or combination of:<br/>
             - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
             Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
             BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet. It holds: 
-            <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></span></p></li>
+            <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></p></li>
         
         <li><p>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
             <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:

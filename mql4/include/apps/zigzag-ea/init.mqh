@@ -27,7 +27,7 @@ int onInitUser() {
          sequence.isTest  = IsTesting();
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = GetLocalTime();
+         sequence.created = TimeLocal();
          sequence.status  = STATUS_WAITING;
          logInfo("onInitUser(1)  sequence "+ sequence.name +" created");
          SaveStatus();
@@ -112,8 +112,9 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   SetLogfile(GetLogFilename());                   // open the logfile (flushes the buffer)
-   StoreSequenceId();                              // store the sequence id for templates changes/restart/recompilation etc.
+   if (IsTesting() || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
+      SetLogfile(GetLogFilename());                // of a finished test (i.e. a test loaded into an online chart)
+   }
 
    // read debug config
    string section = ifString(IsTesting(), "Tester.", "") + StrTrim(ProgramName());
@@ -128,6 +129,8 @@ int afterInit() {
    for (int i=0; i < size; i++) {
       recorder.debug[i] = GetConfigBool(section, "DebugRecorder."+ i, false);
    }
+
+   StoreSequenceId();                              // store the sequence id for templates changes/restart/recompilation etc.
    return(catch("afterInit(1)"));
 }
 
@@ -141,7 +144,7 @@ int afterInit() {
 int CreateStatusBox() {
    if (!__isChart) return(NO_ERROR);
 
-   int x[]={2, 114}, y=46, fontSize=115, sizeofX=ArraySize(x);
+   int x[]={2, 70, 120}, y=50, fontSize=47, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {

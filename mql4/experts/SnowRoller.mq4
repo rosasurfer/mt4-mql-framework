@@ -1154,8 +1154,8 @@ bool RemoveSequenceId() {
       // chart
       Chart.RestoreString(name, name, true);
 
-      // additionally remove a chart status for chart commands
-      name = ProgramName() +".status";
+      // remove a chart status for chart commands
+      name = "EA.status";
       if (ObjectFind(name) != -1) ObjectDelete(name);
    }
    return(!catch("RemoveSequenceId(1)"));
@@ -1716,7 +1716,7 @@ bool ResetSequence(double gridbase, int level) {
    //sequence.id           = ...                         // unchanged
    sequence.cycle++;                                     // increase restart cycle
    //sequence.name         = ...                         // unchanged
-   sequence.created        = GetLocalTime();
+   sequence.created        = TimeLocal();
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
@@ -4139,7 +4139,7 @@ int CreateEventId() {
 bool SaveStatus() {
    if (last_error != NULL)               return(false);
    if (!sequence.id)                     return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting()) return(true);
+   if (IsTestSequence() && !IsTesting()) return(true);      // don't change the status file of a finished test
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
    if (IsTesting() && test.reduceStatusWrites) {

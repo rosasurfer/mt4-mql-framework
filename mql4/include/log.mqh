@@ -56,8 +56,8 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    }
    isRecursion = true;
 
-   // DebugView uses the prefixes "Metatrader" and "Tester" as a message filter
-   string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = StringConcatenate("Tester ", GmtTimeFormat(TimeCurrent(), "%d.%m.%Y %H:%M:%S"));
+   // add prefix "MetaTrader" or "T" for message filtering by DebugView
+   string sPrefix   = "MetaTrader"; if (This.IsTesting()) sPrefix = GmtTimeFormat(TimeCurrent(), "T %d.%m.%Y %H:%M:%S");
    string sLoglevel = ""; if (loglevel != LOG_DEBUG) sLoglevel = LoglevelDescription(loglevel);
           sLoglevel = StrPadRight(sLoglevel, 6);
    string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");

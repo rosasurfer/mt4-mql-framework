@@ -41,14 +41,14 @@
    int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    /*
    bool SystemTimeToTzSpecificLocalTime(
-      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,  // pointer to time zone of interest
-      LPSYSTEMTIME lpUniversalTime,                   // pointer to universal time of interest
-      LPSYSTEMTIME lpLocalTime                        // pointer to structure to receive local time
+      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,              // pointer to time zone of interest
+      LPSYSTEMTIME lpUniversalTime,                               // pointer to universal time of interest
+      LPSYSTEMTIME lpLocalTime                                    // pointer to structure to receive local time
    );
    */
    int  LoadLibraryA(string lpLibFileName);
    bool MoveFileA(string lpOldFileName, string lpNewFileName);
-   void OutputDebugStringA(string lpMessage);         // funktioniert nur für Admins zuverlässig
+   void OutputDebugStringA(string lpMessage);                     // without admin rights calls are ignored
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, int alertable);
@@ -70,12 +70,15 @@
    int  FindWindowExA(int hWndParent, int hWndChildAfter, string lpClass, string lpWindow);
    int  GetActiveWindow();
    int  GetAncestor(int hWnd, int cmd);
+   int  GetAsyncKeyState(int vKey);
    int  GetClassNameA(int hWnd, string lpBuffer, int bufferSize);
    int  GetDC(int hWnd);
    int  GetDesktopWindow();
    int  GetDlgCtrlID(int hWndCtl);
    int  GetDlgItem(int hDlg, int nIDDlgItem);
+   int  GetKeyState(int vKey);
    int  GetParent(int hWnd);
+   int  GetPropA(int hWnd, string lpString);
    int  GetTopWindow(int hWnd);
    int  GetWindow(int hWnd, int cmd);
    int  GetWindowThreadProcessId(int hWnd, int lpProcessId[]);
@@ -88,8 +91,10 @@
    bool RedrawWindow(int hWnd, int lpRectUpdate, int hRgnUpdate, int flags);
    int  RegisterWindowMessageA(string lpString);
    int  ReleaseDC(int hWnd, int hDC);
+   int  RemovePropA(int hWnd, string lpString);
    int  SendMessageA(int hWnd, int msg, int wParam, int lParam);
    int  SetActiveWindow(int hWnd);
+   bool SetPropA(int hWnd, string lpString, int hData);
    bool SetWindowTextA(int hWnd, string lpString);
    bool ShowWindow(int hWnd, int nCmdShow);
 

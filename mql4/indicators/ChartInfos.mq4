@@ -49,6 +49,7 @@ extern string Signal.SMS     = "on | off | auto*";
 #include <lfx.mqh>
 #include <scriptrunner.mqh>
 #include <structs/rsf/LFXOrder.mqh>
+#include <win32api.mqh>
 
 #property indicator_chart_window
 
@@ -167,9 +168,8 @@ color   positions.fontColor.remote  = Blue;
 color   positions.fontColor.virtual = Green;
 color   positions.fontColor.history = C'128,128,0';
 
-// Offline-Chartticker
+// sonstiges
 int     tickTimerId;                                              // ID eines ggf. installierten Offline-Tickers
-int     hWndTerminal;                                             // handle of the terminal main window (for listener registration)
 
 // order tracking
 #define TI_TICKET          0                                      // order tracker indexes
@@ -177,6 +177,8 @@ int     hWndTerminal;                                             // handle of t
 #define TI_ENTRYLIMIT      2
 
 bool    orderTracker.enabled;
+string  orderTracker.key = "";                                    // key prefix for listener registration
+int     hWndDesktop;                                              // handle of the desktop main window (for listener registration)
 double  trackedOrders[][3];                                       // {ticket, orderType, openLimit}
 
 // types for server-side closed positions
@@ -1246,7 +1248,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update the position display bottom-right (total postion) and bottom-left (custom positions).
+ * Update the position display bottom-right (total position) and bottom-left (custom positions).
  *
  * @return bool - success status
  */
@@ -1858,7 +1860,7 @@ bool CalculateUnitSize() {
    // recalculate equity used for calculations
    double accountEquity = AccountEquity()-AccountCredit();
    if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
-   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number, false);
+   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    // recalculate lot value and unleveraged unitsize
    double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
@@ -4235,7 +4237,7 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
 bool onPositionOpen(double data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size) return(true);
+   if (!isLogInfo || !size || This.IsTesting()) return(true);
 
    OrderPush();
    for (int i=0; i < size; i++) {
@@ -4247,7 +4249,7 @@ bool onPositionOpen(double data[][]) {
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
       if (isMySymbol || !isOtherListener) {
-         string event = "rsf::PositionOpen::#"+ OrderTicket();
+         string event = "PositionOpen::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
             // #1 Sell 0.1 GBPUSD "L.8692.+3" at 1.5524'8[ instead of 1.5522'0 (better|worse: -2.8 pip)]
@@ -4286,7 +4288,7 @@ bool onPositionOpen(double data[][]) {
 bool onPositionClose(int data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size) return(true);
+   if (!isLogInfo || !size || This.IsTesting()) return(true);
 
    string sCloseTypeDescr[] = {"", " [tp]", " [sl]", " [so]"};
    OrderPush();
@@ -4301,7 +4303,7 @@ bool onPositionClose(int data[][]) {
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
       if (isMySymbol || !isOtherListener) {
-         string event = "rsf::PositionClose::#"+ OrderTicket();
+         string event = "PositionClose::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
             // #1 Buy 0.6 GBPUSD "SR.1234.+2" from 1.5520'0 at 1.5534'4[ instead of 1.5532'2 (better|worse: -2.8 pip)] [tp]
@@ -4347,7 +4349,7 @@ bool onPositionClose(int data[][]) {
  */
 bool onOrderFail(int tickets[]) {
    int size = ArraySize(tickets);
-   if (!size) return(true);
+   if (!size || This.IsTesting()) return(true);
 
    bool eventLogged = false;
    OrderPush();
@@ -4359,7 +4361,7 @@ bool onOrderFail(int tickets[]) {
       if (!isMySymbol) isOtherListener = IsOrderEventListener(OrderSymbol());
 
       if (isMySymbol || !isOtherListener) {
-         string event = "rsf::OrderFail::#"+ OrderTicket();
+         string event = "OrderFail::#"+ OrderTicket();
 
          if (!IsOrderEventLogged(event)) {
             string sType       = OperationTypeDescription(OrderType() & 1);      // BuyLimit => Buy, SellStop => Sell...
@@ -4384,32 +4386,38 @@ bool onOrderFail(int tickets[]) {
 
 
 /**
- * Whether there is a registered order event listener for the specified symbol.
+ * Whether there is a registered order event listener for the specified account and symbol. Supports multiple terminals
+ * running in parallel.
  *
  * @param  string symbol
  *
  * @return bool
  */
 bool IsOrderEventListener(string symbol) {
-   string name = "rsf::order-tracker::"+ StrToLower(symbol);
-   return(GetWindowIntegerA(hWndTerminal, name) > 0);
+   if (!hWndDesktop) return(false);
+
+   string name = orderTracker.key + StrToLower(symbol);
+   return(GetPropA(hWndDesktop, name) > 0);
 }
 
 
 /**
- * Whether the specified order event was already logged.
+ * Whether the specified order event was already logged. Supports multiple terminals running in parallel.
  *
  * @param  string event - event identifier
  *
  * @return bool
  */
 bool IsOrderEventLogged(string event) {
-   return(GetWindowIntegerA(hWndTerminal, event) > 0);
+   if (!hWndDesktop) return(false);
+
+   string name = orderTracker.key + event;
+   return(GetPropA(hWndDesktop, name) != 0);
 }
 
 
 /**
- * Set the logging status of the specified order event.
+ * Set the logging status of the specified order event. Supports multiple terminals running in parallel.
  *
  * @param  string event  - event identifier
  * @param  bool   status - logging status
@@ -4417,8 +4425,11 @@ bool IsOrderEventLogged(string event) {
  * @return bool - success status
  */
 bool SetOrderEventLogged(string event, bool status) {
-   status = status!=0;
-   return(SetWindowIntegerA(hWndTerminal, event, status) != 0);
+   if (!hWndDesktop) return(false);
+
+   string name = orderTracker.key + event;
+   int value = status!=0;
+   return(SetPropA(hWndDesktop, name, status) != 0);
 }
 
 
