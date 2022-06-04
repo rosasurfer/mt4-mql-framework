@@ -14,6 +14,6 @@ int __DeinitFlags[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   SendChartCommand("LFX-Monitor.command", "cmd=account:{AccountCompanyAlias}:{AccountNumber}");
+   SendChartCommand("LFX-Monitor.command", "trade-account:{account-company}:{account-number}");
    return(catch("onStart(1)"));
 }

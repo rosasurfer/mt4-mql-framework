@@ -9,9 +9,24 @@ bool HandleCommands(string channel = "") {
    string commands[];
    ArrayResize(commands, 0);
 
-   if (IsChartCommand(channel, commands))
-      return(onCommand(commands));
-   return(true);
+   IsChartCommand(channel, commands);
+   int size = ArraySize(commands);
+
+   for (int i=0; i<size && !last_error; i++) {
+      string cmd="", params="", modifiers="", values[];
+
+      int elems = Explode(commands[i], ":", values, NULL);
+      if (elems > 0) cmd       = StrTrim(values[0]);
+      if (elems > 1) params    = StrTrim(values[1]);
+      if (elems > 2) modifiers = StrTrim(values[2]);
+
+      if (cmd == "") {
+         if (IsLogNotice()) logNotice("HandleCommands(1)  skipping empty command: \""+ commands[i] +"\"");
+         continue;
+      }
+      onCommand(cmd, params, modifiers);
+   }
+   return(!last_error);
 }
 
 
@@ -19,7 +34,7 @@ bool HandleCommands(string channel = "") {
  * Checks for and retrieves commands sent to the chart.
  *
  * @param  _In_    string channel     - channel id to check for incoming commands
- * @param  _InOut_ string &commands[] - array received commands are appended to
+ * @param  _InOut_ string &commands[] - target array received commands are appended to
  *
  * @return bool - whether a command was successfully retrieved
  */

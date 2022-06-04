@@ -166,22 +166,25 @@ int onTick() {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (cmd == "Timeframe=Up")   return(SwitchSuperTimeframe(STF_UP));
-   if (cmd == "Timeframe=Down") return(SwitchSuperTimeframe(STF_DOWN));
+   if (IsLogDebug()) logDebug("onCommand(1)  "+ DoubleQuoteStr(fullCmd));
 
-   logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
-   return(true);
+   if (cmd == "timeframe") {
+      if (params == "up")   return(SwitchSuperTimeframe(STF_UP));
+      if (params == "down") return(SwitchSuperTimeframe(STF_DOWN));
+   }
+
+   return(!logNotice("onCommand(2)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 

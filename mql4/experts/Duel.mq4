@@ -279,20 +279,21 @@ int onTick() {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmd = commands[0];
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
-            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             return(StartSequence(NULL));
       }
    }
@@ -300,24 +301,24 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             return(StopSequence(NULL));
       }
    }
    else if (cmd == "resume") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             return(ResumeSequence(NULL));
       }
    }
-   else if (cmd == "toggleOpenOrders") {
+   else if (cmd == "toggle-open-orders") {
       return(ToggleOpenOrders());
    }
-   else if (cmd == "toggleTradeHistory") {
+   else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logWarn("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
+   else return(!logNotice("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd)));
 
    return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmd) +" in status "+ StatusToStr(sequence.status)));
 }

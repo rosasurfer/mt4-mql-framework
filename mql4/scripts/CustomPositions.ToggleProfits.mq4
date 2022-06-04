@@ -15,6 +15,6 @@ int __DeinitFlags[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "cmd=ToggleProfits");
+   SendChartCommand("ChartInfos.command", "toggle-profit-unit");
    return(catch("onStart(1)"));
 }

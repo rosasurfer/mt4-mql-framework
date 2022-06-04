@@ -43,14 +43,8 @@
  *
  *
  * TODO:
- *  - fix cmd Chart.ToggleOpenOrders
- *     update onCommand() to handle command parameters
- *     ZigZag: remove logic from IsChartCommand() and use global include instead
- *
- *     programs using chart commands:
- *      experts:    Duel, SnowRoller, ZigZag EA, XMT-Scalper
- *      indicators: ChartInfos, LFX-Monitor, SuperBars, ZigZag
- *
+ *  - ZigZag EA: Chart.ToggleOpenOrders
+ *  - ChartInfos: implement handling of VK_SHIFT
  *
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - Instrument Infos: remove maxLeverage constraint
@@ -137,6 +131,7 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - realtime equity charts
  *  - much better realtime tick charts (built-in charts are useless)
  *  - CLI tools to rename/update/delete symbols
@@ -359,41 +354,39 @@ int onTick() {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmdBak = commands[0], cmd = StrToLower(cmdBak);
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            int trend = GetZigZagTrend(0);
-            return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
-      }
-   }
+            string sDetail = " ";
+            int logLevel = LOG_INFO;
 
-   else if (cmd == "start:long") {
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            return(StartSequence(SIGNAL_LONG));
-      }
-   }
-
-   else if (cmd == "start:short") {
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            return(StartSequence(SIGNAL_SHORT));
+            if (params == "long") {
+               int signal = SIGNAL_LONG;
+            }
+            else if (params == "short") {
+               signal = SIGNAL_SHORT;
+            }
+            else {
+               if (params != "") {
+                  sDetail  = " skipping unsupported parameter in command ";
+                  logLevel = LOG_NOTICE;
+               }
+               signal = ifInt(GetZigZagTrend(0) > 0, SIGNAL_LONG, SIGNAL_SHORT);
+            }
+            log("onCommand(1)  "+ sequence.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
+            return(StartSequence(signal));
       }
    }
 
@@ -401,7 +394,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             return(StopSequence(NULL));
       }
    }
@@ -409,23 +402,23 @@ bool onCommand(string commands[]) {
    else if (cmd == "wait") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             sequence.status = STATUS_WAITING;
             return(SaveStatus());
       }
    }
 
-   else if (cmd == "toggleopenorders") {
-      debug("onCommand(0.1)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+   else if (cmd == "toggle-open-orders") {
+      debug("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
       return(false);
    }
 
-   else if (cmd == "toggletradehistory") {
+   else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmdBak)));
+   else return(!logNotice("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
-   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmdBak) +" in status "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(sequence.status)));
 }
 
 
