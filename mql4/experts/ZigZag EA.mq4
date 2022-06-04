@@ -44,13 +44,12 @@
  *
  * TODO:
  *  - fix cmd Chart.ToggleOpenOrders
+ *     update onCommand() to handle command parameters
+ *     ZigZag: remove logic from IsChartCommand() and use global include instead
  *
  *     programs using chart commands:
  *      experts:    Duel, SnowRoller, ZigZag EA, XMT-Scalper
  *      indicators: ChartInfos, LFX-Monitor, SuperBars, ZigZag
- *
- *     update onCommand() to handle command parameters
- *     ZigZag: remove logic from IsChartCommand() and use global include instead
  *
  *
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
