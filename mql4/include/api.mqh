@@ -1,10 +1,5 @@
 /**
- * Overview of available functions grouped by location, including MT4Expander DLL functions.
- * Useful if the development environment provides no cTags functionality.
- *
- * Notes:
- *  - This file cannot be used as source code.
- *  - The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
+ * Overview of framework functions grouped by inlude location (this documentation can't be used as a header file).
  */
 
 
@@ -567,12 +562,12 @@ int      ArrayDropString(string &array[], string value);;
 int      ArrayInsertBool(bool &array[], int offset, bool value);;
 int      ArrayInsertBools(bool &array[], int offset, bool &values[]);;
 int      ArrayInsertDouble(double &array[], int offset, double value);;
-int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
+int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);;
 int      ArrayInsertDoubles(double &array[], int offset, double &values[]);;
 int      ArrayInsertInt(int &array[], int offset, int value);;
 int      ArrayInsertInts(int &array[], int offset, int &values[]);;
-int      ArrayInsertString(string &array[], int offset, string value);
-int      ArrayInsertStrings(string &array[], int offset, string values[]);
+int      ArrayInsertString(string &array[], int offset, string value);;
+int      ArrayInsertStrings(string &array[], int offset, string values[]);;
 bool     ArrayPopBool(bool &array[]);;
 double   ArrayPopDouble(double &array[]);;
 int      ArrayPopInt(int &array[]);;
