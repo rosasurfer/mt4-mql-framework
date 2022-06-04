@@ -210,7 +210,7 @@ int onTick() {
    mm.done            = false;
    positions.analyzed = false;
 
-   HandleCommands();                                                                // ChartCommands verarbeiten
+   HandleCommands();                                                                // process incoming commands
 
    if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // aktualisiert die Kursanzeige oben rechts
 
@@ -308,34 +308,6 @@ bool onCommand(string commands[]) {
       logWarn("onCommand(2)  unknown command: \""+ commands[i] +"\"");
    }
    return(!catch("onCommand(3)"));
-}
-
-
-/**
- * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add received commands to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
 }
 
 

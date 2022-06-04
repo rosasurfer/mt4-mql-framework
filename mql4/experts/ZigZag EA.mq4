@@ -43,9 +43,18 @@
  *
  *
  * TODO:
+ *  - fix cmd Chart.ToggleOpenOrders
+ *
+ *     programs using chart commands:
+ *      experts:    Duel, SnowRoller, ZigZag EA, XMT-Scalper
+ *      indicators: ChartInfos, LFX-Monitor, SuperBars, ZigZag
+ *
+ *     update onCommand() to handle command parameters
+ *     ZigZag: remove logic from IsChartCommand() and use global include instead
+ *
+ *
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - Instrument Infos: remove maxLeverage constraint
- *  - fix cmd Chart.ToggleOpenOrders
  *
  *  - on account change:
  *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
@@ -329,7 +338,7 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   if (__isChart) HandleCommands();                            // process chart commands
+   if (__isChart) HandleCommands();                            // process incoming commands
 
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
@@ -576,33 +585,6 @@ int ShowTradeHistory() {
    if (!catch("ShowTradeHistory(1)"))
       return(closedTrades);
    return(EMPTY);
-}
-
-
-/**
- * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = "EA.command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for existing commands in a non-synchronized way (read-only) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      if (AquireLock(mutex, true)) {                                 // now aquire the lock (read-write)
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
 }
 
 

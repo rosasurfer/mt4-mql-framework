@@ -1,7 +1,7 @@
 /**
  * EA.Start Short
  *
- * Send a "start:short" command to a supporting EA.
+ * Send a "start:short" command to a running EA.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // supporting EAs maintain a chart object holding the instance id and the instance status
+   // supporting EAs maintain a chart object holding the instance id and the status
    string sid="", status="", label="EA.status";
    bool isActive = false;
 

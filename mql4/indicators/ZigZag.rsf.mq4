@@ -21,6 +21,7 @@
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
+ *  - remove logic from IsChartCommand() and replace processing by global include
  *
  *  - onReversal = onLeg?
  *  - add signal onZigZagBreakout
@@ -68,7 +69,6 @@ extern bool   Signal.onReversal.SMS          = false;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
 #include <win32api.mqh>
@@ -464,13 +464,28 @@ bool onCommand(string commands[]) {
 
 
 /**
+ * Check for received commands and pass them to the command handler.
+ *
+ * @return bool - success status
+ */
+bool HandleCommands() {
+   string commands[];
+   ArrayResize(commands, 0);
+
+   if (IsChartCommand(commands))
+      return(onCommand(commands));
+   return(true);
+}
+
+
+/**
  * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
  *
  * @param  _InOut_ string &commands[] - array to add the received command to
  *
  * @return bool
  */
-bool EventListener_ChartCommand(string &commands[]) {
+bool IsChartCommand(string &commands[]) {
    if (!__isChart) return(false);
    string label = "PeriodStepper.command";
 
