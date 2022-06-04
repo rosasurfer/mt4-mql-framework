@@ -381,34 +381,33 @@ int onTick() {
 
 
 /**
- * Handle incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received external commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
- *
- * Message format: "cmd=account:[{company-key}:{account-key}]"  => switch the current trade account
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   int size = ArraySize(commands);
-   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   for (int i=0; i < size; i++) {
-      if (StrStartsWith(commands[i], "cmd=account:")) {
-         string accountKey     = StrRightFrom(commands[i], ":");
-         string accountCompany = tradeAccount.company;
-         int    accountNumber  = tradeAccount.number;
+   if (cmd == "trade-account") {
+      string accountKey = params +":"+ modifiers;
+      if (accountKey == ":") accountKey = "";
+      string accountCompany = tradeAccount.company;
+      int    accountNumber  = tradeAccount.number;
 
-         if (!InitTradeAccount(accountKey)) return(false);
-         if (tradeAccount.company!=accountCompany || tradeAccount.number!=accountNumber) {
-            if (!UpdateAccountDisplay())    return(false);     // update display and watched orders if
-            if (!RefreshLfxOrders())        return(false);     // the trade account changed
-         }
-         continue;
+      if (!InitTradeAccount(accountKey)) return(false);
+
+      if (tradeAccount.company!=accountCompany || tradeAccount.number!=accountNumber) {
+         if (!UpdateAccountDisplay()) return(false);        // if the trade account changed
+         if (!RefreshLfxOrders())     return(false);        // update display and monitored orders
       }
-      logWarn("onCommand(2)  unknown command: "+ DoubleQuoteStr(commands[i]));
+      return(!catch("onCommand(1)"));
    }
-   return(!catch("onCommand(3)"));
+
+   return(!logNotice("onCommand(2)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 

@@ -327,16 +327,16 @@ int onTick() {
 
 
 /**
- * Handle incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-
-   string cmd = commands[0];
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "wait") {
       if (IsTestSequence() && !IsTesting())
@@ -380,11 +380,11 @@ bool onCommand(string commands[]) {
       return(true);
    }
 
-   if (cmd ==     "orderdisplay") return(ToggleOrderDisplayMode());
-   if (cmd == "startstopdisplay") return(ToggleStartStopDisplayMode());
+   if (cmd == "order-display")      return(ToggleOrderDisplayMode());
+   if (cmd == "start-stop-display") return(ToggleStartStopDisplayMode());
 
    // log unknown commands and let the EA continue
-   return(!logWarn("onCommand(3)  "+ sequence.name +" unknown command: "+ DoubleQuoteStr(cmd)));
+   return(!logNotice("onCommand(3)  "+ sequence.name +" unknown command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 

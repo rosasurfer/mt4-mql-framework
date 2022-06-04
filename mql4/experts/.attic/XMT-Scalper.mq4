@@ -1976,16 +1976,18 @@ bool Orders.RemoveRealTicket(int ticket) {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
+
+   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
 
    if (cmd == "virtual") {
       switch (tradingMode) {
@@ -2008,9 +2010,9 @@ bool onCommand(string commands[]) {
             return(StartTradeMirror());
       }
    }
-   else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
+   else return(!logNotice("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
-   return(_true(logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode))));
+   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(fullCmd) +" command in "+ TradingModeToStr(tradingMode)));
 }
 
 

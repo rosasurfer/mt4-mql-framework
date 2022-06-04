@@ -458,8 +458,7 @@ bool onCommand(string commands[]) {
    if (StrEndsWith(cmd, "|up"))   return(PeriodStepper(STEP_UP));
    if (StrEndsWith(cmd, "|down")) return(PeriodStepper(STEP_DOWN));
 
-   logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
-   return(true);                                                  // signal success anyway
+   return(!logNotice("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd)));
 }
 
 

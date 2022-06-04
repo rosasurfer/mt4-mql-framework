@@ -15,6 +15,6 @@ int __DeinitFlags[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "cmd=LogPositionTickets");
+   SendChartCommand("ChartInfos.command", "log-custom-positions");
    return(catch("onStart(1)"));
 }

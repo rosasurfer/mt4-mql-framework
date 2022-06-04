@@ -1,7 +1,7 @@
 /**
  * SnowRoller.ToggleStartStop
  *
- * Send a chart command to SnowRoller to toggle the display of sequence start/stop markers.
+ * Send a command to a running SnowRoller instance to toggle the display of sequence start/stop markers.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -18,11 +18,11 @@ int __DeinitFlags[];
 int onStart() {
    // check chart for an active EA
    if (ObjectFind("EA.status") == 0) {
-      SendChartCommand("EA.command", "startstopdisplay");
+      SendChartCommand("EA.command", "start-stop-display");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No sequence found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(), "No running EA found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }

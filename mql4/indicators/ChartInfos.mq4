@@ -256,58 +256,48 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * Handle incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received external commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
- *
- * Messageformat: "cmd=account:[{companyId}:{account}]" - Schaltet den externen Account um.
- *                "cmd=ToggleOpenOrders"                - Schaltet die Anzeige der offenen Orders ein/aus.
- *                "cmd=ToggleTradeHistory"              - Schaltet die Anzeige der Trade-History ein/aus.
- *                "cmd=ToggleAccountBalance"            - Schaltet die AccountBalance-Anzeige ein/aus.
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   int size = ArraySize(commands);
-   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   for (int i=0; i < size; i++) {
-      if (commands[i] == "cmd=LogPositionTickets") {
-         if (!Positions.LogTickets())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=ToggleProfits") {
-         if (!Positions.ToggleProfits())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=ToggleAccountBalance") {
-         if (!ToggleAccountBalance())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=ToggleOpenOrders") {
-         if (!ToggleOpenOrders())
-            return(false);
-         continue;
-      }
-      if (commands[i] == "cmd=ToggleTradeHistory") {
-         if (!ToggleTradeHistory())
-            return(false);
-         continue;
-      }
-      if (StrStartsWith(commands[i], "cmd=account:")) {
-         string key = StrRightFrom(commands[i], ":");
-         if (!InitTradeAccount(key))  return(false);
-         if (!UpdateAccountDisplay()) return(false);
-         ArrayResize(positions.config,          0);
-         ArrayResize(positions.config.comments, 0);
-         continue;
-      }
-      logWarn("onCommand(2)  unknown command: \""+ commands[i] +"\"");
+   if (cmd == "log-custom-positions") {
+      if (!Positions.LogTickets()) return(false);
    }
-   return(!catch("onCommand(3)"));
+
+   else if (cmd == "toggle-account-balance") {
+      if (!ToggleAccountBalance()) return(false);
+   }
+
+   else if (cmd == "toggle-open-orders") {
+      if (!ToggleOpenOrders()) return(false);
+   }
+
+   else if (cmd == "toggle-profit-unit") {
+      if (!Positions.ToggleProfits()) return(false);
+   }
+
+   else if (cmd == "toggle-trade-history") {
+      if (!ToggleTradeHistory()) return(false);
+   }
+
+   else if (cmd == "trade-account") {
+      string key = params +":"+ modifiers;
+      if (key == ":") key = "";
+      if (!InitTradeAccount(key))  return(false);
+      if (!UpdateAccountDisplay()) return(false);
+      ArrayResize(positions.config,          0);
+      ArrayResize(positions.config.comments, 0);
+   }
+   else return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+
+   return(!catch("onCommand(2)"));
 }
 
 
