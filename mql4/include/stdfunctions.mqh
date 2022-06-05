@@ -569,8 +569,7 @@ bool SelectTicket(int ticket, string caller="", bool pushTicket=false, bool onEr
       if (!OrderPop(caller +"SelectTicket(2)")) return(false);
 
    int error = GetLastError();
-   if (!error)
-      error = ERR_INVALID_TICKET;
+   if (!error) error = ERR_INVALID_TICKET;
    return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
 }
 
