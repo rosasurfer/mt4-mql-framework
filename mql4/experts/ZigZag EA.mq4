@@ -43,7 +43,6 @@
  *
  *
  * TODO:
- *  - ZigZag EA: Chart.ToggleOpenOrders
  *  - ChartInfos: implement handling of VK_SHIFT
  *
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
@@ -64,6 +63,7 @@
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
+ *  - notifications for open positions running into swap charges
  *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - support command "wait" in status "progressing"
  *
@@ -409,16 +409,134 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-open-orders") {
-      debug("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
-      return(false);
+      return(ToggleOpenOrders());
    }
 
    else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logNotice("onCommand(5)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   else return(!logNotice("onCommand(4)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
-   return(!logWarn("onCommand(6)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(5)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(sequence.status)));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell"};
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+   int openOrders = 0;
+
+   if (open.ticket != NULL) {
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_ARROW, 0, open.time, open.price)) {
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+         ObjectSetText(label, sequence.name);
+      }
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
 }
 
 
