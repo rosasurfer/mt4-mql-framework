@@ -90,8 +90,8 @@ string  positions.config.comments[];                              // comments of
 #define TERM_EQUITY                     8
 
 // control flags for AnalyzePositions()
-#define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions (configured and unconfigured)
-#define F_LOG_SKIP_EMPTY                2                         // skip empty array elements when logging tickets
+#define F_DUMP_TICKETS                  1                         // dump tickets of resulting custom positions (configured and unconfigured)
+#define F_DUMP_SKIP_EMPTY               2                         // skip empty array elements when dumping tickets
 #define F_SHOW_CONFIGURED_POSITIONS     4                         // call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
 
 // internal + external position data
@@ -272,8 +272,10 @@ int onAccountChange(int previous, int current) {
 bool onCommand(string cmd, string params="", string modifiers="") {
    string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (cmd == "log-custom-positions") {
-      if (!AnalyzePositions(F_LOG_TICKETS|F_LOG_SKIP_EMPTY)) return(false);
+   if (cmd == "dump-custom-positions") {
+      int flags = F_DUMP_TICKETS;                                 // default:  don't dump empty tickets
+      if (modifiers != "VK_SHIFT") flags |= F_DUMP_SKIP_EMPTY;    // VK_SHIFT: dump empty tickets
+      if (!AnalyzePositions(flags)) return(false);
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -1569,13 +1571,13 @@ bool UpdateStopoutLevel() {
  * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren PnL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_LOG_TICKETS:               log tickets of resulting custom positions (configured and unconfigured)
- *                                F_LOG_SKIP_EMPTY:            skip empty array elements when logging tickets
+ *                                F_DUMP_TICKETS:              dump tickets of resulting custom positions (configured and unconfigured)
+ *                                F_DUMP_SKIP_EMPTY:           skip empty array elements when dumping tickets
  *                                F_SHOW_CONFIGURED_POSITIONS: call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
  * @return bool - success status
  */
 bool AnalyzePositions(int flags = NULL) {
-   if (flags & F_LOG_TICKETS != 0) positions.analyzed = false;                   // vorm Loggen werden die Positionen immer re-evaluiert
+   if (flags & F_DUMP_TICKETS != 0) positions.analyzed = false;                  // vorm Dumpen werden die Positionen immer re-evaluiert
    if (mode.extern)                positions.analyzed = true;
    if (positions.analyzed)         return(true);
 
@@ -1720,7 +1722,7 @@ bool AnalyzePositions(int flags = NULL) {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
-         if (flags & F_LOG_TICKETS != 0) LogTickets(customTickets, confLineIndex, flags);
+         if (flags & F_DUMP_TICKETS != 0) CustomPositions.DumpTickets(customTickets, confLineIndex, flags);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -1751,7 +1753,7 @@ bool AnalyzePositions(int flags = NULL) {
       positions.config[i][4] = termCache2;
    }
 
-   if (flags & F_LOG_TICKETS != 0) LogTickets(tickets, -1, flags);
+   if (flags & F_DUMP_TICKETS != 0) CustomPositions.DumpTickets(tickets, -1, flags);
 
    // verbleibende Position(en) speichern
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, 0, 0, -1))
@@ -1763,19 +1765,19 @@ bool AnalyzePositions(int flags = NULL) {
 
 
 /**
- * Loggt die Tickets einer Zeile der Positionsanzeige.
+ * Dump tickets of custom positions to the debug output.
  *
  * @param  int tickets[]
  * @param  int commentIndex
  * @param  int flags [optional] - control flags, supported values:
- *                                F_LOG_SKIP_EMPTY: skip empty array elements when logging tickets
+ *                                F_DUMP_SKIP_EMPTY: skip empty array elements when dumping tickets
  * @return bool - success status
  */
-bool LogTickets(int tickets[], int commentIndex, int flags = NULL) {
+bool CustomPositions.DumpTickets(int tickets[], int commentIndex, int flags = NULL) {
    int copy[]; ArrayResize(copy, 0);
    if (ArraySize(tickets) > 0) {
       ArrayCopy(copy, tickets);
-      if (flags & F_LOG_SKIP_EMPTY != 0) ArrayDropInt(copy, 0);
+      if (flags & F_DUMP_SKIP_EMPTY != 0) ArrayDropInt(copy, 0);
    }
 
    if (ArraySize(copy) > 0) {
@@ -1790,12 +1792,11 @@ bool LogTickets(int tickets[], int commentIndex, int flags = NULL) {
 
       string sPosition = TicketsToStr.Position(copy);
       sPosition = ifString(sPosition=="0 lot", "", sPosition +" = ");
-
       string sTickets = TicketsToStr.Lots(copy, NULL);
 
-      logDebug("LogTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
+      debug("DumpTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
    }
-   return(!catch("LogTickets(2)"));
+   return(!catch("CustomPositions.DumpTickets(2)"));
 }
 
 
