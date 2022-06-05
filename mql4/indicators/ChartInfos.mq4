@@ -92,7 +92,8 @@ string  positions.config.comments[];                              // comments of
 // control flags for AnalyzePositions()
 #define F_DUMP_TICKETS                  1                         // dump tickets of resulting custom positions (configured and unconfigured)
 #define F_DUMP_SKIP_EMPTY               2                         // skip empty array elements when dumping tickets
-#define F_SHOW_CONFIGURED               4                         // call ShowOpenOrders()/ShowTradeHistory() for configured orders (not for unconfigured or remaining ones)
+#define F_SHOW_CUSTOM_POSITIONS         4                         // call ShowOpenOrders() for configured positions (not for unconfigured or pending ones)
+#define F_SHOW_CUSTOM_HISTORY           8                         // call ShowTradeHistory() for the configured history (not for total history)
 
 // internal + external position data
 bool    isPendings;                                               // ob Pending-Limite im Markt liegen (Orders oder Positions)
@@ -157,7 +158,7 @@ int     lfxOrders.pendingPositions;                               // Anzahl der 
 string  label.instrument     = "${__NAME__}.Instrument";
 string  label.price          = "${__NAME__}.Price";
 string  label.spread         = "${__NAME__}.Spread";
-string  label.externalAssets = "${__NAME__}.ExternalAssets";
+string  label.accountBalance = "${__NAME__}.AccountBalance";
 string  label.position       = "${__NAME__}.Position";
 string  label.unitSize       = "${__NAME__}.UnitSize";
 string  label.orderCounter   = "${__NAME__}.OrderCounter";
@@ -284,7 +285,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 
    else if (cmd == "toggle-open-orders") {
       if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CONFIGURED;
+         flags = F_SHOW_CUSTOM_POSITIONS;
          ArrayResize(positions.config,          0);               // let the position configuration be reparsed
          ArrayResize(positions.config.comments, 0);
       }
@@ -294,7 +295,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 
    else if (cmd == "toggle-trade-history") {
       if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CONFIGURED;
+         flags = F_SHOW_CUSTOM_HISTORY;
          ArrayResize(positions.config,          0);               // let the position configuration be reparsed
          ArrayResize(positions.config.comments, 0);
       }
@@ -303,7 +304,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-profit-unit") {
-      if (!Positions.ToggleProfits()) return(false);
+      if (!CustomPositions.ToggleProfits()) return(false);
    }
 
    else if (cmd == "trade-account") {
@@ -324,7 +325,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
  * Toggle the display of open orders.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured orders only (not for unconfigured or remaining ones)
+ *                                F_SHOW_CUSTOM_POSITIONS: show configured positions only (no unconfigured or pending ones)
  * @return bool - success status
  */
 bool ToggleOpenOrders(int flags = NULL) {
@@ -336,7 +337,7 @@ bool ToggleOpenOrders(int flags = NULL) {
       int iNulls[], orders = ShowOpenOrders(iNulls, flags);
       if (orders == -1) return(false);
       if (!orders) {
-         showOrders = false;                          // Without open orders reset status to also enter "off" section
+         showOrders = false;                          // Reset status without open orders to continue with the "off" section
          PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
       }
    }
@@ -381,36 +382,35 @@ bool ToggleOpenOrders(int flags = NULL) {
  *
  * @param  int customTickets[]  - skip resolving of tickets and display the passed tickets instead
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CONFIGURED: display configured orders instead of all open ones
+ *                                F_SHOW_CUSTOM_POSITIONS: display configured positions instead of all open orders
  *
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
-int ShowOpenOrders(int tickets[], int flags = NULL) {
+int ShowOpenOrders(int customTickets[], int flags = NULL) {
    int      i, orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
    string   comment="", label1="", label2="", label3="", sTP="", sSL="", orderTypes[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
-   int      customTickets = ArraySize(tickets);
-   static int n = 0;
+   int      customTicketsSize = ArraySize(customTickets);
+   static int returnValue = 0;
 
-   // on flag F_SHOW_CONFIGURED call AnalyzePositions() which recursively calls ShowOpenOrders() for each custom config line
-   if (!customTickets || flags & F_SHOW_CONFIGURED) {
-      n = 0;
-      if (!customTickets && flags & F_SHOW_CONFIGURED) {
-         if (!AnalyzePositions(flags))
-            return(-1);
-         return(n);
+   // on flag F_SHOW_CUSTOM_POSITIONS call AnalyzePositions() which recursively calls ShowOpenOrders() for each custom config line
+   if (!customTicketsSize || flags & F_SHOW_CUSTOM_POSITIONS) {
+      returnValue = 0;
+      if (!customTicketsSize && flags & F_SHOW_CUSTOM_POSITIONS) {
+         if (!AnalyzePositions(flags)) return(-1);
+         return(returnValue);
       }
    }
 
    // mode.intern or custom tickets
-   if (mode.intern || customTickets) {
-      orders = intOr(customTickets, OrdersTotal());
+   if (mode.intern || customTicketsSize) {
+      orders = intOr(customTicketsSize, OrdersTotal());
 
       for (i=0; i < orders; i++) {
-         if (customTickets > 0) {
-            if (!tickets[i]) continue;
-            if (!SelectTicket(tickets[i], "ShowOpenOrders(1)")) break;
+         if (customTicketsSize > 0) {
+            if (!customTickets[i]) continue;
+            if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
          else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
          if (OrderSymbol() != Symbol()) continue;
@@ -479,9 +479,9 @@ int ShowOpenOrders(int tickets[], int flags = NULL) {
                ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
             }
          }
-         n++;
+         returnValue++;
       }
-      return(n);
+      return(returnValue);
    }
 
    // mode.extern
@@ -554,9 +554,9 @@ int ShowOpenOrders(int tickets[], int flags = NULL) {
             ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
          }
       }
-      n++;
+      returnValue++;
    }
-   return(n);
+   return(returnValue);
 }
 
 
@@ -605,21 +605,18 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * Toggle the display of closed trades.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured orders only (not for unconfigured or remaining ones)
+ *                                F_SHOW_CUSTOM_HISTORY: show the configured history only (not the total one)
  * @return bool - success status
  */
 bool ToggleTradeHistory(int flags = NULL) {
-   //debug("ToggleTradeHistory(0.1)  flags="+ flags);
-
-   // read current status and toggle it
-   bool showHistory = !GetTradeHistoryDisplayStatus();
+   bool showHistory = !GetTradeHistoryDisplayStatus();   // read current status and toggle it
 
    // ON: display closed trades
    if (showHistory) {
-      int trades = ShowTradeHistory();
+      int iNulls[], trades = ShowTradeHistory(iNulls, flags);
       if (trades == -1) return(false);
-      if (!trades) {                                  // Without closed trades status must be reset to have the "off" section
-         showHistory = false;                         // remove any existing closed trade markers.
+      if (!trades) {                                     // Reset status without history to continue with the "off" section
+         showHistory = false;                            // which clears existing (e.g. orphaned) history markers.
          PlaySoundEx("Plonk.wav");
       }
    }
@@ -647,11 +644,9 @@ bool ToggleTradeHistory(int flags = NULL) {
       }
    }
 
-   // store current status in the chart
-   SetTradeHistoryDisplayStatus(showHistory);
+   SetTradeHistoryDisplayStatus(showHistory);            // store new status
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (This.IsTesting())WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
 
@@ -698,36 +693,52 @@ bool SetTradeHistoryDisplayStatus(bool status) {
 
 
 /**
- * Display the currently available trade history.
+ * Display the available or a custom trade history.
  *
- * @return int - number of displayed closed positions or EMPTY (-1) in case of errors
+ * @param  int customTickets[]  - skip history retrieval and display the passed tickets instead
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_SHOW_CUSTOM_HISTORY: display the configured history instead of the available one
+ *
+ * @return int - number of displayed trades or EMPTY (-1) in case of errors
  */
-int ShowTradeHistory() {
-   int      orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
-   datetime openTime, closeTime;
-   double   lots, units, openPrice, closePrice, openEquity, profit;
-   string   sOpenPrice="", sClosePrice="", text="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
-
-   // Anzeigekonfiguration auslesen
+int ShowTradeHistory(int customTickets[], int flags = NULL) {
+   // get drawing configuration
    string file    = GetAccountConfigPath(tradeAccount.company, tradeAccount.number); if (!StringLen(file)) return(EMPTY);
    string section = "Chart";
    string key     = "TradeHistory.ConnectTrades";
-   bool drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // prefer trade account configuration
+   bool success, drawConnectors = GetIniBool(file, section, key, GetConfigBool(section, key, true));  // check trade account first
 
-   // mode.intern
-   if (mode.intern) {
+   int      i, n, orders, ticket, type, markerColors[]={CLR_CLOSED_LONG, CLR_CLOSED_SHORT}, lineColors[]={Blue, Red};
+   datetime openTime, closeTime;
+   double   lots, units, openPrice, closePrice, openEquity, profit;
+   string   sOpenPrice="", sClosePrice="", text="", openLabel="", lineLabel="", closeLabel="", sTypes[]={"buy", "sell"};
+   int      customTicketsSize = ArraySize(customTickets);
+   static int returnValue = 0;
+
+   // on flag F_SHOW_CUSTOM_HISTORY call AnalyzePositions() which recursively calls ShowTradeHistory() for each custom config line
+   if (!customTicketsSize || flags & F_SHOW_CUSTOM_HISTORY) {
+      returnValue = 0;
+      if (!customTicketsSize && flags & F_SHOW_CUSTOM_HISTORY) {
+         if (!AnalyzePositions(flags)) return(-1);
+         return(returnValue);
+      }
+   }
+
+   // mode.intern or custom tickets
+   if (mode.intern || customTicketsSize) {
+      orders = intOr(customTicketsSize, OrdersHistoryTotal());
+
       // Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-      orders = OrdersHistoryTotal();
       int sortKeys[][3];                                                // {CloseTime, OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
 
-      for (int n, i=0; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) {            // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
-            orders = i;
-            break;
-         }
+      for (i=0, n=0; i < orders; i++) {
+         if (customTicketsSize > 0) success = SelectTicket(customTickets[i], "ShowTradeHistory(1)");
+         else                       success = OrderSelect(i, SELECT_BY_POS, MODE_HISTORY);
+         if (!success)                  break;                          // während des Auslesens wurde der Anzeigezeitraum der History verkürzt
          if (OrderSymbol() != Symbol()) continue;
-         if (OrderType()   >  OP_SELL ) continue;
+         if (OrderType() > OP_SELL)     continue;
+         if (!OrderCloseTime())         continue;
 
          sortKeys[n][0] = OrderCloseTime();
          sortKeys[n][1] = OrderOpenTime();
@@ -739,34 +750,33 @@ int ShowTradeHistory() {
       SortClosedTickets(sortKeys);
 
       // Tickets sortiert einlesen
-      int      tickets    []; ArrayResize(tickets,     0);
-      int      types      []; ArrayResize(types,       0);
-      double   lotSizes   []; ArrayResize(lotSizes,    0);
-      datetime openTimes  []; ArrayResize(openTimes,   0);
-      datetime closeTimes []; ArrayResize(closeTimes,  0);
-      double   openPrices []; ArrayResize(openPrices,  0);
-      double   closePrices[]; ArrayResize(closePrices, 0);
-      double   commissions[]; ArrayResize(commissions, 0);
-      double   swaps      []; ArrayResize(swaps,       0);
-      double   profits    []; ArrayResize(profits,     0);
-      string   comments   []; ArrayResize(comments,    0);
-      int      magics     []; ArrayResize(magics,      0);
+      int      tickets    []; ArrayResize(tickets,     orders);
+      int      types      []; ArrayResize(types,       orders);
+      double   lotSizes   []; ArrayResize(lotSizes,    orders);
+      datetime openTimes  []; ArrayResize(openTimes,   orders);
+      datetime closeTimes []; ArrayResize(closeTimes,  orders);
+      double   openPrices []; ArrayResize(openPrices,  orders);
+      double   closePrices[]; ArrayResize(closePrices, orders);
+      double   commissions[]; ArrayResize(commissions, orders);
+      double   swaps      []; ArrayResize(swaps,       orders);
+      double   profits    []; ArrayResize(profits,     orders);
+      string   comments   []; ArrayResize(comments,    orders);
+      int      magics     []; ArrayResize(magics,      orders);
 
       for (i=0; i < orders; i++) {
-         if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(1)"))
-            return(-1);
-         ArrayPushInt   (tickets,     OrderTicket()     );
-         ArrayPushInt   (types,       OrderType()       );
-         ArrayPushDouble(lotSizes,    OrderLots()       );
-         ArrayPushInt   (openTimes,   OrderOpenTime()   );
-         ArrayPushInt   (closeTimes,  OrderCloseTime()  );
-         ArrayPushDouble(openPrices,  OrderOpenPrice()  );
-         ArrayPushDouble(closePrices, OrderClosePrice() );
-         ArrayPushDouble(commissions, OrderCommission() );
-         ArrayPushDouble(swaps,       OrderSwap()       );
-         ArrayPushDouble(profits,     OrderProfit()     );
-         ArrayPushString(comments,    OrderComment()    );
-         ArrayPushInt   (magics,      OrderMagicNumber());
+         if (!SelectTicket(sortKeys[i][2], "ShowTradeHistory(2)")) return(-1);
+         tickets    [i] = OrderTicket();
+         types      [i] = OrderType();
+         lotSizes   [i] = OrderLots();
+         openTimes  [i] = OrderOpenTime();
+         closeTimes [i] = OrderCloseTime();
+         openPrices [i] = OrderOpenPrice();
+         closePrices[i] = OrderClosePrice();
+         commissions[i] = OrderCommission();
+         swaps      [i] = OrderSwap();
+         profits    [i] = OrderProfit();
+         comments   [i] = OrderComment();
+         magics     [i] = OrderMagicNumber();
       }
 
       // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen
@@ -780,8 +790,7 @@ int ShowTradeHistory() {
             // Gegenstück suchen
             ticket = StrToInteger(StringSubstr(comments[i], 16));
             for (n=0; n < orders; n++) {
-               if (tickets[n] == ticket)
-                  break;
+               if (tickets[n] == ticket) break;
             }
             if (n == orders) return(_EMPTY(catch("ShowTradeHistory(4)  cannot find counterpart for hedging position #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
             if (i == n     ) return(_EMPTY(catch("ShowTradeHistory(5)  both hedged and hedging position have the same ticket #"+ tickets[i] +": \""+ comments[i] +"\"", ERR_RUNTIME_ERROR)));
@@ -804,8 +813,7 @@ int ShowTradeHistory() {
 
       // Orders anzeigen
       for (i=0; i < orders; i++) {
-         if (!tickets[i])                                            // verworfene Hedges überspringen
-            continue;
+         if (!tickets[i]) continue;                                  // verworfene Hedges überspringen
          sOpenPrice  = NumberToStr(openPrices [i], PriceFormat);
          sClosePrice = NumberToStr(closePrices[i], PriceFormat);
          text        = OrderMarkerText(types[i], magics[i], comments[i]);
@@ -842,16 +850,16 @@ int ShowTradeHistory() {
             ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
             ObjectSetText(closeLabel, text);
          }
-         n++;
+         returnValue++;
       }
-      return(n);
+      return(returnValue);
    }
 
 
    // mode.extern
    orders = ArrayRange(lfxOrders, 0);
 
-   for (i=0, n=0; i < orders; i++) {
+   for (i=0; i < orders; i++) {
       if (!los.IsClosedPosition(lfxOrders, i)) continue;
 
       ticket      =                     los.Ticket    (lfxOrders, i);
@@ -901,9 +909,9 @@ int ShowTradeHistory() {
          ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
          ObjectSetText(closeLabel, text);
       }
-      n++;
+      returnValue++;
    }
-   return(n);
+   return(returnValue);
 }
 
 
@@ -948,29 +956,23 @@ string OrderMarkerText(int type, int magic, string comment) {
 
 
 /**
- * Schaltet die Anzeige der PL-Beträge der Positionen zwischen "absolut" und "prozentual" um.
+ * Schaltet die Anzeige der PnL-Beträge der Positionen zwischen "absolut" und "prozentual" um.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool Positions.ToggleProfits() {
-   positions.absoluteProfits = !positions.absoluteProfits;     // aktuellen Anzeigestatus umschalten
-
-   if (!UpdatePositions()) return(false);                      // Positionsanzeige aktualisieren
-   if (GetTradeHistoryDisplayStatus())                         // ggf. TradeHistory aktualisieren
-      ShowTradeHistory();
-
-   return(!catch("Positions.ToggleProfits(1)"));
+bool CustomPositions.ToggleProfits() {
+   positions.absoluteProfits = !positions.absoluteProfits;     // toggle status and update positions
+   return(UpdatePositions());
 }
 
 
 /**
- * Toggle the display of the account balance.
+ * Toggle the chart display of the account balance.
  *
  * @return bool - success status
  */
 bool ToggleAccountBalance() {
-   // get current display status and toggle it
-   bool enabled = !GetAccountBalanceDisplayStatus();
+   bool enabled = !GetAccountBalanceDisplayStatus();           // get current display status and toggle it
 
    if (enabled) {
       string sBalance = " ";
@@ -981,22 +983,20 @@ bool ToggleAccountBalance() {
          enabled = false;                                      // mode.extern not yet implemented
          PlaySoundEx("Plonk.wav");
       }
-      ObjectSetText(label.externalAssets, sBalance, 9, "Tahoma", SlateGray);
+      ObjectSetText(label.accountBalance, sBalance, 9, "Tahoma", SlateGray);
    }
    else {
-      ObjectSetText(label.externalAssets, " ", 1);
+      ObjectSetText(label.accountBalance, " ", 1);
    }
 
    int error = GetLastError();
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
       return(!catch("AccountBalance(1)", error));
 
-   // store current display status
-   SetAuMDisplayStatus(enabled);
+   SetAccountBalanceDisplayStatus(enabled);                    // store new display status
 
-   if (This.IsTesting())
-      WindowRedraw();
-   return(!catch("AccountBalance(2)"));
+   if (This.IsTesting()) WindowRedraw();
+   return(!catch("ToggleAccountBalance(2)"));
 }
 
 
@@ -1006,8 +1006,7 @@ bool ToggleAccountBalance() {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".AuMDisplay.status";
+   string label = ProgramName() +".ShowAccountBalance";        // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1015,24 +1014,22 @@ bool GetAccountBalanceDisplayStatus() {
 
 
 /**
- * Speichert den angegebenen AuM-Anzeigestatus im Chart.
+ * Store the account balance display status.
  *
  * @param  bool status - Status
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool SetAuMDisplayStatus(bool status) {
+bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   // TODO: Status statt im Chart im Fenster lesen/schreiben
-   string label = ProgramName() +".AuMDisplay.status";
+   string label = ProgramName() +".ShowAccountBalance";        // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status, 0);
 
-   return(!catch("SetAuMDisplayStatus(1)"));
+   return(!catch("SetAccountBalanceDisplayStatus(1)"));
 }
 
 
@@ -1047,7 +1044,7 @@ bool CreateLabels() {
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
    label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
-   label.externalAssets = StrReplace(label.externalAssets, "${__NAME__}", programName);
+   label.accountBalance = StrReplace(label.accountBalance, "${__NAME__}", programName);
    label.position       = StrReplace(label.position,       "${__NAME__}", programName);
    label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", programName);
    label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", programName);
@@ -1108,15 +1105,15 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-   // Assets-under-Management-Label
-   if (ObjectFind(label.externalAssets) == 0)
-      ObjectDelete(label.externalAssets);
-   if (ObjectCreate(label.externalAssets, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.externalAssets, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.externalAssets, OBJPROP_XDISTANCE, 330);
-      ObjectSet    (label.externalAssets, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.externalAssets, " ", 1);
-      RegisterObject(label.externalAssets);
+   // AccountBalance-Label
+   if (ObjectFind(label.accountBalance) == 0)
+      ObjectDelete(label.accountBalance);
+   if (ObjectCreate(label.accountBalance, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 330);
+      ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.accountBalance, " ", 1);
+      RegisterObject(label.accountBalance);
    }
    else GetLastError();
 
@@ -1592,16 +1589,17 @@ bool UpdateStopoutLevel() {
 
 
 /**
- * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren PnL stats.
+ * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren PL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_DUMP_TICKETS:    dump tickets of resulting custom positions (configured and unconfigured)
- *                                F_DUMP_SKIP_EMPTY: skip empty array elements when dumping tickets
- *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured custom positions (not for unconfigured or remaining positions)
+ *                                F_DUMP_TICKETS:          dump tickets of resulting custom positions (configured and unconfigured)
+ *                                F_DUMP_SKIP_EMPTY:       skip empty array elements when dumping tickets
+ *                                F_SHOW_CUSTOM_POSITIONS: call ShowOpenOrders() for the configured open positions
+ *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured history
  * @return bool - success status
  */
 bool AnalyzePositions(int flags = NULL) {                                        // reparse configuration on chart command flags
-   if (flags & (F_DUMP_TICKETS|F_SHOW_CONFIGURED) != 0) positions.analyzed = false;
+   if (flags & (F_DUMP_TICKETS|F_SHOW_CUSTOM_POSITIONS) != 0) positions.analyzed = false;
    if (mode.extern)        positions.analyzed = true;
    if (positions.analyzed) return(true);
 
@@ -1747,7 +1745,7 @@ bool AnalyzePositions(int flags = NULL) {                                       
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
          if (flags & F_DUMP_TICKETS != 0) CustomPositions.DumpTickets(customTickets, confLineIndex, flags);
-         if (flags & F_SHOW_CONFIGURED && ArraySize(customTickets)) ShowOpenOrders(customTickets);
+         if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -1759,20 +1757,20 @@ bool AnalyzePositions(int flags = NULL) {                                       
          closedProfit        = EMPTY_VALUE;
          adjustedProfit      = 0;
          customEquity        = 0;
-         ArrayResize(customTickets    , 0);
-         ArrayResize(customTypes      , 0);
-         ArrayResize(customLots       , 0);
-         ArrayResize(customOpenPrices , 0);
+         ArrayResize(customTickets,     0);
+         ArrayResize(customTypes,       0);
+         ArrayResize(customLots,        0);
+         ArrayResize(customOpenPrices,  0);
          ArrayResize(customCommissions, 0);
-         ArrayResize(customSwaps      , 0);
-         ArrayResize(customProfits    , 0);
+         ArrayResize(customSwaps,       0);
+         ArrayResize(customProfits,     0);
          confLineIndex++;
          continue;
       }
       if (!ExtractPosition(termType, termValue1, termValue2, termCache1, termCache2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots,       openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity,
-                           isCustomVirtual))
+                           isCustomVirtual, flags))
          return(false);
       positions.config[i][3] = termCache1;
       positions.config[i][4] = termCache2;
@@ -2889,27 +2887,28 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
 
 /**
- * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer CustomPosition
- * {customVars} hinzu.
+ * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer
+ * CustomPosition {customVars} hinzu.
  *
- *                                                                    +-+    struct POSITION_CONFIG_TERM {
- * @param  _In_    int    type           - zu extrahierender Typ      |       double type;
- * @param  _In_    double value1         - zu extrahierende Lotsize   |       double confValue1;
- * @param  _In_    double value2         - Preis/Betrag/Equity        +->     double confValue2;
- * @param  _InOut_ double cache1         - Zwischenspeicher 1         |       double cacheValue1;
- * @param  _InOut_ double cache2         - Zwischenspeicher 2         |       double cacheValue2;
- *                                                                    +-+    };
- *
- * @param  _InOut_ mixed fromVars        - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
- * @param  _InOut_ mixed customVars      - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
+ *                                                                    +-- struct POSITION_CONFIG_TERM {
+ * @param  _In_    int    type           - zu extrahierender Typ      |      double type;
+ * @param  _In_    double value1         - zu extrahierende Lotsize   |      double confValue1;
+ * @param  _In_    double value2         - Preis/Betrag/Equity        |      double confValue2;
+ * @param  _InOut_ double cache1         - Zwischenspeicher 1         |      double cacheValue1;
+ * @param  _InOut_ double cache2         - Zwischenspeicher 2         |      double cacheValue2;
+ *                                                                    +-- };
+ * @param  _InOut_ mixed fromVars...     - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
+ * @param  _InOut_ mixed customVars...   - Variablen, denen die extrahierte Position hinzugefügt wird (Bestand erhöht sich)
  * @param  _InOut_ bool  isCustomVirtual - ob die resultierende CustomPosition virtuell ist
  *
- * @return bool - Erfolgsstatus
+ * @param  _In_    int   flags [optional] - control flags, supported values:
+ *                                          F_SHOW_CUSTOM_HISTORY: call ShowTradeHistory() for the configured history
+ * @return bool - success status
  */
 bool ExtractPosition(int type, double value1, double value2, double &cache1, double &cache2,
                      double &longPosition,       double &shortPosition,       double &totalPosition,       int &tickets[],       int &types[],       double &lots[],       datetime &openTimes[], double &openPrices[],       double &commissions[],       double &swaps[],       double &profits[],
                      double &customLongPosition, double &customShortPosition, double &customTotalPosition, int &customTickets[], int &customTypes[], double &customLots[],                        double &customOpenPrices[], double &customCommissions[], double &customSwaps[], double &customProfits[], double &closedProfit, double &adjustedProfit, double &customEquity,
-                     bool   &isCustomVirtual) {
+                     bool   &isCustomVirtual, int flags = NULL) {
    isCustomVirtual = isCustomVirtual!=0;
 
    double   lotsize;
@@ -3052,38 +3051,32 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
       from              = value1;
       to                = value2;
       double lastProfit = cache1;      // default: EMPTY_VALUE
-      int    lastOrders = cache2;      // default: EMPTY_VALUE                // Anzahl der Tickets in der History: ändert sie sich, wird der Profit neu berechnet
+      int    lastOrders = cache2;      // default: EMPTY_VALUE                   // Anzahl der Tickets in der History: ändert sie sich, wird der PL neu berechnet
 
       int orders=OrdersHistoryTotal(), _orders=orders;
 
       if (orders != lastOrders) {
-         // (1) Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
-         int sortKeys[][3], n, hst.ticket;                                    // {CloseTime, OpenTime, Ticket}
+         // Sortierschlüssel aller geschlossenen Positionen auslesen und nach {CloseTime, OpenTime, Ticket} sortieren
+         int sortKeys[][3], n, hst.ticket;                                 // {CloseTime, OpenTime, Ticket}
          ArrayResize(sortKeys, orders);
 
          for (i=0; i < orders; i++) {
-            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))                 // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
-               break;
+            if (!OrderSelect(i, SELECT_BY_POS, MODE_HISTORY)) break;             // FALSE: während des Auslesens wurde der Anzeigezeitraum der History verkürzt
 
             // wenn OrderType()==OP_BALANCE, dann OrderSymbol()==Leerstring
             if (OrderType() == OP_BALANCE) {
-               // Dividenden                                                  // "Ex Dividend US2000" oder
-               if (StrStartsWithI(OrderComment(), "ex dividend ")) {          // "Ex Dividend 17/03/15 US2000"
-                  if (type == TERM_HISTORY_SYMBOL)                            // single history
-                     if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
-                        continue;
+               // Dividenden                                                     // "Ex Dividend US2000" oder
+               if (StrStartsWithI(OrderComment(), "ex dividend ")) {             // "Ex Dividend 17/03/15 US2000"
+                  if (type == TERM_HISTORY_SYMBOL)                               // single history
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
                }
                // Rollover adjustments
-               else if (StrStartsWithI(OrderComment(), "adjustment ")) {      // "Adjustment BRENT"
-                  if (type == TERM_HISTORY_SYMBOL)                            // single history
-                     if (!StrEndsWithI(OrderComment(), " "+ Symbol()))        // ok, wenn zum aktuellen Symbol gehörend
-                        continue;
+               else if (StrStartsWithI(OrderComment(), "adjustment ")) {         // "Adjustment BRENT"
+                  if (type == TERM_HISTORY_SYMBOL)                               // single history
+                     if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
                }
-               else {
-                  continue;                                                   // sonstige Balance-Einträge
-               }
+               else continue;                                                    // sonstige Balance-Einträge
             }
-
             else {
                if (OrderType() > OP_SELL)                                         continue;
                if (type==TERM_HISTORY_SYMBOL) /*&&*/ if (OrderSymbol()!=Symbol()) continue;  // ggf. Positionen aller Symbole
@@ -3098,38 +3091,39 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          ArrayResize(sortKeys, orders);
          SortClosedTickets(sortKeys);
 
-         // (2) Tickets sortiert einlesen
-         int      hst.tickets    []; ArrayResize(hst.tickets    , 0);
-         int      hst.types      []; ArrayResize(hst.types      , 0);
-         double   hst.lotSizes   []; ArrayResize(hst.lotSizes   , 0);
-         datetime hst.openTimes  []; ArrayResize(hst.openTimes  , 0);
-         datetime hst.closeTimes []; ArrayResize(hst.closeTimes , 0);
-         double   hst.openPrices []; ArrayResize(hst.openPrices , 0);
-         double   hst.closePrices[]; ArrayResize(hst.closePrices, 0);
-         double   hst.commissions[]; ArrayResize(hst.commissions, 0);
-         double   hst.swaps      []; ArrayResize(hst.swaps      , 0);
-         double   hst.profits    []; ArrayResize(hst.profits    , 0);
-         string   hst.comments   []; ArrayResize(hst.comments   , 0);
+         // Tickets sortiert einlesen
+         int      hst.tickets    []; ArrayResize(hst.tickets,     orders);
+         int      hst.types      []; ArrayResize(hst.types,       orders);
+         double   hst.lotSizes   []; ArrayResize(hst.lotSizes,    orders);
+         datetime hst.openTimes  []; ArrayResize(hst.openTimes,   orders);
+         datetime hst.closeTimes []; ArrayResize(hst.closeTimes,  orders);
+         double   hst.openPrices []; ArrayResize(hst.openPrices,  orders);
+         double   hst.closePrices[]; ArrayResize(hst.closePrices, orders);
+         double   hst.commissions[]; ArrayResize(hst.commissions, orders);
+         double   hst.swaps      []; ArrayResize(hst.swaps,       orders);
+         double   hst.profits    []; ArrayResize(hst.profits,     orders);
+         string   hst.comments   []; ArrayResize(hst.comments,    orders);
+         bool     hst.valid      []; ArrayResize(hst.valid,       orders);
 
          for (i=0; i < orders; i++) {
-            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(2)"))
-               return(false);
-            ArrayPushInt   (hst.tickets    , OrderTicket()    );
-            ArrayPushInt   (hst.types      , OrderType()      );
-            ArrayPushDouble(hst.lotSizes   , OrderLots()      );
-            ArrayPushInt   (hst.openTimes  , OrderOpenTime()  );
-            ArrayPushInt   (hst.closeTimes , OrderCloseTime() );
-            ArrayPushDouble(hst.openPrices , OrderOpenPrice() );
-            ArrayPushDouble(hst.closePrices, OrderClosePrice());
-            ArrayPushDouble(hst.commissions, OrderCommission());
-            ArrayPushDouble(hst.swaps      , OrderSwap()      );
-            ArrayPushDouble(hst.profits    , OrderProfit()    );
-            ArrayPushString(hst.comments   , OrderComment()   );
+            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(2)")) return(false);
+            hst.tickets    [i] = OrderTicket();
+            hst.types      [i] = OrderType();
+            hst.lotSizes   [i] = OrderLots();
+            hst.openTimes  [i] = OrderOpenTime();
+            hst.closeTimes [i] = OrderCloseTime();
+            hst.openPrices [i] = OrderOpenPrice();
+            hst.closePrices[i] = OrderClosePrice();
+            hst.commissions[i] = OrderCommission();
+            hst.swaps      [i] = OrderSwap();
+            hst.profits    [i] = OrderProfit();
+            hst.comments   [i] = OrderComment();
+            hst.valid      [i] = true;
          }
 
-         // (3) Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
+         // Hedges korrigieren: alle Daten dem ersten Ticket zuordnen und hedgendes Ticket verwerfen (auch Positionen mehrerer Symbole werden korrekt zugeordnet)
          for (i=0; i < orders; i++) {
-            if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {          // lotSize = 0: Hedge-Position
+            if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {                      // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StrStartsWithI(hst.comments[i], "close hedge by #"))
                   return(!catch("ExtractPosition(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
@@ -3137,8 +3131,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
                // Gegenstück suchen
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
                for (n=0; n < orders; n++) {
-                  if (hst.tickets[n] == hst.ticket)
-                     break;
+                  if (hst.tickets[n] == hst.ticket) break;
                }
                if (n == orders) return(!catch("ExtractPosition(4)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
                if (i == n     ) return(!catch("ExtractPosition(5)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
@@ -3155,19 +3148,26 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
                }
                hst.closeTimes [first] = hst.openTimes [second];
                hst.closePrices[first] = hst.openPrices[second];
-               hst.tickets   [second] = NULL;                                    // hedgendes Ticket als verworfen markieren
+
+               hst.closeTimes[second] = hst.closeTimes[first];                   // CloseTime des hedgenden Tickets auf die erste Order setzen, damit es durch den Zeitfilter kommt und an ShowTradeHistory() übergeben werden kann
+               hst.valid     [second] = false;                                   // hedgendes Ticket als verworfen markieren
             }
          }
 
-         // (4) Trades auswerten
+         // Trades auswerten
+         int showTickets[]; ArrayResize(showTickets, 0);
          lastProfit=0; n=0;
+
          for (i=0; i < orders; i++) {
-            if (!hst.tickets[i])                  continue;                      // verworfene Hedges überspringen
             if (from && hst.closeTimes[i] < from) continue;
             if (to   && hst.closeTimes[i] > to  ) continue;
+            ArrayPushInt(showTickets, hst.tickets[i]);                           // collect tickets to pass to ShowTradeHistory()
+            if (!hst.valid[i])                    continue;                      // verworfene Hedges überspringen
             lastProfit += hst.commissions[i] + hst.swaps[i] + hst.profits[i];
             n++;
-         }
+         }                                                                       // call ShowTradeHistory() if specified
+         if (flags & F_SHOW_CUSTOM_HISTORY && ArraySize(showTickets)) ShowTradeHistory(showTickets);
+
          if (!n) lastProfit = EMPTY_VALUE;                                       // keine passenden geschlossenen Trades gefunden
          else    lastProfit = NormalizeDouble(lastProfit, 2);
          cache1             = lastProfit;
@@ -3179,6 +3179,9 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;
          else                             closedProfit += lastProfit;
       }
+
+
+
    }
 
    else if (type == TERM_ADJUSTMENT) {
