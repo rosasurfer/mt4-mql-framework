@@ -74,13 +74,13 @@ double mm.riskPercent;                                            // resulting r
 double mm.riskRange;                                              // resulting price range
 
 // configuration of custom positions
-#define POSITION_CONFIG_TERM_size      40                         // in Bytes
-#define POSITION_CONFIG_TERM_doubleSize 5                         // in Doubles
+#define POSITION_CONFIG_TERM_size      40                         // in bytes
+#define POSITION_CONFIG_TERM_doubleSize 5                         // in doubles
 
-double  positions.config[][POSITION_CONFIG_TERM_doubleSize];      // geparste Konfiguration, Format siehe CustomPositions.ReadConfig()
-string  positions.config.comments[];                              // Kommentare konfigurierter Positionen (Arraygröße entspricht positions.config[])
+double  positions.config[][POSITION_CONFIG_TERM_doubleSize];      // parsed custom position configuration, format: see CustomPositions.ReadConfig()
+string  positions.config.comments[];                              // comments of position configuration, size matches positions.config[]
 
-#define TERM_OPEN_LONG                  1                         // ConfigTerm-Types
+#define TERM_OPEN_LONG                  1                         // types of config terms
 #define TERM_OPEN_SHORT                 2
 #define TERM_OPEN_SYMBOL                3
 #define TERM_OPEN_ALL                   4
@@ -89,9 +89,14 @@ string  positions.config.comments[];                              // Kommentare 
 #define TERM_ADJUSTMENT                 7
 #define TERM_EQUITY                     8
 
+// control flags for AnalyzePositions()
+#define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions (configured and unconfigured)
+#define F_LOG_SKIP_EMPTY                2                         // skip empty array elements when logging tickets
+#define F_SHOW_CONFIGURED_POSITIONS     4                         // call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
+
 // internal + external position data
 bool    isPendings;                                               // ob Pending-Limite im Markt liegen (Orders oder Positions)
-bool    isPosition;                                               // ob offene Positionen existieren = (longPosition || shortPosition);   // die Gesamtposition kann flat sein
+bool    isPosition;                                               // ob offene Positionen existieren, die Gesamtposition kann flat sein: (longPosition || shortPosition)
 double  totalPosition;
 double  longPosition;
 double  shortPosition;
@@ -268,7 +273,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "log-custom-positions") {
-      if (!Positions.LogTickets()) return(false);
+      if (!AnalyzePositions(F_LOG_TICKETS|F_LOG_SKIP_EMPTY)) return(false);
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -276,7 +281,8 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-open-orders") {
-      if (!ToggleOpenOrders()) return(false);
+      bool customOnly = (modifiers == "VK_SHIFT");
+      if (!ToggleOpenOrders(customOnly)) return(false);
    }
 
    else if (cmd == "toggle-profit-unit") {
@@ -304,19 +310,28 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 /**
  * Toggle the display of open orders.
  *
+ * @param  bool customOnly [optional] - whether to display only custom positions (default: all open orders)
+ *
  * @return bool - success status
  */
-bool ToggleOpenOrders() {
-   // read current status and toggle it
-   bool showOrders = !GetOpenOrderDisplayStatus();
+bool ToggleOpenOrders(bool customOnly = false) {
+   customOnly = customOnly!=0;
+   bool showOrders = !GetOpenOrderDisplayStatus();    // read current status and toggle it
+
+   debug("ToggleOpenOrders(0.1)  customOnly="+ customOnly);
 
    // ON: display open orders
    if (showOrders) {
-      int orders = ShowOpenOrders();
+      if (customOnly) {
+         // there are no global vars for the custom positions (only PnL stats)
+      }
+      else {
+      }
+      int orders = ShowOpenOrders(customOnly);
       if (orders == -1) return(false);
-      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
-         showOrders = false;                          // remove any existing open order markers.
-         PlaySoundEx("Plonk.wav");
+      if (!orders) {
+         showOrders = false;                          // Without open orders reset status to enter "off" section
+         PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
       }
    }
 
@@ -356,11 +371,14 @@ bool ToggleOpenOrders() {
 
 
 /**
- * Display the currently open orders.
+ * Display open orders.
+ *
+ * @param  bool customOnly [optional] - mode intern: whether to display only custom positions (default: all open orders)
  *
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
-int ShowOpenOrders() {
+int ShowOpenOrders(bool customOnly = false) {
+   customOnly = customOnly!=0;
    int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
@@ -1548,27 +1566,18 @@ bool UpdateStopoutLevel() {
 
 
 /**
- * Wrapper für AnalyzePositions(bool logTickets=TRUE) für onCommand()-Handler.
+ * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren PnL stats.
  *
- * @return bool - Erfolgsstatus
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_LOG_TICKETS:               log tickets of resulting custom positions (configured and unconfigured)
+ *                                F_LOG_SKIP_EMPTY:            skip empty array elements when logging tickets
+ *                                F_SHOW_CONFIGURED_POSITIONS: call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
+ * @return bool - success status
  */
-bool Positions.LogTickets() {
-   return(AnalyzePositions(true));
-}
-
-
-/**
- * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren Kennziffern.
- *
- * @param  bool logTickets [optional] - ob die Tickets der einzelnen Positionen geloggt werden sollen (default: nein)
- *
- * @return bool - Erfolgsstatus
- */
-bool AnalyzePositions(bool logTickets = false) {
-   logTickets = logTickets!=0;
-   if (logTickets)         positions.analyzed = false;                           // vorm Loggen werden die Positionen immer re-evaluiert
-   if (mode.extern)        positions.analyzed = true;
-   if (positions.analyzed) return(true);
+bool AnalyzePositions(int flags = NULL) {
+   if (flags & F_LOG_TICKETS != 0) positions.analyzed = false;                   // vorm Loggen werden die Positionen immer re-evaluiert
+   if (mode.extern)                positions.analyzed = true;
+   if (positions.analyzed)         return(true);
 
    int      tickets    [], openPositions;                                        // Positionsdetails
    int      types      [];
@@ -1711,7 +1720,7 @@ bool AnalyzePositions(bool logTickets = false) {
       termCache2 = positions.config[i][4];
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
-         if (logTickets) LogTickets(customTickets, confLineIndex);
+         if (flags & F_LOG_TICKETS != 0) LogTickets(customTickets, confLineIndex, flags);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
@@ -1742,7 +1751,7 @@ bool AnalyzePositions(bool logTickets = false) {
       positions.config[i][4] = termCache2;
    }
 
-   if (logTickets) LogTickets(tickets, -1);
+   if (flags & F_LOG_TICKETS != 0) LogTickets(tickets, -1, flags);
 
    // verbleibende Position(en) speichern
    if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, 0, 0, -1))
@@ -1756,19 +1765,17 @@ bool AnalyzePositions(bool logTickets = false) {
 /**
  * Loggt die Tickets einer Zeile der Positionsanzeige.
  *
- * @param  int  tickets[]
- * @param  int  commentIndex
- * @param  bool skipEmpty [optional] - whether to skip empty elements (default: yes)
- *
+ * @param  int tickets[]
+ * @param  int commentIndex
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_LOG_SKIP_EMPTY: skip empty array elements when logging tickets
  * @return bool - success status
  */
-bool LogTickets(int tickets[], int commentIndex, bool skipEmpty = true) {
-   skipEmpty = skipEmpty!=0;
-
+bool LogTickets(int tickets[], int commentIndex, int flags = NULL) {
    int copy[]; ArrayResize(copy, 0);
    if (ArraySize(tickets) > 0) {
       ArrayCopy(copy, tickets);
-      if (skipEmpty) ArrayDropInt(copy, 0);
+      if (flags & F_LOG_SKIP_EMPTY != 0) ArrayDropInt(copy, 0);
    }
 
    if (ArraySize(copy) > 0) {
