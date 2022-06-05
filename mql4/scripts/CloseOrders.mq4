@@ -146,10 +146,10 @@ int onStart() {
    if (sizeOfPendingOrders || sizeOfOpenPositions) {
       string msg = "";
       if (isInput) {
-         string sPendingOrders = ifString(sizeOfPendingOrders, sizeOfPendingOrders +" pending order"+ Pluralize(sizeOfPendingOrders), "");
+         string sPendingOrders = ifString(sizeOfPendingOrders, "delete "+ sizeOfPendingOrders +" pending order"+ Pluralize(sizeOfPendingOrders), "");
          string sAnd           = ifString(sizeOfPendingOrders && sizeOfOpenPositions, " and ", "");
-         string sOpenPositions = ifString(sizeOfOpenPositions, sizeOfOpenPositions +" open position"+ Pluralize(sizeOfOpenPositions), "");
-         msg = "Do you really want to close "+ sPendingOrders + sAnd + sOpenPositions +"?";
+         string sOpenPositions = ifString(sizeOfOpenPositions, "close "+ sizeOfOpenPositions +" open position"+ Pluralize(sizeOfOpenPositions), "");
+         msg = "Do you really want to "+ sPendingOrders + sAnd + sOpenPositions +"?";
       }
       else {
          msg = "Do you really want to close all "+ (sizeOfPendingOrders + sizeOfOpenPositions) +" open orders?";
