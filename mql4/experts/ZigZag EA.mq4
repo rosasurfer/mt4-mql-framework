@@ -44,7 +44,6 @@
  *
  * TODO:
  *  - ChartInfos: implement handling of VK_SHIFT
- *
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - Instrument Infos: remove maxLeverage constraint
  *
