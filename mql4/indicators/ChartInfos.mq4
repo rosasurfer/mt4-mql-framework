@@ -1756,12 +1756,23 @@ bool AnalyzePositions(bool logTickets = false) {
 /**
  * Loggt die Tickets einer Zeile der Positionsanzeige.
  *
+ * @param  int  tickets[]
+ * @param  int  commentIndex
+ * @param  bool skipEmpty [optional] - whether to skip empty elements (default: yes)
+ *
  * @return bool - success status
  */
-bool LogTickets(int tickets[], int commentIndex) {
+bool LogTickets(int tickets[], int commentIndex, bool skipEmpty = true) {
+   skipEmpty = skipEmpty!=0;
+
+   int copy[]; ArrayResize(copy, 0);
    if (ArraySize(tickets) > 0) {
-      string sIndex = "-";
-      string sComment = "";
+      ArrayCopy(copy, tickets);
+      if (skipEmpty) ArrayDropInt(copy, 0);
+   }
+
+   if (ArraySize(copy) > 0) {
+      string sIndex="-", sComment="";
 
       if (commentIndex > -1) {
          sIndex = commentIndex;
@@ -1769,14 +1780,15 @@ bool LogTickets(int tickets[], int commentIndex) {
             sComment = "\""+ positions.config.comments[commentIndex] +"\" = ";
          }
       }
-      string sPosition = TicketsToStr.Position(tickets);
+
+      string sPosition = TicketsToStr.Position(copy);
       sPosition = ifString(sPosition=="0 lot", "", sPosition +" = ");
 
-      string sTickets = TicketsToStr.Lots(tickets, NULL);
+      string sTickets = TicketsToStr.Lots(copy, NULL);
 
       logDebug("LogTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
    }
-   return(true);
+   return(!catch("LogTickets(2)"));
 }
 
 
