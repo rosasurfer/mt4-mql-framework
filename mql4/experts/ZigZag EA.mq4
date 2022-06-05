@@ -43,7 +43,7 @@
  *
  *
  * TODO:
- *  - ChartInfos: implement handling of VK_SHIFT
+ *  - ChartInfos::ToggleTradeHistory() implement handling of VK_SHIFT
  *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
  *  - Instrument Infos: remove maxLeverage constraint
  *
@@ -132,7 +132,6 @@
  *
  *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - realtime equity charts
- *  - much better realtime tick charts (built-in charts are useless)
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected

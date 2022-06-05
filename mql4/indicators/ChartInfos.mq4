@@ -92,7 +92,7 @@ string  positions.config.comments[];                              // comments of
 // control flags for AnalyzePositions()
 #define F_DUMP_TICKETS                  1                         // dump tickets of resulting custom positions (configured and unconfigured)
 #define F_DUMP_SKIP_EMPTY               2                         // skip empty array elements when dumping tickets
-#define F_SHOW_CONFIGURED_POSITIONS     4                         // call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
+#define F_SHOW_CONFIGURED               4                         // call ShowOpenOrders()/ShowTradeHistory() for configured orders (not for unconfigured or remaining ones)
 
 // internal + external position data
 bool    isPendings;                                               // ob Pending-Limite im Markt liegen (Orders oder Positions)
@@ -283,16 +283,27 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-open-orders") {
-      bool customOnly = (modifiers == "VK_SHIFT");
-      if (!ToggleOpenOrders(customOnly)) return(false);
+      if (modifiers == "VK_SHIFT") {
+         flags = F_SHOW_CONFIGURED;
+         ArrayResize(positions.config,          0);               // let the position configuration be reparsed
+         ArrayResize(positions.config.comments, 0);
+      }
+      else flags = NULL;
+      if (!ToggleOpenOrders(flags)) return(false);
+   }
+
+   else if (cmd == "toggle-trade-history") {
+      if (modifiers == "VK_SHIFT") {
+         flags = F_SHOW_CONFIGURED;
+         ArrayResize(positions.config,          0);               // let the position configuration be reparsed
+         ArrayResize(positions.config.comments, 0);
+      }
+      else flags = NULL;
+      if (!ToggleTradeHistory(flags)) return(false);
    }
 
    else if (cmd == "toggle-profit-unit") {
       if (!Positions.ToggleProfits()) return(false);
-   }
-
-   else if (cmd == "toggle-trade-history") {
-      if (!ToggleTradeHistory()) return(false);
    }
 
    else if (cmd == "trade-account") {
@@ -300,7 +311,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
       if (key == ":") key = "";
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
-      ArrayResize(positions.config,          0);
+      ArrayResize(positions.config,          0);                  // let the position configuration be reparsed
       ArrayResize(positions.config.comments, 0);
    }
    else return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
@@ -312,32 +323,25 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 /**
  * Toggle the display of open orders.
  *
- * @param  bool customOnly [optional] - whether to display only custom positions (default: all open orders)
- *
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured orders only (not for unconfigured or remaining ones)
  * @return bool - success status
  */
-bool ToggleOpenOrders(bool customOnly = false) {
-   customOnly = customOnly!=0;
-   bool showOrders = !GetOpenOrderDisplayStatus();    // read current status and toggle it
-
-   debug("ToggleOpenOrders(0.1)  customOnly="+ customOnly);
+bool ToggleOpenOrders(int flags = NULL) {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
 
    // ON: display open orders
    if (showOrders) {
-      if (customOnly) {
-         // there are no global vars for the custom positions (only PnL stats)
-      }
-      else {
-      }
-      int orders = ShowOpenOrders(customOnly);
+      int iNulls[], orders = ShowOpenOrders(iNulls, flags);
       if (orders == -1) return(false);
       if (!orders) {
-         showOrders = false;                          // Without open orders reset status to enter "off" section
+         showOrders = false;                          // Without open orders reset status to also enter "off" section
          PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
       }
    }
 
-   // OFF: remove open order markers
+   // OFF: remove all open order markers
    if (!showOrders) {
       for (int i=ObjectsTotal()-1; i >= 0; i--) {
          string name = ObjectName(i);
@@ -375,24 +379,40 @@ bool ToggleOpenOrders(bool customOnly = false) {
 /**
  * Display open orders.
  *
- * @param  bool customOnly [optional] - mode intern: whether to display only custom positions (default: all open orders)
+ * @param  int customTickets[]  - skip resolving of tickets and display the passed tickets instead
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_SHOW_CONFIGURED: display configured orders instead of all open ones
  *
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
-int ShowOpenOrders(bool customOnly = false) {
-   customOnly = customOnly!=0;
-   int      orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
+int ShowOpenOrders(int tickets[], int flags = NULL) {
+   int      i, orders, ticket, type, colors[]={CLR_OPEN_LONG, CLR_OPEN_SHORT};
    datetime openTime;
    double   lots, units, openPrice, takeProfit, stopLoss;
-   string   comment="", label1="", label2="", label3="", sTP="", sSL="", types[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
+   string   comment="", label1="", label2="", label3="", sTP="", sSL="", orderTypes[]={"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"};
+   int      customTickets = ArraySize(tickets);
+   static int n = 0;
 
-   // mode.intern
-   if (mode.intern) {
-      orders = OrdersTotal();
+   // on flag F_SHOW_CONFIGURED call AnalyzePositions() which recursively calls ShowOpenOrders() for each custom config line
+   if (!customTickets || flags & F_SHOW_CONFIGURED) {
+      n = 0;
+      if (!customTickets && flags & F_SHOW_CONFIGURED) {
+         if (!AnalyzePositions(flags))
+            return(-1);
+         return(n);
+      }
+   }
 
-      for (int i=0, n; i < orders; i++) {
-         if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))         // FALSE: an order was closed/deleted in another thread
-            break;
+   // mode.intern or custom tickets
+   if (mode.intern || customTickets) {
+      orders = intOr(customTickets, OrdersTotal());
+
+      for (i=0; i < orders; i++) {
+         if (customTickets > 0) {
+            if (!tickets[i]) continue;
+            if (!SelectTicket(tickets[i], "ShowOpenOrders(1)")) break;
+         }
+         else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
          if (OrderSymbol() != Symbol()) continue;
 
          // read order data
@@ -405,11 +425,11 @@ int ShowOpenOrders(bool customOnly = false) {
          stopLoss   = OrderStopLoss();
          comment    = OrderMarkerText(type, OrderMagicNumber(), OrderComment());
 
-         if (OrderType() > OP_SELL) {
+         if (type > OP_SELL) {
             // a pending order
-            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
+            label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display pending order marker
+            // create pending order marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
@@ -420,9 +440,9 @@ int ShowOpenOrders(bool customOnly = false) {
          }
          else {
             // an open position
-            label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
+            label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
-            // display TakeProfit marker
+            // create TakeProfit marker
             if (takeProfit != NULL) {
                sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
                label2 = StringConcatenate(label1, ",  ", sTP);
@@ -436,7 +456,7 @@ int ShowOpenOrders(bool customOnly = false) {
             }
             else sTP = "";
 
-            // display StopLoss marker
+            // create StopLoss marker
             if (stopLoss != NULL) {
                sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
                label3 = StringConcatenate(label1, ",  ", sSL);
@@ -450,7 +470,7 @@ int ShowOpenOrders(bool customOnly = false) {
             }
             else sSL = "";
 
-            // display open position marker
+            // create open position marker
             if (ObjectFind(label1) == 0)
                ObjectDelete(label1);
             if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
@@ -467,7 +487,7 @@ int ShowOpenOrders(bool customOnly = false) {
    // mode.extern
    orders = ArrayRange(lfxOrders, 0);
 
-   for (i=0, n=0; i < orders; i++) {
+   for (i=0; i < orders; i++) {
       if (!lfxOrders.bCache[i][BC.isPendingOrder]) /*&&*/ if (!lfxOrders.bCache[i][BC.isOpenPosition])
          continue;
 
@@ -483,7 +503,7 @@ int ShowOpenOrders(bool customOnly = false) {
 
       if (type > OP_SELL) {
          // Pending-Order
-         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+         label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // Order anzeigen
          if (ObjectFind(label1) == 0)
@@ -495,7 +515,7 @@ int ShowOpenOrders(bool customOnly = false) {
       }
       else {
          // offene Position
-         label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
+         label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // TakeProfit anzeigen                                   // TODO: !!! TP fixen, wenn tpValue oder tpPercent angegeben sind
          if (takeProfit != NULL) {
@@ -584,9 +604,13 @@ bool SetOpenOrderDisplayStatus(bool status) {
 /**
  * Toggle the display of closed trades.
  *
+ * @param  int flags [optional] - control flags, supported values:
+ *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured orders only (not for unconfigured or remaining ones)
  * @return bool - success status
  */
-bool ToggleTradeHistory() {
+bool ToggleTradeHistory(int flags = NULL) {
+   //debug("ToggleTradeHistory(0.1)  flags="+ flags);
+
    // read current status and toggle it
    bool showHistory = !GetTradeHistoryDisplayStatus();
 
@@ -1571,15 +1595,15 @@ bool UpdateStopoutLevel() {
  * Ermittelt die aktuelle Positionierung, gruppiert sie je nach individueller Konfiguration und berechnet deren PnL stats.
  *
  * @param  int flags [optional] - control flags, supported values:
- *                                F_DUMP_TICKETS:              dump tickets of resulting custom positions (configured and unconfigured)
- *                                F_DUMP_SKIP_EMPTY:           skip empty array elements when dumping tickets
- *                                F_SHOW_CONFIGURED_POSITIONS: call ShowOpenOrders() for configured custom positions (not for unconfigured, remaining positions)
+ *                                F_DUMP_TICKETS:    dump tickets of resulting custom positions (configured and unconfigured)
+ *                                F_DUMP_SKIP_EMPTY: skip empty array elements when dumping tickets
+ *                                F_SHOW_CONFIGURED: call ShowOpenOrders() for configured custom positions (not for unconfigured or remaining positions)
  * @return bool - success status
  */
-bool AnalyzePositions(int flags = NULL) {
-   if (flags & F_DUMP_TICKETS != 0) positions.analyzed = false;                  // vorm Dumpen werden die Positionen immer re-evaluiert
-   if (mode.extern)                positions.analyzed = true;
-   if (positions.analyzed)         return(true);
+bool AnalyzePositions(int flags = NULL) {                                        // reparse configuration on chart command flags
+   if (flags & (F_DUMP_TICKETS|F_SHOW_CONFIGURED) != 0) positions.analyzed = false;
+   if (mode.extern)        positions.analyzed = true;
+   if (positions.analyzed) return(true);
 
    int      tickets    [], openPositions;                                        // Positionsdetails
    int      types      [];
@@ -1602,7 +1626,7 @@ bool AnalyzePositions(int flags = NULL) {
       int sortKeys[][2];                                                         // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
 
-      // Sortierschlüssel auslesen und dabei PL von LFX-Positionen erfassen (alle Symbole).
+      // Sortierschlüssel auslesen und dabei PnL von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
          if (OrderType() > OP_SELL) {
@@ -1691,14 +1715,14 @@ bool AnalyzePositions(int flags = NULL) {
    }
 
    // individuelle Konfiguration parsen
-   int oldError = last_error;
+   int prevError = last_error;
    SetLastError(NO_ERROR);
    if (ArrayRange(positions.config, 0)==0) /*&&*/ if (!CustomPositions.ReadConfig()) {
       positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
-      if (!last_error) SetLastError(oldError);                                   // in diesem Fall nächster Versuch beim nächsten Tick.
+      if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       return(positions.analyzed);
    }
-   SetLastError(oldError);
+   SetLastError(prevError);
 
    int    termType, confLineIndex;
    double termValue1, termValue2, termCache1, termCache2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
@@ -1723,6 +1747,7 @@ bool AnalyzePositions(int flags = NULL) {
 
       if (!termType) {                                                           // termType=NULL => "Zeilenende"
          if (flags & F_DUMP_TICKETS != 0) CustomPositions.DumpTickets(customTickets, confLineIndex, flags);
+         if (flags & F_SHOW_CONFIGURED && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // individuell konfigurierte Position speichern
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, confLineIndex))
