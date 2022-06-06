@@ -1,7 +1,7 @@
 /**
- * CustomPositions.DumpTickets
+ * CustomPositions.LogTickets
  *
- * Send a command to the ChartInfos indicator to dump tickets of custom positions to the debug output.
+ * Send a command to the ChartInfos indicator to log tickets of custom positions.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - Fehlerstatus
  */
 int onStart() {
-   string command   = "dump-custom-positions";
+   string command   = "log-custom-positions";
    string params    = "";
    string modifiers = ifString(IsVirtualKeyDown(VK_SHIFT), "VK_SHIFT", "");
 
