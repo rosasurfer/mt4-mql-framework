@@ -15,7 +15,6 @@
  * TODO:
  *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
  *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
- *  - drop obsolete arrrays upperCrossExit[]/lowerCrossExit[]
  *
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
