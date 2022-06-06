@@ -340,7 +340,9 @@ bool ToggleOpenOrders(int flags = NULL) {
          showOrders = false;                          // Reset status without open orders to continue with the "off" section
          PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
       }
-      else logDebug("ToggleOpenOrders(1)  custom positions: "+ orders);
+      else if (flags & F_SHOW_CUSTOM_POSITIONS != 0) {
+         logDebug("ToggleOpenOrders(1)  custom positions: "+ orders);
+      }
    }
 
    // OFF: remove all open order markers
@@ -618,7 +620,9 @@ bool ToggleTradeHistory(int flags = NULL) {
          showHistory = false;                            // which clears existing (e.g. orphaned) history markers.
          PlaySoundEx("Plonk.wav");
       }
-      else logDebug("ToggleTradeHistory(1)  custom history: "+ trades);
+      else if (flags & F_SHOW_CUSTOM_HISTORY != 0) {
+         logDebug("ToggleTradeHistory(1)  custom history: "+ trades);
+      }
    }
 
    // OFF: remove closed trade markers
