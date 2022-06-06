@@ -340,6 +340,7 @@ bool ToggleOpenOrders(int flags = NULL) {
          showOrders = false;                          // Reset status without open orders to continue with the "off" section
          PlaySoundEx("Plonk.wav");                    // which clears existing (e.g. orphaned) open order markers.
       }
+      else logDebug("ToggleOpenOrders(1)  custom positions: "+ orders);
    }
 
    // OFF: remove all open order markers
@@ -368,12 +369,10 @@ bool ToggleOpenOrders(int flags = NULL) {
       }
    }
 
-   // store current status in the chart
-   SetOpenOrderDisplayStatus(showOrders);
+   SetOpenOrderDisplayStatus(showOrders);             // store new status
 
-   if (This.IsTesting())
-      WindowRedraw();
-   return(!catch("ToggleOpenOrders(1)"));
+   if (This.IsTesting()) WindowRedraw();
+   return(!catch("ToggleOpenOrders(2)"));
 }
 
 
@@ -619,6 +618,7 @@ bool ToggleTradeHistory(int flags = NULL) {
          showHistory = false;                            // which clears existing (e.g. orphaned) history markers.
          PlaySoundEx("Plonk.wav");
       }
+      else logDebug("ToggleTradeHistory(1)  custom history: "+ trades);
    }
 
    // OFF: remove closed trade markers
@@ -647,7 +647,7 @@ bool ToggleTradeHistory(int flags = NULL) {
    SetTradeHistoryDisplayStatus(showHistory);            // store new status
 
    if (This.IsTesting())WindowRedraw();
-   return(!catch("ToggleTradeHistory(1)"));
+   return(!catch("ToggleTradeHistory(2)"));
 }
 
 
@@ -3179,9 +3179,6 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
          if (closedProfit == EMPTY_VALUE) closedProfit  = lastProfit;
          else                             closedProfit += lastProfit;
       }
-
-
-
    }
 
    else if (type == TERM_ADJUSTMENT) {
