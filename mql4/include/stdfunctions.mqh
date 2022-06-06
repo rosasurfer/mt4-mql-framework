@@ -6936,8 +6936,8 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iB
                           "",                               // string ____________________
                           true,                             // bool   Donchian.ShowChannel
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
-                          DodgerBlue,                       // color  Donchian.UpperBand.Color
-                          DodgerBlue,                       // color  Donchian.LowerBand.Color
+                          DodgerBlue,                       // color  Donchian.Upper.Color
+                          DodgerBlue,                       // color  Donchian.Lower.Color
 
                           "",                               // string ____________________
                           108,                              // int    Semaphores.Wingdings

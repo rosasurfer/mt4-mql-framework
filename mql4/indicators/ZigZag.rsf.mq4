@@ -47,8 +47,8 @@ extern bool   ZigZag.ShowTrail               = true;                    // wheth
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
 extern bool   Donchian.ShowAllCrossings      = true;                    // whether to display all channel crossings or only crossings exceeding the former High/Low
-extern color  Donchian.UpperBand.Color       = DodgerBlue;
-extern color  Donchian.LowerBand.Color       = Magenta;
+extern color  Donchian.Upper.Color           = DodgerBlue;
+extern color  Donchian.Lower.Color           = Magenta;
 
 extern string ___c__________________________ = "=== Other ===";
 extern int    Semaphores.Wingdings           = 108;                     // a medium dot
@@ -195,9 +195,9 @@ int onInit() {
    // PeriodStepper.StepSize
    if (PeriodStepper.StepSize < 0) return(catch("onInit(9)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (ZigZag.Color             == 0xFF000000) ZigZag.Color       = CLR_NONE;
-   if (Donchian.UpperBand.Color == 0xFF000000) Donchian.UpperBand.Color = CLR_NONE;
-   if (Donchian.LowerBand.Color == 0xFF000000) Donchian.LowerBand.Color = CLR_NONE;
+   if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
+   if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
+   if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
 
    // signaling
    signalReversal       = Signal.onReversal;                      // reset global vars (possible account change)
@@ -825,12 +825,12 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, Semaphores.Wingdings);
 
    drawType = ifInt(Donchian.ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color);
-   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color);
+   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
+   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
    drawType = ifInt(Donchian.ShowAllCrossings || ZigZag.ShowTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color); SetIndexArrow(MODE_UPPER_CROSS, Crossings.Wingdings);
-   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color); SetIndexArrow(MODE_LOWER_CROSS, Crossings.Wingdings);
+   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, Donchian.Upper.Color); SetIndexArrow(MODE_UPPER_CROSS, Crossings.Wingdings);
+   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, Donchian.Lower.Color); SetIndexArrow(MODE_LOWER_CROSS, Crossings.Wingdings);
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -851,8 +851,8 @@ string InputsToStr() {
 
                             "Donchian.ShowChannel=",      BoolToStr(Donchian.ShowChannel),      ";"+ NL,
                             "Donchian.ShowAllCrossings=", BoolToStr(Donchian.ShowAllCrossings), ";"+ NL,
-                            "Donchian.UpperBand.Color=",  ColorToStr(Donchian.UpperBand.Color), ";"+ NL,
-                            "Donchian.LowerBand.Color=",  ColorToStr(Donchian.LowerBand.Color), ";"+ NL,
+                            "Donchian.Upper.Color=",      ColorToStr(Donchian.Upper.Color),     ";"+ NL,
+                            "Donchian.Lower.Color=",      ColorToStr(Donchian.Lower.Color),     ";"+ NL,
 
                             "Semaphores.Wingdings=",      Semaphores.Wingdings,                 ";"+ NL,
                             "Crossings.Wingdings=",       Crossings.Wingdings,                  ";"+ NL,
