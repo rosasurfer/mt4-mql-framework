@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -9925,7 +9925,7 @@ ZigZag.Periods=18
 ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=16711680
-Donchian.ShowCrossings=all
+Donchian.ShowCrossings=off | first | all*
 Donchian.ShowChannel=1
 Donchian.Upper.Color=16748574
 Donchian.Lower.Color=16711935

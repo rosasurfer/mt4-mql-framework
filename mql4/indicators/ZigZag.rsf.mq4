@@ -429,9 +429,15 @@ int onTick() {
       }
 
       // populate visible crossing buffers
-      if (crossingDrawType != NULL) {
+      if (crossingDrawType == MODE_ALL_CROSSINGS) {
          upperCross[bar] = upperCrossEntry[bar];
          lowerCross[bar] = lowerCrossEntry[bar];
+      }
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {
+         if (reversal[bar] == Abs(knownTrend[bar])) {
+            upperCross[bar] = upperCrossEntry[bar];
+            lowerCross[bar] = lowerCrossEntry[bar];
+         }
       }
    }
 
