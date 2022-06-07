@@ -6926,33 +6926,33 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iB
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "ZigZag.rsf",
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
                           1,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
-                          false,                            // bool   ZigZag.ShowTrail
+                          108,                              // int    ZigZag.Semaphores.Wingdings
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           true,                             // bool   Donchian.ShowChannel
+                          false,                            // bool   Donchian.ShowCrossings
                           calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
                           DodgerBlue,                       // color  Donchian.Upper.Color
                           DodgerBlue,                       // color  Donchian.Lower.Color
+                          161,                              // int    Donchian.Crossings.Wingdings
 
-                          "",                               // string ____________________
-                          108,                              // int    Semaphores.Wingdings
-                          161,                              // int    Crossings.Wingdings
+                          "",                               // string ____________________________
                           0,                                // int    PeriodStepper.StepSize
                           -1,                               // int    Max.Bars
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
                           false,                            // bool   Signal.onReversal.Sound
                           false,                            // bool   Signal.onReversal.Popup
                           false,                            // bool   Signal.onReversal.Mail
                           false,                            // bool   Signal.onReversal.SMS
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
