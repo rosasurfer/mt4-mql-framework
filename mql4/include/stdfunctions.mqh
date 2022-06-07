@@ -6913,15 +6913,14 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
 /**
  * Load the custom "ZigZag" indicator and return a value.
  *
- * @param  int  timeframe               - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int  periods                 - indicator parameter
- * @param  bool calcAllChannelCrossings - indicator parameter
- * @param  int  iBuffer                 - indicator buffer index of the value to return
- * @param  int  iBar                    - bar index of the value to return
+ * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int periods   - indicator parameter
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar) {
+double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6935,8 +6934,7 @@ double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iB
 
                           "",                               // string ____________________________
                           true,                             // bool   Donchian.ShowChannel
-                          false,                            // bool   Donchian.ShowCrossings
-                          calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
+                          "off",                            // string Donchian.ShowCrossings
                           DodgerBlue,                       // color  Donchian.Upper.Color
                           DodgerBlue,                       // color  Donchian.Lower.Color
                           161,                              // int    Donchian.Crossings.Wingdings
@@ -7119,7 +7117,7 @@ void __DummyCalls() {
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
-   icZigZag(NULL, NULL, NULL, NULL, NULL);
+   icZigZag(NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);

@@ -167,7 +167,7 @@ double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iB
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
-double   icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar);;
+double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
