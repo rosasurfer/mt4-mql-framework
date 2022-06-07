@@ -9925,9 +9925,8 @@ ZigZag.Periods=18
 ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=16711680
-Donchian.ShowCrossings=1
+Donchian.ShowCrossings=all
 Donchian.ShowChannel=1
-Donchian.ShowAllCrossings=1
 Donchian.Upper.Color=16748574
 Donchian.Lower.Color=16711935
 </inputs>
