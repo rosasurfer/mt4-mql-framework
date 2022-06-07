@@ -5,7 +5,7 @@
  *
  *
  * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always using M5)
+ *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always M5)
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -14,7 +14,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframes         = "H1";                 // one or more timeframes to analyze, separated by comma
-extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all)
+extern int    Max.InsideBars     = 2;                    // number of inside bars per timeframe to display (-1: all)
 extern string ___a__________________________;
 
 extern string Signal.onInsideBar = "on | off | auto*";
