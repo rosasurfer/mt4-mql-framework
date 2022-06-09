@@ -3884,7 +3884,8 @@ int Tester.Pause(string caller = "") {
 int Tester.Stop(string caller = "") {
    if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
+   static bool isStopSent = false;
+   if (isStopSent || Tester.IsStopped()) return(NO_ERROR);              // skip if already stopped
 
    if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Stop()");
 
@@ -3892,6 +3893,8 @@ int Tester.Stop(string caller = "") {
    if (!hWnd) return(last_error);
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // SendMessage() causes a UI thread dead-lock if called in deinit()
+
+   isStopSent = true;
    return(NO_ERROR);
 }
 
