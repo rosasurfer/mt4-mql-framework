@@ -210,34 +210,30 @@ int start() {
    }
 
    Ticks++;                                                                         // einfacher Zähler, der konkrete Werte hat keine Bedeutung
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
-                                                                                    // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: im synthetischen Chart sind MODE_TIME und TimeCurrent() NULL
+
    if (!Tick.time) {
       int error = GetLastError();
       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
    }
 
-
-   // (1) UnchangedBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
+   // UnchangedBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
    UnchangedBars = IndicatorCounted(); ValidBars = UnchangedBars;
    ChangedBars   = Bars - UnchangedBars;
    ShiftedBars   = 0;
 
-
-   // (2) Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
+   // Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
    if (!Bars) return(_last_error(logInfo("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
 
-
-   // (3) Tickstatus bestimmen
+   // Tickstatus bestimmen
    static int lastVolume;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
    lastVolume = Volume[0];
 
-
-   // (4) Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
+   // Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
    static datetime last.startBarOpenTime, last.endBarOpenTime;
    if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
@@ -306,8 +302,7 @@ int start() {
    last.endBarOpenTime   = Time[Bars-1];
    UnchangedBars         = Bars - ChangedBars; ValidBars = UnchangedBars;           // UnchangedBars neu definieren
 
-
-   // (5) Falls wir aus init() kommen, dessen Ergebnis prüfen
+   // Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__CoreFunction == CF_INIT) {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
 

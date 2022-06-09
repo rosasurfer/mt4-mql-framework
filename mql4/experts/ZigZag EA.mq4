@@ -43,7 +43,10 @@
  *
  *
  * TODO:
- *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
+ *  - Inside Bars
+ *     BarOpen detection on BTCUSD seems to be broken
+ *     check/setup signaling per SMS
+ *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - rename ZigZag/MACD to "{name}."
  *
@@ -58,7 +61,7 @@
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
- *  - wider SL on manual positions in opposite direction
+ *  - widen SL on manual positions in opposite direction
  *  - manage an existing manual order
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
