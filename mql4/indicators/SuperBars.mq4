@@ -177,14 +177,11 @@ int onTick() {
 bool onCommand(string cmd, string params="", string modifiers="") {
    string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (IsLogDebug()) logDebug("onCommand(1)  "+ DoubleQuoteStr(fullCmd));
-
    if (cmd == "timeframe") {
       if (params == "up")   return(SwitchSuperTimeframe(STF_UP));
       if (params == "down") return(SwitchSuperTimeframe(STF_DOWN));
    }
-
-   return(!logNotice("onCommand(2)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 
@@ -287,7 +284,7 @@ bool CheckTimeframeAvailability() {
       default:
          switch (Period()) {
             case PERIOD_M1 :
-            case PERIOD_M5 :
+            case PERIOD_M5 : superTimeframe =  PERIOD_H1;  break;
             case PERIOD_M15:
             case PERIOD_M30:
             case PERIOD_H1 : superTimeframe =  PERIOD_D1;  break;
