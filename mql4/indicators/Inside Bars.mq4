@@ -1,11 +1,11 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and the corresponding projection levels of the specified timeframes in the chart.
+ * Marks inside bars and corresponding projection levels of specified timeframes.
  *
  *
  * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always M5)
+ *  - check bar alignment of all timeframes and use the largest correctly aligned timeframe instead of always M5
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -47,7 +47,7 @@ extern string Signal.SMS         = "on | off | auto*";
 int    fTimeframes;                                      // flags of the timeframes to analyze
 int    maxInsideBars;
 
-string labels[];                                         // object labels of existing IB chart markers
+string labels[];                                         // object labels of IB chart markers
 
 bool   signals;
 bool   signal.sound;
@@ -125,10 +125,6 @@ int onTick() {
    double ratesM1[][6], ratesM5[][6];
    int changedBarsM1, changedBarsM5;
 
-   //if (IsBarOpen(PERIOD_M1))  debug("onTick(0.1)   BarOpen(M1) = 1");
-   //if (IsBarOpen(PERIOD_M5))  debug("onTick(0.2)   BarOpen(M5) = 1");
-   //if (IsBarOpen(PERIOD_M15)) debug("onTick(0.3)   BarOpen(M15) = 1");
-
    if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
 
    if (fTimeframes & F_PERIOD_M1  && 1) CheckInsideBars(ratesM1, changedBarsM1, PERIOD_M1);
@@ -162,14 +158,14 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
       changedBarsM1 = changed;
-      //debug("GetRates(1)  M1: "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
+      //debug("CopyRates(0.1)  M1: "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
    }
 
    if (fTimeframes & (F_PERIOD_M5|F_PERIOD_M15|F_PERIOD_M30|F_PERIOD_H1|F_PERIOD_H4|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
       changedBarsM5 = changed;
-      //debug("GetRates(2)  M5: "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
+      //debug("CopyRates(0.2)  M5: "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
    }
    return(true);
 }
@@ -186,7 +182,7 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
  */
 bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
    // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of those timeframes
-   // are aligned correctly by the broker. On timeframes >= M15 this assumption can be wrong (odd bar alignment).
+   // are correctly aligned. On timeframes >= M15 this assumption can be wrong (odd bar alignment).
    int bars = ArrayRange(rates, 0), more;
 
    if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
@@ -227,7 +223,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
       if (changedBars == 2) {
          if (!IsBarOpen(PERIOD_M15)) return(true);                // same as changedBars = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 7;                                                // cover M5 periods of 2 finished M15 bars
+         bars = 8;                                                // cover M5 periods of 2 finished M15 bars
       }
       else {
          DeleteInsideBars(PERIOD_M15);                            // on data pumping: delete all existing bars
@@ -274,14 +270,13 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 13;                                               // cover M5 periods of 2 finished M30 bars
+         bars = 14;                                               // cover M5 periods of 2 finished M30 bars
       }
       else {
          DeleteInsideBars(PERIOD_M30);                            // on data pumping: delete all existing bars
@@ -328,14 +323,13 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 25;                                               // cover M5 periods of 2 finished H1 bars
+         bars = 26;                                               // cover M5 periods of 2 finished H1 bars
       }
       else {
          DeleteInsideBars(PERIOD_H1);                             // on data pumping: delete all existing bars
@@ -382,14 +376,13 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 97;                                               // cover M5 periods of 2 finished H4 bars
+         bars = 98;                                               // cover M5 periods of 2 finished H4 bars
       }
       else {
          DeleteInsideBars(PERIOD_H4);                             // on data pumping: delete all existing bars
@@ -436,14 +429,13 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 577;                                              // cover M5 periods of 2 finished D1 bars
+         bars = 578;                                              // cover M5 periods of 2 finished D1 bars
       }
       else {
          DeleteInsideBars(PERIOD_D1);                             // on data pumping: delete all existing bars
@@ -490,14 +482,13 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 4033;                                             // cover M5 periods of 2 finished W1 bars
+         bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
       }
       else {
          DeleteInsideBars(PERIOD_W1);                             // on data pumping: delete all existing bars
@@ -546,14 +537,13 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 17569;                                            // cover M5 periods of 2 finished MN1 bars
+         bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
       }
       else {
          DeleteInsideBars(PERIOD_MN1);                            // on data pumping: delete all existing bars
@@ -594,7 +584,7 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
 
 
 /**
- * Mark the specified inside bar in the chart.
+ * Mark the specified inside bar.
  *
  * @param  int      timeframe - timeframe
  * @param  datetime openTime  - bar open time
@@ -610,15 +600,15 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
    datetime closeTime   = openTime + timeframe*MINUTES;
    double   barSize     = (high-low);
-   double   longLevel1  = NormalizeDouble(high + barSize, Digits);
-   double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
+   double   longTarget  = NormalizeDouble(high + barSize, Digits);
+   double   shortTarget = NormalizeDouble(low  - barSize, Digits);
    string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
    string   sTimeframe  = TimeframeDescription(timeframe);
    static int counter = 0; counter++;
 
-   // draw vertical line at IB open
+   // vertical line at IB open
    string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, chartOpenTime, shortLevel1)) {
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -627,9 +617,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ArrayPushString(labels, label);
    } else debug("MarkInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   // draw horizontal line at long level 1
-   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, closeTime, longLevel1)) {
+   // horizontal line at long projection
+   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -639,9 +629,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ArrayPushString(labels, label);
    } else debug("MarkInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   // draw horizontal line at short level 1
-   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortLevel1, closeTime, shortLevel1)) {
+   // horizontal line at short projection
+   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -651,8 +641,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // signal new inside bars
-   if (!IsSuperContext() && IsBarOpen(timeframe) && signals)
+   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe));
+   }
    return(true);
 }
 

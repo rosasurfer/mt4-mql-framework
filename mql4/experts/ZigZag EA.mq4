@@ -44,7 +44,6 @@
  *
  * TODO:
  *  - Inside Bars
- *     BarOpen detection on BTCUSD seems to be broken
  *     check/setup signaling per SMS
  *
  *  - Instrument Infos: remove maxLeverage constraint
