@@ -142,15 +142,15 @@ datetime lastTick;
 datetime waitUntil;
 
 bool     signalReversal;
-bool     signalReversal.Sound;
-string   signalReversal.SoundUp   = "Signal-Up.wav";
-string   signalReversal.SoundDown = "Signal-Down.wav";
-bool     signalReversal.Popup;
-bool     signalReversal.Mail;
-string   signalReversal.MailSender   = "";
-string   signalReversal.MailReceiver = "";
-bool     signalReversal.SMS;
-string   signalReversal.SMSReceiver = "";
+bool     signalReversal.sound;
+string   signalReversal.soundUp   = "Signal-Up.wav";
+string   signalReversal.soundDown = "Signal-Down.wav";
+bool     signalReversal.popup;
+bool     signalReversal.mail;
+string   signalReversal.mailSender   = "";
+string   signalReversal.mailReceiver = "";
+bool     signalReversal.sms;
+string   signalReversal.smsReceiver = "";
 string   signalInfo                 = "";
 
 // signal direction types
@@ -213,21 +213,21 @@ int onInit() {
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
 
    // signaling
-   signalReversal       = Signal.onReversal;                      // reset global vars (possible account change)
-   signalReversal.Sound = Signal.onReversal.Sound;
-   signalReversal.Popup = Signal.onReversal.Popup;
-   signalReversal.Mail  = Signal.onReversal.Mail;
-   signalReversal.SMS   = Signal.onReversal.SMS;
+   signalReversal       = Signal.onReversal;                      // reset global vars (for possible account change)
+   signalReversal.sound = Signal.onReversal.Sound;
+   signalReversal.popup = Signal.onReversal.Popup;
+   signalReversal.mail  = Signal.onReversal.Mail;
+   signalReversal.sms   = Signal.onReversal.SMS;
    signalInfo           = "";
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal))                                                                        return(last_error);
    if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.Sound))                                                        return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.Popup))                                                        return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.Mail, signalReversal.MailSender, signalReversal.MailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.SMS, signalReversal.SMSReceiver))                              return(last_error);
-      if (signalReversal.Sound || signalReversal.Popup || signalReversal.Mail || signalReversal.SMS) {
-         signalInfo = StrLeft(ifString(signalReversal.Sound, "sound,", "") + ifString(signalReversal.Popup, "popup,", "") + ifString(signalReversal.Mail, "mail,", "") + ifString(signalReversal.SMS, "sms,", ""), -1);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
+      if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
+         signalInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
       }
       else signalReversal = false;
    }
@@ -239,7 +239,7 @@ int onInit() {
        RegisterObject(legendLabel);
    }
 
-   // setup a chart ticker to detect data pumping in the event handlers
+   // setup a chart ticker for detection of data pumping
    if (!This.IsTesting()) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 2000;                                         // a virtual tick every 2 seconds
@@ -786,10 +786,10 @@ bool onReversal(int direction, int bar) {
       if (IsLogInfo()) logInfo("onReversal(Periods="+ zigzagPeriods +")  "+ message);
 
       message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
-      if (signalReversal.Popup)           Alert(message);                     // before "Sound" to get drowned out by the next sound
-      if (signalReversal.Sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.SoundUp, signalReversal.SoundDown));
-      if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
-      if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
+      if (signalReversal.popup)           Alert(message);                     // before "sound" to get drowned out by the next sound
+      if (signalReversal.sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.soundUp, signalReversal.soundDown));
+      if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
+      if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
    }
    return(!error);
