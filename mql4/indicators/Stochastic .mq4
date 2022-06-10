@@ -192,7 +192,7 @@ int onTick() {
  */
 bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
-      prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
+      prefix = StringConcatenate(ProgramName(MODE_NICE), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
    bool objExists = !ObjectFind(label);

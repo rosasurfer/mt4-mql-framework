@@ -138,7 +138,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals))                                  return(last_error);
+   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onTrendChange, signals))                         return(last_error);
    if (signals) {
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -164,8 +164,8 @@ int onInit() {
 
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = ProgramName() +"("+ MA.Periods + sAppliedPrice +")";
-   string shortName = ProgramName() +"("+ MA.Periods +")";
+   indicatorName = ProgramName(MODE_NICE) +"("+ MA.Periods + sAppliedPrice +")";
+   string shortName = ProgramName(MODE_NICE) +"("+ MA.Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");

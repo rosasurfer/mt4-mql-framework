@@ -463,7 +463,7 @@ int afterInit() {
    if (!InitMetrics()) return(last_error);
 
    if (IsTesting()) {                                       // read test configuration
-      string section = ProgramName() +".Tester";
+      string section = ProgramName(MODE_NICE) +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
@@ -2639,7 +2639,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                          NL,
+   string msg = StringConcatenate(ProgramName(MODE_NICE), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                 NL,
                                                                                                                                                                 NL,
                                     "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
                                     "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,
@@ -3110,7 +3110,7 @@ bool InitMetrics() {
    }
 
    // read the metrics configuration (on every call)
-   string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
+   string section = ProgramName(MODE_NICE) + ifString(IsTesting(), ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
    metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));

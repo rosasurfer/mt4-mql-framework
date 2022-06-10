@@ -1274,7 +1274,7 @@ int HandleScriptError(string caller, string message, int error) {
       caller = " :: "+ caller;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName(MODE_NICE) + caller, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }

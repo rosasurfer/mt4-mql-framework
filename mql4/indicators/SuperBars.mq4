@@ -80,7 +80,7 @@ string errorSound = "";                               // sound played when timef
  * @return int - error status
  */
 int onInit() {
-   string indicator = StrTrim(ProgramName());
+   string indicator = ProgramName(MODE_NICE);
 
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -645,7 +645,7 @@ bool UpdateDescription() {
 string CreateStatusLabel() {
    if (IsSuperContext()) return("");
 
-   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -673,7 +673,7 @@ string CreateStatusLabel() {
 bool StoreRuntimeStatus() {
    if (!superTimeframe) return(true);                             // skip on invalid timeframes
 
-   string label = "rsf."+ ProgramName() +".superTimeframe";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
 
    // store timeframe in the window
    int hWnd = __ExecutionContext[EC.hChart];
@@ -696,7 +696,7 @@ bool StoreRuntimeStatus() {
  * @return bool - success status
  */
 bool RestoreRuntimeStatus() {
-   string label = "rsf."+ ProgramName() +".superTimeframe";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
 
    // look-up a stored timeframe in the window
    int hWnd = __ExecutionContext[EC.hChart];

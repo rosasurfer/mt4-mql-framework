@@ -22,7 +22,7 @@ int onStart() {
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(MODE_NICE), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }

@@ -567,7 +567,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
    if (ObjectFind(label) == 0) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -589,7 +589,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -658,7 +658,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // on error look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
    if (ObjectFind(label) == 0) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -680,7 +680,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1004,7 +1004,7 @@ bool ToggleAccountBalance() {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also store status in the chart window
+   string label = ProgramName(MODE_NICE) +".ShowAccountBalance";    // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -1021,7 +1021,7 @@ bool GetAccountBalanceDisplayStatus() {
 bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   string label = ProgramName() +".ShowAccountBalance";        // TODO: also read status from the chart window
+   string label = ProgramName(MODE_NICE) +".ShowAccountBalance";    // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1038,7 +1038,7 @@ bool SetAccountBalanceDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // Label definieren
-   string programName = ProgramName();
+   string programName = ProgramName(MODE_NICE);
    label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
    label.price          = StrReplace(label.price,          "${__NAME__}", programName);
    label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
@@ -1289,7 +1289,7 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
    // PendingOrder-Marker unten rechts ein-/ausblenden
-   string label = ProgramName() +".PendingTickets";
+   string label = ProgramName(MODE_NICE) +".PendingTickets";
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
    if (isPendings) {
@@ -4061,7 +4061,7 @@ bool StoreRuntimeStatus() {
 
    // Konfiguration im Fenster speichern
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName(MODE_NICE) +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int  value = ifInt(positions.absoluteProfits, 1, -1);
    SetWindowIntegerA(hWnd, key, value);
 
@@ -4086,7 +4086,7 @@ bool RestoreRuntimeStatus() {
 
    // Konfiguration im Fenster suchen
    int   hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName() +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName(MODE_NICE) +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value  = GetWindowIntegerA(hWnd, key);
    bool success = (value != 0);
    // bei Mißerfolg Konfiguration im Chart suchen
