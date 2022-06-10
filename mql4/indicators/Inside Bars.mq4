@@ -19,7 +19,7 @@ extern string ___a__________________________;
 
 extern bool   Signal.onInsideBar       = false;
 extern bool   Signal.onInsideBar.Sound = true;
-extern bool   Signal.onInsideBar.Popup = false;
+extern bool   Signal.onInsideBar.Popup = true;
 extern bool   Signal.onInsideBar.Mail  = false;
 extern bool   Signal.onInsideBar.SMS   = false;
 
@@ -168,14 +168,12 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
       changedBarsM1 = changed;
-      //debug("CopyRates(0.1)  M1: "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
    }
 
    if (fTimeframes & (F_PERIOD_M5|F_PERIOD_M15|F_PERIOD_M30|F_PERIOD_H1|F_PERIOD_H4|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
       changedBarsM5 = changed;
-      //debug("CopyRates(0.2)  M5: "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
    }
    return(true);
 }
@@ -192,7 +190,7 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
  */
 bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
    // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of those timeframes
-   // are correctly aligned. On timeframes >= M15 this assumption can be wrong (odd bar alignment).
+   // are correctly aligned. On timeframes > M5 this assumption can be wrong (if odd bar alignment).
    int bars = ArrayRange(rates, 0), more;
 
    if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
