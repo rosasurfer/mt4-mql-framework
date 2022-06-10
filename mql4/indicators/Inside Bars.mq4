@@ -113,7 +113,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = ProgramName() +": "+ Timeframes + signalInfo;
+   string text = ProgramName(MODE_NICE) +": "+ Timeframes + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(3)"));
@@ -708,7 +708,7 @@ bool DeleteInsideBars(int timeframe) {
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);

@@ -116,7 +116,7 @@ int CreateChartObjects() {
    int n    = 10;                         // counter for unique labels (min. 2 digits)
 
    // background rectangles
-   string label = ProgramName() +"."+ n +".background";
+   string label = ProgramName(MODE_NICE) +"."+ n +".background";
    if (ObjectFind(label) == 0) ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -128,7 +128,7 @@ int CreateChartObjects() {
    else GetLastError();
 
    n++;
-   label = ProgramName() +"."+ n +".background";
+   label = ProgramName(MODE_NICE) +"."+ n +".background";
    if (ObjectFind(label) == 0) ObjectDelete(label);
    if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
@@ -146,7 +146,7 @@ int CreateChartObjects() {
 
    for (int i=0; i < size; i++) {
       n++;
-      label = ProgramName() +"."+ n +"."+ labels[i];
+      label = ProgramName(MODE_NICE) +"."+ n +"."+ labels[i];
       if (ObjectFind(label) == 0) ObjectDelete(label);
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);

@@ -32,13 +32,13 @@ int onStart() {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to enable status \"waiting\" on EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(MODE_NICE), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to enable status \"waiting\" on EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "wait");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(MODE_NICE), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

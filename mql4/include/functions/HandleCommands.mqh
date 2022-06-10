@@ -42,7 +42,7 @@ bool IsChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
    static string stdChannel = ""; if (!StringLen(stdChannel)) {
-      stdChannel = StrLeftTo(ProgramName(), ".rsf");           // remove an optional namespace suffix
+      stdChannel = ProgramName(MODE_NICE);
    }
    if (channel == "") {
       if (IsExpert()) channel = "EA";

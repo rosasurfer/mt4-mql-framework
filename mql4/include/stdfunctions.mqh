@@ -381,10 +381,10 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                          // send the message to the debug output
+   debug(message);                                                                  // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);   // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(MODE_NICE), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1695,30 +1695,59 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
 /**
  * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string ProgramName() {
-   static string name = ""; if (!StringLen(name)) {
+string ProgramName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
       if (IsLibrary()) {
          if (!IsDllsAllowed()) return("???");
-         name = ec_ProgramName(__ExecutionContext);
+         rawName = ec_ProgramName(__ExecutionContext);
       }
       else {
-         name = ModuleName();
+         rawName = ModuleName();
       }
-      if (!StringLen(name)) return("???");
+      if (!StringLen(rawName)) return("???");
+
+      niceName = rawName;
+      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
+      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
+      niceName = StringTrimRight(niceName);
    }
-   return(name);
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
 /**
  * Return the current MQL module's simple name. Alias of WindowExpertName().
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string ModuleName() {
-   return(WindowExpertName());
+string ModuleName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
+      rawName = WindowExpertName();
+
+      niceName = rawName;
+      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
+      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
+      niceName = StringTrimRight(niceName);
+   }
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
@@ -1726,16 +1755,32 @@ string ModuleName() {
  * Return the current MQL module's full name. For main modules this value matches the value of ProgramName(). For libraries
  * this value includes the name of the MQL main module, e.g. "{expert-name}::{library-name}".
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string FullModuleName() {
-   static string name = ""; if (!StringLen(name)) {
-      string program = ProgramName();
-      if (program == "???")
-         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));           // don't cache in static var
-      name = StrTrim(program) + ifString(IsLibrary(), "::"+ ModuleName(), "");
+string FullModuleName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
+      string programName = ProgramName();
+      string libraryName = "";
+      if (IsLibrary()) libraryName = "::"+ ModuleName();
+      if (programName == "???") return(programName + libraryName);
+
+      rawName = programName + libraryName;
+
+      niceName = programName;
+      if (StrEndsWith(programName, ".rsf")) programName = StrLeft(programName, -4);
+      if (StrEndsWith(programName, "."   )) programName = StrLeft(programName, -1);
+      programName = StringTrimRight(programName);
+      niceName = programName + libraryName;
    }
-   return(name);
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
