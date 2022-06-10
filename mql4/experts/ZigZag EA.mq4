@@ -43,8 +43,11 @@
  *
  *
  * TODO:
- *  - Inside Bars
- *     check/setup signaling per SMS
+ *  - Inside Bars: check signaling per SMS
+ *
+ *  - Price Alert:
+ *     audible notifications for new Highs (AlertDefault, Bulk)
+ *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
  *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - rename ZigZag/MACD to "{name}."
@@ -66,8 +69,9 @@
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
+ *  - visual/audible confirmation
+ *     for manual orders (to detect execution errors)
  *  - notifications for open positions running into swap charges
- *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - support command "wait" in status "progressing"
  *
  *  - trading functionality
