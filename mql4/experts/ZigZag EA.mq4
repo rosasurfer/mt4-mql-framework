@@ -43,8 +43,6 @@
  *
  *
  * TODO:
- *  - Inside Bars: check signaling per SMS
- *
  *  - Price Alert:
  *     audible notifications for new Highs (AlertDefault, Bulk)
  *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
