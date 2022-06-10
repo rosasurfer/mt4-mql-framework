@@ -6535,7 +6535,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD.rsf",
+   double value = iCustom(NULL, timeframe, "MACD.",
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
@@ -6972,7 +6972,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "ZigZag.rsf",
+   double value = iCustom(NULL, timeframe, "ZigZag.",
                           "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type

@@ -48,7 +48,6 @@
  *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
  *
  *  - Instrument Infos: remove maxLeverage constraint
- *  - rename ZigZag/MACD to "{name}."
  *
  *  - Range bar offline chart
  *     US500,M202 FATAL  Superbars ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
