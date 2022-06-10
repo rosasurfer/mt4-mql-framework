@@ -48,14 +48,13 @@ string labels[];                                         // chart object labels
 
 bool   signalInsideBar;
 bool   signalInsideBar.sound;
-string signalInsideBar.soundFile = "Siren.wav";
+string signalInsideBar.soundFile = "News.wav";
 bool   signalInsideBar.popup;
 bool   signalInsideBar.mail;
 string signalInsideBar.mailSender   = "";
 string signalInsideBar.mailReceiver = "";
 bool   signalInsideBar.sms;
 string signalInsideBar.smsReceiver = "";
-string signalInfo = "";
 
 
 /**
@@ -64,9 +63,13 @@ string signalInfo = "";
  * @return int - error status
  */
 int onInit() {
+   string indicator = ProgramName(MODE_NICE);
+
    // validate inputs
    // Timeframes
    string sValues[], sValue = Timeframes;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframes", sValue);
+   string sValueBak = sValue;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], ",", sValues, NULL);
       ArraySpliceStrings(sValues, 0, size-1);
@@ -79,23 +82,26 @@ int onInit() {
    for (int i=0; i < size; i++) {
       sValue = sValues[i];
       int timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1)  return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
+      if (timeframe == -1) return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(sValueBak), ERR_INVALID_INPUT_PARAMETER));
       fTimeframes |= TimeframeFlag(timeframe);
       sValues[i] = TimeframeDescription(timeframe);
    }
    Timeframes = JoinStrings(sValues, ",");
+
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
-   maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
+   int iValue = Max.InsideBars;
+   if (AutoConfiguration) iValue = GetConfigInt(indicator, "Max.InsideBars", iValue);
+   if (iValue < -1)        return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
-   signalInsideBar       = Signal.onInsideBar;                 // reset global vars (for possible account change)
+   signalInsideBar       = Signal.onInsideBar;                 // reset global vars due to a possible account change
    signalInsideBar.sound = Signal.onInsideBar.Sound;
    signalInsideBar.popup = Signal.onInsideBar.Popup;
    signalInsideBar.mail  = Signal.onInsideBar.Mail;
    signalInsideBar.sms   = Signal.onInsideBar.SMS;
-   signalInfo            = "";
-   string signalId = "Signal.onInsideBar";
+
+   string signalId="Signal.onInsideBar", signalInfo="";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalInsideBar)) return(last_error);
    if (signalInsideBar) {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalInsideBar.sound))                                                          return(last_error);
@@ -103,7 +109,7 @@ int onInit() {
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalInsideBar.mail, signalInsideBar.mailSender, signalInsideBar.mailReceiver)) return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalInsideBar.sms, signalInsideBar.smsReceiver))                               return(last_error);
       if (signalInsideBar.sound || signalInsideBar.popup || signalInsideBar.mail || signalInsideBar.sms) {
-         signalInfo = StrLeft(ifString(signalInsideBar.sound, "sound,", "") + ifString(signalInsideBar.popup, "popup,", "") + ifString(signalInsideBar.mail, "mail,", "") + ifString(signalInsideBar.sms, "sms,", ""), -1);
+         signalInfo = "  ("+ StrLeft(ifString(signalInsideBar.sound, "sound,", "") + ifString(signalInsideBar.popup, "popup,", "") + ifString(signalInsideBar.mail, "mail,", "") + ifString(signalInsideBar.sms, "sms,", ""), -1) +")";
       }
       else signalInsideBar = false;
    }
@@ -674,6 +680,8 @@ bool onInsideBar(int timeframe) {
    if (signalInsideBar.sound) error |= !PlaySoundEx(signalInsideBar.soundFile);
    if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + accountTime);
    if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + accountTime);
+
+   if (This.IsTesting()) Tester.Pause();
    return(!error);
 }
 
