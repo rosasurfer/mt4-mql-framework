@@ -1,7 +1,7 @@
 /**
  * PeriodStepper Down
  *
- * Broadcast a command to listening indicators to decrease their dynamic period.
+ * Broadcast a command to listening programs to decrease their dynamic period.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,6 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("PeriodStepper.command", GetTickCount() +"|down");
+   SendChartCommand("PeriodStepper.command", "down|"+ GetTickCount());
    return(catch("onStart(1)"));
 }

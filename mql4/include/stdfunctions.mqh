@@ -381,10 +381,10 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                          // send the message to the debug output
+   debug(message);                                                                  // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);   // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(MODE_NICE), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -569,8 +569,7 @@ bool SelectTicket(int ticket, string caller="", bool pushTicket=false, bool onEr
       if (!OrderPop(caller +"SelectTicket(2)")) return(false);
 
    int error = GetLastError();
-   if (!error)
-      error = ERR_INVALID_TICKET;
+   if (!error) error = ERR_INVALID_TICKET;
    return(!catch(caller +"SelectTicket(3)   ticket="+ ticket, error));
 }
 
@@ -1696,30 +1695,59 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
 /**
  * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string ProgramName() {
-   static string name = ""; if (!StringLen(name)) {
+string ProgramName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
       if (IsLibrary()) {
          if (!IsDllsAllowed()) return("???");
-         name = ec_ProgramName(__ExecutionContext);
+         rawName = ec_ProgramName(__ExecutionContext);
       }
       else {
-         name = ModuleName();
+         rawName = ModuleName();
       }
-      if (!StringLen(name)) return("???");
+      if (!StringLen(rawName)) return("???");
+
+      niceName = rawName;
+      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
+      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
+      niceName = StringTrimRight(niceName);
    }
-   return(name);
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
 /**
  * Return the current MQL module's simple name. Alias of WindowExpertName().
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string ModuleName() {
-   return(WindowExpertName());
+string ModuleName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
+      rawName = WindowExpertName();
+
+      niceName = rawName;
+      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
+      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
+      niceName = StringTrimRight(niceName);
+   }
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
@@ -1727,16 +1755,32 @@ string ModuleName() {
  * Return the current MQL module's full name. For main modules this value matches the value of ProgramName(). For libraries
  * this value includes the name of the MQL main module, e.g. "{expert-name}::{library-name}".
  *
+ * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
+ *                               MODE_RAW:  return the raw unmodified name (default)
+ *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string FullModuleName() {
-   static string name = ""; if (!StringLen(name)) {
-      string program = ProgramName();
-      if (program == "???")
-         return(program + ifString(IsLibrary(), "::"+ ModuleName(), ""));           // don't cache in static var
-      name = StrTrim(program) + ifString(IsLibrary(), "::"+ ModuleName(), "");
+string FullModuleName(int mode = MODE_RAW) {
+   static string rawName="", niceName="";
+
+   if (!StringLen(rawName)) {
+      string programName = ProgramName();
+      string libraryName = "";
+      if (IsLibrary()) libraryName = "::"+ ModuleName();
+      if (programName == "???") return(programName + libraryName);
+
+      rawName = programName + libraryName;
+
+      niceName = programName;
+      if (StrEndsWith(programName, ".rsf")) programName = StrLeft(programName, -4);
+      if (StrEndsWith(programName, "."   )) programName = StrLeft(programName, -1);
+      programName = StringTrimRight(programName);
+      niceName = programName + libraryName;
    }
-   return(name);
+
+   if (mode == MODE_NICE)
+      return(niceName);
+   return(rawName);
 }
 
 
@@ -3885,7 +3929,8 @@ int Tester.Pause(string caller = "") {
 int Tester.Stop(string caller = "") {
    if (!IsTesting()) return(catch("Tester.Stop(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
-   if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
+   static bool isStopSent = false;
+   if (isStopSent || Tester.IsStopped()) return(NO_ERROR);              // skip if already stopped
 
    if (IsLogDebug()) logDebug(caller + ifString(StringLen(caller), "->", "") +"Tester.Stop()");
 
@@ -3893,6 +3938,8 @@ int Tester.Stop(string caller = "") {
    if (!hWnd) return(last_error);
 
    PostMessageA(hWnd, WM_COMMAND, IDC_TESTER_SETTINGS_STARTSTOP, 0);    // SendMessage() causes a UI thread dead-lock if called in deinit()
+
+   isStopSent = true;
    return(NO_ERROR);
 }
 
@@ -4044,32 +4091,6 @@ int MarketWatch.Symbols() {
 
    PostMessageA(hWnd, WM_COMMAND, ID_MARKETWATCH_SYMBOLS, 0);
    return(NO_ERROR);
-}
-
-
-/**
- * Prüft, ob der aktuelle Tick ein neuer Tick ist.
- *
- * @return bool - Ergebnis
- */
-bool EventListener.NewTick() {
-   int vol = Volume[0];
-   if (!vol)                                                         // Tick ungültig (z.B. Symbol noch nicht subscribed)
-      return(false);
-
-   static bool lastResult;
-   static int  lastTick, lastVol;
-
-   // Mehrfachaufrufe während desselben Ticks erkennen
-   if (Ticks == lastTick)
-      return(lastResult);
-
-   // Es reicht immer, den Tick nur anhand des Volumens des aktuellen Timeframes zu bestimmen.
-   bool result = (lastVol && vol!=lastVol);                          // wenn der letzte Tick gültig war und sich das aktuelle Volumen geändert hat
-                                                                     // (Optimierung unnötig, da im Normalfall immer beide Bedingungen zutreffen)
-   lastVol    = vol;
-   lastResult = result;
-   return(result);
 }
 
 
@@ -6514,7 +6535,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD.rsf",
+   double value = iCustom(NULL, timeframe, "MACD.",
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
@@ -6940,46 +6961,44 @@ double icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int 
 /**
  * Load the custom "ZigZag" indicator and return a value.
  *
- * @param  int  timeframe               - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int  periods                 - indicator parameter
- * @param  bool calcAllChannelCrossings - indicator parameter
- * @param  int  iBuffer                 - indicator buffer index of the value to return
- * @param  int  iBar                    - bar index of the value to return
+ * @param  int timeframe - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int periods   - indicator parameter
+ * @param  int iBuffer   - indicator buffer index of the value to return
+ * @param  int iBar      - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar) {
+double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "ZigZag.rsf",
-                          "",                               // string ____________________
+   double value = iCustom(NULL, timeframe, "ZigZag.",
+                          "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
                           1,                                // int    ZigZag.Width
                           Blue,                             // color  ZigZag.Color
-                          false,                            // bool   ZigZag.ShowTrail
+                          108,                              // int    ZigZag.Semaphores.Wingdings
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           true,                             // bool   Donchian.ShowChannel
-                          calcAllChannelCrossings,          // bool   Donchian.ShowAllCrossings
-                          DodgerBlue,                       // color  Donchian.UpperBand.Color
-                          DodgerBlue,                       // color  Donchian.LowerBand.Color
+                          "off",                            // string Donchian.ShowCrossings
+                          DodgerBlue,                       // color  Donchian.Upper.Color
+                          DodgerBlue,                       // color  Donchian.Lower.Color
+                          161,                              // int    Donchian.Crossings.Wingdings
 
-                          "",                               // string ____________________
-                          108,                              // int    Semaphores.WingDingsSymbol
-                          161,                              // int    Crossings.WingDingsSymbol
+                          "",                               // string ____________________________
                           0,                                // int    PeriodStepper.StepSize
                           -1,                               // int    Max.Bars
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
                           false,                            // bool   Signal.onReversal.Sound
                           false,                            // bool   Signal.onReversal.Popup
                           false,                            // bool   Signal.onReversal.Mail
                           false,                            // bool   Signal.onReversal.SMS
 
-                          "",                               // string ____________________
+                          "",                               // string ____________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -7100,7 +7119,6 @@ void __DummyCalls() {
    EnumChildWindows(NULL);
    EQ(NULL, NULL);
    ErrorDescription(NULL);
-   EventListener.NewTick();
    FileAccessModeToStr(NULL);
    FindStandardSymbol(NULL);
    Floor(NULL);
@@ -7147,7 +7165,7 @@ void __DummyCalls() {
    icSuperTrend(NULL, NULL, NULL, NULL, NULL);
    icTriEMA(NULL, NULL, NULL, NULL, NULL);
    icTrix(NULL, NULL, NULL, NULL, NULL);
-   icZigZag(NULL, NULL, NULL, NULL, NULL);
+   icZigZag(NULL, NULL, NULL, NULL);
    ifBool(NULL, NULL, NULL);
    ifDouble(NULL, NULL, NULL);
    ifInt(NULL, NULL, NULL);

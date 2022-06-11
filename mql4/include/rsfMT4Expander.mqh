@@ -172,8 +172,8 @@
    // other helpers
    string   GetInternalWindowTextA(int hWnd);
    int      GetLastWin32Error();
-   bool     IsAsyncKeyDown(int vKey);
    bool     IsProgramType(int type);
+   bool     IsVirtualKeyDown(int vKey);
 
    // Empty stubs for optional MQL event handlers. Overwritten by custom MQL implementations.
    int      onInit();

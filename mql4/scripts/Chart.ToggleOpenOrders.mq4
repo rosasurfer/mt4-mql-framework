@@ -1,7 +1,7 @@
 /**
  * Chart.ToggleOpenOrders
  *
- * Send a command to the ChartInfos indicator or an active EA to toggle the display of open orders.
+ * Send a command to a running EA or the ChartInfos indicator to toggle the display of open orders.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -18,16 +18,14 @@ int __DeinitFlags[];
 int onStart() {
    if (This.IsTesting()) Tester.Pause();
 
-   string sVirtualKey = ifString(IsAsyncKeyDown(VK_LSHIFT), "|VK_LSHIFT", "");
+   string command   = "toggle-open-orders";
+   string params    = "";
+   string modifiers = ifString(IsVirtualKeyDown(VK_SHIFT), "VK_SHIFT", "");
 
-   // check chart for an active EA
-   string label = "EA.status";
-   if (ObjectFind(label) == 0) {
-      SendChartCommand("EA.command", "toggleOpenOrders"+ sVirtualKey);
-      return(last_error);
-   }
+   command = command +":"+ params +":"+ modifiers;
 
-   // no EA found
-   SendChartCommand("ChartInfos.command", "cmd=ToggleOpenOrders"+ sVirtualKey);
+   // send to a running EA or the ChartInfos indicator
+   if (ObjectFind("EA.status") == 0) SendChartCommand("EA.command", command);
+   else                              SendChartCommand("ChartInfos.command", command);
    return(last_error);
 }

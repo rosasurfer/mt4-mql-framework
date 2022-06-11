@@ -16,6 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("SuperBars.command", "Timeframe=Down");
+   SendChartCommand("SuperBars.command", "timeframe:down");
    return(catch("onStart(1)"));
 }

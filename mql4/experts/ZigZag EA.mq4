@@ -43,26 +43,32 @@
  *
  *
  * TODO:
- *  - Insidebars: on BTCUSD,M1 detection of BarOpen,H1 is broken
+ *  - Price Alert:
+ *     audible notifications for new Highs (AlertDefault, Bulk)
+ *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
+ *
  *  - Instrument Infos: remove maxLeverage constraint
- *  - fix cmd Chart.ToggleOpenOrders
+ *
+ *  - Range bar offline chart
+ *     US500,M202 FATAL  Superbars ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
+ *     US500,M202 FATAL  Grid      ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
+ *     US500,M202 FATAL  ChartInfos::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *
  *  - on account change:
  *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
  *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
- *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=6, hTimer=0C178498)  [win32:997]
- *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=4 (references non-existing window hWnd=00190390)
- *     ERROR  MT4Expander::timer.cpp::RemoveTickTimer(118)  DeleteTimerQueueTimer(timerId=4, hTimer=0C178518)  [win32:997]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
- *  - wider SL on manual positions in opposite direction
+ *  - widen SL on manual positions in opposite direction
  *  - manage an existing manual order
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
  *
- *  - visual/audible confirmation for manual orders (to detect execution errors)
+ *  - visual/audible confirmation
+ *     for manual orders (to detect execution errors)
+ *  - notifications for open positions running into swap charges
  *  - support command "wait" in status "progressing"
  *
  *  - trading functionality
@@ -129,8 +135,8 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - realtime equity charts
- *  - much better realtime tick charts (built-in charts are useless)
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
@@ -329,7 +335,7 @@ bool     test.reduceStatusWrites  = true;       // whether to reduce status file
 int onTick() {
    if (!sequence.status) return(ERR_ILLEGAL_STATE);
 
-   if (__isChart) HandleCommands();                            // process chart commands
+   if (__isChart) HandleCommands();                            // process incoming commands
 
    if (sequence.status != STATUS_STOPPED) {
       int signal, zzSignal;
@@ -351,41 +357,39 @@ int onTick() {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmdBak = commands[0], cmd = StrToLower(cmdBak);
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "start") {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_STOPPED:
-            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            int trend = GetZigZagTrend(0);
-            return(StartSequence(ifInt(trend > 0, SIGNAL_LONG, SIGNAL_SHORT)));
-      }
-   }
+            string sDetail = " ";
+            int logLevel = LOG_INFO;
 
-   else if (cmd == "start:long") {
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            return(StartSequence(SIGNAL_LONG));
-      }
-   }
-
-   else if (cmd == "start:short") {
-      switch (sequence.status) {
-         case STATUS_WAITING:
-         case STATUS_STOPPED:
-            logInfo("onCommand(4)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-            return(StartSequence(SIGNAL_SHORT));
+            if (params == "long") {
+               int signal = SIGNAL_LONG;
+            }
+            else if (params == "short") {
+               signal = SIGNAL_SHORT;
+            }
+            else {
+               if (params != "") {
+                  sDetail  = " skipping unsupported parameter in command ";
+                  logLevel = LOG_NOTICE;
+               }
+               signal = ifInt(GetZigZagTrend(0) > 0, SIGNAL_LONG, SIGNAL_SHORT);
+            }
+            log("onCommand(1)  "+ sequence.name + sDetail + DoubleQuoteStr(fullCmd), NO_ERROR, logLevel);
+            return(StartSequence(signal));
       }
    }
 
@@ -393,7 +397,7 @@ bool onCommand(string commands[]) {
       switch (sequence.status) {
          case STATUS_WAITING:
          case STATUS_PROGRESSING:
-            logInfo("onCommand(5)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+            logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             return(StopSequence(NULL));
       }
    }
@@ -401,23 +405,141 @@ bool onCommand(string commands[]) {
    else if (cmd == "wait") {
       switch (sequence.status) {
          case STATUS_STOPPED:
-            logInfo("onCommand(6)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
+            logInfo("onCommand(3)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
             sequence.status = STATUS_WAITING;
             return(SaveStatus());
       }
    }
 
-   else if (cmd == "toggleopenorders") {
-      debug("onCommand(0.1)  "+ sequence.name +" "+ DoubleQuoteStr(cmdBak));
-      return(false);
+   else if (cmd == "toggle-open-orders") {
+      return(ToggleOpenOrders());
    }
 
-   else if (cmd == "toggletradehistory") {
+   else if (cmd == "toggle-trade-history") {
       return(ToggleTradeHistory());
    }
-   else return(!logWarn("onCommand(7)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmdBak)));
+   else return(!logNotice("onCommand(4)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
-   return(!logWarn("onCommand(8)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(cmdBak) +" in status "+ StatusToStr(sequence.status)));
+   return(!logWarn("onCommand(5)  "+ sequence.name +" cannot execute command "+ DoubleQuoteStr(fullCmd) +" in status "+ StatusToStr(sequence.status)));
+}
+
+
+/**
+ * Toggle the display of open orders.
+ *
+ * @return bool - success status
+ */
+bool ToggleOpenOrders() {
+   // read current status and toggle it
+   bool showOrders = !GetOpenOrderDisplayStatus();
+
+   // ON: display open orders
+   if (showOrders) {
+      int orders = ShowOpenOrders();
+      if (orders == -1) return(false);
+      if (!orders) {                                  // Without open orders status must be reset to have the "off" section
+         showOrders = false;                          // remove any existing open order markers.
+         PlaySoundEx("Plonk.wav");
+      }
+   }
+
+   // OFF: remove open order markers
+   if (!showOrders) {
+      for (int i=ObjectsTotal()-1; i >= 0; i--) {
+         string name = ObjectName(i);
+
+         if (StringGetChar(name, 0) == '#') {
+            if (ObjectType(name)==OBJ_ARROW) {
+               int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
+               color clr = ObjectGet(name, OBJPROP_COLOR);
+
+               if (arrow == SYMBOL_ORDEROPEN) {
+                  if (clr!=CLR_OPEN_LONG && clr!=CLR_OPEN_SHORT) continue;
+               }
+               else if (arrow == SYMBOL_ORDERCLOSE) {
+                  if (clr!=CLR_OPEN_TAKEPROFIT && clr!=CLR_OPEN_STOPLOSS) continue;
+               }
+               ObjectDelete(name);
+            }
+         }
+      }
+   }
+
+   // store current status in the chart
+   SetOpenOrderDisplayStatus(showOrders);
+
+   if (This.IsTesting())
+      WindowRedraw();
+   return(!catch("ToggleOpenOrders(1)"));
+}
+
+
+/**
+ * Resolve the current 'ShowOpenOrders' display status.
+ *
+ * @return bool - ON/OFF
+ */
+bool GetOpenOrderDisplayStatus() {
+   bool status = false;
+
+   // look-up a status stored in the chart
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   if (ObjectFind(label) == 0) {
+      string sValue = ObjectDescription(label);
+      if (StrIsInteger(sValue))
+         status = (StrToInteger(sValue) != 0);
+      ObjectDelete(label);
+   }
+   return(status);
+}
+
+
+/**
+ * Store the passed 'ShowOpenOrders' display status.
+ *
+ * @param  bool status - display status
+ *
+ * @return bool - success status
+ */
+bool SetOpenOrderDisplayStatus(bool status) {
+   status = status!=0;
+
+   // store status in the chart (for terminal restarts)
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   if (ObjectFind(label) == -1)
+      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSetText(label, ""+ status);
+
+   return(!catch("SetOpenOrderDisplayStatus(1)"));
+}
+
+
+/**
+ * Display the currently open orders.
+ *
+ * @return int - number of displayed orders or EMPTY (-1) in case of errors
+ */
+int ShowOpenOrders() {
+   string orderTypes[] = {"buy", "sell"};
+   color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
+   int openOrders = 0;
+
+   if (open.ticket != NULL) {
+      string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
+      if (ObjectFind(label) == 0)
+         ObjectDelete(label);
+      if (ObjectCreate(label, OBJ_ARROW, 0, open.time, open.price)) {
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+         ObjectSetText(label, sequence.name);
+      }
+      openOrders++;
+   }
+
+   if (!catch("ShowOpenOrders(1)"))
+      return(openOrders);
+   return(EMPTY);
 }
 
 
@@ -481,7 +603,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
    if (ObjectFind(label) == 0) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -503,7 +625,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -580,33 +702,6 @@ int ShowTradeHistory() {
 
 
 /**
- * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = "EA.command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for existing commands in a non-synchronized way (read-only) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      if (AquireLock(mutex, true)) {                                 // now aquire the lock (read-write)
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
-}
-
-
-/**
  * Update recorder with current metric values.
  */
 void RecordMetrics() {
@@ -674,8 +769,8 @@ bool IsZigZagSignal(int &signal) {
  * @return bool - success status
  */
 bool GetZigZagTrendData(int bar, int &combinedTrend, int &reversal) {
-   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_TREND,    bar));
-   reversal      = Round(icZigZag(NULL, ZigZag.Periods, false, ZigZag.MODE_REVERSAL, bar));
+   combinedTrend = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_TREND,    bar));
+   reversal      = Round(icZigZag(NULL, ZigZag.Periods, ZigZag.MODE_REVERSAL, bar));
    return(combinedTrend != 0);
 }
 
@@ -703,7 +798,7 @@ int GetZigZagTrend(int bar) {
  * @return double - channel value or NULL (0) in case of errors
  */
 double GetZigZagChannel(int bar, int mode) {
-   return(icZigZag(NULL, ZigZag.Periods, false, mode, bar));
+   return(icZigZag(NULL, ZigZag.Periods, mode, bar));
 }
 
 
@@ -3000,7 +3095,7 @@ int onInputError(string message) {
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   string name = ProgramName() +".Sequence.ID";
+   string name = ProgramName(MODE_NICE) +".Sequence.ID";
    string value = ifString(sequence.isTest, "T", "") + sequence.id;
 
    Sequence.ID = value;                                              // store in input parameter
@@ -3029,7 +3124,7 @@ bool RestoreSequenceId() {
 
    if (__isChart) {
       // check chart window
-      string name = ProgramName() +".Sequence.ID";
+      string name = ProgramName(MODE_NICE) +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
       if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
@@ -3054,7 +3149,7 @@ bool RestoreSequenceId() {
 bool RemoveSequenceId() {
    if (__isChart) {
       // chart window
-      string name = ProgramName() +".Sequence.ID";
+      string name = ProgramName(MODE_NICE) +".Sequence.ID";
       RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
       // chart
@@ -3276,12 +3371,12 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
-                                                                                                            NL,
-                                  "Lots:      ", sLots,                                                     NL,
-                                  "Start:    ",  sStartConditions,                                          NL,
-                                  "Stop:     ",  sStopConditions,                                           NL,
-                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,               NL
+   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(MODE_NICE), "    ", sStatus, sError, NL,
+                                                                                                                     NL,
+                                  "Lots:      ", sLots,                                                              NL,
+                                  "Start:    ",  sStartConditions,                                                   NL,
+                                  "Stop:     ",  sStopConditions,                                                    NL,
+                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,                        NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

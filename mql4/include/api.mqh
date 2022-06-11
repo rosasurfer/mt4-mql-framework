@@ -1,10 +1,5 @@
 /**
- * Overview of available functions grouped by location, including MT4Expander DLL functions.
- * Useful if the development environment provides no cTags functionality.
- *
- * Notes:
- *  - This file cannot be used as source code.
- *  - The trailing double-semicolon is specific to UEStudio and activates the UEStudio function browser.
+ * Overview of framework functions grouped by inlude location (this documentation can't be used as a header file).
  */
 
 
@@ -136,12 +131,11 @@ double   doubleOr(double value, double altValue);;
 bool     EnumChildWindows(int hWnd, bool recursive = false);;
 bool     EQ(double double1, double double2, int digits = 8);;
 string   ErrorDescription(int error);;
-bool     EventListener.NewTick();;
 string   FileAccessModeToStr(int mode);;
 string   FindStandardSymbol(string symbol, bool strict = false);;
 int      Floor(double value);;
 void     ForceAlert(string message);;
-string   FullModuleName();;
+string   FullModuleName(int mode = MODE_RAW);;
 bool     GE(double double1, double double2, int digits = 8);;
 string   GetAccountAlias(string company="", int account=NULL);;
 string   GetAccountCompanyId();;
@@ -173,7 +167,7 @@ double   icSuperSmoother(int timeframe, int periods, string appliedPrice, int iB
 double   icSuperTrend(int timeframe, int atrPeriods, int smaPeriods, int iBuffer, int iBar);;
 double   icTriEMA(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
 double   icTrix(int timeframe, int periods, string appliedPrice, int iBuffer, int iBar);;
-double   icZigZag(int timeframe, int periods, bool calcAllChannelCrossings, int iBuffer, int iBar);;
+double   icZigZag(int timeframe, int periods, int iBuffer, int iBar);;
 bool     ifBool(bool condition, bool thenValue, bool elseValue);;
 double   ifDouble(bool condition, double thenValue, double elseValue);;
 int      ifInt(bool condition, int thenValue, int elseValue);;
@@ -222,7 +216,7 @@ string   MessageBoxButtonToStr(int id);;
 int      MessageBoxEx(string caption, string message, int flags = MB_OK);;
 int      Min(int value1, int value2, int value3=INT_MAX, int value4=INT_MAX, int value5=INT_MAX, int value6=INT_MAX, int value7=INT_MAX, int value8=INT_MAX);;
 string   ModuleTypesToStr(int fType);;
-string   ModuleName();;
+string   ModuleName(int mode = MODE_RAW);;
 int      Mul(int a, int b, bool boundaryOnOverflow = false);;
 color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
@@ -245,7 +239,7 @@ string   Pluralize(int count, string singular="", string plural="s");;
 string   PriceTypeDescription(int type);;
 string   PriceTypeToStr(int type);;
 int      ProgramInitReason();;
-string   ProgramName();;
+string   ProgramName(int mode = MODE_RAW);;
 string   QuoteStr(string value);;
 int      ResetLastError();;
 color    RGBStrToColor(string value);;
@@ -567,12 +561,12 @@ int      ArrayDropString(string &array[], string value);;
 int      ArrayInsertBool(bool &array[], int offset, bool value);;
 int      ArrayInsertBools(bool &array[], int offset, bool &values[]);;
 int      ArrayInsertDouble(double &array[], int offset, double value);;
-int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
+int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);;
 int      ArrayInsertDoubles(double &array[], int offset, double &values[]);;
 int      ArrayInsertInt(int &array[], int offset, int value);;
 int      ArrayInsertInts(int &array[], int offset, int &values[]);;
-int      ArrayInsertString(string &array[], int offset, string value);
-int      ArrayInsertStrings(string &array[], int offset, string values[]);
+int      ArrayInsertString(string &array[], int offset, string value);;
+int      ArrayInsertStrings(string &array[], int offset, string values[]);;
 bool     ArrayPopBool(bool &array[]);;
 double   ArrayPopDouble(double &array[]);;
 int      ArrayPopInt(int &array[]);;
@@ -890,7 +884,6 @@ string   InitializeReasonToStr(int reason);;
 string   InitReasonToStr(int reason);;
 string   InputsToStr();;
 string   IntToHexStr(int value);;
-bool     IsAsyncKeyDown(int vKey);;
 bool     IsCustomTimeframe(int timeframe);;
 bool     IsDirectoryA(string path, int mode);;
 bool     IsFileA(string path, int mode);;
@@ -904,6 +897,7 @@ bool     IsStdTimeframe(int timeframe);;
 bool     IsSymlinkA(string path);;
 bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId = NULL);;
+bool     IsVirtualKeyDown(int vKey);;
 int      LeaveContext(int &ec[]);;
 bool     LoadMqlProgramA(int hChart, int programType, string programName);;
 bool     LoadMqlProgramW(int hChart, int programType, string programName);;
