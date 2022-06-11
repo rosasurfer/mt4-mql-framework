@@ -1,11 +1,11 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and the corresponding projection levels of the specified timeframes in the chart.
+ * Marks inside bars and corresponding projection levels of specified timeframes.
  *
  *
  * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned one (instead of always using M5)
+ *  - check bar alignment of all timeframes and use the largest correctly aligned one instead of always M5
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -13,14 +13,15 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes         = "H1";                 // one or more timeframes to analyze, separated by comma
-extern int    Max.InsideBars     = 1;                    // max. number of inside bars per timeframe to find (-1: all)
+extern string Timeframes               = "H1";           // one or more comma-separated timeframes to analyze
+extern int    Max.InsideBars           = 2;              // number of inside bars per timeframe to display (-1: all)
 extern string ___a__________________________;
 
-extern string Signal.onInsideBar = "on | off | auto*";
-extern string Signal.Sound       = "on | off | auto*";
-extern string Signal.Mail        = "on | off | auto*";
-extern string Signal.SMS         = "on | off | auto*";
+extern bool   Signal.onInsideBar       = false;
+extern bool   Signal.onInsideBar.Sound = true;
+extern bool   Signal.onInsideBar.Popup = true;
+extern bool   Signal.onInsideBar.Mail  = false;
+extern bool   Signal.onInsideBar.SMS   = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -28,9 +29,6 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iCopyRates.mqh>
 #include <functions/IsBarOpen.mqh>
@@ -44,20 +42,19 @@ extern string Signal.SMS         = "on | off | auto*";
 #define CLOSE     4
 #define VOLUME    5
 
-int    fTimeframes;                                      // flags of the timeframes to analyze
+int    fTimeframes;                                      // flags of the IB timeframes to process
 int    maxInsideBars;
+string labels[];                                         // chart object labels
 
-string labels[];                                         // object labels of existing IB chart markers
-
-bool   signals;
-bool   signal.sound;
-string signal.sound.file = "Siren.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
+bool   signalInsideBar;
+bool   signalInsideBar.sound;
+string signalInsideBar.soundFile = "News.wav";
+bool   signalInsideBar.popup;
+bool   signalInsideBar.mail;
+string signalInsideBar.mailSender   = "";
+string signalInsideBar.mailReceiver = "";
+bool   signalInsideBar.sms;
+string signalInsideBar.smsReceiver = "";
 
 
 /**
@@ -66,9 +63,13 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
+   string indicator = ProgramName(MODE_NICE);
+
    // validate inputs
    // Timeframes
    string sValues[], sValue = Timeframes;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframes", sValue);
+   string sValueBak = sValue;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], ",", sValues, NULL);
       ArraySpliceStrings(sValues, 0, size-1);
@@ -81,27 +82,36 @@ int onInit() {
    for (int i=0; i < size; i++) {
       sValue = sValues[i];
       int timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1)  return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(Timeframes), ERR_INVALID_INPUT_PARAMETER));
+      if (timeframe == -1) return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(sValueBak), ERR_INVALID_INPUT_PARAMETER));
       fTimeframes |= TimeframeFlag(timeframe);
       sValues[i] = TimeframeDescription(timeframe);
    }
    Timeframes = JoinStrings(sValues, ",");
 
    // Max.InsideBars
-   if (Max.InsideBars < -1) return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ Max.InsideBars, ERR_INVALID_INPUT_PARAMETER));
-   maxInsideBars = ifInt(Max.InsideBars==-1, INT_MAX, Max.InsideBars);
+   int iValue = Max.InsideBars;
+   if (AutoConfiguration) iValue = GetConfigInt(indicator, "Max.InsideBars", iValue);
+   if (iValue < -1)        return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
-   string signalInfo = "";
-   if (!ConfigureSignals("Inside Bars", Signal.onInsideBar, signals))                                    return(last_error);
-   if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (signal.sound || signal.mail || signal.sms) {
-         signalInfo = "  ("+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1) +")";
+   signalInsideBar       = Signal.onInsideBar;                 // reset global vars due to a possible account change
+   signalInsideBar.sound = Signal.onInsideBar.Sound;
+   signalInsideBar.popup = Signal.onInsideBar.Popup;
+   signalInsideBar.mail  = Signal.onInsideBar.Mail;
+   signalInsideBar.sms   = Signal.onInsideBar.SMS;
+
+   string signalId="Signal.onInsideBar", signalInfo="";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signalInsideBar)) return(last_error);
+   if (signalInsideBar) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalInsideBar.sound))                                                          return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalInsideBar.popup))                                                          return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalInsideBar.mail, signalInsideBar.mailSender, signalInsideBar.mailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalInsideBar.sms, signalInsideBar.smsReceiver))                               return(last_error);
+      if (signalInsideBar.sound || signalInsideBar.popup || signalInsideBar.mail || signalInsideBar.sms) {
+         signalInfo = "  ("+ StrLeft(ifString(signalInsideBar.sound, "sound,", "") + ifString(signalInsideBar.popup, "popup,", "") + ifString(signalInsideBar.mail, "mail,", "") + ifString(signalInsideBar.sms, "sms,", ""), -1) +")";
       }
-      else signals = false;
+      else signalInsideBar = false;
    }
 
    // display options
@@ -109,7 +119,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = ProgramName() +": "+ Timeframes + signalInfo;
+   string text = ProgramName(MODE_NICE) +": "+ Timeframes + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(3)"));
@@ -124,10 +134,6 @@ int onInit() {
 int onTick() {
    double ratesM1[][6], ratesM5[][6];
    int changedBarsM1, changedBarsM5;
-
-   //if (IsBarOpen(PERIOD_M1))  debug("onTick(0.1)   BarOpen(M1) = 1");
-   //if (IsBarOpen(PERIOD_M5))  debug("onTick(0.2)   BarOpen(M5) = 1");
-   //if (IsBarOpen(PERIOD_M15)) debug("onTick(0.3)   BarOpen(M15) = 1");
 
    if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
 
@@ -162,14 +168,12 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
       changedBarsM1 = changed;
-      //debug("GetRates(1)  M1: "+ changed +" of "+ ArrayRange(ratesM1, 0) +" bars changed");
    }
 
    if (fTimeframes & (F_PERIOD_M5|F_PERIOD_M15|F_PERIOD_M30|F_PERIOD_H1|F_PERIOD_H4|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
       changedBarsM5 = changed;
-      //debug("GetRates(2)  M5: "+ changed +" of "+ ArrayRange(ratesM5, 0) +" bars changed");
    }
    return(true);
 }
@@ -186,7 +190,7 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
  */
 bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
    // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of those timeframes
-   // are aligned correctly by the broker. On timeframes >= M15 this assumption can be wrong (odd bar alignment).
+   // are correctly aligned. On timeframes > M5 this assumption can be wrong (if odd bar alignment).
    int bars = ArrayRange(rates, 0), more;
 
    if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
@@ -227,7 +231,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
       if (changedBars == 2) {
          if (!IsBarOpen(PERIOD_M15)) return(true);                // same as changedBars = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 7;                                                // cover M5 periods of 2 finished M15 bars
+         bars = 8;                                                // cover M5 periods of 2 finished M15 bars
       }
       else {
          DeleteInsideBars(PERIOD_M15);                            // on data pumping: delete all existing bars
@@ -274,14 +278,13 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_M30)) return(true);                // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 13;                                               // cover M5 periods of 2 finished M30 bars
+         bars = 14;                                               // cover M5 periods of 2 finished M30 bars
       }
       else {
          DeleteInsideBars(PERIOD_M30);                            // on data pumping: delete all existing bars
@@ -328,14 +331,13 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_H1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 25;                                               // cover M5 periods of 2 finished H1 bars
+         bars = 26;                                               // cover M5 periods of 2 finished H1 bars
       }
       else {
          DeleteInsideBars(PERIOD_H1);                             // on data pumping: delete all existing bars
@@ -382,14 +384,13 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_H4)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 97;                                               // cover M5 periods of 2 finished H4 bars
+         bars = 98;                                               // cover M5 periods of 2 finished H4 bars
       }
       else {
          DeleteInsideBars(PERIOD_H4);                             // on data pumping: delete all existing bars
@@ -436,14 +437,13 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_D1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 577;                                              // cover M5 periods of 2 finished D1 bars
+         bars = 578;                                              // cover M5 periods of 2 finished D1 bars
       }
       else {
          DeleteInsideBars(PERIOD_D1);                             // on data pumping: delete all existing bars
@@ -490,14 +490,13 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_W1)) return(true);                 // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 4033;                                             // cover M5 periods of 2 finished W1 bars
+         bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
       }
       else {
          DeleteInsideBars(PERIOD_W1);                             // on data pumping: delete all existing bars
@@ -546,14 +545,13 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
  * @return bool - success status
  */
 bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
-   int bars = ArrayRange(ratesM5, 0);
-   int changedBars = changedBarsM5, more;
+   int bars = ArrayRange(ratesM5, 0), more;
 
-   if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)
-      if (changedBars == 2) {
-         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBars = 1
+   if (changedBarsM5 > 1) {                                       // skip regular ticks (they don't change IB status)
+      if (changedBarsM5 == 2) {
+         if (!IsBarOpen(PERIOD_MN1)) return(true);                // same as changedBarsM5 = 1
          more = 1;                                                // on BarOpen: check the last IB only
-         bars = 17569;                                            // cover M5 periods of 2 finished MN1 bars
+         bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
       }
       else {
          DeleteInsideBars(PERIOD_MN1);                            // on data pumping: delete all existing bars
@@ -594,7 +592,7 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
 
 
 /**
- * Mark the specified inside bar in the chart.
+ * Mark the specified inside bar.
  *
  * @param  int      timeframe - timeframe
  * @param  datetime openTime  - bar open time
@@ -610,15 +608,15 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
    datetime closeTime   = openTime + timeframe*MINUTES;
    double   barSize     = (high-low);
-   double   longLevel1  = NormalizeDouble(high + barSize, Digits);
-   double   shortLevel1 = NormalizeDouble(low  - barSize, Digits);
+   double   longTarget  = NormalizeDouble(high + barSize, Digits);
+   double   shortTarget = NormalizeDouble(low  - barSize, Digits);
    string   sOpenTime   = GmtTimeFormat(openTime, "%d.%m.%Y %H:%M");
    string   sTimeframe  = TimeframeDescription(timeframe);
    static int counter = 0; counter++;
 
-   // draw vertical line at IB open
+   // vertical line at IB open
    string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, chartOpenTime, shortLevel1)) {
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -627,9 +625,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ArrayPushString(labels, label);
    } else debug("MarkInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   // draw horizontal line at long level 1
-   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longLevel1, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longLevel1, closeTime, longLevel1)) {
+   // horizontal line at long projection
+   label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -639,9 +637,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ArrayPushString(labels, label);
    } else debug("MarkInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   // draw horizontal line at short level 1
-   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortLevel1, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortLevel1, closeTime, shortLevel1)) {
+   // horizontal line at short projection
+   label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
+   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
       ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
       ObjectSet     (label, OBJPROP_COLOR, Blue);
       ObjectSet     (label, OBJPROP_RAY,   false);
@@ -651,8 +649,9 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
    } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // signal new inside bars
-   if (!IsSuperContext() && IsBarOpen(timeframe) && signals)
+   if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe));
+   }
    return(true);
 }
 
@@ -665,16 +664,22 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
  * @return bool - success status
  */
 bool onInsideBar(int timeframe) {
-   string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr((Bid+Ask)/2, PriceFormat);
+   if (!signalInsideBar) return(false);
+   if (ChangedBars > 2)  return(false);
+
+   string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr(Bid, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
    if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
    message = Symbol() +": "+ message;
 
-   int error = 0;
-   if (signal.sound) error |= !PlaySoundEx(signal.sound.file);
-   if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
-   if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+   int error = NO_ERROR;
+   if (signalInsideBar.popup)           Alert(message);              // before "sound" to get drowned out by the next sound
+   if (signalInsideBar.sound) error |= !PlaySoundEx(signalInsideBar.soundFile);
+   if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + accountTime);
+   if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + accountTime);
+
+   if (This.IsTesting()) Tester.Pause();
    return(!error);
 }
 
@@ -709,7 +714,7 @@ bool DeleteInsideBars(int timeframe) {
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -734,13 +739,12 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",         DoubleQuoteStr(Timeframes),         ";", NL,
-                            "Max.InsideBars=",     Max.InsideBars,                     ";", NL,
-                            "Signal.onInsideBar=", DoubleQuoteStr(Signal.onInsideBar), ";", NL,
-                            "Signal.Sound=",       DoubleQuoteStr(Signal.Sound),       ";", NL,
-                            "Signal.Mail=",        DoubleQuoteStr(Signal.Mail),        ";", NL,
-                            "Signal.SMS=",         DoubleQuoteStr(Signal.SMS),         ";")
-
-
+   return(StringConcatenate("Timeframes=",               DoubleQuoteStr(Timeframes),          ";", NL,
+                            "Max.InsideBars=",           Max.InsideBars,                      ";", NL,
+                            "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),       ";", NL,
+                            "Signal.onInsideBar.Sound=", BoolToStr(Signal.onInsideBar.Sound), ";", NL,
+                            "Signal.onInsideBar.Popup=", BoolToStr(Signal.onInsideBar.Popup), ";", NL,
+                            "Signal.onInsideBar.Mail=",  BoolToStr(Signal.onInsideBar.Mail),  ";", NL,
+                            "Signal.onInsideBar.SMS=",   BoolToStr(Signal.onInsideBar.SMS),   ";")
    );
 }

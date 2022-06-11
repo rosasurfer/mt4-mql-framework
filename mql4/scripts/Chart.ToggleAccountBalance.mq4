@@ -16,6 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "cmd=ToggleAccountBalance");
+   SendChartCommand("ChartInfos.command", "toggle-account-balance");
    return(catch("onStart(1)"));
 }

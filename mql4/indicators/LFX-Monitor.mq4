@@ -208,7 +208,7 @@ int    statusLineHeight         = 15;
  */
 int onInit() {
    // read auto-configuration
-   string indicator = StrTrim(ProgramName());
+   string indicator = ProgramName(MODE_NICE);
    if (AutoConfiguration) {
       // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
@@ -364,7 +364,7 @@ int onDeinit() {
 int onTick() {
    if (!ValidBars) SetIndicatorOptions();                   // reset indicator options
 
-   HandleCommands();                                        // process chart commands
+   HandleCommands();                                        // process incoming commands
 
    ArrayResize(missingSymbols, 0);
    staleLimit = GetServerTime() - 10*MINUTES;               // exotic instruments may show rather large pauses between ticks
@@ -381,62 +381,33 @@ int onTick() {
 
 
 /**
- * Handle incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received external commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
- *
- * Message format: "cmd=account:[{company-key}:{account-key}]"  => switch the current trade account
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   int size = ArraySize(commands);
-   if (!size) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   for (int i=0; i < size; i++) {
-      if (StrStartsWith(commands[i], "cmd=account:")) {
-         string accountKey     = StrRightFrom(commands[i], ":");
-         string accountCompany = tradeAccount.company;
-         int    accountNumber  = tradeAccount.number;
+   if (cmd == "trade-account") {
+      string accountKey = params +":"+ modifiers;
+      if (accountKey == ":") accountKey = "";
+      string accountCompany = tradeAccount.company;
+      int    accountNumber  = tradeAccount.number;
 
-         if (!InitTradeAccount(accountKey)) return(false);
-         if (tradeAccount.company!=accountCompany || tradeAccount.number!=accountNumber) {
-            if (!UpdateAccountDisplay())    return(false);     // update display and watched orders if
-            if (!RefreshLfxOrders())        return(false);     // the trade account changed
-         }
-         continue;
+      if (!InitTradeAccount(accountKey)) return(false);
+
+      if (tradeAccount.company!=accountCompany || tradeAccount.number!=accountNumber) {
+         if (!UpdateAccountDisplay()) return(false);        // if the trade account changed
+         if (!RefreshLfxOrders())     return(false);        // update display and monitored orders
       }
-      logWarn("onCommand(2)  unknown command: "+ DoubleQuoteStr(commands[i]));
-   }
-   return(!catch("onCommand(3)"));
-}
-
-
-/**
- * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add received commands to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
+      return(!catch("onCommand(1)"));
    }
 
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
+   return(!logNotice("onCommand(2)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 
@@ -492,7 +463,7 @@ bool RefreshLfxOrders() {
  * @return int - error status
  */
 int CreateLabels() {
-   string indicatorName = ProgramName();
+   string indicatorName = ProgramName(MODE_NICE);
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
@@ -1079,7 +1050,7 @@ bool UpdateAccountDisplay() {
 bool StoreTradeAccount() {
    // account company id
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
+   string key  = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
    if (ObjectFind(key) == 0)
@@ -1089,7 +1060,7 @@ bool StoreTradeAccount() {
    ObjectSetText(key, tradeAccount.company);
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
+   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    if (ObjectFind(key) == 0)
@@ -1110,14 +1081,14 @@ bool StoreTradeAccount() {
 string GetStoredTradeAccount() {
    // account company id
    int hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName() +".runtime.tradeAccount.company";
+   string key = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
       if (ObjectFind(key) == 0) company = ObjectDescription(key);
    }
 
    // account number
-   key = ProgramName() +".runtime.tradeAccount.number";
+   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
       if (ObjectFind(key) == 0) accountNumber = StrToInteger(ObjectDescription(key));

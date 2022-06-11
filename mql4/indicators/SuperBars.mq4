@@ -80,7 +80,7 @@ string errorSound = "";                               // sound played when timef
  * @return int - error status
  */
 int onInit() {
-   string indicator = StrTrim(ProgramName());
+   string indicator = ProgramName(MODE_NICE);
 
    // validate inputs
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
@@ -166,50 +166,22 @@ int onTick() {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (cmd == "Timeframe=Up")   return(SwitchSuperTimeframe(STF_UP));
-   if (cmd == "Timeframe=Down") return(SwitchSuperTimeframe(STF_DOWN));
-
-   logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
-   return(true);
-}
-
-
-/**
- * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add received commands to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
+   if (cmd == "timeframe") {
+      if (params == "up")   return(SwitchSuperTimeframe(STF_UP));
+      if (params == "down") return(SwitchSuperTimeframe(STF_DOWN));
    }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
 }
 
 
@@ -312,7 +284,7 @@ bool CheckTimeframeAvailability() {
       default:
          switch (Period()) {
             case PERIOD_M1 :
-            case PERIOD_M5 :
+            case PERIOD_M5 : superTimeframe =  PERIOD_H1;  break;
             case PERIOD_M15:
             case PERIOD_M30:
             case PERIOD_H1 : superTimeframe =  PERIOD_D1;  break;
@@ -673,7 +645,7 @@ bool UpdateDescription() {
 string CreateStatusLabel() {
    if (IsSuperContext()) return("");
 
-   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == 0)
       ObjectDelete(label);
@@ -701,7 +673,7 @@ string CreateStatusLabel() {
 bool StoreRuntimeStatus() {
    if (!superTimeframe) return(true);                             // skip on invalid timeframes
 
-   string label = "rsf."+ ProgramName() +".superTimeframe";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
 
    // store timeframe in the window
    int hWnd = __ExecutionContext[EC.hChart];
@@ -724,7 +696,7 @@ bool StoreRuntimeStatus() {
  * @return bool - success status
  */
 bool RestoreRuntimeStatus() {
-   string label = "rsf."+ ProgramName() +".superTimeframe";
+   string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
 
    // look-up a stored timeframe in the window
    int hWnd = __ExecutionContext[EC.hChart];

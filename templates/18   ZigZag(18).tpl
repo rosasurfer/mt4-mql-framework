@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=2
+scale=4
 graph=1
 fore=0
 grid=0
@@ -9917,7 +9917,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag.rsf
+name=ZigZag.
 flags=339
 window_num=0
 <inputs>
@@ -9925,11 +9925,10 @@ ZigZag.Periods=18
 ZigZag.Type=Semaphores
 ZigZag.Width=1
 ZigZag.Color=16711680
-ZigZag.ShowTrail=1
+Donchian.ShowCrossings=off | first | all*
 Donchian.ShowChannel=1
-Donchian.ShowAllCrossings=1
-Donchian.UpperBand.Color=16748574
-Donchian.LowerBand.Color=16711935
+Donchian.Upper.Color=16748574
+Donchian.Lower.Color=16711935
 </inputs>
 </expert>
 style_2=2

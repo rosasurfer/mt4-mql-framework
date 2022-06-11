@@ -1,7 +1,7 @@
 /**
  * EA.Resume
  *
- * Send a "resume" command to a supporting EA.
+ * Send a "resume" command to a running EA.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,7 +16,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   // supporting EAs maintain a chart object holding the instance id and the instance status
+   // supporting EAs maintain a chart object holding the instance id and the status
    string sid="", status="", label="EA.status";
    bool isActive = false;
 
@@ -32,13 +32,13 @@ int onStart() {
       if (This.IsTesting()) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
-      int button = MessageBoxEx(ProgramName(), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to resume EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBoxEx(ProgramName(MODE_NICE), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to resume EA instance "+ sid +"?", MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK) return(catch("onStart(1)"));
       SendChartCommand("EA.command", "resume");
    }
    else {
       PlaySoundEx("Windows Chord.wav");
-      MessageBoxEx(ProgramName(), "No active EA found.", MB_ICONEXCLAMATION|MB_OK);
+      MessageBoxEx(ProgramName(MODE_NICE), "No EA found.", MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(2)"));
 }

@@ -56,7 +56,7 @@ string legendLabel   = "";
  */
 int onInit() {
    // read auto-configuration
-   string indicator = StrTrim(ProgramName());
+   string indicator = ProgramName(MODE_NICE);
    if (AutoConfiguration) {
       Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
       Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
@@ -90,7 +90,7 @@ int onInit() {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
-   indicatorName = StrTrim(ProgramName());
+   indicatorName = ProgramName(MODE_NICE);
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
 

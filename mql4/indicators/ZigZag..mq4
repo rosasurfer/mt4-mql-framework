@@ -13,14 +13,12 @@
  *
  *
  * TODO:
- *  - drop obsolete input ZigZag.ShowTrail (almost identical to Donchian.ShowAllCrossings)
- *  - rename input Donchian.ShowAllCrossings to Donchian.ShowCrossings
- *  - drop obsolete arrrays upperCrossExit[]/lowerCrossExit[]
- *
+ *  - implement Donchian.ShowCrossings = "first"
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
+ *  - remove logic from IsChartCommand() and replace processing by global include
  *
  *  - onReversal = onLeg?
  *  - add signal onZigZagBreakout
@@ -41,17 +39,16 @@ extern int    ZigZag.Periods                 = 40;                      // lookb
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
-extern bool   ZigZag.ShowTrail               = true;                    // whether to display the trail of the ZigZag legs
+extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a medium dot
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
-extern bool   Donchian.ShowAllCrossings      = true;                    // whether to display all channel crossings or only crossings exceeding the former High/Low
-extern color  Donchian.UpperBand.Color       = DodgerBlue;
-extern color  Donchian.LowerBand.Color       = Magenta;
+extern string Donchian.ShowCrossings         = "off | first | all*";    // whether/which channel crossings to display
+extern color  Donchian.Upper.Color           = DodgerBlue;
+extern color  Donchian.Lower.Color           = Magenta;
+extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
 
 extern string ___c__________________________ = "=== Other ===";
-extern int    Semaphores.WingDingsSymbol     = 108;                     // a medium dot
-extern int    Crossings.WingDingsSymbol      = 161;                     // a small circle
 extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified stepsize
 extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
 
@@ -68,7 +65,6 @@ extern bool   Signal.onReversal.SMS          = false;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
 #include <win32api.mqh>
@@ -130,8 +126,13 @@ int      knownTrend      [];                                   // known directio
 int      unknownTrend    [];                                   // not yet known direction and length after a ZigZag reversal
 double   combinedTrend   [];                                   // combined knownTrend[] and unknownTrend[] buffers
 
+#define MODE_FIRST_CROSSING   1                                // crossing draw types
+#define MODE_ALL_CROSSINGS    2
+
 int      zigzagPeriods;
 int      zigzagDrawType;
+int      crossingDrawType;
+string   crossingModeDescriptions[] = {"off", "first", "all"};
 int      maxValues;
 string   indicatorName = "";
 string   legendLabel   = "";
@@ -141,15 +142,15 @@ datetime lastTick;
 datetime waitUntil;
 
 bool     signalReversal;
-bool     signalReversal.Sound;
-string   signalReversal.SoundUp   = "Signal-Up.wav";
-string   signalReversal.SoundDown = "Signal-Down.wav";
-bool     signalReversal.Popup;
-bool     signalReversal.Mail;
-string   signalReversal.MailSender   = "";
-string   signalReversal.MailReceiver = "";
-bool     signalReversal.SMS;
-string   signalReversal.SMSReceiver = "";
+bool     signalReversal.sound;
+string   signalReversal.soundUp   = "Signal-Up.wav";
+string   signalReversal.soundDown = "Signal-Down.wav";
+bool     signalReversal.popup;
+bool     signalReversal.mail;
+string   signalReversal.mailSender   = "";
+string   signalReversal.mailReceiver = "";
+bool     signalReversal.sms;
+string   signalReversal.smsReceiver = "";
 string   signalInfo                 = "";
 
 // signal direction types
@@ -169,7 +170,7 @@ string   signalInfo                 = "";
 int onInit() {
    // validate inputs
    // ZigZag.Periods
-   if (ZigZag.Periods < 2)               return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Periods < 2)                 return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    zigzagPeriods = ZigZag.Periods;
    // ZigZag.Type
    string sValues[], sValue = StrToLower(ZigZag.Type);
@@ -180,41 +181,53 @@ int onInit() {
    sValue = StrTrim(sValue);
    if      (StrStartsWith("line",       sValue)) { zigzagDrawType = DRAW_ZIGZAG; ZigZag.Type = "Line";        }
    else if (StrStartsWith("semaphores", sValue)) { zigzagDrawType = DRAW_ARROW;  ZigZag.Type = "Semaphores";  }
-   else                                  return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
+   else                                    return(catch("onInit(2)  invalid input parameter ZigZag.Type: "+ DoubleQuoteStr(ZigZag.Type), ERR_INVALID_INPUT_PARAMETER));
    // ZigZag.Width
-   if (ZigZag.Width < 0)                 return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
-   // Semaphores.WingDingsSymbol
-   if (Semaphores.WingDingsSymbol <  32) return(catch("onInit(4)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
-   if (Semaphores.WingDingsSymbol > 255) return(catch("onInit(5)  invalid input parameter Semaphores.WingDingsSymbol: "+ Semaphores.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
-   // Crossings.WingDingsSymbol
-   if (Crossings.WingDingsSymbol <  32)  return(catch("onInit(6)  invalid input parameter Crossings.WingDingsSymbol: "+ Crossings.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
-   if (Crossings.WingDingsSymbol > 255)  return(catch("onInit(7)  invalid input parameter Crossings.WingDingsSymbol: "+ Crossings.WingDingsSymbol, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Width < 0)                   return(catch("onInit(3)  invalid input parameter ZigZag.Width: "+ ZigZag.Width, ERR_INVALID_INPUT_PARAMETER));
+   // ZigZag.Semaphores.Wingdings
+   if (ZigZag.Semaphores.Wingdings <  32)  return(catch("onInit(4)  invalid input parameter ZigZag.Semaphores.Wingdings: "+ ZigZag.Semaphores.Wingdings, ERR_INVALID_INPUT_PARAMETER));
+   if (ZigZag.Semaphores.Wingdings > 255)  return(catch("onInit(5)  invalid input parameter ZigZag.Semaphores.Wingdings: "+ ZigZag.Semaphores.Wingdings, ERR_INVALID_INPUT_PARAMETER));
+   // Donchian.ShowCrossings: "off | first | all*"
+   sValue = Donchian.ShowCrossings;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (StrStartsWith("off",   sValue)) crossingDrawType = NULL;
+   else if (StrStartsWith("first", sValue)) crossingDrawType = MODE_FIRST_CROSSING;
+   else if (StrStartsWith("all",   sValue)) crossingDrawType = MODE_ALL_CROSSINGS;
+   else                                    return(catch("onInit(6)  invalid input parameter Donchian.ShowCrossings: "+ DoubleQuoteStr(Donchian.ShowCrossings), ERR_INVALID_INPUT_PARAMETER));
+   Donchian.ShowCrossings = crossingModeDescriptions[crossingDrawType];
+   // Donchian.Crossings.Wingdings
+   if (Donchian.Crossings.Wingdings <  32) return(catch("onInit(7)  invalid input parameter Donchian.Crossings.Wingdings: "+ Donchian.Crossings.Wingdings, ERR_INVALID_INPUT_PARAMETER));
+   if (Donchian.Crossings.Wingdings > 255) return(catch("onInit(8)  invalid input parameter Donchian.Crossings.Wingdings: "+ Donchian.Crossings.Wingdings, ERR_INVALID_INPUT_PARAMETER));
    // Max.Bars
-   if (Max.Bars < -1)                    return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                      return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)       return(catch("onInit(9)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+   if (PeriodStepper.StepSize < 0)         return(catch("onInit(10)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (ZigZag.Color             == 0xFF000000) ZigZag.Color       = CLR_NONE;
-   if (Donchian.UpperBand.Color == 0xFF000000) Donchian.UpperBand.Color = CLR_NONE;
-   if (Donchian.LowerBand.Color == 0xFF000000) Donchian.LowerBand.Color = CLR_NONE;
+   if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
+   if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
+   if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
 
    // signaling
-   signalReversal       = Signal.onReversal;                      // reset global vars (possible account change)
-   signalReversal.Sound = Signal.onReversal.Sound;
-   signalReversal.Popup = Signal.onReversal.Popup;
-   signalReversal.Mail  = Signal.onReversal.Mail;
-   signalReversal.SMS   = Signal.onReversal.SMS;
+   signalReversal       = Signal.onReversal;                      // reset global vars (for possible account change)
+   signalReversal.sound = Signal.onReversal.Sound;
+   signalReversal.popup = Signal.onReversal.Popup;
+   signalReversal.mail  = Signal.onReversal.Mail;
+   signalReversal.sms   = Signal.onReversal.SMS;
    signalInfo           = "";
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal))                                                                        return(last_error);
    if (signalReversal) {
-      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.Sound))                                                        return(last_error);
-      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.Popup))                                                        return(last_error);
-      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.Mail, signalReversal.MailSender, signalReversal.MailReceiver)) return(last_error);
-      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.SMS, signalReversal.SMSReceiver))                              return(last_error);
-      if (signalReversal.Sound || signalReversal.Popup || signalReversal.Mail || signalReversal.SMS) {
-         signalInfo = StrLeft(ifString(signalReversal.Sound, "sound,", "") + ifString(signalReversal.Popup, "popup,", "") + ifString(signalReversal.Mail, "mail,", "") + ifString(signalReversal.SMS, "sms,", ""), -1);
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
+      if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
+         signalInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
       }
       else signalReversal = false;
    }
@@ -226,15 +239,15 @@ int onInit() {
        RegisterObject(legendLabel);
    }
 
-   // setup a chart ticker to detect data pumping in the event handlers
+   // setup a chart ticker for detection of data pumping
    if (!This.IsTesting()) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 2000;                                         // a virtual tick every 2 seconds
       int timerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!timerId) return(catch("onInit(10)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
+      if (!timerId) return(catch("onInit(11)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
    }
-   return(catch("onInit(11)"));
+   return(catch("onInit(12)"));
 }
 
 
@@ -416,9 +429,15 @@ int onTick() {
       }
 
       // populate visible crossing buffers
-      if (Donchian.ShowAllCrossings || (ZigZag.ShowTrail && !unknownTrend[bar])) {
+      if (crossingDrawType == MODE_ALL_CROSSINGS) {
          upperCross[bar] = upperCrossEntry[bar];
          lowerCross[bar] = lowerCrossEntry[bar];
+      }
+      else if (crossingDrawType == MODE_FIRST_CROSSING) {
+         if (reversal[bar] == Abs(knownTrend[bar])) {
+            upperCross[bar] = upperCrossEntry[bar];
+            lowerCross[bar] = lowerCrossEntry[bar];
+         }
       }
    }
 
@@ -458,8 +477,22 @@ bool onCommand(string commands[]) {
    if (StrEndsWith(cmd, "|up"))   return(PeriodStepper(STEP_UP));
    if (StrEndsWith(cmd, "|down")) return(PeriodStepper(STEP_DOWN));
 
-   logWarn("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd));
-   return(true);                                                  // signal success anyway
+   return(!logNotice("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd)));
+}
+
+
+/**
+ * Check for received commands and pass them to the command handler.
+ *
+ * @return bool - success status
+ */
+bool HandleCommands() {
+   string commands[];
+   ArrayResize(commands, 0);
+
+   if (IsChartCommand(commands))
+      return(onCommand(commands));
+   return(true);
 }
 
 
@@ -470,7 +503,7 @@ bool onCommand(string commands[]) {
  *
  * @return bool
  */
-bool EventListener_ChartCommand(string &commands[]) {
+bool IsChartCommand(string &commands[]) {
    if (!__isChart) return(false);
    string label = "PeriodStepper.command";
 
@@ -753,10 +786,10 @@ bool onReversal(int direction, int bar) {
       if (IsLogInfo()) logInfo("onReversal(Periods="+ zigzagPeriods +")  "+ message);
 
       message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
-      if (signalReversal.Popup)           Alert(message);                     // before "Sound" to get drowned out by the next sound
-      if (signalReversal.Sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.SoundUp, signalReversal.SoundDown));
-      if (signalReversal.Mail)  error |= !SendEmail(signalReversal.MailSender, signalReversal.MailReceiver, message, message + NL + accountTime);
-      if (signalReversal.SMS)   error |= !SendSMS(signalReversal.SMSReceiver, message + NL + accountTime);
+      if (signalReversal.popup)           Alert(message);                     // before "sound" to get drowned out by the next sound
+      if (signalReversal.sound) error |= !PlaySoundEx(ifString(direction==D_LONG, signalReversal.soundUp, signalReversal.soundDown));
+      if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
+      if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
    }
    return(!error);
@@ -807,16 +840,16 @@ void SetIndicatorOptions() {
    int drawType  = ifInt(ZigZag.Width, zigzagDrawType, DRAW_NONE);
    int drawWidth = ifInt(zigzagDrawType==DRAW_ZIGZAG, ZigZag.Width, ZigZag.Width-1);
 
-   SetIndexStyle(MODE_SEMAPHORE_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_OPEN,  Semaphores.WingDingsSymbol);
-   SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, Semaphores.WingDingsSymbol);
+   SetIndexStyle(MODE_SEMAPHORE_OPEN,  drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_OPEN,  ZigZag.Semaphores.Wingdings);
+   SetIndexStyle(MODE_SEMAPHORE_CLOSE, drawType, EMPTY, drawWidth, ZigZag.Color); SetIndexArrow(MODE_SEMAPHORE_CLOSE, ZigZag.Semaphores.Wingdings);
 
    drawType = ifInt(Donchian.ShowChannel, DRAW_LINE, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color);
-   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color);
+   SetIndexStyle(MODE_UPPER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Upper.Color);
+   SetIndexStyle(MODE_LOWER_BAND_VISIBLE, drawType, EMPTY, EMPTY, Donchian.Lower.Color);
 
-   drawType = ifInt(Donchian.ShowAllCrossings || ZigZag.ShowTrail, DRAW_ARROW, DRAW_NONE);
-   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, Donchian.UpperBand.Color); SetIndexArrow(MODE_UPPER_CROSS, Crossings.WingDingsSymbol);
-   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, Donchian.LowerBand.Color); SetIndexArrow(MODE_LOWER_CROSS, Crossings.WingDingsSymbol);
+   drawType = ifInt(crossingDrawType, DRAW_ARROW, DRAW_NONE);
+   SetIndexStyle(MODE_UPPER_CROSS, drawType, EMPTY, EMPTY, Donchian.Upper.Color); SetIndexArrow(MODE_UPPER_CROSS, Donchian.Crossings.Wingdings);
+   SetIndexStyle(MODE_LOWER_CROSS, drawType, EMPTY, EMPTY, Donchian.Lower.Color); SetIndexArrow(MODE_LOWER_CROSS, Donchian.Crossings.Wingdings);
 
    SetIndexStyle(MODE_REVERSAL,       DRAW_NONE);
    SetIndexStyle(MODE_COMBINED_TREND, DRAW_NONE);
@@ -829,26 +862,25 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("ZigZag.Periods=",             ZigZag.Periods,                        ";"+ NL,
-                            "ZigZag.Type=",                DoubleQuoteStr(ZigZag.Type),           ";"+ NL,
-                            "ZigZag.Width=",               ZigZag.Width,                          ";"+ NL,
-                            "ZigZag.Color=",               ColorToStr(ZigZag.Color),              ";"+ NL,
-                            "ZigZag.ShowTrail=",           BoolToStr(ZigZag.ShowTrail),           ";"+ NL,
+   return(StringConcatenate("ZigZag.Periods=",               ZigZag.Periods,                         ";"+ NL,
+                            "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type),            ";"+ NL,
+                            "ZigZag.Width=",                 ZigZag.Width,                           ";"+ NL,
+                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color),               ";"+ NL,
+                            "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings,            ";"+ NL,
 
-                            "Donchian.ShowChannel=",       BoolToStr(Donchian.ShowChannel),       ";"+ NL,
-                            "Donchian.ShowAllCrossings=",  BoolToStr(Donchian.ShowAllCrossings),  ";"+ NL,
-                            "Donchian.UpperBand.Color=",   ColorToStr(Donchian.UpperBand.Color),  ";"+ NL,
-                            "Donchian.LowerBand.Color=",   ColorToStr(Donchian.LowerBand.Color),  ";"+ NL,
+                            "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel),        ";"+ NL,
+                            "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings), ";"+ NL,
+                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color),       ";"+ NL,
+                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color),       ";"+ NL,
+                            "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings,           ";"+ NL,
 
-                            "Semaphores.WingDingsSymbol=", Semaphores.WingDingsSymbol,            ";"+ NL,
-                            "Crossings.WingDingsSymbol=",  Crossings.WingDingsSymbol,             ";"+ NL,
-                            "PeriodStepper.StepSize=",     PeriodStepper.StepSize,                ";"+ NL,
-                            "Max.Bars=",                   Max.Bars,                              ";"+ NL,
+                            "PeriodStepper.StepSize=",       PeriodStepper.StepSize,                 ";"+ NL,
+                            "Max.Bars=",                     Max.Bars,                               ";"+ NL,
 
-                            "Signal.onReversal=",          BoolToStr(Signal.onReversal),          ";"+ NL,
-                            "Signal.onReversal.Sound=",    BoolToStr(Signal.onReversal.Sound),    ";"+ NL,
-                            "Signal.onReversal.Popup=",    BoolToStr(Signal.onReversal.Popup),    ";"+ NL,
-                            "Signal.onReversal.Mail=",     BoolToStr(Signal.onReversal.Mail),     ";"+ NL,
-                            "Signal.onReversal.SMS=",      BoolToStr(Signal.onReversal.SMS),      ";")
+                            "Signal.onReversal=",            BoolToStr(Signal.onReversal),           ";"+ NL,
+                            "Signal.onReversal.Sound=",      BoolToStr(Signal.onReversal.Sound),     ";"+ NL,
+                            "Signal.onReversal.Popup=",      BoolToStr(Signal.onReversal.Popup),     ";"+ NL,
+                            "Signal.onReversal.Mail=",       BoolToStr(Signal.onReversal.Mail),      ";"+ NL,
+                            "Signal.onReversal.SMS=",        BoolToStr(Signal.onReversal.SMS),       ";")
    );
 }

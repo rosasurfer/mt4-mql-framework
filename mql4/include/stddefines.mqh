@@ -1,5 +1,5 @@
 /**
- * Global constants and variables
+ * Global constants and variables.
  */
 #property stacksize 32768                                         // According to various MetaQuotes sources the default stacksize per MQL module in 2019 is 256KB
                                                                   // (some even claim 1-8MB). In build 225 the default stacksize was 16KB which at some point had
@@ -252,6 +252,11 @@ double  N_INF;                                                    // -1.#INF: ne
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on MN1 charts
 #define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes (same as specifying NULL)
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
+
+
+// name sanitizer modes for ProgramName(), ModuleName() and FullModuleName()
+#define MODE_RAW               0
+#define MODE_NICE              1
 
 
 // modes to specify the pool to select an order from; see OrderSelect()

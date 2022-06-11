@@ -322,7 +322,7 @@ int onTick.RegularTrading() {
  * @return int - error status
  */
 int onTick.VirtualTrading() {
-   if (__isChart) HandleCommands();                               // process chart commands
+   if (__isChart) HandleCommands();                               // process incoming commands
 
    // update virtual and real order status (if any)
    UpdateVirtualOrderStatus();
@@ -463,7 +463,7 @@ int afterInit() {
    if (!InitMetrics()) return(last_error);
 
    if (IsTesting()) {                                       // read test configuration
-      string section = ProgramName() +".Tester";
+      string section = ProgramName(MODE_NICE) +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
@@ -1976,44 +1976,18 @@ bool Orders.RemoveRealTicket(int ticket) {
 
 
 /**
- * Whether a chart command was sent to the expert. If true the command is retrieved and returned.
+ * Process an incoming command.
  *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool EventListener_ChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-
-   static string label="", mutex=""; if (!StringLen(label)) {
-      label = ProgramName() +".command";
-      mutex = "mutex."+ label;
-   }
-
-   // check for a command non-synchronized (read-only access) to prevent aquiring the lock on every tick
-   if (ObjectFind(label) == 0) {
-      // now aquire the lock for read-write access
-      if (AquireLock(mutex, true)) {
-         ArrayPushString(commands, ObjectDescription(label));
-         ObjectDelete(label);
-         return(ReleaseLock(mutex));
-      }
-   }
-   return(false);
-}
-
-
-/**
- * Dispatch incoming commands.
- *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  "+ sequence.name +" empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
+
+   if (IsLogInfo()) logInfo("onCommand(2)  "+ sequence.name +" "+ DoubleQuoteStr(fullCmd));
 
    if (cmd == "virtual") {
       switch (tradingMode) {
@@ -2036,9 +2010,9 @@ bool onCommand(string commands[]) {
             return(StartTradeMirror());
       }
    }
-   else return(_true(logWarn("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(cmd))));
+   else return(!logNotice("onCommand(3)  "+ sequence.name +" unsupported command: "+ DoubleQuoteStr(fullCmd)));
 
-   return(_true(logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(cmd) +" command in "+ TradingModeToStr(tradingMode))));
+   return(!logWarn("onCommand(4)  "+ sequence.name +" cannot execute "+ DoubleQuoteStr(fullCmd) +" command in "+ TradingModeToStr(tradingMode)));
 }
 
 
@@ -2665,7 +2639,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                          NL,
+   string msg = StringConcatenate(ProgramName(MODE_NICE), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                 NL,
                                                                                                                                                                 NL,
                                     "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
                                     "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,
@@ -3136,7 +3110,7 @@ bool InitMetrics() {
    }
 
    // read the metrics configuration (on every call)
-   string section = ProgramName() + ifString(IsTesting(), ".Tester", "");
+   string section = ProgramName(MODE_NICE) + ifString(IsTesting(), ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
    metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));
