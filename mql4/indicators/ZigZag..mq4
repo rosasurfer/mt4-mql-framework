@@ -11,18 +11,18 @@
  * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developed over
  * time. The indicator supports signaling of new reversals.
  *
+ * Notes:
+ *  - The additional dot in the name prevents the indicator to be overwritten by the built-in version of the same name.
+ *
  *
  * TODO:
- *  - implement Donchian.ShowCrossings = "first"
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
  *  - remove logic from IsChartCommand() and replace processing by global include
- *
  *  - onReversal = onLeg?
  *  - add signal onZigZagBreakout
- *  - a visible buffer for the mid channel?
  *  - add auto-configuration
  *  - restore default values (type, hide channel and trail)
  *  - document inputs

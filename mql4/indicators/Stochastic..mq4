@@ -12,6 +12,9 @@
  *  • Stochastic.MODE_TREND:  direction and age of the last signal
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
+ *
+ * Notes:
+ *  - The additional dot in the name prevents the indicator to be overwritten by the built-in version of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

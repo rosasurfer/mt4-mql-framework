@@ -14,7 +14,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframes               = "H1";           // one or more comma-separated timeframes to analyze
-extern int    Max.InsideBars           = 2;              // number of inside bars per timeframe to display (-1: all)
+extern int    Max.InsideBars           = 1;              // number of inside bars per timeframe to display (-1: all)
 extern string ___a__________________________;
 
 extern bool   Signal.onInsideBar       = false;

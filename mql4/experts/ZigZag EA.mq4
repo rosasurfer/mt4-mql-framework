@@ -47,6 +47,8 @@
  *     audible notifications for new Highs (AlertDefault, Bulk)
  *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
  *
+ *  - Inside Bars: prevent duplicate signals issued by concurrently running instances
+ *
  *  - Instrument Infos: remove maxLeverage constraint
  *
  *  - Range bar offline chart
