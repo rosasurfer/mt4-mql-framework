@@ -5,7 +5,7 @@
  *
  *
  * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned timeframe instead of always M5
+ *  - check bar alignment of all timeframes and use the largest correctly aligned one instead of always M5
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
