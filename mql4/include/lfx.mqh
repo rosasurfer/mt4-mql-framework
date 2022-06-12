@@ -394,7 +394,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @param  int       i         - Index der getriggerten Order innerhalb des übergebenen LFX_ORDER-Arrays
  * @param  int       limitType - Typ des getriggerten Limits
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrSubstr(los.Comment(orders, i), 1));
@@ -856,7 +856,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
  *                              Der Parameter wird ignoriert, wenn orders[] eine einzelne LFX_ORDER ist.
  * @param  int       fCatch   - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
@@ -944,7 +944,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
  *
  * @param  LFX_ORDER orders[] - Array von LFX_ORDERs
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SaveOrders(/*LFX_ORDER*/int orders[][]) {
    int size = ArrayRange(orders, 0);
@@ -992,7 +992,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
  *
  * @param  string cmd - Command
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.SendTradeCommand(string cmd) {
    if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd: "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
@@ -1023,7 +1023,7 @@ bool QC.SendTradeCommand(string cmd) {
 /**
  * Startet einen QuickChannel-Sender für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartTradeCmdSender() {
    if (hQC.TradeCmdSender != 0)
@@ -1072,7 +1072,7 @@ bool QC.StartTradeCmdSender() {
 /**
  * Stoppt einen QuickChannel-Sender für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopTradeCmdSender() {
    if (!hQC.TradeCmdSender)
@@ -1092,7 +1092,7 @@ bool QC.StopTradeCmdSender() {
 /**
  * Startet einen QuickChannel-Receiver für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) return(true);
@@ -1123,7 +1123,7 @@ bool QC.StartTradeCmdReceiver() {
 /**
  * Stoppt einen QuickChannel-Receiver für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
@@ -1151,7 +1151,7 @@ bool QC.StopTradeCmdReceiver() {
  * @param  int    cid - Currency-ID des für die Nachricht zu benutzenden Channels
  * @param  string msg - Nachricht
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.SendOrderNotification(int cid, string msg) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
@@ -1172,7 +1172,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
  *
  * @param  int cid - Currency-ID des zu startenden Channels
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartLfxSender(int cid) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
@@ -1193,7 +1193,7 @@ bool QC.StartLfxSender(int cid) {
 /**
  * Stoppt alle QuickChannel-Sender für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopLfxSenders() {
    for (int i=ArraySize(hQC.TradeToLfxSenders)-1; i >= 0; i--) {
@@ -1211,7 +1211,7 @@ bool QC.StopLfxSenders() {
 /**
  * Startet einen QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) return(true);
@@ -1232,7 +1232,7 @@ bool QC.StartLfxReceiver() {
 /**
  * Stoppt den QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) {
@@ -1248,7 +1248,7 @@ bool QC.StopLfxReceiver() {
 /**
  * Stoppt alle laufenden Sender und Receiver.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopChannels() {
    if (!QC.StopLfxSenders())       return(false);

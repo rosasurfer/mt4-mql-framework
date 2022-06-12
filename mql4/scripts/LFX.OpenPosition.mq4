@@ -35,7 +35,7 @@ double leverage;
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    // (1) TradeAccount und Status initialisieren
@@ -83,7 +83,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    QC.StopChannels();
@@ -94,7 +94,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    string symbols   [7];

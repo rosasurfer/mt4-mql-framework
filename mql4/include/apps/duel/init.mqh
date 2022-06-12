@@ -2,8 +2,6 @@
  * Initialization preprocessing.
  *
  * @return int - error status
- *
- * @see  mql4/experts/Duel.mq4
  */
 int onInit() {
    CreateStatusBox();

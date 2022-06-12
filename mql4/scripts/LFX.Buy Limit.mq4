@@ -34,7 +34,7 @@ int limitType;                                                       // OP_BUYLI
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    // (1) TradeAccount initialisieren
@@ -87,7 +87,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    QC.StopChannels();
@@ -98,7 +98,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    int  button;

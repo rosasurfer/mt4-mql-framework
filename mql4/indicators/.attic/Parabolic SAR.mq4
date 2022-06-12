@@ -37,6 +37,8 @@ double save_sar;
 
 
 /**
+ * Initialization
+ *
  * @return int - error status
  */
 int onInit() {

@@ -150,7 +150,7 @@ bool EditFiles(string &filenames[]) {
  * @param  _Out_ datetime prevTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
  * @param  _Out_ datetime nextTransition[] - Array zur Aufnahme der nächsten Transitionsdaten
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * Format of prevTransition[] and nextTransition[]:
  * ------------------------------------------------
@@ -313,7 +313,7 @@ int    lock.counters[];                                           // Anzahl der 
  * @param  string mutexName - Namensbezeichner des Mutexes
  * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool AquireLock(string mutexName, bool wait) {
    wait = wait!=0;
@@ -379,7 +379,7 @@ bool AquireLock(string mutexName, bool wait) {
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ReleaseLock(string mutexName) {
    if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
@@ -694,7 +694,7 @@ string GetAccountServer() {
  * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
  * @param  int    size     - Anzahl der im Buffer zu speichernden Doubles
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int InitializeDoubleBuffer(double buffer[], int size) {
    if (ArrayDimension(buffer) > 1) return(catch("InitializeDoubleBuffer(1)  too many dimensions of parameter buffer: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAY));
@@ -716,7 +716,7 @@ int InitializeDoubleBuffer(double buffer[], int size) {
  * @param  string buffer[] - das für den Buffer zu verwendende String-Array
  * @param  int    length   - Länge des Buffers in Zeichen
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int InitializeStringBuffer(string &buffer[], int length) {
    if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)  too many dimensions of parameter buffer: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAY));
@@ -751,7 +751,7 @@ bool SortStrings(string &values[]) {
  *
  * @param  _InOut_ int tickets[] - zu sortierende Tickets
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int SortTicketsChronological(int &tickets[]) {
    int sizeOfTickets = ArraySize(tickets);
@@ -807,7 +807,7 @@ int SortTicketsChronological(int &tickets[]) {
  *
  * @param  _Inout_ int tickets[] - Array mit Ticketdaten
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
    if (ArrayRange(tickets, 1) != 2) return(!catch("SortOpenTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAY));
@@ -864,7 +864,7 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
  * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
  * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -891,7 +891,7 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 /**
  * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int RepositionLegend() {
    if (IsSuperContext())
@@ -934,7 +934,7 @@ int RepositionLegend() {
  * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch, die
  * Order auszuführen, erfolgreich sein.
  *
- * @param  int error - Fehlerstatus
+ * @return int - error status
  *
  * @return bool
  */
@@ -989,7 +989,7 @@ bool IsTemporaryTradeError(int error) {
  * @param  int offset    - zu modifizierende Position
  * @param  int values[]  - zuzuweisendes Array (Größe muß der zweiten Dimension des zu modifizierenden Arrays entsprechen)
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int ArraySetInts(int array[][], int offset, int values[]) {
    if (ArrayDimension(array) != 2)   return(catch("ArraySetInts(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY));
@@ -2867,7 +2867,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
  * @param  string cmdLine - Befehlszeile
  * @param  int    cmdShow - ShowWindow()-Konstante
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int WinExecWait(string cmdLine, int cmdShow) {
    /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO_size);
@@ -7492,7 +7492,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
  *
  * @param  color markerColor [optional] - Farbe des Chart-Markers (default: kein Marker)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool DeletePendingOrders(color markerColor = CLR_NONE) {
    int oeFlags = NULL;
@@ -7524,7 +7524,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7556,7 +7556,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  * @param  double   takeProfit  - TakeProfit
  * @param  string   comment     - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7609,7 +7609,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   oldStopLoss   - ursprünglicher StopLoss
  * @param  double   oldTakeProfit - ursprünglicher TakeProfit
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7645,7 +7645,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @param  double   takeProfit    - aktueller TakeProfit
  * @param  string   comment       - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7732,7 +7732,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  * @param  int    digits       - Nachkommastellen des Ordersymbols
  * @param  color  markerColor  - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7763,7 +7763,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  * @param  double   openPrice    - OrderOpenPrice
  * @param  string   comment      - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7813,7 +7813,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
    if (!__isChart) return(true);
@@ -7842,7 +7842,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @param  datetime closeTime   - OrderCloseTime
  * @param  double   closePrice  - OrderClosePrice
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (!__isChart) return(true);
@@ -7896,7 +7896,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7927,7 +7927,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  * @param  datetime closeTime   - OrderCloseTime
  * @param  double   closePrice  - OrderClosePrice
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -8411,7 +8411,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
  * @param  SYMBOL symbol - Symbol
  * @param  int    type   - Symbol-Typ
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Parameter validieren und Template-Datei bestimmen

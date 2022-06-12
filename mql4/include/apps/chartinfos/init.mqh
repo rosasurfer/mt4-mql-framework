@@ -1,28 +1,46 @@
 /**
- * Initialization preprocessing
+ * Initialization preprocessing.
  *
  * @return int - error status
  */
 int onInit() {
-   if (!CreateLabels())         return(last_error);                           // label creation first; needed by RestoreRuntimeStatus()
-   if (!RestoreRuntimeStatus()) return(last_error);                           // restores positions.absoluteProfits
-   if (!InitTradeAccount())     return(last_error);                           // set used trade account
+   // validate inputs
+   // UnitSize.Corner: "top-left | top-right | bottom-left | bottom-right*", also "tl | tr | bl | br"
+   string sValues[], sValue = UnitSize.Corner;
+   if (Explode(sValue, "*", sValues, 2) > 1) {
+      int size = Explode(sValues[0], "|", sValues, NULL);
+      sValue = sValues[size-1];
+   }
+   sValue = StrToLower(StrTrim(sValue));
+   if      (sValue=="top-left"     || sValue=="tl") unitSize.corner = CORNER_TOP_LEFT;
+   else if (sValue=="top-right"    || sValue=="tr") unitSize.corner = CORNER_TOP_RIGHT;
+   else if (sValue=="bottom-left"  || sValue=="bl") unitSize.corner = CORNER_BOTTOM_LEFT;
+   else if (sValue=="bottom-right" || sValue=="br") unitSize.corner = CORNER_BOTTOM_RIGHT;
+   else return(catch("onInit(1)  invalid input parameter UnitSize.Corner: "+ UnitSize.Corner, ERR_INVALID_INPUT_PARAMETER));
+   totalPosition.corner = unitSize.corner;
+   UnitSize.Corner      = cornerDescriptions[unitSize.corner];
+
+   // init labels, status and used trade account
+   if (!CreateLabels())         return(last_error);
+   if (!RestoreStatus())        return(last_error);
+   if (!InitTradeAccount())     return(last_error);
    if (!UpdateAccountDisplay()) return(last_error);
 
-   // read config: displayed price
-   string section="", key="", stdSymbol=StdSymbol(), sValue="bid";
-   if (!IsVisualModeFix()) {                                                  // in tester always display the Bid price (sufficient and faster)
+   // resolve the price type to display
+   string section="", key="", stdSymbol=StdSymbol();
+   if (!IsVisualModeFix()) {
       section = "ChartInfos";
       key     = "DisplayedPrice."+ stdSymbol;
       sValue  = StrToLower(GetConfigString(section, key, "median"));
    }
+   else sValue="bid";                                          // in tester always display the Bid
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
-   else return(catch("onInit(1)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
+   else return(catch("onInit(2)  invalid configuration value ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue) +" (unknown)", ERR_INVALID_CONFIG_VALUE));
 
    if (mode.intern) {
-      // read config: unitsize calculation, see ChartInfos::CalculateUnitSize()
+      // resolve unitsize configuration
       if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(last_error); mm.cfgLeverage    = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(last_error); mm.cfgRiskPercent = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
@@ -33,108 +51,111 @@ int onInit() {
       // order tracker
       if (!OrderTracker.Configure()) return(last_error);
    }
-
-   if (IsTesting()) {
-      positions.absoluteProfits = true;
-   }
-   return(catch("onInit(6)"));
+   return(catch("onInit(3)"));
 }
 
 
 /**
- * Nach manuellem Laden des Indikators durch den User (Input-Dialog).
+ * Called after the indicator was manually loaded by the user. There was an input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitUser() {
-   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders neu einlesen
-   return(NO_ERROR);
+   RestoreLfxOrders(false);                              // read from file
+   return(last_error);
 }
 
 
 /**
- * Nach Laden des Indikators durch ein Template, auch bei Terminal-Start (kein Input-Dialog).
+ * Called after the indicator was loaded by a chart template. Also at terminal start. Also in tester with both
+ * VisualMode=On|Off if the indicator is loaded by template "Tester.tpl". There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitTemplate() {
-   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders neu einlesen
-   return(NO_ERROR);
+   RestoreLfxOrders(false);                              // read from file
+   return(last_error);
 }
 
 
 /**
- * Nach manueller Änderung der Indikatorparameter (Input-Dialog).
+ * Called after the input parameters were changed via the input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitParameters() {
-   if (!RestoreLfxOrders(true)) return(last_error);                           // in Library gespeicherte LFX-Orders restaurieren
-   return(NO_ERROR);
+   RestoreLfxOrders(true);                               // from cache
+   return(last_error);
 }
 
 
 /**
- * Nach Wechsel der Chartperiode (kein Input-Dialog).
+ * Called after the chart timeframe has changed. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitTimeframeChange() {
-   if (!RestoreLfxOrders(true)) return(last_error);                           // in Library gespeicherte LFX-Orders restaurieren
-   return(NO_ERROR);
+   RestoreLfxOrders(true);                               // from cache
+   return(last_error);
 }
 
 
 /**
- * Nach Änderung des Chartsymbols (kein Input-Dialog).
+ * Called after the chart symbol has changed. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitSymbolChange() {
-   if (!RestoreLfxOrders(true))  return(last_error);                          // LFX-Orderdaten des vorherigen Symbols speichern (liegen noch in Library)
-   if (!SaveLfxOrderCache())     return(last_error);
-   if (!RestoreLfxOrders(false)) return(last_error);                          // LFX-Orders des aktuellen Symbols einlesen
+   if (!RestoreLfxOrders(true))  return(last_error);     // restore old orders from cache
+   if (!SaveLfxOrderCache())     return(last_error);     // save old orders to file
+   if (!RestoreLfxOrders(false)) return(last_error);     // read new orders from file
    return(NO_ERROR);
 }
 
 
 /**
- * Bei Reload des Indikators nach Neukompilierung (kein Input-Dialog).
+ * Called after the indicator was recompiled. In older terminals (which ones exactly?) indicators are not automatically
+ * reloded if the terminal is disconnected. There was no input dialog.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInitRecompile() {
    if (mode.extern) {
-      if (!RestoreLfxOrders(false)) return(last_error);                       // LFX-Orders neu einlesen
+      RestoreLfxOrders(false);                           // read from file
    }
-   return(NO_ERROR);
+   return(last_error);
 }
 
 
 /**
- * Initialisierung Postprocessing-Hook
+ * Initialization postprocessing.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int afterInit() {
-   // ggf. Offline-Ticker installieren
-   if (Offline.Ticker) /*&&*/ if (!This.IsTesting()) /*&&*/ if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
-      int hWnd    = __ExecutionContext[EC.hChart];
-      int millis  = 1000;
-      int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
-      if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-      tickTimerId = timerId;
+   if (This.IsTesting()) {
+      positions.absoluteProfits = true;
+   }
+   else {
+      // offline ticker
+      if (Offline.Ticker) /*&&*/ if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
+         int hWnd    = __ExecutionContext[EC.hChart];
+         int millis  = 1000;
+         int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
+         if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+         tickTimerId = timerId;
 
-      // Status des Offline-Tickers im Chart anzeigen
-      string label = ProgramName(MODE_NICE) +".TickerStatus";
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
-         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
-         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // Webdings: runder Marker, grün="Online"
-         RegisterObject(label);
+         // display ticker status
+         string label = ProgramName(MODE_NICE) +".TickerStatus";
+         if (ObjectFind(label) == 0)
+            ObjectDelete(label);
+         if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
+            ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+            ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+            ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+            ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // a "dot" marker, Green = online
+            RegisterObject(label);
+         }
       }
    }
    return(catch("afterInit(2)"));
@@ -220,7 +241,7 @@ bool ReadUnitSizeConfigValue(string id, string &value) {
       return(true);
    }
 
-   return(true);     // success also if no configuration was found (returns an empty string)
+   return(true);           // success also if no configuration was found (returns an empty string)
 }
 
 

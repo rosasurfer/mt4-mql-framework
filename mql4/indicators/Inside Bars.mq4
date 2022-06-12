@@ -19,7 +19,7 @@ extern string ___a__________________________;
 
 extern bool   Signal.onInsideBar       = false;
 extern bool   Signal.onInsideBar.Sound = true;
-extern bool   Signal.onInsideBar.Popup = true;
+extern bool   Signal.onInsideBar.Popup = false;
 extern bool   Signal.onInsideBar.Mail  = false;
 extern bool   Signal.onInsideBar.SMS   = false;
 

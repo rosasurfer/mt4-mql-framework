@@ -29,7 +29,7 @@ double iLowerLevel[];                           // unterer Level
 
 
 /**
- * Initialisierung
+ * Initialization
  *
  * @return int - error status
  */
@@ -68,7 +68,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
@@ -80,7 +80,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
