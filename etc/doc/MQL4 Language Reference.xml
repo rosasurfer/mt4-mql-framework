@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="Windows-1252"?>
+<!--
+Q: Where can I find the original version of the MQL4 language reference?
+A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30ebd8/doc/MQL4%20Reference.xml#
+-->
 <dictionary>
   tag=MetaQuotesLanguage
   caption=MetaQuotes Language 4
@@ -35,15 +39,15 @@
 
   .code           { font-family:monospace;            }
   .const          { color:#980000;                    }
-  .function       { color:#000093;                    }  <!-- same as <a/>    -->
+  .function       { color:#000093;                    }  /* same as <a/>    */
   .core           { color:Red;                        }
-  .global         { color:#980000; font-style:italic; }  <!-- global variable -->
+  .global         { color:#980000; font-style:italic; }  /* global variable */
   .keyword        { color:#D000D0;                    }
   .number         { color:#7070FF;                    }
   .preproc        { color:#008000;                    }
   .string         { color:#008080;                    }
-  .char           { color:#008080;                    }  <!-- same as .string -->
-  .type           { color:#808000;                    }
+  .char           { color:#008080;                    }  /* same as .string */
+  .type           { color:Olive;                      }
   .comment        { color:Blue;                       }
   </styles>
 
@@ -1032,7 +1036,7 @@ bool   bLog;
           <li><a href="help://basics_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
           have passed since 0.00 a.m. on 1 January, 1970.</li>
         </ul>
-        
+
         <p>Additional data types make sense only at the declaration of <a href="help://basics_variables_extern">input parameters</a> for their more convenient
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
@@ -4052,7 +4056,7 @@ Print(&quot;Min value = &quot;, num_array[minValueIdx]);
         <br/>
         <li>Local arrays (arrays which are declared in a function) will remain resized and keep their values after the function returned.</li>
 
-        <li>Resizing an array to a size of <span class="number">0</span> releases allocated memory. Resizing an array to the same size does nothing (no-op). 
+        <li>Resizing an array to a size of <span class="number">0</span> releases allocated memory. Resizing an array to the same size does nothing (no-op).
         Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
 
         <li>During resizing existing or remaining array elements are kept. New numeric array elements are initialized with <span class="number">0</span> (zero).</li>
@@ -4745,9 +4749,9 @@ Optional data output mode can be one or combination of:<br/>
             - <span class="global">ChangedBars</span> signalisiert die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
             - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
             Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
-            BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet. It holds: 
+            BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet. It holds:
             <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></p></li>
-        
+
         <li><p>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
             <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
             <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
@@ -4758,7 +4762,7 @@ Optional data output mode can be one or combination of:<br/>
 
         <li><p><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
             Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.</p></li>
-        
+
         <li><p>For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>() in MQL5 for MetaTrader 4 see
           <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
           <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.</p></li>
@@ -5660,8 +5664,8 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsEnding()
       type=bool
       <content>
-        Returns <span class="const">TRUE</span> after a failed attempt to move the file pointer or to read past the end of a file. 
-        <span class="const">TRUE</span> is also returned if an invalid or closed file handle is passed (the read attempt will fail). 
+        Returns <span class="const">TRUE</span> after a failed attempt to move the file pointer or to read past the end of a file.
+        <span class="const">TRUE</span> is also returned if an invalid or closed file handle is passed (the read attempt will fail).
         <br/>
       </content>
       <example>
