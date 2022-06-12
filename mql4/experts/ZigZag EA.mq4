@@ -43,19 +43,23 @@
  *
  *
  * TODO:
- *  - Price Alert:
- *     audible notifications for new Highs (AlertDefault, Bulk)
- *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
+ *  - ChartInfos: configurable unitsize positioning
  *
- *  - Inside Bars: prevent duplicate signals issued by concurrently running instances
+ *  - Inside Bars
+ *     rename Max.InsideBars
+ *     audible notification on projection crossing
+ *
+ *  - fix Superbars in Range bar chart
+ *
+ *  - Price Alert
+ *     audible notifications for new Highs (e.g. AlertDefault, Bulk)
+ *     audible notifications for new Lows (e.g. MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
  *
  *  - Instrument Infos: remove maxLeverage constraint
- *
  *  - Range bar offline chart
  *     US500,M202 FATAL  Superbars ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *     US500,M202 FATAL  Grid      ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *     US500,M202 FATAL  ChartInfos::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *
  *  - on account change:
  *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
  *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)

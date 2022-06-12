@@ -2751,7 +2751,7 @@ int TimeYearEx(datetime time) {
  * @param  int source      - Quelladdrese
  * @param  int bytes       - Anzahl zu kopierender Bytes
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 void CopyMemory(int destination, int source, int bytes) {
    if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination: 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
@@ -3537,7 +3537,7 @@ string StrCapitalize(string value) {
 /**
  * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  *
  * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
@@ -3583,7 +3583,7 @@ int Chart.SendTick(bool sound = false) {
 /**
  * Ruft den Hauptmenü-Befehl Charts->Objects->Unselect All auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Chart.Objects.UnselectAll() {
    int hWnd = __ExecutionContext[EC.hChart];
@@ -3595,7 +3595,7 @@ int Chart.Objects.UnselectAll() {
 /**
  * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Chart.Refresh() {
    int hWnd = __ExecutionContext[EC.hChart];
@@ -4053,7 +4053,7 @@ string CreateString(int length) {
  *
  * @param  bool enable - gewünschter Status: On/Off
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
@@ -4082,7 +4082,7 @@ int Toolbar.Experts(bool enable) {
 /**
  * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int MarketWatch.Symbols() {
    int hWnd = GetTerminalMainWindow();
@@ -6081,7 +6081,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  * @param  string subject  - Subject der E-Mail
  * @param  string message  - Body der E-Mail
  *
- * @return bool - Erfolgsstatus: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
+ * @return bool - success status: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {

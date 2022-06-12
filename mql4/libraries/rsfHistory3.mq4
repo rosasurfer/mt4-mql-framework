@@ -400,7 +400,7 @@ int HistorySet3.Get(string symbol, string directory = "") {
  *
  * @param  int hSet - Set-Handle
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool HistorySet3.Close(int hSet) {
    // Validierung
@@ -438,7 +438,7 @@ bool HistorySet3.Close(int hSet) {
  *                            BarOpen-Event
  *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool HistorySet3.AddTick(int hSet, datetime time, double value, int flags = NULL) {
    // Validierung
@@ -681,7 +681,7 @@ int HistoryFile3.Open(string symbol, int timeframe, string description, int digi
  *
  * @param  int hFile - Dateihandle
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool HistoryFile3.Close(int hFile) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.Close(1)  invalid file handle: "+ hFile, ERR_INVALID_PARAMETER));
@@ -808,7 +808,7 @@ int HistoryFile3.FindBar(int hFile, datetime time, bool &lpBarExists[]) {
  * @param  _In_  int    offset - Offset der zu lesenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  _Out_ double bar[6] - Array zur Aufnahme der Bar-Daten (TOHLCV)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * NOTE: Time und Volume der gelesenen Bar werden validert, nicht jedoch die Barform.
  */
@@ -907,7 +907,7 @@ bool HistoryFile3.ReadBar(int hFile, int offset, double &bar[]) {
  * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                         • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * NOTE: Time und Volume der zu schreibenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
@@ -1057,7 +1057,7 @@ bool HistoryFile3.WriteBar(int hFile, int offset, double bar[], int flags=NULL) 
  * @param  int    offset - Offset der zu aktualisierenden Bar relativ zum Dateiheader (Offset 0 ist die älteste Bar)
  * @param  double value  - neuer Schlußkurs (z.B. ein weiterer Tick der jüngsten Bar)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
    if (hFile <= 0)                      return(!catch("HistoryFile3.UpdateBar(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1109,7 +1109,7 @@ bool HistoryFile3.UpdateBar(int hFile, int offset, double value) {
  * @param  int    flags  - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                         • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * NOTE: Time und Volume der einzufügenden Bar werden auf != NULL validert, alles andere nicht. Insbesondere wird nicht überprüft, ob die
  *       Bar-Time eine normalisierte OpenTime für den Timeframe der Historydatei ist.
@@ -1142,7 +1142,7 @@ bool HistoryFile3.InsertBar(int hFile, int offset, double bar[], int flags = NUL
  * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                     • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -1210,7 +1210,7 @@ bool HistoryFile3.WriteLastStoredBar(int hFile, int flags = NULL) {
  * @param  int flags - zusätzliche, das Schreiben steuernde Flags (default: keine)
  *                     • HST_FILL_GAPS: beim Schreiben entstehende Gaps werden mit dem Schlußkurs der letzten Bar vor dem Gap gefüllt
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -1308,7 +1308,7 @@ bool HistoryFile3.WriteBufferedBar(int hFile, int flags = NULL) {
  * @param  int fromOffset - Start-Offset
  * @param  int destOffset - Ziel-Offset: Ist dieser Wert kleiner als der Start-Offset, wird die Historydatei entsprechend gekürzt.
  *
- * @return bool - Erfolgsstatus                                            TODO: Implementieren
+ * @return bool - success status                                            TODO: Implementieren
  */
 bool HistoryFile3.MoveBars(int hFile, int fromOffset, int destOffset) {
    return(!catch("HistoryFile3.MoveBars(1)  "+ hf.symbol[hFile] +","+ PeriodDescription(hf.period[hFile]) +")", ERR_NOT_IMPLEMENTED));
@@ -1326,7 +1326,7 @@ bool HistoryFile3.MoveBars(int hFile, int fromOffset, int destOffset) {
  *                            BarOpen-Event
  *                          • HST_FILL_GAPS:    füllt entstehende Gaps mit dem letzten Schlußkurs vor dem Gap
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool HistoryFile3.AddTick(int hFile, datetime time, double value, int flags = NULL) {
    if (hFile <= 0)                         return(!catch("HistoryFile3.AddTick(1)  invalid parameter hFile: "+ hFile, ERR_INVALID_PARAMETER));
@@ -1635,7 +1635,7 @@ void onLibraryInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    __CheckFileHandles();

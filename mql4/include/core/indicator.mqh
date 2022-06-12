@@ -551,7 +551,7 @@ bool CheckErrors(string caller, int error = NULL) {
 
 
 /**
- * Initialization preprocessing
+ * Initialization preprocessing.
  *
  * @return int - error status
  *
@@ -572,9 +572,7 @@ int onInitUser()
 
 /**
  * Called after the indicator was loaded by a chart template. Also at terminal start. Also in tester with both
- * VisualMode=On|Off if the indicator is loaded by the template "Tester.tpl". On VisualMode=Off for each indicator in the
- * tester template the functions init() and deinit() are called. On VisualMode=Off the function start() is not called.
- * There was no input dialog.
+ * VisualMode=On|Off if the indicator is loaded by template "Tester.tpl". There was no input dialog.
  *
  * @return int - error status
  *
@@ -634,8 +632,8 @@ int onInitSymbolChange()
 
 
 /**
- * Called after the indicator was recompiled. There was no input dialog.
- * In older terminals (which ones exactly?) indicators are not automatically reloded if the terminal is disconnected.
+ * Called after the indicator was recompiled. In older terminals (which ones exactly?) indicators are not automatically
+ * reloded if the terminal is disconnected. There was no input dialog.
  *
  * @return int - error status
  *
@@ -645,7 +643,7 @@ int onInitRecompile()
 
 
 /**
- * Initialization postprocessing
+ * Initialization postprocessing.
  *
  * @return int - error status
  *

@@ -4,7 +4,7 @@
  * @param  int buffer[] - das für den Buffer zu verwendende Integer-Array
  * @param  int bytes    - Anzahl der im Buffer zu speichernden Bytes
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int InitializeByteBuffer(int buffer[], int bytes) {
    int dimensions = ArrayDimension(buffer);

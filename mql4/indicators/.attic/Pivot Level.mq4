@@ -209,7 +209,7 @@ int iPivotLevel() {
  * @param  _In_  int      period    - Pivot-Periode: PERIOD_M1 | PERIOD_M5 | PERIOD_M15... (default: aktuelle Periode)
  * @param  _Out_ double   results[] - Ergebnis-Array
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
    if (ArraySize(results) != 7)

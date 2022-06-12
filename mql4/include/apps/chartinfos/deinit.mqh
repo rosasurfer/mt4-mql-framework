@@ -1,7 +1,7 @@
 /**
- * Deinitialisierung Preprocessing-Hook
+ * Deinitialization
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    // ggf. Offline-Ticker deinstallieren
@@ -10,8 +10,7 @@ int onDeinit() {
       if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 
-   // in allen deinit()-Szenarien Laufzeitstatus speichern
-   if (!StoreRuntimeStatus()) return(last_error);
+   if (!StoreStatus()) return(last_error);
 
    // unregister the order event listener
    if (orderTracker.enabled) {
@@ -30,7 +29,7 @@ int onDeinit() {
  * auﬂerhalb iCustom(): bei Parameter‰nderung
  * innerhalb iCustom(): nie
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitParameters() {
    // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
@@ -44,7 +43,7 @@ int onDeinitParameters() {
  * auﬂerhalb iCustom(): bei Symbol- oder Timeframewechsel
  * innerhalb iCustom(): nie
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitChartChange() {
    // LFX-Orders in Library zwischenspeichern, um in init() das Neuladen zu sparen
@@ -58,7 +57,7 @@ int onDeinitChartChange() {
  * auﬂerhalb iCustom(): Indikator von Hand entfernt oder Chart geschlossen, auch vorm Laden eines Profils oder Templates
  * innerhalb iCustom(): in allen deinit()-F‰llen
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitRemove() {
    // Profilwechsel oder Terminal-Shutdown
@@ -72,7 +71,7 @@ int onDeinitRemove() {
 
 /**
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitTemplate() {
    return(onDeinitRemove());
@@ -81,7 +80,7 @@ int onDeinitTemplate() {
 
 /**
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitChartClose() {
    return(onDeinitRemove());
@@ -90,7 +89,7 @@ int onDeinitChartClose() {
 
 /**
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitClose() {
    return(onDeinitRemove());
@@ -101,7 +100,7 @@ int onDeinitClose() {
  * auﬂerhalb iCustom(): bei Recompilation
  * innerhalb iCustom(): nie
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinitRecompile() {
    // gecachte LFX-Orderdaten speichern

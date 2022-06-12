@@ -13,7 +13,7 @@ int __DeinitFlags[];
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    return(last_error);
@@ -23,7 +23,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    return(last_error);
@@ -33,7 +33,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    return(last_error);

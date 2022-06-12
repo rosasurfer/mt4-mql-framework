@@ -44,7 +44,7 @@ string signal.sms.receiver = "";
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    if (!InitTradeAccount())
@@ -61,7 +61,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    ScriptRunner.StopParamReceiver();
@@ -73,7 +73,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    int    command;
@@ -217,7 +217,7 @@ bool GetTradeCommand(int &command, int &ticket1, int &ticket2, string &trigger) 
  * @param  _In_ int    ticket  - LFX-Ticket der Order
  * @param  _In_ string trigger - Trigger-Message der Order (default: keine)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OpenLfxOrder(int ticket, string trigger="") {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
@@ -252,7 +252,7 @@ bool OpenLfxOrder(int ticket, string trigger="") {
  * @param  _In_  LFX_ORDER lo[]         - LFX-Order
  * @param  _Out_ int       subPositions - Variable zur Aufnahme der Anzahl der geöffneten Subpositionen
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    subPositions = 0;
@@ -444,7 +444,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
  * @param  _In_ LFX_ORDER lo[]        - LFX-Order
  * @param  _In_ bool      isOpenError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
    isOpenError = isOpenError!=0;
@@ -490,7 +490,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
    return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":open="+ (!lo.IsOpenError(lo))));
@@ -505,7 +505,7 @@ bool OpenLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @param  _In_ string    trigger      - Trigger-Message des Öffnens (falls zutreffend)
  * @param  _In_ int       error        - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigger, int error) {
    if (signal.sms) {
@@ -533,7 +533,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
  * @param  _In_ int    ticket  - LFX-Ticket der Position
  * @param  _In_ string trigger - Trigger-Message des Schließens (default: keine)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CloseLfxOrder(int ticket, string trigger) {
    // Um die Implementierung übersichtlich zu halten, wird der Funktionsablauf in Teilschritte aufgeteilt und jeder Schritt
@@ -569,7 +569,7 @@ bool CloseLfxOrder(int ticket, string trigger) {
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    if (!lo.IsOpenPosition(lo)) return(!catch("CloseLfxOrder.Execute(1)  #"+ lo.Ticket(lo) +" cannot close "+ ifString(lo.IsPendingOrder(lo), "a pending", "an already closed") +" order", ERR_RUNTIME_ERROR));
@@ -642,7 +642,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
  * @param  _In_ LFX_ORDER lo[]         - LFX-Order
  * @param  _In_ bool      isCloseError - ob bei der Orderausführung ein Fehler auftrat (dieser Fehler ist u.U. nicht in der Order selbst gesetzt)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
    isCloseError = isCloseError!=0;
@@ -689,7 +689,7 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
  *
  * @param  _In_ LFX_ORDER lo[] - LFX-Order
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
    return(QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close="+ (!lo.IsCloseError(lo))));
@@ -704,7 +704,7 @@ bool CloseLfxOrder.NotifyListeners(/*LFX_ORDER*/int lo[]) {
  * @param  _In_ string    trigger - Trigger-Message des Schließen (falls zutreffend)
  * @param  _In_ int       error   - bei der Orderausführung aufgetretener Fehler (falls zutreffend)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger, int error) {
    if (signal.sms) {
