@@ -595,9 +595,9 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
  * Mark the specified inside bar.
  *
  * @param  int      timeframe - timeframe
- * @param  datetime openTime  - bar open time
- * @param  double   high      - bar high
- * @param  double   low       - bar low
+ * @param  datetime openTime  - inside bar open time
+ * @param  double   high      - inside bar high
+ * @param  double   low       - inside bar low
  *
  * @return bool - success status
  */
@@ -650,7 +650,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 
    // signal new inside bars
    if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
-      return(onInsideBar(timeframe));
+      return(onInsideBar(timeframe, closeTime, high, low));
    }
    return(true);
 }
@@ -659,15 +659,18 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
 /**
  * Signal event handler for new inside bars.
  *
- * @param  int timeframe
+ * @param  int      timeframe - inside bar timeframe
+ * @param  datetime closeTime - inside bar close time
+ * @param  double   high      - inside bar high
+ * @param  double   low       - inside bar low
  *
  * @return bool - success status
  */
-bool onInsideBar(int timeframe) {
+bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (!signalInsideBar) return(false);
    if (ChangedBars > 2)  return(false);
 
-   string message     = TimeframeDescription(timeframe) +" inside bar at "+ NumberToStr(Bid, PriceFormat);
+   string message     = TimeframeDescription(timeframe) +" inside bar: H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
    if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
