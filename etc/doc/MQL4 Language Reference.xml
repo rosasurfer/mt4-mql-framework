@@ -3685,32 +3685,18 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-         Copies elements from one array to another and returns the number of copied elements.<br/>
+         Copies elements from one array to another and returns the number of copied elements. Overwrites existing elements.<br/>
          <br/>
-         Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
-         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first
-         dimension of the target array (rows) is automatically increased.<br/>
+         Both arrays must be of the same type (<span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
+         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. The size of the target array's first dimension (rows) 
+         is automatically increased. If a reverse-indexed array (a timeseries) is copied the target array becomes reverse-indexed, too. The opposite is not true.<br/>
          <br/>
-
-         <b>Notes:</b>
-         <br/>
-         <li>The source array range to copy must be non-empty.</li>
-
-         <li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
-
-         <li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
-             of the indexing order of the arrays.</li>
-
-         <li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
-
       </content>
       <example>
 <span class="type code">int</span> source[] = {<span class="number code">1</span>, <span class="number code">2</span>, <span class="number code">3</span>, <span class="number code">4</span>, <span class="number code">5</span>};
 <span class="type code">int</span> target[] = {<span class="number code">11</span>, <span class="number code">22</span>, <span class="number code">33</span>, <span class="number code">44</span>, <span class="number code">55</span>, <span class="number code">66</span>};<br/>
 
-<span class="function code">ArraySetAsSeries</span>(source, <span class="const code">true</span>);         <span class="comment code">// make source reverse-indexed</span>
+<span class="function code">ArraySetAsSeries</span>(source, <span class="const code">true</span>);         <span class="comment code">// enable reverse-indexing</span>
 <span class="function code">ArrayCopy</span>(target, source, <span class="number code">0</span>, <span class="number code">1</span>, <span class="number code">3</span>);     <span class="comment code">// copy 3 elements</span>
 <span class="function code">Print</span>(<span class="function code">IntsToStr</span>(target, <span class="const code">NULL</span>));         <span class="comment code">// {4, 3, 2, 44, 55, 66}</span>
 
@@ -3723,7 +3709,7 @@ Search direction. It can be any of the following values:<br/>
       <parameter>
         type=object
         name=<nobr>source[]</nobr>
-        description=source array
+        description=source array, must not be empty (a <span class="const">NULL</span> pointer)
       </parameter>
       <parameter>
         type=int
@@ -3741,7 +3727,7 @@ Search direction. It can be any of the following values:<br/>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=number of elements to copy (default: all elements from source start index to the end of the array)
+        description=number of elements to copy (default: all elements from source start index to the end)
       </parameter>
     </function>
 
