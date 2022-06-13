@@ -5,7 +5,7 @@
  */
 int onInit() {
    // validate inputs
-   // UnitSize.Corner: "top-left | top-right | bottom-left | bottom-right*", also "tl | tr | bl | br"
+   // UnitSize.Corner: "top-left | top-right | bottom-left | bottom-right*" and  "tl | tr | bl | br"
    string sValues[], sValue = UnitSize.Corner;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);

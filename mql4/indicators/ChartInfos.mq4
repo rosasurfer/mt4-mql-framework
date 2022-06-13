@@ -3,18 +3,13 @@
  *
  *
  *  - The current price and spread.
- *  - In terminal builds <= 509 the current instrument name.
- *  - The calculated unitsize according to the configured risk profile, see CalculateUnitSize().
- *  - The open position and the used leverage.
+ *  - The current instrument name (only in terminals <= build 509).
+ *  - The calculated unitsize (if configured).
+ *  - The open position and used leverage.
  *  - The current account stopout level.
- *  - A warning in different colors when the account's open order limit is approached.
- *  - PL of open positions and/or trade history in two different modes, i.e.
- *     internal: positions and/or history from the current account,
- *               PL as provided by the current account,
- *               order execution notifications
- *     external: positions and/or history from an external account (e.g. synthetic instruments),
- *               PL as provided by the external source,
- *               limit monitoring and notifications
+ *  - PL of customizable open positions and/or trade history.
+ *  - A warning when the account's open order limit is approached.
+ *
  *
  * TODO:
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
@@ -28,13 +23,14 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Track.Orders   = "on | off | auto*";
-extern bool   Offline.Ticker = true;                        // whether to enable self-ticking of offline charts
+extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // also: "tl | tr | bl | br"
+extern string Track.Orders    = "on | off | auto*";
+extern bool   Offline.Ticker  = true;                                                  // whether to enable self-ticking offline charts
 extern string ___a__________________________;
 
-extern string Signal.Sound   = "on | off | auto*";
-extern string Signal.Mail    = "on | off | auto*";
-extern string Signal.SMS     = "on | off | auto*";
+extern string Signal.Sound    = "on | off | auto*";
+extern string Signal.Mail     = "on | off | auto*";
+extern string Signal.SMS      = "on | off | auto*";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -154,18 +150,24 @@ int     lfxOrders.pendingPositions;                               // Anzahl der 
 #define DC.stopLossAmount           5
 #define DC.stopLossPercent          6
 
-// Textlabel für die einzelnen Anzeigen
-string  label.instrument     = "${__NAME__}.Instrument";
-string  label.price          = "${__NAME__}.Price";
-string  label.spread         = "${__NAME__}.Spread";
-string  label.accountBalance = "${__NAME__}.AccountBalance";
-string  label.position       = "${__NAME__}.Position";
-string  label.unitSize       = "${__NAME__}.UnitSize";
-string  label.orderCounter   = "${__NAME__}.OrderCounter";
-string  label.tradeAccount   = "${__NAME__}.TradeAccount";
-string  label.stopoutLevel   = "${__NAME__}.StopoutLevel";
+// text labels for the different chart infos
+string  label.instrument     = "";
+string  label.price          = "";
+string  label.spread         = "";
+string  label.customPosition = "";                                // base value create actual row + column labels
+string  label.totalPosition  = "";
+string  label.unitSize       = "";
+string  label.accountBalance = "";
+string  label.orderCounter   = "";
+string  label.tradeAccount   = "";
+string  label.stopoutLevel   = "";
 
-// Font-Settings der CustomPositions-Anzeige
+// chart position of total position and unitsize
+int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
+int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
+string  cornerDescriptions[] = {"top-left", "top-right", "bottom-left", "bottom-right"};
+
+// font settings for custom positions
 string  positions.fontName          = "MS Sans Serif";
 int     positions.fontSize          = 8;
 color   positions.fontColor.intern  = Blue;
@@ -174,7 +176,7 @@ color   positions.fontColor.remote  = Blue;
 color   positions.fontColor.virtual = Green;
 color   positions.fontColor.history = C'128,128,0';
 
-// sonstiges
+// other
 int     tickTimerId;                                              // ID eines ggf. installierten Offline-Tickers
 
 // order tracking
@@ -1032,43 +1034,45 @@ bool SetAccountBalanceDisplayStatus(bool status) {
 
 
 /**
- * Erzeugt die einzelnen ChartInfo-Label.
+ * Create text labels for the different chart infos.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool CreateLabels() {
-   // Label definieren
+   // define labels
    string programName = ProgramName(MODE_NICE);
-   label.instrument     = StrReplace(label.instrument,     "${__NAME__}", programName);
-   label.price          = StrReplace(label.price,          "${__NAME__}", programName);
-   label.spread         = StrReplace(label.spread,         "${__NAME__}", programName);
-   label.accountBalance = StrReplace(label.accountBalance, "${__NAME__}", programName);
-   label.position       = StrReplace(label.position,       "${__NAME__}", programName);
-   label.unitSize       = StrReplace(label.unitSize,       "${__NAME__}", programName);
-   label.orderCounter   = StrReplace(label.orderCounter,   "${__NAME__}", programName);
-   label.tradeAccount   = StrReplace(label.tradeAccount,   "${__NAME__}", programName);
-   label.stopoutLevel   = StrReplace(label.stopoutLevel,   "${__NAME__}", programName);
+   label.instrument     = programName +".Instrument";
+   label.price          = programName +".Price";
+   label.spread         = programName +".Spread";
+   label.customPosition = programName +".CustomPosition";                                 // base value for actual row/column labels
+   label.totalPosition  = programName +".TotalPosition";
+   label.unitSize       = programName +".UnitSize";
+   label.accountBalance = programName +".AccountBalance";
+   label.orderCounter   = programName +".OrderCounter";
+   label.tradeAccount   = programName +".TradeAccount";
+   label.stopoutLevel   = programName +".StopoutLevel";
 
-   // Instrument-Label: Anzeige wird sofort (und nur hier) gesetzt
-   int build = GetTerminalBuild();
-   if (build <= 509) {                                                                    // Builds größer 509 haben oben links eine {Symbol,Period}-Anzeige, die das
-      if (ObjectFind(label.instrument) == 0)                                              // Label überlagert und sich nicht ohne weiteres ausblenden läßt.
+   int corner, xDist, yDist, build=GetTerminalBuild();
+
+   // instrument name (the text is set immediately here)
+   if (build <= 509) {                                                                    // only builds <= 509, newer builds already display the symbol here
+      if (ObjectFind(label.instrument) != -1)
          ObjectDelete(label.instrument);
       if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // Builds größer 478 haben oben links einen Pfeil fürs One-Click-Trading,
-         ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // das Instrument-Label wird dort entsprechend versetzt positioniert.
+         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // On builds > 478 the label is inset to account for the arrow of the
+         ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // "One-Click-Trading" feature.
          RegisterObject(label.instrument);
       }
       else GetLastError();
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
-      if      (StrEndsWithI(Symbol(), "_ask")) name = StringConcatenate(name, " (Ask)");
-      else if (StrEndsWithI(Symbol(), "_avg")) name = StringConcatenate(name, " (Avg)");
+      if      (StrEndsWithI(Symbol(), "_ask")) name = name +" (Ask)";
+      else if (StrEndsWithI(Symbol(), "_avg")) name = name +" (Avg)";
       ObjectSetText(label.instrument, name, 9, "Tahoma Fett", Black);
    }
 
-   // Price-Label
-   if (ObjectFind(label.price) == 0)
+   // price
+   if (ObjectFind(label.price) != -1)
       ObjectDelete(label.price);
    if (ObjectCreate(label.price, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
@@ -1079,32 +1083,58 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-   // Spread-Label
-   if (ObjectFind(label.spread) == 0)
+   // spread
+   corner = CORNER_TOP_RIGHT;
+   xDist  = 33;
+   yDist  = 38;
+   if (ObjectFind(label.spread) != -1)
       ObjectDelete(label.spread);
    if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.spread, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label.spread, OBJPROP_XDISTANCE, 33);
-      ObjectSet    (label.spread, OBJPROP_YDISTANCE, 38);
+      ObjectSet    (label.spread, OBJPROP_CORNER,   corner);
+      ObjectSet    (label.spread, OBJPROP_XDISTANCE, xDist);
+      ObjectSet    (label.spread, OBJPROP_YDISTANCE, yDist);
       ObjectSetText(label.spread, " ", 1);
       RegisterObject(label.spread);
    }
    else GetLastError();
 
-   // OrderCounter-Label
-   if (ObjectFind(label.orderCounter) == 0)
-      ObjectDelete(label.orderCounter);
-   if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
-      ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.orderCounter, " ", 1);
-      RegisterObject(label.orderCounter);
+   // unit size
+   corner = unitSize.corner;
+   xDist  = 9;
+   switch (corner) {
+      case CORNER_TOP_LEFT:                 break;
+      case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
+      case CORNER_BOTTOM_LEFT:              break;
+      case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
+   }
+   if (ObjectFind(label.unitSize) != -1)
+      ObjectDelete(label.unitSize);
+   if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
+      ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
+      ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, yDist);
+      ObjectSetText(label.unitSize, " ", 1);
+      RegisterObject(label.unitSize);
    }
    else GetLastError();
 
-   // AccountBalance-Label
-   if (ObjectFind(label.accountBalance) == 0)
+   // total position
+   corner = totalPosition.corner;
+   xDist  = 9;
+   yDist  = ObjectGet(label.unitSize, OBJPROP_YDISTANCE) + 20;    // 1 line above unitsize
+   if (ObjectFind(label.totalPosition) != -1)
+      ObjectDelete(label.totalPosition);
+   if (ObjectCreate(label.totalPosition, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
+      ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
+      ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, yDist);
+      ObjectSetText(label.totalPosition, " ", 1);
+      RegisterObject(label.totalPosition);
+   }
+   else GetLastError();
+
+   // account balance
+   if (ObjectFind(label.accountBalance) != -1)
       ObjectDelete(label.accountBalance);
    if (ObjectCreate(label.accountBalance, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
@@ -1115,35 +1145,20 @@ bool CreateLabels() {
    }
    else GetLastError();
 
-
-   // Gesamt-Positions-Label
-   if (ObjectFind(label.position) == 0)
-      ObjectDelete(label.position);
-   if (ObjectCreate(label.position, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.position, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.position, OBJPROP_XDISTANCE,  9);
-      ObjectSet    (label.position, OBJPROP_YDISTANCE, 29);
-      ObjectSetText(label.position, " ", 1);
-      RegisterObject(label.position);
+   // order counter
+   if (ObjectFind(label.orderCounter) != -1)
+      ObjectDelete(label.orderCounter);
+   if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
+      ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
+      ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
+      ObjectSetText(label.orderCounter, " ", 1);
+      RegisterObject(label.orderCounter);
    }
    else GetLastError();
 
-
-   // UnitSize-Label
-   if (ObjectFind(label.unitSize) == 0)
-      ObjectDelete(label.unitSize);
-   if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.unitSize, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, 9);
-      ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, 9);
-      ObjectSetText(label.unitSize, " ", 1);
-      RegisterObject(label.unitSize);
-   }
-   else GetLastError();
-
-
-   // TradeAccount-Label
-   if (ObjectFind(label.tradeAccount) == 0)
+   // trade account
+   if (ObjectFind(label.tradeAccount) != -1)
       ObjectDelete(label.tradeAccount);
    if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
       ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
@@ -1161,7 +1176,7 @@ bool CreateLabels() {
 /**
  * Aktualisiert die Kursanzeige oben rechts.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdatePrice() {
    double price = Bid;
@@ -1249,17 +1264,17 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update the position display bottom-right (total position) and bottom-left (custom positions).
+ * Update the position displays bottom-right (total position) and bottom-left (custom positions).
  *
  * @return bool - success status
  */
 bool UpdatePositions() {
    if (!positions.analyzed) {
-      if (!AnalyzePositions())   return(false);                // on error
+      if (!AnalyzePositions())  return(false);
    }
    if (mode.intern && !mm.done) {
-      if (!CalculateUnitSize())  return(false);                // on error
-      if (!mm.done)              return(true);                 // on terminal not yet ready
+      if (!CalculateUnitSize()) return(false);
+      if (!mm.done)             return(true);      // on terminal not yet ready
    }
 
    // total position bottom-right
@@ -1282,7 +1297,7 @@ bool UpdatePositions() {
 
       sCurrentPosition = StringConcatenate("Position:    ", sRisk, sUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
-   ObjectSetText(label.position, sCurrentPosition, 9, "Tahoma", SlateGray);
+   ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
    if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
@@ -1297,41 +1312,27 @@ bool UpdatePositions() {
          ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
          ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
          ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-         ObjectSetText(label, "n", 6, "Webdings", Orange);     // Webdings: runder Marker, orange="Notice"
+         ObjectSetText(label, "n", 6, "Webdings", Orange);     // Webdings "dot"
          RegisterObject(label);
       }
    }
 
-   // Einzelpositionsanzeige unten links
-   static int  col.xShifts[], cols, percentCol, commentCol, yDist=3, lines;
+   // custom positions bottom-left
+   static int  lines, cols, percentCol, commentCol, xPrev, xOffset[], xDist, yStart=6, yDist;
    static bool lastAbsoluteProfits;
-   if (!ArraySize(col.xShifts) || positions.absoluteProfits!=lastAbsoluteProfits) {
+   if (!ArraySize(xOffset) || positions.absoluteProfits!=lastAbsoluteProfits) {
+      ArrayResize(xOffset, 0);
       if (positions.absoluteProfits) {
-         // Spalten:         Type: Lots   BE:  BePrice   Profit: Amount Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 177,      243,    282,   369,      430};
-         ArrayResize(col.xShifts, 8);
-         col.xShifts[0] =  20;
-         col.xShifts[1] =  66;
-         col.xShifts[2] = 149;
-         col.xShifts[3] = 177;
-         col.xShifts[4] = 243;
-         col.xShifts[5] = 282;
-         col.xShifts[6] = 369;
-         col.xShifts[7] = 430;
+         // 8 columns: Type:  Lots  BE:  BePrice  Profit:  Amount  Percent  Comment
+         int cols8[] = {9,    46,   83,  28,      66,      39,     87,      61};    // offsets to the previous column
+         ArrayCopy(xOffset, cols8);
       }
       else {
-         // Spalten:         Type: Lots   BE:  BePrice   Profit: Percent   Comment
-         // col.xShifts[] = {20,   66,    149, 177,      243,    282,      343};
-         ArrayResize(col.xShifts, 7);
-         col.xShifts[0] =  20;
-         col.xShifts[1] =  66;
-         col.xShifts[2] = 149;
-         col.xShifts[3] = 177;
-         col.xShifts[4] = 243;
-         col.xShifts[5] = 282;
-         col.xShifts[6] = 343;
+         // 7 columns: Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
+         int cols7[] = {9,    46,   83,  28,      66,      39,      61};
+         ArrayCopy(xOffset, cols7);
       }
-      cols                = ArraySize(col.xShifts);
+      cols                = ArraySize(xOffset);
       percentCol          = cols - 2;
       commentCol          = cols - 1;
       lastAbsoluteProfits = positions.absoluteProfits;
@@ -1339,9 +1340,8 @@ bool UpdatePositions() {
       // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
          for (int col=0; col < 8; col++) {                     // alle Spalten testen: mit und ohne absoluten Beträgen
-            label = StringConcatenate(label.position, ".line", lines, "_col", col);
-            if (ObjectFind(label) != -1)
-               ObjectDelete(label);
+            label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
+            if (ObjectFind(label) != -1) ObjectDelete(label);
          }
          lines--;
       }
@@ -1350,28 +1350,32 @@ bool UpdatePositions() {
    if (mode.extern) positions = lfxOrders.openPositions;
    else             positions = iePositions;
 
-   // zusätzlich benötigte Zeilen hinzufügen
+   // create new rows/columns as needed
    while (lines < positions) {
       lines++;
+      xPrev = 0;
+      yDist = yStart + (lines-1)*(positions.fontSize+8);
+
       for (col=0; col < cols; col++) {
-         label = StringConcatenate(label.position, ".line", lines, "_col", col);
+         label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
+         xDist = xPrev + xOffset[col];
          if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
             ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-            ObjectSet    (label, OBJPROP_XDISTANCE, col.xShifts[col]              );
-            ObjectSet    (label, OBJPROP_YDISTANCE, yDist + (lines-1)*(positions.fontSize+8));
+            ObjectSet    (label, OBJPROP_XDISTANCE, xDist);
+            ObjectSet    (label, OBJPROP_YDISTANCE, yDist);
             ObjectSetText(label, " ", 1);
             RegisterObject(label);
          }
          else GetLastError();
+         xPrev = xDist;
       }
    }
 
-   // nicht benötigte Zeilen löschen
+   // remove existing surplus rows/columns
    while (lines > positions) {
       for (col=0; col < cols; col++) {
-         label = StringConcatenate(label.position, ".line", lines, "_col", col);
-         if (ObjectFind(label) != -1)
-            ObjectDelete(label);
+         label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
+         if (ObjectFind(label) != -1) ObjectDelete(label);
       }
       lines--;
    }
@@ -1399,15 +1403,15 @@ bool UpdatePositions() {
          // Nur History
          if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
             // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
 
          // Directional oder Hedged
@@ -1415,32 +1419,32 @@ bool UpdatePositions() {
             // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
             // Hedged
             if (positions.iData[i][I_POSITION_TYPE] == POSITION_HEDGE) {
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
                   else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true, true);
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
             }
 
             // Not Hedged
             else {
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+");
                   else                                    sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.dData[i][I_HEDGED_LOTS], ".+");
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"), sLotSize +" lot",                                                                positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"), "BE:",                                                                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                                                positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                                           positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
                   else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
-               ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
             }
 
             // Hedged und Not-Hedged
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
       }
    }
@@ -1452,19 +1456,19 @@ bool UpdatePositions() {
          if (lfxOrders.bCache[i][BC.isOpenPosition]) {
             line++;
             // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),                          positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),                          positions.fontSize, positions.fontName, fontColor);
                double profitPct = lfxOrders.dCache[i][DC.profit] / los.OpenEquity(lfxOrders, i) * 100;
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
                sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
                if (StringGetChar(sComment, 0) == '#')
                   sComment = StringConcatenate(lfxCurrency, ".", StrSubstr(sComment, 1));
-            ObjectSetText(StringConcatenate(label.position, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
       }
    }
@@ -1476,7 +1480,7 @@ bool UpdatePositions() {
 /**
  * Aktualisiert die Anzeige der aktuellen Anzahl und des Limits der offenen Orders.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateOrderCounter() {
    static int   showLimit   =INT_MAX,   warnLimit=INT_MAX,    alertLimit=INT_MAX, maxOpenOrders;
@@ -1514,7 +1518,7 @@ bool UpdateOrderCounter() {
 /**
  * Aktualisiert die Anzeige eines externen oder Remote-Accounts.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateAccountDisplay() {
    string text = "";
@@ -1538,7 +1542,7 @@ bool UpdateAccountDisplay() {
 /**
  * Aktualisiert die Anzeige des aktuellen Stopout-Levels.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool UpdateStopoutLevel() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions())
@@ -1946,7 +1950,7 @@ int SearchLfxTicket(int ticket) {
 /**
  * Liest die individuelle Positionskonfiguration ein und speichert sie in einem binären Format.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  *
  * Füllt das Array positions.config[][] mit den Konfigurationsdaten des aktuellen Instruments in der Accountkonfiguration. Das Array enthält
@@ -2252,7 +2256,7 @@ bool CustomPositions.ReadConfig() {
  * @param  _Out_   datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
  * @param  _Out_   datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  *
  * Format:
@@ -2436,7 +2440,7 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
  * @param  _Out_   datetime from              - Beginnzeitpunkt der zu berücksichtigenden History
  * @param  _Out_   datetime to                - Endzeitpunkt der zu berücksichtigenden History
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  *
  * Format:
@@ -3281,7 +3285,7 @@ bool ExtractPosition(int type, double value1, double value2, double &cache1, dou
  * @param  _In_ double customEquity
  * @param  _In_ int    commentIndex
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, int commentIndex) {
    isVirtual = isVirtual!=0;
@@ -3555,7 +3559,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
  *
  * @param  _InOut_ int tickets[]
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SortClosedTickets(int &tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
    if (ArrayRange(tickets, 1) != 3) return(!catch("SortClosedTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAY));
@@ -3643,7 +3647,7 @@ bool SortClosedTickets(int &tickets[][/*{CloseTime, OpenTime, Ticket}*/]) {
  * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
  * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -3677,7 +3681,7 @@ bool __SCT.SameCloseTimes(int &ticketData[][/*{CloseTime, OpenTime, Ticket}*/], 
  * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
  * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -3703,7 +3707,7 @@ bool __SCT.SameOpenTimes(int &ticketData[][/*{OpenTime, CloseTime, Ticket}*/], i
 /**
  * Handler für beim LFX-Terminal eingehende Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.HandleLfxTerminalMessages() {
    if (!__isChart) return(true);
@@ -3754,7 +3758,7 @@ bool QC.HandleLfxTerminalMessages() {
  *
  * @param  string message - QuickChannel-Message, siehe Formatbeschreibung
  *
- * @return bool - Erfolgsstatus: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende
+ * @return bool - success status: Ob die Message erfolgreich verarbeitet wurde. Ein falsches Messageformat oder keine zur Message passende
  *                               Order sind kein Fehler, das Auslösen eines Fehlers durch Schicken einer falschen Message ist so nicht
  *                               möglich. Für nicht unterstützte Messages wird stattdessen eine Warnung ausgegeben.
  *
@@ -3829,7 +3833,7 @@ bool ProcessLfxTerminalMessage(string message) {
  *                          FALSE: Liest die LFX-Orderdaten im aktuellen Kontext neu ein. Für offene Positionen wird im Dateisystem kein PL
  *                                 gespeichert (ändert sich ständig). Stattdessen wird dieser PL in globalen Terminal-Variablen zwischen-
  *                                 gespeichert (schneller) und von dort restauriert.
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool RestoreLfxOrders(bool fromCache) {
    fromCache = fromCache!=0;
@@ -3919,7 +3923,7 @@ bool RestoreLfxOrders(bool fromCache) {
  * Speichert die aktuellen LFX-Order-PLs in globalen Terminal-Variablen. So steht der letzte bekannte PL auch dann zur Verfügung,
  * wenn das Trade-Terminal nicht läuft.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SaveLfxOrderCache() {
    string varName = "";
@@ -3942,7 +3946,7 @@ bool SaveLfxOrderCache() {
 /**
  * Handler für beim Terminal eingehende Trade-Commands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.HandleTradeCommands() {
    if (!__isChart) return(true);
@@ -4000,7 +4004,7 @@ bool QC.HandleTradeCommands() {
  * Schickt den Profit der LFX-Positionen ans LFX-Terminal. Prüft absolute und prozentuale Limite, wenn sich der Wert seit dem letzten
  * Aufruf geändert hat, und triggert entsprechende Trade-Command.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool AnalyzePos.ProcessLfxProfits() {
    string messages[]; ArrayResize(messages, 0); ArrayResize(messages, ArraySize(hQC.TradeToLfxSenders));    // 2 x ArrayResize() = ArrayInitialize()
@@ -4052,53 +4056,59 @@ bool AnalyzePos.ProcessLfxProfits() {
 
 
 /**
- * Speichert die Laufzeitkonfiguration im Fenster (für Init-Cycle und neue Templates) und im Chart (für Terminal-Restart).
+ * Store runtime status in chart (for terminal restart) and chart window (for loading of templates).
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool StoreRuntimeStatus() {
+bool StoreStatus() {
+   // stored vars:
    // bool positions.absoluteProfits
+   string key = ProgramName(MODE_NICE) +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int value = ifInt(positions.absoluteProfits, 1, -1);
 
-   // Konfiguration im Fenster speichern
-   int   hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName(MODE_NICE) +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int  value = ifInt(positions.absoluteProfits, 1, -1);
-   SetWindowIntegerA(hWnd, key, value);
+   // chart window
+   if (__isChart) {
+      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
+   }
 
-   // Konfiguration im Chart speichern
+   // chart
    if (ObjectFind(key) == 0)
       ObjectDelete(key);
    ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);
 
-   return(!catch("StoreRuntimeStatus(1)"));
+   return(!catch("StoreStatus(1)"));
 }
 
 
 /**
- * Restauriert eine im Fenster oder im Chart gespeicherte Laufzeitkonfiguration.
+ * Restore a runtime status stored in the chart or the chart window.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
-bool RestoreRuntimeStatus() {
+bool RestoreStatus() {
+   // restored vars:
    // bool positions.absoluteProfits
+   string key = ProgramName(MODE_NICE) +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   bool result = false;
 
-   // Konfiguration im Fenster suchen
-   int   hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName(MODE_NICE) +".runtime.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int value  = GetWindowIntegerA(hWnd, key);
-   bool success = (value != 0);
-   // bei Mißerfolg Konfiguration im Chart suchen
-   if (!success) {
+   // prefer chart window
+   if (__isChart) {
+      int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+      result = (value != 0);
+   }
+
+   // then check chart
+   if (!result) {
       if (ObjectFind(key) == 0) {
-         value   = StrToInteger(ObjectDescription(key));
-         success = (value != 0);
+         value = StrToInteger(ObjectDescription(key));
+         result = (value != 0);
       }
    }
-   if (success) positions.absoluteProfits = (value > 0);
+   if (result) positions.absoluteProfits = (value > 0);
 
-   return(!catch("RestoreRuntimeStatus(1)"));
+   return(!catch("RestoreStatus(1)"));
 }
 
 
@@ -4473,12 +4483,12 @@ double iADR() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("displayedPrice=", PriceTypeToStr(displayedPrice), ";", NL,
-                            "Track.Orders=",   DoubleQuoteStr(Track.Orders),   ";", NL,
-                            "Offline.Ticker=", BoolToStr(Offline.Ticker),      ";", NL,
-                            "Signal.Sound=",   DoubleQuoteStr(Signal.Sound),   ";", NL,
-                            "Signal.Mail=",    DoubleQuoteStr(Signal.Mail),    ";", NL,
-                            "Signal.SMS=",     DoubleQuoteStr(Signal.SMS),     ";")
+   return(StringConcatenate("UnitSize.Corner=", DoubleQuoteStr(UnitSize.Corner), ";", NL,
+                            "Track.Orders=",    DoubleQuoteStr(Track.Orders),    ";", NL,
+                            "Offline.Ticker=",  BoolToStr(Offline.Ticker),       ";", NL,
+                            "Signal.Sound=",    DoubleQuoteStr(Signal.Sound),    ";", NL,
+                            "Signal.Mail=",     DoubleQuoteStr(Signal.Mail),     ";", NL,
+                            "Signal.SMS=",      DoubleQuoteStr(Signal.SMS),      ";")
    );
 }
 
@@ -4491,7 +4501,7 @@ string InputsToStr() {
    int      ArrayPushDouble       (double &array[], double value);
    int      ArrayPushDoubles      (double &array[], double values[]);
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
-   int      ChartInfos.CopyLfxOrders(bool direction, /*LFX_ORDER*/int orders[][], int iData[][], bool bData[][], double dData[][]);
+   int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
    int      DeleteRegisteredObjects();
    datetime FxtToServerTime(datetime fxtTime);

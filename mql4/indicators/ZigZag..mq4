@@ -774,7 +774,8 @@ bool onReversal(int direction, int bar) {
 
    // check wether the event was already signaled
    int hWnd = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetDesktopWindow());
-   string sEvent = "rsf::"+ StdSymbol() +","+ PeriodDescription() +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
+   string sPeriod = PeriodDescription();
+   string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
    bool isSignaled = false;
    if (hWnd > 0) isSignaled = (GetPropA(hWnd, sEvent) != 0);
 
@@ -783,7 +784,7 @@ bool onReversal(int direction, int bar) {
    if (!isSignaled) {
       string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
-      if (IsLogInfo()) logInfo("onReversal(Periods="+ zigzagPeriods +")  "+ message);
+      if (IsLogInfo()) logInfo("onReversal("+ zigzagPeriods +"x"+ sPeriod +")  "+ message);
 
       message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
       if (signalReversal.popup)           Alert(message);                     // before "sound" to get drowned out by the next sound
