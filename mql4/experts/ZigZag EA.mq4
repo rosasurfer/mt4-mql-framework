@@ -49,7 +49,7 @@
  *
  *  - fix Superbars in range bar chart
  *
- *  - Price Alert
+ *  - ZigZag: integrate price alerts
  *     audible notifications for new Highs (e.g. AlertDefault, Bulk)
  *     audible notifications for new Lows (e.g. MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
  *
