@@ -1,5 +1,5 @@
 /**
- * Displays additional market and account infos on the chart.
+ * Displays order/market data and account infos on the chart.
  *
  *
  *  - The current price and spread.
