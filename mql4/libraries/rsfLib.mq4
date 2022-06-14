@@ -320,56 +320,52 @@ bool AquireLock(string mutexName, bool wait) {
 
    if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
 
-   // (1) check if we already own that lock
+   // check if we already own the lock
    int i = SearchStringArray(lock.names, mutexName);
-   if (i > -1) {
-      // yes
+   if (i > -1) {                                               // yes
       lock.counters[i]++;
       return(true);
    }
 
-   int    error, duration, seconds=1, startTime=GetTickCount();
-   string globalVarName = mutexName;
+   int error, duration, seconds=1, startTime=GetTickCount();
+   string globalVar = ifString(This.IsTesting(), "tester.", "") + mutexName;
 
-   if (This.IsTesting())
-      globalVarName = "tester."+ mutexName;
-
-   // (2) no, run until lock is aquired
+   // loop until lock is aquired
    while (true) {
-      if (GlobalVariableSetOnCondition(globalVarName, 1, 0)) {       // try to get it
-         ArrayPushString(lock.names, mutexName);                     // got it
+      if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
+         ArrayPushString(lock.names, mutexName);               // got it
          ArrayPushInt   (lock.counters,      1);
          return(true);
       }
       error = GetLastError();
 
-      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {                  // create mutex if it doesn't yet exist
-         if (!GlobalVariableSet(globalVarName, 0)) {
+      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {            // create mutex if it doesn't yet exist
+         if (!GlobalVariableSet(globalVar, 0)) {
             error = GetLastError();
             return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutexName), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
-         continue;                                                   // retry
+         continue;                                             // retry
       }
-      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
+      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
+      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
       if (!wait)
          return(false);
 
-      // (2.1) warn every single second, cancel after 10 seconds
+      // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
-         logNotice("AquireLock(6)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
+            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
+         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
          seconds++;
       }
 
-      // Sleep and retry...
-      if (IsIndicator() || IsTesting()) SleepEx(100, true);          // Indicator oder Expert im Tester
-      else                              Sleep  (100);
+      // sleep and retry...
+      if (IsIndicator() || IsTesting()) SleepEx(100, true);    // indicator or expert in tester
+      else                              Sleep(100);
    }
 
-   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));                  // unreachable
+   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));            // unreachable
 }
 
 
