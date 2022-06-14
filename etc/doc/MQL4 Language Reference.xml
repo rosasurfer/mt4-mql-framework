@@ -2339,7 +2339,7 @@ void SendMyMessage(string text) {
 <tr><td class="const">ERR_INVALID_FUNCTION_PARAMVALUE</td><td>4051</td><td>Invalid function parameter value.</td></tr>
 <tr><td class="const">ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error.</td></tr>
 <tr><td class="const">ERR_ARRAY_ERROR</td><td>4053</td><td>Some array error.</td></tr>
-<tr><td class="const">ERR_SERIES_NOT_AVAILABLE</td><td>4054</td><td>Time series not available.</td></tr>
+<tr><td class="const">ERR_SERIES_NOT_AVAILABLE</td><td>4054</td><td>Timeseries not available.</td></tr>
 <tr><td class="const">ERR_CUSTOM_INDICATOR_ERROR</td><td>4055</td><td>Custom indicator error.</td></tr>
 <tr><td class="const">ERR_INCOMPATIBLE_ARRAYS</td><td>4056</td><td>Arrays are incompatible.</td></tr>
 <tr><td class="const">ERR_GLOBAL_VARIABLES_PROCESSING</td><td>4057</td><td>Global variables processing error.</td></tr>
@@ -3638,7 +3638,7 @@ else
         Note: Binary search processes only sorted arrays. To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
       </content>
       <example>
-// datetime series are reverse-indexed and in descending order
+// rates timeseries are reverse-indexed
 datetime times[];
 ArrayCopySeries(times, MODE_TIME, Symbol(), PERIOD_D1);<br/>
 
@@ -3808,7 +3808,7 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
       <content>
         Assigns a pointer to a series array to a regular array variable and returns the number of elements contained in the array or -1 in case of an error.<br/>
         No additional memory is allocated and no data is copied except the target arrays is an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a> in which case
-        the data is indeed copied. If data from a different time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data
+        the data is indeed copied. If data from a different timeseries is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data
         does not (yet) exist the <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br/>
         <br/>
@@ -3844,13 +3844,13 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=Symbol of the time series to access.
+        description=Symbol of the timeseries to access.
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=Timeframe of the time series to access. Can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
+        description=Timeframe of the timeseries to access. Can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
       </parameter>
     </function>
 
@@ -9164,7 +9164,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
 
   <group>
     tag=series
-    caption=Time series access
+    caption=Timeseries
     <content>
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
@@ -9173,7 +9173,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
     <br/>
     In the Tester price data of the same symbol but of another timeframe is modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
-    Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
+    Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in timeseries is modelled exactly.
     </content>
 
     <function>
@@ -9181,7 +9181,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iBars()
       type=int
       <content>
-      Returns the number of bars of the specified time series.<br/>
+      Returns the number of bars of the specified timeseries.<br/>
       For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
       <br/>
       Notes:<br/>
@@ -9198,7 +9198,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the time series (<span class="const">NULL</span> means the current symbol).
+        description=Symbol of the timeseries (<span class="const">NULL</span> means the current symbol).
       </parameter>
       <parameter>
         type=int
@@ -9236,7 +9236,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=Symbol of the time series (<span class="const">NULL</span> means the current symbol).
+        description=Symbol of the timeseries (<span class="const">NULL</span> means the current symbol).
       </parameter>
       <parameter>
         type=int
