@@ -49,8 +49,8 @@ extern color  Donchian.Lower.Color           = Magenta;
 extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
 
 extern string ___c__________________________ = "=== Other ===";
-extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified stepsize
 extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
+extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified stepsize
 
 extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onReversal              = false;
@@ -875,8 +875,8 @@ string InputsToStr() {
                             "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color),       ";"+ NL,
                             "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings,           ";"+ NL,
 
-                            "PeriodStepper.StepSize=",       PeriodStepper.StepSize,                 ";"+ NL,
                             "Max.Bars=",                     Max.Bars,                               ";"+ NL,
+                            "PeriodStepper.StepSize=",       PeriodStepper.StepSize,                 ";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal),           ";"+ NL,
                             "Signal.onReversal.Sound=",      BoolToStr(Signal.onReversal.Sound),     ";"+ NL,

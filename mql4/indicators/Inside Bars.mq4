@@ -670,7 +670,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (!signalInsideBar) return(false);
    if (ChangedBars > 2)  return(false);
 
-   string message     = TimeframeDescription(timeframe) +" inside bar: H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
+   string message = TimeframeDescription(timeframe) +" inside bar at "+ TimeToStr(closeTime, TIME_DATE|TIME_MINUTES) +": H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
    if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
