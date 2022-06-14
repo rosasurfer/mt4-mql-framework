@@ -6370,54 +6370,51 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=GlobalVariableSetOnCondition()
       type=bool
       <content>
-Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
-is no global variable, the function will generate <a href="help://constants_errors">error</a> <span class="const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)
-and return <span class="const">FALSE</span>. When successfully executed, the function returns <span class="const">TRUE</span>, otherwise, it returns <span class="const">FALSE</span>. To get detailed error information,
-call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="const">FALSE</span>.<br/>
-The function provides atomic access to the global variable, this is why it can be used for providing of a semaphore at interaction of
-several experts working simultaneously within one client terminal.
+        Sets the value of a global variable if the variable exists and holds the specified conditional value. If the variable exists and holds a different 
+        value the function returns <span class="const">FALSE</span>. If the variable does not exist <a href="help://constants_errors">error</a> 
+        <span class="const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> is set. Returns the success status.<br/>
+        <br/>
+        The function ensures atomic read/write access to the variable.
      </content>
       <example>
-  int init()
-    {
-     //---- create global variable
-     GlobalVariableSet(&quot;DATAFILE_SEM&quot;,0);
-     //...
-    }
+<span class="code type">int</span> <span class="core code">init</span>() {
+   <span class="code comment">// create global variable</span>
+   <span class="code function">GlobalVariableSet</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">0</span>);
+}<br/>
 
-  int start()
-    {
-     //---- try to lock common resource
-     while(!IsStopped())
-       {
-        //---- locking
-        if(GlobalVariableSetOnCondition(&quot;DATAFILE_SEM&quot;,1,0)==true)  break;
-        //---- may the variable be deleted?
-        if(GetLastError()==ERR_GLOBAL_VARIABLE_NOT_FOUND) return(0);
-        //---- sleeping
-        Sleep(500);
-       }
-     //---- resource locked
-     // ... do some work
-     //---- unlock resource
-     GlobalVariableSet(&quot;DATAFILE_SEM&quot;,0);
-    }
+<span class="code type">int</span> <span class="code core">start</span>() {
+   <span class="code keyword">while</span> (!<span class="code function">IsStopped</span>()) {
+      <span class="code comment">// try to lock</span>
+      <span class="code keyword">if</span> (<span class="code function">GlobalVariableSetOnCondition</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">1</span>, <span class="code number">0</span>)) <span class="code keyword">break</span>;
+      
+      <span class="code comment">// does the variable exist?</span>
+      <span class="code keyword">if</span> (<span class="code function">GetLastError</span>() == <span class="code const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span>) <span class="code keyword">return</span>(<span class="code number">0</span>);
+      
+      <span class="code comment">// sleep a moment</span>
+      <span class="code function">Sleep</span>(<span class="code number">500</span>);
+   }
+   <span class="code comment">// resource is locked now</span>
+   
+   <span class="code comment">// ...do some work</span>
+   
+   <span class="code comment">// unlock the resource</span>
+   <span class="code function">GlobalVariableSet</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">0</span>);
+}
       </example>
       <parameter>
         type=string
         name=name
-        description=Global variable name.
+        description=name of the global variable
       </parameter>
       <parameter>
         type=double
-        name=value
-        description=New value.
+        name=newValue
+        description=new value
       </parameter>
       <parameter>
         type=double
-        name=check_value
-        description=Value to be compared to the current global variable value.
+        name=ifValue
+        description=existing value to satisfy the condition
       </parameter>
     </function>
 
