@@ -63,9 +63,8 @@ string signalInsideBar.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
-
    // validate inputs
+   string indicator = ProgramName(MODE_NICE);
    // Timeframes
    string sValues[], sValue = Timeframes;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframes", sValue);

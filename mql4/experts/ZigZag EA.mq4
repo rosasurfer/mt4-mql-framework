@@ -43,14 +43,11 @@
  *
  *
  * TODO:
- *  - ZigZag: price alerts
- *     sound on new Highs (e.g. AlertDefault, Bulk)
- *     sound on new Lows (e.g. MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
- *
  *  - TradeManager: close (new|all) hedges
  *  - Superbars: fix range bar charts
  *  - ChartInfos: update unitsize positioning
  *  - Inside Bars: sound on projection crossing
+ *  - Grid: fix price levels
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *

@@ -348,7 +348,7 @@ bool PlaySoundEx(string soundfile) {
    if (!IsFile(fullName, MODE_SYSTEM)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
       if (!IsFile(fullName, MODE_SYSTEM)) {
-         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
+         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file \""+ soundfile +"\" not found", ERR_FILE_NOT_FOUND);
          return(false);
       }
    }
