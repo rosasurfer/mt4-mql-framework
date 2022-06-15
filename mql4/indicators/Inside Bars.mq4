@@ -670,17 +670,21 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (!signalInsideBar) return(false);
    if (ChangedBars > 2)  return(false);
 
-   string message = TimeframeDescription(timeframe) +" new inside bar at "+ TimeToStr(closeTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
-   string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
+   string sTimeframe = TimeframeDescription(timeframe);
+   string sBarHigh   = NumberToStr(high, PriceFormat);
+   string sBarLow    = NumberToStr(low, PriceFormat);
+   string sBarTime   = TimeToStr(closeTime, TIME_DATE|TIME_MINUTES);
+   string sLocalTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
+   string message    = "new "+ sTimeframe +" inside bar";
 
-   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
+   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
    message = Symbol() +": "+ message;
 
    int error = NO_ERROR;
-   if (signalInsideBar.popup)           Alert(message);              // before "sound" to get drowned out by the next sound
+   if (signalInsideBar.popup)           Alert(message);                          // before "sound" to get drowned out by the next sound
    if (signalInsideBar.sound) error |= !PlaySoundEx(signalInsideBar.soundFile);
-   if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + accountTime);
-   if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + accountTime);
+   if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + sLocalTime);
+   if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + sLocalTime);
 
    if (This.IsTesting()) Tester.Pause();
    return(!error);
