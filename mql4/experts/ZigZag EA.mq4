@@ -50,9 +50,7 @@
  *  - TradeManager: close (new|all) hedges
  *  - Superbars: fix range bar charts
  *  - ChartInfos: update unitsize positioning
- *  - Inside Bars
- *     rename Max.InsideBars
- *     sound on projection crossing
+ *  - Inside Bars: sound on projection crossing
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *
