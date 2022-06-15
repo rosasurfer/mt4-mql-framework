@@ -14,7 +14,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframes               = "H1";           // one or more comma-separated timeframes to analyze
-extern int    Max.InsideBars           = 1;              // number of inside bars per timeframe to display (-1: all)
+extern int    NumberOfInsideBars       = 1;              // number of IBs per timeframe to display (-1: all)
 extern string ___a__________________________;
 
 extern bool   Signal.onInsideBar       = false;
@@ -48,7 +48,7 @@ string labels[];                                         // chart object labels
 
 bool   signalInsideBar;
 bool   signalInsideBar.sound;
-string signalInsideBar.soundFile = "News.wav";
+string signalInsideBar.soundFile = "Sonar.wav";
 bool   signalInsideBar.popup;
 bool   signalInsideBar.mail;
 string signalInsideBar.mailSender   = "";
@@ -88,10 +88,10 @@ int onInit() {
    }
    Timeframes = JoinStrings(sValues, ",");
 
-   // Max.InsideBars
-   int iValue = Max.InsideBars;
-   if (AutoConfiguration) iValue = GetConfigInt(indicator, "Max.InsideBars", iValue);
-   if (iValue < -1)        return(catch("onInit(2)  invalid input parameter Max.InsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   // NumberOfInsideBars
+   int iValue = NumberOfInsideBars;
+   if (AutoConfiguration) iValue = GetConfigInt(indicator, "NumberOfInsideBars", iValue);
+   if (iValue < -1)        return(catch("onInit(2)  invalid input parameter NumberOfInsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
@@ -670,7 +670,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (!signalInsideBar) return(false);
    if (ChangedBars > 2)  return(false);
 
-   string message = TimeframeDescription(timeframe) +" inside bar at "+ TimeToStr(closeTime, TIME_DATE|TIME_MINUTES) +": H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
+   string message = TimeframeDescription(timeframe) +" new inside bar at "+ TimeToStr(closeTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(high, PriceFormat) +"  L="+ NumberToStr(low, PriceFormat);
    string accountTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
 
    if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message);
@@ -743,7 +743,7 @@ string CreateStatusLabel() {
  */
 string InputsToStr() {
    return(StringConcatenate("Timeframes=",               DoubleQuoteStr(Timeframes),          ";", NL,
-                            "Max.InsideBars=",           Max.InsideBars,                      ";", NL,
+                            "NumberOfInsideBars=",       NumberOfInsideBars,                  ";", NL,
                             "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),       ";", NL,
                             "Signal.onInsideBar.Sound=", BoolToStr(Signal.onInsideBar.Sound), ";", NL,
                             "Signal.onInsideBar.Popup=", BoolToStr(Signal.onInsideBar.Popup), ";", NL,
