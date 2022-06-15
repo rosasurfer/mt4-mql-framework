@@ -4238,13 +4238,12 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=GetTickCount()
       type=int
       <content>
-        The GetTickCount() function retrieves the number of milliseconds since the system was started.
-      It is limited to the resolution of the system timer.
+        Returns the number of milliseconds since the system was started. Limited to the resolution of the system timer.
       </content>
       <example>
-  int start=GetTickCount();
-  // some hard calculations...
-  Print(&quot;Calculation time is &quot;, GetTickCount()-start, &quot; milliseconds.&quot;);
+<span class="type code">int</span> start = <span class="function code">GetTickCount</span>();<br/>
+<span class="comment code">// some long calculations...</span><br/>
+<span class="function code">Print</span>(<span class="string code">"Calculation time is "</span>, <span class="function code">GetTickCount</span>()-start, <span class="string code">" milliseconds"</span>);
       </example>
     </function>
 
@@ -4253,15 +4252,15 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=MarketInfo()
       type=double
       <content>
-      Returns various data about instruments listed in the &quot;Market Watch&quot; window.
-      A part of information about the current instrument is stored in <a href="help://predefined_variables">predefined variables</a>.
+      Returns various data about instruments listed in the &quot;Market Watch&quot; window. Some of that information about the current instrument is also stored in 
+      <a href="help://predefined_variables">predefined variables</a>.
       </content>
       <example>
-   double bid    = MarketInfo(&quot;EURUSD&quot;, MODE_BID   );
-   double ask    = MarketInfo(&quot;EURUSD&quot;, MODE_ASK   );
-   double point  = MarketInfo(&quot;EURUSD&quot;, MODE_POINT );
-   int    digits = MarketInfo(&quot;EURUSD&quot;, MODE_DIGITS);
-   int    spread = MarketInfo(&quot;EURUSD&quot;, MODE_SPREAD);
+<span class="type code">double</span> bid    = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_BID</span>);
+<span class="type code">double</span> ask    = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_ASK</span>);
+<span class="type code">double</span> point  = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_POINT</span>);
+<span class="type code">int</span>    digits = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_DIGITS</span>);
+<span class="type code">int</span>    spread = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_SPREAD</span>);
       </example>
       <parameter>
         type=string
@@ -4271,7 +4270,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       <parameter>
         type=int
         name=type
-        description=Request identifier that defines the type of information to be returned, can be one of the valid <a href="help://constants_marketinfo">request identifiers</a>.
+        description=one of the <a href="help://constants_marketinfo">MarketInfo() type constants</a>
       </parameter>
     </function>
 
