@@ -339,21 +339,20 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  *
  * @param  string soundfile
  *
- * @return bool - success status
+ * @return int - error status
  */
-bool PlaySoundEx(string soundfile) {
+int PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
    if (!IsFile(fullName, MODE_SYSTEM)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
       if (!IsFile(fullName, MODE_SYSTEM)) {
-         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file \""+ soundfile +"\" not found", ERR_FILE_NOT_FOUND);
-         return(false);
+         return(logError("PlaySoundEx(1)  sound file \""+ soundfile +"\" not found", ERR_FILE_NOT_FOUND));
       }
    }
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   return(!catch("PlaySoundEx(2)"));
+   return(catch("PlaySoundEx(2)"));
 }
 
 
@@ -3573,8 +3572,7 @@ int Chart.SendTick(bool sound = false) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
-   if (sound)
-      PlaySoundEx("Tick.wav");
+   if (sound) PlaySoundEx("Tick.wav");
 
    return(NO_ERROR);
 }

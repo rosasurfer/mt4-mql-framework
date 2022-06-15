@@ -4288,7 +4288,7 @@ bool onPositionOpen(double data[][]) {
    OrderPop();
 
    if (eventLogged && signal.sound)
-      return(PlaySoundEx(signal.sound.positionOpened));
+      return(!PlaySoundEx(signal.sound.positionOpened));
    return(!catch("onPositionOpen(3)"));
 }
 
@@ -4350,7 +4350,7 @@ bool onPositionClose(int data[][]) {
    OrderPop();
 
    if (eventLogged && signal.sound)
-      return(PlaySoundEx(signal.sound.positionClosed));
+      return(!PlaySoundEx(signal.sound.positionClosed));
    return(!catch("onPositionClose(3)"));
 }
 
@@ -4395,7 +4395,7 @@ bool onOrderFail(int tickets[]) {
    OrderPop();
 
    if (eventLogged && signal.sound)
-      return(PlaySoundEx(signal.sound.orderFailed));
+      return(!PlaySoundEx(signal.sound.orderFailed));
    return(!catch("onOrderFail(3)"));
 }
 

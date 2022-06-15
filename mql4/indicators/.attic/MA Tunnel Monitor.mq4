@@ -349,7 +349,7 @@ bool onBreakout(int mode) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
-      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundUp);
+      if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundUp);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);
@@ -361,7 +361,7 @@ bool onBreakout(int mode) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
-      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundDown);
+      if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundDown);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);

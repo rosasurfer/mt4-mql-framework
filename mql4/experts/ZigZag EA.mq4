@@ -45,7 +45,9 @@
  * TODO:
  *  - Superbars: fix range bar charts
  *  - TradeManager: close (new|all) hedges
- *  - ChartInfos: update unitsize positioning
+ *  - ChartInfos:
+ *     use/display current daily range in risk management
+ *     update unitsize positioning
  *  - Inside Bars: sound on projection crossing
  *  - Grid: fix price levels
  *

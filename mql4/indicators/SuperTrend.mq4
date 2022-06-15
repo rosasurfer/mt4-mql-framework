@@ -325,7 +325,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);
@@ -336,7 +336,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);
