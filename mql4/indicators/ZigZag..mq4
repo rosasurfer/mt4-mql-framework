@@ -145,7 +145,7 @@ string   legendLabel   = "";
 int      tickTimerId;
 double   tickSize;
 datetime lastTick;
-int      lastReversalTick;
+int      lastSound;
 datetime waitUntil;
 double   prevUpperBand;
 double   prevLowerBand;
@@ -281,8 +281,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   bool isLogDebug = IsLogDebug();
-
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  size(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -458,13 +456,17 @@ int onTick() {
          prevUpperBand = upperBand[1];
          prevLowerBand = lowerBand[1];
       }
-      if (prevUpperBand && GT(upperBand[0], prevUpperBand) && Ticks!=lastReversalTick) {
-         if (isLogDebug) logDebug("onTick(3)  new High: "+ NumberToStr(upperBand[0], PriceFormat));
-         PlaySoundEx(Sound.onCrossing.Up);
-      }
-      else if (prevLowerBand && LT(lowerBand[0], prevLowerBand) && Ticks!=lastReversalTick) {
-         if (isLogDebug) logDebug("onTick(4)  new Low: "+ NumberToStr(lowerBand[0], PriceFormat));
-         PlaySoundEx(Sound.onCrossing.Down);
+      if (lastSound+2000 < GetTickCount()) {                                  // at least 2 sec pause between sound signals
+         if (prevUpperBand && GT(upperBand[0], prevUpperBand)) {
+            PlaySoundEx(Sound.onCrossing.Up);
+            lastSound = GetTickCount();
+            if (IsLogDebug()) logDebug("onTick(3)  new High: "+ NumberToStr(upperBand[0], PriceFormat));
+         }
+         else if (prevLowerBand && LT(lowerBand[0], prevLowerBand)) {
+            PlaySoundEx(Sound.onCrossing.Down);
+            lastSound = GetTickCount();
+            if (IsLogDebug()) logDebug("onTick(4)  new Low: "+ NumberToStr(lowerBand[0], PriceFormat));
+         }
       }
       prevUpperBand = upperBand[0];
       prevLowerBand = lowerBand[0];
@@ -816,13 +818,14 @@ bool onReversal(int direction, int bar) {
       if (IsLogInfo()) logInfo("onReversal("+ zigzagPeriods +"x"+ sPeriod +")  "+ message);
 
       message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
-      if (signalReversal.popup)           Alert(message);                     // before "sound" to get drowned out by the next sound
+      if (signalReversal.popup)           Alert(message);
       if (signalReversal.sound) error |= !PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
+
+      if (signalReversal.sound) lastSound = GetTickCount();
    }
-   lastReversalTick = Ticks;
    return(!error);
 }
 

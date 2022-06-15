@@ -43,8 +43,8 @@
  *
  *
  * TODO:
- *  - TradeManager: close (new|all) hedges
  *  - Superbars: fix range bar charts
+ *  - TradeManager: close (new|all) hedges
  *  - ChartInfos: update unitsize positioning
  *  - Inside Bars: sound on projection crossing
  *  - Grid: fix price levels
