@@ -62,8 +62,8 @@ extern bool   Signal.onReversal.SMS          = false;
 
 extern string ___e__________________________ = "=== High/Low signaling ===";
 extern bool   Sound.onCrossing               = false;
-extern string Sound.onCrossing.Up            = "New High.wav";          // on channel widening (all channel crossings)
-extern string Sound.onCrossing.Down          = "New Low.wav";
+extern string Sound.onCrossing.Up            = "AlertDefault.wav";      // on channel widening (all channel crossings)
+extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -456,18 +456,9 @@ int onTick() {
          prevUpperBand = upperBand[1];
          prevLowerBand = lowerBand[1];
       }
-      if (lastSound+2000 < GetTickCount()) {                                  // at least 2 sec pause between sound signals
-         if (prevUpperBand && GT(upperBand[0], prevUpperBand)) {
-            PlaySoundEx(Sound.onCrossing.Up);
-            lastSound = GetTickCount();
-            if (IsLogDebug()) logDebug("onTick(3)  new High: "+ NumberToStr(upperBand[0], PriceFormat));
-         }
-         else if (prevLowerBand && LT(lowerBand[0], prevLowerBand)) {
-            PlaySoundEx(Sound.onCrossing.Down);
-            lastSound = GetTickCount();
-            if (IsLogDebug()) logDebug("onTick(4)  new Low: "+ NumberToStr(lowerBand[0], PriceFormat));
-         }
-      }
+      if      (prevUpperBand && GT(upperBand[0], prevUpperBand)) onChannelCrossing(D_LONG);
+      else if (prevLowerBand && LT(lowerBand[0], prevLowerBand)) onChannelCrossing(D_SHORT);
+
       prevUpperBand = upperBand[0];
       prevLowerBand = lowerBand[0];
    }
@@ -817,16 +808,43 @@ bool onReversal(int direction, int bar) {
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal("+ zigzagPeriods +"x"+ sPeriod +")  "+ message);
 
+      if (signalReversal.sound) {
+         error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
+         if (!error)                           lastSound = GetTickCount();
+         else if (error == ERR_FILE_NOT_FOUND) signalReversal.sound = false;
+         else                                  error |= error;
+      }
+
       message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
       if (signalReversal.popup)           Alert(message);
-      if (signalReversal.sound) error |= !PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
       if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
-
-      if (signalReversal.sound) lastSound = GetTickCount();
    }
    return(!error);
+}
+
+
+/**
+ * An event handler signaling Donchian channel crossings.
+ *
+ * @param  int direction - crossing direction: D_LONG | D_SHORT
+ *
+ * @return bool - success status
+ */
+bool onChannelCrossing(int direction) {
+   if (!Sound.onCrossing) return(false);
+   if (direction!=D_LONG && direction!=D_SHORT) return(!catch("onChannelCrossing(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   if (lastSound+2000 < GetTickCount()) {                                  // at least 2 sec pause between sound signals
+      int error = PlaySoundEx(ifString(direction==D_LONG, Sound.onCrossing.Up, Sound.onCrossing.Down));
+
+      if      (!error)                      lastSound = GetTickCount();
+      else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
+
+      if (IsLogDebug()) logDebug("onChannelCrossing(2)  new "+ ifString(direction==D_LONG, "High", "Low") +": "+ NumberToStr(upperBand[0], PriceFormat));
+   }
+   return(!catch("onChannelCrossing(3)"));
 }
 
 

@@ -7382,8 +7382,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
          if (IsLogDebug()) logDebug(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx("OrderOk.wav");
+         if (!IsTesting()) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
       }

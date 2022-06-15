@@ -680,8 +680,8 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    message = Symbol() +": "+ message;
 
    int error = NO_ERROR;
-   if (signalInsideBar.popup)           Alert(message);                          // before "sound" to get drowned out by the next sound
-   if (signalInsideBar.sound) error |= !PlaySoundEx(signalInsideBar.soundFile);
+   if (signalInsideBar.popup)          Alert(message);                           // before "sound" to get drowned out by the next sound
+   if (signalInsideBar.sound) error |= PlaySoundEx(signalInsideBar.soundFile);
    if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + sLocalTime);
    if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + sLocalTime);
 

@@ -347,7 +347,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));                   // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.crossUp);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);
@@ -358,7 +358,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.crossDown);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);
