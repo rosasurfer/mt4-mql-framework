@@ -6988,8 +6988,8 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           161,                              // int    Donchian.Crossings.Wingdings
 
                           "",                               // string ____________________________
-                          0,                                // int    PeriodStepper.StepSize
                           -1,                               // int    Max.Bars
+                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
