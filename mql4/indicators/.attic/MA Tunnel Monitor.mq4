@@ -89,8 +89,8 @@ int    ma3AppliedPrice;
 int    totalInitPeriods;
 double totalTrend[];
 
-string signalSoundUp      = "Signal-Up.wav";
-string signalSoundDown    = "Signal-Down.wav";
+string signalSoundUp      = "Signal Up.wav";
+string signalSoundDown    = "Signal Down.wav";
 string signalMailSender   = "";
 string signalMailReceiver = "";
 string signalSmsReceiver  = "";

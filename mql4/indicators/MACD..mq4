@@ -16,7 +16,7 @@
  *
  * Notes:
  *  - The SMMA is not supported as SMMA(n) = EMA(2*n-1).
- *  - The additional dot in the name prevents the indicator to be overwritten by the built-in version of the same name.
+ *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -95,8 +95,8 @@ string indicatorName = "";                                  // "Data" window and
 
 bool   signals;
 bool   signal.sound;
-string signal.sound.crossUp   = "Signal-Up.wav";
-string signal.sound.crossDown = "Signal-Down.wav";
+string signal.sound.crossUp   = "Signal Up.wav";
+string signal.sound.crossDown = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";

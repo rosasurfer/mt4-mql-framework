@@ -71,8 +71,8 @@ string bfxLicense = "";                                        // BFX indicator 
 
 bool   signals;
 bool   signal.sound;
-string signal.sound.levelCross.long  = "Signal-Up.wav";
-string signal.sound.levelCross.short = "Signal-Down.wav";
+string signal.sound.levelCross.long  = "Signal Up.wav";
+string signal.sound.levelCross.short = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
