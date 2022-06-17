@@ -391,7 +391,7 @@ int log2Debugger(string message, int error, int level) {
       int pid = __ExecutionContext[EC.pid];
       if (IsSuperContext()) configLevel = ep_SuperLoglevelDebugger(pid);            // an indicator loaded by iCustom()
       if (!configLevel) {
-         string sValue = GetConfigString("Log", "Log2Debugger", "all");             // default: off
+         string sValue = GetConfigString("Log", "Log2Debugger", "all");             // default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
          if (!configLevel) configLevel = _int(LOG_OFF, catch("log2Debugger(1)  invalid loglevel configuration [Log]->Log2Debugger = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       }
@@ -432,14 +432,9 @@ int log2File(string message, int error, int level) {
       int pid = __ExecutionContext[EC.pid];
       if (IsSuperContext()) configLevel = ep_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
       if (!configLevel) {
-         if (IsExpert() && !IsTesting()) {
-            configLevel = LOG_ALL;                                                  // in online EAs: all
-         }
-         else {
-            string sValue = GetConfigString("Log", "Log2File", "off");              // default: off
-            configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
-            if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(1)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
-         }
+         string sValue = GetConfigString("Log", "Log2File", "all");                 // default: all
+         configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
+         if (!configLevel) configLevel = _int(LOG_OFF, catch("log2File(1)  invalid loglevel configuration [Log]->Log2File = "+ sValue, ERR_INVALID_CONFIG_VALUE));
       }
       ec_SetLoglevelFile(__ExecutionContext, configLevel);
    }

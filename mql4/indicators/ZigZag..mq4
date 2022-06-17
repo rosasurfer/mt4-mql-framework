@@ -42,7 +42,7 @@ extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a med
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
-extern string Donchian.ShowCrossings         = "off | first | all*";    // whether/which channel crossings to display
+extern string Donchian.ShowCrossings         = "off | first* | all";    // whether/which channel crossings to display
 extern color  Donchian.Upper.Color           = DodgerBlue;
 extern color  Donchian.Lower.Color           = Magenta;
 extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
@@ -195,7 +195,7 @@ int onInit() {
    // ZigZag.Semaphores.Wingdings
    if (ZigZag.Semaphores.Wingdings <  32)  return(catch("onInit(4)  invalid input parameter ZigZag.Semaphores.Wingdings: "+ ZigZag.Semaphores.Wingdings, ERR_INVALID_INPUT_PARAMETER));
    if (ZigZag.Semaphores.Wingdings > 255)  return(catch("onInit(5)  invalid input parameter ZigZag.Semaphores.Wingdings: "+ ZigZag.Semaphores.Wingdings, ERR_INVALID_INPUT_PARAMETER));
-   // Donchian.ShowCrossings: "off | first | all*"
+   // Donchian.ShowCrossings: "off | first | all"
    sValue = Donchian.ShowCrossings;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
