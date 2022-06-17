@@ -50,6 +50,7 @@
  *     update unitsize positioning
  *  - Inside Bars: sound on projection crossing
  *  - Grid: fix price levels
+ *  - support for 4BF and M5 scalping
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *
