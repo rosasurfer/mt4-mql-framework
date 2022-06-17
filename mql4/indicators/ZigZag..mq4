@@ -496,8 +496,8 @@ bool onCommand(string commands[]) {
    string cmd = commands[0];
    if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
 
-   if (StrEndsWith(cmd, "|up"))   return(PeriodStepper(STEP_UP));
-   if (StrEndsWith(cmd, "|down")) return(PeriodStepper(STEP_DOWN));
+   if (StrStartsWith(cmd, "up|"))   return(PeriodStepper(STEP_UP));
+   if (StrStartsWith(cmd, "down|")) return(PeriodStepper(STEP_DOWN));
 
    return(!logNotice("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd)));
 }
@@ -531,7 +531,7 @@ bool IsChartCommand(string &commands[]) {
 
    if (ObjectFind(label) == 0) {
       string cmd = ObjectDescription(label);
-      int tickcount = StrToInteger(cmd);
+      int tickcount = StrToInteger(StrRightFrom(cmd, "|"));
       static int lastTickcount;
 
       if (tickcount > lastTickcount) {
