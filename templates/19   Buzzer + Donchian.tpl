@@ -9950,6 +9950,7 @@ window_num=0
 <inputs>
 Price=0
 Length=20
+AlertOn=1
 </inputs>
 </expert>
 color_0=65535
