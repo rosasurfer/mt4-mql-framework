@@ -327,19 +327,23 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 }
 
 
-#define SND_ASYNC           0x01       // play asynchronously
+#define SND_ASYNC           0x01       // play sound in another thread and immediately return (doesn't mix sounds)
 #define SND_FILENAME     0x20000       // parameter is a file name
 
 
 /**
  * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Plays a sound asynchronously (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it in the current context (e.g. in tester).
+ * Queue a .WAV sound file for playing and immediately continue (instead of waiting for the end of the sound as the terminal
+ * does). Also plays a sound if the terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
  *
  * @return int - error status
+ *
+ * Notes: This is a wrapper for the SoundPlayer API which cannot mix sounds. If the SoundPlayer currently plays a sound and
+ *        the function is called again the current sound is stopped and the new sound gets started. Use the MediaPlayer API
+ *        to mix multiple sounds.
  */
 int PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
