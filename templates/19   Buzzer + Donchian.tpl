@@ -1,10 +1,10 @@
 <chart>
 symbol=GBPUSD
-period=60
+period=30
 digits=5
 
 leftpos=9229
-scale=1
+scale=8
 graph=1
 fore=0
 grid=0
@@ -9909,11 +9909,58 @@ name=Custom Indicator
 name=SuperBars
 flags=339
 window_num=0
-<inputs>
-</inputs>
 </expert>
 period_flags=255
 show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ZigZag.
+flags=339
+window_num=0
+<inputs>
+ZigZag.Periods=10
+ZigZag.Type=Semaphores
+ZigZag.Width=1
+ZigZag.Color=16711680
+Donchian.ShowCrossings=off | first* | all
+Donchian.ShowChannel=1
+Donchian.Upper.Color=16748574
+Donchian.Lower.Color=16711935
+</inputs>
+</expert>
+style_2=2
+style_3=2
+weight_4=0
+weight_5=0
+color_6=4294967295
+color_7=4294967295
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Buzzer MA
+flags=339
+window_num=0
+<inputs>
+Price=0
+Length=20
+</inputs>
+</expert>
+color_0=65535
+draw_1=0
+color_1=16760576
+weight_1=2
+draw_2=0
+color_2=42495
+weight_2=2
+period_flags=0
+show_data=1
 </indicator>
 
 </window>
