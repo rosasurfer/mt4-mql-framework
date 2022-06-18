@@ -11,7 +11,7 @@ int __DeinitFlags[];
 
 extern int  Price   = 0;
 extern int  Length  = 20;
-extern bool AlertON = true;
+extern bool AlertOn = true;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -150,13 +150,13 @@ int onTick() {
    }
 
    if (trend[2] < 0 && trend[1] > 0 && Volume[0] > 1 && !UpTrendAlert) {
-   	if (AlertON) Alert(Symbol() +" M"+ Period() +": Signal for BUY");
+   	if (AlertOn) Alert(Symbol() +" M"+ Period() +": Signal for BUY");
    	UpTrendAlert   = true;
    	DownTrendAlert = false;
 	}
 
 	if (trend[2] > 0 && trend[1] < 0 && Volume[0] > 1 && !DownTrendAlert) {
-   	if (AlertON) Alert(Symbol() +" M"+ Period() +": Signal for SELL");
+   	if (AlertOn) Alert(Symbol() +" M"+ Period() +": Signal for SELL");
    	UpTrendAlert   = false;
    	DownTrendAlert = true;
 	}
