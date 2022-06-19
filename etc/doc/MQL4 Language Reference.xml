@@ -1583,14 +1583,24 @@ It can be one of the following values:</p>
       keywords=;DRAW_NONE;DRAW_LINE;DRAW_SECTION;DRAW_HISTOGRAM;DRAW_ARROW;STYLE_SOLID;STYLE_DASH;STYLE_DOT;STYLE_DASHDOT;STYLE_DASHDOTDOT;
       <content>
 <p>Indicator drawing shapes for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>():</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">DRAW_LINE</td><td class="number">0</td><td>Connects successive values of an indicator buffer by a line. Missing values interrupt the line.</td></tr>
-<tr><td class="const">DRAW_SECTION</td><td class="number">1</td><td>Connects all values of an indicator buffer by a line. Missing values don't interrupt the line. A zigzag line without vertical segments.</td></tr>
-<tr><td class="const">DRAW_HISTOGRAM</td><td class="number">2</td><td>Connects corresponding values (pairs) of two consecutive buffers (even and odd index) by a vertical histogram. The larger buffer value determines the color to use.</td></tr>
-<tr><td class="const">DRAW_ARROW</td><td class="number">3</td><td>Draws for each buffer value a symbol.</td></tr>
-<tr><td class="const">DRAW_ZIGZAG</td><td class="number">4</td><td>Connects value pairs of two consecutive buffers (even and odd index) by zigzag lines and vertical segments. Single values are not drawn. Uses the color of the even buffer.</td></tr>
-<tr><td class="const">DRAW_NONE</td><td class="number">12</td><td>Nothing is drawn.</td></tr>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
+
+<tr><td class="const">DRAW_LINE     </td><td class="number">0</td><td>Connects successive values of a buffer by a line. Missing values interrupt the line.</td></tr>
+
+<tr><td class="const">DRAW_SECTION  </td><td class="number">1</td><td>Connects all values of a buffer by a line. Missing values don't interrupt the line. A zigzag line without 
+                                                                      vertical segments.</td></tr>
+
+<tr><td class="const">DRAW_HISTOGRAM</td><td class="number">2</td><td>Connects values of two consecutive buffers (even and odd) by a vertical histogram. The larger buffer value 
+                                                                      determines the color to use.</td></tr>
+
+<tr><td class="const">DRAW_ARROW    </td><td class="number">3</td><td>Displays a character symbol for each buffer value.</td></tr>
+
+<tr><td class="const">DRAW_ZIGZAG   </td><td class="number">4</td><td>Connects values of two consecutive buffers (even and odd) by a zigzag line and vertical segments (stair step 
+                                                                      or saw tooth pattern). Values without a counterpart in the other buffer interrupt the line. The even buffer 
+                                                                      determines the color to use.</td></tr>
+
+<tr><td class="const">DRAW_NONE     </td><td class="number">12</td><td>Nothing is drawn.</td></tr>
 </table>
 <br/>
 <p>Indicator line styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(..., drawType=<span class="const">DRAW_LINE</span>, ..., drawWidth=<span class="number">1</span>):</p>

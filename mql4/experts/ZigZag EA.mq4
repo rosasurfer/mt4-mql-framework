@@ -44,13 +44,15 @@
  *
  * TODO:
  *  - Superbars: fix range bar charts
- *  - TradeManager: close (new|all) hedges
+ *  - TradeManager
+ *     for custom position
+ *     close new|all hedges
+ *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
+ *  - support for 4BF and M5 scalping
  *  - ChartInfos:
  *     use/display current daily range in risk management
  *     update unitsize positioning
- *  - Inside Bars: sound on projection crossing
  *  - Grid: fix price levels
- *  - support for 4BF and M5 scalping
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *

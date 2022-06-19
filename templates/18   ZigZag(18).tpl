@@ -9922,7 +9922,7 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=18
-ZigZag.Type=Semaphores
+ZigZag.Type=Line | Semaphores*
 ZigZag.Width=1
 ZigZag.Color=16711680
 Donchian.ShowCrossings=off | first* | all
