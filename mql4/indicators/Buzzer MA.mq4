@@ -23,9 +23,9 @@ extern bool AlertOn = true;
 #property indicator_buffers 3
 #property indicator_color1 Yellow
 #property indicator_width1 2
-#property indicator_color2 Lime
+#property indicator_color2 DeepSkyBlue
 #property indicator_width2 2
-#property indicator_color3 Red
+#property indicator_color3 Orange
 #property indicator_width3 2
 
 double MABuffer[];
