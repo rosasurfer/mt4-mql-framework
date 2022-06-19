@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
@@ -9922,7 +9922,7 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=10
-ZigZag.Type=Semaphores
+ZigZag.Type=Line | Semaphores*
 ZigZag.Width=1
 ZigZag.Color=16711680
 Donchian.ShowCrossings=off | first* | all
