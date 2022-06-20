@@ -43,6 +43,11 @@
  *
  *
  * TODO:
+ *  - Insidebar signals
+ *     on level 1: 0%   breakout
+ *     on level 2: 50%  projection
+ *     on level 3: 100% projection
+ *
  *  - Superbars: fix range bar charts
  *  - TradeManager
  *     for custom position
