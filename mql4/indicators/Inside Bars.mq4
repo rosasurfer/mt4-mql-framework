@@ -13,15 +13,26 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes               = "H1";           // one or more comma-separated timeframes to analyze
-extern int    NumberOfInsideBars       = 1;              // number of IBs per timeframe to display (-1: all)
-extern string ___a__________________________;
+extern string Timeframes                     = "H1";                          // one or more comma-separated timeframes to analyze
+extern int    NumberOfInsideBars             = 1;                             // number of IBs per timeframe to display (-1: all)
 
-extern bool   Signal.onInsideBar       = false;
-extern bool   Signal.onInsideBar.Sound = true;
-extern bool   Signal.onInsideBar.Popup = false;
-extern bool   Signal.onInsideBar.Mail  = false;
-extern bool   Signal.onInsideBar.SMS   = false;
+extern string ___a__________________________ = "=== Signaling ===";
+extern bool   Signal.onInsideBar             = false;
+extern bool   Signal.onInsideBar.Sound       = true;
+extern bool   Signal.onInsideBar.Popup       = false;
+extern bool   Signal.onInsideBar.Mail        = false;
+extern bool   Signal.onInsideBar.SMS         = false;
+
+extern string ___b__________________________ = "=== Projection levels ===";   // an empty string disables a level
+extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout
+extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
+extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
+
+extern string ___c__________________________ = "=== Sound alerts ===";
+extern string Sound.onInsideBar              = "Inside Bar.wav";
+extern string Sound.onProjectionLevel.1      = "Inside Bar Level 1.wav";
+extern string Sound.onProjectionLevel.2      = "Inside Bar Level 2.wav";
+extern string Sound.onProjectionLevel.3      = "Inside Bar Level 3.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -48,7 +59,6 @@ string labels[];                                         // chart object labels
 
 bool   signalInsideBar;
 bool   signalInsideBar.sound;
-string signalInsideBar.soundFile = "Sonar.wav";
 bool   signalInsideBar.popup;
 bool   signalInsideBar.mail;
 string signalInsideBar.mailSender   = "";
@@ -112,6 +122,17 @@ int onInit() {
       }
       else signalInsideBar = false;
    }
+
+   // projection levels
+   //extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout
+   //extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
+   //extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
+
+   // sound files
+   //extern string Sound.onInsideBar              = "Inside Bar.wav";
+   //extern string Sound.onProjectionLevel.1      = "Inside Bar Level 1.wav";
+   //extern string Sound.onProjectionLevel.2      = "Inside Bar Level 2.wav";
+   //extern string Sound.onProjectionLevel.3      = "Inside Bar Level 3.wav";
 
    // display options
    SetIndexLabel(0, NULL);                                     // disable "Data" window display
@@ -680,8 +701,8 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    message = Symbol() +": "+ message;
 
    int error = NO_ERROR;
-   if (signalInsideBar.popup)          Alert(message);                           // before "sound" to get drowned out by the next sound
-   if (signalInsideBar.sound) error |= PlaySoundEx(signalInsideBar.soundFile);
+   if (signalInsideBar.popup)          Alert(message);
+   if (signalInsideBar.sound) error |= PlaySoundEx(Sound.onInsideBar);
    if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + sLocalTime);
    if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + sLocalTime);
 
@@ -745,12 +766,21 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",               DoubleQuoteStr(Timeframes),          ";", NL,
-                            "NumberOfInsideBars=",       NumberOfInsideBars,                  ";", NL,
-                            "Signal.onInsideBar=",       BoolToStr(Signal.onInsideBar),       ";", NL,
-                            "Signal.onInsideBar.Sound=", BoolToStr(Signal.onInsideBar.Sound), ";", NL,
-                            "Signal.onInsideBar.Popup=", BoolToStr(Signal.onInsideBar.Popup), ";", NL,
-                            "Signal.onInsideBar.Mail=",  BoolToStr(Signal.onInsideBar.Mail),  ";", NL,
-                            "Signal.onInsideBar.SMS=",   BoolToStr(Signal.onInsideBar.SMS),   ";")
+   return(StringConcatenate("Timeframes=",                  DoubleQuoteStr(Timeframes),                  ";", NL,
+                            "NumberOfInsideBars=",          NumberOfInsideBars,                          ";", NL,
+                            "Signal.onInsideBar=",          BoolToStr(Signal.onInsideBar),               ";", NL,
+                            "Signal.onInsideBar.Sound=",    BoolToStr(Signal.onInsideBar.Sound),         ";", NL,
+                            "Signal.onInsideBar.Popup=",    BoolToStr(Signal.onInsideBar.Popup),         ";", NL,
+                            "Signal.onInsideBar.Mail=",     BoolToStr(Signal.onInsideBar.Mail),          ";", NL,
+                            "Signal.onInsideBar.SMS=",      BoolToStr(Signal.onInsideBar.SMS),           ";", NL,
+
+                            "InsideBar.ProjectionLevel.1=", DoubleQuoteStr(InsideBar.ProjectionLevel.1), ";", NL,
+                            "InsideBar.ProjectionLevel.2=", DoubleQuoteStr(InsideBar.ProjectionLevel.2), ";", NL,
+                            "InsideBar.ProjectionLevel.3=", DoubleQuoteStr(InsideBar.ProjectionLevel.3), ";", NL,
+
+                            "Sound.onInsideBar=",           DoubleQuoteStr(Sound.onInsideBar),           ";", NL,
+                            "Sound.onProjectionLevel.1=",   DoubleQuoteStr(Sound.onProjectionLevel.1),   ";", NL,
+                            "Sound.onProjectionLevel.2=",   DoubleQuoteStr(Sound.onProjectionLevel.2),   ";", NL,
+                            "Sound.onProjectionLevel.3=",   DoubleQuoteStr(Sound.onProjectionLevel.3),   ";")
    );
 }

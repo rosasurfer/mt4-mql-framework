@@ -341,9 +341,8 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
  *
  * @return int - error status
  *
- * Notes: This is a wrapper for the SoundPlayer API which cannot mix sounds. If the SoundPlayer currently plays a sound and
- *        the function is called again the current sound is stopped and the new sound gets started. Use the MediaPlayer API
- *        to mix multiple sounds.
+ * Notes: This is a wrapper for the SoundPlayer API which cannot mix sounds. If the SoundPlayer currently plays a sound the
+ *        sound is stopped and the specified sound is played. Use the MediaPlayer API to mix multiple sounds.
  */
 int PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
