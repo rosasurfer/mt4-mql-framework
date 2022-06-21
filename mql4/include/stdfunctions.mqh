@@ -2336,19 +2336,19 @@ bool StrEndsWithI(string value, string suffix) {
 
 
 /**
- * Prüft, ob ein String nur Ziffern enthält.
+ * Whether a string consists of digits only.
  *
- * @param  string value - zu prüfender String
+ * @param  string value
  *
  * @return bool
  */
-bool StrIsDigit(string value) {
+bool StrIsDigits(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StrIsDigit(1)", error);
+      catch("StrIsDigits(1)", error);
    }
 
    int chr, len=StringLen(value);
@@ -2489,7 +2489,7 @@ bool StrIsPhoneNumber(string value) {
       if (StrStartsWith(s, "0")) return(false);
    }
 
-   return(StrIsDigit(s));
+   return(StrIsDigits(s));
 }
 
 
@@ -4491,7 +4491,7 @@ int GetAccountNumberFromAlias(string company, string alias) {
             sAccount = StringTrimRight(StrLeft(keys[i], -6));
             value    = GetGlobalConfigString(section, sAccount +".company");
             if (StrCompareI(value, company)) {
-               if (StrIsDigit(sAccount))
+               if (StrIsDigits(sAccount))
                   return(StrToInteger(sAccount));
             }
          }
@@ -4800,9 +4800,9 @@ color RGBStrToColor(string value) {
    if (Explode(value, ",", sValues, NULL) != 3)
       return(NaC);
 
-   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
-   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
-   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
+   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigits(sValues[0])) return(NaC);
+   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigits(sValues[1])) return(NaC);
+   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigits(sValues[2])) return(NaC);
 
    int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
    int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
@@ -6191,7 +6191,7 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
-   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigits(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
@@ -7266,7 +7266,7 @@ void __DummyCalls() {
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
    stringOr(NULL, NULL);
-   StrIsDigit(NULL);
+   StrIsDigits(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
    StrIsNumeric(NULL);

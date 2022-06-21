@@ -47,7 +47,7 @@ int onStart() {
          }
          string number = StrRightFrom(account, ":");
          int iNumber = StrToInteger(number);
-         if (!StrIsDigit(number) || !iNumber) {
+         if (!StrIsDigits(number) || !iNumber) {
             logNotice("onStart(2)  invalid chart object "+ DoubleQuoteStr(label) +": "+ DoubleQuoteStr(account) +" (invalid account number)");
          }
          if (StringLen(company) && iNumber) {

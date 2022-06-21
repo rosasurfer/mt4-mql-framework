@@ -261,7 +261,7 @@ bool     StrContainsI(string value, string substring);;
 bool     StrEndsWithI(string value, string suffix);;
 int      StrFindR(string value, string search);;
 string   stringOr(string value, string altValue);;
-bool     StrIsDigit(string value);;
+bool     StrIsDigits(string value);;
 bool     StrIsEmailAddress(string value);;
 bool     StrIsInteger(string value);;
 bool     StrIsNumeric(string value);;

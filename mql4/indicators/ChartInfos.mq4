@@ -2072,7 +2072,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "#")) {             // Ticket
                   strTicket = StrTrim(StrSubstr(values[n], 1));
-                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(strTicket))                       return(!catch("CustomPositions.ReadConfig(2)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue1 = EMPTY;                                // alle verbleibenden Lots
                   termValue2 = NULL;
@@ -2194,7 +2194,7 @@ bool CustomPositions.ReadConfig() {
                   if (termValue1 && LT(termValue1, minLotSize))      return(!catch("CustomPositions.ReadConfig(24)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size smaller than MIN_LOTSIZE \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   if (MathModFix(termValue1, lotStep) != 0)          return(!catch("CustomPositions.ReadConfig(25)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (lot size not a multiple of LOTSTEP \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   strTicket = StrTrim(StrSubstr(values[n], pos+1));
-                  if (!StrIsDigit(strTicket))                        return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsDigits(strTicket))                       return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-digits in ticket \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = StrToInteger(strTicket);
                   termValue2 = NULL;
                   termCache1 = NULL;
@@ -2720,7 +2720,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
 
    // (1) Ausdruck parsen
-   if (!StrIsDigit(StrLeft(value, 1))) {
+   if (!StrIsDigits(StrLeft(value, 1))) {
       datetime date, now = TimeFXT(); if (!now) return(NaT);
 
       // (1.1) alphabetischer Ausdruck
@@ -2796,7 +2796,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       if (valuesSize >= 1) {
          sYY = StrTrim(values[0]);                                   // Jahr prüfen
          if (StringLen(sYY) != 4)                                    return(_NaT(catch("ParseDateTimeEx(7)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sYY))                                       return(_NaT(catch("ParseDateTimeEx(8)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigits(sYY))                                      return(_NaT(catch("ParseDateTimeEx(8)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iYY = StrToInteger(sYY);
          if (iYY < 1970 || 2037 < iYY)                               return(_NaT(catch("ParseDateTimeEx(9)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 1) {
@@ -2809,7 +2809,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
       if (valuesSize >= 2) {
          sMM = StrTrim(values[1]);                                   // Monat prüfen
          if (StringLen(sMM) > 2)                                     return(_NaT(catch("ParseDateTimeEx(10)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sMM))                                       return(_NaT(catch("ParseDateTimeEx(11)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigits(sMM))                                      return(_NaT(catch("ParseDateTimeEx(11)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iMM = StrToInteger(sMM);
          if (iMM < 1 || 12 < iMM)                                    return(_NaT(catch("ParseDateTimeEx(12)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (valuesSize == 2) {
@@ -2835,7 +2835,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
          }
                                                                      // Tag prüfen
          if (StringLen(sDD) > 2)                                     return(_NaT(catch("ParseDateTimeEx(14)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-         if (!StrIsDigit(sDD))                                       return(_NaT(catch("ParseDateTimeEx(15)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+         if (!StrIsDigits(sDD))                                      return(_NaT(catch("ParseDateTimeEx(15)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          iDD = StrToInteger(sDD);
          if (iDD < 1 || 31 < iDD)                                    return(_NaT(catch("ParseDateTimeEx(16)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
          if (iDD > 28) {
@@ -2854,13 +2854,13 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
             sHH = StrTrim(values[0]);                                // Stunden
             if (StringLen(sHH) > 2)                                  return(_NaT(catch("ParseDateTimeEx(21)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sHH))                                    return(_NaT(catch("ParseDateTimeEx(22)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigits(sHH))                                   return(_NaT(catch("ParseDateTimeEx(22)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iHH = StrToInteger(sHH);
             if (iHH < 0 || 23 < iHH)                                 return(_NaT(catch("ParseDateTimeEx(23)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
 
             sII = StrTrim(values[1]);                                // Minuten
             if (StringLen(sII) > 2)                                  return(_NaT(catch("ParseDateTimeEx(24)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-            if (!StrIsDigit(sII))                                    return(_NaT(catch("ParseDateTimeEx(25)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+            if (!StrIsDigits(sII))                                   return(_NaT(catch("ParseDateTimeEx(25)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             iII = StrToInteger(sII);
             if (iII < 0 || 59 < iII)                                 return(_NaT(catch("ParseDateTimeEx(26)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             if (valuesSize == 2) {
@@ -2871,7 +2871,7 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
             if (valuesSize == 3) {
                sSS = StrTrim(values[2]);                             // Sekunden
                if (StringLen(sSS) > 2)                               return(_NaT(catch("ParseDateTimeEx(27)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
-               if (!StrIsDigit(sSS))                                 return(_NaT(catch("ParseDateTimeEx(28)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
+               if (!StrIsDigits(sSS))                                return(_NaT(catch("ParseDateTimeEx(28)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
                iSS = StrToInteger(sSS);
                if (iSS < 0 || 59 < iSS)                              return(_NaT(catch("ParseDateTimeEx(29)  invalid history configuration in "+ DoubleQuoteStr(origValue), ERR_INVALID_CONFIG_VALUE)));
             }

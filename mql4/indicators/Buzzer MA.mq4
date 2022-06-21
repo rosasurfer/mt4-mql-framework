@@ -22,11 +22,11 @@ extern bool AlertOn = true;
 #property indicator_chart_window
 #property indicator_buffers 3
 #property indicator_color1 Yellow
-#property indicator_width1 2
+#property indicator_width1 1
 #property indicator_color2 DeepSkyBlue
-#property indicator_width2 2
+#property indicator_width2 3
 #property indicator_color3 Orange
-#property indicator_width3 2
+#property indicator_width3 3
 
 double MABuffer[];
 double UpBuffer[];

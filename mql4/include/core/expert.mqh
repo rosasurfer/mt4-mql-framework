@@ -754,7 +754,7 @@ string init_RecorderNewSymbol() {
       symbol = symbols_Name(symbols, i);
       if (StrStartsWithI(symbol, name)) {
          suffix = StrSubstr(symbol, StringLen(name));
-         if (StringLen(suffix)==3) /*&&*/ if (StrIsDigit(suffix)) {
+         if (StringLen(suffix)==3) /*&&*/ if (StrIsDigits(suffix)) {
             maxId = Max(maxId, StrToInteger(suffix));
          }
       }
