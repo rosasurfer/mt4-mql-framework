@@ -1,11 +1,11 @@
 /**
  * Inside Bars
  *
- * Marks inside bars and corresponding projection levels of specified timeframes.
+ * Marks inside bars and corresponding projection levels.
  *
  *
  * TODO:
- *  - check bar alignment of all timeframes and use the largest correctly aligned one instead of always M5
+ *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
@@ -13,8 +13,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Timeframes                     = "H1";                          // one or more comma-separated timeframes to analyze
-extern int    NumberOfInsideBars             = 1;                             // number of IBs per timeframe to display (-1: all)
+extern string Timeframe                      = "H1";                          // inside bar timeframe to process
+extern int    NumberOfInsideBars             = 1;                             // number of inside bars to display (-1: all)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
@@ -23,16 +23,18 @@ extern bool   Signal.onInsideBar.Popup       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
 extern bool   Signal.onInsideBar.SMS         = false;
 
-extern string ___b__________________________ = "=== Projection levels ===";   // an empty string disables a level
+extern string ___b__________________________ = "=== Projection levels ===";   // last inside bar only
 extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout
 extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
 extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
+extern string InsideBar.ProjectionLevel.4    = "{a non-numeric value disables a level}";
 
 extern string ___c__________________________ = "=== Sound alerts ===";
 extern string Sound.onInsideBar              = "Inside Bar.wav";
 extern string Sound.onProjectionLevel.1      = "Inside Bar Level 1.wav";
 extern string Sound.onProjectionLevel.2      = "Inside Bar Level 2.wav";
 extern string Sound.onProjectionLevel.3      = "Inside Bar Level 3.wav";
+extern string Sound.onProjectionLevel.4      = "Inside Bar Level 4.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,7 +55,7 @@ extern string Sound.onProjectionLevel.3      = "Inside Bar Level 3.wav";
 #define CLOSE     4
 #define VOLUME    5
 
-int    fTimeframes;                                      // flags of the IB timeframes to process
+int    timeframe;                                        // IB timeframe to process
 int    maxInsideBars;
 string labels[];                                         // chart object labels
 
@@ -66,6 +68,11 @@ string signalInsideBar.mailReceiver = "";
 bool   signalInsideBar.sms;
 string signalInsideBar.smsReceiver = "";
 
+double projectionLevel_1 = EMPTY;
+double projectionLevel_2 = EMPTY;
+double projectionLevel_3 = EMPTY;
+double projectionLevel_4 = EMPTY;
+
 
 /**
  * Initialization
@@ -73,29 +80,14 @@ string signalInsideBar.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = ProgramName(MODE_NICE);
-   // Timeframes
-   string sValues[], sValue = Timeframes;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframes", sValue);
-   string sValueBak = sValue;
-   if (Explode(sValue, "*", sValues, 2) > 1) {
-      int size = Explode(sValues[0], ",", sValues, NULL);
-      ArraySpliceStrings(sValues, 0, size-1);
-      size = 1;
-   }
-   else {
-      size = Explode(sValue, ",", sValues, NULL);
-   }
-   fTimeframes = NULL;
-   for (int i=0; i < size; i++) {
-      sValue = sValues[i];
-      int timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-      if (timeframe == -1) return(catch("onInit(1)  invalid identifier "+ DoubleQuoteStr(sValue) +" in input parameter Timeframes: "+ DoubleQuoteStr(sValueBak), ERR_INVALID_INPUT_PARAMETER));
-      fTimeframes |= TimeframeFlag(timeframe);
-      sValues[i] = TimeframeDescription(timeframe);
-   }
-   Timeframes = JoinStrings(sValues, ",");
+
+   // validate inputs
+   // Timeframe
+   string sValue = ifString(AutoConfiguration, GetConfigString(indicator, "Timeframe", Timeframe), Timeframe);
+   timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+   if (timeframe == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   Timeframe = TimeframeDescription(timeframe);
 
    // NumberOfInsideBars
    int iValue = NumberOfInsideBars;
@@ -104,7 +96,7 @@ int onInit() {
    maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
-   signalInsideBar       = Signal.onInsideBar;                 // reset global vars due to a possible account change
+   signalInsideBar       = Signal.onInsideBar;                 // reset global vars when called due to an account change
    signalInsideBar.sound = Signal.onInsideBar.Sound;
    signalInsideBar.popup = Signal.onInsideBar.Popup;
    signalInsideBar.mail  = Signal.onInsideBar.Mail;
@@ -124,25 +116,53 @@ int onInit() {
    }
 
    // projection levels
-   //extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout
-   //extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
-   //extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
-
-   // sound files
-   //extern string Sound.onInsideBar              = "Inside Bar.wav";
-   //extern string Sound.onProjectionLevel.1      = "Inside Bar Level 1.wav";
-   //extern string Sound.onProjectionLevel.2      = "Inside Bar Level 2.wav";
-   //extern string Sound.onProjectionLevel.3      = "Inside Bar Level 3.wav";
+   projectionLevel_1 = EMPTY;
+   sValue = StrTrim(InsideBar.ProjectionLevel.1);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.1", sValue);
+   if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
+   if (StrIsNumeric(sValue)) {
+      double dValue = StrToDouble(sValue);
+      if (dValue < 0)      return(catch("onInit(3)  invalid input parameter InsideBar.ProjectionLevel.1: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.1) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+      projectionLevel_1 = dValue;
+   }
+   projectionLevel_2 = EMPTY;
+   sValue = StrTrim(InsideBar.ProjectionLevel.2);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.2", sValue);
+   if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < 0)      return(catch("onInit(4)  invalid input parameter InsideBar.ProjectionLevel.2: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.2) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+      projectionLevel_2 = dValue;
+   }
+   projectionLevel_3 = EMPTY;
+   sValue = StrTrim(InsideBar.ProjectionLevel.3);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.3", sValue);
+   if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < 0)      return(catch("onInit(5)  invalid input parameter InsideBar.ProjectionLevel.3: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.3) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+      projectionLevel_3 = dValue;
+   }
+   projectionLevel_4 = EMPTY;
+   sValue = StrTrim(InsideBar.ProjectionLevel.4);
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.4", sValue);
+   if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < 0)      return(catch("onInit(6)  invalid input parameter InsideBar.ProjectionLevel.4: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.4) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+      projectionLevel_4 = dValue;
+   }
+   // sound files will be validated/checked at runtime
 
    // display options
    SetIndexLabel(0, NULL);                                     // disable "Data" window display
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = ProgramName(MODE_NICE) +": "+ Timeframes + signalInfo;
+   string text = ProgramName(MODE_NICE) +": "+ Timeframe + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
-   return(catch("onInit(3)"));
+   return(catch("onInit(7)"));
 }
 
 
@@ -157,16 +177,17 @@ int onTick() {
 
    if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
 
-   if (fTimeframes & F_PERIOD_M1  && 1) CheckInsideBars(ratesM1, changedBarsM1, PERIOD_M1);
-   if (fTimeframes & F_PERIOD_M5  && 1) CheckInsideBars(ratesM5, changedBarsM5, PERIOD_M5);
-   if (fTimeframes & F_PERIOD_M15 && 1) CheckInsideBarsM15(ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_M30 && 1) CheckInsideBarsM30(ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_H1  && 1) CheckInsideBarsH1 (ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_H4  && 1) CheckInsideBarsH4 (ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_D1  && 1) CheckInsideBarsD1 (ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_W1  && 1) CheckInsideBarsW1 (ratesM5, changedBarsM5);
-   if (fTimeframes & F_PERIOD_MN1 && 1) CheckInsideBarsMN1(ratesM5, changedBarsM5);
-
+   switch (timeframe) {
+      case PERIOD_M1 : CheckInsideBars   (ratesM1, changedBarsM1, PERIOD_M1); break;
+      case PERIOD_M5 : CheckInsideBars   (ratesM5, changedBarsM5, PERIOD_M5); break;
+      case PERIOD_M15: CheckInsideBarsM15(ratesM5, changedBarsM5);            break;
+      case PERIOD_M30: CheckInsideBarsM30(ratesM5, changedBarsM5);            break;
+      case PERIOD_H1 : CheckInsideBarsH1 (ratesM5, changedBarsM5);            break;
+      case PERIOD_H4 : CheckInsideBarsH4 (ratesM5, changedBarsM5);            break;
+      case PERIOD_D1 : CheckInsideBarsD1 (ratesM5, changedBarsM5);            break;
+      case PERIOD_W1 : CheckInsideBarsW1 (ratesM5, changedBarsM5);            break;
+      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBarsM5);            break;
+   }
    return(last_error);
 }
 
@@ -184,13 +205,12 @@ int onTick() {
 bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int &changedBarsM5) {
    int changed;
 
-   if (fTimeframes & F_PERIOD_M1 && 1) {
+   if (timeframe == PERIOD_M1) {
       changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
       if (changed < 0) return(false);
       changedBarsM1 = changed;
    }
-
-   if (fTimeframes & (F_PERIOD_M5|F_PERIOD_M15|F_PERIOD_M30|F_PERIOD_H1|F_PERIOD_H4|F_PERIOD_D1|F_PERIOD_W1|F_PERIOD_MN1) && 1) {
+   else {
       changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
       if (changed < 0) return(false);
       changedBarsM5 = changed;
@@ -766,7 +786,7 @@ string CreateStatusLabel() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Timeframes=",                  DoubleQuoteStr(Timeframes),                  ";", NL,
+   return(StringConcatenate("Timeframe=",                   DoubleQuoteStr(Timeframe),                   ";", NL,
                             "NumberOfInsideBars=",          NumberOfInsideBars,                          ";", NL,
                             "Signal.onInsideBar=",          BoolToStr(Signal.onInsideBar),               ";", NL,
                             "Signal.onInsideBar.Sound=",    BoolToStr(Signal.onInsideBar.Sound),         ";", NL,
@@ -777,10 +797,12 @@ string InputsToStr() {
                             "InsideBar.ProjectionLevel.1=", DoubleQuoteStr(InsideBar.ProjectionLevel.1), ";", NL,
                             "InsideBar.ProjectionLevel.2=", DoubleQuoteStr(InsideBar.ProjectionLevel.2), ";", NL,
                             "InsideBar.ProjectionLevel.3=", DoubleQuoteStr(InsideBar.ProjectionLevel.3), ";", NL,
+                            "InsideBar.ProjectionLevel.4=", DoubleQuoteStr(InsideBar.ProjectionLevel.4), ";", NL,
 
                             "Sound.onInsideBar=",           DoubleQuoteStr(Sound.onInsideBar),           ";", NL,
                             "Sound.onProjectionLevel.1=",   DoubleQuoteStr(Sound.onProjectionLevel.1),   ";", NL,
                             "Sound.onProjectionLevel.2=",   DoubleQuoteStr(Sound.onProjectionLevel.2),   ";", NL,
-                            "Sound.onProjectionLevel.3=",   DoubleQuoteStr(Sound.onProjectionLevel.3),   ";")
+                            "Sound.onProjectionLevel.3=",   DoubleQuoteStr(Sound.onProjectionLevel.3),   ";", NL,
+                            "Sound.onProjectionLevel.4=",   DoubleQuoteStr(Sound.onProjectionLevel.4),   ";")
    );
 }
