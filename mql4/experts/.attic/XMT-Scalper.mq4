@@ -2242,11 +2242,11 @@ bool ReadStatus() {
    Sequence.ID = sSequenceId;
    if (sTradingMode == "")                      return(!catch("ReadStatus(6)  "+ sequence.name +" invalid TradingMode "+ DoubleQuoteStr(sTradingMode) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    TradingMode = sTradingMode;
-   if (!StrIsDigit(sEntryIndicator))            return(!catch("ReadStatus(7)  "+ sequence.name +" invalid EntryIndicator "+ DoubleQuoteStr(sEntryIndicator) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sEntryIndicator))           return(!catch("ReadStatus(7)  "+ sequence.name +" invalid EntryIndicator "+ DoubleQuoteStr(sEntryIndicator) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    EntryIndicator = StrToInteger(sEntryIndicator);
-   if (!StrIsDigit(sIndicatorTimeframe))        return(!catch("ReadStatus(8)  "+ sequence.name +" invalid IndicatorTimeframe "+ DoubleQuoteStr(sIndicatorTimeframe) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sIndicatorTimeframe))       return(!catch("ReadStatus(8)  "+ sequence.name +" invalid IndicatorTimeframe "+ DoubleQuoteStr(sIndicatorTimeframe) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    IndicatorTimeframe = StrToInteger(sIndicatorTimeframe);
-   if (!StrIsDigit(sIndicatorPeriods))          return(!catch("ReadStatus(9)  "+ sequence.name +" invalid IndicatorPeriods "+ DoubleQuoteStr(sIndicatorPeriods) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sIndicatorPeriods))         return(!catch("ReadStatus(9)  "+ sequence.name +" invalid IndicatorPeriods "+ DoubleQuoteStr(sIndicatorPeriods) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    IndicatorPeriods = StrToInteger(sIndicatorPeriods);
    if (!StrIsNumeric(sBollingerBandsDeviation)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid BollingerBands.Deviation "+ DoubleQuoteStr(sBollingerBandsDeviation) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    BollingerBands.Deviation = StrToDouble(sBollingerBandsDeviation);
@@ -2283,9 +2283,9 @@ bool ReadStatus() {
    StopOnTotalProfit = StrToDouble(sStopOnTotalProfit);
    if (!StrIsNumeric(sStopOnTotalLoss))         return(!catch("ReadStatus(25)  "+ sequence.name +" invalid StopOnTotalLoss "+ DoubleQuoteStr(sStopOnTotalLoss) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    StopOnTotalLoss = StrToDouble(sStopOnTotalLoss);
-   if (!StrIsDigit(sSessionbreakStartTime))     return(!catch("ReadStatus(26)  "+ sequence.name +" invalid Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sSessionbreakStartTime))    return(!catch("ReadStatus(26)  "+ sequence.name +" invalid Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
-   if (!StrIsDigit(sSessionbreakEndTime))       return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sSessionbreakEndTime))      return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
    ChannelBug                = StrToBool(sChannelBug);
    TakeProfitBug             = StrToBool(sTakeProfitBug);
@@ -2334,7 +2334,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int mode) 
 
    for (int i=size-1; i >= 0; i--) {
       if (StrStartsWithI(keys[i], prefix)) {
-         if (StrIsDigit(StrSubstr(keys[i], prefixLen))) {
+         if (StrIsDigits(StrSubstr(keys[i], prefixLen))) {
             continue;
          }
       }
@@ -2381,13 +2381,13 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // ticket
    string sTicket = StrTrim(values[0]);
-   if (!StrIsDigit(sTicket))                                          return(!catch("ReadStatus.ParseOrder(2)  "+ sequence.name +" illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sTicket))                                         return(!catch("ReadStatus.ParseOrder(2)  "+ sequence.name +" illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int ticket = StrToInteger(sTicket);
    if (!ticket)                                                       return(!catch("ReadStatus.ParseOrder(3)  "+ sequence.name +" illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // linkedTicket
    string sLinkedTicket = StrTrim(values[1]);
-   if (!StrIsDigit(sLinkedTicket))                                    return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal linked ticket "+ DoubleQuoteStr(sLinkedTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sLinkedTicket))                                   return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal linked ticket "+ DoubleQuoteStr(sLinkedTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int linkedTicket = StrToInteger(sLinkedTicket);
 
    // lots
@@ -2424,7 +2424,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // openTime
    string sOpenTime = StrTrim(values[6]);
-   if (!StrIsDigit(sOpenTime))                                        return(!catch("ReadStatus.ParseOrder(17)  "+ sequence.name +" illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sOpenTime))                                       return(!catch("ReadStatus.ParseOrder(17)  "+ sequence.name +" illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime openTime = StrToInteger(sOpenTime);
    if (openType==OP_UNDEFINED && openTime)                            return(!catch("ReadStatus.ParseOrder(18)  "+ sequence.name +" order open type/time mis-match "+ OperationTypeToStr(openType) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
    if (openType!=OP_UNDEFINED && !openTime)                           return(!catch("ReadStatus.ParseOrder(19)  "+ sequence.name +" order open type/time mis-match "+ OperationTypeToStr(openType) +"/"+ openTime +" in order record", ERR_INVALID_FILE_FORMAT));
@@ -2439,7 +2439,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // closeTime
    string sCloseTime = StrTrim(values[8]);
-   if (!StrIsDigit(sCloseTime))                                       return(!catch("ReadStatus.ParseOrder(24)  "+ sequence.name +" illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sCloseTime))                                      return(!catch("ReadStatus.ParseOrder(24)  "+ sequence.name +" illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime closeTime = StrToInteger(sCloseTime);
    if (closeTime && closeTime < openTime)                             return(!catch("ReadStatus.ParseOrder(25)  "+ sequence.name +" order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
 
@@ -2936,7 +2936,7 @@ void RestoreInputs() {
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
+   if (!StrIsDigits(sValue))                 return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
    if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 

@@ -62,7 +62,7 @@ bool InitTradeAccount(string accountId = "") {
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
       _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))         return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
       _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
    }
    else {
@@ -75,7 +75,7 @@ bool InitTradeAccount(string accountId = "") {
       string key     = "TradeAccount"+ ifString(This.IsTesting(), ".Tester", "");
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))                                                   return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          section = "Accounts";
          key     = _accountNumber +".company";
@@ -578,8 +578,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OpenTriggerTime
    sValue = StrTrim(values[5]);
-   if (StrIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
-   else                             _openTriggerTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
+   else                              _openTriggerTime =    StrToTime(sValue);
    if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
       if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -675,8 +675,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // CloseTriggerTime
    sValue = StrTrim(values[16]);
-   if (StrIsDigit(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
-   else                             _closeTriggerTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
+   else                              _closeTriggerTime =    StrToTime(sValue);
    if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
       if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -704,14 +704,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // ModificationTime
    sValue = StrTrim(values[20]);
-   if (StrIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
-   else                             _modificationTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _modificationTime = StrToInteger(sValue);
+   else                              _modificationTime =    StrToTime(sValue);
    if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
    sValue = StrTrim(values[21]);
-   if (!StrIsDigit(sValue))                           return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsDigits(sValue))                          return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int _version = StrToInteger(sValue);
    if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
@@ -797,7 +797,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
    /*LFX_ORDER*/int order[];
 
    for (int i=0; i < keysSize; i++) {
-      if (!StrIsDigit(keys[i])) continue;
+      if (!StrIsDigits(keys[i])) continue;
       int ticket = StrToInteger(keys[i]);
 
       if (currencyId != 0)
