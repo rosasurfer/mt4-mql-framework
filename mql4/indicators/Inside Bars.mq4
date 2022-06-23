@@ -23,13 +23,13 @@ extern bool   Signal.onInsideBar.Popup       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
 extern bool   Signal.onInsideBar.SMS         = false;
 
-extern string ___b__________________________ = "=== Projection levels ===";   // last inside bar only
-extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout
-extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
-extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
-extern string InsideBar.ProjectionLevel.4    = "{a non-numeric value disables a level}";
+extern string ___b__________________________ = "=== Monitored projection levels in % ===";
+extern string InsideBar.ProjectionLevel.1    = "{a non-numeric value disables the level}";
+extern string InsideBar.ProjectionLevel.2    = "0%";                          // IB breakout
+extern string InsideBar.ProjectionLevel.3    = "50%";                         // projection mid range
+extern string InsideBar.ProjectionLevel.4    = "100%";                        // projection full range
 
-extern string ___c__________________________ = "=== Sound alerts ===";
+extern string ___c__________________________ = "=== Sound alerts ===";        // youngest inside bar only
 extern string Sound.onInsideBar              = "Inside Bar.wav";
 extern string Sound.onProjectionLevel.1      = "Inside Bar Level 1.wav";
 extern string Sound.onProjectionLevel.2      = "Inside Bar Level 2.wav";
@@ -55,23 +55,26 @@ extern string Sound.onProjectionLevel.4      = "Inside Bar Level 4.wav";
 #define CLOSE     4
 #define VOLUME    5
 
-int    timeframe;                                        // IB timeframe to process
-int    maxInsideBars;
-string labels[];                                         // chart object labels
+int      timeframe;                                      // IB timeframe to process
+int      maxInsideBars;
+string   labels[];                                       // chart object labels
 
-bool   signalInsideBar;
-bool   signalInsideBar.sound;
-bool   signalInsideBar.popup;
-bool   signalInsideBar.mail;
-string signalInsideBar.mailSender   = "";
-string signalInsideBar.mailReceiver = "";
-bool   signalInsideBar.sms;
-string signalInsideBar.smsReceiver = "";
+bool     signalInsideBar;
+bool     signalInsideBar.sound;
+bool     signalInsideBar.popup;
+bool     signalInsideBar.mail;
+string   signalInsideBar.mailSender   = "";
+string   signalInsideBar.mailReceiver = "";
+bool     signalInsideBar.sms;
+string   signalInsideBar.smsReceiver = "";
 
-double projectionLevel_1 = EMPTY;
-double projectionLevel_2 = EMPTY;
-double projectionLevel_3 = EMPTY;
-double projectionLevel_4 = EMPTY;
+bool     monitorProjections;                             // projection percentage targets and corresponding price levels
+double   projectionTargets[4] = {EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE};
+double   projectionLevels [4];
+
+datetime latestIB.openTime;                              // bar data of the youngest (=latest) inside bar
+double   latestIB.high;
+double   latestIB.low;
 
 
 /**
@@ -115,43 +118,30 @@ int onInit() {
       else signalInsideBar = false;
    }
 
-   // projection levels
-   projectionLevel_1 = EMPTY;
+   // projection levels (in percent)
+   ArrayInitialize(projectionTargets, EMPTY_VALUE);
+
    sValue = StrTrim(InsideBar.ProjectionLevel.1);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.1", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) {
-      double dValue = StrToDouble(sValue);
-      if (dValue < 0)      return(catch("onInit(3)  invalid input parameter InsideBar.ProjectionLevel.1: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.1) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
-      projectionLevel_1 = dValue;
-   }
-   projectionLevel_2 = EMPTY;
+   if (StrIsNumeric(sValue)) projectionTargets[0] = StrToDouble(sValue);
+
    sValue = StrTrim(InsideBar.ProjectionLevel.2);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.2", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) {
-      dValue = StrToDouble(sValue);
-      if (dValue < 0)      return(catch("onInit(4)  invalid input parameter InsideBar.ProjectionLevel.2: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.2) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
-      projectionLevel_2 = dValue;
-   }
-   projectionLevel_3 = EMPTY;
+   if (StrIsNumeric(sValue)) projectionTargets[1] = StrToDouble(sValue);
+
    sValue = StrTrim(InsideBar.ProjectionLevel.3);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.3", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) {
-      dValue = StrToDouble(sValue);
-      if (dValue < 0)      return(catch("onInit(5)  invalid input parameter InsideBar.ProjectionLevel.3: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.3) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
-      projectionLevel_3 = dValue;
-   }
-   projectionLevel_4 = EMPTY;
+   if (StrIsNumeric(sValue)) projectionTargets[2] = StrToDouble(sValue);
+
    sValue = StrTrim(InsideBar.ProjectionLevel.4);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.4", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) {
-      dValue = StrToDouble(sValue);
-      if (dValue < 0)      return(catch("onInit(6)  invalid input parameter InsideBar.ProjectionLevel.4: "+ DoubleQuoteStr(InsideBar.ProjectionLevel.4) +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
-      projectionLevel_4 = dValue;
-   }
+   if (StrIsNumeric(sValue)) projectionTargets[3] = StrToDouble(sValue);
+
+   monitorProjections = (!IsEmptyValue(projectionTargets[0]) || !IsEmptyValue(projectionTargets[1]) || !IsEmptyValue(projectionTargets[2]) || !IsEmptyValue(projectionTargets[3]));
    // sound files will be validated/checked at runtime
 
    // display options
@@ -187,6 +177,10 @@ int onTick() {
       case PERIOD_D1 : CheckInsideBarsD1 (ratesM5, changedBarsM5);            break;
       case PERIOD_W1 : CheckInsideBarsW1 (ratesM5, changedBarsM5);            break;
       case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBarsM5);            break;
+   }
+
+   if (latestIB.openTime && monitorProjections) {
+      MonitorProjections();
    }
    return(last_error);
 }
@@ -245,7 +239,7 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
 
       for (int i=2; i < bars; i++) {
          if (rates[i][HIGH] >= rates[i-1][HIGH] && rates[i][LOW] <= rates[i-1][LOW]) {
-            MarkInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
+            CreateInsideBar(timeframe, rates[i-1][TIME], rates[i-1][HIGH], rates[i-1][LOW]);
             more--;
             if (!more) break;
          }
@@ -291,7 +285,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (m15 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow);
+               CreateInsideBar(PERIOD_M15, ppOpenTimeM15, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -344,7 +338,7 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (m30 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow);
+               CreateInsideBar(PERIOD_M30, ppOpenTimeM30, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -397,7 +391,7 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
          }
          else {
             if (h1 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow);
+               CreateInsideBar(PERIOD_H1, ppOpenTimeH1, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -450,7 +444,7 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new H4 bar
             if (h4 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow);
+               CreateInsideBar(PERIOD_H4, ppOpenTimeH4, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -503,7 +497,7 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new D1 bar
             if (d1 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow);
+               CreateInsideBar(PERIOD_D1, ppOpenTimeD1, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -558,7 +552,7 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new W1 bar
             if (w1 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow);
+               CreateInsideBar(PERIOD_W1, ppOpenTimeW1, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -613,7 +607,7 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
          }
          else {                                                   // the current H1 bar belongs to a new MN1 bar
             if (mn1 > 1 && high >= pHigh && low <= pLow) {
-               MarkInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow);
+               CreateInsideBar(PERIOD_MN1, ppOpenTimeMN1, pHigh, pLow);
                more--;
                if (!more) break;
             }
@@ -632,16 +626,16 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
 
 
 /**
- * Mark the specified inside bar.
+ * Draw a new inside bar for the specified data.
  *
- * @param  int      timeframe - timeframe
+ * @param  int      timeframe - inside bar timeframe
  * @param  datetime openTime  - inside bar open time
  * @param  double   high      - inside bar high
  * @param  double   low       - inside bar low
  *
  * @return bool - success status
  */
-bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
+bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) {
    datetime chartOpenTime = openTime;
    int chartOffset = iBarShiftNext(NULL, NULL, openTime);         // offset of the first matching chart bar
    if (chartOffset >= 0) chartOpenTime = Time[chartOffset];
@@ -663,7 +657,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_BACK,  true);
       RegisterObject(label);
       ArrayPushString(labels, label);
-   } else debug("MarkInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // horizontal line at long projection
    label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
@@ -675,7 +669,7 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSetText (label, " "+ sTimeframe);
       RegisterObject(label);
       ArrayPushString(labels, label);
-   } else debug("MarkInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
 
    // horizontal line at short projection
    label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
@@ -686,11 +680,22 @@ bool MarkInsideBar(int timeframe, datetime openTime, double high, double low) {
       ObjectSet     (label, OBJPROP_BACK,  true);
       RegisterObject(label);
       ArrayPushString(labels, label);
-   } else debug("MarkInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
-   // signal new inside bars
-   if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
-      return(onInsideBar(timeframe, closeTime, high, low));
+
+   if (!IsSuperContext()) {
+      // store data of the youngest inside bar for monitoring of projection levels
+      if (openTime > latestIB.openTime) {
+         latestIB.openTime = openTime;
+         latestIB.high     = high;
+         latestIB.low      = low;
+         ArrayInitialize(projectionLevels, NULL);
+      }
+
+      // signal new inside bars
+      if (signalInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
+         return(onInsideBar(timeframe, closeTime, high, low));
+      }
    }
    return(true);
 }
@@ -750,6 +755,20 @@ bool DeleteInsideBars(int timeframe) {
          }
          ArraySpliceStrings(labels, i, 1);
       }
+   }
+   return(true);
+}
+
+
+/**
+ * Monitor projection levels for the globally stored inside bar.
+ *
+ * @return bool - success status
+ */
+bool MonitorProjections() {
+   static bool done = false; if (!done) {
+      //debug("MonitorProjections(0.1)  "+ PeriodDescription(timeframe) +" IB: T="+ TimeToStr(latestIB.openTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(latestIB.high, PriceFormat) +"  L="+ NumberToStr(latestIB.low, PriceFormat));
+      done = true;
    }
    return(true);
 }
