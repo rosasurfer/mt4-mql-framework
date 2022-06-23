@@ -9953,13 +9953,12 @@ Length=20
 AlertOn=1
 </inputs>
 </expert>
-color_0=65535
 draw_1=0
 color_1=16760576
-weight_1=2
+weight_1=3
 draw_2=0
 color_2=42495
-weight_2=2
+weight_2=3
 period_flags=0
 show_data=1
 </indicator>
