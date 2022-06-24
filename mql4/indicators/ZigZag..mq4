@@ -38,7 +38,7 @@ extern int    ZigZag.Periods                 = 40;                      // lookb
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
-extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a medium dot
+extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large dot
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
@@ -52,17 +52,17 @@ extern int    Max.Bars                       = 10000;                   // max. 
 extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified step size
 
 extern string ___d__________________________ = "=== Reversal signaling ===";
-extern bool   Signal.onReversal              = false;
+extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
 extern bool   Signal.onReversal.Sound        = true;
-extern string Signal.onReversal.SoundUp      = "Signal Up.wav";         // on ZigZag reversal (first channel crossing)
+extern string Signal.onReversal.SoundUp      = "Signal Up.wav";
 extern string Signal.onReversal.SoundDown    = "Signal Down.wav";
 extern bool   Signal.onReversal.Popup        = false;
 extern bool   Signal.onReversal.Mail         = false;
 extern bool   Signal.onReversal.SMS          = false;
 
-extern string ___e__________________________ = "=== High/Low signaling ===";
-extern bool   Sound.onCrossing               = false;
-extern string Sound.onCrossing.Up            = "AlertDefault.wav";      // on channel widening (all channel crossings)
+extern string ___e__________________________ = "=== New high/low sound alerts ===";
+extern bool   Sound.onCrossing               = false;                   // on channel widening (all channel crossings)
+extern string Sound.onCrossing.Up            = "AlertDefault.wav";
 extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
