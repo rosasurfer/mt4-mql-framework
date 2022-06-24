@@ -38,6 +38,7 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .code           { font-family:monospace;            }
+  .italic         { font-style:italic;                }
   .const          { color:#980000;                    }
   .function       { color:#000093;                    }  /* same as <a/>    */
   .core           { color:Red;                        }
@@ -4144,43 +4145,40 @@ for(int i=0; i&lt;count; i++)
       tag=array_ArraySort
       caption=ArraySort()
       type=int
-      keywords=;ArraySort();MODE_ASCEND;MODE_DESCEND;
+      keywords=;ArraySort();MODE_ASCEND;MODE_DESCEND;sort;
       <content>
-      Sorts numeric arrays by first dimension. Series arrays cannot be sorted by ArraySort().
+      Sorts a numeric array by its first dimension. Series arrays cannot be sorted.
       </content>
       <example>
-  double num_array[5]={4,1,6,3,9};
-  // now array contains values 4,1,6,3,9
-  ArraySort(num_array);
-  // now array is sorted 1,3,4,6,9
-  ArraySort(num_array,WHOLE_ARRAY,0,MODE_DESCEND);
-  // now array is sorted 9,6,4,3,1
+<span class="type code">double</span> values[<span class="number code">5</span>] = {<span class="number code">4</span>, <span class="number code">1</span>, <span class="number code">6</span>, <span class="number code">3</span>, <span class="number code">9</span>};                <span class="comment code">// initial order:         4, 1, 6, 3, 9</span>
+<span class="function code">ArraySort</span>(values);                                 <span class="comment code">// now sorted ascending:  1, 3, 4, 6, 9</span>
+<span class="function code">ArraySort</span>(values, <span class="const code">WHOLE_ARRAY</span>, <span class="number code">0</span>, <span class="const code">MODE_DESCEND</span>);   <span class="comment code">// now sorted descending: 9, 6, 4, 3, 1</span>
       </example>
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
-        description=The numeric array to be sorted.
+        description=numeric array to be sorted
       </parameter>
       <parameter>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Count of elements to be sorted.
+        description=number of elements to be sorted starting at parameter <span class="code italic">start</span> 
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Starting index.
+        description=start index
       </parameter>
       <parameter>
         type=int
-        name=sort_dir
+        name=direction
         def_value=<span class="const">MODE_ASCEND</span>
         <description>
-Array sorting direction. It can be any of the following values:<br/>
-<span class="const">MODE_ASCEND</span> - sort ascending,<br/>
-<span class="const">MODE_DESCEND</span> - sort descending.
+sorting direction, can be one of:<br/>
+<span class="const">MODE_ASCEND</span> - sort ascending<br/>
+<span class="const">MODE_DESCEND</span> - sort descending
         </description>
       </parameter>
     </function>
