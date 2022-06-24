@@ -69,8 +69,9 @@ bool     signalInsideBar.sms;
 string   signalInsideBar.smsReceiver = "";
 
 bool     monitorProjections;                             // projection percentage targets and corresponding price levels
-double   projectionTargets[4] = {EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE};
-double   projectionLevels [4];
+double   projectionTargets    [4] = {EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE};
+double   projectionLevelsLong [4];
+double   projectionLevelsShort[4];
 
 datetime latestIB.openTime;                              // bar data of the youngest (=latest) inside bar
 double   latestIB.high;
@@ -99,7 +100,7 @@ int onInit() {
    maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
-   signalInsideBar       = Signal.onInsideBar;                 // reset global vars when called due to an account change
+   signalInsideBar       = Signal.onInsideBar;
    signalInsideBar.sound = Signal.onInsideBar.Sound;
    signalInsideBar.popup = Signal.onInsideBar.Popup;
    signalInsideBar.mail  = Signal.onInsideBar.Mail;
@@ -118,7 +119,7 @@ int onInit() {
       else signalInsideBar = false;
    }
 
-   // projection levels (in percent)
+   // projection levels
    ArrayInitialize(projectionTargets, EMPTY_VALUE);
 
    sValue = StrTrim(InsideBar.ProjectionLevel.1);
@@ -141,7 +142,8 @@ int onInit() {
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
    if (StrIsNumeric(sValue)) projectionTargets[3] = StrToDouble(sValue);
 
-   monitorProjections = (!IsEmptyValue(projectionTargets[0]) || !IsEmptyValue(projectionTargets[1]) || !IsEmptyValue(projectionTargets[2]) || !IsEmptyValue(projectionTargets[3]));
+   ArraySort(projectionTargets);
+   monitorProjections = !IsEmptyValue(projectionTargets[0]);
    // sound files will be validated/checked at runtime
 
    // display options
@@ -179,10 +181,26 @@ int onTick() {
       case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBarsM5);            break;
    }
 
-   if (latestIB.openTime && monitorProjections) {
-      MonitorProjections();
-   }
+   if (monitorProjections && latestIB.openTime) MonitorProjections();
    return(last_error);
+}
+
+
+/**
+ * Handle AccountChange events.
+ *
+ * @param  int previous - previous account number
+ * @param  int current  - new account number
+ *
+ * @return int - error status
+ */
+int onAccountChange(int previous, int current) {
+   latestIB.openTime = 0;                          // reset global non-input vars used by the various event handlers
+   latestIB.high     = 0;
+   latestIB.low      = 0;
+   ArrayInitialize(projectionLevelsLong,  NULL);
+   ArrayInitialize(projectionLevelsShort, NULL);
+   return(onInit());
 }
 
 
@@ -233,7 +251,7 @@ bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
          bars = 3;
       }
       else {
-         DeleteInsideBars(timeframe);                             // on data pumping: delete all existing bars
+         DeleteInsideBars(timeframe);                             // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -268,7 +286,7 @@ bool CheckInsideBarsM15(double ratesM5[][], int changedBarsM5) {
          bars = 8;                                                // cover M5 periods of 2 finished M15 bars
       }
       else {
-         DeleteInsideBars(PERIOD_M15);                            // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_M15);                            // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -321,7 +339,7 @@ bool CheckInsideBarsM30(double ratesM5[][], int changedBarsM5) {
          bars = 14;                                               // cover M5 periods of 2 finished M30 bars
       }
       else {
-         DeleteInsideBars(PERIOD_M30);                            // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_M30);                            // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -374,7 +392,7 @@ bool CheckInsideBarsH1(double ratesM5[][], int changedBarsM5) {
          bars = 26;                                               // cover M5 periods of 2 finished H1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_H1);                             // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_H1);                             // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -427,7 +445,7 @@ bool CheckInsideBarsH4(double ratesM5[][], int changedBarsM5) {
          bars = 98;                                               // cover M5 periods of 2 finished H4 bars
       }
       else {
-         DeleteInsideBars(PERIOD_H4);                             // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_H4);                             // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -480,7 +498,7 @@ bool CheckInsideBarsD1(double ratesM5[][], int changedBarsM5) {
          bars = 578;                                              // cover M5 periods of 2 finished D1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_D1);                             // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_D1);                             // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -533,7 +551,7 @@ bool CheckInsideBarsW1(double ratesM5[][], int changedBarsM5) {
          bars = 4034;                                             // cover M5 periods of 2 finished W1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_W1);                             // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_W1);                             // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -588,7 +606,7 @@ bool CheckInsideBarsMN1(double ratesM5[][], int changedBarsM5) {
          bars = 17858;                                            // cover M5 periods of 2 finished MN1 bars
       }
       else {
-         DeleteInsideBars(PERIOD_MN1);                            // on data pumping: delete all existing bars
+         DeleteInsideBars(PERIOD_MN1);                            // on init or data pumping: delete all existing bars
          more = maxInsideBars;                                    // check the configured number of IBs
       }
 
@@ -689,7 +707,8 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
          latestIB.openTime = openTime;
          latestIB.high     = high;
          latestIB.low      = low;
-         ArrayInitialize(projectionLevels, NULL);
+         ArrayInitialize(projectionLevelsLong,  NULL);
+         ArrayInitialize(projectionLevelsShort, NULL);
       }
 
       // signal new inside bars
@@ -766,11 +785,38 @@ bool DeleteInsideBars(int timeframe) {
  * @return bool - success status
  */
 bool MonitorProjections() {
+   if (!projectionLevelsLong[0]) {                                         // initialize price levels
+      if (latestIB.openTime<=0 || latestIB.high<=0 || latestIB.low<=0) {
+         return(!catch("MonitorProjections(1)  invalid latest IB data: T="+ TimeToStr(latestIB.openTime, TIME_FULL) +"  H="+ NumberToStr(latestIB.high, ".1+") +"  L="+ NumberToStr(latestIB.low, ".1+"), ERR_ILLEGAL_STATE));
+      }
+      double ibHigh=latestIB.high, ibLow=latestIB.low, ibRange=ibHigh-ibLow;
+
+      if (!IsEmptyValue(projectionTargets[0]) && !projectionLevelsLong[0]) {
+         projectionLevelsLong [0] = NormalizeDouble(ibHigh + ibRange * projectionTargets[0]/100, Digits);
+         projectionLevelsShort[0] = NormalizeDouble(ibLow  - ibRange * projectionTargets[0]/100, Digits);
+      }
+      if (!IsEmptyValue(projectionTargets[1]) && !projectionLevelsLong[1]) {
+         projectionLevelsLong [1] = NormalizeDouble(ibHigh + ibRange * projectionTargets[1]/100, Digits);
+         projectionLevelsShort[1] = NormalizeDouble(ibLow  - ibRange * projectionTargets[1]/100, Digits);
+      }
+      if (!IsEmptyValue(projectionTargets[2]) && !projectionLevelsLong[2]) {
+         projectionLevelsLong [2] = NormalizeDouble(ibHigh + ibRange * projectionTargets[2]/100, Digits);
+         projectionLevelsShort[2] = NormalizeDouble(ibLow  - ibRange * projectionTargets[2]/100, Digits);
+      }
+      if (!IsEmptyValue(projectionTargets[3]) && !projectionLevelsLong[3]) {
+         projectionLevelsLong [3] = NormalizeDouble(ibHigh + ibRange * projectionTargets[3]/100, Digits);
+         projectionLevelsShort[3] = NormalizeDouble(ibLow  - ibRange * projectionTargets[3]/100, Digits);
+      }
+   }
+
    static bool done = false; if (!done) {
       //debug("MonitorProjections(0.1)  "+ PeriodDescription(timeframe) +" IB: T="+ TimeToStr(latestIB.openTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(latestIB.high, PriceFormat) +"  L="+ NumberToStr(latestIB.low, PriceFormat));
+      //debug("MonitorProjections(0.2)  projectionLevelsLong  = "+ DoublesToStr(projectionLevelsLong, NULL));
+      //debug("MonitorProjections(0.3)  projectionLevelsShort = "+ DoublesToStr(projectionLevelsShort, NULL));
       done = true;
    }
-   return(true);
+
+   return(!catch("MonitorProjections(2)"));
 }
 
 

@@ -221,7 +221,7 @@ int onInit() {
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
    if (Donchian.Lower.Color == 0xFF000000) Donchian.Lower.Color = CLR_NONE;
    // signaling
-   signalReversal       = Signal.onReversal;                      // reset global vars (for possible account change)
+   signalReversal       = Signal.onReversal;
    signalReversal.sound = Signal.onReversal.Sound;
    signalReversal.popup = Signal.onReversal.Popup;
    signalReversal.mail  = Signal.onReversal.Mail;
@@ -478,9 +478,12 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   tickSize  = 0;
-   lastTick  = 0;                                                 // reset vars used by the reversal event handler
-   waitUntil = 0;
+   tickSize      = 0;
+   lastTick      = 0;         // reset global non-input vars used by the various event handlers
+   lastSound     = 0;
+   waitUntil     = 0;
+   prevUpperBand = 0;
+   prevLowerBand = 0;
    return(onInit());
 }
 
