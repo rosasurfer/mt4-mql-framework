@@ -1,7 +1,7 @@
 /**
  * Buzzer MA
  *
- * @link  https://www.mql5.com/en/code/12152#   [Buzzer]
+ * @link  https://www.mql5.com/en/code/12152
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
