@@ -48,16 +48,16 @@ extern string Sound.onProjectionLevel.4      = "Inside Bar Level 4.wav";
 
 #property indicator_chart_window
 
-#define TIME      0                                      // rates array indexes
+#define TIME      0                             // rates array indexes
 #define OPEN      1
 #define LOW       2
 #define HIGH      3
 #define CLOSE     4
 #define VOLUME    5
 
-int      timeframe;                                      // IB timeframe to process
+int      timeframe;                             // IB timeframe to process
 int      maxInsideBars;
-string   labels[];                                       // chart object labels
+string   labels[];                              // chart object labels
 
 bool     signalInsideBar;
 bool     signalInsideBar.sound;
@@ -68,12 +68,13 @@ string   signalInsideBar.mailReceiver = "";
 bool     signalInsideBar.sms;
 string   signalInsideBar.smsReceiver = "";
 
-bool     monitorProjections;                             // projection percentage targets and corresponding price levels
-double   projectionTargets    [4] = {EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE};
-double   projectionLevelsLong [4];
-double   projectionLevelsShort[4];
+bool     monitorProjections;
+double   projectionLevels[];                    // projection levels in %
+string   projectionEvents[];                    // projection events to be executed
+double   projectionPrices[];                    // projection prices
+int      lastProjectionEvent = EMPTY;           // index of the last touched projection level
 
-datetime latestIB.openTime;                              // bar data of the youngest (=latest) inside bar
+datetime latestIB.openTime;                     // bar data of the youngest (i.e. latest) inside bar
 double   latestIB.high;
 double   latestIB.low;
 
@@ -88,7 +89,8 @@ int onInit() {
 
    // validate inputs
    // Timeframe
-   string sValue = ifString(AutoConfiguration, GetConfigString(indicator, "Timeframe", Timeframe), Timeframe);
+   string sValue = Timeframe;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframe", sValue);
    timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
    if (timeframe == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    Timeframe = TimeframeDescription(timeframe);
@@ -96,7 +98,7 @@ int onInit() {
    // NumberOfInsideBars
    int iValue = NumberOfInsideBars;
    if (AutoConfiguration) iValue = GetConfigInt(indicator, "NumberOfInsideBars", iValue);
-   if (iValue < -1)        return(catch("onInit(2)  invalid input parameter NumberOfInsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   if (iValue < -1)     return(catch("onInit(2)  invalid input parameter NumberOfInsideBars: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    maxInsideBars = ifInt(iValue==-1, INT_MAX, iValue);
 
    // signaling
@@ -120,30 +122,83 @@ int onInit() {
    }
 
    // projection levels
-   ArrayInitialize(projectionTargets, EMPTY_VALUE);
+   ArrayResize(projectionLevels, 0);
+   ArrayResize(projectionEvents, 0);
+   ArrayResize(projectionPrices, 0);
 
    sValue = StrTrim(InsideBar.ProjectionLevel.1);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.1", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) projectionTargets[0] = StrToDouble(sValue);
+   if (StrIsNumeric(sValue)) {
+      double dValue = StrToDouble(sValue);
+      if (dValue < -50) return(catch("onInit(3)  invalid input parameter InsideBar.ProjectionLevel.1: "+ sValue +" (min. value -50)", ERR_INVALID_INPUT_PARAMETER));
+      ArrayPushDouble(projectionLevels, dValue+50);
+      ArrayPushString(projectionEvents, Sound.onProjectionLevel.1);
+      if (dValue > -50) {
+         ArrayPushDouble(projectionLevels, -(dValue+50));
+         ArrayPushString(projectionEvents, Sound.onProjectionLevel.1);
+      }
+   }
 
    sValue = StrTrim(InsideBar.ProjectionLevel.2);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.2", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) projectionTargets[1] = StrToDouble(sValue);
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < -50) return(catch("onInit(4)  invalid input parameter InsideBar.ProjectionLevel.2: "+ sValue +" (min. value -50)", ERR_INVALID_INPUT_PARAMETER));
+      ArrayPushDouble(projectionLevels, dValue+50);
+      ArrayPushString(projectionEvents, Sound.onProjectionLevel.2);
+      if (dValue > -50) {
+         ArrayPushDouble(projectionLevels, -(dValue+50));
+         ArrayPushString(projectionEvents, Sound.onProjectionLevel.2);
+      }
+   }
 
    sValue = StrTrim(InsideBar.ProjectionLevel.3);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.3", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) projectionTargets[2] = StrToDouble(sValue);
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < -50) return(catch("onInit(5)  invalid input parameter InsideBar.ProjectionLevel.3: "+ sValue +" (min. value -50)", ERR_INVALID_INPUT_PARAMETER));
+      ArrayPushDouble(projectionLevels, dValue+50);
+      ArrayPushString(projectionEvents, Sound.onProjectionLevel.3);
+      if (dValue > -50) {
+         ArrayPushDouble(projectionLevels, -(dValue+50));
+         ArrayPushString(projectionEvents, Sound.onProjectionLevel.3);
+      }
+   }
 
    sValue = StrTrim(InsideBar.ProjectionLevel.4);
    if (AutoConfiguration) sValue = GetConfigString(indicator, "InsideBar.ProjectionLevel.4", sValue);
    if (StrEndsWith(sValue, "%")) sValue = StrTrim(StrLeft(sValue, -1));
-   if (StrIsNumeric(sValue)) projectionTargets[3] = StrToDouble(sValue);
+   if (StrIsNumeric(sValue)) {
+      dValue = StrToDouble(sValue);
+      if (dValue < -50) return(catch("onInit(6)  invalid input parameter InsideBar.ProjectionLevel.4: "+ sValue +" (min. value -50)", ERR_INVALID_INPUT_PARAMETER));
+      ArrayPushDouble(projectionLevels, dValue+50);
+      ArrayPushString(projectionEvents, Sound.onProjectionLevel.4);
+      if (dValue > -50) {
+         ArrayPushDouble(projectionLevels, -(dValue+50));
+         ArrayPushString(projectionEvents, Sound.onProjectionLevel.4);
+      }
+   }
 
-   ArraySort(projectionTargets);
-   monitorProjections = !IsEmptyValue(projectionTargets[0]);
+   monitorProjections = (ArraySize(projectionLevels) > 0);
+   if (monitorProjections) {
+      if (!DoubleInArray(projectionLevels, 50)) {
+         ArrayPushDouble(projectionLevels, 50);                // always monitor IB high but don't assign an event
+         ArrayPushString(projectionEvents, "");
+      }
+      if (!DoubleInArray(projectionLevels, 0)) {
+         ArrayPushDouble(projectionLevels, 0);                 // always monitor IB mid but don't assign an event
+         ArrayPushString(projectionEvents, "");
+      }
+      if (!DoubleInArray(projectionLevels, -50)) {
+         ArrayPushDouble(projectionLevels, -50);               // always monitor IB low but don't assign an event
+         ArrayPushString(projectionEvents, "");
+      }
+      SortProjections(projectionLevels, projectionEvents);
+      ArrayResize(projectionPrices, ArraySize(projectionLevels));
+   }
    // sound files will be validated/checked at runtime
 
    // display options
@@ -195,11 +250,13 @@ int onTick() {
  * @return int - error status
  */
 int onAccountChange(int previous, int current) {
-   latestIB.openTime = 0;                          // reset global non-input vars used by the various event handlers
-   latestIB.high     = 0;
-   latestIB.low      = 0;
-   ArrayInitialize(projectionLevelsLong,  NULL);
-   ArrayInitialize(projectionLevelsShort, NULL);
+   ArrayResize(projectionLevels, 0);               // reset global status vars used by the event handlers
+   ArrayResize(projectionEvents, 0);
+   ArrayResize(projectionPrices, 0);
+   lastProjectionEvent = EMPTY;
+   latestIB.openTime   = 0;
+   latestIB.high       = 0;
+   latestIB.low        = 0;
    return(onInit());
 }
 
@@ -700,21 +757,17 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
       ArrayPushString(labels, label);
    } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
 
+   // store data of the latest inside bar for projection monitoring
+   if (openTime > latestIB.openTime) {
+      latestIB.openTime = openTime;
+      latestIB.high     = high;
+      latestIB.low      = low;
+      ArrayInitialize(projectionPrices, 0);
+   }
 
-   if (!IsSuperContext()) {
-      // store data of the youngest inside bar for monitoring of projection levels
-      if (openTime > latestIB.openTime) {
-         latestIB.openTime = openTime;
-         latestIB.high     = high;
-         latestIB.low      = low;
-         ArrayInitialize(projectionLevelsLong,  NULL);
-         ArrayInitialize(projectionLevelsShort, NULL);
-      }
-
-      // signal new inside bars
-      if (signalInsideBar) /*&&*/ if (IsBarOpen(timeframe)) {
-         return(onInsideBar(timeframe, closeTime, high, low));
-      }
+   // signal new inside bars
+   if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
+      return(onInsideBar(timeframe, closeTime, high, low));
    }
    return(true);
 }
@@ -750,7 +803,7 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    if (signalInsideBar.mail)  error |= !SendEmail(signalInsideBar.mailSender, signalInsideBar.mailReceiver, message, message + NL + sLocalTime);
    if (signalInsideBar.sms)   error |= !SendSMS(signalInsideBar.smsReceiver, message + NL + sLocalTime);
 
-   if (This.IsTesting()) Tester.Pause();
+   if (__isTesting) Tester.Pause();
    return(!error);
 }
 
@@ -780,43 +833,138 @@ bool DeleteInsideBars(int timeframe) {
 
 
 /**
- * Monitor projection levels for the globally stored inside bar.
+ * Sort projection levels and assigned events.
+ *
+ * @param  double levels[]
+ * @param  string events[]
+ *
+ * @return bool - success status
+ */
+bool SortProjections(double levels[], string events[]) {
+   // a simple bubble sort algorithm
+   int size = ArraySize(levels);
+
+   for (int i=size-1; i >= 0; i--) {
+      bool swapped = false;
+
+      for (int j=0; j < i; j++) {
+         if (levels[j] > levels[j+1]) {
+            SortProjections_Swap(levels, events, j, j+1);
+            swapped = true;
+         }
+      }
+      if (!swapped) break;
+   }
+   return(!catch("SortProjections(1)"));
+}
+
+
+/**
+ * Swap helper for SortProjections()
+ *
+ * @param  double levels[]
+ * @param  string events[]
+ * @param  int    a
+ * @param  int    b
+ */
+void SortProjections_Swap(double &levels[], string &events[], int a, int b) {
+   double dTmp = levels[a];
+   string sTmp = events[a];
+
+   levels[a] = levels[b];
+   events[a] = events[b];
+
+   levels[b] = dTmp;
+   events[b] = sTmp;
+}
+
+
+/**
+ * Monitor projection levels of the latest inside bar.
  *
  * @return bool - success status
  */
 bool MonitorProjections() {
-   if (!projectionLevelsLong[0]) {                                         // initialize price levels
+   if (!projectionPrices[0]) {                                 // initialize price levels
       if (latestIB.openTime<=0 || latestIB.high<=0 || latestIB.low<=0) {
          return(!catch("MonitorProjections(1)  invalid latest IB data: T="+ TimeToStr(latestIB.openTime, TIME_FULL) +"  H="+ NumberToStr(latestIB.high, ".1+") +"  L="+ NumberToStr(latestIB.low, ".1+"), ERR_ILLEGAL_STATE));
       }
-      double ibHigh=latestIB.high, ibLow=latestIB.low, ibRange=ibHigh-ibLow;
+      double ibHigh=latestIB.high, ibLow=latestIB.low, ibMid=(ibHigh+ibLow)/2., ibRange=ibHigh-ibLow;
 
-      if (!IsEmptyValue(projectionTargets[0]) && !projectionLevelsLong[0]) {
-         projectionLevelsLong [0] = NormalizeDouble(ibHigh + ibRange * projectionTargets[0]/100, Digits);
-         projectionLevelsShort[0] = NormalizeDouble(ibLow  - ibRange * projectionTargets[0]/100, Digits);
+      int size = ArraySize(projectionLevels);
+      for (int i=0; i < size; i++) {
+         projectionPrices[i] = NormalizeDouble(ibMid + ibRange * projectionLevels[i]/100, Digits);
       }
-      if (!IsEmptyValue(projectionTargets[1]) && !projectionLevelsLong[1]) {
-         projectionLevelsLong [1] = NormalizeDouble(ibHigh + ibRange * projectionTargets[1]/100, Digits);
-         projectionLevelsShort[1] = NormalizeDouble(ibLow  - ibRange * projectionTargets[1]/100, Digits);
+      lastProjectionEvent = ResolveLastProjectionEvent();
+
+      static bool barModelChecked = false; if (!barModelChecked) {
+         if (__isTesting && __Test.barModel==MODE_BAROPEN) logInfo("MonitorProjections(2)  projection monitoring in tester with bar model \"Open prices\" is not accurate");
+         barModelChecked = true;
       }
-      if (!IsEmptyValue(projectionTargets[2]) && !projectionLevelsLong[2]) {
-         projectionLevelsLong [2] = NormalizeDouble(ibHigh + ibRange * projectionTargets[2]/100, Digits);
-         projectionLevelsShort[2] = NormalizeDouble(ibLow  - ibRange * projectionTargets[2]/100, Digits);
+
+      if (IsLogDebug()) {
+         //logDebug("MonitorProjections(0.1)  InsideBar("+ PeriodDescription(timeframe) +"): T="+ TimeToStr(latestIB.openTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(latestIB.high, PriceFormat) +"  L="+ NumberToStr(latestIB.low, PriceFormat));
+         //logDebug("MonitorProjections(0.2)  projectionLevels    = "+ DoublesToStr(projectionLevels, NULL));
+         //logDebug("MonitorProjections(0.3)  projectionPrices    = "+ DoublesToStr(projectionPrices, NULL));
+         //logDebug("MonitorProjections(0.4)  lastProjectionEvent = "+ NumberToStr(projectionLevels[lastProjectionEvent]-50, ".1+") +"% = "+ NumberToStr(projectionPrices[lastProjectionEvent], PriceFormat));
       }
-      if (!IsEmptyValue(projectionTargets[3]) && !projectionLevelsLong[3]) {
-         projectionLevelsLong [3] = NormalizeDouble(ibHigh + ibRange * projectionTargets[3]/100, Digits);
-         projectionLevelsShort[3] = NormalizeDouble(ibLow  - ibRange * projectionTargets[3]/100, Digits);
+   }
+   size = ArraySize(projectionLevels);
+
+   int nextLongProjection = lastProjectionEvent + 1;           // check long projections
+   if (nextLongProjection < size) {
+      if (Bid >= projectionPrices[nextLongProjection]) {
+         PlaySoundDX(projectionEvents[nextLongProjection]);
+         lastProjectionEvent = nextLongProjection;
       }
    }
 
-   static bool done = false; if (!done) {
-      //debug("MonitorProjections(0.1)  "+ PeriodDescription(timeframe) +" IB: T="+ TimeToStr(latestIB.openTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(latestIB.high, PriceFormat) +"  L="+ NumberToStr(latestIB.low, PriceFormat));
-      //debug("MonitorProjections(0.2)  projectionLevelsLong  = "+ DoublesToStr(projectionLevelsLong, NULL));
-      //debug("MonitorProjections(0.3)  projectionLevelsShort = "+ DoublesToStr(projectionLevelsShort, NULL));
-      done = true;
+   int nextShortProjection = lastProjectionEvent - 1;          // check short projections
+   if (nextShortProjection >= 0) {
+      if (Bid <= projectionPrices[nextShortProjection]) {
+         PlaySoundDX(projectionEvents[nextShortProjection]);
+         lastProjectionEvent = nextShortProjection;
+      }
+   }
+   return(!catch("MonitorProjections(3)"));
+}
+
+
+/**
+ * Resolve the last touched projection level for monitoring.
+ *
+ * @return int - index of the last touched projection level
+ */
+int ResolveLastProjectionEvent() {
+   int size = ArraySize(projectionPrices);
+   int iMid = size/2;
+
+   if (Bid >= projectionPrices[iMid]) {         // compare Bid against long projections
+      for (int i=iMid; i < size; i++) {
+         if (projectionPrices[i] > Bid) break;
+      }
+      return(i-1);
    }
 
-   return(!catch("MonitorProjections(2)"));
+   for (i=iMid; i >= 0; i--) {                  // compare Bid against short projections
+      if (projectionPrices[i] < Bid) break;
+   }
+   return(i+1);
+}
+
+
+/**
+ * Empty shell for PlaySoundEx()
+ *
+ * @param  string action - event action
+ *
+ * @return int - error status
+ */
+int PlaySoundDX(string action) {
+   if (action != "") {
+      if (IsLogDebug()) logDebug("PlaySoundDX(1)  tick="+ Ticks +"  "+ action);
+   }
+   return(NO_ERROR);
 }
 
 
