@@ -15,6 +15,7 @@ int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_C
 //int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only in tester with "VisualMode=Off" or "Optimization=On".
 bool     __isTesting;                                             // Whether the program runs in the tester (experts, indicators and scripts).
+int      __Test.barModel;                                         // the bar model of a test
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
 bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)

@@ -81,8 +81,9 @@ int init() {
  * @return bool - success status
  */
 bool init_Globals() {
-   __isChart      = (__ExecutionContext[EC.hChart ] != 0);
-   __isTesting    = (__ExecutionContext[EC.testing] != 0);
+   __isChart   = (__ExecutionContext[EC.hChart ] != 0);
+   __isTesting = (__ExecutionContext[EC.testing] != 0);
+   if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));
