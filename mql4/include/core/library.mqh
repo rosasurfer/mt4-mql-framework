@@ -14,6 +14,7 @@ int init() {
    // globale Variablen initialisieren
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
+   if (__isTesting) __Test.barModel = Tester.GetBarModel();
    __lpSuperContext =  __ExecutionContext[EC.superContext];
 
    PipDigits        = Digits & (~1);

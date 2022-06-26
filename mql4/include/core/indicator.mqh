@@ -170,8 +170,9 @@ bool init_Globals() {
    //
    // TODO: implement workaround in MT4Expander
    //
-   __isChart      = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
+   __isChart   = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
+   if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));

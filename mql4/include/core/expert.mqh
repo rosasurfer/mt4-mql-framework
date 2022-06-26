@@ -147,9 +147,10 @@ int init() {
 
    if (__isTesting) {                                          // log MarketInfo() data
       if (IsLogInfo()) {
+         string title = "::: TEST (bar model: "+ BarModelDescription(__Test.barModel) +") :::";
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ init_MarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
-         if (__isTesting) separator = "::: TEST :::"+ StrRight(separator, -12);
+         if (__isTesting) separator = title + StrRight(separator, -StringLen(title));
          logInfo(separator);
          logInfo(msg);
       }
@@ -557,8 +558,9 @@ bool CheckErrors(string caller, int error = NULL) {
  * @return bool - success status
  */
 bool init_Globals() {
-   __isChart      = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting    = IsTesting();
+   __isChart       = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting     = IsTesting();
+   __Test.barModel = ec_TestBarModel(__ExecutionContext);
 
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));
@@ -1027,6 +1029,7 @@ bool start_Recorder() {
    bool   HistorySet3.Close  (int hSet);
 
 #import "rsfMT4Expander.dll"
+   int    ec_TestBarModel          (int ec[]);
    int    ec_SetDllError           (int ec[], int error   );
    int    ec_SetProgramCoreFunction(int ec[], int function);
    int    ec_SetRecordMode         (int ec[], int mode    );
