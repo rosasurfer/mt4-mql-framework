@@ -164,7 +164,7 @@ int onInit() {
  * @return int - error status
  */
 int afterInit() {
-   if (This.IsTesting()) {                                  // read test configuration
+   if (__isTesting) {                                       // read test configuration
       string section = ProgramName(MODE_NICE) +".Tester";
       test.onSignalPause = GetConfigBool(section, "OnSignalPause", false);
    }

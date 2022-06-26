@@ -339,7 +339,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    string fullCmd = cmd +":"+ params +":"+ modifiers;
 
    if (cmd == "wait") {
-      if (IsTestSequence() && !IsTesting())
+      if (IsTestSequence() && !__isTesting)
          return(true);
 
       switch (sequence.status) {
@@ -352,7 +352,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    if (cmd == "start") {
-      if (IsTestSequence() && !IsTesting())
+      if (IsTestSequence() && !__isTesting)
          return(true);
 
       switch (sequence.status) {
@@ -367,7 +367,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    if (cmd == "stop") {
-      if (IsTestSequence() && !IsTesting())
+      if (IsTestSequence() && !__isTesting)
          return(true);
 
       switch (sequence.status) {
@@ -623,7 +623,7 @@ void RestoreInputs() {
 double CalculateStartEquity() {
    double result;
 
-   if (!IsTesting() || !StrIsNumeric(UnitSize) || !recorder.hstBase[0]) {
+   if (!__isTesting || !StrIsNumeric(UnitSize) || !recorder.hstBase[0]) {
       result = NormalizeDouble(AccountEquity()-AccountCredit(), 2);
    }
    else {
@@ -814,7 +814,7 @@ bool ConfirmFirstTickTrade(string caller, string message) {
       return(true);                       // will differ and the calling logic must correctly interprete the first result.
 
    bool result;
-   if (Ticks > 1 || IsTesting()) {
+   if (Ticks > 1 || __isTesting) {
       result = true;
    }
    else {
@@ -1004,7 +1004,7 @@ bool HandleNetworkErrors() {
  * @return bool
  */
 bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
+   return(sequence.isTest || __isTesting);
 }
 
 
@@ -1406,7 +1406,7 @@ bool StartSequence(int signal) {
    if (IsLogDebug()) logDebug("StartSequence(4)  "+ sequence.name +" sequence started at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", gridbase "+ NumberToStr(gridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
-   if (IsTesting()) /*&&*/ if (IsVisualMode()) {
+   if (__isTesting) /*&&*/ if (IsVisualMode()) {
       if      (test.onStartPause)                                        Tester.Pause("StartSequence(5)");
       else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StartSequence(6)");
       else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("StartSequence(7)");
@@ -1674,7 +1674,7 @@ bool StopSequence(int signal) {
    }
 
    // pause or stop the tester according to the configuration
-   if (IsTesting()) {
+   if (__isTesting) {
       if (IsVisualMode()) {
          if      (test.onStopPause)                                         Tester.Pause("StopSequence(11)");
          else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("StopSequence(12)");
@@ -1950,7 +1950,7 @@ bool ResumeSequence(int signal) {
    if (IsLogDebug()) logDebug("ResumeSequence(4)  "+ sequence.name +" resumed at level "+ sequence.level +" (start price "+ NumberToStr(startPrice, PriceFormat) +", new gridbase "+ NumberToStr(newGridbase, PriceFormat) +")");
 
    // pause the tester according to the configuration
-   if (IsTesting()) /*&&*/ if (IsVisualMode()) {
+   if (__isTesting) /*&&*/ if (IsVisualMode()) {
       if      (test.onStartPause)                                        Tester.Pause("ResumeSequence(5)");
       else if (test.onSessionBreakPause && signal==SIGNAL_SESSION_BREAK) Tester.Pause("ResumeSequence(6)");
       else if (test.onTrendChangePause  && signal==SIGNAL_TREND)         Tester.Pause("ResumeSequence(7)");
@@ -2759,7 +2759,7 @@ bool UpdatePendingOrders(int saveStatusMode = SAVESTATUS_AUTO) {
       if (NE(gridbase, orders.gridbase[i], Digits)) {
          static int lastTrailed = 0;
 
-         if (/*IsTesting() ||*/Tick.time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
+         if (/*__isTesting ||*/Tick.time-lastTrailed >= limitOrderTrailing) { // wait <x> seconds between requests to avoid ERR_TOO_MANY_REQUESTS
             type = Grid.TrailPendingOrder(i); if (!type) return(false);
             lastTrailed = Tick.time;
             if (saveStatusMode != SAVESTATUS_SKIP) saveStatus = true;
@@ -4111,10 +4111,10 @@ int CreateEventId() {
 bool SaveStatus() {
    if (last_error != NULL)               return(false);
    if (!sequence.id)                     return(!catch("SaveStatus(1)  "+ sequence.name +" illegal value of sequence.id = "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting()) return(true);      // don't change the status file of a finished test
+   if (IsTestSequence() && !__isTesting) return(true);      // don't change the status file of a finished test
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (__isTesting && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -4908,7 +4908,7 @@ bool SynchronizeStatus() {
 
    // (1.1) alle offenen Tickets in Datenarrays synchronisieren, gestrichene PendingOrders löschen
    for (int i=0; i < sizeOfTickets; i++) {
-      if (!IsTestSequence() || !IsTesting()) {                             // keine Synchronization für abgeschlossene Tests
+      if (!IsTestSequence() || !__isTesting) {                             // keine Synchronization für abgeschlossene Tests
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
                PlaySoundEx("Windows Notify.wav");
@@ -4955,7 +4955,7 @@ bool SynchronizeStatus() {
    }
 
    // (1.3) alle erreichbaren Tickets der Sequenz auf lokale Referenz überprüfen (außer für abgeschlossene Tests)
-   if (!IsTestSequence() || IsTesting()) {
+   if (!IsTestSequence() || __isTesting) {
       for (i=OrdersTotal()-1; i >= 0; i--) {                               // offene Tickets
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES))                  // FALSE: während des Auslesens wurde in einem anderen Thread eine offene Order entfernt
             continue;
@@ -5507,7 +5507,7 @@ bool ReadSessionBreaks(datetime time, datetime &config[][2]) {
  */
 bool UpdateProfitTargets() {
    if (IsLastError())                      return(false);
-   if (IsTesting() && !test.showBreakeven) return(true);
+   if (__isTesting && !test.showBreakeven) return(true);
    // 7bit:
    // double loss = currentPL - PotentialProfit(gridbaseDistance);
    // double be   = gridbase + RequiredDistance(loss);

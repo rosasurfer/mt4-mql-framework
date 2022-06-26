@@ -59,8 +59,9 @@
  *     update unitsize positioning
  *  - Grid: fix price levels
  *
+ *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
+ *  - monitor and notify of incoming emails
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
- *
  *  - Instrument Infos: remove maxLeverage constraint
  *  - Range bar chart:
  *     FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
@@ -490,8 +491,7 @@ bool ToggleOpenOrders() {
    // store current status in the chart
    SetOpenOrderDisplayStatus(showOrders);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
 
@@ -610,8 +610,7 @@ bool ToggleTradeHistory() {
    // store current status in the chart
    SetTradeHistoryDisplayStatus(showHistory);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
 
@@ -1605,11 +1604,11 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
-   if (IsTesting()) {
+   if (__isTesting) {
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -1663,11 +1662,11 @@ bool StopVirtualSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopVirtualSequence(2)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopVirtualSequence(2)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
-   if (IsTesting()) {
+   if (__isTesting) {
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -1781,7 +1780,7 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = sequence.name;
-   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (IsTesting() && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
+   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
    string sBySL       = ifString(closedBySl, "by SL ", "");
    string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was "+ sUnexpected +"closed "+ sBySL +"at "+ sClosePrice;
 
@@ -1789,7 +1788,7 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
    else if (closedBySl)                               error = ERR_ORDER_CHANGED;
    else if (__CoreFunction==CF_INIT)                  error = NO_ERROR;
-   else if (IsTesting() && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
    else                                               error = ERR_CONCURRENT_MODIFICATION;
 
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
@@ -1830,7 +1829,7 @@ int onPositionClose(string message, int error) {
    if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
       return(!logNotice(message, error));                   // continue
 
-   if (IsTesting()) return(catch(message, error));          // tester: treat everything else as terminating
+   if (__isTesting) return(catch(message, error));          // tester: treat everything else as terminating
 
    logWarn(message, error);                                 // online
    if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
@@ -1986,7 +1985,7 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    enabled = false;
    if (IsLastError())                    return(false);
    if (!sequence.id)                     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting()) return(false);                       // never record anything in a stopped test
+   if (IsTestSequence() && !__isTesting) return(false);                       // never record anything in a stopped test
 
    string ids[];
    int size = Explode(EA.Recorder, ",", ids, NULL);
@@ -2174,9 +2173,9 @@ string SignalToStr(int signal) {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
+   if (IsTestSequence() && !__isTesting)         return(true);  // don't change the status file of a finished test
 
-   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
+   if (__isTesting && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2725,7 +2724,7 @@ bool IsLocalClosedPosition(int ticket) {
  * @return bool
  */
 bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
+   return(sequence.isTest || __isTesting);
 }
 
 
@@ -3072,7 +3071,7 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
-   if (!IsTestSequence() || IsTesting()) {      // never init the recorder of a stopped test
+   if (!IsTestSequence() || __isTesting) {      // never init the recorder of a stopped test
       int metrics;
       if (!init_RecorderValidateInput(metrics)) return(false);
       if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));

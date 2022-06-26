@@ -463,7 +463,7 @@ string GetClassName(int hWnd) {
  * Replacement for IsVisualMode() in
  *  - indicators: not supported
  *  - scripts:    not supported
- *  - libraries:  broken (returns always the value of the first test, irrespective of changes)
+ *  - libraries:  broken (always returns the value of the first test, irrespective of changes)
  *
  * @return bool
  */
@@ -674,7 +674,7 @@ bool WaitForTicket(int ticket, bool select = false) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
+      if (__isTesting)       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
       else if (i && !(i%10)) logWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
       Sleep(delay);
       i++;
@@ -758,7 +758,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       }
       else {
          isConstant = false;                                         // TickValue ist dynamisch
-         isCorrect = !IsTesting();                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isCorrect = !__isTesting;                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
       isCalculatable = StrStartsWith(Symbol(), AccountCurrency());   // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
       doWarn = (!isCorrect && !isCalculatable);                      // muß nach einmaliger Warnung der Online-Wert verwendet werden.
@@ -887,7 +887,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
       bool isCFD = false;
       double value = 0;
 
-      if (This.IsTesting()) {
+      if (__isTesting) {
          value = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
@@ -3140,31 +3140,14 @@ string StrRightPad(string input, int padLength, string padString = " ") {
 
 
 /**
- * Whether the current program is executed in the tester or on a tester chart.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   static bool result = -1;
-   if (result == -1) {
-      if (IsTesting()) result = true;
-      else             result = (__ExecutionContext[EC.testing] != 0);
-   }
-   return(result);
-}
-
-
-/**
  * Whether the current program runs on a demo account. Workaround for a bug in terminal builds <= 509 where the built-in
  * function IsDemo() returns FALSE in tester.
  *
  * @return bool
  */
 bool IsDemoFix() {
-   static bool result = -1;
-   if (result == -1) {
-      if (IsDemo()) result = true;
-      else          result = This.IsTesting();
+   static bool result = -1; if (result == -1) {
+      result = (IsDemo() || __isTesting);
    }
    return(result);
 }
@@ -3482,7 +3465,7 @@ bool CreateDirectory(string path, int flags) {
  */
 string GetMqlSandboxPath() {
    static string path = ""; if (!StringLen(path)) {
-      if (IsTesting()) {
+      if (__isTesting) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
 
@@ -3545,7 +3528,7 @@ string StrCapitalize(string value) {
  * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
-   if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+   if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = __ExecutionContext[EC.hChart];
 
@@ -3568,7 +3551,7 @@ int Chart.SendTick(bool sound = false) {
 
    int hWnd = __ExecutionContext[EC.hChart];
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
    }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
    else if (Tester.IsPaused()) {
@@ -3885,12 +3868,12 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
 
 
 /**
- * Get the bar model currently selected in the tester.
+ * Get the bar model used in a test.
  *
  * @return int - bar model id or EMPTY (-1) if not called in the tester
  */
 int Tester.GetBarModel() {
-   if (!This.IsTesting())
+   if (!__isTesting)
       return(_EMPTY(catch("Tester.GetBarModel(1)  tester only function", ERR_FUNC_NOT_ALLOWED)));
    return(Tester_GetBarModel());
 }
@@ -3904,7 +3887,7 @@ int Tester.GetBarModel() {
  * @return int - error status
  */
 int Tester.Pause(string caller = "") {
-   if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
@@ -3951,7 +3934,7 @@ int Tester.Stop(string caller = "") {
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting())  return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting)       return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
 
@@ -3968,7 +3951,7 @@ bool Tester.IsPaused() {
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
@@ -4059,7 +4042,7 @@ string CreateString(int length) {
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
 
-   if (This.IsTesting()) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
+   if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
@@ -4109,7 +4092,7 @@ datetime TimeServer(bool watchLastTick = true) {
    static bool isLibrary = -1;
    if (isLibrary == -1) isLibrary = IsLibrary();
 
-   if (This.IsTesting())
+   if (__isTesting)
       return(TimeCurrent());
 
    datetime serverTime = GmtToServerTime(GetGmtTime());
@@ -4132,7 +4115,7 @@ datetime TimeServer(bool watchLastTick = true) {
 datetime TimeGMT() {
    datetime gmt;
 
-   if (This.IsTesting()) {
+   if (__isTesting) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
       datetime localTime = Tick.time;
       gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
@@ -7304,7 +7287,6 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
-   This.IsTesting();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();

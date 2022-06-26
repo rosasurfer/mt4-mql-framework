@@ -13,7 +13,9 @@ int init() {
 
    // globale Variablen initialisieren
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
-   __lpSuperContext = __ExecutionContext[EC.superContext];
+   __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
+   __lpSuperContext =  __ExecutionContext[EC.superContext];
+
    PipDigits        = Digits & (~1);
    PipPoints        = MathRound(MathPow(10, Digits & 1));
    Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
@@ -33,7 +35,7 @@ int init() {
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
+      if (__isTesting) {                                             // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
          onLibraryInit();
       }

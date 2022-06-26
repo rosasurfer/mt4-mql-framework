@@ -328,7 +328,7 @@ bool AquireLock(string mutexName, bool wait) {
    }
 
    int error, duration, seconds=1, startTime=GetTickCount();
-   string globalVar = ifString(This.IsTesting(), "tester.", "") + mutexName;
+   string globalVar = ifString(__isTesting, "tester.", "") + mutexName;
 
    // loop until lock is aquired
    while (true) {
@@ -395,7 +395,7 @@ bool ReleaseLock(string mutexName) {
 
       string globalVarName = mutexName;
 
-      if (This.IsTesting())
+      if (__isTesting)
          globalVarName = "tester."+ mutexName;
 
       if (!GlobalVariableSet(globalVarName, 0)) {
@@ -4119,7 +4119,7 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                             // im Tester ohne Server-Verbindung
-      if (!IsTesting())           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
+      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
       account = 0;
    }
 
@@ -4138,7 +4138,7 @@ int GetAccountNumber() {
 
    // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks in deinit() caused by GetWindowText() calls zu vermeiden.
    // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
-   if (IsTesting())
+   if (__isTesting)
       testAccount = account;
    return(account);                                                     // nicht die statische Testervariable zurückgeben (ist online immer 0)
 }
@@ -4299,7 +4299,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
  *               EMPTY_VALUE, falls  ein Fehler auftrat
  */
 int GetLocalToGmtTimeOffset() {
-   if (This.IsTesting()) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
+   if (__isTesting) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
 
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION_size);
 
@@ -5472,7 +5472,7 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    }
 
    // in tester always add ERS_EXECUTION_STOPPING to the passed flags
-   if (This.IsTesting() && IsStopped())
+   if (__isTesting && IsStopped())
       oeFlags |= F_ERS_EXECUTION_STOPPING;
 
    // filter the flagged errors and log them accordingly
@@ -5515,7 +5515,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
 
    string message = "temporary error";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote" + Pluralize(requotes);
@@ -5557,7 +5557,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    ArrayInitialize(oe, 0);
    // symbol
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
-   if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
+   if (__isTesting && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
    double maxLot         = MarketInfo(symbol, MODE_MAXLOT);
@@ -5603,7 +5603,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
    if (!done) {
-      //if (IsTesting()) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
+      //if (__isTesting) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
       //   testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
       //   testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
       //}
@@ -5677,7 +5677,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
          if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
 
-         if (IsTesting()) {
+         if (__isTesting) {
             if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
                Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
@@ -5717,7 +5717,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          case ERR_REQUOTE:
             requotes++;
             oe.setRequotes(oe, requotes);
-            if (IsTesting())  break;
+            if (__isTesting)  break;
             if (requotes > 5) break;
             continue;                                                      // no delay after ERR_REQUOTE
 
@@ -5777,7 +5777,7 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
                                  message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5815,7 +5815,7 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
 
    string message = "temporary error while trying to "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5853,7 +5853,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
                                  message = message +" (market: "+ sBid +"/"+ sAsk + sSD +")";
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5987,7 +5987,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
          if (IsLogDebug()) logDebug("OrderModifyEx(30)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
-         if (!IsTesting()) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
+         if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
          return(!_bool(Order.HandleError("OrderModifyEx(31)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(32)")));
       }
 
@@ -6058,7 +6058,7 @@ string OrderModifyEx.SuccessMsg(int oe[], double prevOpenPrice, double prevStopL
    string sTP = ""; if (NE(takeProfit, prevTakeProfit)) sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
 
    string message = "modified #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + comment +" at "+ sPrice +  sSL + sTP;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6095,7 +6095,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6242,7 +6242,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
             string sValue1="", sValue2="";
-            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
+            if (__isTesting) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
                sValue1 = "split from #"+ ticket;
@@ -6278,7 +6278,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          }
          if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
-         if (!IsTesting())                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         if (!__isTesting)                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
          else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
@@ -6305,7 +6305,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          case ERR_REQUOTE:
             requotes++;
             oe.setRequotes(oe, requotes);
-            if (IsTesting() || requotes > 5) break;
+            if (__isTesting || requotes > 5) break;
             continue;                                                               // immediately repeat the request
 
          // map terminal generated errors
@@ -6361,7 +6361,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
                        message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -6397,7 +6397,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6543,7 +6543,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    else                  largerType = oppositeType;
 
    int  error, time1, tempErrors, remainder;
-   bool success, smallerByLarger=!IsTesting(), largerBySmaller=!smallerByLarger;
+   bool success, smallerByLarger=!__isTesting, largerBySmaller=!smallerByLarger;
 
    // loop until the positions have been closed or a non-fixable error occurred
    while (true) {
@@ -6632,7 +6632,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
          }
 
          if (IsLogDebug()) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
-         if (!IsTesting()) PlaySoundEx("OrderOk.wav");
+         if (!__isTesting) PlaySoundEx("OrderOk.wav");
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
 
@@ -6693,9 +6693,9 @@ string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, int oe[]
    string message = "closed #"+ first +" by #"+ second;
 
    int remainder = oe.RemainingTicket(oe);
-   if (remainder != 0)    message = message +", remainder: #"+ remainder +" "+ OperationTypeDescription(largerType) +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ oe.Symbol(oe);
-   else                   message = message +", no remainder";
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ OperationTypeDescription(largerType) +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ oe.Symbol(oe);
+   else                message = message +", no remainder";
+   if (!__isTesting)   message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
    return(message);
 }
 
@@ -6713,7 +6713,7 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
    // error while trying to close #1 by #2 after 0.345 s
 
    string message = "error while trying to close #"+ first +" by #"+ second;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
    return(message);
 }
 
@@ -7382,7 +7382,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
          if (IsLogDebug()) logDebug(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
-         if (!IsTesting()) PlaySoundEx("OrderOk.wav");
+         if (!__isTesting) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
       }
@@ -7444,7 +7444,7 @@ string OrderDeleteEx.SuccessMsg(int oe[]) {
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
    string message = "deleted #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ strPrice;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -7476,7 +7476,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -7778,7 +7778,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
       ObjectDelete(label2);
 
    // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
-   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
+   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label3) == 0)
          ObjectDelete(label3);                                                         // löschen
 
@@ -7867,7 +7867,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
-   string label3 = StringConcatenate(label1, " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
+   string label3 = StringConcatenate(label1, " close", ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label3) == 0) {
       if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren

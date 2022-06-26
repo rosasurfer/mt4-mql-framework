@@ -282,7 +282,7 @@ int onTick() {
 
    // record metrics if configured
    if (Metrics.RecordPerformance) {
-      if (!IsTesting() || !IsOptimization()) {
+      if (!__isTesting || !IsOptimization()) {
          RecordMetrics();
       }
    }
@@ -462,7 +462,7 @@ int afterInit() {
 
    if (!InitMetrics()) return(last_error);
 
-   if (IsTesting()) {                                       // read test configuration
+   if (__isTesting) {                                       // read test configuration
       string section = ProgramName(MODE_NICE) +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
@@ -482,7 +482,7 @@ int onDeinit() {
       CloseHistorySet(i);
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       if (!last_error || last_error==ERR_CANCELLED_BY_USER) {
          if (IsLogInfo()) {
             if (tradingMode!=TRADINGMODE_REGULAR || virt.closedPositions) logInfo("onDeinit(1)  "+ sequence.name +" test stop: "+ virt.closedPositions +" virtual trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2));
@@ -828,7 +828,7 @@ bool onRealPositionOpen(int i) {
       logDebug("onRealPositionOpen(1)  "+ sequence.name +" "+ message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       if (__ExecutionContext[EC.externalReporting] != 0) {
          Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
@@ -875,7 +875,7 @@ bool onRealPositionClose(int i) {
       logDebug("onRealPositionClose(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
-   if (IsTesting() && __ExecutionContext[EC.externalReporting]) {
+   if (__isTesting && __ExecutionContext[EC.externalReporting]) {
       Test_onPositionClose(__ExecutionContext, OrderTicket(), OrderCloseTime(), OrderClosePrice(), NULL, OrderProfit());
    }
    return(!catch("onRealPositionClose(2)"));
@@ -1102,7 +1102,7 @@ bool OpenRealOrder(int signal) {
    else                                 { openType    = oe.Type(oe); openPrice    = oe.OpenPrice(oe); openTime = oe.OpenTime(oe); }
    if (!Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), pendingType, pendingPrice, openType, openTime, openPrice, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL)) return(false);
 
-   if (IsTesting()) {                                   // pause the test if configured
+   if (__isTesting) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenRealOrder(4)");
    }
    return(SaveStatus());
@@ -1147,7 +1147,7 @@ bool OpenVirtualOrder(int signal) {
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
    if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ sequence.name +" opened virtual #"+ ticket +" "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ comment +"\" at "+ NumberToStr(price, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 
-   if (IsTesting()) {                                   // pause the test if configured
+   if (__isTesting) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");
    }
    return(SaveStatus());
@@ -1438,7 +1438,7 @@ bool CalculateSpreads() {
    lastTick      = Ticks;
    currentSpread = NormalizeDouble((Ask-Bid)/Pip, 1);
 
-   if (IsTesting()) {
+   if (__isTesting) {
       avgSpread  = currentSpread; if (__isChart) SS.Spreads();
       lastResult = true;
       return(lastResult);
@@ -2107,7 +2107,7 @@ string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string result = ""; if (!StringLen(result)) {
-      string directory = "/presets/"+ ifString(IsTesting(), "Tester", GetAccountCompanyId()) +"/";
+      string directory = "/presets/"+ ifString(__isTesting, "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ sequence.id +".set";
       result = GetMqlSandboxPath() + directory + baseName;
    }
@@ -2492,7 +2492,7 @@ bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
    // in tester skip most status file writes, except file creation and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (__isTesting && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2754,7 +2754,7 @@ void SS.Spreads() {
    if (__isChart) {
       sCurrentSpread = DoubleToStr(currentSpread, 1);
 
-      if (IsTesting())     sAvgSpread = sCurrentSpread;
+      if (__isTesting)     sAvgSpread = sCurrentSpread;
       else if (!avgSpread) sAvgSpread = "-";
       else                 sAvgSpread = DoubleToStr(avgSpread, 2);
    }
@@ -2992,7 +2992,7 @@ bool ValidateInputs() {
 
    // IndicatorTimeframe
    if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
-   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
+   if (__isTesting && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
    int _IndicatorTimeframe = IndicatorTimeframe;
 
    // IndicatorPeriods
@@ -3110,7 +3110,7 @@ bool InitMetrics() {
    }
 
    // read the metrics configuration (on every call)
-   string section = ProgramName(MODE_NICE) + ifString(IsTesting(), ".Tester", "");
+   string section = ProgramName(MODE_NICE) + ifString(__isTesting, ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
    metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));
@@ -3227,7 +3227,7 @@ bool RecordMetrics() {
 
    static int flags;
    static bool flagsInitialized = false; if (!flagsInitialized) {
-      flags = ifInt(IsTesting(), HST_BUFFER_TICKS, NULL);      // buffer ticks in tester
+      flags = ifInt(__isTesting, HST_BUFFER_TICKS, NULL);      // buffer ticks in tester
       flagsInitialized = true;
    }
 

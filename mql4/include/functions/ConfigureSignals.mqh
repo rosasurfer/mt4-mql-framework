@@ -33,7 +33,7 @@ bool ConfigureSignals(string name, string &configValue, bool &enabled) {
 
    // auto
    if (sValue == "auto") {
-      string section = "Signals" + ifString(This.IsTesting(), ".Tester", "");
+      string section = "Signals" + ifString(__isTesting, ".Tester", "");
       string key     = name;
       configValue    = "auto";
       enabled        = GetConfigBool(section, key);
@@ -66,7 +66,7 @@ bool ConfigureSignals2(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(This.IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
       enabled = GetConfigBool(section, signalId, enabled);
    }
    return(true);
@@ -92,7 +92,7 @@ bool ConfigureSignalsBySound2(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(This.IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
       enabled = GetConfigBool(section, signalId +".Sound", enabled);
    }
    return(true);
@@ -113,7 +113,7 @@ bool ConfigureSignalsByPopup(string signalId, bool autoConfig, bool &enabled) {
    enabled = enabled!=0;
 
    if (autoConfig) {
-      string section = ifString(This.IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
+      string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
       enabled = GetConfigBool(section, signalId +".Popup", enabled);
    }
    return(true);
@@ -137,7 +137,7 @@ bool ConfigureSignalsByMail2(string signalId, bool autoConfig, bool &enabled, st
    sender = "";
    receiver = "";
 
-   string signalSection = ifString(This.IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
+   string signalSection = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
    string mailSection   = "Mail";
    string senderKey     = "Sender";
    string receiverKey   = "Receiver";
@@ -185,7 +185,7 @@ bool ConfigureSignalsBySMS2(string signalId, bool autoConfig, bool &enabled, str
    autoConfig = autoConfig!=0;
    enabled = enabled!=0;
 
-   string signalSection = ifString(This.IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
+   string signalSection = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
    string smsSection = "SMS";
    string receiverKey = "Receiver";
 

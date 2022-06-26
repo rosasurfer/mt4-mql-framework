@@ -368,8 +368,7 @@ bool ToggleOpenOrders() {
    // store current status in the chart
    SetOpenOrderDisplayStatus(showOrders);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
 
@@ -535,8 +534,7 @@ bool ToggleTradeHistory() {
    // store current status in the chart
    SetTradeHistoryDisplayStatus(showHistory);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
 
@@ -787,7 +785,7 @@ bool IsStartSignal(int &signal) {
       return(false);
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       // tester: auto-start
       if (!ArraySize(long.ticket) && !ArraySize(short.ticket)) return(true);
    }
@@ -1197,7 +1195,7 @@ bool StopSequence(int signal) {
    SS.StopConditions();
    SaveStatus();
 
-   if (IsTesting()) {                                                // pause/stop the tester according to the debug configuration
+   if (__isTesting) {                                                // pause/stop the tester according to the debug configuration
       if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
       else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
@@ -1598,7 +1596,7 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
       sReason = "deleted (not enough money)";
       error = ERR_NOT_ENOUGH_MONEY;
    }
-   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+   else if (!__isTesting || __CoreFunction!=CF_DEINIT) {
       error = ERR_CONCURRENT_MODIFICATION;
    }
    OrderPop("UpdateStatus.OrderCancelledMsg(3)");
@@ -1652,7 +1650,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
       sStopout = ", "+ OrderComment();
       error = ERR_MARGIN_STOPOUT;
    }
-   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+   else if (!__isTesting || __CoreFunction!=CF_DEINIT) {
       error = ERR_CONCURRENT_MODIFICATION;
    }
    OrderPop("UpdateStatus.PositionCloseMsg(3)");
@@ -1670,7 +1668,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
  * @return int - the same error
  */
 int UpdateStatus.onOrderChange(string message, int error) {
-   if (!IsTesting()) logError(message, error);
+   if (!__isTesting) logError(message, error);
    else if (!error)  logDebug(message, error);
    else              catch(message, error);
    return(error);
@@ -1707,7 +1705,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (plusLevels+minusLevels >= MaxUnits) {
          if (IsLogInfo()) {
             logInfo("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long units reached ("+ MaxUnits +")");
-            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+            if (!__isTesting) PlaySoundEx("MarginLow.wav");
          }
          return(Grid.RemovePendingOrders(saveStatus));
       }
@@ -1744,7 +1742,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (plusLevels+minusLevels >= MaxUnits) {
          if (IsLogInfo()) {
             logInfo("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short units reached ("+ MaxUnits +")");
-            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+            if (!__isTesting) PlaySoundEx("MarginLow.wav");
          }
          return(Grid.RemovePendingOrders(saveStatus));
       }
@@ -2614,7 +2612,7 @@ bool Grid.AddPendingOrder(int direction, int level) {
  * @return bool
  */
 bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
+   return(sequence.isTest || __isTesting);
 }
 
 
@@ -3549,10 +3547,10 @@ double iADR() {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
+   if (IsTestSequence() && !__isTesting)         return(true);  // don't change the status file of a finished test
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (__isTesting && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;

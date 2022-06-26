@@ -240,7 +240,7 @@ int onInit() {
       else signalReversal = false;
    }
    // Sound.onCrossing
-   if (AutoConfiguration) Sound.onCrossing = GetConfigBool(ifString(This.IsTesting(), "Tester.", "") + indicator, "Sound.onCrossing", Sound.onCrossing);
+   if (AutoConfiguration) Sound.onCrossing = GetConfigBool(ifString(__isTesting, "Tester.", "") + indicator, "Sound.onCrossing", Sound.onCrossing);
 
    // buffer management, indicator names and display options
    SetIndicatorOptions();
@@ -250,7 +250,7 @@ int onInit() {
    }
 
    // setup a chart ticker for detection of data pumping
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 2000;                                         // a virtual tick every 2 seconds
       int timerId = SetupTickTimer(hWnd, millis, NULL);
@@ -799,7 +799,7 @@ bool onReversal(int direction, int bar) {
    if (IsPossibleDataPumping())                 return(true);                 // skip signals during possible data pumping
 
    // check wether the event was already signaled
-   int hWnd = ifInt(This.IsTesting(), __ExecutionContext[EC.hChart], GetDesktopWindow());
+   int hWnd = ifInt(__isTesting, __ExecutionContext[EC.hChart], GetDesktopWindow());
    string sPeriod = PeriodDescription();
    string sEvent  = "rsf::"+ StdSymbol() +","+ sPeriod +"."+ indicatorName +"("+ zigzagPeriods +").onReversal("+ direction +")."+ TimeToStr(Time[bar], TIME_DATE|TIME_MINUTES);
    bool isSignaled = false;
@@ -858,7 +858,7 @@ bool onChannelCrossing(int direction) {
  * @return bool
  */
 bool IsPossibleDataPumping() {
-   if (This.IsTesting()) return(false);
+   if (__isTesting) return(false);
 
    int waitTime = 20 * SECONDS;
    datetime now = GetGmtTime();
