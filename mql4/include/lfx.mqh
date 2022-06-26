@@ -72,7 +72,7 @@ bool InitTradeAccount(string accountId = "") {
 
       string file    = GetAccountConfigPath(); if (!StringLen(file)) return(false);
       string section = "General";
-      string key     = "TradeAccount"+ ifString(This.IsTesting(), ".Tester", "");
+      string key     = "TradeAccount"+ ifString(__isTesting, ".Tester", "");
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
          if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));

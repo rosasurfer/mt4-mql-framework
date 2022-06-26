@@ -29,7 +29,7 @@ bool ConfigureSignalsBySound(string configValue, bool &enabled) {
 
    // auto
    if (sValue == "auto") {
-      string section = "Signals"+ ifString(This.IsTesting(), ".Tester", "");
+      string section = "Signals"+ ifString(__isTesting, ".Tester", "");
       string key     = "Signal.Sound";
       enabled = GetConfigBool(section, key);
       return(true);

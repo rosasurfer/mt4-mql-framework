@@ -40,9 +40,9 @@ int init() {
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())            // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
+   int hChart = NULL; if (!IsTesting() || IsVisualMode()) {          // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER
        hChart = WindowHandle(Symbol(), NULL);                        // if VisualMode=Off
-
+   }
    int error = SyncMainContext_init(__ExecutionContext, MT_INDICATOR, WindowExpertName(), UninitializeReason(), SumInts(__InitFlags), SumInts(__DeinitFlags), Symbol(), Period(), Digits, Point, NULL, IsTesting(), IsVisualMode(), IsOptimization(), false, __lpSuperContext, hChart, WindowOnDropped(), WindowXOnDropped(), WindowYOnDropped());
    if (!error) error = GetLastError();                               // detect a DLL exception
    if (IsError(error)) {
@@ -171,6 +171,8 @@ bool init_Globals() {
    // TODO: implement workaround in MT4Expander
    //
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
+
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
@@ -411,7 +413,7 @@ int deinit() {
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
-   if (!This.IsTesting()) DeleteRegisteredObjects();
+   if (!__isTesting) DeleteRegisteredObjects();
 
    return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
 }

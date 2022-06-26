@@ -133,7 +133,7 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (This.IsTesting()) {
+   if (__isTesting) {
       positions.absoluteProfits = true;
    }
    else {
@@ -196,7 +196,7 @@ bool OrderTracker.Configure() {
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
 
       // register the indicator as order event listener
-      if (!This.IsTesting()) {
+      if (!__isTesting) {
          hWndDesktop = GetDesktopWindow();
          orderTracker.key = "rsf::order-tracker::"+ GetAccountNumber() +"::";
          string name = orderTracker.key + StrToLower(Symbol());

@@ -77,7 +77,7 @@ int onInit() {
    recordingFormat = Recording.HistoryFormat;
 
    // setup a chart ticker (online only)
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       int hWnd         = __ExecutionContext[EC.hChart];
       int milliseconds = 1000;                           // a virtual tick every second (1000 milliseconds)
       int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
@@ -388,7 +388,7 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
  * @return bool - success status
  */
 bool RecordData() {
-   if (IsTesting()) return(true);
+   if (__isTesting) return(true);
 
    datetime now = TimeFXT();
    int dow = TimeDayOfWeekEx(now);

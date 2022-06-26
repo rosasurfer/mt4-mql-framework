@@ -244,7 +244,7 @@ int onInit() {
 
    // validate inputs
    // Recording.Enabled
-   if (This.IsTesting()) Recording.Enabled = false;
+   if (__isTesting) Recording.Enabled = false;
    // Recording.HistoryDirectory
    recordingDirectory = StrTrim(Recording.HistoryDirectory);
    if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not an allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
@@ -309,7 +309,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // only online
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       // restore a configured trade account and initialize order/limit monitoring
       string accountId = GetStoredTradeAccount();
       if (!InitTradeAccount(accountId)) return(last_error);
@@ -606,15 +606,10 @@ int CreateLabels() {
  * @return bool - success status
  */
 bool GetMarketData(string symbol, double &median, double &bid, double &ask, bool &isStale) {
-   static bool isTesting, done = false; if (!done) {
-      isTesting = This.IsTesting();
-      done = true;
-   }
-
    if (StringLen(brokerSuffix) > 0)
       symbol = StringConcatenate(symbol, brokerSuffix);
 
-   if (!isTesting || symbol==Symbol()) {
+   if (!__isTesting || symbol==Symbol()) {
       bid     = MarketInfo(symbol, MODE_BID);
       ask     = MarketInfo(symbol, MODE_ASK);
       median  = (bid + ask)/2;
@@ -871,7 +866,7 @@ bool CalculateIndexes() {
  * @return bool - success status
  */
 bool ProcessAllLimits() {
-   if (This.IsTesting()) return(true);
+   if (__isTesting) return(true);
 
    // only check orders if the symbol's calculated price has changed
    if (!isStale[I_AUDLFX]) if (!EQ(currMid[I_AUDLFX], prevMid[I_AUDLFX], symbolDigits[I_AUDLFX])) if (!ProcessLimits(AUDLFX.orders, currMid[I_AUDLFX])) return(false);

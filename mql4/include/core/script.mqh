@@ -81,7 +81,9 @@ int init() {
  * @return bool - success status
  */
 bool init_Globals() {
-   __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   __isChart      = (__ExecutionContext[EC.hChart ] != 0);
+   __isTesting    = (__ExecutionContext[EC.testing] != 0);
+
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
@@ -168,7 +170,7 @@ int deinit() {
 
    if (!error) error = onDeinit();                    // preprocessing hook
    if (!error) error = afterDeinit();                 // postprocessing hook
-   if (!This.IsTesting()) DeleteRegisteredObjects();
+   if (!__isTesting) DeleteRegisteredObjects();
 
    return(CheckErrors("deinit(3)") + LeaveContext(__ExecutionContext));
 }

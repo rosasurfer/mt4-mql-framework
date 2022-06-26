@@ -372,7 +372,7 @@ bool ToggleOpenOrders(int flags = NULL) {
 
    SetOpenOrderDisplayStatus(showOrders);             // store new status
 
-   if (This.IsTesting()) WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(2)"));
 }
 
@@ -646,7 +646,7 @@ bool ToggleTradeHistory(int flags = NULL) {
 
    SetTradeHistoryDisplayStatus(showHistory);            // store new status
 
-   if (This.IsTesting())WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(2)"));
 }
 
@@ -995,7 +995,7 @@ bool ToggleAccountBalance() {
 
    SetAccountBalanceDisplayStatus(enabled);                    // store new display status
 
-   if (This.IsTesting()) WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleAccountBalance(2)"));
 }
 
@@ -1225,7 +1225,7 @@ bool UpdateSpread() {
  * @return bool - success status
  */
 bool UpdateUnitSize() {
-   if (IsTesting())             return(true);            // skip in tester
+   if (__isTesting)             return(true);            // skip in tester
    if (!mm.done) {
       if (!CalculateUnitSize()) return(false);           // on error
       if (!mm.done)             return(true);            // on terminal not yet ready
@@ -4252,7 +4252,7 @@ bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], in
 bool onPositionOpen(double data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size || This.IsTesting()) return(true);
+   if (!isLogInfo || !size || __isTesting) return(true);
 
    OrderPush();
    for (int i=0; i < size; i++) {
@@ -4303,7 +4303,7 @@ bool onPositionOpen(double data[][]) {
 bool onPositionClose(int data[][]) {
    bool isLogInfo=IsLogInfo(), eventLogged=false;
    int size = ArrayRange(data, 0);
-   if (!isLogInfo || !size || This.IsTesting()) return(true);
+   if (!isLogInfo || !size || __isTesting) return(true);
 
    string sCloseTypeDescr[] = {"", " [tp]", " [sl]", " [so]"};
    OrderPush();
@@ -4364,7 +4364,7 @@ bool onPositionClose(int data[][]) {
  */
 bool onOrderFail(int tickets[]) {
    int size = ArraySize(tickets);
-   if (!size || This.IsTesting()) return(true);
+   if (!size || __isTesting) return(true);
 
    bool eventLogged = false;
    OrderPush();

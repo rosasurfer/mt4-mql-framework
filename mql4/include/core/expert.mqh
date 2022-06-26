@@ -82,8 +82,9 @@ int init() {
    }
 
    // initialize the execution context
-   int hChart = NULL; if (!IsTesting() || IsVisualMode())      // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
+   int hChart = NULL; if (!IsTesting() || IsVisualMode()) {    // in tester WindowHandle() triggers ERR_FUNC_NOT_ALLOWED_IN_TESTER if VisualMode=Off
        hChart = WindowHandle(Symbol(), NULL);
+   }
    int initFlags=SumInts(__InitFlags), deinitFlags=SumInts(__DeinitFlags);
    if (initFlags & INIT_NO_EXTERNAL_REPORTING && 1) {
       Test.ExternalReporting = false;                          // the input must be reset before SyncMainContext_init()
@@ -126,7 +127,7 @@ int init() {
 
    // enable experts if they are disabled                      // @see  https://www.mql5.com/en/code/29022#    [Disable auto trading for one EA]
    int reasons1[] = {UR_UNDEFINED, UR_CHARTCLOSE, UR_REMOVE};
-   if (!IsTesting()) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
+   if (!__isTesting) /*&&*/ if (!IsExpertEnabled()) /*&&*/ if (IntInArray(reasons1, UninitializeReason())) {
       error = Toolbar.Experts(true);                           // TODO: fails if multiple experts try it at the same time (e.g. at terminal start)
       if (IsError(error)) /*&&*/ if (CheckErrors("init(10)")) return(last_error);
    }
@@ -144,11 +145,11 @@ int init() {
    int account = GetAccountNumber(); if (!account) return(_last_error(CheckErrors("init(12)")));
    string initHandlers[] = {"", "initUser", "initTemplate", "", "", "initParameters", "initTimeframeChange", "initSymbolChange", "initRecompile"};
 
-   if (IsTesting()) {                                          // log MarketInfo() data
+   if (__isTesting) {                                          // log MarketInfo() data
       if (IsLogInfo()) {
          string msg = initHandlers[initReason] +"(0)  MarketInfo: "+ init_MarketInfo();
          string separator = StrRepeat(":", StringLen(msg));
-         if (IsTesting()) separator = "::: TEST :::"+ StrRight(separator, -12);
+         if (__isTesting) separator = "::: TEST :::"+ StrRight(separator, -12);
          logInfo(separator);
          logInfo(msg);
       }
@@ -213,7 +214,7 @@ int init() {
    ShowStatus(last_error);
 
    // setup virtual ticks to continue operation on a stalled data feed
-   if (!IsTesting()) {
+   if (!__isTesting) {
       int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 10 * 1000;                                                // every 10 seconds
       __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
@@ -238,7 +239,7 @@ int start() {
       if (IsDllsAllowed() && IsLibrariesAllowed() && __STATUS_OFF.reason!=ERR_TERMINAL_INIT_FAILURE) {
          if (__isChart) ShowStatus(__STATUS_OFF.reason);
          static bool testerStopped = false;
-         if (IsTesting() && !testerStopped) {                                    // stop the tester in case of errors
+         if (__isTesting && !testerStopped) {                                    // stop the tester in case of errors
             Tester.Stop("start(1)");                                             // covers errors in init(), too
             testerStopped = true;
          }
@@ -285,7 +286,7 @@ int start() {
    if (!Bars) return(ShowStatus(SetLastError(logInfo("start(3)  Bars=0", ERS_TERMINAL_NOT_YET_READY))));
 
    // tester: wait until a configured start time/price is reached
-   if (IsTesting()) {
+   if (__isTesting) {
       if (Test.StartTime != 0) {
          static string startTime=""; if (!StringLen(startTime)) startTime = TimeToStr(Test.StartTime, TIME_FULL);
          if (Tick.time < Test.StartTime) {
@@ -435,7 +436,7 @@ int deinit() {
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
 
-   if (!IsTesting()) DeleteRegisteredObjects();
+   if (!__isTesting) DeleteRegisteredObjects();
 
    return(CheckErrors("deinit(8)") + LeaveContext(__ExecutionContext));
 }
@@ -557,6 +558,8 @@ bool CheckErrors(string caller, int error = NULL) {
  */
 bool init_Globals() {
    __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting    = IsTesting();
+
    PipDigits      = Digits & (~1);
    PipPoints      = MathRound(MathPow(10, Digits & 1));
    Pip            = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
@@ -677,7 +680,7 @@ bool init_RecorderAddSymbol(int i, bool enabled, string symbol, string symbolDes
    if (enabled) {
       // check an existing symbol
       if (IsRawSymbol(symbol, hstDirectory)) {
-         if (IsTesting()) return(!catch("init_RecorderAddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
+         if (__isTesting) return(!catch("init_RecorderAddSymbol(5)  symbol \""+ symbol +"\" already exists", ERR_ILLEGAL_STATE));
          // TODO: update an existing raw symbol
       }
       else {
@@ -797,7 +800,7 @@ string init_RecorderHstDirectory(string caller, string hstDirectory = "") {
 
    if (!StringLen(hstDirectory)) {
       if (!StringLen(configValue)) {
-         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+         string section = ifString(__isTesting, "Tester.", "") +"EA.Recorder";
          string sValue  = GetConfigString(section, "HistoryDirectory", "");
          if (!StringLen(sValue)) return(_EMPTY_STR(catch(caller +"->init_RecorderHstDirectory(1)  missing config value ["+ section +"]->HistoryDirectory", ERR_INVALID_CONFIG_VALUE)));
          configValue = sValue;
@@ -821,7 +824,7 @@ int init_RecorderHstFormat(string caller, int hstFormat = NULL) {
 
    if (!hstFormat) {
       if (!configValue) {
-         string section = ifString(IsTesting(), "Tester.", "") +"EA.Recorder";
+         string section = ifString(__isTesting, "Tester.", "") +"EA.Recorder";
          int iValue = GetConfigInt(section, "HistoryFormat", 401);
          if (iValue!=400 && iValue!=401)      return(!catch(caller +"->init_RecorderHstFormat(1)  invalid config value ["+ section +"]->HistoryFormat: "+ iValue +" (must be 400 or 401)", ERR_INVALID_CONFIG_VALUE));
          configValue = iValue;
@@ -929,7 +932,7 @@ bool init_RecorderValidateInput(int &metrics) {
  */
 bool init_Test() {
    if (!test.initialized) {
-      if (Test.ExternalReporting && IsTesting()) {
+      if (__isTesting && Test.ExternalReporting) {
          datetime time = MarketInfo(Symbol(), MODE_TIME);
          Test_InitReporting(__ExecutionContext, time, Bars);
       }
@@ -968,7 +971,7 @@ bool start_Recorder() {
 
       if (!recorder.hSet[i]) {
          // online: prefer to continue an existing history
-         if (!IsTesting()) {
+         if (!__isTesting) {
             if      (i <  7) recorder.hSet[i] = HistorySet1.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else if (i < 14) recorder.hSet[i] = HistorySet2.Get(recorder.symbol[i], recorder.hstDirectory[i]);
             else             recorder.hSet[i] = HistorySet3.Get(recorder.symbol[i], recorder.hstDirectory[i]);
@@ -987,7 +990,7 @@ bool start_Recorder() {
       if (recordInternal) value = AccountEquity() - AccountCredit();
       else                value = recorder.hstBase[i] + recorder.currValue[i] * recorder.hstMultiplier[i];
 
-      if (IsTesting()) flags = HST_BUFFER_TICKS;
+      if (__isTesting) flags = HST_BUFFER_TICKS;
 
       if (recorder.debug[i]) debug("start_Recorder(0."+ i +")  "+ recorder.symbol[i] +"  Tick="+ Ticks +"  time="+ TimeToStr(Tick.time, TIME_FULL) +"  base="+ NumberToStr(recorder.hstBase[i], ".1+") +"  curr="+ NumberToStr(recorder.currValue[i], ".1+") +"  mul="+ recorder.hstMultiplier[i] +"  => "+ NumberToStr(value, ".1+"));
 

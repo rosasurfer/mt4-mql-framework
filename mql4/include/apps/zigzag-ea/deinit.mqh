@@ -4,7 +4,7 @@
  * @return int - error status
  */
 int onDeinit() {
-   if (IsTesting()) {
+   if (__isTesting) {
       if (!last_error && sequence.status!=STATUS_STOPPED) {
          bool success = true;
          if (sequence.status == STATUS_PROGRESSING) {
@@ -54,7 +54,7 @@ int onDeinitChartChange() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
       logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
       SaveStatus();
    }
@@ -69,7 +69,7 @@ int onDeinitChartClose() {
  * @return int - error status
  */
 int onDeinitTemplate() {
-   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
       logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
       SaveStatus();
    }
