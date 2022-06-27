@@ -43,11 +43,7 @@
  *
  *
  * TODO:
- *  - Insidebar signals
- *     on level 1: 0%   breakout
- *     on level 2: 50%  projection
- *     on level 3: 100% projection
- *
+ *  - Insidebar projection sound alerts
  *  - Superbars: fix range bar charts
  *  - TradeManager
  *     for custom position
@@ -58,6 +54,7 @@
  *     use/display current daily range in risk management
  *     update unitsize positioning
  *  - Grid: fix price levels
+ *  - rename MODE_BAROPEN to MODE_OPENPRICES
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - monitor and notify of incoming emails
