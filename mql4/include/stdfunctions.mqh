@@ -837,30 +837,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
  * @param  _Out_ int    &error            - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
- *                                           if specified errors are logged
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
+ *                                          if specified errors are logged with level LOG_NOTICE
+ *                                          if not specified errors are not logged (default)
  *
- * @return double - pip value or NULL (0) in case of errors, check parameter 'error'
+ * @return double - pip value or NULL (0) in case of errors (check parameter 'error')
  */
 double PipValueEx(string symbol, double lots, int &error, string caller = "") {
-   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, caller);
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(1)", error);
-      return(NULL);
-   }
+   if (caller != "") caller = StringConcatenate(caller, "->PipValueEx()");
 
-   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller);    // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(2)", error);
-      return(NULL);
-   }
-
-   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, caller);             // TODO: the returned digits may be wrong
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(3)", error);
-      return(NULL);
-   }
+   double tickSize  = MarketInfoEx(symbol, MODE_TICKSIZE,  error, caller); if (error != NO_ERROR) return(NULL);
+   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller); if (error != NO_ERROR) return(NULL);   // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
+   int    digits    = MarketInfoEx(symbol, MODE_DIGITS,    error, caller); if (error != NO_ERROR) return(NULL);   // TODO: the returned digits may be wrong
 
    int    pipDigits = digits & (~1);
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
@@ -2787,18 +2775,19 @@ int SumInts(int values[]) {
  * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
  * @param  _In_  string symbol            - symbol
- * @param  _In_  int    type              - identifier of the MarketInfo data to query
+ * @param  _In_  int    type              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
- *                                           if specified errors are logged
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
+ *                                          if specified errors are logged with level LOG_NOTICE
+ *                                          if not specified errors are not logged (default)
  *
- * @return double - result of the MarketInfo() call or NULL (0) in case of errors, check parameter 'error'
+ * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */
 double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    double value = MarketInfo(symbol, type);
 
    error = GetLastError();
+
    if (!error) {
       switch (type) {
          case MODE_TICKSIZE:
@@ -2809,9 +2798,7 @@ double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    }
    if (!error) return(value);
 
-   if (caller != "") {
-      if (IsLogDebug()) logDebug(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
-   }
+   if (caller != "") logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    return(NULL);
 }
 
