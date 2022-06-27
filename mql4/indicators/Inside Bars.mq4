@@ -898,7 +898,7 @@ bool MonitorProjections() {
       lastProjectionEvent = ResolveLastProjectionEvent();
 
       static bool barModelChecked = false; if (!barModelChecked) {
-         if (__isTesting && __Test.barModel==MODE_BAROPEN) logInfo("MonitorProjections(2)  projection monitoring in tester with bar model \"Open prices\" is not accurate");
+         if (__isTesting && __Test.barModel==MODE_BAROPEN) logInfo("MonitorProjections(2)  projection monitoring in tester with bar model \"Open prices\" is not exact");
          barModelChecked = true;
       }
 
@@ -906,7 +906,7 @@ bool MonitorProjections() {
          //logDebug("MonitorProjections(0.1)  InsideBar("+ PeriodDescription(timeframe) +"): T="+ TimeToStr(latestIB.openTime, TIME_DATE|TIME_MINUTES) +"  H="+ NumberToStr(latestIB.high, PriceFormat) +"  L="+ NumberToStr(latestIB.low, PriceFormat));
          //logDebug("MonitorProjections(0.2)  projectionLevels    = "+ DoublesToStr(projectionLevels, NULL));
          //logDebug("MonitorProjections(0.3)  projectionPrices    = "+ DoublesToStr(projectionPrices, NULL));
-         //logDebug("MonitorProjections(0.4)  lastProjectionEvent = "+ NumberToStr(projectionLevels[lastProjectionEvent]-50, ".1+") +"% = "+ NumberToStr(projectionPrices[lastProjectionEvent], PriceFormat));
+         //logDebug("MonitorProjections(0.4)  lastProjectionEvent = "+ NumberToStr(projectionLevels[lastProjectionEvent], ".1+") +" = "+ NumberToStr(projectionPrices[lastProjectionEvent], PriceFormat));
       }
    }
    size = ArraySize(projectionLevels);
@@ -971,7 +971,7 @@ int PlaySoundDX(string action) {
 /**
  * Create a text label for the indicator status.
  *
- * @return string - the label or an empty string in case of errors
+ * @return string - created label or an empty string in case of errors
  */
 string CreateStatusLabel() {
    string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
