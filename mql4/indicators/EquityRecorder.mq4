@@ -204,11 +204,10 @@ bool CollectData() {
    ArrayResize(symbolProfits, symbolsSize);
 
    for (i=0; i < symbolsSize; i++) {
-      symbolProfits[i] = CalculateProfit(symbols[i], i, symbolsIdx, tickets, types, lots, openPrices, commissions, swaps, profits);
-         if (IsEmptyValue(symbolProfits[i]))                                                              return(!logNotice("CollectData(1)", ERR_INVALID_MARKET_DATA));
-      symbolProfits[i] = NormalizeDouble(symbolProfits[i], 2);
-      datetime tckTime = MarketInfoEx(symbols[i], MODE_TIME, error, "CollectData(2)"); if (error != NULL) return(!logNotice("CollectData(3)", error));
-      lastTickTime     = Max(lastTickTime, tckTime);
+      symbolProfits[i]  = CalculateProfit(symbols[i], i, symbolsIdx, tickets, types, lots, openPrices, commissions, swaps, profits); if (IsEmptyValue(symbolProfits[i])) return(false);
+      symbolProfits[i]  = NormalizeDouble(symbolProfits[i], 2);
+      datetime tickTime = MarketInfoEx(symbols[i], MODE_TIME, error, "CollectData(1)"); if (error != NULL) return(false);
+      lastTickTime      = Max(lastTickTime, tickTime);
    }
 
    // calculate resulting equity values
@@ -218,7 +217,7 @@ bool CollectData() {
    currEquity[I_EQUITY_ACCOUNT    ] = NormalizeDouble(AccountBalance()             + fullPL,         2);
    currEquity[I_EQUITY_ACCOUNT_EXT] = NormalizeDouble(currEquity[I_EQUITY_ACCOUNT] + externalAssets, 2);
 
-   return(!catch("CollectData(4)"));
+   return(!catch("CollectData(2)"));
 }
 
 
@@ -254,10 +253,10 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
    totalPosition = NormalizeDouble(longPosition-shortPosition, 2);
 
    // TODO: digits may be erroneous
-   int    digits     = MarketInfoEx(symbol, MODE_DIGITS, error, "CalculateProfit(1)"); if (error != NULL) return(_EMPTY_VALUE(logNotice("CalculateProfit(2)", error)));
+   int    digits     = MarketInfoEx(symbol, MODE_DIGITS, error, "CalculateProfit(1)"); if (error != NULL) return(EMPTY_VALUE);
    int    pipDigits  = digits & (~1);
    double pipSize    = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
-   double spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "CalculateProfit(3)"); if (error != NULL) return(_EMPTY_VALUE(logNotice("CalculateProfit(4)", error)));
+   double spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "CalculateProfit(2)"); if (error != NULL) return(EMPTY_VALUE);
    double spreadPips = spread/MathPow(10, digits & 1);               // spread in pip
 
    // resolve the constant PL of a hedged position
@@ -313,18 +312,18 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
             }
          }
       }
-      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("CalculateProfit(5)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
-      if (remainingShort != 0) return(_EMPTY_VALUE(catch("CalculateProfit(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingLong  != 0) return(_EMPTY_VALUE(catch("CalculateProfit(3)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
+      if (remainingShort != 0) return(_EMPTY_VALUE(catch("CalculateProfit(4)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of hedged position = "+ NumberToStr(hedgedLots, ".+"), ERR_RUNTIME_ERROR)));
 
       // calculate BE distance and the resulting PL
-      pipValue     = PipValueEx(symbol, hedgedLots, error, "CalculateProfit(7)"); if (error != NULL) return(_EMPTY_VALUE(logNotice("CalculateProfit(8)", error)));
+      pipValue     = PipValueEx(symbol, hedgedLots, error, "CalculateProfit(5)"); if (error != NULL) return(EMPTY_VALUE);
       pipDistance  = (closePrice-openPrice)/hedgedLots/pipSize + (commission+swap)/pipValue;
       hedgedProfit = pipDistance * pipValue;
 
       // without directional position return PL of the hedged position only
       if (!totalPosition) {
          fullProfit = NormalizeDouble(hedgedProfit, 2);
-         return(ifDouble(!catch("CalculateProfit(9)"), fullProfit, EMPTY_VALUE));
+         return(ifDouble(!catch("CalculateProfit(6)"), fullProfit, EMPTY_VALUE));
       }
    }
 
@@ -347,10 +346,10 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
       }
       // add the PL value of half of the spread
       pipDistance = spreadPips/2;
-      pipValue    = PipValueEx(symbol, totalPosition, error, "CalculateProfit(10)"); if (error != NULL) return(_EMPTY_VALUE(logNotice("CalculateProfit(11)", error)));
+      pipValue    = PipValueEx(symbol, totalPosition, error, "CalculateProfit(7)"); if (error != NULL) return(EMPTY_VALUE);
       vtmProfit   = pipDistance * pipValue;
       fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
-      return(ifDouble(!catch("CalculateProfit(12)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("CalculateProfit(8)"), fullProfit, EMPTY_VALUE));
    }
 
    // calculate PL of a short position (if any)
@@ -372,13 +371,13 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
       }
       // add the PL value of half of the spread
       pipDistance = spreadPips/2;
-      pipValue    = PipValueEx(symbol, totalPosition, error, "CalculateProfit(13)"); if (error != NULL) return(_EMPTY_VALUE(logNotice("CalculateProfit(14)", error)));
+      pipValue    = PipValueEx(symbol, totalPosition, error, "CalculateProfit(9)"); if (error != NULL) return(EMPTY_VALUE);
       vtmProfit   = pipDistance * pipValue;
       fullProfit  = NormalizeDouble(hedgedProfit + floatingProfit + vtmProfit + swap + commission, 2);
-      return(ifDouble(!catch("CalculateProfit(15)"), fullProfit, EMPTY_VALUE));
+      return(ifDouble(!catch("CalculateProfit(10)"), fullProfit, EMPTY_VALUE));
    }
 
-   return(_EMPTY_VALUE(catch("CalculateProfit(16)  unreachable code reached", ERR_RUNTIME_ERROR)));
+   return(_EMPTY_VALUE(catch("CalculateProfit(11)  unreachable code reached", ERR_RUNTIME_ERROR)));
 }
 
 
