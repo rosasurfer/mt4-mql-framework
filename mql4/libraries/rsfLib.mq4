@@ -355,8 +355,8 @@ bool AquireLock(string mutexName, bool wait) {
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
-         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
+            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
+         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ duration/1000 +" sec, retrying...");
          seconds++;
       }
 

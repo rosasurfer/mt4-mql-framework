@@ -2798,7 +2798,7 @@ double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    }
    if (!error) return(value);
 
-   if (caller != "") logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
+   if (caller!="" && IsLogNotice()) logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    return(NULL);
 }
 

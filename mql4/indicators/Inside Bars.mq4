@@ -23,11 +23,11 @@ extern bool   Signal.onInsideBar.Popup       = false;
 extern bool   Signal.onInsideBar.Mail        = false;
 extern bool   Signal.onInsideBar.SMS         = false;
 
-extern string ___b__________________________ = "=== Monitored projection levels in % ===";
-extern string InsideBar.ProjectionLevel.1    = "{a non-numeric value disables the level}";
-extern string InsideBar.ProjectionLevel.2    = "0%";                          // IB breakout
-extern string InsideBar.ProjectionLevel.3    = "50%";                         // projection mid range
-extern string InsideBar.ProjectionLevel.4    = "100%";                        // projection full range
+extern string ___b__________________________ = "=== Monitored projection levels ===";
+extern string InsideBar.ProjectionLevel.1    = "0%";                          // IB breakout (high/low)
+extern string InsideBar.ProjectionLevel.2    = "50%";                         // projection mid range
+extern string InsideBar.ProjectionLevel.3    = "100%";                        // projection full range
+extern string InsideBar.ProjectionLevel.4    = "{a non-numeric value disables a level}";
 
 extern string ___c__________________________ = "=== Sound alerts ===";        // youngest inside bar only
 extern string Sound.onInsideBar              = "Inside Bar.wav";
