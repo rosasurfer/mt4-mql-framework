@@ -10035,7 +10035,7 @@ window_num=0
 <inputs>
 Price=0
 Length=20
-AlertOn=1
+AlertOn=0
 </inputs>
 </expert>
 draw_1=0
