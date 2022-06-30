@@ -784,7 +784,7 @@
 #define SE_ERR_DLLNOTFOUND                        32     // DLL not found
 
 
-// STARTUPINFO structure flags
+// struct STARTUPINFO flags
 #define STARTF_FORCEONFEEDBACK                0x0040
 #define STARTF_FORCEOFFFEEDBACK               0x0080
 #define STARTF_PREVENTPINNING                 0x2000

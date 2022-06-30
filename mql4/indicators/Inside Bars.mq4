@@ -5,6 +5,7 @@
  *
  *
  * TODO:
+ *  - finish projection sound alerts
  *  - check bar alignment of all timeframes and use the largest correctly aligned instead of M5
  */
 #include <stddefines.mqh>
@@ -962,7 +963,7 @@ int ResolveLastProjectionEvent() {
  */
 int PlaySoundDX(string action) {
    if (action != "") {
-      if (IsLogDebug()) logDebug("PlaySoundDX(1)  tick="+ Ticks +"  "+ action);
+      //logDebug("PlaySoundDX(1)  tick="+ Ticks +"  "+ action);
    }
    return(NO_ERROR);
 }
