@@ -50,7 +50,6 @@
  *     include current daily range in ADR calculation/display
  *     update unitsize positioning
  *     open risk is not displayed if account balance is tiny
- *  - rename MODE_BAROPEN to MODE_OPENPRICES
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - monitor and notify of incoming emails
