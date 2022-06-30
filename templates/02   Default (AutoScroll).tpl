@@ -9879,6 +9879,91 @@ weight=1
 background=1
 value_0=16250
 </object>
+
+<object>
+type=1
+object_name=Horizontal Line 19000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 19500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 22000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=22000
+</object>
 </indicator>
 
 <indicator>

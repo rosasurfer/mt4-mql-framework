@@ -86,6 +86,7 @@
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
+ *  - rename to Turtle EA
  *
  *  - visual/audible confirmation
  *     for manual orders (to detect execution errors)
