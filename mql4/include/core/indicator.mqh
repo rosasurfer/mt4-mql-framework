@@ -217,11 +217,11 @@ int start() {
 
    if (!Tick.time) {
       int error = GetLastError();
-      if (error!=NO_ERROR) /*&&*/ if (error!=ERR_SYMBOL_NOT_AVAILABLE)              // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                                 // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
          if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
    }
 
-   // UnchangedBars und ChangedBars ermitteln: die Originalwerte werden in (4) und (5) ggf. neu definiert
+   // UnchangedBars und ChangedBars ermitteln: die Originalwerte werden später ggf. überschrieben
    UnchangedBars = IndicatorCounted(); ValidBars = UnchangedBars;
    ChangedBars   = Bars - UnchangedBars;
    ShiftedBars   = 0;
@@ -230,11 +230,14 @@ int start() {
    if (!Bars) return(_last_error(logInfo("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
 
    // Tickstatus bestimmen
-   static int lastVolume;
+   static int lastVolume = NULL;
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
    lastVolume = Volume[0];
+
+   // TODO: on account change IsConnected() returns FALSE and the code goes into the branch for offline charts
+   // FATAL  Grid::start(6)  Bar[last.startBarOpenTime]=2022.06.29 15:30:00 not found  [ERR_RUNTIME_ERROR]
 
    // Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
    static int      last.bars = -1;
@@ -340,17 +343,15 @@ int start() {
 
    __STATUS_HISTORY_UPDATE = false;
 
-   // Detect and handle account changes
+   // Detect and handle account changes                                             // TODO: move before resolving of Valid/Changed/ShiftedBars
    // ---------------------------------
-   // If the account server changes due to an account change IndicatorCounted() = ValidBars will immediately return 0 (zero).
-   // If the server doesn't change the new account will continue to use the same history and IndicatorCounted() will not immediately
-   // return zero. However, in both cases after 2-3 ticks in the new account all bars will be indicated as changed again.
-   // Summary: In both cases we can fully rely on the return value of IndicatorCounted().
+   // If the trade server changes as part of the account change IndicatorCounted() will return 0 on the first tick in the new account.
+   // If the trade server doesn't change the program continues to use the same history and IndicatorCounted() will not return 0.
+   // However in both cases 2-3 ticks later all bars will be indicated as changed again.
+   // Summary: In both cases we can rely on the return value of IndicatorCounted().
    int accountNumber = AccountNumber();
    if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {
-      error = onAccountChange(__lastAccountNumber, accountNumber);
-      //if (error) {}     // TODO: do something
-      //else {}
+      error = onAccountChange(__lastAccountNumber, accountNumber);                  // TODO: do something on error
    }
    __lastAccountNumber = accountNumber;
 
@@ -361,13 +362,13 @@ int start() {
    }
 
    // call the userland main function
-   int uError = onTick();
-   if (uError && uError!=last_error) catch("start(10)", uError);
+   int userError = onTick();
+   if (userError && userError!=last_error) catch("start(10)", userError);
 
    // check errors
-   int lError = GetLastError();
-   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(11)", lError);
+   error = GetLastError();
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(11)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
