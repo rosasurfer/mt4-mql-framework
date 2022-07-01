@@ -7847,30 +7847,34 @@ double value = iAO(NULL, 0, 2);
       caption=iATR() - Average True Range
       type=double
       <content>
-      Calculates the Indicator of the average true range and returns its value.
+      Calculates the Average True Range indicator and returns a value.
       </content>
       <example>
-if (iATR(NULL, 0, 12, 0) &gt; iATR(NULL, 0, 20, 0)) return(0);
+<span class="code keyword">if</span> (<span class="code function">iATR</span>(<span class="code const">NULL</span>, <span class="code const">NULL</span>, <span class="code number">12</span>, <span class="code number">0</span>) &gt; <span class="code function">iATR</span>(<span class="code const">NULL</span>, <span class="code const">NULL</span>, <span class="code number">20</span>, <span class="code number">0</span>)) {
+    <span class="code comment">// do something</span>
+} 
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+        def_value=<span class="const">NULL</span>
+        description=symbol of the time series to calculate the indicator from (<span class="const">NULL</span>: the current symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+        def_value=<span class="const">NULL</span>
+        description=<a href="help://constants_timeframes">timeframe</a> of the time series to calculate the indicator from (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=period
-        description=Averaging period for calculation.
+        description=averaging period
         </parameter>
       <parameter>
         type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+        name=index
+        description=indicator buffer index (offset) of the value to return
       </parameter>
     </function>
 
