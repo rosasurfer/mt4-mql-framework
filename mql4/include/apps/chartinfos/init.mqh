@@ -44,9 +44,7 @@ int onInit() {
       if (!ReadUnitSizeConfigValue("Leverage",    sValue)) return(last_error); mm.cfgLeverage    = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskPercent", sValue)) return(last_error); mm.cfgRiskPercent = StrToDouble(sValue);
       if (!ReadUnitSizeConfigValue("RiskRange",   sValue)) return(last_error); mm.cfgRiskRange   = StrToDouble(sValue);
-
       mm.cfgRiskRangeIsADR = StrCompareI(sValue, "ADR");
-      if (mm.cfgRiskRangeIsADR) mm.cfgRiskRange = iADR();
 
       // order tracker
       if (!OrderTracker.Configure()) return(last_error);

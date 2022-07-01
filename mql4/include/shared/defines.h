@@ -152,6 +152,7 @@
 #define F_ERR_TRADE_MODIFY_DENIED      0x00008000        //       32768
 #define F_ERR_STOP_DISTANCE_VIOLATED   0x00010000        //       65536
 #define F_ERR_TRADESERVER_GONE         0x00020000        //      131072
+#define F_ERR_NO_HISTORY_DATA          0x00040000        //      262144
 #define F_LOG_NOTICE                   0x40000000        //  1073741824  min. loglevel for matching errors (default: LOG_INFO)
 
 

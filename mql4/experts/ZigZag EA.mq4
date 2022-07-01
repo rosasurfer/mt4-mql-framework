@@ -43,18 +43,19 @@
  *
  *
  * TODO:
+ *  - ChartInfos
+ *     open risk is not displayed if account balance is tiny
+ *     include current daily range in ADR calculation/display
+ *     update unitsize positioning
+ *  - Range bar chart: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *  - Superbars: fix range bar charts
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
- *  - ChartInfos
- *     include current daily range in ADR calculation/display
- *     update unitsize positioning
- *     open risk is not displayed if account balance is tiny
+ *  - drop global var UnchangedBars
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - monitor and notify of incoming emails
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
- *  - Range bar chart: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 2 sec, retrying...
@@ -164,7 +165,6 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)

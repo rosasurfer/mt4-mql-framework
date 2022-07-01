@@ -328,6 +328,7 @@ bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiv
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands();;
+double   iADR(int flags = NULL);;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iChangedBars(string symbol=NULL, int timeframe=NULL);;

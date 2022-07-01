@@ -66,6 +66,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/iADR.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         105                    // unique strategy id between 101-1023 (10 bit)
@@ -2415,7 +2416,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
    if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0)) return(!catch("ConfigureGrid(1)  "+ sequence.name +" invalid parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+") +" (all must be non-negative)", ERR_INVALID_PARAMETER));
    if (!gridvola && (!gridsize || !unitsize))                 return(!catch("ConfigureGrid(2)  "+ sequence.name +" insufficient parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+"), ERR_INVALID_PARAMETER));
 
-   double adr        = iADR();                                                  if (!adr)       return(!catch("ConfigureGrid(3)  "+ sequence.name +" ADR=0", ERR_RUNTIME_ERROR));
+   double adr        = GetADR();                                                if (!adr)       return(false);
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(!catch("ConfigureGrid(4)  "+ sequence.name +" MODE_TICKSIZE=0", ERR_RUNTIME_ERROR));
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(!catch("ConfigureGrid(5)  "+ sequence.name +" MODE_TICKVALUE=0", ERR_RUNTIME_ERROR));
    double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(!catch("ConfigureGrid(6)  "+ sequence.name +" equity=0", ERR_RUNTIME_ERROR));
@@ -3519,22 +3520,13 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
 
 
 /**
- * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ * Resolve the current Average Daily Range.
  *
- * @return double - ADR in absolute terms or NULL in case of errors
+ * @return double - ADR value or NULL in case of errors
  */
-double iADR() {
-   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
-   if (!adr) {
-      double ranges[];
-      int maPeriods = 20;
-      ArrayResize(ranges, maPeriods);
-      ArraySetAsSeries(ranges, true);
-      for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
-      }
-      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
-   }
+double GetADR() {
+   static double adr = 0;                                   // TODO: invalidate static var on BarOpen(D1)
+   if (!adr) adr = iADR();
    return(adr);
 }
 

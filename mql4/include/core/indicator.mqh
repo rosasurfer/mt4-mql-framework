@@ -221,10 +221,10 @@ int start() {
          if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
    }
 
-   // UnchangedBars und ChangedBars ermitteln: die Originalwerte werden später ggf. überschrieben
-   UnchangedBars = IndicatorCounted(); ValidBars = UnchangedBars;
-   ChangedBars   = Bars - UnchangedBars;
-   ShiftedBars   = 0;
+   // ValidBars und ChangedBars ermitteln: die Originalwerte werden später ggf. überschrieben
+   ValidBars   = IndicatorCounted(); UnchangedBars = ValidBars;
+   ChangedBars = Bars - ValidBars;
+   ShiftedBars = 0;
 
    // Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
    if (!Bars) return(_last_error(logInfo("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
@@ -306,7 +306,7 @@ int start() {
    last.bars             = Bars;
    last.startBarOpenTime = Time[0];
    last.endBarOpenTime   = Time[Bars-1];
-   UnchangedBars         = Bars - ChangedBars; ValidBars = UnchangedBars;           // UnchangedBars neu definieren
+   ValidBars             = Bars - ChangedBars; UnchangedBars = ValidBars;           // ValidBars neu definieren
 
    // Falls wir aus init() kommen, dessen Ergebnis prüfen
    if (__CoreFunction == CF_INIT) {
@@ -324,22 +324,22 @@ int start() {
             return(error);
          }
       }
-      last_error    = NO_ERROR;                                                     // init() war erfolgreich
-      UnchangedBars = 0; ValidBars = UnchangedBars;
+      last_error = NO_ERROR;                                                        // init() war erfolgreich
+      ValidBars  = 0; UnchangedBars = ValidBars;
    }
    else {
       // normaler Tick
       prev_error = last_error;
       ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) UnchangedBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) UnchangedBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) UnchangedBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) UnchangedBars = 0;         // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
-      ValidBars = UnchangedBars;
+      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
+      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
+      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
+      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      UnchangedBars = ValidBars;
    }
-   if (!UnchangedBars) ShiftedBars = 0;
-   ChangedBars = Bars - UnchangedBars;                                              // ChangedBars aktualisieren (UnchangedBars wurde evt. neu gesetzt)
+   if (!ValidBars) ShiftedBars = 0;
+   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
 
    __STATUS_HISTORY_UPDATE = false;
 
