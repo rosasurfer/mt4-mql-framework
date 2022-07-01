@@ -33,6 +33,7 @@ extern double StopLoss.Size              = 20;     // in pip to calculate risk o
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/iADR.mqh>
 
 #property indicator_chart_window
 
@@ -238,7 +239,7 @@ int UpdateInstrumentInfos() {
    double stopLevel   = MarketInfo(symbol, MODE_STOPLEVEL)  /PipPoints;
    double freezeLevel = MarketInfo(symbol, MODE_FREEZELEVEL)/PipPoints;
 
-   double adr         = iADR();
+   double adr         = GetADR(); if (!adr && last_error && last_error!=ERS_TERMINAL_NOT_YET_READY) return(last_error);
    double volaPerADR  = adr/Close[0] * 100;                   // instrument volatility per ADR move in percent
 
    int    lotSize     = MarketInfo(symbol, MODE_LOTSIZE);
@@ -387,98 +388,21 @@ int UpdateInstrumentInfos() {
 
 
 /**
- * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ * Resolve the current Average Daily Range.
  *
- * @return double - ADR in absolute terms or NULL in case of errors
+ * @return double - ADR value or NULL in case of errors
  */
-double iADR() {
-   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
+double GetADR() {
+   static double adr = 0;                                   // TODO: invalidate static var on BarOpen(D1)
+
    if (!adr) {
-      double ranges[];
-      int maPeriods = 20;
-      ArrayResize(ranges, maPeriods);
-      ArraySetAsSeries(ranges, true);
-      for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
+      adr = iADR(F_ERR_NO_HISTORY_DATA);
+
+      if (!adr && last_error==ERR_NO_HISTORY_DATA) {
+         SetLastError(ERS_TERMINAL_NOT_YET_READY);
       }
-      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
    }
    return(adr);
-
-   CalculateLeverage(NULL);
-   CalculateLots(NULL);
-   CalculateVola();
-}
-
-
-/**
- * Calculate the performance volatility of an unleveraged position per ADR. Allows to compare the effective volatility of
- * different instruments.
- *
- * @return double - equity change of an unleveraged position in percent or NULL in case of errors
- */
-double CalculateVola() {
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double lotValue  = MathDiv(Close[0], tickSize) * tickValue;          // value of 1 lot in account currency
-   double vola      = MathDiv(1, lotValue) * tickValue * MathDiv(iADR(), tickSize);
-   return(vola * 100);
-}
-
-
-/**
- * Calculate and return the lots for the specified equity change per ADR.
- *
- * @param  double percent - equity change in percent
- *
- * @return double - lots or NULL in case of errors
- */
-double CalculateLots(double percent) {
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double equity    = AccountEquity() - AccountCredit() + GetExternalAssets();
-   double amount    = percent/100 * equity;                             // equity amount in account currency
-   double adr       = MathDiv(iADR(), tickSize);                        // ADR in ticks
-   double lots      = MathDiv(MathDiv(amount, adr), tickValue);         // lots for amount and ADR
-
-   // normalize the result
-   if (lots > 0) {                                                                              // max. 6.7% per step
-      if      (lots <=    0.03) lots = NormalizeDouble(MathRound(lots/  0.001) *   0.001, 3);   //     0-0.03: multiple of   0.001
-      else if (lots <=   0.075) lots = NormalizeDouble(MathRound(lots/  0.002) *   0.002, 3);   // 0.03-0.075: multiple of   0.002
-      else if (lots <=    0.1 ) lots = NormalizeDouble(MathRound(lots/  0.005) *   0.005, 3);   //  0.075-0.1: multiple of   0.005
-      else if (lots <=    0.3 ) lots = NormalizeDouble(MathRound(lots/  0.01 ) *   0.01 , 2);   //    0.1-0.3: multiple of   0.01
-      else if (lots <=    0.75) lots = NormalizeDouble(MathRound(lots/  0.02 ) *   0.02 , 2);   //   0.3-0.75: multiple of   0.02
-      else if (lots <=    1.2 ) lots = NormalizeDouble(MathRound(lots/  0.05 ) *   0.05 , 2);   //   0.75-1.2: multiple of   0.05
-      else if (lots <=   10.  ) lots = NormalizeDouble(MathRound(lots/  0.1  ) *   0.1  , 1);   //     1.2-10: multiple of   0.1
-      else if (lots <=   30.  ) lots =       MathRound(MathRound(lots/  1    ) *   1       );   //      12-30: multiple of   1
-      else if (lots <=   75.  ) lots =       MathRound(MathRound(lots/  2    ) *   2       );   //      30-75: multiple of   2
-      else if (lots <=  120.  ) lots =       MathRound(MathRound(lots/  5    ) *   5       );   //     75-120: multiple of   5
-      else if (lots <=  300.  ) lots =       MathRound(MathRound(lots/ 10    ) *  10       );   //    120-300: multiple of  10
-      else if (lots <=  750.  ) lots =       MathRound(MathRound(lots/ 20    ) *  20       );   //    300-750: multiple of  20
-      else if (lots <= 1200.  ) lots =       MathRound(MathRound(lots/ 50    ) *  50       );   //   750-1200: multiple of  50
-      else                      lots =       MathRound(MathRound(lots/100    ) * 100       );   //   1200-...: multiple of 100
-   }
-   return(lots);
-}
-
-
-/**
- * Calculate and return the leverage for the specified lotsize using the current account size.
- *
- * @param  double lots - lotsize
- *
- * @return double - resulting leverage value or NULL in case of errors
- */
-double CalculateLeverage(double lots) {
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   double equity    = AccountEquity() - AccountCredit() + GetExternalAssets();
-
-   double lotValue        = MathDiv(Close[0], tickSize) * tickValue;    // value of 1 lot in account currency
-   double unleveragedLots = MathDiv(equity, lotValue);                  // unleveraged lotsize
-   double leverage        = MathDiv(lots, unleveragedLots);             // leverage of the specified lotsize
-
-   return(leverage);
 }
 
 

@@ -13,7 +13,6 @@
  *
  * TODO:
  *  - don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - set order tracker sound on stopout to "margin-call"
  *  - PositionOpen/PositionClose events during change of chart timeframe/symbol are not detected
  */
@@ -40,6 +39,7 @@ extern string Signal.SMS      = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/iADR.mqh>
 #include <functions/InitializeByteBuffer.mqh>
 #include <MT4iQuickChannel.mqh>
 #include <lfx.mqh>
@@ -1875,11 +1875,17 @@ bool CalculateUnitSize() {
    int error = GetLastError();
    if (error || !Close[0] || !tickSize || !tickValue || !mm.equity) {   // may happen on terminal start, on account change, on template change or in offline charts
       if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
-         return(!SetLastError(ERS_TERMINAL_NOT_YET_READY));
+         return(_true(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
       return(!catch("CalculateUnitSize(1)", error));
    }
    mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
+
+   // update the current ADR
+   if (mm.cfgRiskRangeIsADR) {
+      mm.cfgRiskRange = GetADR();
+      if (!mm.cfgRiskRange) return(last_error == ERS_TERMINAL_NOT_YET_READY);
+   }
 
    // recalculate the unitsize
    if (mm.cfgRiskPercent && mm.cfgRiskRange) {
@@ -4449,29 +4455,19 @@ bool SetOrderEventLogged(string event, bool status) {
 
 
 /**
- * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ * Resolve the current Average Daily Range.
  *
- * @return double - ADR in absolute terms or NULL in case of errors
+ * @return double - ADR value or NULL in case of errors
  */
-double iADR() {
-   static double adr;                                    // TODO: invalidate static cache on BarOpen(D1)
+double GetADR() {
+   static double adr = 0;                                   // TODO: invalidate static var on BarOpen(D1)
 
-   if (!adr) {                                           // TODO: convert to current timeframe for non-FXT brokers
-      double ranges[];
-      int maPeriods = 20;
-      ArrayResize(ranges, maPeriods);
-      ArraySetAsSeries(ranges, true);
-      for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);
-      }
-      double ma = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
+   if (!adr) {
+      adr = iADR(F_ERR_NO_HISTORY_DATA);
 
-      int error = GetLastError();
-      if (error != NO_ERROR) {
-         if (error == ERS_HISTORY_UPDATE) return(ma);    // don't store result in cache to resolve it another time
-         return(!catch("iADR(1)", error));
+      if (!adr && last_error==ERR_NO_HISTORY_DATA) {
+         SetLastError(ERS_TERMINAL_NOT_YET_READY);
       }
-      adr = ma;
    }
    return(adr);
 }
