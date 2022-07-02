@@ -752,7 +752,6 @@ string   DoubleQuoteStr(string value);;
 double   ec_Ask                   (int &ec[]);;
 int      ec_Bars                  (int &ec[]);;
 double   ec_Bid                   (int &ec[]);;
-int      ec_CycleTicks            (int &ec[]);;
 int      ec_Digits                (int &ec[]);;
 int      ec_DllError              (int &ec[]);;
 int      ec_DllWarning            (int &ec[]);;

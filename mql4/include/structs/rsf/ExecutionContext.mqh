@@ -44,7 +44,7 @@
    int      ec_ChangedBars          (int ec[]);
    int      ec_UnchangedBars        (int ec[]);
    int      ec_Ticks                (int ec[]);
-   int      ec_CycleTicks           (int ec[]);
+   //       ec.cycleTicks
    datetime ec_PrevTickTime         (int ec[]);
    datetime ec_CurrTickTime         (int ec[]);
    double   ec_Bid                  (int ec[]);
