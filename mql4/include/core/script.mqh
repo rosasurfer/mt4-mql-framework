@@ -142,13 +142,13 @@ int start() {
    }
 
    // call the userland main function
-   int uError = onStart();
-   if (uError && uError!=last_error) catch("start(5)", uError);
+   error = onStart();
+   if (error && error!=last_error) CheckErrors("start(5)", error);            // don't use catch() as we must filter non-critical errors
 
-   // check errors
-   int lError = GetLastError();
-   if (lError || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(6)", lError);
+   // check all errors
+   error = GetLastError();
+   if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
+      CheckErrors("start(6)", error);
    return(last_error);
 }
 
@@ -248,7 +248,6 @@ bool CheckErrors(string caller, int error = NULL) {
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
-    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts a terminating error
       case ERS_EXECUTION_STOPPING:
          break;
       default:
@@ -260,7 +259,6 @@ bool CheckErrors(string caller, int error = NULL) {
    switch (last_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
-    //case ERS_TERMINAL_NOT_YET_READY:                               // in scripts a terminating error
       case ERS_EXECUTION_STOPPING:
          break;
       default:
@@ -270,10 +268,15 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // check uncatched errors
    if (!error) error = GetLastError();
-   if (error != NO_ERROR) {
-      catch(caller, error);
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
+   switch (error) {
+      case NO_ERROR:
+         break;
+      case ERS_HISTORY_UPDATE:
+      case ERS_EXECUTION_STOPPING:
+         logInfo(caller, error);
+         break;
+      default:                                                       // catch() calls SetLastError() which calls CheckErrors() again
+         catch(caller, error);                                       // which updates __STATUS_OFF accordingly
    }
 
    // update variable last_error

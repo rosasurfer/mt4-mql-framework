@@ -361,10 +361,10 @@ int start() {
    }
 
    // call the userland main function
-   int userError = onTick();
-   if (userError && userError!=last_error) catch("start(10)", userError);
+   error = onTick();
+   if (error && error!=last_error) CheckErrors("start(10)", error);                 // don't use catch() as we must filter non-critical errors
 
-   // check errors
+   // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
       CheckErrors("start(11)", error);
@@ -515,10 +515,17 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // check uncatched errors
    if (!error) error = GetLastError();
-   if (error != NO_ERROR) {
-      catch(caller, error);
-      __STATUS_OFF        = true;
-      __STATUS_OFF.reason = error;                                   // all uncatched errors are terminating errors
+   switch (error) {
+      case NO_ERROR:
+         break;
+      case ERR_HISTORY_INSUFFICIENT:
+      case ERS_HISTORY_UPDATE:
+      case ERS_TERMINAL_NOT_YET_READY:
+      case ERS_EXECUTION_STOPPING:
+         logInfo(caller, error);
+         break;
+      default:                                                       // catch() calls SetLastError() which calls CheckErrors() again
+         catch(caller, error);                                       // which updates __STATUS_OFF accordingly
    }
 
    // update variable last_error
