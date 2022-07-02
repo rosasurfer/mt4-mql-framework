@@ -23,7 +23,6 @@
  *  - remove logic from IsChartCommand() and replace processing by global include
  *  - add signal onZigZagBreakout
  *  - add auto-configuration
- *  - restore default values (type, hide channel and trail)
  *  - document inputs
  *  - document usage of iCustom()
  */
@@ -282,7 +281,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  size(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands
    if (__isChart && PeriodStepper.StepSize) HandleCommands();
@@ -341,6 +340,8 @@ int onTick() {
 
    // check data pumping on every tick so the reversal handler can skip errornous signals
    IsPossibleDataPumping();
+
+   debug("onTick(0.1)  Tick="+ Ticks +"  sizeof(semaphoreOpen) = "+ ArraySize(semaphoreOpen) +"  Bars="+ Bars +"  ChangedBars="+ ChangedBars);
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);

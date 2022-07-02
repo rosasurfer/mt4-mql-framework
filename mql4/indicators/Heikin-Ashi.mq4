@@ -211,7 +211,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(haOpen)) return(logInfo("onTick(1)  size(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(haOpen)) return(logInfo("onTick(1)  sizeof(haOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    ManageDoubleIndicatorBuffer(MODE_HA_CLOSE, haClose);
 
