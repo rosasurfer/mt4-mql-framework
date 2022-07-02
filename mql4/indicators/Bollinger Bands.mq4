@@ -222,7 +222,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startbar = Min(changedBars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
 
    // recalculate changed bars

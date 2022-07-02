@@ -170,7 +170,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)
       changedBars = Max.Bars;                                        // Because EMA(EMA(EMA)) is used in the calculation, TEMA needs 3*<period>-2 samples
    int bar, startbar = Min(changedBars-1, Bars - (3*MA.Periods-2));  // to start producing values in contrast to <period> samples needed by a regular EMA.
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ (3*MA.Periods-2), SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
 
    // (2) recalculate changed bars

@@ -149,6 +149,7 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - update signature of onTick() to onTick(int &prevCalculated)
  *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - TradeManager for custom positions
  *     close new|all hedges

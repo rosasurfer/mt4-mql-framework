@@ -79,7 +79,7 @@ int onTick() {
 
    // (1) calculate start bar
    int startbar = Min(ChangedBars-1, Bars-Periods-1);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ (Periods+1), SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
 
    double direction, noise;

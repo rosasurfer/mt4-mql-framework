@@ -278,7 +278,7 @@ int onTick() {
    initBars = 1;                                      // 1 bar for comparison with the previous value
    int srBars = Min(maBars, channelBars)-initBars;
    int srStartbar = Min(ChangedBars, srBars) - 1;
-   if (srStartbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (srStartbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed=?", SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
    double prevSR = lineUp[srStartbar+1] + lineDown[srStartbar+1];
    if (!prevSR) prevSR = ma[srStartbar+1];
