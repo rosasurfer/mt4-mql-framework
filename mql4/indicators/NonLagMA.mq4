@@ -2,7 +2,7 @@
  * Non-Lag Moving Average
  *
  *
- * Based on sources by Igor Durkin (aka igorad) and  uses the formula of version 4. While version 7 is a bit less responsive
+ * Based on sources by Igor Durkin (aka igorad) using the formula of version 4. While version 7 is a bit less responsive
  * (and probably more correct) in 99.9% of the observed cases trend changes are identical.
  *
  * Indicator buffers for iCustom():
@@ -11,11 +11,10 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @link  v4.0: http://www.forexfactory.com/showthread.php?t=571026
+ * @link  v4.0: https://www.forexfactory.com/thread/571026-trend-catching-with-nonlagdot-indicator
  * @link  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
- * @link  v7.1: http://www.mql5.com/en/forum/175037/page36#comment_4583645
  * @link  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
- * @link  v7.9: http://www.mql5.com/en/forum/175037/page75#comment_4584032
+ * @link  v7.9: https://www.mql5.com/en/forum/175037/page74#comment_4584032
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -28,7 +27,7 @@ extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typi
 
 extern color  Color.UpTrend        = RoyalBlue;
 extern color  Color.DownTrend      = Red;
-extern string Draw.Type            = "Line | Dot*";
+extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
 extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
 extern string ___a__________________________;

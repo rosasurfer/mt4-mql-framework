@@ -1,7 +1,10 @@
 /**
- * Buzzer MA
+ * Buzzer MA (NonLagMA v7.1)
  *
- * @link  https://www.mql5.com/en/code/12152
+ *
+ * @link  https://www.forexfactory.com/thread/561195-daytrading-scalping-strategy-m5-m1#          [Scalping Strategy M5 & M1]
+ * @link  https://www.mql5.com/en/code/12152#                                                                        [Buzzer]
+ * @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                                            [NonLagMA v7.1]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -9,9 +12,10 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int  Price   = 0;
-extern int  Length  = 20;
-extern bool AlertOn = false;
+extern int    Price     = 0;
+extern int    Length    = 20;
+extern double PctFilter = 1.36;
+extern bool   AlertOn   = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,7 +39,6 @@ double trend[];
 double Del[];
 double AvgDel[];
 
-double PctFilter    = 1.36;
 int    ColorBarBack = 1;
 double Deviation    = 0;
 
