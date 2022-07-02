@@ -1282,20 +1282,20 @@ bool UpdatePositions() {
    if      (!isPosition)    sCurrentPosition = " ";
    else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:    ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
    else {
-      string sUnits = "";
-      double currentUnits;
-      if (mm.leveragedLotsNormalized != 0) {
-         currentUnits = MathAbs(totalPosition)/mm.leveragedLotsNormalized;
-         sUnits = StringConcatenate("U", DoubleToStr(currentUnits, 1), "    ");
+      double currentUnits = 0;
+      string sCurrentUnits = "";
+      if (mm.leveragedLots != 0) {
+         currentUnits  = MathAbs(totalPosition)/mm.leveragedLots;
+         sCurrentUnits = StringConcatenate("U", NumberToStr(currentUnits, ",'.1R"), "    ");
       }
       string sRisk = "";
       if (mm.riskPercent && currentUnits) {
-         sRisk = StringConcatenate("R", DoubleToStr(mm.riskPercent * currentUnits, 0), "%    ");
+         sRisk = StringConcatenate("R", NumberToStr(mm.riskPercent * currentUnits, ",'.0R"), "%    ");
       }
       string sCurrentLeverage = "";
-      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", DoubleToStr(MathAbs(totalPosition)/mm.unleveragedLots, 1), "    ");
+      if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(totalPosition)/mm.unleveragedLots, ",'.1R"), "    ");
 
-      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
    }
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
@@ -1560,7 +1560,7 @@ bool UpdateStopoutLevel() {
    double equity     = AccountEquity();
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
-   double soEquity   = AccountStopoutLevel(); if (soMode != MSM_ABSOLUTE) soEquity /= (100/usedMargin);
+   double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
    if (!Bid || !tickSize || !tickValue)

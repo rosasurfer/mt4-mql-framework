@@ -478,7 +478,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
 
 
-// Margin stopout modes, siehe AccountStopoutMode()
+// account stopout modes, see AccountStopoutMode()
 #define MSM_PERCENT                    0
 #define MSM_ABSOLUTE                   1
 
