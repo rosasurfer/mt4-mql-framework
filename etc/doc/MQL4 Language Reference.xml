@@ -3599,9 +3599,12 @@ if (AccountFreeMarginMode() == 0) {
       caption=AccountStopoutLevel()
       type=int
       <content>
-      Returns the value of the Stop Out level.
+      Returns the account's stopout level. A percentage level if <a href="help://account_AccountStopoutMode">AccountStopoutMode()</a> is <span class="const">MSM_PERCENT</span>,
+      or an absolute free margin value if <a href="help://account_AccountStopoutMode">AccountStopoutMode()</a> is <span class="const">MSM_ABSOLUTE</span>.
       </content>
-      example=Print(&quot;StopOut level = &quot;, AccountStopoutLevel());
+      <example>
+<span class="code function">Print</span>(<span class="code string">"StopOut level = "</span>, <span class="code function">AccountStopoutLevel</span>());
+      </example>
     </function>
 
     <function>
@@ -3609,16 +3612,18 @@ if (AccountFreeMarginMode() == 0) {
       caption=AccountStopoutMode()
       type=int
       <content>
-      Returns the calculation mode for the Stop Out level. Calculation mode can take the following values:<br/><br/>
+      Returns the calculation mode for the account's stopout level. Calculation mode can take the following values:<br/><br/>
       0 - calculation of percentage ratio between margin and equity;<br/>
       1 - comparison of the free margin level to the absolute value.
       </content>
       <example>
-int level=AccountStopoutLevel();
-if(AccountStopoutMode()==0)
-   Print(&quot;StopOut level = &quot;, level, &quot;%&quot;);
-else
-   Print(&quot;StopOut level = &quot;, level, &quot; &quot;, AccountCurrency());
+int level = AccountStopoutLevel();
+if (AccountStopoutMode() == 0) {
+   Print("StopOut level = ", level, "%");
+}
+else {
+   Print("StopOut level = ", level, " ", AccountCurrency());
+}
       </example>
     </function>
   </group>

@@ -44,11 +44,10 @@
  *
  * TODO:
  *  - ChartInfos
- *     open risk is not displayed if account balance is tiny
  *     include current daily range in ADR calculation/display
  *     update unitsize positioning
  *  - Range bar chart: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *  - Superbars: fix range bar charts
+ *  - Superbars: fix in ßrange bar charts
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
  *  - drop global var UnchangedBars
