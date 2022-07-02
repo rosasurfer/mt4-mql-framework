@@ -139,7 +139,7 @@ int afterInit() {
       if (Offline.Ticker) /*&&*/ if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
          int hWnd    = __ExecutionContext[EC.hChart];
          int millis  = 1000;
-         int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_VISIBLE);
+         int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
          if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
          tickTimerId = timerId;
 

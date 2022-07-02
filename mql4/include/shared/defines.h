@@ -357,11 +357,11 @@
 
 
 // configuration flags for synthetic ticks
-#define TICK_OFFLINE_EA                         1        // send a standard tick, triggers Expert::start() in offline charts if a server connection is established
+#define TICK_OFFLINE_EA                         1        // send a standard tick, triggers Expert::start() in offline charts if a server connection exists
 #define TICK_CHART_REFRESH                      2        // send command ID_CHART_REFRESH instead of a standard tick (for offline charts and custom symbols)
 #define TICK_TESTER                             4        // send command ID_CHART_STEPFORWARD instead of a standard tick (for tester)
-#define TICK_IF_VISIBLE                         8        // send ticks only if the chart is at least partially visible (default: off)
-#define TICK_PAUSE_ON_WEEKEND                  16        // send ticks only at regular session times (default: off)
+#define TICK_IF_WINDOW_VISIBLE                  8        // send ticks only if the receiving chart window is visible
+#define TICK_PAUSE_ON_WEEKEND                  16        // send ticks only at regular session times (not implemented)
 
 
 /**
