@@ -28,9 +28,9 @@ string   PriceFormat="", PipPriceFormat="";                       // Preisformat
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // in indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts: always -1)
-int      UnchangedBars, ValidBars;                                // in indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts: always -1)
-int      ShiftedBars;                                             // in indicators: non-zero in offline charts only                                (in experts and scripts: always -1)
+int      ChangedBars;                                             // in indicators, it holds: Bars = ValidBars + ChangedBars (in experts and scripts: always -1)
+int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts: always -1)
+int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts: always -1)
 
 int      last_error;                                              // last error of the current execution
 int      prev_error;                                              // last error of the previous start() call

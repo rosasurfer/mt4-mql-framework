@@ -255,10 +255,10 @@ int start() {
    if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
    else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = false;
-   lastVolume    = Volume[0];
-   ChangedBars   = -1;                                                           // in experts not available
-   UnchangedBars = -1; ValidBars = UnchangedBars;                                // ...
-   ShiftedBars   = -1;                                                           // ...
+   lastVolume  = Volume[0];
+   ChangedBars = -1;                                                             // in experts not available
+   ValidBars   = -1                                                              // ...
+   ShiftedBars = -1;                                                             // ...
 
    // if called after init() check it's return value
    if (__CoreFunction == CF_INIT) {
