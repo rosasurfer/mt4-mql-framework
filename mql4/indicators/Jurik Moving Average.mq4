@@ -329,7 +329,7 @@ int onTick() {
    }
 
    // calculate start bar
-   if (Bars < 32) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed=32", SetLastError(ERR_HISTORY_INSUFFICIENT)));
+   if (Bars < 32) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
    int validBars = ValidBars, error;
    if (validBars > 0) validBars--;
    int oldestBar = Bars-1;

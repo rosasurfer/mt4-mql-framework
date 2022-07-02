@@ -345,7 +345,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startbar = Min(bars-1, Bars-zigzagPeriods);
-   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ zigzagPeriods, SetLastError(ERR_HISTORY_INSUFFICIENT)));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ zigzagPeriods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
