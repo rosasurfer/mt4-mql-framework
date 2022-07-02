@@ -257,7 +257,7 @@ int start() {
    else                                Tick.isVirtual = false;
    lastVolume  = Volume[0];
    ChangedBars = -1;                                                             // in experts not available
-   ValidBars   = -1                                                              // ...
+   ValidBars   = -1;                                                             // ...
    ShiftedBars = -1;                                                             // ...
 
    // if called after init() check it's return value
@@ -348,7 +348,7 @@ int start() {
 
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) catch("start(9)", error);
+   if (error && error!=last_error) CheckErrors("start(9)", error);   // don't use catch() as we must filter non-critical errors
 
    // record PL
    if (recordMode != RECORDING_OFF) {
@@ -536,9 +536,17 @@ bool CheckErrors(string caller, int error = NULL) {
 
    // check uncatched errors
    if (!error) error = GetLastError();
-   if (error != NO_ERROR) {
-      catch(caller, error);                                          // catch() calls SetLastError() which calls CheckErrors() again
-   }                                                                 // which updates __STATUS_OFF accordingly
+   switch (error) {
+      case NO_ERROR:
+         break;
+      case ERS_HISTORY_UPDATE:
+      case ERS_TERMINAL_NOT_YET_READY:
+      case ERS_EXECUTION_STOPPING:
+         logInfo(caller, error);
+         break;
+      default:                                                       // catch() calls SetLastError() which calls CheckErrors() again
+         catch(caller, error);                                       // which updates __STATUS_OFF accordingly
+   }
 
    // update the variable last_error
    if (__STATUS_OFF) {
