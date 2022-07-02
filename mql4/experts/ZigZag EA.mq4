@@ -43,16 +43,21 @@
  *
  *
  * TODO:
- *  - ChartInfos
- *     include current daily range in ADR calculation/display
- *     update unitsize positioning
  *  - Range bar chart: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
+ *
+ *  - on account change:
+ *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
+ *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
+ *
+ *
+ *
  *  - Superbars: fix in range bar charts
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
+ *  - ChartInfos: include current daily range in ADR calculation/display
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
- *  - monitor and notify of incoming emails
+ *  - VPS: monitor and notify of incoming emails
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
@@ -65,9 +70,6 @@
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 8 sec, retrying...
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 9 sec, retrying...
  *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
- *  - on account change:
- *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
- *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
@@ -166,6 +168,7 @@
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - ChartInfos: update unitsize positioning
  *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
  *  - on restart delete dead screen sockets
  */
