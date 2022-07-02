@@ -47,10 +47,9 @@
  *     include current daily range in ADR calculation/display
  *     update unitsize positioning
  *  - Range bar chart: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *  - Superbars: fix in ßrange bar charts
+ *  - Superbars: fix in range bar charts
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
- *  - drop global var UnchangedBars
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - monitor and notify of incoming emails

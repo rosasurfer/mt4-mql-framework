@@ -2,9 +2,9 @@
  * Return the number of changed bars of the specified timeseries since the last tick. Equivalent to resolving the number of
  * changed bars in indicators for the current chart timeframe by computing:
  *
- *   UnchangedBars = IndicatorCounted()
- *   ChangedBars = Bars - UnchangedBars
- *   Bars = ChangedBars + UnchangedBars
+ *   ValidBars   = IndicatorCounted()
+ *   ChangedBars = Bars - ValidBars
+ *   Bars = ValidBars + ChangedBars
  *
  * This function can be used if IndicatorCounted() is not available, i.e. in experts or in indicators with the requested
  * timeframe different from the current chart timeframe.

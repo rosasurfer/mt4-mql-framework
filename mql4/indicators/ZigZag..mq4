@@ -561,7 +561,7 @@ bool PeriodStepper(int direction) {
    else                      zigzagPeriods -= PeriodStepper.StepSize;
 
    ChangedBars = Bars;
-   ValidBars   = 0; UnchangedBars = ValidBars;
+   ValidBars   = 0;
    ShiftedBars = 0;
 
    return(true);
