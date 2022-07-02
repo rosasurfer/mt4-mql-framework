@@ -243,7 +243,7 @@ int onTick() {
    int requestedBars  = Min(ChangedBars, maxValues);
    int bars           = Min(requestedBars, Min(maxSMAValues, maxStochValues));                     // actual number of bars to be updated
    int startbar       = bars - 1;
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed=?", SetLastError(ERR_HISTORY_INSUFFICIENT)));
    if (Time[startbar]+Period()*MINUTES-1 < startTime)
       startbar = iBarShiftNext(NULL, NULL, startTime);
 

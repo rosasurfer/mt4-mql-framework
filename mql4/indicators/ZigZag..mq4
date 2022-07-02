@@ -247,10 +247,11 @@ int onInit() {
        RegisterObject(legendLabel);
    }
 
-   // setup a chart ticker for detection of data pumping
+   // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
+   // invalid signals caused by ticks during data pumping.
    if (!__isTesting) {
-      int hWnd    = __ExecutionContext[EC.hChart];
       int millis  = 2000;                                         // a virtual tick every 2 seconds
+      int hWnd    = __ExecutionContext[EC.hChart];
       int timerId = SetupTickTimer(hWnd, millis, NULL);
       if (!timerId) return(catch("onInit(11)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
       tickTimerId = timerId;
@@ -341,12 +342,10 @@ int onTick() {
    // check data pumping on every tick so the reversal handler can skip errornous signals
    IsPossibleDataPumping();
 
-   debug("onTick(0.1)  Tick="+ Ticks +"  sizeof(semaphoreOpen) = "+ ArraySize(semaphoreOpen) +"  Bars="+ Bars +"  ChangedBars="+ ChangedBars);
-
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startbar = Min(bars-1, Bars-zigzagPeriods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ zigzagPeriods, SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {

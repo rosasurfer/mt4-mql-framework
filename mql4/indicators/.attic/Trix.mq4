@@ -184,7 +184,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (Max.Bars < ChangedBars)             // Because EMA(EMA(EMA)) is used in the calculation, TriEMA needs
       changedBars = Max.Bars;                                        // 3*<period>-2 samples to start producing values in contrast to
    int bar, startbar = Min(changedBars-1, Bars - (3*EMA.Periods-2)); // <period> samples needed by a regular EMA.
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ ((3*EMA.Periods-2)), SetLastError(ERR_HISTORY_INSUFFICIENT)));
 
 
    // (2) recalculate changed bars
