@@ -148,6 +148,7 @@ int init() {
          Chart.SendTick();                         // TODO: Nur bei existierendem "Indicators List"-Window (nicht bei einzelnem Indikator).
       }                                            // TODO: Nicht im Tester-Chart. Oder etwa doch?
    }
+
    CheckErrors("init(16)");
    return(last_error);
 }
