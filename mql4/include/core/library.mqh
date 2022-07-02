@@ -1,4 +1,21 @@
-
+/**
+ * Framework struct EXECUTION_CONTEXT
+ *
+ * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
+ *
+ * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
+ *
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
+ * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
+ * wird ein neuer alloziiert. Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt,
+ * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher
+ * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
+ * schreibend).
+ *
+ * TODO:
+ *  - indicators loaded in a library must use a temporary copy of the main module context for their init() cycles
+ *  - integrate __STATUS_OFF and __STATUS_OFF.reason
+ */
 int __lpSuperContext = NULL;
 
 

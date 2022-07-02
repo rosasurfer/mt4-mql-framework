@@ -192,13 +192,11 @@ bool init_Globals() {
 
 
 /**
- * Globale start()-Funktion für Indikatoren.
+ * Core start() function for indicators.
  *
- * - Erfolgt der Aufruf nach einem vorherigem init()-Aufruf und init() kehrte mit ERS_TERMINAL_NOT_YET_READY zurück,
- *   wird versucht, init() erneut auszuführen. Bei erneutem init()-Fehler bricht start() ab.
- *   Wurde init() fehlerfrei ausgeführt, wird der letzte Errorcode 'last_error' vor Abarbeitung zurückgesetzt.
- *
- * - Der letzte Errorcode 'last_error' wird in 'prev_error' gespeichert und vor Abarbeitung zurückgesetzt.
+ * Before execution the global var 'last_error' is reset and an existing error is stored in var 'prev_error'. If indicator
+ * initialization returned with ERS_TERMINAL_NOT_YET_READY an attempt is made to re-execute initialization. On repeated
+ * initialization errors execution stops.
  *
  * @return int - error status
  */
@@ -208,13 +206,17 @@ int start() {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
             return(__STATUS_OFF.reason);
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, NL, msg);                                              // 4 Zeilen Abstand für Instrumentanzeige und ggf. vorhandene Legende
+         Comment(NL, NL, NL, NL, msg);                                              // 4 lines margin for symbol display and optional chart legend
       }
       return(__STATUS_OFF.reason);
    }
 
    Ticks++;                                                                         // einfacher Zähler, der konkrete Werte hat keine Bedeutung
    Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: im synthetischen Chart sind MODE_TIME und TimeCurrent() NULL
+
+
+   debug("start(0.1)  Tick="+ Ticks +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  Bars="+ Bars +"  ValidBars="+ IndicatorCounted() +"  account="+ AccountNumber());
+
 
    if (!Tick.time) {
       int error = GetLastError();
