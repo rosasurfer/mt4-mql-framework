@@ -43,14 +43,18 @@
  *
  *
  * TODO:
- *  - on account change to another trade server with older history:
- *     FATAL  US2000,M15  Indicator::start(4)  Bar[last.startBarOpenTime]=2022.07.01 23:45:00 not found  [ERR_RUNTIME_ERROR]
+ *  - account change events are not correctly handled:
+ *    • on account change to another trade server with older history:
+ *       FATAL  US2000,M15  Indicator::start(4)  Bar[last.startBarOpenTime]=2022.07.01 23:45:00 not found  [ERR_RUNTIME_ERROR]
  *
- *  - if last ticks on the other trade server are older or missing:
- *     MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ERROR: ticktime is counting backwards:  tickTime=1970.01.01 00:00:00  lastTickTime=2022.07.01 23:59:46  ec={pid=2, previousPid=0, started="2022.07.02 20:24:06", programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=0, moduleDeinitFlags=0, symbol="US2000", timeframe=M15, newSymbol="US2000", newTimeframe=M15, rates=0x087C0020, bars=60000, changedBars=1, unchangedBars=59999, ticks=21, cycleTicks=9, prevTickTime="2022.07.01 23:59:46", currTickTime="2022.07.01 23:59:46", bid=1727.93, ask=1728.16, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=612 (UI), hChart=0x00150ADA, hChartWindow=0x00490B28, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=INFO, loglevelAlert=NOTICE, loglevelDebugger=DEBUG, loglevelFile=DEBUG, loglevelMail=OFF, loglevelSMS=OFF, logger=NULL, logBuffer=(0), logFilename=""} (0x07462B78)  [ERR_ILLEGAL_STATE]
+ *    • on account change to another trade server where last ticks are older or missing:
+ *       MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ERROR: ticktime is counting backwards:  tickTime=1970.01.01 00:00:00  lastTickTime=2022.07.01 23:59:46  ec={pid=2, previousPid=0, started="2022.07.02 20:24:06", programType=PT_INDICATOR, programName="ChartInfos", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=0, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="ChartInfos", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=0, moduleDeinitFlags=0, symbol="US2000", timeframe=M15, newSymbol="US2000", newTimeframe=M15, rates=0x087C0020, bars=60000, changedBars=1, unchangedBars=59999, ticks=21, cycleTicks=9, prevTickTime="2022.07.01 23:59:46", currTickTime="2022.07.01 23:59:46", bid=1727.93, ask=1728.16, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=612 (UI), hChart=0x00150ADA, hChartWindow=0x00490B28, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=DEBUG, loglevelTerminal=INFO, loglevelAlert=NOTICE, loglevelDebugger=DEBUG, loglevelFile=DEBUG, loglevelMail=OFF, loglevelSMS=OFF, logger=NULL, logBuffer=(0), logFilename=""} (0x07462B78)  [ERR_ILLEGAL_STATE]
  *
- *  - Range bar chart:   FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *  - Superbars: fix in range bar charts
+ *
+ *  - Range bar chart with odd bar times: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
+ *  - Superbars
+ *     fix in range bar charts
+ *     implement more timeframes
  *  - rewrite NonLagMA and replace Buzzer
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
