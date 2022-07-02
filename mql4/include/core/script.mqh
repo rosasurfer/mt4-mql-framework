@@ -125,7 +125,7 @@ int start() {
    ArrayCopyRates(__rates);
 
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(2)")) return(last_error);
+      if (CheckErrors("start(2)->SyncMainContext_start()")) return(last_error);
    }
 
    if (!Tick.time) {
@@ -143,7 +143,7 @@ int start() {
 
    // call the userland main function
    error = onStart();
-   if (error && error!=last_error) CheckErrors("start(5)", error);            // don't use catch() as we must filter non-critical errors
+   if (error && error!=last_error) CheckErrors("start(5)", error);
 
    // check all errors
    error = GetLastError();
@@ -164,10 +164,11 @@ int deinit() {
    if (!IsDllsAllowed() || !IsLibrariesAllowed() || last_error==ERR_TERMINAL_INIT_FAILURE || last_error==ERR_DLL_EXCEPTION)
       return(last_error);
 
-   int error = SyncMainContext_deinit(__ExecutionContext, UninitializeReason());
-   if (error != NULL) return(CheckErrors("deinit(1)") + LeaveContext(__ExecutionContext));
+   if (SyncMainContext_deinit(__ExecutionContext, UninitializeReason()) != NO_ERROR) {
+      return(CheckErrors("deinit(1)->SyncMainContext_deinit()") + LeaveContext(__ExecutionContext));
+   }
 
-   error = catch("deinit(2)");                        // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
+   int error = catch("deinit(2)");                    // detect errors causing a full execution stop, e.g. ERR_ZERO_DIVIDE
 
    if (!error) error = onDeinit();                    // preprocessing hook
    if (!error) error = afterDeinit();                 // postprocessing hook
@@ -231,20 +232,22 @@ bool IsLibrary() {
  * Check and update the program's error status and activate the flag __STATUS_OFF accordingly.
  *
  * @param  string caller           - location identifier of the caller
- * @param  int    error [optional] - error to enforce (default: none)
+ * @param  int    error [optional] - enforced error (default: none)
  *
  * @return bool - whether the flag __STATUS_OFF is set
  */
 bool CheckErrors(string caller, int error = NULL) {
-   // check and signal DLL errors
-   int dll_error = __ExecutionContext[EC.dllError];                  // TODO: signal DLL errors
-   if (dll_error != NO_ERROR) {
-      __STATUS_OFF        = true;                                    // all DLL errors are terminating errors
+   // check DLL errors
+   int dll_error = __ExecutionContext[EC.dllError];
+   if (dll_error != NO_ERROR) {                             // all DLL errors are terminating errors
+      if (dll_error != __STATUS_OFF.reason)                 // prevent recursion errors
+         logFatal(caller +"  DLL error", dll_error);        // signal the error but don't overwrite MQL last_error
+      __STATUS_OFF        = true;
       __STATUS_OFF.reason = dll_error;
    }
 
-   // check MQL errors
-   int mql_error = __ExecutionContext[EC.mqlError];
+   // check the program's MQL error
+   int mql_error = __ExecutionContext[EC.mqlError];         // may have bubbled up from an MQL library
    switch (mql_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -252,10 +255,10 @@ bool CheckErrors(string caller, int error = NULL) {
          break;
       default:
          __STATUS_OFF        = true;
-         __STATUS_OFF.reason = mql_error;                            // MQL errors have higher severity than DLL errors
+         __STATUS_OFF.reason = mql_error;                   // MQL errors have higher severity than DLL errors
    }
 
-   // check last_error
+   // check the module's MQL error (if set it should match EC.mqlError)
    switch (last_error) {
       case NO_ERROR:
       case ERS_HISTORY_UPDATE:
@@ -263,24 +266,27 @@ bool CheckErrors(string caller, int error = NULL) {
          break;
       default:
          __STATUS_OFF        = true;
-         __STATUS_OFF.reason = last_error;                           // local errors have higher severity than library errors
+         __STATUS_OFF.reason = last_error;                  // main module errors have higher severity than library errors
    }
 
-   // check uncatched errors
+   // check enforced or uncatched errors
    if (!error) error = GetLastError();
    switch (error) {
       case NO_ERROR:
          break;
       case ERS_HISTORY_UPDATE:
       case ERS_EXECUTION_STOPPING:
-         logInfo(caller, error);
+         logInfo(caller, error);                            // don't SetLastError()
          break;
-      default:                                                       // catch() calls SetLastError() which calls CheckErrors() again
-         catch(caller, error);                                       // which updates __STATUS_OFF accordingly
+      default:
+         if (error != __STATUS_OFF.reason)                  // prevent recursion errors
+            catch(caller, error);                           // catch() calls SetLastError()
+         __STATUS_OFF        = true;
+         __STATUS_OFF.reason = error;
    }
 
    // update variable last_error
-   if (__STATUS_OFF) /*&&*/ if (!last_error)
+   if (__STATUS_OFF && !last_error)
       last_error = __STATUS_OFF.reason;
    return(__STATUS_OFF);
 
