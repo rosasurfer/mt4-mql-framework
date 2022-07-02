@@ -22,7 +22,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // also: "tl | tr | bl | br"
+extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // or: "tl | tr | bl | br"
 extern string Track.Orders    = "on | off | auto*";
 extern bool   Offline.Ticker  = true;                                                  // whether to enable self-ticking offline charts
 extern string ___a__________________________;

@@ -392,7 +392,7 @@ int deinit() {
    if (__tickTimerId != NULL) {
       int tmp = __tickTimerId;
       __tickTimerId = NULL;
-      if (!RemoveTickTimer(tmp)) logError("deinit(3)->RemoveTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
+      if (!ReleaseTickTimer(tmp)) logError("deinit(3)->ReleaseTickTimer(timerId="+ tmp +") failed", ERR_RUNTIME_ERROR);
    }
 
    // close history sets of the PL recorder
