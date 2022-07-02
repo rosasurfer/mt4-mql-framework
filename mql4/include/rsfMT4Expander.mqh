@@ -47,7 +47,7 @@
    bool     IsCustomTimeframe(int timeframe);
    bool     IsStdTimeframe(int timeframe);
    int      SetupTickTimer(int hWnd, int millis, int flags);
-   bool     RemoveTickTimer(int timerId);
+   bool     ReleaseTickTimer(int timerId);
 
    // configuration
    string   GetGlobalConfigPathA();

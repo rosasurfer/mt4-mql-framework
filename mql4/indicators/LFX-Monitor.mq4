@@ -350,7 +350,7 @@ int onDeinit() {
    // uninstall the chart ticker
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
-      if (!RemoveTickTimer(id)) return(catch("onDeinit(1)->RemoveTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
+      if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
 }
