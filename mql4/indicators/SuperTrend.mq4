@@ -229,7 +229,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startbar = Min(bars-1, Bars-Max(ATR.Periods, SMA.Periods));
-   if (startbar < 0) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ Max(ATR.Periods, SMA.Periods), SetLastError(ERR_HISTORY_INSUFFICIENT)));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int i=startbar; i >= 0; i--) {

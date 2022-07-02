@@ -188,7 +188,7 @@ int onTick() {
    if (Max.Bars >= 0) /*&&*/ if (changedBars > Max.Bars)
       changedBars = Max.Bars;
    int startbar = changedBars-1;
-   if (startbar < 0) return(!logInfo("onTick(3)  Tick="+ Ticks +"  Bars="+ Bars +"  needed=?", SetLastError(ERR_HISTORY_INSUFFICIENT)));
+   if (startbar < 0) return(logInfo("onTick(3)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
 
    // (2) recalculate changed bars

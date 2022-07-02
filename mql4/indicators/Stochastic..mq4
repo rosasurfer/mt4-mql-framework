@@ -167,7 +167,7 @@ int onTick() {
    // +-----------------------------------------------------------------------------------------------------------+
    int requestedBars = Min(ChangedBars, maxValues);
    int resultingBars = Bars - stochPeriods - ma1Periods - ma2Periods + 3;  // max. resulting bars
-   if (resultingBars < 1) return(!logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ (stochPeriods+ma1Periods+ma2Periods-3), SetLastError(ERR_HISTORY_INSUFFICIENT)));
+   if (resultingBars < 1) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    int bars          = Min(requestedBars, resultingBars);                  // actual number of bars to be updated
    int ma2Startbar   = bars - 1;
