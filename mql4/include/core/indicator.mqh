@@ -284,7 +284,7 @@ int start() {
    // The below code works under the following assumptions:
    // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
    // - all updates must include either the begin or the end of the history (no separate updates in the middle)
-   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a single random second)
+   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
    // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
    //
    static int prevBars = -1;
