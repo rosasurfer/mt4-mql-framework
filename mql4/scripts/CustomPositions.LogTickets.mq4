@@ -13,7 +13,7 @@ int __DeinitFlags[];
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    string command   = "log-custom-positions";

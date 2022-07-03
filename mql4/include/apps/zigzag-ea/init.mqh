@@ -2,8 +2,6 @@
  * Initialization preprocessing.
  *
  * @return int - error status
- *
- * @see  "mql4/experts/ZigZag EA.mq4"
  */
 int onInit() {
    CreateStatusBox();
@@ -24,7 +22,7 @@ int onInitUser() {
    }
    else if (StrTrim(Sequence.ID) == "") {          // no sequence id was specified
       if (ValidateInputs()) {
-         sequence.isTest  = IsTesting();
+         sequence.isTest  = __isTesting;
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = TimeLocal();
@@ -112,13 +110,13 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (IsTesting() || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
+   if (__isTesting || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
       SetLogfile(GetLogFilename());                // of a finished test (i.e. a test loaded into an online chart)
    }
 
    // read debug config
-   string section = ifString(IsTesting(), "Tester.", "") + ProgramName(MODE_NICE);
-   if (IsTesting()) {
+   string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
+   if (__isTesting) {
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
       test.onStopPause         = GetConfigBool(section, "OnStopPause",         true);

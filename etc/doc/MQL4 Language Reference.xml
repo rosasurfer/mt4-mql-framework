@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="Windows-1252"?>
+<!--
+Q: Where can I find the original version of the MQL4 language reference?
+A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30ebd8/doc/MQL4%20Reference.xml#
+-->
 <dictionary>
   tag=MetaQuotesLanguage
   caption=MetaQuotes Language 4
@@ -34,16 +38,17 @@
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
 
   .code           { font-family:monospace;            }
+  .italic         { font-style:italic;                }
   .const          { color:#980000;                    }
-  .function       { color:#000093;                    }  <!-- same as <a/>    -->
-  .core           { color:Red;                        }
-  .global         { color:#980000; font-style:italic; }  <!-- global variable -->
+  .function       { color:#000093;                    }  /* same as <a/> */
+  .core-function  { color:Red;                        }
+  .global-var     { color:#980000; font-style:italic; }
   .keyword        { color:#D000D0;                    }
   .number         { color:#7070FF;                    }
   .preproc        { color:#008000;                    }
   .string         { color:#008080;                    }
-  .char           { color:#008080;                    }  <!-- same as .string -->
-  .type           { color:#808000;                    }
+  .char           { color:#008080;                    }
+  .type           { color:Olive;                      }
   .comment        { color:Blue;                       }
   </styles>
 
@@ -1032,7 +1037,7 @@ bool   bLog;
           <li><a href="help://basics_types_datetime">datetime</a> is date and time, an unsigned integer containing seconds that
           have passed since 0.00 a.m. on 1 January, 1970.</li>
         </ul>
-        
+
         <p>Additional data types make sense only at the declaration of <a href="help://basics_variables_extern">input parameters</a> for their more convenient
        representation in the properties window.</p>
         <p class="doctabhdr">Example:</p>
@@ -1579,14 +1584,24 @@ It can be one of the following values:</p>
       keywords=;DRAW_NONE;DRAW_LINE;DRAW_SECTION;DRAW_HISTOGRAM;DRAW_ARROW;STYLE_SOLID;STYLE_DASH;STYLE_DOT;STYLE_DASHDOT;STYLE_DASHDOTDOT;
       <content>
 <p>Indicator drawing shapes for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>():</p>
-        <table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
-        <tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
-<tr><td class="const">DRAW_LINE</td><td class="number">0</td><td>Connects successive values of an indicator buffer by a line. Missing values interrupt the line.</td></tr>
-<tr><td class="const">DRAW_SECTION</td><td class="number">1</td><td>Connects all values of an indicator buffer by a line. Missing values don't interrupt the line. A zigzag line without vertical segments.</td></tr>
-<tr><td class="const">DRAW_HISTOGRAM</td><td class="number">2</td><td>Connects corresponding values (pairs) of two consecutive buffers (even and odd index) by a vertical histogram. The larger buffer value determines the color to use.</td></tr>
-<tr><td class="const">DRAW_ARROW</td><td class="number">3</td><td>Draws for each buffer value a symbol.</td></tr>
-<tr><td class="const">DRAW_ZIGZAG</td><td class="number">4</td><td>Connects value pairs of two consecutive buffers (even and odd index) by zigzag lines and vertical segments. Single values are not drawn. Uses the color of the even buffer.</td></tr>
-<tr><td class="const">DRAW_NONE</td><td class="number">12</td><td>Nothing is drawn.</td></tr>
+<table cellspacing="0" cellpadding="4" border="0" class="docenums" width="95%">
+<tr><th width="15%">Constant</th><th width="10%">Value</th><th width="75%">Description</th></tr>
+
+<tr><td class="const">DRAW_LINE     </td><td class="number">0</td><td>Connects successive values of a buffer by a line. Missing values interrupt the line.</td></tr>
+
+<tr><td class="const">DRAW_SECTION  </td><td class="number">1</td><td>Connects all values of a buffer by a line. Missing values don't interrupt the line. A zigzag line without
+                                                                      vertical segments.</td></tr>
+
+<tr><td class="const">DRAW_HISTOGRAM</td><td class="number">2</td><td>Connects values of two consecutive buffers (even and odd) by a vertical histogram. The larger buffer value
+                                                                      determines the color to use.</td></tr>
+
+<tr><td class="const">DRAW_ARROW    </td><td class="number">3</td><td>Displays a character symbol for each buffer value.</td></tr>
+
+<tr><td class="const">DRAW_ZIGZAG   </td><td class="number">4</td><td>Connects values of two consecutive buffers (even and odd) by a zigzag line and vertical segments (stair step
+                                                                      or saw tooth pattern). Values without a counterpart in the other buffer interrupt the line. The even buffer
+                                                                      determines the color to use.</td></tr>
+
+<tr><td class="const">DRAW_NONE     </td><td class="number">12</td><td>Nothing is drawn.</td></tr>
 </table>
 <br/>
 <p>Indicator line styles for <a href="help://indicatormanagement_SetIndexStyle">SetIndexStyle</a>(..., drawType=<span class="const">DRAW_LINE</span>, ..., drawWidth=<span class="number">1</span>):</p>
@@ -2335,7 +2350,7 @@ void SendMyMessage(string text) {
 <tr><td class="const">ERR_INVALID_FUNCTION_PARAMVALUE</td><td>4051</td><td>Invalid function parameter value.</td></tr>
 <tr><td class="const">ERR_STRING_FUNCTION_INTERNAL</td><td>4052</td><td>String function internal error.</td></tr>
 <tr><td class="const">ERR_ARRAY_ERROR</td><td>4053</td><td>Some array error.</td></tr>
-<tr><td class="const">ERR_SERIES_NOT_AVAILABLE</td><td>4054</td><td>Time series not available.</td></tr>
+<tr><td class="const">ERR_SERIES_NOT_AVAILABLE</td><td>4054</td><td>Timeseries not available.</td></tr>
 <tr><td class="const">ERR_CUSTOM_INDICATOR_ERROR</td><td>4055</td><td>Custom indicator error.</td></tr>
 <tr><td class="const">ERR_INCOMPATIBLE_ARRAYS</td><td>4056</td><td>Arrays are incompatible.</td></tr>
 <tr><td class="const">ERR_GLOBAL_VARIABLES_PROCESSING</td><td>4057</td><td>Global variables processing error.</td></tr>
@@ -3584,9 +3599,12 @@ if (AccountFreeMarginMode() == 0) {
       caption=AccountStopoutLevel()
       type=int
       <content>
-      Returns the value of the Stop Out level.
+      Returns the account's stopout level. A percentage level if <a href="help://account_AccountStopoutMode">AccountStopoutMode()</a> is <span class="const">MSM_PERCENT</span>,
+      or an absolute free margin value if <a href="help://account_AccountStopoutMode">AccountStopoutMode()</a> is <span class="const">MSM_ABSOLUTE</span>.
       </content>
-      example=Print(&quot;StopOut level = &quot;, AccountStopoutLevel());
+      <example>
+<span class="code function">Print</span>(<span class="code string">"StopOut level = "</span>, <span class="code function">AccountStopoutLevel</span>());
+      </example>
     </function>
 
     <function>
@@ -3594,16 +3612,18 @@ if (AccountFreeMarginMode() == 0) {
       caption=AccountStopoutMode()
       type=int
       <content>
-      Returns the calculation mode for the Stop Out level. Calculation mode can take the following values:<br/><br/>
+      Returns the calculation mode for the account's stopout level. Calculation mode can take the following values:<br/><br/>
       0 - calculation of percentage ratio between margin and equity;<br/>
       1 - comparison of the free margin level to the absolute value.
       </content>
       <example>
-int level=AccountStopoutLevel();
-if(AccountStopoutMode()==0)
-   Print(&quot;StopOut level = &quot;, level, &quot;%&quot;);
-else
-   Print(&quot;StopOut level = &quot;, level, &quot; &quot;, AccountCurrency());
+int level = AccountStopoutLevel();
+if (AccountStopoutMode() == 0) {
+   Print("StopOut level = ", level, "%");
+}
+else {
+   Print("StopOut level = ", level, " ", AccountCurrency());
+}
       </example>
     </function>
   </group>
@@ -3634,7 +3654,7 @@ else
         Note: Binary search processes only sorted arrays. To sort numeric arrays use the <a href="help://array_ArraySort">ArraySort()</a> function.
       </content>
       <example>
-// datetime series are reverse-indexed and in descending order
+// rates timeseries are reverse-indexed
 datetime times[];
 ArrayCopySeries(times, MODE_TIME, Symbol(), PERIOD_D1);<br/>
 
@@ -3681,32 +3701,18 @@ Search direction. It can be any of the following values:<br/>
       caption=ArrayCopy()
       type=int
       <content>
-         Copies elements from one array to another and returns the number of copied elements.<br/>
+         Copies elements from one array to another and returns the number of copied elements. Overwrites existing elements.<br/>
          <br/>
-         Both arrays must be of the same type (types <span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
-         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. If needed the size of the first
-         dimension of the target array (rows) is automatically increased.<br/>
+         Both arrays must be of the same type (<span class="type">bool</span>, <span class="type">int</span>, <span class="type">datetime</span>
+         and <span class="type">color</span> are considered the same). Dimensions of multidimensional arrays must match. The size of the target array's first dimension (rows)
+         is automatically increased. If a reverse-indexed array (a timeseries) is copied the target array becomes reverse-indexed, too. The opposite is not true.<br/>
          <br/>
-
-         <b>Notes:</b>
-         <br/>
-         <li>The source array range to copy must be non-empty.</li>
-
-         <li>If a timeseries array (reverse-indexed) is copied the target array becomes reverse-indexed, too.</li>
-
-         <li>If the source array is a pointer to an internal rates array (as returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are relative to the internal array buffers, regardless
-             of the indexing order of the arrays.</li>
-
-         <li>If the source array is a regular array (not returned by <a href="help://array_ArrayCopyRates">ArrayCopyRates()</a> or
-             <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>) start index and order of copied elements are according to the indexing order of the arrays.</li>
-
       </content>
       <example>
 <span class="type code">int</span> source[] = {<span class="number code">1</span>, <span class="number code">2</span>, <span class="number code">3</span>, <span class="number code">4</span>, <span class="number code">5</span>};
 <span class="type code">int</span> target[] = {<span class="number code">11</span>, <span class="number code">22</span>, <span class="number code">33</span>, <span class="number code">44</span>, <span class="number code">55</span>, <span class="number code">66</span>};<br/>
 
-<span class="function code">ArraySetAsSeries</span>(source, <span class="const code">true</span>);         <span class="comment code">// make source reverse-indexed</span>
+<span class="function code">ArraySetAsSeries</span>(source, <span class="const code">true</span>);         <span class="comment code">// enable reverse-indexing</span>
 <span class="function code">ArrayCopy</span>(target, source, <span class="number code">0</span>, <span class="number code">1</span>, <span class="number code">3</span>);     <span class="comment code">// copy 3 elements</span>
 <span class="function code">Print</span>(<span class="function code">IntsToStr</span>(target, <span class="const code">NULL</span>));         <span class="comment code">// {4, 3, 2, 44, 55, 66}</span>
 
@@ -3719,7 +3725,7 @@ Search direction. It can be any of the following values:<br/>
       <parameter>
         type=object
         name=<nobr>source[]</nobr>
-        description=source array
+        description=source array, must not be empty (a <span class="const">NULL</span> pointer)
       </parameter>
       <parameter>
         type=int
@@ -3737,7 +3743,7 @@ Search direction. It can be any of the following values:<br/>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=number of elements to copy (default: all elements from source start index to the end of the array)
+        description=number of elements to copy (default: all elements from source start index to the end)
       </parameter>
     </function>
 
@@ -3818,7 +3824,7 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
       <content>
         Assigns a pointer to a series array to a regular array variable and returns the number of elements contained in the array or -1 in case of an error.<br/>
         No additional memory is allocated and no data is copied except the target arrays is an <a href="help://indicatormanagement_SetIndexBuffer">indicator buffer</a> in which case
-        the data is indeed copied. If data from a different time series is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data
+        the data is indeed copied. If data from a different timeseries is accessed the status code <span class="const">ERS_HISTORY_UPDATE</span> may be set. If the specified data
         does not (yet) exist the <a href="help://constants_errors">error code</a> <span class="const">ERR_ARRAY_ERROR</span> is set and the function returns -1.
         <br/>
         <br/>
@@ -3854,13 +3860,13 @@ Print("Current bar open: Time="+ TimeToStr(array[0][0]) +"  Open="+ array[0][1])
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=Symbol of the time series to access.
+        description=Symbol of the timeseries to access.
       </parameter>
       <parameter>
         type=int
         name=timeframe
         def_value=<span class="const">NULL</span>
-        description=Timeframe of the time series to access. Can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
+        description=Timeframe of the timeseries to access. Can be any of <a href="help://constants_timeframes">Timeframe list</a> values.
       </parameter>
     </function>
 
@@ -4052,7 +4058,7 @@ Print(&quot;Min value = &quot;, num_array[minValueIdx]);
         <br/>
         <li>Local arrays (arrays which are declared in a function) will remain resized and keep their values after the function returned.</li>
 
-        <li>Resizing an array to a size of <span class="number">0</span> releases allocated memory. Resizing an array to the same size does nothing (no-op). 
+        <li>Resizing an array to a size of <span class="number">0</span> releases allocated memory. Resizing an array to the same size does nothing (no-op).
         Resizing an array to a different size allocates new memory and changes the address of the internal buffer.</li>
 
         <li>During resizing existing or remaining array elements are kept. New numeric array elements are initialized with <span class="number">0</span> (zero).</li>
@@ -4144,43 +4150,40 @@ for(int i=0; i&lt;count; i++)
       tag=array_ArraySort
       caption=ArraySort()
       type=int
-      keywords=;ArraySort();MODE_ASCEND;MODE_DESCEND;
+      keywords=;ArraySort();MODE_ASCEND;MODE_DESCEND;sort;
       <content>
-      Sorts numeric arrays by first dimension. Series arrays cannot be sorted by ArraySort().
+      Sorts a numeric array by its first dimension. Series arrays cannot be sorted.
       </content>
       <example>
-  double num_array[5]={4,1,6,3,9};
-  // now array contains values 4,1,6,3,9
-  ArraySort(num_array);
-  // now array is sorted 1,3,4,6,9
-  ArraySort(num_array,WHOLE_ARRAY,0,MODE_DESCEND);
-  // now array is sorted 9,6,4,3,1
+<span class="type code">double</span> values[<span class="number code">5</span>] = {<span class="number code">4</span>, <span class="number code">1</span>, <span class="number code">6</span>, <span class="number code">3</span>, <span class="number code">9</span>};                <span class="comment code">// initial order:         4, 1, 6, 3, 9</span>
+<span class="function code">ArraySort</span>(values);                                 <span class="comment code">// now sorted ascending:  1, 3, 4, 6, 9</span>
+<span class="function code">ArraySort</span>(values, <span class="const code">WHOLE_ARRAY</span>, <span class="number code">0</span>, <span class="const code">MODE_DESCEND</span>);   <span class="comment code">// now sorted descending: 9, 6, 4, 3, 1</span>
       </example>
       <parameter>
         type=double
         name=<nobr>array[]</nobr>
-        description=The numeric array to be sorted.
+        description=numeric array to be sorted
       </parameter>
       <parameter>
         type=int
         name=count
         def_value=<span class="const">WHOLE_ARRAY</span>
-        description=Count of elements to be sorted.
+        description=number of elements to be sorted starting at parameter <span class="code italic">start</span>
       </parameter>
       <parameter>
         type=int
         name=start
         def_value=0
-        description=Starting index.
+        description=start index
       </parameter>
       <parameter>
         type=int
-        name=sort_dir
+        name=direction
         def_value=<span class="const">MODE_ASCEND</span>
         <description>
-Array sorting direction. It can be any of the following values:<br/>
-<span class="const">MODE_ASCEND</span> - sort ascending,<br/>
-<span class="const">MODE_DESCEND</span> - sort descending.
+sorting direction, can be one of:<br/>
+<span class="const">MODE_ASCEND</span> - sort ascending<br/>
+<span class="const">MODE_DESCEND</span> - sort descending
         </description>
       </parameter>
     </function>
@@ -4248,13 +4251,12 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=GetTickCount()
       type=int
       <content>
-        The GetTickCount() function retrieves the number of milliseconds since the system was started.
-      It is limited to the resolution of the system timer.
+        Returns the number of milliseconds since the system was started. Limited to the resolution of the system timer.
       </content>
       <example>
-  int start=GetTickCount();
-  // some hard calculations...
-  Print(&quot;Calculation time is &quot;, GetTickCount()-start, &quot; milliseconds.&quot;);
+<span class="type code">int</span> start = <span class="function code">GetTickCount</span>();<br/>
+<span class="comment code">// some long calculations...</span><br/>
+<span class="function code">Print</span>(<span class="string code">"Calculation time is "</span>, <span class="function code">GetTickCount</span>()-start, <span class="string code">" milliseconds"</span>);
       </example>
     </function>
 
@@ -4263,15 +4265,15 @@ To output values of datetime type as strings, convert them with the <a href="hel
       caption=MarketInfo()
       type=double
       <content>
-      Returns various data about instruments listed in the &quot;Market Watch&quot; window.
-      A part of information about the current instrument is stored in <a href="help://predefined_variables">predefined variables</a>.
+      Returns various data about instruments listed in the &quot;Market Watch&quot; window. Some of that information about the current instrument is also stored in
+      <a href="help://predefined_variables">predefined variables</a>.
       </content>
       <example>
-   double bid    = MarketInfo(&quot;EURUSD&quot;, MODE_BID   );
-   double ask    = MarketInfo(&quot;EURUSD&quot;, MODE_ASK   );
-   double point  = MarketInfo(&quot;EURUSD&quot;, MODE_POINT );
-   int    digits = MarketInfo(&quot;EURUSD&quot;, MODE_DIGITS);
-   int    spread = MarketInfo(&quot;EURUSD&quot;, MODE_SPREAD);
+<span class="type code">double</span> bid    = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_BID</span>);
+<span class="type code">double</span> ask    = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_ASK</span>);
+<span class="type code">double</span> point  = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_POINT</span>);
+<span class="type code">int</span>    digits = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_DIGITS</span>);
+<span class="type code">int</span>    spread = <span class="function code">MarketInfo</span>(<span class="string code">"EURUSD"</span>, <span class="const code">MODE_SPREAD</span>);
       </example>
       <parameter>
         type=string
@@ -4281,7 +4283,7 @@ To output values of datetime type as strings, convert them with the <a href="hel
       <parameter>
         type=int
         name=type
-        description=Request identifier that defines the type of information to be returned, can be one of the valid <a href="help://constants_marketinfo">request identifiers</a>.
+        description=one of the <a href="help://constants_marketinfo">MarketInfo() type constants</a>
       </parameter>
     </function>
 
@@ -4735,46 +4737,40 @@ Optional data output mode can be one or combination of:<br/>
       caption=IndicatorCounted()
       type=int
       <content>
-      <p>Returns the number of unmodified (unchanged) bars since last execution of <span class="function">Indicator::start</span>(). The youngest bar (index 0) is always
-      reported as modified.</p>
+      <p>Returns the number of bars which state hasn't changed since the last call of <a href="help://runtime_start">Indicator::start()</a>. The state of all other bars
+      has changed and indicator values of those modified bars need to be recalculated. The youngest bar (index 0) is always reported as modified. On a bar open event the 
+      just closed bar is also reported as modified.</p>
 
       <ul>
-        <li><p><span class="function">IndicatorCounted</span>() gibt die Anzahl der Bars zur&uuml;ck, deren Status seit dem letzten Tick unver&auml;ndert ist. Abh&auml;ngig vom
-            Indikator brauchen die Indikatorwerte dieser Bars ggf. nicht neu berechnet werden. Zur besseren Handhabung definiert das MQL-Framework die globalen Variablen
-            <span class="global">ChangedBars</span> und <span class="global">UnchangedBars</span>:<br/>
-            - <span class="global">ChangedBars</span> signalisiert die Anzahl der modifizierten und ggf. neu zu berechnenden Bars.<br/>
-            - <span class="global">UnchangedBars</span> signalisiert die Anzahl der unver&auml;nderten Bars und entspricht dem Wert von <span class="function">IndicatorCounted</span>().<br/>
-            Die aktuelle Bar wird immer als modifiziert gemeldet (<span class="global">ChangedBars</span> ist immer &gt;= <span class="number">1</span>). Bei einem
-            BarOpen-Event wird die gerade geschlossene Bar (deren Close-Tick u.U. noch nicht verarbeitet wurde) ebenfalls als modifiziert gemeldet. It holds: 
-            <span class="global code">Bars</span> = <span class="global code">ChangedBars</span> + <span class="global code">UnchangedBars</span></p></li>
-        
-        <li><p>Data-Pumping (Laden von Historydaten) erfolgt in Bl&ouml;cken von je 512 Bars. Neuere Bars werden zuerst geladen. Beim ersten Aufruf von
-            <span class="function">Indicator::start</span>() nach dem Pumping ist <span class="function">IndicatorCounted</span>() = <span class="number">0</span> (alle Bars modifiziert:
-            <span class="global">ChangedBars</span> = <span class="global">Bars</span>). W&auml;hrend des Pumpings k&ouml;nnen die Bars immer noch L&uuml;cken enthalten, da
-            <span class="function">Indicator::start</span>() auch zwischen dem Laden mehrerer Bl&ouml;cke aufgerufen wird. Auch hier ist <span class="function">IndicatorCounted</span>() =
-            <span class="number">0</span> (alle Bars modifiziert).<br/>
-            Allgemein: <span class="function">IndicatorCounted</span>() gibt immer dann <span class="number">0</span> zur&uuml;ck (alle Bars modifiziert), wenn mehr als die n&auml;chste neue Bar
-            (BarOpen-Event) im Chart erscheint.</p></li>
+        <li><p>For simplification the MQL framework defines the global vars <span class="global-var code">ChangedBars</span> und <span class="global-var code">ValidBars</span>:<br/>
+            - <span class="global-var code">ChangedBars</span> holds the number of modified (i.e. invalidated) bars.<br/>
+            - <span class="global-var code">ValidBars</span> holds the the number of unchanged bars and matches the value of <a href="help://indicatormanagement_IndicatorCounted">IndicatorCounted()</a>.<br/>
+            - It holds: <span class="global-var code">Bars</span> = <span class="global-var code">ChangedBars</span> + <span class="global-var code">ValidBars</span></p></li>
 
-        <li><p><span class="function">IndicatorCounted</span>() kann nur in Indikatoren und f&uuml;r die aktuelle Zeitreihe verwendet werden. F&uuml;r andere als die aktuelle Zeitreihe und in
-            Experts mu&szlig; die Framework-Funktion <span class="function">iChangedBars</span>() verwendet werden.</p></li>
-        
-        <li><p>For use of <span class="function">IndicatorCounted</span>() vs <span class="function">OnCalculate</span>() in MQL5 for MetaTrader 4 see
-          <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and
-          <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.</p></li>
+        <li><p>Price history is loaded from the server in blocks of 512 bars (data pumping). Blocks with newer bars arrive first. If <a href="help://runtime_start">Indicator::start()</a> 
+            is called during ongoing data pumping (possibly multiple times) <a href="help://indicatormanagement_IndicatorCounted">IndicatorCounted()</a> reports each time all bars all modified. 
+            </p></li>
+
+        <li><p><a href="help://indicatormanagement_IndicatorCounted">IndicatorCounted()</a> can be used only in indicators and for the current time series.
+            Use the framework function <span class="function code">iChangedBars()</span> to get the number of modified bars for other time series or in experts.</p></li>
+
+        <li><p>
+            For usage of <a href="help://indicatormanagement_IndicatorCounted">IndicatorCounted()</a> in the context of MQL5's <span class="function code">OnCalculate()</span> see<br/>
+            <a target="_blank" href="https://docs.mql4.com/basis/function/events#oncalculate">https://docs.mql4.com/basis/function/events#oncalculate</a> and<br/>
+            <a target="_blank" href="https://www.mql5.com/en/forum/159093#comment_3813702">https://www.mql5.com/en/forum/159093#comment_3813702</a>.</p></li>
       </ul>
       </content>
       <example>
-<span class="keyword code">extern</span> <span class="type code">int</span> Periods = <span class="number code">20</span>;
+<span class="keyword code">extern</span> <span class="type code">int</span> periods = <span class="number code">20</span>;
 ...
-<span class="type code">int</span> <span class="core code">start</span>() {
-   <span class="type code">int</span> <span class="global code">UnchangedBars</span> = <span class="function code">IndicatorCounted</span>();
-   <span class="type code">int</span> <span class="global code">ChangedBars</span> = <span class="global code">Bars</span> - <span class="global code">UnchangedBars</span>;<br/>
-   <span class="comment">// main loop</span>
-   <span class="keyword code">for</span> (<span class="type code">int</span> i=<span class="global code">ChangedBars</span>-<span class="number code">1</span>; i &gt;= <span class="number code">0</span>; i--) {
-      buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, Periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
+<span class="type code">int</span> <span class="core-function code">start</span>() {
+   <span class="type code">int</span> <span class="global-var code">ValidBars</span> = <span class="function code">IndicatorCounted</span>();
+   <span class="type code">int</span> <span class="global-var code">ChangedBars</span> = <span class="global-var code">Bars</span> - <span class="global-var code">ValidBars</span>;<br/>
+   <span class="comment code">// main loop</span>
+   <span class="keyword code">for</span> (<span class="type code">int</span> i=<span class="global-var code">ChangedBars</span>-<span class="number code">1</span>; i &gt;= <span class="number code">0</span>; i--) {
+      buffer[i] = <span class="function code">iMA</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, periods, <span class="number code">0</span>, <span class="const code">MODE_SMMA</span>, <span class="const code">PRICE_MEDIAN</span>, i);
    }
-   <span class="keyword code">return</span>(<span class="global code">last_error</span>);
+   <span class="keyword code">return</span>(<span class="global-var code">last_error</span>);
 }
       </example>
     </function>
@@ -4974,7 +4970,7 @@ Indicator values left of the specified index will not appear in the chart. By de
         Indicator buffer arrays are automatically initialized with <span class="number">0.0</span> (zero) - like regular arrays - independent of the defined "empty" value.
       </content>
       <example>
-<span class="type code">int</span> <span class="core code">init</span>() {
+<span class="type code">int</span> <span class="core-function code">init</span>() {
    <span class="comment code">// 2 indicator buffers</span>
    <span class="function code">SetIndexBuffer</span>(<span class="number code">0</span>, buffer1);
    <span class="function code">SetIndexBuffer</span>(<span class="number code">1</span>, buffer2);<br/>
@@ -5349,7 +5345,7 @@ int init() {
       <br/>
       <br/>
       <span style="color:green">Note:</span><br/>
-      Don't use this function. Instead use either the variable <span class="global">Tick.time</span> or the function <span class="function">TimeServer</span>().<br/>
+      Don't use this function. Instead use either the variable <span class="global-var">Tick.time</span> or the function <span class="function">TimeServer</span>().<br/>
 
       <br/>
       <span style="color:red">TODO:</span><br/>
@@ -5660,8 +5656,8 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       caption=FileIsEnding()
       type=bool
       <content>
-        Returns <span class="const">TRUE</span> after a failed attempt to move the file pointer or to read past the end of a file. 
-        <span class="const">TRUE</span> is also returned if an invalid or closed file handle is passed (the read attempt will fail). 
+        Returns <span class="const">TRUE</span> after a failed attempt to move the file pointer or to read past the end of a file.
+        <span class="const">TRUE</span> is also returned if an invalid or closed file handle is passed (the read attempt will fail).
         <br/>
       </content>
       <example>
@@ -6380,54 +6376,51 @@ To get detailed error information call <a href="help://runtimestatus_GetLastErro
       caption=GlobalVariableSetOnCondition()
       type=bool
       <content>
-Sets the new value of the existing global variable if the current value equals to the third parameter <i>check_value</i>. If there
-is no global variable, the function will generate <a href="help://constants_errors">error</a> <span class="const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> (4058)
-and return <span class="const">FALSE</span>. When successfully executed, the function returns <span class="const">TRUE</span>, otherwise, it returns <span class="const">FALSE</span>. To get detailed error information,
-call <a href="help://runtimestatus_GetLastError">GetLastError()</a>.<br/>
-If the current value of the global variable differs from the <i>check_value</i>, the function will return <span class="const">FALSE</span>.<br/>
-The function provides atomic access to the global variable, this is why it can be used for providing of a semaphore at interaction of
-several experts working simultaneously within one client terminal.
+        Sets the value of a global variable if the variable exists and holds the specified conditional value. If the variable exists and holds a different
+        value the function returns <span class="const">FALSE</span>. If the variable does not exist <a href="help://constants_errors">error</a>
+        <span class="const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span> is set. Returns the success status.<br/>
+        <br/>
+        The function ensures atomic read/write access to the variable.
      </content>
       <example>
-  int init()
-    {
-     //---- create global variable
-     GlobalVariableSet(&quot;DATAFILE_SEM&quot;,0);
-     //...
-    }
+<span class="code type">int</span> <span class="core-function code">init</span>() {
+   <span class="code comment">// create global variable</span>
+   <span class="code function">GlobalVariableSet</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">0</span>);
+}<br/>
 
-  int start()
-    {
-     //---- try to lock common resource
-     while(!IsStopped())
-       {
-        //---- locking
-        if(GlobalVariableSetOnCondition(&quot;DATAFILE_SEM&quot;,1,0)==true)  break;
-        //---- may the variable be deleted?
-        if(GetLastError()==ERR_GLOBAL_VARIABLE_NOT_FOUND) return(0);
-        //---- sleeping
-        Sleep(500);
-       }
-     //---- resource locked
-     // ... do some work
-     //---- unlock resource
-     GlobalVariableSet(&quot;DATAFILE_SEM&quot;,0);
-    }
+<span class="code type">int</span> <span class="code core-function">start</span>() {
+   <span class="code keyword">while</span> (!<span class="code function">IsStopped</span>()) {
+      <span class="code comment">// try to lock</span>
+      <span class="code keyword">if</span> (<span class="code function">GlobalVariableSetOnCondition</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">1</span>, <span class="code number">0</span>)) <span class="code keyword">break</span>;
+
+      <span class="code comment">// does the variable exist?</span>
+      <span class="code keyword">if</span> (<span class="code function">GetLastError</span>() == <span class="code const">ERR_GLOBAL_VARIABLE_NOT_FOUND</span>) <span class="code keyword">return</span>(<span class="code number">0</span>);
+
+      <span class="code comment">// sleep a moment</span>
+      <span class="code function">Sleep</span>(<span class="code number">500</span>);
+   }
+   <span class="code comment">// resource is locked now</span>
+
+   <span class="code comment">// ...do some work</span>
+
+   <span class="code comment">// unlock the resource</span>
+   <span class="code function">GlobalVariableSet</span>(<span class="code string">"DATAFILE_SEM"</span>, <span class="code number">0</span>);
+}
       </example>
       <parameter>
         type=string
         name=name
-        description=Global variable name.
+        description=name of the global variable
       </parameter>
       <parameter>
         type=double
-        name=value
-        description=New value.
+        name=newValue
+        description=new value
       </parameter>
       <parameter>
         type=double
-        name=check_value
-        description=Value to be compared to the current global variable value.
+        name=ifValue
+        description=existing value to satisfy the condition
       </parameter>
     </function>
 
@@ -7853,30 +7846,34 @@ double value = iAO(NULL, 0, 2);
       caption=iATR() - Average True Range
       type=double
       <content>
-      Calculates the Indicator of the average true range and returns its value.
+      Calculates the Average True Range indicator and returns a value.
       </content>
       <example>
-if (iATR(NULL, 0, 12, 0) &gt; iATR(NULL, 0, 20, 0)) return(0);
+<span class="code keyword">if</span> (<span class="code function">iATR</span>(<span class="code const">NULL</span>, <span class="code const">NULL</span>, <span class="code number">12</span>, <span class="code number">0</span>) &gt; <span class="code function">iATR</span>(<span class="code const">NULL</span>, <span class="code const">NULL</span>, <span class="code number">20</span>, <span class="code number">0</span>)) {
+    <span class="code comment">// do something</span>
+}
       </example>
       <parameter>
         type=string
         name=symbol
-        description=Symbol the data of which should be used to calculate indicator. <span class="const">NULL</span> means the current symbol.
+        def_value=<span class="const">NULL</span>
+        description=symbol of the time series to calculate the indicator from (<span class="const">NULL</span>: the current symbol)
       </parameter>
       <parameter>
         type=int
         name=timeframe
-        description=<a href="help://constants_timeframes">Timeframe</a>, 0 means the current chart timeframe.
+        def_value=<span class="const">NULL</span>
+        description=<a href="help://constants_timeframes">timeframe</a> of the time series to calculate the indicator from (<span class="const">NULL</span>: the current chart timeframe)
       </parameter>
       <parameter>
         type=int
         name=period
-        description=Averaging period for calculation.
+        description=averaging period
         </parameter>
       <parameter>
         type=int
-        name=shift
-        description=Index of the value taken from the indicator buffer (shift relative to the current bar the given amount of periods ago).
+        name=index
+        description=indicator buffer index (offset) of the value to return
       </parameter>
     </function>
 
@@ -9174,7 +9171,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
 
   <group>
     tag=series
-    caption=Time series access
+    caption=Timeseries
     <content>
     A group of functions intended for access to price data of any available symbol/period.<br/><br/>
     If data (symbol name and/or timeframe differ from the current ones) are requested from another chart, the situation is possible
@@ -9183,7 +9180,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
     in the <a href="help://runtime_errors">last_error</a> variable, and one will has to re-request (see example of <a href="help://array_ArrayCopySeries">ArrayCopySeries()</a>).<br/>
     <br/>
     In the Tester price data of the same symbol but of another timeframe is modelled exactly with the exception of volume. Volume of another timeframe is not modelled.
-    Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in time series is modelled exactly.
+    Price data of other symbols is not modelled, either. In all cases the amount of <a href="help://series_iBars">bars</a> in timeseries is modelled exactly.
     </content>
 
     <function>
@@ -9191,7 +9188,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       caption=iBars()
       type=int
       <content>
-      Returns the number of bars of the specified time series.<br/>
+      Returns the number of bars of the specified timeseries.<br/>
       For the current chart the number of bars is in the predefined variable <a href="help://predefined_variables_Bars">Bars</a>.<br/>
       <br/>
       Notes:<br/>
@@ -9208,7 +9205,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       <parameter>
         type=string
         name=symbol
-        description=Symbol of the time series (<span class="const">NULL</span> means the current symbol).
+        description=Symbol of the timeseries (<span class="const">NULL</span> means the current symbol).
       </parameter>
       <parameter>
         type=int
@@ -9246,7 +9243,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
         type=string
         name=symbol
         def_value=<span class="const">NULL</span>
-        description=Symbol of the time series (<span class="const">NULL</span> means the current symbol).
+        description=Symbol of the timeseries (<span class="const">NULL</span> means the current symbol).
       </parameter>
       <parameter>
         type=int
@@ -9339,7 +9336,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       </content>
       <example>
 <span class="comment code">// getting the highest high of 20 bars in the range from bar offset 4 to 23</span>
-<span class="type code">double</span> value = <span class="global code">High</span>[<span class="function code">iHighest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_HIGH</span>, <span class="number code">20</span>, <span class="number code">4</span>)];
+<span class="type code">double</span> value = <span class="global-var code">High</span>[<span class="function code">iHighest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_HIGH</span>, <span class="number code">20</span>, <span class="number code">4</span>)];
       </example>
       <parameter>
         type=string
@@ -9411,7 +9408,7 @@ if (iStochastic(NULL, 0, 5, 3, 3, MODE_SMA, 0, MODE_MAIN, 0) &gt; iStochastic(NU
       </content>
       <example>
 <span class="comment code">// getting the lowest low of 10 bars in the range from bar offset 10 to 19</span>
-<span class="type code">double</span> value = <span class="global code">Low</span>[<span class="function code">iLowest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_LOW</span>, <span class="number code">10</span>, <span class="number code">10</span>)];
+<span class="type code">double</span> value = <span class="global-var code">Low</span>[<span class="function code">iLowest</span>(<span class="const code">NULL</span>, <span class="number code">0</span>, <span class="const code">MODE_LOW</span>, <span class="number code">10</span>, <span class="number code">10</span>)];
       </example>
       <parameter>
         type=string

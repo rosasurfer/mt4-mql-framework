@@ -33,7 +33,7 @@ int onStart() {
    }
 
    if (isStoppable) {
-      if (This.IsTesting()) Tester.Pause();
+      if (__isTesting) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
       int button = MessageBoxEx(ProgramName(MODE_NICE), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to stop the XMT trade "+ ifString(mode=="virtual-copier", "copier", "mirror") +" (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);

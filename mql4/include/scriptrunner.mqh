@@ -78,7 +78,7 @@ string ScriptRunner.GetChannelName() {
  *
  * @param  string parameters - Parameterstring (das Format ist nicht Sache dieser Funktion)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.SetParameters(string parameters) {
    if (IsScript()) return(!catch("ScriptRunner.SetParameters(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
@@ -104,7 +104,7 @@ bool ScriptRunner.SetParameters(string parameters) {
  * @param  _Out_ string parameters[] - Array zur Aufnahme der übertragenen Parameterstrings
  * @param  _In_  bool   stopReceiver - ob der Receiver vorm Verlassen der Funktion gestoppt werden soll (default: ja)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
    stopReceiver = stopReceiver!=0;
@@ -155,7 +155,7 @@ bool ScriptRunner.GetParameters(string &parameters[], bool stopReceiver=true) {
 /**
  * Startet einen QuickChannel-Sender für Scriptparameter.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.StartParamSender() {
    if (IsScript()) return(!catch("ScriptRunner.StartParamSender(1)  invalid calling context (must not be called from a script)", ERR_RUNTIME_ERROR));
@@ -175,7 +175,7 @@ bool ScriptRunner.StartParamSender() {
 /**
  * Stoppt einen QuickChannel-Sender für Scriptparameter.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.StopParamSender() {
    if (!scriptrunner.hQC.sender)
@@ -191,7 +191,7 @@ bool ScriptRunner.StopParamSender() {
 /**
  * Startet einen QuickChannel-Receiver für Scriptparameter. Der Aufruf muß aus einem Script erfolgen.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.StartParamReceiver() {
    if (!IsScript()) return(!catch("ScriptRunner.StartParamReceiver(1)  invalid calling context (not a script)", ERR_RUNTIME_ERROR));
@@ -212,7 +212,7 @@ bool ScriptRunner.StartParamReceiver() {
 /**
  * Stoppt einen QuickChannel-Receiver für Scriptparameter.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ScriptRunner.StopParamReceiver() {
    if (scriptrunner.hQC.receiver != NULL) {

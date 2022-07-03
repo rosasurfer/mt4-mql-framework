@@ -19,8 +19,7 @@
  */
 int SetLastError(int error, int param = NULL) {
    last_error = ec_SetMqlError(__ExecutionContext, error);
-   if (last_error && IsExpert())
-      CheckErrors("SetLastError(1)");                             // update __STATUS_OFF in experts
+   if (error && IsExpert()) CheckErrors("SetLastError(1)");       // immediately update __STATUS_OFF in experts
    return(error);
 }
 
@@ -327,33 +326,35 @@ string StrSubstr(string str, int start, int length = INT_MAX) {
 }
 
 
-#define SND_ASYNC           0x01       // play asynchronously
+#define SND_ASYNC           0x01       // play sound in another thread and immediately return (doesn't mix sounds)
 #define SND_FILENAME     0x20000       // parameter is a file name
 
 
 /**
  * Dropin-replacement for the built-in MQL function PlaySound().
  *
- * Plays a sound asynchronously (instead of synchronously and UI blocking as the terminal does). Also plays a sound if the
- * terminal doesn't support it in the current context (e.g. in tester).
+ * Queue a .WAV sound file for playing and immediately continue (instead of waiting for the end of the sound as the terminal
+ * does). Also plays a sound if the terminal doesn't support it in the current context (e.g. in tester).
  *
  * @param  string soundfile
  *
- * @return bool - success status
+ * @return int - error status
+ *
+ * Notes: This is a wrapper for the SoundPlayer API which cannot mix sounds. If the SoundPlayer currently plays a sound the
+ *        sound is stopped and the specified sound is played. Use the MediaPlayer API to mix multiple sounds.
  */
-bool PlaySoundEx(string soundfile) {
+int PlaySoundEx(string soundfile) {
    string filename = StrReplace(soundfile, "/", "\\");
    string fullName = TerminalPath() +"\\sounds\\"+ filename;
 
    if (!IsFile(fullName, MODE_SYSTEM)) {
       fullName = GetTerminalDataPathA() +"\\sounds\\"+ filename;
       if (!IsFile(fullName, MODE_SYSTEM)) {
-         if (IsLogNotice()) logNotice("PlaySoundEx(1)  sound file not found: "+ DoubleQuoteStr(soundfile), ERR_FILE_NOT_FOUND);
-         return(false);
+         return(logError("PlaySoundEx(1)  sound file \""+ soundfile +"\" not found", ERR_FILE_NOT_FOUND));
       }
    }
    PlaySoundA(fullName, NULL, SND_FILENAME|SND_ASYNC);
-   return(!catch("PlaySoundEx(2)"));
+   return(catch("PlaySoundEx(2)"));
 }
 
 
@@ -461,7 +462,7 @@ string GetClassName(int hWnd) {
  * Replacement for IsVisualMode() in
  *  - indicators: not supported
  *  - scripts:    not supported
- *  - libraries:  broken (returns always the value of the first test, irrespective of changes)
+ *  - libraries:  broken (always returns the value of the first test, irrespective of changes)
  *
  * @return bool
  */
@@ -672,7 +673,7 @@ bool WaitForTicket(int ticket, bool select = false) {
    int i, delay=100;                                                 // je 0.1 Sekunden warten
 
    while (!OrderSelect(ticket, SELECT_BY_TICKET)) {
-      if (IsTesting())       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
+      if (__isTesting)       logWarn("WaitForTicket(3)  #"+ ticket +" not yet accessible");
       else if (i && !(i%10)) logWarn("WaitForTicket(4)  #"+ ticket +" not yet accessible after "+ DoubleToStr(i*delay/1000., 1) +" s");
       Sleep(delay);
       i++;
@@ -756,7 +757,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       }
       else {
          isConstant = false;                                         // TickValue ist dynamisch
-         isCorrect = !IsTesting();                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isCorrect = !__isTesting;                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
       isCalculatable = StrStartsWith(Symbol(), AccountCurrency());   // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
       doWarn = (!isCorrect && !isCalculatable);                      // muß nach einmaliger Warnung der Online-Wert verwendet werden.
@@ -835,30 +836,18 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
  * @param  _Out_ int    &error            - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
- *                                           if specified errors are logged
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
+ *                                          if specified errors are logged with level LOG_NOTICE
+ *                                          if not specified errors are not logged (default)
  *
- * @return double - pip value or NULL (0) in case of errors, check parameter 'error'
+ * @return double - pip value or NULL (0) in case of errors (check parameter 'error')
  */
 double PipValueEx(string symbol, double lots, int &error, string caller = "") {
-   double tickSize = MarketInfoEx(symbol, MODE_TICKSIZE, error, caller);
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(1)", error);
-      return(NULL);
-   }
+   if (caller != "") caller = StringConcatenate(caller, "->PipValueEx()");
 
-   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller);    // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(2)", error);
-      return(NULL);
-   }
-
-   int digits = MarketInfoEx(symbol, MODE_DIGITS, error, caller);             // TODO: the returned digits may be wrong
-   if (error != NO_ERROR) {
-      if (caller!="" && IsLogDebug()) logDebug(caller +"->PipValueEx(3)", error);
-      return(NULL);
-   }
+   double tickSize  = MarketInfoEx(symbol, MODE_TICKSIZE,  error, caller); if (error != NO_ERROR) return(NULL);
+   double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller); if (error != NO_ERROR) return(NULL);   // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
+   int    digits    = MarketInfoEx(symbol, MODE_DIGITS,    error, caller); if (error != NO_ERROR) return(NULL);   // TODO: the returned digits may be wrong
 
    int    pipDigits = digits & (~1);
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
@@ -885,7 +874,7 @@ double GetCommission(double lots=1.0, int mode=MODE_MONEY) {
       bool isCFD = false;
       double value = 0;
 
-      if (This.IsTesting()) {
+      if (__isTesting) {
          value = Test_GetCommission(__ExecutionContext, 1);
       }
       else {
@@ -2334,19 +2323,19 @@ bool StrEndsWithI(string value, string suffix) {
 
 
 /**
- * Prüft, ob ein String nur Ziffern enthält.
+ * Whether a string consists of digits only.
  *
- * @param  string value - zu prüfender String
+ * @param  string value
  *
  * @return bool
  */
-bool StrIsDigit(string value) {
+bool StrIsDigits(string value) {
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error == ERR_NOT_INITIALIZED_STRING) {
          if (StrIsNull(value)) return(false);
       }
-      catch("StrIsDigit(1)", error);
+      catch("StrIsDigits(1)", error);
    }
 
    int chr, len=StringLen(value);
@@ -2487,7 +2476,7 @@ bool StrIsPhoneNumber(string value) {
       if (StrStartsWith(s, "0")) return(false);
    }
 
-   return(StrIsDigit(s));
+   return(StrIsDigits(s));
 }
 
 
@@ -2751,7 +2740,7 @@ int TimeYearEx(datetime time) {
  * @param  int source      - Quelladdrese
  * @param  int bytes       - Anzahl zu kopierender Bytes
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 void CopyMemory(int destination, int source, int bytes) {
    if (destination>=0 && destination<MIN_VALID_POINTER) return(catch("CopyMemory(1)  invalid parameter destination: 0x"+ IntToHexStr(destination) +" (not a valid pointer)", ERR_INVALID_POINTER));
@@ -2785,18 +2774,19 @@ int SumInts(int values[]) {
  * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
  * @param  _In_  string symbol            - symbol
- * @param  _In_  int    type              - identifier of the MarketInfo data to query
+ * @param  _In_  int    type              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
- * @param  _In_  string caller [optional] - location identifier of the caller, controls logging behavior:
- *                                           if specified errors are logged
- *                                           if not specified errors are not logged (default)
+ * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
+ *                                          if specified errors are logged with level LOG_NOTICE
+ *                                          if not specified errors are not logged (default)
  *
- * @return double - result of the MarketInfo() call or NULL (0) in case of errors, check parameter 'error'
+ * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */
 double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    double value = MarketInfo(symbol, type);
 
    error = GetLastError();
+
    if (!error) {
       switch (type) {
          case MODE_TICKSIZE:
@@ -2807,9 +2797,7 @@ double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    }
    if (!error) return(value);
 
-   if (caller != "") {
-      if (IsLogDebug()) logDebug(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
-   }
+   if (caller!="" && IsLogNotice()) logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
    return(NULL);
 }
 
@@ -3138,31 +3126,14 @@ string StrRightPad(string input, int padLength, string padString = " ") {
 
 
 /**
- * Whether the current program is executed in the tester or on a tester chart.
- *
- * @return bool
- */
-bool This.IsTesting() {
-   static bool result = -1;
-   if (result == -1) {
-      if (IsTesting()) result = true;
-      else             result = (__ExecutionContext[EC.testing] != 0);
-   }
-   return(result);
-}
-
-
-/**
  * Whether the current program runs on a demo account. Workaround for a bug in terminal builds <= 509 where the built-in
  * function IsDemo() returns FALSE in tester.
  *
  * @return bool
  */
 bool IsDemoFix() {
-   static bool result = -1;
-   if (result == -1) {
-      if (IsDemo()) result = true;
-      else          result = This.IsTesting();
+   static bool result = -1; if (result == -1) {
+      result = (IsDemo() || __isTesting);
    }
    return(result);
 }
@@ -3480,7 +3451,7 @@ bool CreateDirectory(string path, int flags) {
  */
 string GetMqlSandboxPath() {
    static string path = ""; if (!StringLen(path)) {
-      if (IsTesting()) {
+      if (__isTesting) {
          string dataDirectory = GetTerminalDataPathA();
          if (!StringLen(dataDirectory)) return(EMPTY_STR);
 
@@ -3537,13 +3508,13 @@ string StrCapitalize(string value) {
 /**
  * Schickt dem aktuellen Chart eine Nachricht zum Öffnen des EA-Input-Dialogs.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  *
  *
  * NOTE: Es wird nicht überprüft, ob zur Zeit des Aufrufs ein EA läuft.
  */
 int Chart.Expert.Properties() {
-   if (This.IsTesting()) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
+   if (__isTesting) return(catch("Chart.Expert.Properties(1)", ERR_FUNC_NOT_ALLOWED_IN_TESTER));
 
    int hWnd = __ExecutionContext[EC.hChart];
 
@@ -3566,15 +3537,14 @@ int Chart.SendTick(bool sound = false) {
 
    int hWnd = __ExecutionContext[EC.hChart];
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
    }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
-   if (sound)
-      PlaySoundEx("Tick.wav");
+   if (sound) PlaySoundEx("Tick.wav");
 
    return(NO_ERROR);
 }
@@ -3583,7 +3553,7 @@ int Chart.SendTick(bool sound = false) {
 /**
  * Ruft den Hauptmenü-Befehl Charts->Objects->Unselect All auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Chart.Objects.UnselectAll() {
    int hWnd = __ExecutionContext[EC.hChart];
@@ -3595,7 +3565,7 @@ int Chart.Objects.UnselectAll() {
 /**
  * Ruft den Kontextmenü-Befehl Chart->Refresh auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Chart.Refresh() {
    int hWnd = __ExecutionContext[EC.hChart];
@@ -3884,12 +3854,12 @@ bool Chart.RestoreString(string key, string &var, bool remove = true) {
 
 
 /**
- * Get the bar model currently selected in the tester.
+ * Get the bar model used in a test.
  *
  * @return int - bar model id or EMPTY (-1) if not called in the tester
  */
 int Tester.GetBarModel() {
-   if (!This.IsTesting())
+   if (!__isTesting)
       return(_EMPTY(catch("Tester.GetBarModel(1)  tester only function", ERR_FUNC_NOT_ALLOWED)));
    return(Tester_GetBarModel());
 }
@@ -3903,7 +3873,7 @@ int Tester.GetBarModel() {
  * @return int - error status
  */
 int Tester.Pause(string caller = "") {
-   if (!This.IsTesting()) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting) return(catch("Tester.Pause(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (!__isChart)         return(NO_ERROR);                            // skip if VisualMode=Off
    if (Tester.IsStopped()) return(NO_ERROR);                            // skip if already stopped
@@ -3950,7 +3920,7 @@ int Tester.Stop(string caller = "") {
  * @return bool
  */
 bool Tester.IsPaused() {
-   if (!This.IsTesting())  return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting)       return(!catch("Tester.IsPaused(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
    if (!__isChart)         return(false);
    if (Tester.IsStopped()) return(false);
 
@@ -3967,7 +3937,7 @@ bool Tester.IsPaused() {
  * @return bool
  */
 bool Tester.IsStopped() {
-   if (!This.IsTesting()) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
+   if (!__isTesting) return(!catch("Tester.IsStopped(1)  tester only function", ERR_FUNC_NOT_ALLOWED));
 
    if (IsScript()) {
       int hWndTesterSettings = GetDlgItem(FindTesterWindow(), IDC_TESTER_SETTINGS);
@@ -4053,12 +4023,12 @@ string CreateString(int length) {
  *
  * @param  bool enable - gewünschter Status: On/Off
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int Toolbar.Experts(bool enable) {
    enable = enable!=0;
 
-   if (This.IsTesting()) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
+   if (__isTesting) return(debug("Toolbar.Experts(1)  skipping in Tester", NO_ERROR));
 
    // TODO: Lock implementieren, damit mehrere gleichzeitige Aufrufe sich nicht gegenseitig überschreiben
    // TODO: Vermutlich Deadlock bei IsStopped()=TRUE, dann PostMessage() verwenden
@@ -4082,7 +4052,7 @@ int Toolbar.Experts(bool enable) {
 /**
  * Ruft den Kontextmenü-Befehl MarketWatch->Symbols auf.
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int MarketWatch.Symbols() {
    int hWnd = GetTerminalMainWindow();
@@ -4108,7 +4078,7 @@ datetime TimeServer(bool watchLastTick = true) {
    static bool isLibrary = -1;
    if (isLibrary == -1) isLibrary = IsLibrary();
 
-   if (This.IsTesting())
+   if (__isTesting)
       return(TimeCurrent());
 
    datetime serverTime = GmtToServerTime(GetGmtTime());
@@ -4131,7 +4101,7 @@ datetime TimeServer(bool watchLastTick = true) {
 datetime TimeGMT() {
    datetime gmt;
 
-   if (This.IsTesting()) {
+   if (__isTesting) {
       // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
       datetime localTime = Tick.time;
       gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
@@ -4490,7 +4460,7 @@ int GetAccountNumberFromAlias(string company, string alias) {
             sAccount = StringTrimRight(StrLeft(keys[i], -6));
             value    = GetGlobalConfigString(section, sAccount +".company");
             if (StrCompareI(value, company)) {
-               if (StrIsDigit(sAccount))
+               if (StrIsDigits(sAccount))
                   return(StrToInteger(sAccount));
             }
          }
@@ -4799,9 +4769,9 @@ color RGBStrToColor(string value) {
    if (Explode(value, ",", sValues, NULL) != 3)
       return(NaC);
 
-   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigit(sValues[0])) return(NaC);
-   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigit(sValues[1])) return(NaC);
-   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigit(sValues[2])) return(NaC);
+   sValues[0] = StrTrim(sValues[0]); if (!StrIsDigits(sValues[0])) return(NaC);
+   sValues[1] = StrTrim(sValues[1]); if (!StrIsDigits(sValues[1])) return(NaC);
+   sValues[2] = StrTrim(sValues[2]); if (!StrIsDigits(sValues[2])) return(NaC);
 
    int r = StrToInteger(sValues[0]); if (r & 0xFFFF00 && 1) return(NaC);
    int g = StrToInteger(sValues[1]); if (g & 0xFFFF00 && 1) return(NaC);
@@ -6081,7 +6051,7 @@ bool SendChartCommand(string cmdObject, string cmd, string cmdMutex = "") {
  * @param  string subject  - Subject der E-Mail
  * @param  string message  - Body der E-Mail
  *
- * @return bool - Erfolgsstatus: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
+ * @return bool - success status: TRUE, wenn die E-Mail zum Versand akzeptiert wurde (nicht, ob sie versendet wurde);
  *                               FALSE andererseits
  */
 bool SendEmail(string sender, string receiver, string subject, string message) {
@@ -6190,7 +6160,7 @@ bool SendSMS(string receiver, string message) {
 
    if      (StrStartsWith(_receiver, "+" )) _receiver = StrSubstr(_receiver, 1);
    else if (StrStartsWith(_receiver, "00")) _receiver = StrSubstr(_receiver, 2);
-   if (!StrIsDigit(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
+   if (!StrIsDigits(_receiver)) return(!catch("SendSMS(1)  invalid parameter receiver: "+ DoubleQuoteStr(receiver), ERR_INVALID_PARAMETER));
 
    // get SMS gateway details
    // service
@@ -6988,8 +6958,8 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           161,                              // int    Donchian.Crossings.Wingdings
 
                           "",                               // string ____________________________
-                          0,                                // int    PeriodStepper.StepSize
                           -1,                               // int    Max.Bars
+                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
@@ -7265,7 +7235,7 @@ void __DummyCalls() {
    StrEndsWithI(NULL, NULL);
    StrFindR(NULL, NULL);
    stringOr(NULL, NULL);
-   StrIsDigit(NULL);
+   StrIsDigits(NULL);
    StrIsEmailAddress(NULL);
    StrIsInteger(NULL);
    StrIsNumeric(NULL);
@@ -7303,7 +7273,6 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
-   This.IsTesting();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();

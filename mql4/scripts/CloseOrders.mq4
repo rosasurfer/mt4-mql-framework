@@ -71,9 +71,9 @@ int onInit() {
             sValue = StrLeftTo(sValue, ":");                      // cut an optional lotsize after ":"
             sValue = StrTrim(sValue);
          }
-         if (!StrIsDigit(sValue)) return(catch("onInit(2)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
+         if (!StrIsDigits(sValue)) return(catch("onInit(2)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
          int iValue = StrToInteger(sValue);
-         if (iValue <= 0)         return(catch("onInit(3)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
+         if (iValue <= 0)          return(catch("onInit(3)  invalid value in input parameter Close.Tickets: "+ DoubleQuoteStr(sValues[i]), ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(closeTickets, iValue);
       }
    }
@@ -83,9 +83,9 @@ int onInit() {
    for (i=0; i < size; i++) {
       sValue = StrTrim(sValues[i]);
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue)) return(catch("onInit(4)  invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
+         if (!StrIsDigits(sValue)) return(catch("onInit(4)  invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
          iValue = StrToInteger(sValue);
-         if (iValue < 0)          return(catch("onInit(5)  invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
+         if (iValue < 0)           return(catch("onInit(5)  invalid value in input parameter Close.MagicNumbers: "+ DoubleQuoteStr(Close.MagicNumbers), ERR_INVALID_INPUT_PARAMETER));
          ArrayPushInt(closeMagics, iValue);
       }
    }

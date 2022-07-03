@@ -2,8 +2,6 @@
  * Called before input parameters are changed.
  *
  * @return int - error status
- *
- * @see  mql4/experts/SnowRoller.mq4
  */
 int onDeinitParameters() {
    BackupInputs();
@@ -34,7 +32,7 @@ int onDeinitChartChange() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   if (IsTesting()) {
+   if (__isTesting) {
       if (!IsLastError()) SetLastError(ERR_CANCELLED_BY_USER);
    }
    else {
@@ -53,7 +51,7 @@ int onDeinitChartClose() {
  * @return int - error status
  */
 int onDeinitUndefined() {
-   if (IsTesting()) {
+   if (__isTesting) {
       if (IsLastError()) return(last_error);
 
       bool success = true;

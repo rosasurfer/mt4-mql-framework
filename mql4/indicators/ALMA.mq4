@@ -82,8 +82,8 @@ string legendLabel   = "";
 
 bool   signals;
 bool   signal.sound;
-string signal.sound.trendChange_up   = "Signal-Up.wav";
-string signal.sound.trendChange_down = "Signal-Down.wav";
+string signal.sound.trendChange_up   = "Signal Up.wav";
+string signal.sound.trendChange_down = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
@@ -200,7 +200,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -224,7 +224,7 @@ int onTick() {
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
    int startbar = Min(bars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
@@ -247,23 +247,31 @@ int onTick() {
    }
    return(last_error);
 
-   // Speed benchmark on Toshiba Satellite
-   // ------------------------------------
-   // H1 ::ALMA(7xD1)::onTick()   weights(  168)=0.000 sec   buffer(2000)=0.110 sec   loops=   336,000
-   // M30::ALMA(7xD1)::onTick()   weights(  336)=0.000 sec   buffer(2000)=0.250 sec   loops=   672,000
-   // M15::ALMA(7xD1)::onTick()   weights(  672)=0.000 sec   buffer(2000)=0.453 sec   loops= 1,344,000
-   // M5 ::ALMA(7xD1)::onTick()   weights( 2016)=0.016 sec   buffer(2000)=1.547 sec   loops= 4,032,000
-   // M1 ::ALMA(7xD1)::onTick()   weights(10080)=0.000 sec   buffer(2000)=7.110 sec   loops=20,160,000
+   // Speed test on Toshiba Satellite
+   // ------------------------------------------------------------------------------------------
+   // H1   ALMA(7xD1)  weights(  168)=0.009 sec   maxBars(2000)=0.110 sec   loops=   336,000
+   // M30  ALMA(7xD1)  weights(  336)=0.009 sec   maxBars(2000)=0.250 sec   loops=   672,000
+   // M15  ALMA(7xD1)  weights(  672)=0.009 sec   maxBars(2000)=0.453 sec   loops= 1,344,000
+   // M5   ALMA(7xD1)  weights( 2016)=0.016 sec   maxBars(2000)=1.547 sec   loops= 4,032,000
+   // M1   ALMA(7xD1)  weights(10080)=0.016 sec   maxBars(2000)=7.110 sec   loops=20,160,000
    //
-   // Speed benchmark on Toshiba Portege
-   // ----------------------------------
-   // H1 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.078 sec
-   // M30::ALMA(7xD1)::onTick()                              buffer(2000)=0.156 sec
-   // M15::ALMA(7xD1)::onTick()                              buffer(2000)=0.312 sec
-   // M5 ::ALMA(7xD1)::onTick()                              buffer(2000)=0.952 sec
-   // M1 ::ALMA(7xD1)::onTick()                              buffer(2000)=4.773 sec
+   // Speed test on Toshiba Portege
+   // -------------------------------------------------------------------------------------------------
+   // H1   ALMA(7xD1)  weights(  168)             maxBars(2000)=0.078 sec   as above
+   // M30  ALMA(7xD1)  weights(  336)             maxBars(2000)=0.156 sec   ...
+   // M15  ALMA(7xD1)  weights(  672)             maxBars(2000)=0.312 sec   ...
+   // M5   ALMA(7xD1)  weights( 2016)             maxBars(2000)=0.952 sec   ...
+   // M1   ALMA(7xD1)  weights(10080)             maxBars(2000)=4.773 sec   ...
    //
-   // Conclusion: weights calculation is ignorable, bottleneck is the nested loop in MA calculation
+   // Speed test on Dell Precision
+   // -------------------------------------------------------------------------------------------------
+   // M1    ALMA(168)  weights(  168)             maxBars(2000)=0.062 sec   as above
+   // M1    ALMA(336)  weights(  336)             maxBars(2000)=0.109 sec   ...
+   // M1    ALMA(672)  weights(  672)             maxBars(2000)=0.218 sec   ...
+   // M1   ALMA(2016)  weights( 2016)             maxBars(2000)=0.671 sec   ...
+   // M1  ALMA(10080)  weights(10080)             maxBars(2000)=3.323 sec   ...
+   //
+   // Conclusion: Weights calculation is ignorable, bottleneck is the nested loop in MA calculation.
 }
 
 
@@ -283,7 +291,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
       return(!error);
@@ -294,7 +302,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
       return(!error);

@@ -33,7 +33,7 @@ int onStart() {
    }
 
    if (isStartable) {
-      if (This.IsTesting()) Tester.Pause();
+      if (__isTesting) Tester.Pause();
 
       PlaySoundEx("Windows Notify.wav");                                // confirm sending the command
       int button = MessageBoxEx(ProgramName(MODE_NICE), ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Do you really want to start the XMT trade mirror (sid "+ sid +")?", MB_ICONQUESTION|MB_OKCANCEL);

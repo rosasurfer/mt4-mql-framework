@@ -43,20 +43,28 @@
  *
  *
  * TODO:
- *  - Price Alert:
- *     audible notifications for new Highs (AlertDefault, Bulk)
- *     audible notifications for new Lows (MarginLow, Night, Notify-2, Online, Prrrp, Windows Ping, Close_order)
+ *  - Superbars
+ *     fix in range bar charts
+ *     implement more timeframes
+ *  - rewrite NonLagMA and replace Buzzer
+ *  - Grid: fix price levels
+ *  - support for 4BF and M5 scalping
+ *  - ChartInfos: include current daily range in ADR calculation/display
  *
- *  - Instrument Infos: remove maxLeverage constraint
- *
- *  - Range bar offline chart
- *     US500,M202 FATAL  Superbars ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *     US500,M202 FATAL  Grid      ::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *     US500,M202 FATAL  ChartInfos::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
- *
- *  - on account change:
- *     ERROR  MT4Expander::executioncontext.cpp::SyncMainContext_start(524)  ticktime is counting backwards:  tickTime=2022.05.18 23:29:34  lastTickTime=2022.05.19 05:41:07  ec={pid=42, previousPid=0, started="2022.05.19 05:31:35", programType=PT_INDICATOR, programName="Grid", programCoreFunction=CF_START, programInitReason=IR_TIMEFRAMECHANGE, programUninitReason=UR_CHARTCHANGE, programInitFlags=INIT_TIMEZONE, programDeinitFlags=0, moduleType=MT_INDICATOR, moduleName="Grid", moduleCoreFunction=CF_START, moduleUninitReason=UR_CHARTCHANGE, moduleInitFlags=INIT_TIMEZONE, moduleDeinitFlags=0, symbol="US2000", timeframe=M1, newSymbol="US2000", newTimeframe=M1, rates=0x0B390020, bars=60012, changedBars=1, unchangedBars=60011, ticks=773, cycleTicks=763, prevTickTime="2022.05.19 05:41:07", currTickTime="2022.05.19 05:41:07", bid=1750.10, ask=1751.10, digits=2, pipDigits=2, pip=0.01, point=0.01, pipPoints=1, priceFormat=".2", pipPriceFormat=".2", superContext=NULL, threadId=6076 (UI), hChart=0x00190390, hChartWindow=0x00120A86, recordMode=0, test=NULL, testing=FALSE, visualMode=FALSE, optimization=FALSE, externalReporting=FALSE, mqlError=0, dllError=0, dllWarning=0, loglevel=NULL, loglevelTerminal=NULL, loglevelAlert=NULL, loglevelDebugger=NULL, loglevelFile=NULL, loglevelMail=NULL, loglevelSMS=NULL, logger=NULL, logBuffer=(0), logFilename=""} (0x09787E58)  [ERR_ILLEGAL_STATE]
- *            MT4Expander::timer.cpp::onTickTimerEvent(42)  releasing obsolete tick timer with id=6 (references non-existing window hWnd=00180956)
+ *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
+ *  - VPS: monitor and notify of incoming emails
+ *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
+ *  - on chart command
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 2 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 3 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 4 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 5 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 6 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 7 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 8 sec, retrying...
+ *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 9 sec, retrying...
+ *     FATAL   BTCUSD,202  ChartInfos::rsfLib::AquireLock(5)  failed to get lock on mutex "mutex.ChartInfos.command" after 10 sec, giving up  [ERR_RUNTIME_ERROR]
  *
  *  - stop on reverse signal
  *  - signals MANUAL_LONG|MANUAL_SHORT
@@ -65,6 +73,7 @@
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
+ *  - rename to Turtle EA
  *
  *  - visual/audible confirmation
  *     for manual orders (to detect execution errors)
@@ -135,7 +144,11 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
+ *  - update signature of onTick() to onTick(int &prevCalculated)
  *  - ZigZag: remove logic from IsChartCommand() and use global include instead
+ *  - TradeManager for custom positions
+ *     close new|all hedges
+ *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - realtime equity charts
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
@@ -148,10 +161,10 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - ChartInfos: FATAL GER30,M15 ChartInfos::iADR(1)  [ERR_NO_HISTORY_DATA]
  *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
+ *  - ChartInfos: update unitsize positioning
  *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
  *  - on restart delete dead screen sockets
  */
@@ -468,8 +481,7 @@ bool ToggleOpenOrders() {
    // store current status in the chart
    SetOpenOrderDisplayStatus(showOrders);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
 
@@ -588,8 +600,7 @@ bool ToggleTradeHistory() {
    // store current status in the chart
    SetTradeHistoryDisplayStatus(showHistory);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
 
@@ -1583,11 +1594,11 @@ bool StopSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopSequence(5)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
-   if (IsTesting()) {
+   if (__isTesting) {
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -1641,11 +1652,11 @@ bool StopVirtualSequence(int signal) {
    }
    SS.StartStopConditions();
 
-   if (IsLogInfo()) logInfo("StopVirtualSequence(2)  "+ sequence.name +" "+ ifString(IsTesting() && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
+   if (IsLogInfo()) logInfo("StopVirtualSequence(2)  "+ sequence.name +" "+ ifString(__isTesting && !signal, "test ", "") +"sequence stopped"+ ifString(!signal, "", " ("+ SignalToStr(signal) +")") +", profit: "+ sSequenceTotalNetPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    SaveStatus();
 
    // pause/stop the tester according to the debug configuration
-   if (IsTesting()) {
+   if (__isTesting) {
       if      (!IsVisualMode())       { if (sequence.status == STATUS_STOPPED) Tester.Stop ("StopSequence(6)"); }
       else if (signal == SIGNAL_TIME) { if (test.onSessionBreakPause)          Tester.Pause("StopSequence(7)"); }
       else                            { if (test.onStopPause)                  Tester.Pause("StopSequence(8)"); }
@@ -1759,7 +1770,7 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    string sOpenPrice  = NumberToStr(openPrice, PriceFormat);
    string sClosePrice = NumberToStr(closePrice, PriceFormat);
    string comment     = sequence.name;
-   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (IsTesting() && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
+   string sUnexpected = ifString(closedBySl || __CoreFunction==CF_INIT || (__isTesting && __CoreFunction==CF_DEINIT), "", "unexpectedly ");
    string sBySL       = ifString(closedBySl, "by SL ", "");
    string message     = "#"+ ticket +" "+ sType +" "+ NumberToStr(lots, ".+") +" "+ OrderSymbol() +" at "+ sOpenPrice +" (\""+ comment +"\") was "+ sUnexpected +"closed "+ sBySL +"at "+ sClosePrice;
 
@@ -1767,7 +1778,7 @@ string UpdateStatus.PositionCloseMsg(int &error) {
    if (StrStartsWithI(OrderComment(), "so:")) {       error = ERR_MARGIN_STOPOUT; sStopout = ", "+ OrderComment(); }
    else if (closedBySl)                               error = ERR_ORDER_CHANGED;
    else if (__CoreFunction==CF_INIT)                  error = NO_ERROR;
-   else if (IsTesting() && __CoreFunction==CF_DEINIT) error = NO_ERROR;
+   else if (__isTesting && __CoreFunction==CF_DEINIT) error = NO_ERROR;
    else                                               error = ERR_CONCURRENT_MODIFICATION;
 
    return(message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) + sStopout +")");
@@ -1808,7 +1819,7 @@ int onPositionClose(string message, int error) {
    if (error == ERR_ORDER_CHANGED)                          // expected in a fast market: a SL was triggered
       return(!logNotice(message, error));                   // continue
 
-   if (IsTesting()) return(catch(message, error));          // tester: treat everything else as terminating
+   if (__isTesting) return(catch(message, error));          // tester: treat everything else as terminating
 
    logWarn(message, error);                                 // online
    if (error == ERR_CONCURRENT_MODIFICATION)                // unexpected: most probably manually closed
@@ -1964,7 +1975,7 @@ bool Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string 
    enabled = false;
    if (IsLastError())                    return(false);
    if (!sequence.id)                     return(!catch("Recorder_GetSymbolDefinitionA(1)  "+ sequence.name +" illegal sequence id: "+ sequence.id, ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting()) return(false);                       // never record anything in a stopped test
+   if (IsTestSequence() && !__isTesting) return(false);                       // never record anything in a stopped test
 
    string ids[];
    int size = Explode(EA.Recorder, ",", ids, NULL);
@@ -2152,9 +2163,9 @@ string SignalToStr(int signal) {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
+   if (IsTestSequence() && !__isTesting)         return(true);  // don't change the status file of a finished test
 
-   if (IsTesting() && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
+   if (__isTesting && test.reduceStatusWrites) {                // in tester skip most writes except file creation, sequence stop and test end
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2513,7 +2524,7 @@ bool ReadStatus.ParseHistory(string key, string value) {
 
    // history.i=ticket,lots,openType,openTime,openBid,openAsk,openPrice,closeTime,closeBid,closeAsk,closePrice,slippage,swap,commission,grossProfit,netProfit
    string values[];
-   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))   return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+   string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))  return(!catch("ReadStatus.ParseHistory(2)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
    if (Explode(value, ",", values, NULL) != ArrayRange(history, 1)) return(!catch("ReadStatus.ParseHistory(3)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
    int      ticket      = StrToInteger(values[HI_TICKET        ]);
@@ -2703,7 +2714,7 @@ bool IsLocalClosedPosition(int ticket) {
  * @return bool
  */
 bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
+   return(sequence.isTest || __isTesting);
 }
 
 
@@ -3050,7 +3061,7 @@ bool ValidateInputs() {
    TakeProfit.Type = tpTypeDescriptions[stop.profitQu.type];
 
    // EA.Recorder
-   if (!IsTestSequence() || IsTesting()) {      // never init the recorder of a stopped test
+   if (!IsTestSequence() || __isTesting) {      // never init the recorder of a stopped test
       int metrics;
       if (!init_RecorderValidateInput(metrics)) return(false);
       if (recordCustom && metrics > 8)          return(!onInputError("ValidateInputs(26)  "+ sequence.name +" invalid parameter EA.Recorder: "+ DoubleQuoteStr(EA.Recorder) +" (unsupported metric "+ metrics +")"));
@@ -3189,7 +3200,7 @@ bool ApplySequenceId(string value, bool &error, string caller) {
       value = StrSubstr(value, 1);
    }
 
-   if (!StrIsDigit(value)) {
+   if (!StrIsDigits(value)) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
       return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));

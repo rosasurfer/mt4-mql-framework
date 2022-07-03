@@ -282,7 +282,7 @@ int onTick() {
 
    // record metrics if configured
    if (Metrics.RecordPerformance) {
-      if (!IsTesting() || !IsOptimization()) {
+      if (!__isTesting || !IsOptimization()) {
          RecordMetrics();
       }
    }
@@ -462,7 +462,7 @@ int afterInit() {
 
    if (!InitMetrics()) return(last_error);
 
-   if (IsTesting()) {                                       // read test configuration
+   if (__isTesting) {                                       // read test configuration
       string section = ProgramName(MODE_NICE) +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
@@ -482,7 +482,7 @@ int onDeinit() {
       CloseHistorySet(i);
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       if (!last_error || last_error==ERR_CANCELLED_BY_USER) {
          if (IsLogInfo()) {
             if (tradingMode!=TRADINGMODE_REGULAR || virt.closedPositions) logInfo("onDeinit(1)  "+ sequence.name +" test stop: "+ virt.closedPositions +" virtual trade"+ Pluralize(virt.closedPositions) +", pl="+ DoubleToStr(virt.closedPl, 2) +", plNet="+ DoubleToStr(virt.closedPlNet, 2));
@@ -828,7 +828,7 @@ bool onRealPositionOpen(int i) {
       logDebug("onRealPositionOpen(1)  "+ sequence.name +" "+ message +" ("+ sSlippage +"market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       if (__ExecutionContext[EC.externalReporting] != 0) {
          Test_onPositionOpen(__ExecutionContext, OrderTicket(), OrderType(), OrderLots(), OrderSymbol(), OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), OrderMagicNumber(), OrderComment());
       }
@@ -875,7 +875,7 @@ bool onRealPositionClose(int i) {
       logDebug("onRealPositionClose(1)  "+ sequence.name +" "+ message +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
    }
 
-   if (IsTesting() && __ExecutionContext[EC.externalReporting]) {
+   if (__isTesting && __ExecutionContext[EC.externalReporting]) {
       Test_onPositionClose(__ExecutionContext, OrderTicket(), OrderCloseTime(), OrderClosePrice(), NULL, OrderProfit());
    }
    return(!catch("onRealPositionClose(2)"));
@@ -1102,7 +1102,7 @@ bool OpenRealOrder(int signal) {
    else                                 { openType    = oe.Type(oe); openPrice    = oe.OpenPrice(oe); openTime = oe.OpenTime(oe); }
    if (!Orders.AddRealTicket(oe.Ticket(oe), virtualTicket, oe.Lots(oe), pendingType, pendingPrice, openType, openTime, openPrice, NULL, NULL, oe.StopLoss(oe), oe.TakeProfit(oe), NULL, NULL)) return(false);
 
-   if (IsTesting()) {                                   // pause the test if configured
+   if (__isTesting) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenRealOrder(4)");
    }
    return(SaveStatus());
@@ -1147,7 +1147,7 @@ bool OpenVirtualOrder(int signal) {
    // opened virt. #1 Buy 0.5 GBPUSD "XMT" at 1.5524'8, sl=1.5500'0, tp=1.5600'0 (market: Bid/Ask)
    if (IsLogDebug()) logDebug("OpenVirtualOrder(2)  "+ sequence.name +" opened virtual #"+ ticket +" "+ OperationTypeDescription(type) +" "+ NumberToStr(lots, ".+") +" "+ Symbol() +" \""+ comment +"\" at "+ NumberToStr(price, PriceFormat) +", sl="+ NumberToStr(stopLoss, PriceFormat) +", tp="+ NumberToStr(takeProfit, PriceFormat) +" (market: "+ NumberToStr(Bid, PriceFormat) +"/"+ NumberToStr(Ask, PriceFormat) +")");
 
-   if (IsTesting()) {                                   // pause the test if configured
+   if (__isTesting) {                                   // pause the test if configured
       if (IsVisualMode() && test.onPositionOpenPause) Tester.Pause("OpenVirtualOrder(3)");
    }
    return(SaveStatus());
@@ -1438,7 +1438,7 @@ bool CalculateSpreads() {
    lastTick      = Ticks;
    currentSpread = NormalizeDouble((Ask-Bid)/Pip, 1);
 
-   if (IsTesting()) {
+   if (__isTesting) {
       avgSpread  = currentSpread; if (__isChart) SS.Spreads();
       lastResult = true;
       return(lastResult);
@@ -2107,7 +2107,7 @@ string GetStatusFilename() {
    if (!sequence.id) return(_EMPTY_STR(catch("GetStatusFilename(1)  "+ sequence.name +" illegal sequence.id: "+ sequence.id, ERR_ILLEGAL_STATE)));
 
    static string result = ""; if (!StringLen(result)) {
-      string directory = "/presets/"+ ifString(IsTesting(), "Tester", GetAccountCompanyId()) +"/";
+      string directory = "/presets/"+ ifString(__isTesting, "Tester", GetAccountCompanyId()) +"/";
       string baseName  = StrToLower(Symbol()) +".XMT-Scalper."+ sequence.id +".set";
       result = GetMqlSandboxPath() + directory + baseName;
    }
@@ -2242,11 +2242,11 @@ bool ReadStatus() {
    Sequence.ID = sSequenceId;
    if (sTradingMode == "")                      return(!catch("ReadStatus(6)  "+ sequence.name +" invalid TradingMode "+ DoubleQuoteStr(sTradingMode) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    TradingMode = sTradingMode;
-   if (!StrIsDigit(sEntryIndicator))            return(!catch("ReadStatus(7)  "+ sequence.name +" invalid EntryIndicator "+ DoubleQuoteStr(sEntryIndicator) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sEntryIndicator))           return(!catch("ReadStatus(7)  "+ sequence.name +" invalid EntryIndicator "+ DoubleQuoteStr(sEntryIndicator) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    EntryIndicator = StrToInteger(sEntryIndicator);
-   if (!StrIsDigit(sIndicatorTimeframe))        return(!catch("ReadStatus(8)  "+ sequence.name +" invalid IndicatorTimeframe "+ DoubleQuoteStr(sIndicatorTimeframe) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sIndicatorTimeframe))       return(!catch("ReadStatus(8)  "+ sequence.name +" invalid IndicatorTimeframe "+ DoubleQuoteStr(sIndicatorTimeframe) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    IndicatorTimeframe = StrToInteger(sIndicatorTimeframe);
-   if (!StrIsDigit(sIndicatorPeriods))          return(!catch("ReadStatus(9)  "+ sequence.name +" invalid IndicatorPeriods "+ DoubleQuoteStr(sIndicatorPeriods) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sIndicatorPeriods))         return(!catch("ReadStatus(9)  "+ sequence.name +" invalid IndicatorPeriods "+ DoubleQuoteStr(sIndicatorPeriods) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    IndicatorPeriods = StrToInteger(sIndicatorPeriods);
    if (!StrIsNumeric(sBollingerBandsDeviation)) return(!catch("ReadStatus(10)  "+ sequence.name +" invalid BollingerBands.Deviation "+ DoubleQuoteStr(sBollingerBandsDeviation) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    BollingerBands.Deviation = StrToDouble(sBollingerBandsDeviation);
@@ -2283,9 +2283,9 @@ bool ReadStatus() {
    StopOnTotalProfit = StrToDouble(sStopOnTotalProfit);
    if (!StrIsNumeric(sStopOnTotalLoss))         return(!catch("ReadStatus(25)  "+ sequence.name +" invalid StopOnTotalLoss "+ DoubleQuoteStr(sStopOnTotalLoss) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    StopOnTotalLoss = StrToDouble(sStopOnTotalLoss);
-   if (!StrIsDigit(sSessionbreakStartTime))     return(!catch("ReadStatus(26)  "+ sequence.name +" invalid Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sSessionbreakStartTime))    return(!catch("ReadStatus(26)  "+ sequence.name +" invalid Sessionbreak.StartTime "+ DoubleQuoteStr(sSessionbreakStartTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.StartTime = StrToInteger(sSessionbreakStartTime);    // TODO: convert input to string and validate
-   if (!StrIsDigit(sSessionbreakEndTime))       return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sSessionbreakEndTime))      return(!catch("ReadStatus(27)  "+ sequence.name +" invalid Sessionbreak.EndTime "+ DoubleQuoteStr(sSessionbreakEndTime) +" in status file "+ DoubleQuoteStr(file), ERR_INVALID_FILE_FORMAT));
    Sessionbreak.EndTime = StrToInteger(sSessionbreakEndTime);        // TODO: convert input to string and validate
    ChannelBug                = StrToBool(sChannelBug);
    TakeProfitBug             = StrToBool(sTakeProfitBug);
@@ -2334,7 +2334,7 @@ int ReadStatus.OrderKeys(string file, string section, string &keys[], int mode) 
 
    for (int i=size-1; i >= 0; i--) {
       if (StrStartsWithI(keys[i], prefix)) {
-         if (StrIsDigit(StrSubstr(keys[i], prefixLen))) {
+         if (StrIsDigits(StrSubstr(keys[i], prefixLen))) {
             continue;
          }
       }
@@ -2381,13 +2381,13 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // ticket
    string sTicket = StrTrim(values[0]);
-   if (!StrIsDigit(sTicket))                                          return(!catch("ReadStatus.ParseOrder(2)  "+ sequence.name +" illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sTicket))                                         return(!catch("ReadStatus.ParseOrder(2)  "+ sequence.name +" illegal ticket "+ DoubleQuoteStr(sTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int ticket = StrToInteger(sTicket);
    if (!ticket)                                                       return(!catch("ReadStatus.ParseOrder(3)  "+ sequence.name +" illegal ticket #"+ ticket +" in order record", ERR_INVALID_FILE_FORMAT));
 
    // linkedTicket
    string sLinkedTicket = StrTrim(values[1]);
-   if (!StrIsDigit(sLinkedTicket))                                    return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal linked ticket "+ DoubleQuoteStr(sLinkedTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sLinkedTicket))                                   return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal linked ticket "+ DoubleQuoteStr(sLinkedTicket) +" in order record", ERR_INVALID_FILE_FORMAT));
    int linkedTicket = StrToInteger(sLinkedTicket);
 
    // lots
@@ -2424,7 +2424,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // openTime
    string sOpenTime = StrTrim(values[6]);
-   if (!StrIsDigit(sOpenTime))                                        return(!catch("ReadStatus.ParseOrder(17)  "+ sequence.name +" illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sOpenTime))                                       return(!catch("ReadStatus.ParseOrder(17)  "+ sequence.name +" illegal order open time "+ DoubleQuoteStr(sOpenTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime openTime = StrToInteger(sOpenTime);
    if (openType==OP_UNDEFINED && openTime)                            return(!catch("ReadStatus.ParseOrder(18)  "+ sequence.name +" order open type/time mis-match "+ OperationTypeToStr(openType) +"/'"+ TimeToStr(openTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
    if (openType!=OP_UNDEFINED && !openTime)                           return(!catch("ReadStatus.ParseOrder(19)  "+ sequence.name +" order open type/time mis-match "+ OperationTypeToStr(openType) +"/"+ openTime +" in order record", ERR_INVALID_FILE_FORMAT));
@@ -2439,7 +2439,7 @@ bool ReadStatus.ParseOrder(string value, int mode) {
 
    // closeTime
    string sCloseTime = StrTrim(values[8]);
-   if (!StrIsDigit(sCloseTime))                                       return(!catch("ReadStatus.ParseOrder(24)  "+ sequence.name +" illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
+   if (!StrIsDigits(sCloseTime))                                      return(!catch("ReadStatus.ParseOrder(24)  "+ sequence.name +" illegal order close time "+ DoubleQuoteStr(sCloseTime) +" in order record", ERR_INVALID_FILE_FORMAT));
    datetime closeTime = StrToInteger(sCloseTime);
    if (closeTime && closeTime < openTime)                             return(!catch("ReadStatus.ParseOrder(25)  "+ sequence.name +" order open/close time mis-match '"+ TimeToStr(openTime, TIME_FULL) +"'/'"+ TimeToStr(closeTime, TIME_FULL) +"' in order record", ERR_INVALID_FILE_FORMAT));
 
@@ -2492,7 +2492,7 @@ bool SaveStatus() {
    if (last_error || !sequence.id) return(false);
 
    // in tester skip most status file writes, except file creation and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (__isTesting && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -2754,7 +2754,7 @@ void SS.Spreads() {
    if (__isChart) {
       sCurrentSpread = DoubleToStr(currentSpread, 1);
 
-      if (IsTesting())     sAvgSpread = sCurrentSpread;
+      if (__isTesting)     sAvgSpread = sCurrentSpread;
       else if (!avgSpread) sAvgSpread = "-";
       else                 sAvgSpread = DoubleToStr(avgSpread, 2);
    }
@@ -2936,7 +2936,7 @@ void RestoreInputs() {
 bool ValidateInputs.SID() {
    string sValue = StrTrim(Sequence.ID);
    if (!StringLen(sValue))                   return(false);
-   if (!StrIsDigit(sValue))                  return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
+   if (!StrIsDigits(sValue))                 return(!onInputError("ValidateInputs.SID(1)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (must be digits only)"));
    int iValue = StrToInteger(sValue);
    if (iValue < SID_MIN || iValue > SID_MAX) return(!onInputError("ValidateInputs.SID(2)  invalid input parameter Sequence.ID: "+ DoubleQuoteStr(Sequence.ID) +" (range error)"));
 
@@ -2992,7 +2992,7 @@ bool ValidateInputs() {
 
    // IndicatorTimeframe
    if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
-   if (IsTesting() && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
+   if (__isTesting && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
    int _IndicatorTimeframe = IndicatorTimeframe;
 
    // IndicatorPeriods
@@ -3110,7 +3110,7 @@ bool InitMetrics() {
    }
 
    // read the metrics configuration (on every call)
-   string section = ProgramName(MODE_NICE) + ifString(IsTesting(), ".Tester", "");
+   string section = ProgramName(MODE_NICE) + ifString(__isTesting, ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
    metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));
@@ -3227,7 +3227,7 @@ bool RecordMetrics() {
 
    static int flags;
    static bool flagsInitialized = false; if (!flagsInitialized) {
-      flags = ifInt(IsTesting(), HST_BUFFER_TICKS, NULL);      // buffer ticks in tester
+      flags = ifInt(__isTesting, HST_BUFFER_TICKS, NULL);      // buffer ticks in tester
       flagsInitialized = true;
    }
 

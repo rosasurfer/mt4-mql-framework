@@ -150,7 +150,7 @@ bool EditFiles(string &filenames[]) {
  * @param  _Out_ datetime prevTransition[] - Array zur Aufnahme der letzten vorherigen Transitionsdaten
  * @param  _Out_ datetime nextTransition[] - Array zur Aufnahme der nächsten Transitionsdaten
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * Format of prevTransition[] and nextTransition[]:
  * ------------------------------------------------
@@ -313,63 +313,59 @@ int    lock.counters[];                                           // Anzahl der 
  * @param  string mutexName - Namensbezeichner des Mutexes
  * @param  bool   wait      - ob auf das Lock gewartet (TRUE) oder sofort zurückgekehrt (FALSE) werden soll
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool AquireLock(string mutexName, bool wait) {
    wait = wait!=0;
 
    if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
 
-   // (1) check if we already own that lock
+   // check if we already own the lock
    int i = SearchStringArray(lock.names, mutexName);
-   if (i > -1) {
-      // yes
+   if (i > -1) {                                               // yes
       lock.counters[i]++;
       return(true);
    }
 
-   int    error, duration, seconds=1, startTime=GetTickCount();
-   string globalVarName = mutexName;
+   int error, duration, seconds=1, startTime=GetTickCount();
+   string globalVar = ifString(__isTesting, "tester.", "") + mutexName;
 
-   if (This.IsTesting())
-      globalVarName = "tester."+ mutexName;
-
-   // (2) no, run until lock is aquired
+   // loop until lock is aquired
    while (true) {
-      if (GlobalVariableSetOnCondition(globalVarName, 1, 0)) {       // try to get it
-         ArrayPushString(lock.names, mutexName);                     // got it
+      if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
+         ArrayPushString(lock.names, mutexName);               // got it
          ArrayPushInt   (lock.counters,      1);
          return(true);
       }
       error = GetLastError();
 
-      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {                  // create mutex if it doesn't yet exist
-         if (!GlobalVariableSet(globalVarName, 0)) {
+      if (error == ERR_GLOBAL_VARIABLE_NOT_FOUND) {            // create mutex if it doesn't yet exist
+         if (!GlobalVariableSet(globalVar, 0)) {
             error = GetLastError();
             return(!catch("AquireLock(2)  failed to create mutex "+ DoubleQuoteStr(mutexName), ifInt(!error, ERR_RUNTIME_ERROR, error)));
          }
-         continue;                                                   // retry
+         continue;                                             // retry
       }
-      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
+      if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
+      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
       if (!wait)
          return(false);
 
-      // (2.1) warn every single second, cancel after 10 seconds
+      // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
       if (duration >= seconds*1000) {
          if (seconds >= 10)
-            return(!catch("AquireLock(5)  failed to get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., giving up", ERR_RUNTIME_ERROR));
-         logNotice("AquireLock(6)  couldn't get lock for mutex "+ DoubleQuoteStr(mutexName) +" after "+ DoubleToStr(duration/1000., 3) +" sec., retrying...");
+            return(!catch("AquireLock(5)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ (duration/1000) +" sec, giving up", ERR_RUNTIME_ERROR));
+         logNotice("AquireLock(6)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +" after "+ duration/1000 +" sec, retrying...");
          seconds++;
       }
 
-      // Sleep and retry...
-      if (IsIndicator() || IsTesting()) SleepEx(100, true);          // Indicator oder Expert im Tester
-      else                              Sleep  (100);
+      // sleep and retry...
+      if (IsIndicator() || IsTesting()) SleepEx(100, true);    // indicator or expert in tester
+      else                              Sleep(100);
    }
 
-   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));                  // unreachable
+   return(!catch("AquireLock(7)", ERR_WRONG_JUMP));            // unreachable
 }
 
 
@@ -379,7 +375,7 @@ bool AquireLock(string mutexName, bool wait) {
  *
  * @param  string mutexName - Namensbezeichner des Mutexes
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ReleaseLock(string mutexName) {
    if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
@@ -399,7 +395,7 @@ bool ReleaseLock(string mutexName) {
 
       string globalVarName = mutexName;
 
-      if (This.IsTesting())
+      if (__isTesting)
          globalVarName = "tester."+ mutexName;
 
       if (!GlobalVariableSet(globalVarName, 0)) {
@@ -634,7 +630,7 @@ string GetAccountServer() {
 
    // invalidate cache if a new tick and ValidBars==0
    int tick = __ExecutionContext[EC.ticks];
-   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   if (!__ExecutionContext[EC.validBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -694,7 +690,7 @@ string GetAccountServer() {
  * @param  double buffer[] - das für den Buffer zu verwendende Double-Array
  * @param  int    size     - Anzahl der im Buffer zu speichernden Doubles
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int InitializeDoubleBuffer(double buffer[], int size) {
    if (ArrayDimension(buffer) > 1) return(catch("InitializeDoubleBuffer(1)  too many dimensions of parameter buffer: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAY));
@@ -716,7 +712,7 @@ int InitializeDoubleBuffer(double buffer[], int size) {
  * @param  string buffer[] - das für den Buffer zu verwendende String-Array
  * @param  int    length   - Länge des Buffers in Zeichen
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int InitializeStringBuffer(string &buffer[], int length) {
    if (ArrayDimension(buffer) > 1) return(catch("InitializeStringBuffer(1)  too many dimensions of parameter buffer: "+ ArrayDimension(buffer), ERR_INCOMPATIBLE_ARRAY));
@@ -751,7 +747,7 @@ bool SortStrings(string &values[]) {
  *
  * @param  _InOut_ int tickets[] - zu sortierende Tickets
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int SortTicketsChronological(int &tickets[]) {
    int sizeOfTickets = ArraySize(tickets);
@@ -807,7 +803,7 @@ int SortTicketsChronological(int &tickets[]) {
  *
  * @param  _Inout_ int tickets[] - Array mit Ticketdaten
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
    if (ArrayRange(tickets, 1) != 2) return(!catch("SortOpenTickets(1)  invalid parameter tickets["+ ArrayRange(tickets, 0) +"]["+ ArrayRange(tickets, 1) +"]", ERR_INCOMPATIBLE_ARRAY));
@@ -864,7 +860,7 @@ bool SortOpenTickets(int &tickets[][/*{OpenTime, Ticket}*/]) {
  * @param  _InOut_ int ticketData[] - zu sortierendes Datenarray
  * @param  _In_    int rowsToSort[] - Array mit aufsteigenden Indizes der umzusortierenden Zeilen des Datenarrays
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @access private
  */
@@ -891,7 +887,7 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 /**
  * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int RepositionLegend() {
    if (IsSuperContext())
@@ -934,7 +930,7 @@ int RepositionLegend() {
  * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch, die
  * Order auszuführen, erfolgreich sein.
  *
- * @param  int error - Fehlerstatus
+ * @return int - error status
  *
  * @return bool
  */
@@ -989,7 +985,7 @@ bool IsTemporaryTradeError(int error) {
  * @param  int offset    - zu modifizierende Position
  * @param  int values[]  - zuzuweisendes Array (Größe muß der zweiten Dimension des zu modifizierenden Arrays entsprechen)
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int ArraySetInts(int array[][], int offset, int values[]) {
    if (ArrayDimension(array) != 2)   return(catch("ArraySetInts(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY));
@@ -2867,7 +2863,7 @@ string GetWindowsShortcutTarget(string lnkFilename) {
  * @param  string cmdLine - Befehlszeile
  * @param  int    cmdShow - ShowWindow()-Konstante
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int WinExecWait(string cmdLine, int cmdShow) {
    /*STARTUPINFO*/int si[]; InitializeByteBuffer(si, STARTUPINFO_size);
@@ -3339,12 +3335,12 @@ string GetLongSymbolNameStrict(string symbol) {
    string prefix = StrLeft(symbol, -3);
    string suffix = StrRight(symbol, 3);
 
-   if      (suffix == ".BA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
-   else if (suffix == ".BX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
-   else if (suffix == ".EA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
-   else if (suffix == ".EX") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
-   else if (suffix == ".LA") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
-   else if (suffix == ".PL") { if (StrIsDigit(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
+   if      (suffix == ".BA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Balance"      )); }
+   else if (suffix == ".BX") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Balance + AuM")); }
+   else if (suffix == ".EA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Equity"       )); }
+   else if (suffix == ".EX") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Equity + AuM" )); }
+   else if (suffix == ".LA") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Leverage"     )); }
+   else if (suffix == ".PL") { if (StrIsDigits(prefix)) return(StringConcatenate("Account ", prefix, " Profit/Loss"  )); }
 
    return("");
 }
@@ -4123,26 +4119,26 @@ int GetAccountNumber() {
    int account = AccountNumber();
 
    if (account == 0x4000) {                                             // im Tester ohne Server-Verbindung
-      if (!IsTesting())          return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
+      if (!__isTesting)           return(!catch("GetAccountNumber(1)->AccountNumber()  illegal account number "+ account +" (0x"+ IntToHexStr(account) +")", ERR_RUNTIME_ERROR));
       account = 0;
    }
 
    if (!account) {                                                      // Titelzeile des Hauptfensters auswerten
       string title = GetInternalWindowTextA(GetTerminalMainWindow());
-      if (!StringLen(title))     return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      if (!StringLen(title))      return(!logInfo("GetAccountNumber(2)->GetInternalWindowTextA(hWndMain) = \"\"", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
       int pos = StringFind(title, ":");
-      if (pos < 1)               return(!catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
+      if (pos < 1)                return(!catch("GetAccountNumber(3)  account number separator not found in top window title \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       string strValue = StrLeft(title, pos);
-      if (!StrIsDigit(strValue)) return(!catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
+      if (!StrIsDigits(strValue)) return(!catch("GetAccountNumber(4)  account number in top window title contains non-digits \""+ title +"\"", ERR_RUNTIME_ERROR));
 
       account = StrToInteger(strValue);
    }
 
    // Im Tester wird die Accountnummer gecacht, um UI-Deadlocks in deinit() caused by GetWindowText() calls zu vermeiden.
    // Online wird nicht gecacht, da sonst ein Accountwechsel nicht erkannt werden würde.
-   if (IsTesting())
+   if (__isTesting)
       testAccount = account;
    return(account);                                                     // nicht die statische Testervariable zurückgeben (ist online immer 0)
 }
@@ -4303,7 +4299,7 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
  *               EMPTY_VALUE, falls  ein Fehler auftrat
  */
 int GetLocalToGmtTimeOffset() {
-   if (This.IsTesting()) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
+   if (__isTesting) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
 
    /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION_size);
 
@@ -4340,12 +4336,12 @@ string GetServerTimezone() {
    #define IDX_COMPANY  1
    #define IDX_TIMEZONE 2
 
-   int tick=__ExecutionContext[EC.ticks], unchangedBars=__ExecutionContext[EC.unchangedBars];
+   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
    static int lastTick = -1;
    static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
    if (tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) && !unchangedBars) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !validBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";
@@ -5476,7 +5472,7 @@ int Order.HandleError(string message, int error, int oeFlags, int oe[], bool ref
    }
 
    // in tester always add ERS_EXECUTION_STOPPING to the passed flags
-   if (This.IsTesting() && IsStopped())
+   if (__isTesting && IsStopped())
       oeFlags |= F_ERS_EXECUTION_STOPPING;
 
    // filter the flagged errors and log them accordingly
@@ -5519,7 +5515,7 @@ string Order.TempErrorMsg(int oe[], int errors) {
 
    string message = "temporary error";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote" + Pluralize(requotes);
@@ -5561,7 +5557,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    ArrayInitialize(oe, 0);
    // symbol
    if (symbol == "0") symbol = Symbol();                       // (string) NULL
-   if (IsTesting() && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
+   if (__isTesting && !StrCompareI(symbol, Symbol()))          return(!Order.HandleError("OrderSendEx(2)  cannot trade symbol "+ symbol +" in a "+ Symbol() +" test", ERR_SYMBOL_NOT_AVAILABLE, oeFlags, oe));
    int    digits         = MarketInfo(symbol, MODE_DIGITS);
    double minLot         = MarketInfo(symbol, MODE_MINLOT);
    double maxLot         = MarketInfo(symbol, MODE_MAXLOT);
@@ -5607,7 +5603,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
    if (!done) {
-      //if (IsTesting()) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
+      //if (__isTesting) /*&&*/ if (IsConfigKey("SnowRoller.Tester", "TestCase.From") && IsConfigKey("SnowRoller.Tester", "TestCase.To")) {
       //   testCase.from = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.From"));
       //   testCase.to   = StrToTime(GetConfigString("SnowRoller.Tester", "TestCase.To"));
       //}
@@ -5681,7 +5677,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
          if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
 
-         if (IsTesting()) {
+         if (__isTesting) {
             if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
                Test_onPositionOpen(__ExecutionContext, ticket, type, OrderLots(), symbol, OrderOpenTime(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), OrderCommission(), magicNumber, comment);
             }
@@ -5721,7 +5717,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          case ERR_REQUOTE:
             requotes++;
             oe.setRequotes(oe, requotes);
-            if (IsTesting())  break;
+            if (__isTesting)  break;
             if (requotes > 5) break;
             continue;                                                      // no delay after ERR_REQUOTE
 
@@ -5781,7 +5777,7 @@ string OrderSendEx.SuccessMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
                                  message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5819,7 +5815,7 @@ string OrderSendEx.TempErrorMsg(int oe[], int errors) {
 
    string message = "temporary error while trying to "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ sPrice +" (market: "+ sBid +"/"+ sAsk +")";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5857,7 +5853,7 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
    if (NE(oe.StopLoss  (oe), 0)) message = message +", sl="+ NumberToStr(oe.StopLoss(oe), priceFormat);
    if (NE(oe.TakeProfit(oe), 0)) message = message +", tp="+ NumberToStr(oe.TakeProfit(oe), priceFormat);
                                  message = message +" (market: "+ sBid +"/"+ sAsk + sSD +")";
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -5991,7 +5987,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
          if (IsLogDebug()) logDebug("OrderModifyEx(30)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
-         if (!IsTesting()) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
+         if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
          return(!_bool(Order.HandleError("OrderModifyEx(31)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(32)")));
       }
 
@@ -6062,7 +6058,7 @@ string OrderModifyEx.SuccessMsg(int oe[], double prevOpenPrice, double prevStopL
    string sTP = ""; if (NE(takeProfit, prevTakeProfit)) sTP    = ", tp="+ NumberToStr(prevTakeProfit, priceFormat) +" => "+ NumberToStr(takeProfit, priceFormat);
 
    string message = "modified #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + comment +" at "+ sPrice +  sSL + sTP;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6099,7 +6095,7 @@ string OrderModifyEx.ErrorMsg(int oe[], double prevOpenPrice, double prevStopLos
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to modify #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6246,7 +6242,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          // find the remaining position
          if (NE(lots, openLots, 2)) {
             string sValue1="", sValue2="";
-            if (IsTesting()) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
+            if (__isTesting) /*&&*/ if (!StrStartsWithI(OrderComment(), "to #")) {  // fall-back to server behavior if current terminal builds fixed the comment issue
                // the Tester overwrites the comment with "partial close" instead of "to #2"
                if (OrderComment() != "partial close") return(_false(Order.HandleError("OrderCloseEx(23)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(24)")));
                sValue1 = "split from #"+ ticket;
@@ -6272,7 +6268,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
             if (!remainder) {
                if (!StrStartsWithI(OrderComment(), "to #")) return(_false(Order.HandleError("OrderCloseEx(30)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(31)")));
                sValue1 = StrSubstr(OrderComment(), 4);
-               if (!StrIsDigit(sValue1))                    return(_false(Order.HandleError("OrderCloseEx(32)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(33)")));
+               if (!StrIsDigits(sValue1))                   return(_false(Order.HandleError("OrderCloseEx(32)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(33)")));
                remainder = StrToInteger(sValue1);
                if (!remainder)                              return(_false(Order.HandleError("OrderCloseEx(34)  unexpected order comment after partial close of #"+ ticket +" ("+ NumberToStr(lots, ".+") +" of "+ NumberToStr(openLots, ".+") +" lots) = \""+ OrderComment() +"\"", ERR_RUNTIME_ERROR, oeFlags, oe), OrderPop("OrderCloseEx(35)")));
             }
@@ -6282,7 +6278,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          }
          if (IsLogDebug()) logDebug("OrderCloseEx(36)  "+ OrderCloseEx.SuccessMsg(oe));
 
-         if (!IsTesting())                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
+         if (!__isTesting)                                       PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
          else if (__ExecutionContext[EC.externalReporting] != 0) Test_onPositionClose(__ExecutionContext, ticket, OrderCloseTime(), OrderClosePrice(), OrderSwap(), OrderProfit());
                                                                                     // regular exit
          return(_bool(!Order.HandleError("OrderCloseEx(37)", GetLastError(), oeFlags, oe), OrderPop("OrderCloseEx(38)")));
@@ -6309,7 +6305,7 @@ bool OrderCloseEx(int ticket, double lots, int slippage, color markerColor, int 
          case ERR_REQUOTE:
             requotes++;
             oe.setRequotes(oe, requotes);
-            if (IsTesting() || requotes > 5) break;
+            if (__isTesting || requotes > 5) break;
             continue;                                                               // immediately repeat the request
 
          // map terminal generated errors
@@ -6365,7 +6361,7 @@ string OrderCloseEx.SuccessMsg(int oe[]) {
    if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ sType +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ symbol;
                        message = message +" ("+ sSlippage +"market: "+ sBid +"/"+ sAsk +")";
 
-   if (!This.IsTesting()) {
+   if (!__isTesting) {
       message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
       int requotes = oe.Requotes(oe);
       if (requotes > 0) message = message +" and "+ requotes +" requote"+ Pluralize(requotes);
@@ -6401,7 +6397,7 @@ string OrderCloseEx.ErrorMsg(int oe[]) {
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to close #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + comment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -6547,7 +6543,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
    else                  largerType = oppositeType;
 
    int  error, time1, tempErrors, remainder;
-   bool success, smallerByLarger=!IsTesting(), largerBySmaller=!smallerByLarger;
+   bool success, smallerByLarger=!__isTesting, largerBySmaller=!smallerByLarger;
 
    // loop until the positions have been closed or a non-fixable error occurred
    while (true) {
@@ -6636,7 +6632,7 @@ bool OrderCloseByEx(int ticket, int opposite, color markerColor, int oeFlags, in
          }
 
          if (IsLogDebug()) logDebug("OrderCloseByEx(26)  "+ OrderCloseByEx.SuccessMsg(first, second, largerType, oe));
-         if (!IsTesting()) PlaySoundEx("OrderOk.wav");
+         if (!__isTesting) PlaySoundEx("OrderOk.wav");
          return(!oe.setError(oe, catch("OrderCloseByEx(27)", NULL, O_POP)));     // regular exit (NO_ERROR)
       }
 
@@ -6697,9 +6693,9 @@ string OrderCloseByEx.SuccessMsg(int first, int second, int largerType, int oe[]
    string message = "closed #"+ first +" by #"+ second;
 
    int remainder = oe.RemainingTicket(oe);
-   if (remainder != 0)    message = message +", remainder: #"+ remainder +" "+ OperationTypeDescription(largerType) +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ oe.Symbol(oe);
-   else                   message = message +", no remainder";
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (remainder != 0) message = message +", remainder: #"+ remainder +" "+ OperationTypeDescription(largerType) +" "+ NumberToStr(oe.RemainingLots(oe), ".+") +" "+ oe.Symbol(oe);
+   else                message = message +", no remainder";
+   if (!__isTesting)   message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
    return(message);
 }
 
@@ -6717,7 +6713,7 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
    // error while trying to close #1 by #2 after 0.345 s
 
    string message = "error while trying to close #"+ first +" by #"+ second;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
    return(message);
 }
 
@@ -7386,8 +7382,7 @@ bool OrderDeleteEx(int ticket, color markerColor, int oeFlags, int oe[]) {
             return(_false(oe.setError(oe, last_error), OrderPop("OrderDeleteEx(12)")));
 
          if (IsLogDebug()) logDebug(StringConcatenate("OrderDeleteEx(13)  ", OrderDeleteEx.SuccessMsg(oe)));
-         if (!IsTesting())
-            PlaySoundEx("OrderOk.wav");
+         if (!__isTesting) PlaySoundEx("OrderOk.wav");
 
          return(!oe.setError(oe, catch("OrderDeleteEx(14)", NULL, O_POP)));   // regular exit (NO_ERROR)
       }
@@ -7449,7 +7444,7 @@ string OrderDeleteEx.SuccessMsg(int oe[]) {
    string strPrice    = NumberToStr(oe.OpenPrice(oe), priceFormat);
 
    string message = "deleted #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ oe.Symbol(oe) + sComment +" at "+ strPrice;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -7481,7 +7476,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
    string sMarket = "(market: "+ NumberToStr(oe.Bid(oe), priceFormat) +"/"+ NumberToStr(oe.Ask(oe), priceFormat) + sSD +")";
 
    string message = "error while trying to delete #"+ oe.Ticket(oe) +" "+ sType +" "+ sLots +" "+ symbol + sComment +" at "+ sPrice + sSL + sTP +" "+ sMarket;
-   if (!This.IsTesting()) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
+   if (!__isTesting) message = message +" after "+ DoubleToStr(oe.Duration(oe)/1000., 3) +" s";
 
    return(message);
 }
@@ -7492,7 +7487,7 @@ string OrderDeleteEx.ErrorMsg(int oe[]) {
  *
  * @param  color markerColor [optional] - Farbe des Chart-Markers (default: kein Marker)
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool DeletePendingOrders(color markerColor = CLR_NONE) {
    int oeFlags = NULL;
@@ -7524,7 +7519,7 @@ bool DeletePendingOrders(color markerColor = CLR_NONE) {
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderSent_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7556,7 +7551,7 @@ bool ChartMarker.OrderSent_A(int ticket, int digits, color markerColor) {
  * @param  double   takeProfit  - TakeProfit
  * @param  string   comment     - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderSent_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7609,7 +7604,7 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
  * @param  double   oldStopLoss   - ursprünglicher StopLoss
  * @param  double   oldTakeProfit - ursprünglicher TakeProfit
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderModified_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7645,7 +7640,7 @@ bool ChartMarker.OrderModified_A(int ticket, int digits, color markerColor, date
  * @param  double   takeProfit    - aktueller TakeProfit
  * @param  string   comment       - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderModified_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7732,7 +7727,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
  * @param  int    digits       - Nachkommastellen des Ordersymbols
  * @param  color  markerColor  - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderFilled_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7763,7 +7758,7 @@ bool ChartMarker.OrderFilled_A(int ticket, int pendingType, double pendingPrice,
  * @param  double   openPrice    - OrderOpenPrice
  * @param  string   comment      - OrderComment
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderFilled_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -7783,7 +7778,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
       ObjectDelete(label2);
 
    // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
-   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(openPrice, digits));
+   string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(openPrice, digits));
    if (ObjectFind(label3) == 0)
          ObjectDelete(label3);                                                         // löschen
 
@@ -7813,7 +7808,7 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
    if (!__isChart) return(true);
@@ -7842,7 +7837,7 @@ bool ChartMarker.PositionClosed_A(int ticket, int digits, color markerColor) {
  * @param  datetime closeTime   - OrderCloseTime
  * @param  double   closePrice  - OrderClosePrice
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int type, double lots, string symbol, datetime openTime, double openPrice, datetime closeTime, double closePrice) {
    if (!__isChart) return(true);
@@ -7872,7 +7867,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
-   string label3 = StringConcatenate(label1, " close", ifString(IsTesting(), " by tester", ""), " at ", DoubleToStr(closePrice, digits));
+   string label3 = StringConcatenate(label1, " close", ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(closePrice, digits));
    if (ObjectFind(label3) == 0) {
       if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
@@ -7896,7 +7891,7 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
  * @param  int   digits      - Nachkommastellen des Ordersymbols
  * @param  color markerColor - Farbe des Chartmarkers
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderDeleted_B(), wenn das Ticket während der Ausführung nicht selektierbar ist
  */
@@ -7927,7 +7922,7 @@ bool ChartMarker.OrderDeleted_A(int ticket, int digits, color markerColor) {
  * @param  datetime closeTime   - OrderCloseTime
  * @param  double   closePrice  - OrderClosePrice
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  *
  * @see  ChartMarker.OrderDeleted_A(), wenn das Ticket während der Ausführung selektierbar ist
  */
@@ -8411,7 +8406,7 @@ bool SaveSymbolGroups(/*SYMBOL_GROUP*/int sgs[], string directory = "") {
  * @param  SYMBOL symbol - Symbol
  * @param  int    type   - Symbol-Typ
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
    // Parameter validieren und Template-Datei bestimmen

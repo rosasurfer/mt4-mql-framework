@@ -2,8 +2,6 @@
  * Initialization preprocessing.
  *
  * @return int - error status
- *
- * @see  mql4/experts/Duel.mq4
  */
 int onInit() {
    CreateStatusBox();
@@ -28,7 +26,7 @@ int onInitUser() {
    }
    else if (StrTrim(Sequence.ID) == "") {                            // no sequence id was specified
       if (ValidateInputs()) {
-         sequence.isTest  = IsTesting();
+         sequence.isTest  = __isTesting;
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.created = TimeLocal();
@@ -56,7 +54,7 @@ int onInitUser() {
          }
 
          // confirm dangerous live modes
-         if (!IsTesting() && !IsDemoFix()) {
+         if (!__isTesting && !IsDemoFix()) {
             if (sequence.martingaleEnabled || sequence.direction==D_BOTH) {
                PlaySoundEx("Windows Notify.wav");
                if (IDOK != MessageBoxEx(ProgramName(MODE_NICE) +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
@@ -162,11 +160,11 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (IsTesting() || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
+   if (__isTesting || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
       SetLogfile(GetLogFilename());                // of a finished test (i.e. a test loaded into an online chart)
    }
 
-   if (IsTesting()) {                              // read test configuration
+   if (__isTesting) {                              // read test configuration
       string section          = "Tester."+ ProgramName(MODE_NICE);
       test.onStopPause        = GetConfigBool(section, "OnStopPause",       false);
       test.reduceStatusWrites = GetConfigBool(section, "ReduceStatusWrites", true);

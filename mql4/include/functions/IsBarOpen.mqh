@@ -19,7 +19,7 @@ bool IsBarOpen(int timeframe = NULL) {
       if (IsIndicator()) {
          if (IsSuperContext())           return(!catch("IsBarOpen(3)  can't be used in an indicator loaded by iCustom() (no tick support)", ERR_FUNC_NOT_ALLOWED));
          if (__CoreFunction != CF_START) return(!catch("IsBarOpen(4)  can only be used in the program's start() function", ERR_FUNC_NOT_ALLOWED));
-         if (This.IsTesting()) {
+         if (__isTesting) {
             if (!IsTesting())            return(!catch("IsBarOpen(5)  can't be used in a standalone indicator in tester (tick time not available)", ERR_FUNC_NOT_ALLOWED));
             // TODO: check tick details/support
             //       check VisualMode On/Off

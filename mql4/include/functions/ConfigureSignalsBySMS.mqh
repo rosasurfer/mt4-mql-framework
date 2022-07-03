@@ -11,7 +11,7 @@ bool ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver) 
    enabled  = false;
    receiver = "";
 
-   string signalSection = "Signals"+ ifString(This.IsTesting(), ".Tester", "");
+   string signalSection = "Signals"+ ifString(__isTesting, ".Tester", "");
    string signalKey     = "Signal.SMS";
    string smsSection    = "SMS";
    string receiverKey   = "Receiver";

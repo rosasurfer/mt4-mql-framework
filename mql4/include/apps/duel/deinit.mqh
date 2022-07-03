@@ -2,11 +2,9 @@
  * Deinitialization
  *
  * @return int - error status
- *
- * @see  "mql4/experts/Duel.mq4"
  */
 int onDeinit() {
-   if (IsTesting()) {
+   if (__isTesting) {
       if (!last_error && sequence.status!=STATUS_STOPPED) {
          if (IsLogInfo()) logInfo("onDeinit(1)  "+ sequence.name +" test stopped in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
          SaveStatus();
@@ -53,7 +51,7 @@ int onDeinitChartChange() {
  * @return int - error status
  */
 int onDeinitChartClose() {
-   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
       logInfo("onDeinitChartClose(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);
@@ -67,7 +65,7 @@ int onDeinitChartClose() {
  * @return int - error status
  */
 int onDeinitTemplate() {
-   if (!IsTesting() && sequence.status!=STATUS_STOPPED) {
+   if (!__isTesting && sequence.status!=STATUS_STOPPED) {
       logInfo("onDeinitTemplate(1)  "+ sequence.name +" expert unloaded in status \""+ StatusDescription(sequence.status) +"\", profit: "+ sSequenceTotalPL +" "+ StrReplace(sSequencePlStats, " ", ""));
    }
    return(NO_ERROR);

@@ -2,8 +2,6 @@
  * Initialization preprocessing.
  *
  * @return int - error status
- *
- * @see  mql4/experts/SnowRoller.mq4
  */
 int onInit() {
    CreateStatusBox();
@@ -29,7 +27,7 @@ int onInitUser() {
          if (!ConfirmFirstTickTrade("", "Do you really want to start a new sequence?"))                        // TODO: this must be Confirm() only
             return(SetLastError(ERR_CANCELLED_BY_USER));
 
-         sequence.isTest  = IsTesting();
+         sequence.isTest  = __isTesting;
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.cycle   = 1;
@@ -40,7 +38,7 @@ int onInitUser() {
          if (IsLogDebug()) {
             logDebug("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
          }
-         else if (IsTesting() && !IsVisualMode()) {
+         else if (__isTesting && !IsVisualMode()) {
             debug("onInitUser(2)  sequence "+ sequence.name +" created");
          }
       }
@@ -131,14 +129,14 @@ int onInitRecompile() {
  * @return int - error status
  */
 int afterInit() {
-   if (IsTesting() || !IsTestSequence()) {            // open the log file (flushes the log buffer) but don't touch the file
+   if (__isTesting || !IsTestSequence()) {            // open the log file (flushes the log buffer) but don't touch the file
       SetLogfile(GetLogFilename());                   // of a finished test (i.e. a test loaded into an online chart)
    }
 
    string section = ProgramName(MODE_NICE);
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
-   if (IsTesting()) {
+   if (__isTesting) {
       // initialize tester configuration
       section = "Tester."+ section;
       test.onStartPause        = GetConfigBool(section, "OnStartPause",        false);
