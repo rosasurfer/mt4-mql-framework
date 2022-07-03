@@ -205,13 +205,13 @@ int start() {
          if (ProgramInitReason() == INITREASON_PROGRAM_AFTERTEST)
             return(__STATUS_OFF.reason);
          string msg = WindowExpertName() +" => switched off ("+ ifString(!__STATUS_OFF.reason, "unknown reason", ErrorToStr(__STATUS_OFF.reason)) +")";
-         Comment(NL, NL, NL, NL, msg);                                              // 4 lines margin for symbol display and optional chart legend
+         Comment(NL, NL, NL, NL, msg);                                           // 4 lines margin for symbol display and optional chart legend
       }
       return(__STATUS_OFF.reason);
    }
 
-   // check chart initialization
-   // Without history (i.e. no bars) Indicator::start() is never called. However for older builds Bars=0 used to be a spurious issue observed on terminal start.
+   // check chart initialization: Without history (i.e. no bars) Indicator::start() is never called.
+   // However for older builds Bars=0 used to be a spurious issue observed on terminal start.
    if (!Bars) return(_last_error(logInfo("start(1)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(2)")));
 
    // initialize ValidBars, ChangedBars and ShiftedBars (updated later)
@@ -220,11 +220,11 @@ int start() {
    ShiftedBars = 0;
 
    // determine tick status
-   Ticks++;                                                                         // an increasing counter without actual meaning
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: in synthetic charts MODE_TIME and TimeCurrent() are 0 (1970.01.01 00:00:00)
+   Ticks++;                                                                      // an increasing counter without actual meaning
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: in synthetic charts MODE_TIME and TimeCurrent() are 0 (1970.01.01 00:00:00)
    if (!Tick.time) {
       int error = GetLastError();
-      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                               // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
          if (CheckErrors("start(3)", error)) return(last_error);
       }
    }
@@ -234,153 +234,124 @@ int start() {
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
 
+
    // handle account changes
    // ----------------------
-   // The tick when AccountNumber() reports the new account the 1st time is executed either on new history (if it exists) or
-   // on the old history (if no history exists fpr the new account). Depending on it ValidBars will be either 0 (new history)
+   // The tick on which AccountNumber() reports a new account the first time is executed either on new history (if it exists)
+   // or on old history (if no history exists for the new account). Depending on it ValidBars will be either 0 (new history)
    // or not 0 (old history). Only the first tick with a new account number may be executed on old history. After a successfull
-   // account change all bars will be indicated as changed, no matter whether the history changed or not (ValidBars is reliable).
+   // account change all bars will be indicated as changed, no matter whether history changed or not (ValidBars is reliable).
    //
    // At terminal start AccountNumber() reports 0 (zero) until the connection is fully established. An account change at runtime
-   // causes a new tick where AccountNumber() immediately reports the new account number and IsConnected() returns FALSE.
+   // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
    static int prevAccount;
    int currAccount = AccountNumber();
    bool isAccountChange = (prevAccount && currAccount!=prevAccount);
    if (isAccountChange) {
       __ExecutionContext[EC.currTickTime] = 0;
       __ExecutionContext[EC.prevTickTime] = 0;
-      onAccountChange(prevAccount, currAccount);                                    // TODO: handle errors
+      onAccountChange(prevAccount, currAccount);                                 // TODO: handle errors
    }
    prevAccount = currAccount;
 
-
-
-   //debug("start(0.1)  Tick="+ Ticks +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  Bars="+ Bars +"  ValidBars="+ IndicatorCounted() +"  account="+ AccountNumber());
-
-
-
-
-   // TODO: on account change IsConnected() returns FALSE and the code goes into the branch for offline charts
-   // FATAL  Grid::start(6)  Bar[last.startBarOpenTime]=2022.06.29 15:30:00 not found  [ERR_RUNTIME_ERROR]
-
-   // Valid/Changed/ShiftedBars in synthetischen Charts anhand der Zeitreihe selbst bestimmen. IndicatorCounted() signalisiert dort immer alle Bars als modifiziert.
-   static int      last.bars = -1;
-   static datetime last.startBarOpenTime, last.endBarOpenTime;
-   if (!ValidBars) /*&&*/ if (!IsConnected()) {                                     // detektiert Offline-Chart (regulär oder Pseudo-Online-Chart)
-      // Initialisierung
-      if (last.bars == -1) {
-         ChangedBars = Bars;                                                        // erster Zugriff auf die Zeitreihe
-      }
-
-      // Baranzahl ist unverändert
-      else if (Bars == last.bars) {
-         if (Time[Bars-1] == last.endBarOpenTime) {                                 // älteste Bar ist noch dieselbe
-            ChangedBars = 1;
-         }
-         else {                                                                     // älteste Bar ist verändert => Bars wurden hinten "hinausgeschoben"
-            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
-               ChangedBars = Bars;
-            }
-            else {                                                                  // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
-               for (int i=1; i < Bars; i++) {
-                  if (Time[i] == last.startBarOpenTime) break;
-               }
-               if (i == Bars) return(_last_error(CheckErrors("start(4)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
-               ShiftedBars = i;
-               ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
-            }
-         }
-      }
-
-      // Baranzahl ist verändert (hat sich vergrößert)
-      else {
-         if (Time[Bars-1] == last.endBarOpenTime) {                                 // älteste Bar ist noch dieselbe
-            if (Time[0] == last.startBarOpenTime) {                                 // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
-               ChangedBars = Bars;
-            }
-            else {                                                                  // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
-               for (i=1; i < Bars; i++) {
-                  if (Time[i] == last.startBarOpenTime) break;
-               }
-               if (i == Bars) return(_last_error(CheckErrors("start(5)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
-               ShiftedBars = i;
-               ChangedBars = i+1;                                                   // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
-            }
-         }
-         else {                                                                     // älteste Bar ist verändert
-            if (Time[Bars-1] < last.endBarOpenTime) {                               // Bars hinten angefügt: alle Bars invalidieren
-               ChangedBars = Bars;
-            }
-            else {                                                                  // Bars hinten "hinausgeschoben"
-               if (Time[0] == last.startBarOpenTime) {                              // neue Bars wurden in Lücke eingefügt: uneindeutig => alle Bars invalidieren
-                  ChangedBars = Bars;
-               }
-               else {                                                               // neue Bars zu Beginn hinzugekommen: Bar[last.startBarOpenTime] suchen
-                  for (i=1; i < Bars; i++) {
-                     if (Time[i] == last.startBarOpenTime) break;
-                  }
-                  if (i == Bars) return(_last_error(CheckErrors("start(6)  Bar[last.startBarOpenTime]="+ TimeToStr(last.startBarOpenTime, TIME_FULL) +" not found", ERR_RUNTIME_ERROR)));
-                  ShiftedBars = i;
-                  ChangedBars = i+1;                                                // Bar[last.startBarOpenTime] wird ebenfalls invalidiert (onBarOpen ChangedBars=2)
-               }
-            }
-         }
-      }
-   }
-   last.bars             = Bars;
-   last.startBarOpenTime = Time[0];
-   last.endBarOpenTime   = Time[Bars-1];
-   ValidBars             = Bars - ChangedBars;                                      // ValidBars neu definieren
-
-   // Falls wir aus init() kommen, dessen Ergebnis prüfen
+   // handle a first call after init()
    if (__CoreFunction == CF_INIT) {
-      __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);     // __STATUS_OFF ist false: evt. ist jedoch ein Status gesetzt, siehe CheckErrors()
+      __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
-      if (last_error == ERS_TERMINAL_NOT_YET_READY) {                               // alle anderen Stati brauchen zur Zeit keine eigene Behandlung
-         debug("start(7)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
-         last_error = NO_ERROR;
+      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing a repetition of init()
+      if (last_error == ERS_TERMINAL_NOT_YET_READY) {
+         logDebug("start(4)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
+         prev_error = last_error;
+         ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-         error = init();                                                            // init() erneut aufrufen
+         error = init();
          if (__STATUS_OFF) return(last_error);
 
-         if (error == ERS_TERMINAL_NOT_YET_READY) {                                 // wenn überhaupt, kann wieder nur ein Status gesetzt sein
-            __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);// __CoreFunction zurücksetzen und auf den nächsten Tick warten
+         if (error == ERS_TERMINAL_NOT_YET_READY) {                              // restore CF_INIT and wait for the next tick
+            __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_INIT);
             return(error);
+         }                                                                       // last_error may hold another non-critical init() error which is discarded
+      }
+   } //else (a regular tick)
+
+
+   // speed-up offline chart calculations
+   // -----------------------------------
+   // IndicatorCounted() always reports all bars as changed. Redefine ChangedBars/ShiftedBars to improve calculation performance.
+   // The below code works under the following assumptions:
+   // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
+   // - all updates must include either the begin or the end of the history (no separate updates in the middle)
+   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a single random second)
+   // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
+   static int prevBars = -1;
+   static datetime prevFirstBarTime, prevLastBarTime;
+
+   if (!isAccountChange && !ValidBars && prevBars>=0 && !IsConnected()) {        // Detects offline charts and regular charts on a disconnected terminal.
+      bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
+      bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
+
+      // if number of bars is the same
+      if (Bars == prevBars) {
+         if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
+            ShiftedBars = 0;
+            ChangedBars = 1;                                                     // a new tick
+         }
+         else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
+            for (int i=1; i < Bars; i++) {
+               if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
+            }
+            if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
+               ShiftedBars = i;
+               ChangedBars = ShiftedBars + 1;
+            }
          }
       }
-      last_error = NO_ERROR;                                                        // init() war erfolgreich
-      ValidBars  = 0;
-   }
-   else {
-      // normaler Tick
-      prev_error = last_error;
-      ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-      if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
-      else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
-      else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-      if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE kann je nach Kontext Fehler oder Status sein
+      // if number of bars increased
+      else if (Bars > prevBars) {
+         if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
+            if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
+               ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
+               ChangedBars = ShiftedBars + 1;
+            }
+         }
+      }                                                                          // all other cases: all bars stay invalidated
    }
-   if (!ValidBars) ShiftedBars = 0;
-   ChangedBars = Bars - ValidBars;                                                  // ChangedBars aktualisieren (ValidBars wurde evt. neu gesetzt)
+   prevBars         = Bars;
+   prevFirstBarTime = Time[0];
+   prevLastBarTime  = Time[Bars-1];
+   ValidBars        = Bars - ChangedBars;                                        // update ValidBars accordingly
 
+
+   // reset last_error
+   prev_error = last_error;
+   ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
+
+
+   // final update of ChangedBars                                                // TODO: replace by global var CalculatedBars
+   if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
+   else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
+   else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
+   if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE may be signaled in two places
    __STATUS_HISTORY_UPDATE = false;
+   if (!ValidBars) ShiftedBars = 0;
+   ChangedBars = Bars - ValidBars;
 
 
+   // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
-
    if (SyncMainContext_start(__ExecutionContext, __rates, Bars, ChangedBars, Ticks, Tick.time, Bid, Ask) != NO_ERROR) {
-      if (CheckErrors("start(9)->SyncMainContext_start()")) return(last_error);
+      if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
    // call the userland main function
    error = onTick();
-   if (error && error!=last_error) CheckErrors("start(10)", error);
+   if (error && error!=last_error) CheckErrors("start(6)", error);
 
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(11)", error);
+      CheckErrors("start(7)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }

@@ -43,11 +43,6 @@
  *
  *
  * TODO:
- *  - account change events are not correctly handled:
- *    • on account change to another trade server with older history:
- *       FATAL  US2000,M15  Indicator::start(4)  Bar[last.startBarOpenTime]=2022.07.01 23:45:00 not found  [ERR_RUNTIME_ERROR]
- *
- *  - Range bar chart with custom bar times: FATAL  US500,M202  Indicator::start(6)  Bar[last.startBarOpenTime]=2022.06.02 21:35:23 not found [ERR_RUNTIME_ERROR]
  *  - Superbars
  *     fix in range bar charts
  *     implement more timeframes
