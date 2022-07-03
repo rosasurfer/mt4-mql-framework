@@ -562,6 +562,8 @@ bool CheckErrors(string caller, int error = NULL) {
    return(__STATUS_OFF);
 
    // suppress compiler warnings
+   int iNull;
+   init_RecorderValidateInput(iNull);
    __DummyCalls();
 }
 
