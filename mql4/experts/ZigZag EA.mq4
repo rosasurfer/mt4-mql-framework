@@ -50,6 +50,7 @@
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
  *  - ChartInfos: include current daily range in ADR calculation/display
+ *  - implement global var Indicator::CalculatedBars
  *
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - VPS: monitor and notify of incoming emails
