@@ -630,7 +630,7 @@ string GetAccountServer() {
 
    // invalidate cache if a new tick and ValidBars==0
    int tick = __ExecutionContext[EC.ticks];
-   if (!__ExecutionContext[EC.unchangedBars]) /*&&*/ if (tick != static.lastTick)
+   if (!__ExecutionContext[EC.validBars]) /*&&*/ if (tick != static.lastTick)
       static.serverName[0] = "";
    static.lastTick = tick;
 
@@ -4336,12 +4336,12 @@ string GetServerTimezone() {
    #define IDX_COMPANY  1
    #define IDX_TIMEZONE 2
 
-   int tick=__ExecutionContext[EC.ticks], unchangedBars=__ExecutionContext[EC.unchangedBars];
+   int tick=__ExecutionContext[EC.ticks], validBars=__ExecutionContext[EC.validBars];
    static int lastTick = -1;
    static string lastResult[3]; // {lastServer, lastCompany, lastTimezone};
 
    if (tick != lastTick) {
-      if (StringLen(lastResult[IDX_TIMEZONE]) && !unchangedBars) {
+      if (StringLen(lastResult[IDX_TIMEZONE]) && !validBars) {
          string server = GetAccountServer(); if (!StringLen(server)) return("");
          if (!StrCompare(server, lastResult[IDX_SERVER])) {
             lastResult[IDX_TIMEZONE] = "";

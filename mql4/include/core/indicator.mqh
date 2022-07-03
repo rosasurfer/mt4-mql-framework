@@ -9,7 +9,6 @@ extern int    __lpSuperContext;
 
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
-int    __lastAccountNumber = 0;                                      // previously active account number
 
 
 /**
@@ -211,33 +210,55 @@ int start() {
       return(__STATUS_OFF.reason);
    }
 
-   Ticks++;                                                                         // einfacher Zähler, der konkrete Werte hat keine Bedeutung
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: im synthetischen Chart sind MODE_TIME und TimeCurrent() NULL
+   // check chart initialization
+   // Without history (i.e. no bars) Indicator::start() is never called. However for older builds Bars=0 used to be a spurious issue observed on terminal start.
+   if (!Bars) return(_last_error(logInfo("start(1)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(2)")));
 
-
-   debug("start(0.1)  Tick="+ Ticks +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  Bars="+ Bars +"  ValidBars="+ IndicatorCounted() +"  account="+ AccountNumber());
-
-
-   if (!Tick.time) {
-      int error = GetLastError();
-      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE)                                 // ERR_SYMBOL_NOT_AVAILABLE vorerst ignorieren, da ein Offline-Chart beim ersten Tick
-         if (CheckErrors("start(1)", error)) return(last_error);                    // nicht sicher detektiert werden kann
-   }
-
-   // ValidBars und ChangedBars ermitteln: die Originalwerte werden später ggf. überschrieben
+   // initialize ValidBars, ChangedBars and ShiftedBars (updated later)
    ValidBars   = IndicatorCounted();
    ChangedBars = Bars - ValidBars;
    ShiftedBars = 0;
 
-   // Abschluß der Chart-Initialisierung überprüfen (Bars=0 kann bei Terminal-Start auftreten)
-   if (!Bars) return(_last_error(logInfo("start(2)  Bars=0", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("start(3)")));
-
-   // Tickstatus bestimmen
-   static int lastVolume = NULL;
-   if      (!Volume[0] || !lastVolume) Tick.isVirtual = true;
-   else if ( Volume[0] ==  lastVolume) Tick.isVirtual = true;
+   // determine tick status
+   Ticks++;                                                                         // an increasing counter without actual meaning
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                     // TODO: in synthetic charts MODE_TIME and TimeCurrent() are 0 (1970.01.01 00:00:00)
+   if (!Tick.time) {
+      int error = GetLastError();
+      if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                               // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
+         if (CheckErrors("start(3)", error)) return(last_error);
+      }
+   }
+   static int prevVolume;
+   if      (!Volume[0] || !prevVolume) Tick.isVirtual = true;
+   else if ( Volume[0] ==  prevVolume) Tick.isVirtual = true;
    else                                Tick.isVirtual = (ChangedBars > 2);
-   lastVolume = Volume[0];
+   prevVolume = Volume[0];
+
+   // handle account changes
+   // ----------------------
+   // The tick when AccountNumber() reports the new account the 1st time is executed either on new history (if it exists) or
+   // on the old history (if no history exists fpr the new account). Depending on it ValidBars will be either 0 (new history)
+   // or not 0 (old history). Only the first tick with a new account number may be executed on old history. After a successfull
+   // account change all bars will be indicated as changed, no matter whether the history changed or not (ValidBars is reliable).
+   //
+   // At terminal start AccountNumber() reports 0 (zero) until the connection is fully established. An account change at runtime
+   // causes a new tick where AccountNumber() immediately reports the new account number and IsConnected() returns FALSE.
+   static int prevAccount;
+   int currAccount = AccountNumber();
+   bool isAccountChange = (prevAccount && currAccount!=prevAccount);
+   if (isAccountChange) {
+      __ExecutionContext[EC.currTickTime] = 0;
+      __ExecutionContext[EC.prevTickTime] = 0;
+      onAccountChange(prevAccount, currAccount);                                    // TODO: handle errors
+   }
+   prevAccount = currAccount;
+
+
+
+   //debug("start(0.1)  Tick="+ Ticks +"  Time[0]="+ TimeToStr(Time[0], TIME_FULL) +"  Bars="+ Bars +"  ValidBars="+ IndicatorCounted() +"  account="+ AccountNumber());
+
+
+
 
    // TODO: on account change IsConnected() returns FALSE and the code goes into the branch for offline charts
    // FATAL  Grid::start(6)  Bar[last.startBarOpenTime]=2022.06.29 15:30:00 not found  [ERR_RUNTIME_ERROR]
@@ -345,17 +366,6 @@ int start() {
 
    __STATUS_HISTORY_UPDATE = false;
 
-   // Detect and handle account changes                                             // TODO: move before resolving of Valid/Changed/ShiftedBars
-   // ---------------------------------
-   // If the trade server changes as part of the account change IndicatorCounted() will return 0 on the first tick in the new account.
-   // If the trade server doesn't change the program continues to use the same history and IndicatorCounted() will not return 0.
-   // However in both cases 2-3 ticks later all bars will be indicated as changed again.
-   // Summary: In both cases we can rely on the return value of IndicatorCounted().
-   int accountNumber = AccountNumber();
-   if (__lastAccountNumber && accountNumber!=__lastAccountNumber) {
-      error = onAccountChange(__lastAccountNumber, accountNumber);                  // TODO: do something on error
-   }
-   __lastAccountNumber = accountNumber;
 
    ArrayCopyRates(__rates);
 
