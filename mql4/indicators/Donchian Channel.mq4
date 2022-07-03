@@ -29,7 +29,7 @@ double iLowerLevel[];                           // unterer Level
 
 
 /**
- * Initialisierung
+ * Initialization
  *
  * @return int - error status
  */
@@ -68,7 +68,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
@@ -80,12 +80,12 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onTick() {
    // Abschluß der Buffer-Initialisierung überprüfen
    if (!ArraySize(iUpperLevel))                                      // kann bei Terminal-Start auftreten
-      return(logInfo("onTick(1)  size(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+      return(logInfo("onTick(1)  sizeof(iUpperLevel) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {

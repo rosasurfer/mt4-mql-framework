@@ -99,17 +99,17 @@ bool ParseTime(string value, int flags, int &result[]) {
       if (sYYYY == "")                                        return(__ParseTime.Error("ParseTime(7)  invalid date \""+ sDate +"\" in \""+ sValueOrig +"\"", result));
 
       // year
-      if (!StrIsDigit(sYYYY))                                 return(__ParseTime.Error("ParseTime(8)  invalid year \""+ sYYYY +"\" in \""+ sValueOrig +"\"", result));
+      if (!StrIsDigits(sYYYY))                                return(__ParseTime.Error("ParseTime(8)  invalid year \""+ sYYYY +"\" in \""+ sValueOrig +"\"", result));
       iYYYY = StrToInteger(sYYYY);
       if (iYYYY < 1970 || iYYYY > 2037)                       return(__ParseTime.Error("ParseTime(9)  invalid year \""+ sYYYY +"\" in \""+ sValueOrig +"\" (not between 1970-2037)", result));
 
       // month
-      if (StringLen(sMM) > 2 || !StrIsDigit(sMM))             return(__ParseTime.Error("ParseTime(10)  invalid month \""+ sMM +"\" in \""+ sValueOrig +"\"", result));
+      if (StringLen(sMM) > 2 || !StrIsDigits(sMM))            return(__ParseTime.Error("ParseTime(10)  invalid month \""+ sMM +"\" in \""+ sValueOrig +"\"", result));
       iMM = StrToInteger(sMM);
       if (iMM < 1 || iMM > 12)                                return(__ParseTime.Error("ParseTime(11)  invalid month \""+ sMM +"\" in \""+ sValueOrig +"\" (not between 1-12)", result));
 
       // day
-      if (StringLen(sDD) > 2 || !StrIsDigit(sDD))             return(__ParseTime.Error("ParseTime(12)  invalid day \""+ sDD +"\" in \""+ sValueOrig +"\"", result));
+      if (StringLen(sDD) > 2 || !StrIsDigits(sDD))            return(__ParseTime.Error("ParseTime(12)  invalid day \""+ sDD +"\" in \""+ sValueOrig +"\"", result));
       iDD = StrToInteger(sDD);
       if (iDD < 1 || iDD > 31)                                return(__ParseTime.Error("ParseTime(13)  invalid day \""+ sDD +"\" in \""+ sValueOrig +"\" (not between 1-31)", result));
       if (iDD > 28) {
@@ -130,20 +130,20 @@ bool ParseTime(string value, int flags, int &result[]) {
 
       // hour
       string sHH = exprs[0];
-      if (StringLen(sHH)!=2 || !StrIsDigit(sHH))              return(__ParseTime.Error("ParseTime(18)  invalid hour \""+ sHH +"\" in \""+ sValueOrig +"\"", result));
+      if (StringLen(sHH)!=2 || !StrIsDigits(sHH))             return(__ParseTime.Error("ParseTime(18)  invalid hour \""+ sHH +"\" in \""+ sValueOrig +"\"", result));
       iHH = StrToInteger(sHH);
       if (iHH < 0 || iHH > 23)                                return(__ParseTime.Error("ParseTime(19)  invalid hour \""+ sHH +"\" in \""+ sValueOrig +"\" (not between 00-23)", result));
 
       // minutes
       string sII = exprs[1];
-      if (StringLen(sII)!=2 || !StrIsDigit(sII))              return(__ParseTime.Error("ParseTime(20)  invalid minutes \""+ sII +"\" in \""+ sValueOrig +"\"", result));
+      if (StringLen(sII)!=2 || !StrIsDigits(sII))             return(__ParseTime.Error("ParseTime(20)  invalid minutes \""+ sII +"\" in \""+ sValueOrig +"\"", result));
       iII = StrToInteger(sII);
       if (iII < 0 || iII > 59)                                return(__ParseTime.Error("ParseTime(21)  invalid minutes \""+ sII +"\" in \""+ sValueOrig +"\" (not between 00-59)", result));
 
       // optional seconds
       if (size == 3) {
          string sSS = exprs[2];
-         if (StringLen(sSS)!=2 || !StrIsDigit(sSS))           return(__ParseTime.Error("ParseTime(22)  invalid seconds \""+ sSS +"\" in \""+ sValueOrig +"\"", result));
+         if (StringLen(sSS)!=2 || !StrIsDigits(sSS))          return(__ParseTime.Error("ParseTime(22)  invalid seconds \""+ sSS +"\" in \""+ sValueOrig +"\"", result));
          iSS = StrToInteger(sSS);
          if (iSS < 0 || iSS > 59)                             return(__ParseTime.Error("ParseTime(23)  invalid seconds \""+ sSS +"\" in \""+ sValueOrig +"\" (not between 00-59)", result));
       }

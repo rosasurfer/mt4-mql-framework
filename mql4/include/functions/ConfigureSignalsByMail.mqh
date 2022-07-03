@@ -13,7 +13,7 @@ bool ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, s
    sender   = "";
    receiver = "";
 
-   string signalSection = "Signals"+ ifString(This.IsTesting(), ".Tester", "");
+   string signalSection = "Signals"+ ifString(__isTesting, ".Tester", "");
    string signalKey     = "Signal.Mail";
    string mailSection   = "Mail";
    string senderKey     = "Sender";

@@ -13,7 +13,9 @@ int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_C
 //int    __lpSuperContext;                                        // address of the super EXECUTION_CONTEXT (in indicators loaded by iCustom() and their libraries only)
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
-bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only during testing if "VisualMode=Off" or "Optimization=On".
+bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only in tester with "VisualMode=Off" or "Optimization=On".
+bool     __isTesting;                                             // Whether the program runs in the tester (experts, indicators and scripts).
+int      __Test.barModel;                                         // the bar model of a test
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
 bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)
@@ -26,9 +28,9 @@ string   PriceFormat="", PipPriceFormat="";                       // Preisformat
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // in indicators, it holds: Bars = ChangedBars + UnchangedBars                   (in experts and scripts: always -1)
-int      UnchangedBars, ValidBars;                                // in indicators: UnchangedBars with alias ValidBars, same as IndicatorCounted() (in experts and scripts: always -1)
-int      ShiftedBars;                                             // in indicators: non-zero in offline charts only                                (in experts and scripts: always -1)
+int      ChangedBars;                                             // in indicators, it holds: Bars = ValidBars + ChangedBars (in experts and scripts: always -1)
+int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts: always -1)
+int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts: always -1)
 
 int      last_error;                                              // last error of the current execution
 int      prev_error;                                              // last error of the previous start() call
@@ -476,7 +478,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define FMCM_USE_LOSSES_ONLY           3        // only floating losses of open positions are used for calculation
 
 
-// Margin stopout modes, siehe AccountStopoutMode()
+// account stopout modes, see AccountStopoutMode()
 #define MSM_PERCENT                    0
 #define MSM_ABSOLUTE                   1
 

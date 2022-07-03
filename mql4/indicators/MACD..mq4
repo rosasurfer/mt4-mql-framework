@@ -14,7 +14,9 @@
  *    - section: positive values denote a MACD above zero (+1...+n), negative values a MACD below zero (-1...-n)
  *    - length:  the absolute value is the histogram section length (bars since the last crossing of zero)
  *
- * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
+ * Notes:
+ *  - The SMMA is not supported as SMMA(n) = EMA(2*n-1).
+ *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -93,8 +95,8 @@ string indicatorName = "";                                  // "Data" window and
 
 bool   signals;
 bool   signal.sound;
-string signal.sound.crossUp   = "Signal-Up.wav";
-string signal.sound.crossDown = "Signal-Down.wav";
+string signal.sound.crossUp   = "Signal Up.wav";
+string signal.sound.crossDown = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
@@ -246,7 +248,7 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  size(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(bufferMACD)) return(logInfo("onTick(1)  sizeof(bufferMACD) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -345,7 +347,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(1)  "+ StrRightFrom(message, "MACD ", -1));                   // -1 makes sure on error the whole string is returned
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossUp);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.crossUp);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");   // subject only (empty mail body)
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);
@@ -356,7 +358,7 @@ bool onCross(int section) {
       if (IsLogInfo()) logInfo("onCross(2)  "+ StrRightFrom(message, "MACD ", -1));
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.crossDown);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.crossDown);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, "");
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);

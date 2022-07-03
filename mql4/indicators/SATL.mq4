@@ -75,8 +75,8 @@ string legendLabel   = "";
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;
-string signal.sound.trendChange_up   = "Signal-Up.wav";
-string signal.sound.trendChange_down = "Signal-Down.wav";
+string signal.sound.trendChange_up   = "Signal Up.wav";
+string signal.sound.trendChange_down = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
@@ -175,7 +175,7 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -240,7 +240,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_up);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);
@@ -251,7 +251,7 @@ bool onTrendChange(int trend) {
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.trendChange_down);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message +NL+ accountTime);
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message +NL+ accountTime);
       return(!error);

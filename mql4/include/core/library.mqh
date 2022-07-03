@@ -1,4 +1,21 @@
-
+/**
+ * Framework struct EXECUTION_CONTEXT
+ *
+ * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
+ *
+ * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
+ *
+ * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
+ * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
+ * wird ein neuer alloziiert. Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt,
+ * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher
+ * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
+ * schreibend).
+ *
+ * TODO:
+ *  - indicators loaded in a library must use a temporary copy of the main module context for their init() cycles
+ *  - integrate __STATUS_OFF and __STATUS_OFF.reason
+ */
 int __lpSuperContext = NULL;
 
 
@@ -13,7 +30,10 @@ int init() {
 
    // globale Variablen initialisieren
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
-   __lpSuperContext = __ExecutionContext[EC.superContext];
+   __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
+   if (__isTesting) __Test.barModel = Tester.GetBarModel();
+   __lpSuperContext =  __ExecutionContext[EC.superContext];
+
    PipDigits        = Digits & (~1);
    PipPoints        = MathRound(MathPow(10, Digits & 1));
    Pip              = NormalizeDouble(1/MathPow(10, PipDigits), PipDigits);
@@ -33,7 +53,7 @@ int init() {
       error = GetLastError();
       if (error && error!=ERR_NO_TICKET_SELECTED) return(catch("init(1)", error));
 
-      if (IsTesting()) {                                             // Im Tester globale Variablen der Library zurücksetzen.
+      if (__isTesting) {                                             // Im Tester globale Variablen der Library zurücksetzen.
          ArrayResize(__orderStack, 0);                               // in stdfunctions global definierte Variable
          onLibraryInit();
       }

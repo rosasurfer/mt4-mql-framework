@@ -12,6 +12,9 @@
  *  • Stochastic.MODE_TREND:  direction and age of the last signal
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
+ *
+ * Notes:
+ *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -132,7 +135,7 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  size(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {

@@ -702,7 +702,7 @@
 
 // PlaySound() flags
 #define SND_SYNC                                0x00     // play synchronously (default)
-#define SND_ASYNC                               0x01     // play asynchronously
+#define SND_ASYNC                               0x01     // play asynchronously in another thread and immediately return (doesn't mix sounds)
 #define SND_NODEFAULT                           0x02     // silence (!default) if sound not found
 #define SND_MEMORY                              0x04     // lpSound points to a memory file
 #define SND_LOOP                                0x08     // loop the sound until next sndPlaySound
@@ -784,7 +784,7 @@
 #define SE_ERR_DLLNOTFOUND                        32     // DLL not found
 
 
-// STARTUPINFO structure flags
+// struct STARTUPINFO flags
 #define STARTF_FORCEONFEEDBACK                0x0040
 #define STARTF_FORCEOFFFEEDBACK               0x0080
 #define STARTF_PREVENTPINNING                 0x2000

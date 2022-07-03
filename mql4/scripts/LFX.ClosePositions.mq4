@@ -37,7 +37,7 @@ string inputLabels[];
 /**
  * Initialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onInit() {
    // TradeAccount initialisieren
@@ -60,7 +60,7 @@ int onInit() {
 /**
  * Deinitialisierung
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onDeinit() {
    QC.StopChannels();
@@ -71,7 +71,7 @@ int onDeinit() {
 /**
  * Main-Funktion
  *
- * @return int - Fehlerstatus
+ * @return int - error status
  */
 int onStart() {
    int magics       []; ArrayResize(magics,        0);      // alle zu schließenden LFX-Tickets

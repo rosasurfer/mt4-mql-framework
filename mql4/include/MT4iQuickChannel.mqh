@@ -34,7 +34,7 @@
    -------------
    int  timerId = SetupTimedTicks(int hWnd, int millis);             // Fehlerhaft: Der Parameter 'millis' muﬂ durch 1.56 geteilt werden, die Ticks funktionieren
    bool success = RemoveTimedTicks(int timerId);                     //             nicht in Offline-Charts.
-                                                                     // stattdessen MT4Expander::SetupTickTimer() und MT4Expander::RemoveTickTimer() verwenden
+                                                                     // stattdessen MT4Expander::SetupTickTimer() und MT4Expander::ReleaseTickTimer() verwenden
    CreateHelper2();
    RemoveHelper();
 

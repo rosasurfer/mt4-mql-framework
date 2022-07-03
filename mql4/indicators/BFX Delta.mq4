@@ -71,8 +71,8 @@ string bfxLicense = "";                                        // BFX indicator 
 
 bool   signals;
 bool   signal.sound;
-string signal.sound.levelCross.long  = "Signal-Up.wav";
-string signal.sound.levelCross.short = "Signal-Down.wav";
+string signal.sound.levelCross.long  = "Signal Up.wav";
+string signal.sound.levelCross.short = "Signal Down.wav";
 bool   signal.mail;
 string signal.mail.sender   = "";
 string signal.mail.receiver = "";
@@ -250,7 +250,7 @@ bool onLevelCross(int mode) {
       if (IsLogInfo()) logInfo("onLevelCross(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.long);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.long);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);
@@ -261,7 +261,7 @@ bool onLevelCross(int mode) {
       if (IsLogInfo()) logInfo("onLevelCross(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= !PlaySoundEx(signal.sound.levelCross.short);
+      if (signal.sound) error |= PlaySoundEx(signal.sound.levelCross.short);
       if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message);  // subject = body
       if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message);
       return(!error);

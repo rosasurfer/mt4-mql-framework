@@ -17,7 +17,7 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   if (This.IsTesting()) Tester.Pause();
+   if (__isTesting) Tester.Pause();
 
    string command   = "toggle-trade-history";
    string params    = "";

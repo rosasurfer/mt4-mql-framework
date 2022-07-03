@@ -66,6 +66,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 00:02:10';              //
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
+#include <functions/iADR.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID         105                    // unique strategy id between 101-1023 (10 bit)
@@ -368,8 +369,7 @@ bool ToggleOpenOrders() {
    // store current status in the chart
    SetOpenOrderDisplayStatus(showOrders);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleOpenOrders(1)"));
 }
 
@@ -535,8 +535,7 @@ bool ToggleTradeHistory() {
    // store current status in the chart
    SetTradeHistoryDisplayStatus(showHistory);
 
-   if (This.IsTesting())
-      WindowRedraw();
+   if (__isTesting) WindowRedraw();
    return(!catch("ToggleTradeHistory(1)"));
 }
 
@@ -787,7 +786,7 @@ bool IsStartSignal(int &signal) {
       return(false);
    }
 
-   if (IsTesting()) {
+   if (__isTesting) {
       // tester: auto-start
       if (!ArraySize(long.ticket) && !ArraySize(short.ticket)) return(true);
    }
@@ -1197,7 +1196,7 @@ bool StopSequence(int signal) {
    SS.StopConditions();
    SaveStatus();
 
-   if (IsTesting()) {                                                // pause/stop the tester according to the debug configuration
+   if (__isTesting) {                                                // pause/stop the tester according to the debug configuration
       if (!IsVisualMode())       Tester.Stop ("StopSequence(5)");
       else if (test.onStopPause) Tester.Pause("StopSequence(6)");
    }
@@ -1598,7 +1597,7 @@ string UpdateStatus.OrderCancelledMsg(int direction, int i, int &error) {
       sReason = "deleted (not enough money)";
       error = ERR_NOT_ENOUGH_MONEY;
    }
-   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+   else if (!__isTesting || __CoreFunction!=CF_DEINIT) {
       error = ERR_CONCURRENT_MODIFICATION;
    }
    OrderPop("UpdateStatus.OrderCancelledMsg(3)");
@@ -1652,7 +1651,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
       sStopout = ", "+ OrderComment();
       error = ERR_MARGIN_STOPOUT;
    }
-   else if (!IsTesting() || __CoreFunction!=CF_DEINIT) {
+   else if (!__isTesting || __CoreFunction!=CF_DEINIT) {
       error = ERR_CONCURRENT_MODIFICATION;
    }
    OrderPop("UpdateStatus.PositionCloseMsg(3)");
@@ -1670,7 +1669,7 @@ string UpdateStatus.PositionCloseMsg(int direction, int i, int &error) {
  * @return int - the same error
  */
 int UpdateStatus.onOrderChange(string message, int error) {
-   if (!IsTesting()) logError(message, error);
+   if (!__isTesting) logError(message, error);
    else if (!error)  logDebug(message, error);
    else              catch(message, error);
    return(error);
@@ -1707,7 +1706,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (plusLevels+minusLevels >= MaxUnits) {
          if (IsLogInfo()) {
             logInfo("UpdatePendingOrders(3)  "+ sequence.name +" max. number of long units reached ("+ MaxUnits +")");
-            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+            if (!__isTesting) PlaySoundEx("MarginLow.wav");
          }
          return(Grid.RemovePendingOrders(saveStatus));
       }
@@ -1744,7 +1743,7 @@ bool UpdatePendingOrders(bool saveStatus = false) {
       if (plusLevels+minusLevels >= MaxUnits) {
          if (IsLogInfo()) {
             logInfo("UpdatePendingOrders(5)  "+ sequence.name +" max. number of short units reached ("+ MaxUnits +")");
-            if (!IsTesting()) PlaySoundEx("MarginLow.wav");
+            if (!__isTesting) PlaySoundEx("MarginLow.wav");
          }
          return(Grid.RemovePendingOrders(saveStatus));
       }
@@ -2417,7 +2416,7 @@ bool ConfigureGrid(double &gridvola, double &gridsize, double &unitsize) {
    if (LT(gridvola, 0) || LT(gridsize, 0) || LT(unitsize, 0)) return(!catch("ConfigureGrid(1)  "+ sequence.name +" invalid parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+") +" (all must be non-negative)", ERR_INVALID_PARAMETER));
    if (!gridvola && (!gridsize || !unitsize))                 return(!catch("ConfigureGrid(2)  "+ sequence.name +" insufficient parameters GridVolatility="+ NumberToStr(gridvola, ".+") +" / GridSize="+ NumberToStr(gridsize, ".+") +" / UnitSize="+ NumberToStr(unitsize, ".+"), ERR_INVALID_PARAMETER));
 
-   double adr        = iADR();                                                  if (!adr)       return(!catch("ConfigureGrid(3)  "+ sequence.name +" ADR=0", ERR_RUNTIME_ERROR));
+   double adr        = GetADR();                                                if (!adr)       return(false);
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE);                     if (!tickSize)  return(!catch("ConfigureGrid(4)  "+ sequence.name +" MODE_TICKSIZE=0", ERR_RUNTIME_ERROR));
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE);                    if (!tickValue) return(!catch("ConfigureGrid(5)  "+ sequence.name +" MODE_TICKVALUE=0", ERR_RUNTIME_ERROR));
    double equity     = AccountEquity() - AccountCredit() + GetExternalAssets(); if (!equity)    return(!catch("ConfigureGrid(6)  "+ sequence.name +" equity=0", ERR_RUNTIME_ERROR));
@@ -2614,7 +2613,7 @@ bool Grid.AddPendingOrder(int direction, int level) {
  * @return bool
  */
 bool IsTestSequence() {
-   return(sequence.isTest || IsTesting());
+   return(sequence.isTest || __isTesting);
 }
 
 
@@ -3521,22 +3520,13 @@ int SubmitStopOrder(int direction, int level, int &oe[]) {
 
 
 /**
- * Calculate and return the average daily range. Implemented as LWMA(20, ATR(1)).
+ * Resolve the current Average Daily Range.
  *
- * @return double - ADR in absolute terms or NULL in case of errors
+ * @return double - ADR value or NULL in case of errors
  */
-double iADR() {
-   static double adr;                                       // TODO: invalidate static cache on BarOpen(D1)
-   if (!adr) {
-      double ranges[];
-      int maPeriods = 20;
-      ArrayResize(ranges, maPeriods);
-      ArraySetAsSeries(ranges, true);
-      for (int i=0; i < maPeriods; i++) {
-         ranges[i] = iATR(NULL, PERIOD_D1, 1, i+1);         // TODO: convert to current timeframe for non-FXT brokers
-      }
-      adr = iMAOnArray(ranges, WHOLE_ARRAY, maPeriods, 0, MODE_LWMA, 0);
-   }
+double GetADR() {
+   static double adr = 0;                                   // TODO: invalidate static var on BarOpen(D1)
+   if (!adr) adr = iADR();
    return(adr);
 }
 
@@ -3549,10 +3539,10 @@ double iADR() {
 bool SaveStatus() {
    if (last_error != NULL)                       return(false);
    if (!sequence.id || StrTrim(Sequence.ID)=="") return(!catch("SaveStatus(1)  illegal sequence id: "+ sequence.id +" (Sequence.ID="+ DoubleQuoteStr(Sequence.ID) +")", ERR_ILLEGAL_STATE));
-   if (IsTestSequence() && !IsTesting())         return(true);  // don't change the status file of a finished test
+   if (IsTestSequence() && !__isTesting)         return(true);  // don't change the status file of a finished test
 
    // in tester skip most status file writes, except file creation, sequence stop and test end
-   if (IsTesting() && test.reduceStatusWrites) {
+   if (__isTesting && test.reduceStatusWrites) {
       static bool saved = false;
       if (saved && sequence.status!=STATUS_STOPPED && __CoreFunction!=CF_DEINIT) return(true);
       saved = true;
@@ -4090,7 +4080,7 @@ bool ReadStatus.ParseOrder(string key, string value) {
 
    if (pool == MODE_HISTORY) {
       // [long|short].history.i=cycle,startTime,startPrice,gridbase,stopTime,stopPrice,totalProfit,maxProfit,maxDrawdown,ticket,level,lots,pendingType,pendingTime,pendingPrice,openType,openTime,openPrice,closeTime,closePrice,swap,commission,profit
-      string sId = StrRightFrom(key, ".", -1); if (!StrIsDigit(sId))        return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
+      string sId = StrRightFrom(key, ".", -1); if (!StrIsDigits(sId))       return(!catch("ReadStatus.ParseOrder(4)  "+ sequence.name +" illegal history record key "+ DoubleQuoteStr(key), ERR_INVALID_FILE_FORMAT));
       int index = StrToInteger(sId);
       if (Explode(value, ",", values, NULL) != ArrayRange(long.history, 1)) return(!catch("ReadStatus.ParseOrder(5)  "+ sequence.name +" illegal number of details ("+ ArraySize(values) +") in history record", ERR_INVALID_FILE_FORMAT));
 
@@ -4223,7 +4213,7 @@ bool ApplySequenceId(string value, bool &error, string caller) {
       value = StrSubstr(value, 1);
    }
 
-   if (!StrIsDigit(value)) {
+   if (!StrIsDigits(value)) {
       error = true;
       if (muteErrors) return(!SetLastError(ERR_INVALID_PARAMETER));
       return(!catch(caller +"->ApplySequenceId(1)  invalid sequence id value: \""+ valueBak +"\" (must be digits only)", ERR_INVALID_PARAMETER));

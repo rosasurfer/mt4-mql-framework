@@ -1,16 +1,10 @@
 /**
  * Framework struct EXECUTION_CONTEXT
  *
- * Ausführungskontext von MQL-Programmen zur Kommunikation zwischen MQL und DLL
+ * A shared storage context for runtime variables, data exchange and communication between MQL modules and MT4Expander DLL.
  *
  * @link  https://github.com/rosasurfer/mt4-expander/blob/master/header/struct/rsf/ExecutionContext.h
  *
- * Im Indikator gibt es während eines init()-Cycles in der Zeitspanne vom Verlassen von Indicator::deinit() bis zum Wieder-
- * eintritt in Indicator::init() keinen gültigen Hauptmodulkontext. Der alte Speicherblock wird sofort freigegeben, später
- * wird ein neuer alloziiert. Während dieser Zeitspanne wird der init()-Cycle von bereits geladenen Libraries durchgeführt,
- * also die Funktionen Library::deinit() und Library::init() aufgerufen. In Indikatoren geladene Libraries dürfen daher
- * während ihres init()-Cycles nicht auf den alten, bereits ungültigen Hauptmodulkontext zugreifen (weder lesend noch
- * schreibend).
  *
  * TODO:
  *  - indicators loaded in a library must use a temporary copy of the main module context for their init() cycles
@@ -39,14 +33,16 @@
 
    string   ec_Symbol               (int ec[]);
    int      ec_Timeframe            (int ec[]);
+   //       ec.newSymbol
+   //       ec.newTimeframe
    //       ec.rates
    int      ec_Bars                 (int ec[]);
+   int      ec_ValidBars            (int ec[]);
    int      ec_ChangedBars          (int ec[]);
-   int      ec_UnchangedBars        (int ec[]);
    int      ec_Ticks                (int ec[]);
-   int      ec_CycleTicks           (int ec[]);
-   datetime ec_PrevTickTime         (int ec[]);
+   //       ec.cycleTicks
    datetime ec_CurrTickTime         (int ec[]);
+   datetime ec_PrevTickTime         (int ec[]);
    double   ec_Bid                  (int ec[]);
    double   ec_Ask                  (int ec[]);
 

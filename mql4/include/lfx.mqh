@@ -62,7 +62,7 @@ bool InitTradeAccount(string accountId = "") {
    if (StringLen(accountId) > 0) {
       // resolve the specified trade account
       _accountCompany = StrLeftTo(accountId, ":");  if (!StringLen(_accountCompany)) return(!logWarn("InitTradeAccount(1)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
-      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigit(sValue))         return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
+      string sValue = StrRightFrom(accountId, ":"); if (!StrIsDigits(sValue))        return(!logWarn("InitTradeAccount(2)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
       _accountNumber = StrToInteger(sValue);        if (!_accountNumber)             return(!logWarn("InitTradeAccount(3)  invalid parameter accountId: "+ DoubleQuoteStr(accountId)));
    }
    else {
@@ -72,10 +72,10 @@ bool InitTradeAccount(string accountId = "") {
 
       string file    = GetAccountConfigPath(); if (!StringLen(file)) return(false);
       string section = "General";
-      string key     = "TradeAccount"+ ifString(This.IsTesting(), ".Tester", "");
+      string key     = "TradeAccount"+ ifString(__isTesting, ".Tester", "");
       sValue = GetIniStringA(file, section, key, "");
       if (StringLen(sValue) > 0) {
-         if (!StrIsDigit(sValue))                                                   return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
+         if (!StrIsDigits(sValue))                                                  return(!logWarn("InitTradeAccount(4)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          _accountNumber = StrToInteger(sValue); if (!_accountNumber)                return(!logWarn("InitTradeAccount(5)  invalid trade account setting ["+ section +"]->"+ key +" = "+ DoubleQuoteStr(sValue)));
          section = "Accounts";
          key     = _accountNumber +".company";
@@ -394,7 +394,7 @@ int LFX.CheckLimits(/*LFX_ORDER*/int orders[][], int i, double bid, double ask, 
  * @param  int       i         - Index der getriggerten Order innerhalb des übergebenen LFX_ORDER-Arrays
  * @param  int       limitType - Typ des getriggerten Limits
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrSubstr(los.Comment(orders, i), 1));
@@ -578,8 +578,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // OpenTriggerTime
    sValue = StrTrim(values[5]);
-   if (StrIsDigit(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
-   else                             _openTriggerTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _openTriggerTime = StrToInteger(sValue);
+   else                              _openTriggerTime =    StrToTime(sValue);
    if      (_openTriggerTime < 0)                     return(!catch("LFX.GetOrder(9)  invalid open-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_openTriggerTime > 0)
       if (_openTriggerTime > GetFxtTime())            return(!catch("LFX.GetOrder(10)  invalid open-trigger time \""+ TimeToStr(_openTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -675,8 +675,8 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // CloseTriggerTime
    sValue = StrTrim(values[16]);
-   if (StrIsDigit(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
-   else                             _closeTriggerTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _closeTriggerTime = StrToInteger(sValue);
+   else                              _closeTriggerTime =    StrToTime(sValue);
    if      (_closeTriggerTime < 0)                    return(!catch("LFX.GetOrder(31)  invalid close-trigger time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    else if (_closeTriggerTime > 0)
       if (_closeTriggerTime > GetFxtTime())           return(!catch("LFX.GetOrder(32)  invalid close-trigger time \""+ TimeToStr(_closeTriggerTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
@@ -704,14 +704,14 @@ int LFX.GetOrder(int ticket, /*LFX_ORDER*/int lo[]) {
 
    // ModificationTime
    sValue = StrTrim(values[20]);
-   if (StrIsDigit(sValue)) datetime _modificationTime = StrToInteger(sValue);
-   else                             _modificationTime =    StrToTime(sValue);
+   if (StrIsDigits(sValue)) datetime _modificationTime = StrToInteger(sValue);
+   else                              _modificationTime =    StrToTime(sValue);
    if (_modificationTime <= 0)                        return(!catch("LFX.GetOrder(38)  invalid modification time \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    if (_modificationTime > GetFxtTime())              return(!catch("LFX.GetOrder(39)  invalid modification time \""+ TimeToStr(_modificationTime, TIME_FULL) +" FXT\" (current time \""+ TimeToStr(GetFxtTime(), TIME_FULL) +" FXT\") in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
    // Version
    sValue = StrTrim(values[21]);
-   if (!StrIsDigit(sValue))                           return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
+   if (!StrIsDigits(sValue))                          return(!catch("LFX.GetOrder(40)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
    int _version = StrToInteger(sValue);
    if (_version <= 0)                                 return(!catch("LFX.GetOrder(41)  invalid version \""+ sValue +"\" in order ["+ section +"]->"+ ticket +" = \""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\" in \""+ file +"\"", ERR_RUNTIME_ERROR));
 
@@ -797,7 +797,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
    /*LFX_ORDER*/int order[];
 
    for (int i=0; i < keysSize; i++) {
-      if (!StrIsDigit(keys[i])) continue;
+      if (!StrIsDigits(keys[i])) continue;
       int ticket = StrToInteger(keys[i]);
 
       if (currencyId != 0)
@@ -856,7 +856,7 @@ int LFX.GetOrders(string currency, int fSelection, /*LFX_ORDER*/int orders[][]) 
  *                              Der Parameter wird ignoriert, wenn orders[] eine einzelne LFX_ORDER ist.
  * @param  int       fCatch   - Flag mit leise zu setzenden Fehler, sodaß sie vom Aufrufer behandelt werden können
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    // (1) übergebene Order in eine einzelne Order umkopieren (Parameter orders[] kann unterschiedliche Dimensionen haben)
@@ -944,7 +944,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
  *
  * @param  LFX_ORDER orders[] - Array von LFX_ORDERs
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool LFX.SaveOrders(/*LFX_ORDER*/int orders[][]) {
    int size = ArrayRange(orders, 0);
@@ -992,7 +992,7 @@ int __LFX.SaveOrder.HandleError(string message, int error, int fCatch) {
  *
  * @param  string cmd - Command
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.SendTradeCommand(string cmd) {
    if (!StringLen(cmd)) return(!catch("QC.SendTradeCommand(1)  invalid parameter cmd: "+ DoubleQuoteStr(cmd), ERR_INVALID_PARAMETER));
@@ -1023,7 +1023,7 @@ bool QC.SendTradeCommand(string cmd) {
 /**
  * Startet einen QuickChannel-Sender für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartTradeCmdSender() {
    if (hQC.TradeCmdSender != 0)
@@ -1072,7 +1072,7 @@ bool QC.StartTradeCmdSender() {
 /**
  * Stoppt einen QuickChannel-Sender für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopTradeCmdSender() {
    if (!hQC.TradeCmdSender)
@@ -1092,7 +1092,7 @@ bool QC.StopTradeCmdSender() {
 /**
  * Startet einen QuickChannel-Receiver für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) return(true);
@@ -1123,7 +1123,7 @@ bool QC.StartTradeCmdReceiver() {
 /**
  * Stoppt einen QuickChannel-Receiver für TradeCommands.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopTradeCmdReceiver() {
    if (hQC.TradeCmdReceiver != NULL) {
@@ -1151,7 +1151,7 @@ bool QC.StopTradeCmdReceiver() {
  * @param  int    cid - Currency-ID des für die Nachricht zu benutzenden Channels
  * @param  string msg - Nachricht
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.SendOrderNotification(int cid, string msg) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
@@ -1172,7 +1172,7 @@ bool QC.SendOrderNotification(int cid, string msg) {
  *
  * @param  int cid - Currency-ID des zu startenden Channels
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartLfxSender(int cid) {
    if (cid < 1 || cid >= ArraySize(hQC.TradeToLfxSenders))
@@ -1193,7 +1193,7 @@ bool QC.StartLfxSender(int cid) {
 /**
  * Stoppt alle QuickChannel-Sender für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopLfxSenders() {
    for (int i=ArraySize(hQC.TradeToLfxSenders)-1; i >= 0; i--) {
@@ -1211,7 +1211,7 @@ bool QC.StopLfxSenders() {
 /**
  * Startet einen QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StartLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) return(true);
@@ -1232,7 +1232,7 @@ bool QC.StartLfxReceiver() {
 /**
  * Stoppt den QuickChannel-Receiver für "TradeToLfxTerminal"-Messages.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopLfxReceiver() {
    if (hQC.TradeToLfxReceiver != NULL) {
@@ -1248,7 +1248,7 @@ bool QC.StopLfxReceiver() {
 /**
  * Stoppt alle laufenden Sender und Receiver.
  *
- * @return bool - Erfolgsstatus
+ * @return bool - success status
  */
 bool QC.StopChannels() {
    if (!QC.StopLfxSenders())       return(false);

@@ -56,12 +56,12 @@
 #define EC.timeframe                       145
 #define EC.rates                           150
 #define EC.bars                            151
-#define EC.changedBars                     152
-#define EC.unchangedBars                   153
+#define EC.validBars                       152
+#define EC.changedBars                     153
 #define EC.ticks                           154
 #define EC.cycleTicks                      155
-#define EC.prevTickTime                    156
-#define EC.currTickTime                    157
+#define EC.currTickTime                    156
+#define EC.prevTickTime                    157
 #define EC.digits                          162
 #define EC.pipDigits                       163
 #define EC.pipPoints                       168

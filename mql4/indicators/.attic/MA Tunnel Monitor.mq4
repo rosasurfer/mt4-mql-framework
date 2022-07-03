@@ -89,8 +89,8 @@ int    ma3AppliedPrice;
 int    totalInitPeriods;
 double totalTrend[];
 
-string signalSoundUp      = "Signal-Up.wav";
-string signalSoundDown    = "Signal-Down.wav";
+string signalSoundUp      = "Signal Up.wav";
+string signalSoundDown    = "Signal Down.wav";
 string signalMailSender   = "";
 string signalMailReceiver = "";
 string signalSmsReceiver  = "";
@@ -231,7 +231,7 @@ int onInit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(ma1)) return(logInfo("onTick(1)  size(ma1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(ma1)) return(logInfo("onTick(1)  sizeof(ma1) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -349,7 +349,7 @@ bool onBreakout(int mode) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
-      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundUp);
+      if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundUp);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);
@@ -361,7 +361,7 @@ bool onBreakout(int mode) {
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
-      if (Signal.onBreakout.Sound) error |= !PlaySoundEx(signalSoundDown);
+      if (Signal.onBreakout.Sound) error |= PlaySoundEx(signalSoundDown);
       if (Signal.onBreakout.Mail)  error |= !SendEmail(signalMailSender, signalMailReceiver, message, message + NL + accountTime);
       if (Signal.onBreakout.SMS)   error |= !SendSMS(signalSmsReceiver, message +NL+ accountTime);
       return(!error);
