@@ -892,7 +892,7 @@ bool     IsIniKeyA(string fileName, string section, string key);;
 bool     IsIniSectionA(string fileName, string section);;
 bool     IsJunctionA(string path);;
 bool     IsProgramType(int type);;
-bool     IsStdTimeframe(int timeframe);;
+bool     IsStandardTimeframe(int timeframe);;
 bool     IsSymlinkA(string path);;
 bool     IsTerminalConfigKeyA(string section, string key);;
 bool     IsUIThread(int threadId = NULL);;

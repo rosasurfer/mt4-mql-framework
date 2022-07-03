@@ -98,7 +98,7 @@
 #define UNINITREASON_CLOSE                      9
 
 
-// timeframe identifiers (not to be combined)
+// timeframe identifiers (cannot be combined)
 #define PERIOD_M1                               1        // 1 minute
 #define PERIOD_M5                               5        // 5 minutes
 #define PERIOD_M15                             15        // 15 minutes
@@ -115,7 +115,7 @@
 #define PERIOD_Q1                          129600        // 1 quarter (3 months, custom timeframe)
 
 
-// timeframe flags (to be combined)
+// timeframe flags (can be combined)
 #define F_PERIOD_M1                        0x0001        //    1
 #define F_PERIOD_M5                        0x0002        //    2
 #define F_PERIOD_M15                       0x0004        //    4
