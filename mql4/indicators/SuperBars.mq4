@@ -21,7 +21,6 @@
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
  * TODO:
- *  - doesn't work on offline charts
  *  - ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
  */
@@ -131,10 +130,10 @@ int onInit() {
 
    // display configuration, names, labels
    SetIndexLabel(0, NULL);                               // no entries in "Data" window
-   legendLabel = CreateStatusLabel();                    // create status label
+   legendLabel = CreateStatusLabel();
 
    // restore a stored runtime status
-   if (!RestoreRuntimeStatus()) return(last_error);
+   if (!RestoreStatus()) return(last_error);
 
    CheckTimeframeAvailability();
    return(catch("onInit(1)"));
@@ -251,48 +250,50 @@ bool SwitchSuperTimeframe(int direction) {
 
 
 /**
- * Whether the selected superbar timeframe can be displayed on the current chart, e.g. the bar period H1 can't be displayed
- * on an H4 chart. If the superbar timeframe can't be displayed superbars are disabled for that chart period.
+ * Checks whether the selected superbar period can be displayed and disables superbars for the current chart period if this
+ * is not the case (e.g. superbar period H1 can't be displayed on an H4 chart).
  *
  * @return bool - success status
  */
 bool CheckTimeframeAvailability() {
+   int currentTimeframe = Period();
+
+   // handle offline charts with non-standard bar periods where we can't rely on the value of Period()
+   if (IsCustomTimeframe(currentTimeframe)) {
+      int customTimeframe = MathRound(MathMin(Time[0]-Time[1], Time[1]-Time[2])/MINUTES);
+      currentTimeframe = intOr(customTimeframe, PERIOD_M1);
+   }
+
    switch (superTimeframe) {
       // off: to be activated manually only
-      case  INT_MIN      :
-      case  INT_MAX      : break;
+      case  INT_MIN:
+      case  INT_MAX: break;
 
-      // positive value = active: automatically deactivated if display on the current doesn't make sense
-      case  PERIOD_H1    : if (Period() >  PERIOD_M15) superTimeframe *= -1; break;
+      // positive value = active: automatically deactivated if display on the current chart doesn't make sense
+      case  PERIOD_H1:  if (currentTimeframe > PERIOD_M15)  superTimeframe *= -1; break;
       case  PERIOD_D1_ETH:
          if (!ethEnabled) superTimeframe = PERIOD_D1;
-      case  PERIOD_D1    : if (Period() >  PERIOD_H4 ) superTimeframe *= -1; break;
-      case  PERIOD_W1    : if (Period() >  PERIOD_D1 ) superTimeframe *= -1; break;
-      case  PERIOD_MN1   : if (Period() >  PERIOD_D1 ) superTimeframe *= -1; break;
-      case  PERIOD_Q1    : if (Period() >  PERIOD_W1 ) superTimeframe *= -1; break;
+      case  PERIOD_D1:  if (currentTimeframe > PERIOD_H4)   superTimeframe *= -1; break;
+      case  PERIOD_W1:  if (currentTimeframe > PERIOD_D1)   superTimeframe *= -1; break;
+      case  PERIOD_MN1: if (currentTimeframe > PERIOD_D1)   superTimeframe *= -1; break;
+      case  PERIOD_Q1:  if (currentTimeframe > PERIOD_W1)   superTimeframe *= -1; break;
 
       // negative value = inactive: automatically activated if display on the current chart makes sense
-      case -PERIOD_H1    : if (Period() <= PERIOD_M15) superTimeframe *= -1; break;
+      case -PERIOD_H1:  if (currentTimeframe <= PERIOD_M15) superTimeframe *= -1; break;
       case -PERIOD_D1_ETH:
          if (!ethEnabled) superTimeframe = -PERIOD_H1;
-      case -PERIOD_D1    : if (Period() <= PERIOD_H4 ) superTimeframe *= -1; break;
-      case -PERIOD_W1    : if (Period() <= PERIOD_D1 ) superTimeframe *= -1; break;
-      case -PERIOD_MN1   : if (Period() <= PERIOD_D1 ) superTimeframe *= -1; break;
-      case -PERIOD_Q1    : if (Period() <= PERIOD_W1 ) superTimeframe *= -1; break;
+      case -PERIOD_D1:  if (currentTimeframe <= PERIOD_H4)  superTimeframe *= -1; break;
+      case -PERIOD_W1:  if (currentTimeframe <= PERIOD_D1)  superTimeframe *= -1; break;
+      case -PERIOD_MN1: if (currentTimeframe <= PERIOD_D1)  superTimeframe *= -1; break;
+      case -PERIOD_Q1:  if (currentTimeframe <= PERIOD_W1)  superTimeframe *= -1; break;
 
       // not initialized or invalid value: reset to default value
       default:
-         switch (Period()) {
-            case PERIOD_M1 :
-            case PERIOD_M5 : superTimeframe =  PERIOD_H1;  break;
-            case PERIOD_M15:
-            case PERIOD_M30:
-            case PERIOD_H1 : superTimeframe =  PERIOD_D1;  break;
-            case PERIOD_H4 : superTimeframe =  PERIOD_W1;  break;
-            case PERIOD_D1 : superTimeframe =  PERIOD_MN1; break;
-            case PERIOD_W1 :
-            case PERIOD_MN1: superTimeframe = -PERIOD_MN1; break;
-         }
+         if      (currentTimeframe <= PERIOD_M5)  superTimeframe =  PERIOD_H1;
+         else if (currentTimeframe <= PERIOD_H1)  superTimeframe =  PERIOD_D1;
+         else if (currentTimeframe <= PERIOD_H4)  superTimeframe =  PERIOD_W1;
+         else if (currentTimeframe <= PERIOD_D1)  superTimeframe =  PERIOD_MN1;
+         else if (currentTimeframe <= PERIOD_MN1) superTimeframe = -PERIOD_MN1;
    }
    return(true);
 }
@@ -695,7 +696,7 @@ bool StoreRuntimeStatus() {
  *
  * @return bool - success status
  */
-bool RestoreRuntimeStatus() {
+bool RestoreStatus() {
    string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
 
    // look-up a stored timeframe in the window
@@ -713,7 +714,7 @@ bool RestoreRuntimeStatus() {
    }
    if (result != 0) superTimeframe = result;
 
-   return(!catch("RestoreRuntimeStatus(1)"));
+   return(!catch("RestoreStatus(1)"));
 }
 
 

@@ -44,7 +44,6 @@
  *
  * TODO:
  *  - Superbars
- *     fix in range bar charts
  *     implement more timeframes
  *  - rewrite NonLagMA and replace Buzzer
  *  - Grid: fix price levels
