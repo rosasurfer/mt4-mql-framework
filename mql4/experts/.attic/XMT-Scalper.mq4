@@ -2991,7 +2991,7 @@ bool ValidateInputs() {
    int _EntryIndicator = EntryIndicator;
 
    // IndicatorTimeframe
-   if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
+   if (!IsStandardTimeframe(IndicatorTimeframe))             return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
    if (__isTesting && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
    int _IndicatorTimeframe = IndicatorTimeframe;
 
