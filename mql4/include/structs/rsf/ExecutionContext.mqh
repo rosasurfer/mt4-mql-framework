@@ -37,12 +37,12 @@
    //       ec.newTimeframe
    //       ec.rates
    int      ec_Bars                 (int ec[]);
+   int      ec_ValidBars            (int ec[]);
    int      ec_ChangedBars          (int ec[]);
-   int      ec_UnchangedBars        (int ec[]);
    int      ec_Ticks                (int ec[]);
    //       ec.cycleTicks
-   datetime ec_PrevTickTime         (int ec[]);
    datetime ec_CurrTickTime         (int ec[]);
+   datetime ec_PrevTickTime         (int ec[]);
    double   ec_Bid                  (int ec[]);
    double   ec_Ask                  (int ec[]);
 
