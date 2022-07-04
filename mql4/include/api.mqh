@@ -324,7 +324,6 @@ bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiv
 bool     ConfigureSignalsBySound(string configValue, bool &enabled);;
 int      ExplodeStrings(int &buffer[], string &results[]);;
 bool     HandleCommands();;
-double   iADR(int flags = NULL);;
 int      iBarShiftNext(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, int flags=NULL);;
 int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
@@ -342,6 +341,7 @@ bool     ParseTime(string value, int flags, int &result[]);;
 
 
 // include/functions/ta/
+double   iADR(int flags = NULL);;
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
