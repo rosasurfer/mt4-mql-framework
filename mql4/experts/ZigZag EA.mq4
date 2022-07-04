@@ -43,7 +43,11 @@
  *
  *
  * TODO:
- *  - rewrite NonLagMA + ALMA (replace Buzzer)
+ *  - rewrite NonLagMA + ALMA
+ *     parameter stepper for 2 parameters using VK_SHIFT
+ *     replace Buzzer
+ *     fix positioning bug of multiple legends
+ *
  *  - Superbars: implement more timeframes
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping

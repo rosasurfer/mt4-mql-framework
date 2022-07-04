@@ -20,7 +20,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods           = 38;
-extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma (parabola steepness)
 
@@ -46,8 +46,8 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/@ALMA.mqh>
 #include <functions/@Trend.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
@@ -111,7 +111,7 @@ int onInit() {
    sValue = StrTrim(sValue);
    if (sValue == "") sValue = "close";                   // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE)
                        return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
@@ -230,7 +230,7 @@ int onTick() {
    for (int bar=startbar; bar >= 0; bar--) {
       main[bar] = 0;
       for (int i=0; i < MA.Periods; i++) {
-         main[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
+         main[bar] += almaWeights[i] * GetPrice(maAppliedPrice, bar+1);
       }
       @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
    }
@@ -309,6 +309,32 @@ bool onTrendChange(int trend) {
    }
 
    return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+}
+
+
+/**
+ * Get the price of the specified type at the given bar offset.
+ *
+ * @param  int type - price type
+ * @param  int i    - bar offset
+ *
+ * @return double - price or NULL in case of errors
+ */
+double GetPrice(int type, int i) {
+   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
+
+   switch (type) {
+      case PRICE_CLOSE:                                                          // 0
+      case PRICE_BID:      return(Close[i]);                                     // 8
+      case PRICE_OPEN:     return( Open[i]);                                     // 1
+      case PRICE_HIGH:     return( High[i]);                                     // 2
+      case PRICE_LOW:      return(  Low[i]);                                     // 3
+      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
+      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
+      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
+      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
+   }
+   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
 }
 
 

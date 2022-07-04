@@ -56,8 +56,8 @@ extern string Signal.SMS            = "on | off | auto*";
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
-#include <functions/@ALMA.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
 #define MODE_SECTION          MACD.MODE_SECTION

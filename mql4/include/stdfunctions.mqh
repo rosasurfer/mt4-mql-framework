@@ -5714,7 +5714,7 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: don't trigger an internal error on unsupported parameters
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unsupported parameters
  *
  * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
@@ -5847,7 +5847,7 @@ string PriceTypeToStr(int type) {
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE:  return("PRICE_AVERAGE" );     // (O+H+L+C)/4
+      case PRICE_AVERAGE : return("PRICE_AVERAGE" );     // (O+H+L+C)/4
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
@@ -5871,7 +5871,7 @@ string PriceTypeDescription(int type) {
       case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE:  return("Average" );     // (O+H+L+C)/4
+      case PRICE_AVERAGE : return("Average" );     // (O+H+L+C)/4
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }

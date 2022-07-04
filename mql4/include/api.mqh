@@ -316,7 +316,6 @@ bool     WaitForTicket(int ticket, bool select = false);;
 
 
 // include/functions/
-void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
@@ -343,6 +342,10 @@ string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseTime(string value, int flags, int &result[]);;
+
+
+// include/functions/ta/
+void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 
 
 // include/structs/mt4/
