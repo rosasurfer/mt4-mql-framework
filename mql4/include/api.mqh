@@ -316,7 +316,6 @@ bool     WaitForTicket(int ticket, bool select = false);;
 
 
 // include/functions/
-bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 bool     @Trend.UpdateDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
 void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
@@ -347,6 +346,7 @@ void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;
+bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 
 
 // include/structs/mt4/
