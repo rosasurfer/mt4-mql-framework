@@ -5562,20 +5562,28 @@ string PeriodDescription(int period = NULL) {
    if (!period) period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return("M1" );     // 1 minute
-      case PERIOD_M5 : return("M5" );     // 5 minutes
+      case PERIOD_M1:  return("M1");      // 1 minute
+      case PERIOD_M2:  return("M2");      // 2 minutes  (custom timeframe)
+      case PERIOD_M3:  return("M3");      // 3 minutes  (custom timeframe)
+      case PERIOD_M4:  return("M4");      // 4 minutes  (custom timeframe)
+      case PERIOD_M5:  return("M5");      // 5 minutes
+      case PERIOD_M6:  return("M6");      // 6 minutes  (custom timeframe)
+      case PERIOD_M10: return("M10");     // 10 minutes (custom timeframe)
+      case PERIOD_M12: return("M12");     // 12 minutes (custom timeframe)
       case PERIOD_M15: return("M15");     // 15 minutes
+      case PERIOD_M20: return("M20");     // 20 minutes (custom timeframe)
       case PERIOD_M30: return("M30");     // 30 minutes
-      case PERIOD_H1 : return("H1" );     // 1 hour
-      case PERIOD_H2 : return("H2" );     // 2 hours (custom timeframe)
-      case PERIOD_H3 : return("H3" );     // 3 hours (custom timeframe)
-      case PERIOD_H4 : return("H4" );     // 4 hours
-      case PERIOD_H6 : return("H6" );     // 6 hours (custom timeframe)
-      case PERIOD_H8 : return("H8" );     // 8 hours (custom timeframe)
-      case PERIOD_D1 : return("D1" );     // 1 day
-      case PERIOD_W1 : return("W1" );     // 1 week
+      case PERIOD_H1:  return("H1");      // 1 hour
+      case PERIOD_H2:  return("H2");      // 2 hours    (custom timeframe)
+      case PERIOD_H3:  return("H3");      // 3 hours    (custom timeframe)
+      case PERIOD_H4:  return("H4");      // 4 hours
+      case PERIOD_H6:  return("H6");      // 6 hours    (custom timeframe)
+      case PERIOD_H8:  return("H8");      // 8 hours    (custom timeframe)
+      case PERIOD_H12: return("H12");     // 12 hours   (custom timeframe)
+      case PERIOD_D1:  return("D1");      // 1 day
+      case PERIOD_W1:  return("W1");      // 1 week
       case PERIOD_MN1: return("MN1");     // 1 month
-      case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
+      case PERIOD_Q1:  return("Q1");      // 1 quarter  (custom timeframe)
    }
    return(""+ period);
 }
@@ -5607,20 +5615,28 @@ int PeriodFlag(int period = NULL) {
       period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return(F_PERIOD_M1 );
-      case PERIOD_M5 : return(F_PERIOD_M5 );
+      case PERIOD_M1:  return(F_PERIOD_M1);
+      case PERIOD_M2:  return(F_PERIOD_M2);
+      case PERIOD_M3:  return(F_PERIOD_M3);
+      case PERIOD_M4:  return(F_PERIOD_M4);
+      case PERIOD_M5:  return(F_PERIOD_M5);
+      case PERIOD_M6:  return(F_PERIOD_M6);
+      case PERIOD_M10: return(F_PERIOD_M10);
+      case PERIOD_M12: return(F_PERIOD_M12);
       case PERIOD_M15: return(F_PERIOD_M15);
+      case PERIOD_M20: return(F_PERIOD_M20);
       case PERIOD_M30: return(F_PERIOD_M30);
-      case PERIOD_H1 : return(F_PERIOD_H1 );
-      case PERIOD_H2 : return(F_PERIOD_H2 );
-      case PERIOD_H3 : return(F_PERIOD_H3 );
-      case PERIOD_H4 : return(F_PERIOD_H4 );
-      case PERIOD_H6 : return(F_PERIOD_H6 );
-      case PERIOD_H8 : return(F_PERIOD_H8 );
-      case PERIOD_D1 : return(F_PERIOD_D1 );
-      case PERIOD_W1 : return(F_PERIOD_W1 );
+      case PERIOD_H1:  return(F_PERIOD_H1);
+      case PERIOD_H2:  return(F_PERIOD_H2);
+      case PERIOD_H3:  return(F_PERIOD_H3);
+      case PERIOD_H4:  return(F_PERIOD_H4);
+      case PERIOD_H6:  return(F_PERIOD_H6);
+      case PERIOD_H8:  return(F_PERIOD_H8);
+      case PERIOD_H12: return(F_PERIOD_H12);
+      case PERIOD_D1:  return(F_PERIOD_D1);
+      case PERIOD_W1:  return(F_PERIOD_W1);
       case PERIOD_MN1: return(F_PERIOD_MN1);
-      case PERIOD_Q1 : return(F_PERIOD_Q1 );
+      case PERIOD_Q1:  return(F_PERIOD_Q1);
    }
    return(_NULL(catch("PeriodFlag(1)  invalid parameter period: "+ period, ERR_INVALID_PARAMETER)));
 }
@@ -5651,20 +5667,28 @@ string PeriodFlagToStr(int flag) {
    string result = "";
 
    if (!flag)                    result = StringConcatenate(result, "|NULL");
-   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1"  );
-   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5"  );
-   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15" );
-   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30" );
-   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1"  );
-   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2"  );
-   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3"  );
-   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4"  );
-   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6"  );
-   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8"  );
-   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1"  );
-   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1"  );
-   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1" );
-   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1"  );
+   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1");
+   if (flag & F_PERIOD_M2  && 1) result = StringConcatenate(result, "|F_PERIOD_M2");
+   if (flag & F_PERIOD_M3  && 1) result = StringConcatenate(result, "|F_PERIOD_M3");
+   if (flag & F_PERIOD_M4  && 1) result = StringConcatenate(result, "|F_PERIOD_M4");
+   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5");
+   if (flag & F_PERIOD_M6  && 1) result = StringConcatenate(result, "|F_PERIOD_M6");
+   if (flag & F_PERIOD_M10 && 1) result = StringConcatenate(result, "|F_PERIOD_M10");
+   if (flag & F_PERIOD_M12 && 1) result = StringConcatenate(result, "|F_PERIOD_M12");
+   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15");
+   if (flag & F_PERIOD_M20 && 1) result = StringConcatenate(result, "|F_PERIOD_M20");
+   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30");
+   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1");
+   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2");
+   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3");
+   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4");
+   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6");
+   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8");
+   if (flag & F_PERIOD_H12 && 1) result = StringConcatenate(result, "|F_PERIOD_H12");
+   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1");
+   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1");
+   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1");
+   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1");
 
    if (StringLen(result) > 0)
       result = StrSubstr(result, 1);
@@ -5895,36 +5919,52 @@ int StrToPeriod(string value, int flags = NULL) {
    if (StrStartsWith(str, "PERIOD_"))
       str = StrSubstr(str, 7);
 
-   if (str ==           "M1" ) return(PERIOD_M1 );
-   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );
-   if (str ==           "M5" ) return(PERIOD_M5 );
-   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );
+   if (str ==           "M1" ) return(PERIOD_M1);
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1);
+   if (str ==           "M5" ) return(PERIOD_M5);
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5);
    if (str ==           "M15") return(PERIOD_M15);
    if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);
    if (str ==           "M30") return(PERIOD_M30);
    if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);
-   if (str ==           "H1" ) return(PERIOD_H1 );
-   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );
-   if (str ==           "H4" ) return(PERIOD_H4 );
-   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );
-   if (str ==           "D1" ) return(PERIOD_D1 );
-   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );
-   if (str ==           "W1" ) return(PERIOD_W1 );
-   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );
+   if (str ==           "H1" ) return(PERIOD_H1);
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1);
+   if (str ==           "H4" ) return(PERIOD_H4);
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4);
+   if (str ==           "D1" ) return(PERIOD_D1);
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1);
+   if (str ==           "W1" ) return(PERIOD_W1);
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1);
    if (str ==           "MN1") return(PERIOD_MN1);
    if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);
 
    if (flags & F_CUSTOM_TIMEFRAME && 1) {
-      if (str ==           "H2" ) return(PERIOD_H2 );
-      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2 );
-      if (str ==           "H3" ) return(PERIOD_H3 );
-      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3 );
-      if (str ==           "H6" ) return(PERIOD_H6 );
-      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6 );
-      if (str ==           "H8" ) return(PERIOD_H8 );
-      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8 );
-      if (str ==           "Q1" ) return(PERIOD_Q1 );
-      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );
+      if (str ==           "M2" ) return(PERIOD_M2);
+      if (str == ""+ PERIOD_M2  ) return(PERIOD_M2);
+      if (str ==           "M3" ) return(PERIOD_M3);
+      if (str == ""+ PERIOD_M3  ) return(PERIOD_M3);
+      if (str ==           "M4" ) return(PERIOD_M4);
+      if (str == ""+ PERIOD_M4  ) return(PERIOD_M4);
+      if (str ==           "M6" ) return(PERIOD_M6);
+      if (str == ""+ PERIOD_M6  ) return(PERIOD_M6);
+      if (str ==           "M10") return(PERIOD_M10);
+      if (str == ""+ PERIOD_M10 ) return(PERIOD_M10);
+      if (str ==           "M12") return(PERIOD_M12);
+      if (str == ""+ PERIOD_M12 ) return(PERIOD_M12);
+      if (str ==           "M20") return(PERIOD_M20);
+      if (str == ""+ PERIOD_M20 ) return(PERIOD_M20);
+      if (str ==           "H2" ) return(PERIOD_H2);
+      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2);
+      if (str ==           "H3" ) return(PERIOD_H3);
+      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3);
+      if (str ==           "H6" ) return(PERIOD_H6);
+      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6);
+      if (str ==           "H8" ) return(PERIOD_H8);
+      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8);
+      if (str ==           "H12") return(PERIOD_H12);
+      if (str == ""+ PERIOD_H12 ) return(PERIOD_H12);
+      if (str ==           "Q1" ) return(PERIOD_Q1);
+      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1);
    }
 
    if (flags & F_ERR_INVALID_PARAMETER && 1)
