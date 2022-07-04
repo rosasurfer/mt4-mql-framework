@@ -47,7 +47,7 @@ extern string Signal.SMS             = "on | off | auto*";
 #include <functions/iBarShiftNext.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ParseTime.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/Trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
