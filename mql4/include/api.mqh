@@ -346,6 +346,7 @@ bool     ParseTime(string value, int flags, int &result[]);;
 void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
 double   @ATR(string symbol, int timeframe, int periods, int offset);;
 void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
+double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;
 
 
 // include/structs/mt4/
