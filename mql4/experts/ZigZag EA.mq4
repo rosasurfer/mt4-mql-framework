@@ -43,9 +43,8 @@
  *
  *
  * TODO:
- *  - Superbars
- *     implement more timeframes
- *  - rewrite NonLagMA and replace Buzzer
+ *  - rewrite NonLagMA + ALMA (replace Buzzer)
+ *  - Superbars: implement more timeframes
  *  - Grid: fix price levels
  *  - support for 4BF and M5 scalping
  *  - ChartInfos: include current daily range in ADR calculation/display
@@ -144,7 +143,6 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - update signature of onTick() to onTick(int &prevCalculated)
  *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - TradeManager for custom positions
  *     close new|all hedges
@@ -161,7 +159,6 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - ChartInfos: update unitsize positioning

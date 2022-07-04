@@ -1,11 +1,11 @@
 /**
  * SuperBars
  *
- * Draws rectangles of trading sessions and/or higher timeframe periods on the chart. The active higher timeframe can be
- * changed by executing the scripts "SuperBars.TimeframeUp" or "SuperBars.TimeframeDown".
+ * Draws rectangles of higher timeframe bars or trading sessions on the chart. The active higher timeframe can be changed by
+ * executing the scripts "SuperBars.TimeframeUp" and "SuperBars.TimeframeDown".
  *
  * With input parameter "AutoConfiguration" enabled (default) inputs found in the framework configuration override manual
- * inputs. Additional auto-config settings:
+ * inputs. Additional framework config settings without manual inputs:
  *
  * [SuperBars]
  *  Legend.Corner                = {int}              ; CORNER_TOP_LEFT* | CORNER_TOP_RIGHT | CORNER_BOTTOM_LEFT | CORNER_BOTTOM_RIGHT
@@ -16,13 +16,15 @@
  *  Legend.FontColor             = {color}            ; font color (web color name, integer or RGB triplet)
  *  UnchangedBars.MaxPriceChange = {double}           ; max. close change of a bar in percent to be drawn as "unchanged"
  *  MaxBars.H1                   = {int}              ; max. number of H1 superbars to draw (default: all available)
- *  ErrorSound                   = {string}           ; sound if timeframe cycling is at upper/lower limit (default: none)
+ *  ErrorSound                   = {string}           ; cycling sound if no higher/lower timeframe is available (default: none)
  *
  * @see  https://www.forexfactory.com/thread/1078323-superbars-higher-timeframe-bars-with-cme-session-support
  *
  * TODO:
- *  - ETH/RTH separation for Frankfurt session with 17:35 CET hint
+ *  - implement more super timeframes and rewrite configuration of max. bars
+ *  - SuperBar close markers in variable period charts (e.g. range bars) are incorrect
  *  - workaround for odd period start times on BTCUSD (everything > PERIOD_M5, ETH sessions)
+ *  - ETH/RTH separation for Frankfurt session
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE};
