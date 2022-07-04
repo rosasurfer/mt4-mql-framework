@@ -33,7 +33,7 @@ extern double StopLoss.Size              = 20;     // in pip to calculate risk o
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/iADR.mqh>
+#include <functions/ta/ADR.mqh>
 
 #property indicator_chart_window
 
