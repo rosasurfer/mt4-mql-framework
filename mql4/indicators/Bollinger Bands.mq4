@@ -67,9 +67,9 @@ double almaWeights[];
 
 string indicatorName = "";                            // name for chart legend
 string legendLabel   = "";
+string legendInfo    = "";                            // additional chart legend info
 
 bool   signals;
-string signal.info = "";                              // info text in chart legend
 bool   signal.sound;
 string signal.sound.touchBand = "Signal Up.wav";
 bool   signal.mail;
@@ -139,7 +139,7 @@ int onInit() {
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -254,7 +254,7 @@ int onTick() {
 
    // update chart legend
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+      @Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }
