@@ -39,12 +39,12 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/Bands.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/ta/ALMA.mqh>
-#include <functions/ta/Bands.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
