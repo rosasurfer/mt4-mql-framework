@@ -44,6 +44,8 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
+ *     remove Bands.mqh from /ta/
+ *     update *CalculateWeights(): signatures, error handling, remove duplicated logic
  *     add auto-configuration
  *     update signaling
  *     replace Buzzer

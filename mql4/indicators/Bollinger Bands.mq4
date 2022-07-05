@@ -175,7 +175,7 @@ int onInit() {
 
    // initialize indicator calculation
    if (maMethod==MODE_ALMA && MA.Periods > 1) {
-      @ALMA.CalculateWeights(almaWeights, MA.Periods);
+      ALMA.CalculateWeights(almaWeights, MA.Periods);
    }
    return(catch("onInit(9)"));
 }
@@ -254,7 +254,7 @@ int onTick() {
 
    // update chart legend
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+      Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }

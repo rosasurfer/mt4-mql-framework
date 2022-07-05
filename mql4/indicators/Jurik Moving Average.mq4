@@ -339,11 +339,11 @@ int onTick() {
       double price = iMA(NULL, NULL, 1, 0, MODE_SMA, appliedPrice, bar);
       main[bar] = JMASeries(0, oldestBar, startbar, Periods, Phase, price, bar); if (last_error != 0) return(last_error);
 
-      @Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {

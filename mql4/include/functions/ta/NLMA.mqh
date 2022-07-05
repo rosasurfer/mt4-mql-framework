@@ -14,7 +14,7 @@
  * @link  v4.0: https://www.forexfactory.com/showthread.php?t=571026
  * @link  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
  */
-bool @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength) {
+bool NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength) {
    int phase      = cycleLength - 1;
    int windowSize = cycles*cycleLength + phase;
 

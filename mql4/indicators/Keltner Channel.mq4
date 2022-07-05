@@ -160,7 +160,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // pre-calculate ALMA bar weights
-   if (maMethod == MODE_ALMA) @ALMA.CalculateWeights(almaWeights, maPeriods);
+   if (maMethod == MODE_ALMA) ALMA.CalculateWeights(almaWeights, maPeriods);
 
    return(catch("onInit(8)"));
 }
@@ -220,7 +220,7 @@ int onTick() {
       }
    }
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
    }
    return(last_error);
 }

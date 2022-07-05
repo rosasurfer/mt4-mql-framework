@@ -291,7 +291,7 @@ void CalculateRepaintingTMA(int startbar) {
    }
 
    if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
    return(last_error);
 }

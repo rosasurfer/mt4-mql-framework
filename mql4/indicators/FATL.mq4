@@ -206,11 +206,11 @@ int onTick() {
       for (int i=0; i < length; i++) {
          main[bar] += filterWeights[i] * Close[bar+i];
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       if (signals) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[1]);

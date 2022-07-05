@@ -243,11 +243,11 @@ int onTick() {
       if (bar > Bars-3) main[bar] = price;               // prevent index out of range errors
       else              main[bar] = coef1*price + coef2*main[bar+1] + coef3*main[bar+2];
 
-      @Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {
