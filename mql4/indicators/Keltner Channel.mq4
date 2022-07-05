@@ -35,8 +35,8 @@ extern int    Max.Bars        = 10000;                            // max. values
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/Bands.mqh>
 #include <functions/ta/ALMA.mqh>
-#include <functions/ta/Bands.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER

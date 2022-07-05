@@ -36,9 +36,9 @@ extern bool   AlertsOn         = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/Bands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/ta/Bands.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
 #define MODE_UPPER_BAND_RP       1                 //
