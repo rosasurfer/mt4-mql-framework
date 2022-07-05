@@ -44,8 +44,10 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     parameter stepper for 2 parameters using VK_SHIFT
+ *     add auto-configuration
+ *     update signaling
  *     replace Buzzer
+ *     parameter stepper for 2 parameters using VK_SHIFT
  *     fix positioning bug of multiple legends
  *
  *  - Superbars: implement more timeframes

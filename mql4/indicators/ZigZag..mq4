@@ -139,8 +139,6 @@ int      zigzagDrawType;
 int      crossingDrawType;
 string   crossingModeDescriptions[] = {"off", "first", "all"};
 int      maxValues;
-string   indicatorName = "";
-string   legendLabel   = "";
 int      tickTimerId;
 double   tickSize;
 datetime lastTick;
@@ -148,6 +146,10 @@ int      lastSound;
 datetime waitUntil;
 double   prevUpperBand;
 double   prevLowerBand;
+
+string   indicatorName = "";
+string   legendLabel   = "";
+string   legendInfo    = "";                                   // additional chart legend info
 
 bool     signalReversal;
 bool     signalReversal.sound;
@@ -157,7 +159,6 @@ string   signalReversal.mailSender   = "";
 string   signalReversal.mailReceiver = "";
 bool     signalReversal.sms;
 string   signalReversal.smsReceiver = "";
-string   signalInfo                 = "";
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG      // 1

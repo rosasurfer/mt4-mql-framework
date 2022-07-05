@@ -94,6 +94,7 @@ bool     reversalInitialized;                               // whether the rever
 
 string   indicatorName = "";
 string   legendLabel   = "";
+string   legendInfo    = "";                                // additional chart legend info
 
 bool     signals;
 bool     signal.sound;
@@ -104,7 +105,6 @@ string   signal.mail.sender   = "";
 string   signal.mail.receiver = "";
 bool     signal.sms;
 string   signal.sms.receiver = "";
-string   signal.info = "";                                  // additional chart legend info
 
 #define D_LONG   TRADE_DIRECTION_LONG                       // 1
 #define D_SHORT TRADE_DIRECTION_SHORT                       // 2
@@ -151,7 +151,7 @@ int onInit() {
       if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -344,7 +344,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
+      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpen()) {

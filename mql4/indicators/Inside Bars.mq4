@@ -15,7 +15,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframe                      = "H1";                          // inside bar timeframe to process
-extern int    NumberOfInsideBars             = 1;                             // number of inside bars to display (-1: all)
+extern int    NumberOfInsideBars             = 2;                             // number of inside bars to display (-1: all)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
