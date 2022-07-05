@@ -303,7 +303,7 @@ int onTick() {
    if (!IsSuperContext()) {
       double value = (buffer1[0]+buffer2[0]) / 2;
       color  clr   = ifInt(buffer1[0] > buffer2[0], Color.UpTrend, Color.DownTrend);
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", clr, clr, value, Digits, NULL, Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, "", clr, clr, value, Digits, NULL, Time[0]);
    }
    return(last_error);
 }

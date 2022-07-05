@@ -316,8 +316,6 @@ bool     WaitForTicket(int ticket, bool select = false);;
 
 
 // include/functions/
-bool     @Trend.UpdateDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
-void     @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
 bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver);;
 bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
@@ -338,15 +336,17 @@ string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
 bool     ParseTime(string value, int flags, int &result[]);;
+bool     Trend.UpdateDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;
+void     Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double trend, datetime barOpenTime);;
 
 
 // include/functions/ta/
+void     ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
+double   ATR(string symbol, int timeframe, int periods, int offset);;
+void     Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 double   iADR(int flags = NULL);;
-void     @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
-double   @ATR(string symbol, int timeframe, int periods, int offset);;
-void     @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
 double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;
-bool     @NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
+bool     NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
 
 
 // include/structs/mt4/

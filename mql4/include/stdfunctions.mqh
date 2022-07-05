@@ -6317,10 +6317,10 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           distributionOffset,               // double Distribution.Offset
                           distributionSigma,                // double Distribution.Sigma
 
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
+                          CLR_NONE,                         // color  Color.UpTrend
+                          CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
                           "",                               // string ____________________
                           "off",                            // string Signal.onTrendChange
@@ -6655,10 +6655,10 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           cycleLength,                      // int    Cycle.Length
                           appliedPrice,                     // string AppliedPrice
 
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
+                          CLR_NONE,                         // color  Color.UpTrend
+                          CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
                           "",                               // string ____________________
                           "off",                            // string Signal.onTrendChange

@@ -9,9 +9,9 @@
  * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  * @see   "/etc/doc/alma/ALMA Weighted Distribution.xls"
  */
-void @ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
+void ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
    if (periods <= 0) {
-      catch("@ALMA.CalculateWeights(1)  illegal parameter periods: "+ periods, ERR_INVALID_PARAMETER);
+      catch("ALMA.CalculateWeights(1)  illegal parameter periods: "+ periods, ERR_INVALID_PARAMETER);
       return;
    }
    if (ArraySize(weights) != periods) {

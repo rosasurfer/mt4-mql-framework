@@ -313,7 +313,7 @@ int onTick() {
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);
 }

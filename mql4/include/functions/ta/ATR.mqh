@@ -15,9 +15,9 @@
  *       (by passing F_ERS_HISTORY_UPDATE). Thus it is possible to ignore the error and to query a set ERS_HISTORY_UPDATE
  *       status in the calling code.
  */
-double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreErrors = NULL) {
+double ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreErrors = NULL) {
    int error = GetLastError();
-   if (error != NO_ERROR) return(!catch("@ATR(1)", error));    // catch previously unhandled errors
+   if (error != NO_ERROR) return(!catch("ATR(1)", error));    // catch previously unhandled errors
 
    if (symbol == "0")         // (string) NULL
       symbol = Symbol();
@@ -32,10 +32,10 @@ double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreEr
    if (error == ERR_SERIES_NOT_AVAILABLE) {
       if (IsStandardTimeframe(timeframe)) {                    // On built-in timeframes ERR_SERIES_NOT_AVAILABLE essentially
          error = ERS_HISTORY_UPDATE;                           // means ERS_HISTORY_UPDATE.
-         debug("@ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
+         debug("ATR(2)  silently converting ERR_SERIES_NOT_AVAILABLE to ERS_HISTORY_UPDATE");
       }
       else {
-         return(!catch("@ATR(3)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
+         return(!catch("ATR(3)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
       }
    }
 
@@ -45,5 +45,5 @@ double @ATR(string symbol, int timeframe, int periods, int offset, int fIgnoreEr
          return(result);                                       // ignore the error (result may be NULL)
       }
    }
-   return(!catch("@ATR(4)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
+   return(!catch("ATR(4)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)), error));
 }

@@ -1,9 +1,7 @@
 /**
- * Non-Lag Moving Average
+ * NonLag Moving Average
  *
- *
- * Based on sources by Igor Durkin (aka igorad) using the formula of version 4. While version 7 is a bit less responsive
- * (and probably more correct) in 99.9% of the observed cases trend changes are identical.
+ * The "NonLag Moving Average" of Igor Durkin aka igorad, enhanced and converted to this framework.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -11,10 +9,14 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @link  v4.0: https://www.forexfactory.com/thread/571026-trend-catching-with-nonlagdot-indicator
- * @link  v7.1: http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm
- * @link  v7.8: http://www.mql5.com/en/forum/175037/page62#comment_4583907
- * @link  v7.9: https://www.mql5.com/en/forum/175037/page74#comment_4584032
+ *  @link  https://www.forexfactory.com/thread/571026#                                           [NonLag Moving Average v4.0]
+ *  @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                              [NonLag Moving Average v7.1]
+ *  @link  http://www.mql5.com/en/forum/175037/page62#comment_4583907#                           [NonLag Moving Average v7.8]
+ *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032#                          [NonLag Moving Average v7.9]
+ *
+ *
+ * TODO:
+ *  - uses the formula of v4, v7 is a bit less responsive
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -23,12 +25,12 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    Cycle.Length         = 20;
-extern string AppliedPrice         = "Open | High | Low | Close* | Median | Typical | Weighted";
+extern string AppliedPrice         = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 
-extern color  Color.UpTrend        = RoyalBlue;
-extern color  Color.DownTrend      = Red;
 extern string Draw.Type            = "Line* | Dot";
 extern int    Draw.Width           = 3;
+extern color  Color.UpTrend        = RoyalBlue;
+extern color  Color.DownTrend      = Red;
 extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
 extern string ___a__________________________;
 
@@ -54,7 +56,6 @@ extern string Signal.SMS           = "on | off | auto*";
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
-#define MODE_UPTREND1         MODE_UPTREND
 #define MODE_UPTREND2         4
 
 #property indicator_chart_window
@@ -68,21 +69,22 @@ extern string Signal.SMS           = "on | off | auto*";
 
 double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double uptrend1 [];                                      // uptrend values:      visible
+double uptrend  [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
 int    cycles = 4;
 int    cycleLength;
 int    cycleWindowSize;
-int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
-
-int    maxValues;
+int    maAppliedPrice;
 int    drawType;
+int    maxValues;
 
 string indicatorName = "";
 string legendLabel   = "";
+string legendInfo    = "";                               // additional chart legend info
+bool   enableMultiColoring;
 
 bool   signals;
 bool   signal.sound;
@@ -93,7 +95,6 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -121,10 +122,6 @@ int onInit() {
                          return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
    AppliedPrice = PriceTypeDescription(maAppliedPrice);
 
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-
    // Draw.Type
    sValue = StrToLower(Draw.Type);
    if (Explode(sValue, "*", sValues, 2) > 1) {
@@ -139,6 +136,10 @@ int onInit() {
    // Draw.Width
    if (Draw.Width < 0)   return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
 
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
+
    // Max.Bars
    if (Max.Bars < -1)    return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
@@ -150,7 +151,7 @@ int onInit() {
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -158,14 +159,18 @@ int onInit() {
    // buffer management
    SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:      visible
+   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend
+   // chart legend and coloring
    if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
+      enableMultiColoring = true;
+   }
+   else {
+      enableMultiColoring = false;
    }
 
    // names, labels and display options
@@ -175,14 +180,14 @@ int onInit() {
    IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexLabel(MODE_UPTREND1,  NULL);
+   SetIndexLabel(MODE_UPTREND,   NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate MA bar weights
-   @NLMA.CalculateWeights(maWeights, cycles, cycleLength);
+   // pre-calculate NLMA bar weights
+   NLMA.CalculateWeights(maWeights, cycles, cycleLength);
 
    return(catch("onInit(6)"));
 }
@@ -212,7 +217,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(uptrend,   EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
       ArrayInitialize(uptrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
@@ -222,7 +227,7 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
@@ -236,13 +241,13 @@ int onTick() {
    for (int bar=startbar; bar >= 0; bar--) {
       main[bar] = 0;
       for (int i=0; i < cycleWindowSize; i++) {
-         main[bar] += maWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
+         main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
+      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {
@@ -293,6 +298,32 @@ bool onTrendChange(int trend) {
 
 
 /**
+ * Get the price of the specified type at the given bar offset.
+ *
+ * @param  int type - price type
+ * @param  int i    - bar offset
+ *
+ * @return double - price or NULL in case of errors
+ */
+double GetPrice(int type, int i) {
+   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
+
+   switch (type) {
+      case PRICE_CLOSE:                                                          // 0
+      case PRICE_BID:      return(Close[i]);                                     // 8
+      case PRICE_OPEN:     return( Open[i]);                                     // 1
+      case PRICE_HIGH:     return( High[i]);                                     // 2
+      case PRICE_LOW:      return(  Low[i]);                                     // 3
+      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
+      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
+      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
+      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
+   }
+   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
+}
+
+
+/**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
  * recompilation options must be set in start() to not be ignored.
  */
@@ -301,7 +332,7 @@ void SetIndicatorOptions() {
 
    SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
    SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
+   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
 }
@@ -315,10 +346,10 @@ void SetIndicatorOptions() {
 string InputsToStr() {
    return(StringConcatenate("Cycle.Length=",         Cycle.Length,                         ";", NL,
                             "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
                             "Draw.Width=",           Draw.Width,                           ";", NL,
+                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),            ";", NL,
+                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),          ";", NL,
                             "Max.Bars=",             Max.Bars,                             ";", NL,
                             "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange), ";", NL,
                             "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),         ";", NL,

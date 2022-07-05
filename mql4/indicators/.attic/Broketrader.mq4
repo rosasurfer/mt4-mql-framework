@@ -344,7 +344,7 @@ int onTick() {
 
    if (!IsSuperContext()) {
       color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpen()) {

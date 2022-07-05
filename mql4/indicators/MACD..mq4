@@ -234,8 +234,8 @@ int onInit() {
    SetIndicatorOptions();
 
    // precalculate ALMA bar weights
-   if (fastMA.method == MODE_ALMA) @ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
-   if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
+   if (fastMA.method == MODE_ALMA) ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
+   if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
 
    return(catch("onInit(15)"));
 }

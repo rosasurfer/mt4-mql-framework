@@ -187,7 +187,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // pre-calculate ALMA bar weights
-   if (maMethod == MODE_ALMA) @ALMA.CalculateWeights(almaWeights, MA.Periods);
+   if (maMethod == MODE_ALMA) ALMA.CalculateWeights(almaWeights, MA.Periods);
 
    return(catch("onInit(8)"));
 }
@@ -248,11 +248,11 @@ int onTick() {
       else {                                 // built-in moving averages
          main[bar] = iMA(NULL, NULL, MA.Periods, 0, maMethod, maAppliedPrice, bar);
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
+      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
    if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {
