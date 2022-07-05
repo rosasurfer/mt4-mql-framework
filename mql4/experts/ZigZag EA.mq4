@@ -44,9 +44,9 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     update *CalculateWeights(): signatures, error handling, remove duplicated logic
  *     add auto-configuration
  *     update signaling
+ *     add step filter
  *     replace Buzzer
  *     parameter stepper for 2 parameters using VK_SHIFT
  *     fix positioning bug of multiple legends
@@ -57,8 +57,6 @@
  *  - ChartInfos: include current daily range in ADR calculation/display
  *  - implement global var Indicator::CalculatedBars
  *
- *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
- *  - VPS: monitor and notify of incoming emails
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
@@ -81,12 +79,12 @@
  *  - reduce slippage on short reversal: enter market via StopSell
  *  - rename to Turtle EA
  *
- *  - visual/audible confirmation
- *     for manual orders (to detect execution errors)
- *  - notifications for open positions running into swap charges
- *  - support command "wait" in status "progressing"
+ *  - virtual trading
+ *     analyze PL differences DAX,M1 2022.01.04
+ *     adjust virtual commissions
  *
  *  - trading functionality
+ *     support command "wait" in status "progressing"
  *     rewrite and test all @profit() conditions
  *     breakeven stop
  *     trailing stop
@@ -94,10 +92,6 @@
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
- *
- *  - virtual trading
- *     analyze PL differences DAX,M1 2022.01.04
- *     adjust virtual commissions
  *
  *  - visualization
  *     a chart profile per instrument
@@ -154,7 +148,11 @@
  *  - TradeManager for custom positions
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
+ *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
+ *  - VPS: monitor and notify of incoming emails
  *  - realtime equity charts
+ *  - visual/audible confirmation for manual orders (to detect execution errors)
+ *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected

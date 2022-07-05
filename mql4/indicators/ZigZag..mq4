@@ -16,13 +16,13 @@
  *
  *
  * TODO:
+ *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
  *  - remove logic from IsChartCommand() and replace processing by global include
  *  - add signal onZigZagBreakout
- *  - add auto-configuration
  *  - document inputs
  *  - document usage of iCustom()
  */
@@ -175,8 +175,9 @@ string   signalReversal.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   // validate inputs
    string indicator = ProgramName(MODE_NICE);
+
+   // validate inputs
    // ZigZag.Periods
    if (ZigZag.Periods < 2)                 return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    zigzagPeriods = ZigZag.Periods;

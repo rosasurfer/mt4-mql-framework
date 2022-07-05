@@ -347,9 +347,8 @@ bool AquireLock(string mutexName, bool wait) {
          continue;                                             // retry
       }
       if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
-      if (!wait)
-         return(false);
+      if (IsStopped())    return(_true(logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutexName) +" but was ordered to stop, taking it...")));
+      if (!wait)          return(false);
 
       // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
