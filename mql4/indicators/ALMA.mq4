@@ -155,16 +155,6 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend and coloring
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-      enableMultiColoring = true;
-   }
-   else {
-      enableMultiColoring = false;
-   }
-
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = ProgramName(MODE_NICE) +"("+ MA.Periods + sAppliedPrice +")";
@@ -181,6 +171,15 @@ int onInit() {
    // calculate ALMA bar weights
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
+   // chart legend and coloring
+   if (!IsSuperContext()) {
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
+      enableMultiColoring = true;
+   }
+   else {
+      enableMultiColoring = false;
+   }
    return(catch("onInit(6)"));
 }
 

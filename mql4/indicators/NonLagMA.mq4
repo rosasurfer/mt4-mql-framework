@@ -1,7 +1,8 @@
 /**
  * NonLag Moving Average
  *
- * The "NonLag Moving Average" of Igor Durkin aka igorad, enhanced and converted to this framework.
+ * The enhanced "NonLag Moving Average" of Igor Durkin aka igorad, converted to this framework. It uses four cosine wave
+ * cycles for calculating the MA weights.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -13,10 +14,6 @@
  *  @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                              [NonLag Moving Average v7.1]
  *  @link  http://www.mql5.com/en/forum/175037/page62#comment_4583907#                           [NonLag Moving Average v7.8]
  *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032#                          [NonLag Moving Average v7.9]
- *
- *
- * TODO:
- *  - uses the formula of v4, v7 is a bit less responsive
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -24,7 +21,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Cycle.Length         = 20;
+extern int    Periods              = 20;                 // bar periods per cosine wave
 extern string AppliedPrice         = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 
 extern string Draw.Type            = "Line* | Dot";
@@ -73,10 +70,8 @@ double uptrend  [];                                      // uptrend values:     
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
-int    cycles = 4;
-int    cycleLength;
-int    cycleWindowSize;
 double maWeights[];                                      // bar weighting of the MA
+int    maPeriods;
 int    maAppliedPrice;
 int    drawType;
 int    maxValues;
@@ -104,10 +99,9 @@ string signal.sms.receiver = "";
  */
 int onInit() {
    // validate inputs
-   // Cycle.Length
-   if (Cycle.Length < 2) return(catch("onInit(1)  invalid input parameter Cycle.Length: "+ Cycle.Length, ERR_INVALID_INPUT_PARAMETER));
-   cycleLength     = Cycle.Length;
-   cycleWindowSize = cycles*cycleLength + cycleLength-1;
+   // Periods
+   if (Periods < 3)      return(catch("onInit(1)  invalid input parameter Periods: "+ Periods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
+   int waveCycles=4, waveCycleLength=Periods;
 
    // AppliedPrice
    string sValues[], sValue = StrToLower(AppliedPrice);
@@ -163,20 +157,10 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend and coloring
-   if (!IsSuperContext()) {
-      legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
-      enableMultiColoring = true;
-   }
-   else {
-      enableMultiColoring = false;
-   }
-
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = ProgramName(MODE_NICE) +"("+ cycleLength + sAppliedPrice +")";
-   string shortName = "NLMA("+ cycleLength +")";
+   indicatorName = ProgramName(MODE_NICE) +"("+ Periods + sAppliedPrice +")";
+   string shortName = "NLMA("+ Periods +")";
    IndicatorShortName(shortName);                        // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     shortName +" trend");
@@ -186,9 +170,19 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate NLMA bar weights
-   NLMA.CalculateWeights(maWeights, cycles, cycleLength);
+   // calculate NLMA bar weights
+   NLMA.CalculateWeights(waveCycles, Periods, maWeights);
+   maPeriods = ArraySize(maWeights);
 
+   // chart legend and coloring
+   if (!IsSuperContext()) {
+      legendLabel = CreateLegendLabel();
+      RegisterObject(legendLabel);
+      enableMultiColoring = true;
+   }
+   else {
+      enableMultiColoring = false;
+   }
    return(catch("onInit(6)"));
 }
 
@@ -234,13 +228,13 @@ int onTick() {
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-cycleWindowSize);
+   int startbar = Min(bars-1, Bars-maPeriods);
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       main[bar] = 0;
-      for (int i=0; i < cycleWindowSize; i++) {
+      for (int i=0; i < maPeriods; i++) {
          main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
       Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
@@ -344,7 +338,7 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Cycle.Length=",         Cycle.Length,                         ";", NL,
+   return(StringConcatenate("Periods=",              Periods,                              ";", NL,
                             "AppliedPrice=",         DoubleQuoteStr(AppliedPrice),         ";", NL,
                             "Draw.Type=",            DoubleQuoteStr(Draw.Type),            ";", NL,
                             "Draw.Width=",           Draw.Width,                           ";", NL,

@@ -346,7 +346,7 @@ bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double 
 double   ATR(string symbol, int timeframe, int periods, int offset);;
 double   iADR(int flags = NULL);;
 double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;
-bool     NLMA.CalculateWeights(double &weights[], int cycles, int cycleLength);;
+bool     NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]);;
 
 
 // include/structs/mt4/
