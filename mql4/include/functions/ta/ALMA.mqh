@@ -1,33 +1,36 @@
 /**
- * Berechnet die Gewichtungen eines ALMAs.
+ * Calculate the weights of an ALMA using the formula of a Gaussian normal distribution.
  *
- * @param  _Out_ double weights[]         - Array zur Aufnahme der Gewichtungen
- * @param  _In_  int    periods           - Anzahl der Perioden des ALMA
- * @param  _In_  double offset [optional] - Offset der Gauﬂ'schen Normalverteilung (default: 0.85)
- * @param  _In_  double sigma  [optional] - Steilheit der Gauﬂ'schen Normalverteilung (default: 6.0)
+ * @param  _In_  int    periods    - number of MA periods
+ * @param  _In_  double offset     - offset of the desired distribution, recommended value: 0.85
+ * @param  _In_  double sigma      - sigma (steepness) of the desired distribution, recommended value: 6.0
+ * @param  _Out_ double &weights[] - array receiving the resulting MA weights
+ *
+ * @return bool - success status
  *
  * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
  *
  */
-void ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0) {
-   if (periods <= 0) {
-      catch("ALMA.CalculateWeights(1)  illegal parameter periods: "+ periods, ERR_INVALID_PARAMETER);
-      return;
-   }
-   if (ArraySize(weights) != periods) {
-      ArrayResize(weights, periods);
-   }
+bool ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]) {
+   if (periods <= 0)             return(!catch("ALMA.CalculateWeights(1)  invalid parameter periods: "+ periods +" (out of range)", ERR_INVALID_PARAMETER));
+   if (offset < 0 || offset > 1) return(!catch("ALMA.CalculateWeights(2)  invalid parameter offset: "+ NumberToStr(offset, ".1+") +" (out of range)", ERR_INVALID_PARAMETER));
+   if (sigma <= 0)               return(!catch("ALMA.CalculateWeights(3)  invalid parameter sigma: "+ NumberToStr(sigma, ".1+") +" (must be positive)", ERR_INVALID_PARAMETER));
 
-   double dist = (periods-1) * offset;                      // m: Abstand des Scheitelpunkts der Glocke von der ‰ltesten Bar; im Original floor(value)
-   double s    = periods / sigma;                           // s: Steilheit der Glocke
-   double weightsSum;
+   if (ArraySize(weights) != periods)
+      ArrayResize(weights, periods);
+
+   double dist = (periods-1) * offset;                // m: resulting distance of vertex from the oldest bar
+   double s    = periods / sigma;                     // s: resulting steepness
+   double weightsSum = 0;
 
    for (int j, i=0; i < periods; i++) {
       j = periods-1-i;
       weights[j]  = MathExp(-(i-dist)*(i-dist)/(2*s*s));
       weightsSum += weights[j];
    }
-   for (i=0; i < periods; i++) {
-      weights[i] /= weightsSum;                             // Summe der Gewichtungen aller Bars = 1 (100%)
+   for (i=0; i < periods; i++) {                      // normalize weights: sum = 1 (100%)
+      weights[i] /= weightsSum;
    }
+
+   return(!catch("ALMA.CalculateWeights(4)"));
 }

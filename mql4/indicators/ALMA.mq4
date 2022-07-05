@@ -178,8 +178,8 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate ALMA bar weights
-   ALMA.CalculateWeights(maWeights, MA.Periods, Distribution.Offset, Distribution.Sigma);
+   // calculate ALMA bar weights
+   ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    return(catch("onInit(6)"));
 }

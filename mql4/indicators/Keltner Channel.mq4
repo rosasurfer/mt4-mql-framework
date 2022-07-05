@@ -159,9 +159,11 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate ALMA bar weights
-   if (maMethod == MODE_ALMA) ALMA.CalculateWeights(almaWeights, maPeriods);
-
+   // calculate ALMA bar weights
+   if (maMethod == MODE_ALMA) {
+      double almaOffset=0.85, almaSigma=6.0;
+      ALMA.CalculateWeights(maPeriods, almaOffset, almaSigma, almaWeights);
+   }
    return(catch("onInit(8)"));
 }
 

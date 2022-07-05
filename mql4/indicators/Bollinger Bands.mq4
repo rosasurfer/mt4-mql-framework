@@ -175,7 +175,8 @@ int onInit() {
 
    // initialize indicator calculation
    if (maMethod==MODE_ALMA && MA.Periods > 1) {
-      ALMA.CalculateWeights(almaWeights, MA.Periods);
+      double almaOffset=0.85, almaSigma=6.0;
+      ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
    }
    return(catch("onInit(9)"));
 }
