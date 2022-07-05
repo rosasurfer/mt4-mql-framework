@@ -342,7 +342,7 @@ void     Trend.UpdateLegend(string label, string name, string status, color uptr
 
 
 // include/functions/ta/
-void     ALMA.CalculateWeights(double &weights[], int periods, double offset=0.85, double sigma=6.0);;
+bool     ALMA.CalculateWeights(int periods, double offset, double sigma, double &weights[]);;
 double   ATR(string symbol, int timeframe, int periods, int offset);;
 double   iADR(int flags = NULL);;
 double   JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar);;

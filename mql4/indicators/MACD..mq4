@@ -233,9 +233,10 @@ int onInit() {
    IndicatorDigits(ifInt(isCentUnit, 3, 2));                            // or pip with 2 decimal digit otherwise:                         123.4 pip => 123.04
    SetIndicatorOptions();
 
-   // precalculate ALMA bar weights
-   if (fastMA.method == MODE_ALMA) ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
-   if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
+   // calculate ALMA bar weights
+   double almaOffset=0.85, almaSigma=6.0;
+   if (fastMA.method == MODE_ALMA) ALMA.CalculateWeights(fastMA.periods, almaOffset, almaSigma, fastALMA.weights);
+   if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowMA.periods, almaOffset, almaSigma, slowALMA.weights);
 
    return(catch("onInit(15)"));
 }
