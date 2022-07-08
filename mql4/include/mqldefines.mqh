@@ -13,7 +13,7 @@
 #include <shared/errors.h>
 
 
-// MetaQuotes MQL aliases intentionally not shared with C++
+// MetaQuotes aliases intentionally not shared with C++
 #define ERR_DLLFUNC_CRITICALERROR                     ERR_DLL_EXCEPTION
 #define ERR_EXTERNAL_CALLS_NOT_ALLOWED        ERR_EX4_CALLS_NOT_ALLOWED
 #define ERR_FILE_BUFFER_ALLOCATION_ERROR    ERR_FILE_BUFFER_ALLOC_ERROR
@@ -34,6 +34,6 @@
 #define ERR_UNKNOWN_SYMBOL                     ERR_SYMBOL_NOT_AVAILABLE
 
 
-// differently typed in C++ but same value
+// constants with a differing C++ type (but same value)
 #define NO_ERROR  ERR_NO_ERROR                     // 0x0L
 #define CLR_NONE  0xFFFFFFFF                       // 0xFFFFFFFFL

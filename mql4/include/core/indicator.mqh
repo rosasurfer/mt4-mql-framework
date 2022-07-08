@@ -64,15 +64,14 @@ int init() {
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
+      if (!StringLen(GetServerTimezone()))          return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet, e.g.
       error = GetLastError();                                        // - symbol not yet subscribed (on start or account/template change), it shows up later
       if (IsError(error)) {                                          // - synthetic symbol in offline chart
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)
-            return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
-         if (CheckErrors("init(6)", error)) return(last_error);
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)     return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+         if (CheckErrors("init(6)", error))         return(last_error);
       }
       if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
@@ -225,7 +224,7 @@ int start() {
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
-         if (CheckErrors("start(3)", error)) return(last_error);
+         if (CheckErrors("start(3)  Tick.time = 0", error)) return(last_error);
       }
    }
    static int prevVolume;
@@ -487,6 +486,7 @@ bool CheckErrors(string caller, int error = NULL) {
       case ERS_EXECUTION_STOPPING:
          break;
       default:
+         logInfo("CheckErrors(1)  setting __STATUS_OFF due to mql_error: ", mql_error);
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = mql_error;                   // MQL errors have higher severity than DLL errors
    }
@@ -500,6 +500,7 @@ bool CheckErrors(string caller, int error = NULL) {
       case ERS_EXECUTION_STOPPING:
          break;
       default:
+         logInfo("CheckErrors(2)  setting __STATUS_OFF due to last_error: ", last_error);
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = last_error;                  // main module errors have higher severity than library errors
    }

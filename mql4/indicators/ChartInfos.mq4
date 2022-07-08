@@ -288,7 +288,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    else if (cmd == "toggle-open-orders") {
       if (modifiers == "VK_SHIFT") {
          flags = F_SHOW_CUSTOM_POSITIONS;
-         ArrayResize(positions.config,          0);               // let the position configuration be reparsed
+         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
          ArrayResize(positions.config.comments, 0);
       }
       else flags = NULL;
@@ -298,7 +298,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    else if (cmd == "toggle-trade-history") {
       if (modifiers == "VK_SHIFT") {
          flags = F_SHOW_CUSTOM_HISTORY;
-         ArrayResize(positions.config,          0);               // let the position configuration be reparsed
+         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
          ArrayResize(positions.config.comments, 0);
       }
       else flags = NULL;
@@ -1563,8 +1563,10 @@ bool UpdateStopoutLevel() {
    double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
-   if (!Bid || !tickSize || !tickValue)
+   if (!Bid || !tickSize || !tickValue) {
+      logInfo("UpdateStopoutLevel(2)  Bid="+ Bid +"  tickSize="+ tickSize +"  tickValue="+ tickValue, ERR_SYMBOL_NOT_AVAILABLE);
       return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                                 // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+   }
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
    if (totalPosition > 0) soPrice = NormalizeDouble(Bid - soDistance, Digits);
@@ -1586,7 +1588,7 @@ bool UpdateStopoutLevel() {
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on ObjectDrag or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateStopoutLevel(2)", error));
+   return(!catch("UpdateStopoutLevel(3)", error));
 }
 
 
@@ -1875,7 +1877,7 @@ bool CalculateUnitSize() {
    int error = GetLastError();
    if (error || !Close[0] || !tickSize || !tickValue || !mm.equity) {   // may happen on terminal start, on account change, on template change or in offline charts
       if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
-         return(_true(SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+         return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
       return(!catch("CalculateUnitSize(1)", error));
    }
    mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
