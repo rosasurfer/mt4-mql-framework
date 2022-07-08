@@ -228,7 +228,7 @@ int onInit() {
    signalReversal.sms   = Signal.onReversal.SMS;
    signalInfo           = "";
    string signalId = "Signal.onReversal";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal))                                                                        return(last_error);
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
@@ -268,7 +268,9 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   // remove an installed chhart ticker
+   RepositionLegend();
+
+   // remove an installed chart ticker
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
@@ -812,6 +814,7 @@ bool onReversal(int direction, int bar) {
       string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal("+ zigzagPeriods +"x"+ sPeriod +")  "+ message);
+      message            = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
 
       if (signalReversal.sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
@@ -819,8 +822,6 @@ bool onReversal(int direction, int bar) {
          else if (error == ERR_FILE_NOT_FOUND) signalReversal.sound = false;
          else                                  error |= error;
       }
-
-      message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
       if (signalReversal.popup)           Alert(message);
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
