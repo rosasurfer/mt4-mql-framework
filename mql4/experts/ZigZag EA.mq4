@@ -44,14 +44,15 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
+ *     parameter stepper (fix in existing indicators)
  *     add step filter
+ *     2nd parameter stepper for step filter using VK_SHIFT
  *     replace Buzzer
- *     parameter stepper for 2 parameters using VK_SHIFT
  *     fix positioning bug of multiple legends
  *
  *  - Superbars: implement more timeframes
  *  - Grid: fix price levels
- *  - support for 4BF and M5 scalping
+ *  - support for M5 and 4BF scalping
  *  - ChartInfos: include current daily range in ADR calculation/display
  *  - implement global var Indicator::CalculatedBars
  *
