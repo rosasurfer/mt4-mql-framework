@@ -44,8 +44,6 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     add auto-configuration
- *     update signaling
  *     add step filter
  *     replace Buzzer
  *     parameter stepper for 2 parameters using VK_SHIFT

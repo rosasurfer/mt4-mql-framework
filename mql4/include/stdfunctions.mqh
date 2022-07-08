@@ -6322,12 +6322,17 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6660,12 +6665,17 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
