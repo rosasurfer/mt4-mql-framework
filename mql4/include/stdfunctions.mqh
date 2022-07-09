@@ -6634,21 +6634,23 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
 /**
  * Load the "NonLagMA" indicator and return a value.
  *
- * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    cycleLength  - indicator parameter
- * @param  string appliedPrice - indicator parameter
- * @param  int    iBuffer      - indicator buffer index of the value to return
- * @param  int    iBar         - bar index of the value to return
+ * @param  int    timeframe        - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    waveCyclePeriods - indicator parameter
+ * @param  string maAppliedPrice   - indicator parameter
+ * @param  double maMinChange      - indicator parameter
+ * @param  int    iBuffer          - indicator buffer index of the value to return
+ * @param  int    iBar             - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
+double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maMinChange, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
-                          cycleLength,                      // int    Cycle.Length
-                          appliedPrice,                     // string AppliedPrice
+                          waveCyclePeriods,                 // int    WaveCycle.Periods
+                          maAppliedPrice,                   // string MA.AppliedPrice
+                          maMinChange,                      // double MA.MinChange
 
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
@@ -6675,8 +6677,8 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icNonLagMA(1)", error));
-      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+         return(!catch("icNLMA(1)", error));
+      logWarn("icNLMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -7169,7 +7171,7 @@ void __DummyCalls() {
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
-   icNonLagMA(NULL, NULL, NULL, NULL, NULL);
+   icNLMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSATL(NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);

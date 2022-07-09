@@ -5914,7 +5914,7 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetNonLagMA(5)  "+ sequence.name +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(icNonLagMA(timeframe, cycleLength, appliedPrice, iBuffer, iBar));
+   return(icNLMA(timeframe, cycleLength, appliedPrice, 0, iBuffer, iBar));
 }
 
 

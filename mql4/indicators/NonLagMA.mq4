@@ -1,7 +1,7 @@
 /**
  * NonLag Moving Average
  *
- * Fixed and enhanced version of the "NonLag Moving Average" created by Igor Durkin aka igorad. It uses four cosine wave
+ * Fixed and enhanced version of the "NonLag Moving Average" created by Igor Durkin aka igorad. It uses five cosine wave
  * cycles for calculating the MA weights.
  *
  * Indicator buffers for iCustom():
@@ -12,8 +12,8 @@
  *
  *  @link  https://www.forexfactory.com/thread/571026#                                           [NonLag Moving Average v4.0]
  *  @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                              [NonLag Moving Average v7.1]
- *  @link  http://www.mql5.com/en/forum/175037/page62#comment_4583907#                           [NonLag Moving Average v7.8]
- *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032#                          [NonLag Moving Average v7.9]
+ *  @link  http://www.mql5.com/en/forum/175037/page62#comment_4583907                            [NonLag Moving Average v7.8]
+ *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032                           [NonLag Moving Average v7.9]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -21,15 +21,16 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    Periods                        = 20;                // bar periods per cosine wave cycle
-extern string AppliedPrice                   = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
+extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern double MA.MinChange                   = 0;                 // min. MA change for a trend reversal in std-deviations
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  Color.UpTrend                  = RoyalBlue;
-extern color  Color.DownTrend                = Red;
+extern color  Color.UpTrend                  = Magenta;  //RoyalBlue;
+extern color  Color.DownTrend                = Yellow;   //Red;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
-extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for Periods
+extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for WaveCycle.Periods
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -51,14 +52,16 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/Trend.mqh>
 #include <functions/ta/NLMA.mqh>
 
-#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND2         4
+#define MODE_MA_RAW           5
 
 #property indicator_chart_window
-#property indicator_buffers   5
+#property indicator_buffers   5                          // visible buffers
+int       terminal_buffers  = 6;                         // all buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -66,17 +69,19 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double main     [];                                      // MA main values:      invisible, displayed in legend and "Data" window
-double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double uptrend  [];                                      // uptrend values:      visible
-double downtrend[];                                      // downtrend values:    visible
-double uptrend2 [];                                      // single-bar uptrends: visible
+double maRaw     [];                                     // MA raw main values:      invisible
+double maFiltered[];                                     // MA filtered main values: invisible, displayed in legend and "Data" window
+double trend     [];                                     // trend direction:         invisible, displayed in "Data" window
+double uptrend   [];                                     // uptrend values:          visible
+double downtrend [];                                     // downtrend values:        visible
+double uptrend2  [];                                     // single-bar uptrends:     visible
 
-int    waveCycles = 4;
+int    waveCycles = 4;                                   // 4 initial cycles (1 more wave is added later)
 int    waveCyclePeriods;
 int    maPeriods;
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
+double maMinChange;                                      // min. change of consecutive MA values in std-deviations
 int    drawType;
 int    maxValues;
 
@@ -108,21 +113,25 @@ int onInit() {
    string indicator = ProgramName(MODE_NICE);
 
    // validate inputs
-   // Periods
-   waveCyclePeriods = Periods;
-   if (AutoConfiguration) waveCyclePeriods = GetConfigInt(indicator, "Periods", waveCyclePeriods);
-   if (waveCyclePeriods < 3)                                 return(catch("onInit(1)  invalid input parameter Periods: "+ waveCyclePeriods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
-   // AppliedPrice
-   string sValues[], sValue = AppliedPrice;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "AppliedPrice", sValue);
+   // WaveCycle.Periods
+   waveCyclePeriods = WaveCycle.Periods;
+   if (AutoConfiguration) waveCyclePeriods = GetConfigInt(indicator, "WaveCycle.Periods", waveCyclePeriods);
+   if (waveCyclePeriods < 3)                                 return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ waveCyclePeriods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.AppliedPrice
+   string sValues[], sValue = MA.AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-   AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   // MA.MinChange
+   maMinChange = MA.MinChange;
+   if (AutoConfiguration) maMinChange = GetConfigDouble(indicator, "MA.MinChange", maMinChange);
+   if (maMinChange < 0)                                      return(catch("onInit(3)  invalid input parameter MA.MinChange: "+ NumberToStr(maMinChange, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -133,10 +142,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                      return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                                      return(catch("onInit(4)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                       return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                                       return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -144,10 +153,10 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // Max.Bars
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                        return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(6)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(7)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
 
    // signaling
    signalTrendChange       = Signal.onTrendChange;
@@ -170,11 +179,12 @@ int onInit() {
    }
 
    // buffer management and display options
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
-   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );      // MA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);      // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );      // trend direction:         invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );      // uptrend values:          visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );      // downtrend values:        visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );      // single-bar uptrends:     visible
    SetIndicatorOptions();
 
    // calculate NLMA bar weights
@@ -190,7 +200,7 @@ int onInit() {
    else {
       enableMultiColoring = false;
    }
-   return(catch("onInit(7)"));
+   return(catch("onInit(8)"));
 }
 
 
@@ -212,28 +222,30 @@ int onDeinit() {
  */
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(main,      EMPTY_VALUE);
-      ArrayInitialize(trend,               0);
-      ArrayInitialize(uptrend,   EMPTY_VALUE);
-      ArrayInitialize(downtrend, EMPTY_VALUE);
-      ArrayInitialize(uptrend2,  EMPTY_VALUE);
+      ArrayInitialize(maRaw,                0);
+      ArrayInitialize(maFiltered, EMPTY_VALUE);
+      ArrayInitialize(trend,                0);
+      ArrayInitialize(uptrend,    EMPTY_VALUE);
+      ArrayInitialize(downtrend,  EMPTY_VALUE);
+      ArrayInitialize(uptrend2,   EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(maRaw,      Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(maFiltered, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(trend,      Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(uptrend,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(downtrend,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend2,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
@@ -243,15 +255,16 @@ int onTick() {
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      main[bar] = 0;
+      maRaw[bar] = 0;
       for (int i=0; i < maPeriods; i++) {
-         main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
+         maRaw[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
-      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
+      maFiltered[bar] = maRaw[bar];
+      Trend.UpdateDirection(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {
-      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
 
       // monitor trend changes
       if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
@@ -387,18 +400,20 @@ double GetPrice(int type, int i) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   IndicatorBuffers(terminal_buffers);
+
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods + sAppliedPrice +")";
+   indicatorName = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods +"/"+ maPeriods + sAppliedPrice +")";
    string shortName = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA,        shortName);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,   NULL);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND, NULL);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,  NULL);
+   SetIndexStyle(MODE_MA_FILTERED, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA_FILTERED, shortName);
+   SetIndexStyle(MODE_TREND,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,       shortName +" trend");
+   SetIndexStyle(MODE_UPTREND,     draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,     NULL);
+   SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   NULL);
+   SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
    IndicatorDigits(Digits);
 }
 
@@ -409,8 +424,9 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Periods=",                        Periods,                                        ";", NL,
-                            "AppliedPrice=",                   DoubleQuoteStr(AppliedPrice),                   ";", NL,
+   return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";", NL,
+                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";", NL,
+                            "MA.MinChange=",                   NumberToStr(MA.MinChange, ".1+"),               ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
                             "Draw.Width=",                     Draw.Width,                                     ";", NL,
