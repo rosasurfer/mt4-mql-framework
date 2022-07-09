@@ -6311,6 +6311,7 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
+                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
@@ -6654,6 +6655,7 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
+                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange

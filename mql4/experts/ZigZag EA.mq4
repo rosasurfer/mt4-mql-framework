@@ -143,7 +143,6 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - TradeManager for custom positions
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
