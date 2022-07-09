@@ -21,14 +21,15 @@ int __DeinitFlags[];
 
 extern int    MA.Periods                     = 38;
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double Distribution.Offset            = 0.85;               // Gaussian distribution offset (offset of parabola vertex: 0..1)
-extern double Distribution.Sigma             = 6.0;                // Gaussian distribution sigma (parabola steepness)
+extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
+extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
-extern int    Max.Bars                       = 10000;              // max. values to calculate (-1: all available)
+extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for MA.Periods
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -45,6 +46,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/Trend.mqh>
 #include <functions/ta/ALMA.mqh>
@@ -104,7 +106,6 @@ int onInit() {
    maPeriods = MA.Periods;
    if (AutoConfiguration) maPeriods = GetConfigInt(indicator, "MA.Periods", maPeriods);
    if (maPeriods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ maPeriods, ERR_INVALID_INPUT_PARAMETER));
-
    // MA.AppliedPrice
    string sValues[], sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -116,15 +117,12 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-
    // Distribution.Offset
    if (AutoConfiguration) Distribution.Offset = GetConfigDouble(indicator, "Distribution.Offset", Distribution.Offset);
    if (Distribution.Offset < 0 || Distribution.Offset > 1)   return(catch("onInit(3)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
-
    // Distribution.Sigma
    if (AutoConfiguration) Distribution.Sigma = GetConfigDouble(indicator, "Distribution.Sigma", Distribution.Sigma);
    if (Distribution.Sigma <= 0)                              return(catch("onInit(4)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
-
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -136,21 +134,20 @@ int onInit() {
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
    else                                                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
    if (Draw.Width < 0)                                       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-
    // Max.Bars
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
    if (Max.Bars < -1)                                        return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // PeriodStepper.StepSize
+   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(8)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
 
    // signaling
    signalTrendChange       = Signal.onTrendChange;
@@ -204,7 +201,7 @@ int onInit() {
    else {
       enableMultiColoring = false;
    }
-   return(catch("onInit(6)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -227,6 +224,9 @@ int onDeinit() {
 int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   if (__isChart && PeriodStepper.StepSize) HandleCommands();
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -298,6 +298,21 @@ int onTick() {
    // M1  ALMA(10080)  weights(10080)             maxBars(2000)=3.323 sec   ...
    //
    // Conclusion: Weights calculation is ignorable, bottleneck is the nested loop in MA calculation.
+}
+
+
+/**
+ * Process an incoming command.
+ *
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
+   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
 }
 
 
@@ -387,21 +402,24 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",                     MA.Periods,                                     ";", NL,
-                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";", NL,
-                            "Distribution.Offset=",            NumberToStr(Distribution.Offset, ".1+"),        ";", NL,
-                            "Distribution.Sigma=",             NumberToStr(Distribution.Sigma, ".1+"),         ";", NL,
-                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
-                            "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
-                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
-                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
-                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,
-                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";", NL,
-                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";", NL,
-                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";", NL,
-                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
+   return(StringConcatenate("MA.Periods=",                     MA.Periods,                                     ";"+ NL,
+                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+                            "Distribution.Offset=",            NumberToStr(Distribution.Offset, ".1+"),        ";"+ NL,
+                            "Distribution.Sigma=",             NumberToStr(Distribution.Sigma, ".1+"),         ";"+ NL,
+
+                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
+                            "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
+                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
+                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
+                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";"+ NL,
+
+                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
+                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,
+                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
+                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
+                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";"+ NL,
+                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";"+ NL,
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
 }

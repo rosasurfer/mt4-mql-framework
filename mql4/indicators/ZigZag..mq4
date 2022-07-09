@@ -21,7 +21,6 @@
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
- *  - remove logic from IsChartCommand() and replace processing by global include
  *  - add signal onZigZagBreakout
  *  - document inputs
  *  - document usage of iCustom()
@@ -48,7 +47,7 @@ extern int    Donchian.Crossings.Wingdings   = 161;                     // a sma
 
 extern string ___c__________________________ = "=== Other ===";
 extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
-extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified step size
+extern int    PeriodStepper.StepSize         = 0;                       // parameter stepper for ZigZag.Periods
 
 extern string ___d__________________________ = "=== Reversal signaling ===";
 extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
@@ -215,7 +214,7 @@ int onInit() {
    if (Max.Bars < -1)                      return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)         return(catch("onInit(10)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+   if (PeriodStepper.StepSize < 0)         return(catch("onInit(10)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
@@ -288,7 +287,7 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // process incoming commands
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
    if (__isChart && PeriodStepper.StepSize) HandleCommands();
 
    // manage framework buffers
@@ -881,7 +880,7 @@ bool IsPossibleDataPumping() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   indicatorName = "ZigZag("+ ifString(PeriodStepper.StepSize, "dyn:", "") + zigzagPeriods +")";
+   indicatorName = "ZigZag("+ ifString(PeriodStepper.StepSize, "var:", "") + zigzagPeriods +")";
    IndicatorShortName(indicatorName);
    IndicatorDigits(Digits);
 

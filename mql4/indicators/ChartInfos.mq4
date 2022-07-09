@@ -1,7 +1,6 @@
 /**
  * Displays order/market data and account infos on the chart.
  *
- *
  *  - The current price and spread.
  *  - The current instrument name (only in terminals <= build 509).
  *  - The calculated unitsize (if configured).
@@ -215,10 +214,10 @@ string  signal.sms.receiver = "";
  * @return int - error status
  */
 int onTick() {
-   mm.done            = false;
+   mm.done = false;
    positions.analyzed = false;
 
-   HandleCommands();                                                                // process incoming commands
+   if (__isChart) HandleCommands();                                                 // process incoming commands
 
    if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // aktualisiert die Kursanzeige oben rechts
 

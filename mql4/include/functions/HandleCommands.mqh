@@ -1,7 +1,11 @@
 /**
- * Retrieve received commands and pass them to the command handler.
+ * Retrieve received commands and pass them to the command handler. Command format: "cmd[:params[:modifiers]]"
  *
- * @param  string channel [optional] - channel to check for incoming commands (default: the program's standard channel id)
+ *  - cmd:       command identifier (required)
+ *  - params:    one or more command parameters separated by comma "," (optional)
+ *  - modifiers: one or more virtual key modifiers separated by a pipe "|" symbol (optional)
+ *
+ * @param  string channel [optional] - id of the channel to check for commands (default: the program's standard channel id)
  *
  * @return bool - success status
  */
@@ -43,7 +47,7 @@ bool HandleCommands(string channel = "") {
 bool IsChartCommand(string channel, string &commands[]) {
    if (!__isChart) return(false);
 
-   static string stdChannel = ""; if (!StringLen(stdChannel)) {
+   static string stdChannel = ""; if (stdChannel == "") {
       stdChannel = ProgramName(MODE_NICE);
    }
    if (channel == "") {
