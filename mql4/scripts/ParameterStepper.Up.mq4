@@ -1,7 +1,7 @@
 /**
- * PeriodStepper Up
+ * ParameterStepper Up
  *
- * Broadcast a command to listening programs to increase their dynamic period.
+ * Broadcast a command to listening programs to increase a variable parameter.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,6 +16,14 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("PeriodStepper.command", "up|"+ GetTickCount());
+   if (__isTesting) Tester.Pause();
+
+   string command   = "parameter-up";
+   string params    = GetTickCount();
+   string modifiers = ifString(IsVirtualKeyDown(VK_SHIFT), "VK_SHIFT", "");
+
+   command = command +":"+ params +":"+ modifiers;
+
+   SendChartCommand("ParameterStepper.command", command);
    return(catch("onStart(1)"));
 }

@@ -226,7 +226,7 @@ int onTick() {
    if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && PeriodStepper.StepSize) HandleCommands();
+   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -297,7 +297,7 @@ int onTick() {
    // M1   ALMA(2016)  weights( 2016)             maxBars(2000)=0.671 sec   ...
    // M1  ALMA(10080)  weights(10080)             maxBars(2000)=3.323 sec   ...
    //
-   // Conclusion: Weights calculation is ignorable, bottleneck is the nested loop in MA calculation.
+   // conclusion: Weights calculation is ignorable, bottleneck is the nested loop in MA calculation.
 }
 
 

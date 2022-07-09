@@ -221,7 +221,7 @@ int onTick() {
    if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && PeriodStepper.StepSize) HandleCommands();
+   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
