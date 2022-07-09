@@ -189,7 +189,7 @@ int onInit() {
    maPeriods = ArraySize(maWeights);
 
    // chart legend and coloring
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
       RegisterObject(legendLabel);
       enableMultiColoring = true;
@@ -254,7 +254,7 @@ int onTick() {
       Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // monitor trend changes

@@ -104,7 +104,7 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
+   if (!__isSuperContext) {                                    // no chart legend if called by iCustom()
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -183,7 +183,7 @@ int onTick() {
 
 
    // (3) update chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        Trend.UpdateLegend(legendLabel, ma.name, "", MA.Color, MA.Color, tema[0], Digits, NULL, Time[0]);
    }
    return(last_error);

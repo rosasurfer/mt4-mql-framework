@@ -164,7 +164,7 @@ int onInit() {
    SetIndexBuffer(MODE_MA,         sma      );           // MA                  visible
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
       RegisterObject(legendLabel);
    }
@@ -295,7 +295,7 @@ int onTick() {
       }
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes

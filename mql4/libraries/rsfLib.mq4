@@ -1,6 +1,6 @@
 /**
- * Data types and sizes in C, Win32 and MQL4
- * =========================================
+ * Data types and sizes in C, C++/Win32 and MQL4
+ * =============================================
  *
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
  * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |     C++/Win32      |      MQL4      |      MQL5       |
@@ -889,8 +889,7 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
  * @return int - error status
  */
 int RepositionLegend() {
-   if (IsSuperContext())
-      return(true);
+   if (__isSuperContext) return(true);
 
    int objects = ObjectsTotal(),
        labels  = ObjectsTotal(OBJ_LABEL);

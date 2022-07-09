@@ -196,7 +196,6 @@ bool     IsOrderType(int value);;
 bool     IsPendingOrderType(int value);;
 bool     IsShortOrderType(int value);;
 bool     IsStopOrderType(int value);;
-bool     IsSuperContext();;
 bool     IsTicket(int ticket);;
 bool     IsVisualModeFix();;
 string   JoinStrings(string values[], string separator = ", ");;

@@ -226,7 +226,7 @@ int onInit() {
    signalReversal.popup = Signal.onReversal.Popup;
    signalReversal.mail  = Signal.onReversal.Mail;
    signalReversal.sms   = Signal.onReversal.SMS;
-   signalInfo           = "";
+   legendInfo           = "";
    string signalId = "Signal.onReversal";
    if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
@@ -235,7 +235,7 @@ int onInit() {
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
-         signalInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
+         legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
       }
       else signalReversal = false;
    }
@@ -244,7 +244,7 @@ int onInit() {
 
    // buffer management, indicator names and display options
    SetIndicatorOptions();
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -467,7 +467,7 @@ int onTick() {
       prevLowerBand = lowerBand[0];
    }
 
-   if (!IsSuperContext()) UpdateLegend();
+   if (!__isSuperContext) UpdateLegend();
    return(catch("onTick(5)"));
 }
 
@@ -584,7 +584,7 @@ void UpdateLegend() {
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       if (!tickSize) tickSize = GetTickSize();
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
-      string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
+      string sSignal   = ifString(signalReversal, "   ("+ legendInfo +")", "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;

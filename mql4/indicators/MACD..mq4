@@ -319,7 +319,7 @@ int onTick() {
    }
 
    // detect zero line crossings
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       if (signals) /*&&*/ if (IsBarOpen()) {
          static int lastSide; if (!lastSide) lastSide = bufferSection[2];
          int side = bufferSection[1];

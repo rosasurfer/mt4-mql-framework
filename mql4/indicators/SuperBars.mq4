@@ -646,7 +646,7 @@ bool UpdateDescription() {
  * @return string - the label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   if (IsSuperContext()) return("");
+   if (__isSuperContext) return("");
 
    string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 

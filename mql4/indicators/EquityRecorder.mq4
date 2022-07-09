@@ -86,7 +86,7 @@ int onInit() {
    }
 
    // indicator labels and display options
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -131,7 +131,7 @@ int onTick() {
    if (!CollectData()) return(last_error);
    if (!RecordData())  return(last_error);
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       if (NE(currEquity[0], prevEquity[0], 2)) {
          ObjectSetText(legendLabel, indicatorName +"   "+ DoubleToStr(currEquity[0], 2), 9, "Arial Fett", Blue);
          int error = GetLastError();

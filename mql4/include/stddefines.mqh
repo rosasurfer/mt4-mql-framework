@@ -13,8 +13,10 @@ int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_C
 //int    __lpSuperContext;                                        // address of the super EXECUTION_CONTEXT (in indicators loaded by iCustom() and their libraries only)
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
 //int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
+
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only in tester with "VisualMode=Off" or "Optimization=On".
 bool     __isTesting;                                             // Whether the program runs in the tester (experts, indicators and scripts).
+bool     __isSuperContext;                                        // Whether the current program is an indicator loaded by iCustom().
 int      __Test.barModel;                                         // the bar model of a test
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert

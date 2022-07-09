@@ -157,7 +157,7 @@ int onInit() {
    SetIndexBuffer(MODE_HA_LOW,      haLow     );
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -312,7 +312,7 @@ int onTick() {
       UpdateTrend(bar);
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);

@@ -10,11 +10,9 @@ double  __rates[][6];                                                // current 
  * @return int - error status
  */
 int init() {
-   if (__STATUS_OFF)
-      return(__STATUS_OFF.reason);
-
-   if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
-      __CoreFunction = CF_INIT;
+   __isSuperContext = false;
+   if (__STATUS_OFF) return(__STATUS_OFF.reason);
+   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this script.");

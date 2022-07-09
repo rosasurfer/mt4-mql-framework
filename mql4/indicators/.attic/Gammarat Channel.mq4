@@ -131,7 +131,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -290,7 +290,7 @@ void CalculateRepaintingTMA(int startbar) {
       lowerBandRP[i] = tmaRP[i] - Bands.Deviations * MathSqrt(lowerVarianceRP[i]);
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
    return(last_error);
