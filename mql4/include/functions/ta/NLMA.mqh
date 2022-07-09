@@ -9,8 +9,8 @@
  *
  * @link  https://www.forexfactory.com/showthread.php?t=571026#                                 [NonLag Moving Average v4.0]
  * @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                              [NonLag Moving Average v7.1]
- * @link  https://www.mql5.com/en/forum/175037/page62#comment_4583907#                          [NonLag Moving Average v7.8]
- * @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032#                          [NonLag Moving Average v7.9]
+ * @link  https://www.mql5.com/en/forum/175037/page62#comment_4583907                           [NonLag Moving Average v7.8]
+ * @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032                           [NonLag Moving Average v7.9]
  */
 bool NLMA.CalculateWeights(int cycles, int cyclePeriods, double &weights[]) {
    if (cycles < 1)       return(!catch("NLMA.CalculateWeights(1)  invalid parameter cycles: "+ cycles +" (must be positive)", ERR_INVALID_PARAMETER));

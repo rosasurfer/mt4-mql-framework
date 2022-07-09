@@ -9921,7 +9921,7 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
-Periods=20
+WaceCycle.Periods=20
 Color.UpTrend=14772545
 Color.DownTrend=65535
 Draw.Type=Line
