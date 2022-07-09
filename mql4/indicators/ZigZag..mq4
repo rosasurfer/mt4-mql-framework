@@ -69,6 +69,7 @@ extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
 #include <win32api.mqh>
@@ -288,7 +289,7 @@ int onTick() {
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && PeriodStepper.StepSize) HandleCommands();
+   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // manage framework buffers
    ManageDoubleIndicatorBuffer(MODE_UPPER_BAND,        upperBand      );
@@ -491,62 +492,26 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (StrStartsWith(cmd, "up|"))   return(PeriodStepper(STEP_UP));
-   if (StrStartsWith(cmd, "down|")) return(PeriodStepper(STEP_DOWN));
+   static int lastTickcount = 0;
+   int tickcount = StrToInteger(params);
+   if (tickcount <= lastTickcount) return(false);
+   lastTickcount = tickcount;
 
-   return(!logNotice("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd)));
-}
+   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
+   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
 
-
-/**
- * Check for received commands and pass them to the command handler.
- *
- * @return bool - success status
- */
-bool HandleCommands() {
-   string commands[];
-   ArrayResize(commands, 0);
-
-   if (IsChartCommand(commands))
-      return(onCommand(commands));
-   return(true);
-}
-
-
-/**
- * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool IsChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-   string label = "PeriodStepper.command";
-
-   if (ObjectFind(label) == 0) {
-      string cmd = ObjectDescription(label);
-      int tickcount = StrToInteger(StrRightFrom(cmd, "|"));
-      static int lastTickcount;
-
-      if (tickcount > lastTickcount) {
-         ArrayPushString(commands, cmd);
-         lastTickcount = tickcount;
-         return(true);
-      }
-   }
-   return(false);
+   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
 }
 
 
