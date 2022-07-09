@@ -767,7 +767,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // signal new inside bars
-   if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
+   if (signalInsideBar && !__isSuperContext) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe, closeTime, high, low));
    }
    return(true);

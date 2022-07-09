@@ -265,7 +265,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
       RegisterObject(legendLabel);
    }
@@ -342,7 +342,7 @@ int onTick() {
       Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes

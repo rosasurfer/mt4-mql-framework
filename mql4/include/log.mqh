@@ -199,10 +199,9 @@ bool IsLogFatal() {
 int log(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevel]; if (!configLevel) {
-      bool isSuperContext = IsSuperContext();
       int pid = __ExecutionContext[EC.pid];
 
-      if (isSuperContext) configLevel = ep_SuperLoglevel(pid);             // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevel(pid);           // an indicator loaded by iCustom()
       if (!configLevel) {
          if (IsExpert() && !IsTesting()) {
             configLevel = LOG_ALL;                                         // online EAs: all
@@ -214,7 +213,7 @@ int log(string message, int error, int level) {
                value = GetConfigString("Log", key, "off");                 // tester, default: off
             }
             else {
-               key = ifString(isSuperContext, ep_SuperProgramName(pid), ProgramName(MODE_NICE));
+               key = ifString(__isSuperContext, ep_SuperProgramName(pid), ProgramName(MODE_NICE));
                if (!IsConfigKey("Log", key)) key = "Online";
                value = GetConfigString("Log", key, "all");                 // online others, default: all
             }
@@ -337,7 +336,7 @@ int log2Alert(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelAlert]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelAlert(pid);               // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelAlert(pid);               // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2Alert", "notice");             // default: notice
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
@@ -389,7 +388,7 @@ int log2Debugger(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelDebugger]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelDebugger(pid);            // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelDebugger(pid);            // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2Debugger", "all");             // default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
@@ -430,7 +429,7 @@ int log2File(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelFile]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelFile(pid);                // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2File", "all");                 // default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
@@ -471,7 +470,7 @@ int log2Mail(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelMail]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelMail(pid);                // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelMail(pid);                // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2Mail", "off");                 // default: off
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
@@ -526,7 +525,7 @@ int log2SMS(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelSMS]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelSMS(pid);                 // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelSMS(pid);                 // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2SMS", "off");                  // default: off
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);
@@ -575,7 +574,7 @@ int log2Terminal(string message, int error, int level) {
    // read the configuration on first usage
    int configLevel = __ExecutionContext[EC.loglevelTerminal]; if (!configLevel) {
       int pid = __ExecutionContext[EC.pid];
-      if (IsSuperContext()) configLevel = ep_SuperLoglevelTerminal(pid);            // an indicator loaded by iCustom()
+      if (__isSuperContext) configLevel = ep_SuperLoglevelTerminal(pid);            // an indicator loaded by iCustom()
       if (!configLevel) {
          string sValue = GetConfigString("Log", "Log2Terminal", "all");             // default: all
          configLevel = StrToLogLevel(sValue, F_ERR_INVALID_PARAMETER);

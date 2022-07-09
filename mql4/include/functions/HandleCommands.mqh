@@ -6,6 +6,8 @@
  * @return bool - success status
  */
 bool HandleCommands(string channel = "") {
+   if (__isSuperContext) return(true);
+
    string commands[];
    ArrayResize(commands, 0);
 

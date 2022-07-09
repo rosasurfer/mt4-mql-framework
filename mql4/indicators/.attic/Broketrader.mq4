@@ -168,7 +168,7 @@ int onInit() {
    SetIndexEmptyValue(MODE_TREND, 0);
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -342,7 +342,7 @@ int onTick() {
       if (bar > 0) prevReversal = currentReversal;
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 

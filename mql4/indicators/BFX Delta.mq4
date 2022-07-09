@@ -226,7 +226,7 @@ int onTick() {
    }
 
    // signal zero line crossings
-   if (signals) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen()) {
+   if (signals && !__isSuperContext) /*&&*/ if (IsBarOpen()) {
       if      (bufferSignal[1] ==  1) onLevelCross(MODE_UPPER);
       else if (bufferSignal[1] == -1) onLevelCross(MODE_LOWER);
    }

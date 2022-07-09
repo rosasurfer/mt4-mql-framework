@@ -49,7 +49,7 @@ int onInit() {
    IndicatorDigits(Digits);
 
    // Legende
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        string legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
        ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);

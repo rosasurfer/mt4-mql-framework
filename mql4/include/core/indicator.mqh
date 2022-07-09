@@ -17,11 +17,9 @@ double __rates[][6];                                                 // current 
  * @return int - error status
  */
 int init() {
-   if (__STATUS_OFF)
-      return(__STATUS_OFF.reason);
-
-   if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
-      __CoreFunction = CF_INIT;
+   __isSuperContext = (__lpSuperContext != 0);
+   if (__STATUS_OFF) return(__STATUS_OFF.reason);
+   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this indicator.");
@@ -85,7 +83,7 @@ int init() {
    }
 
    // before onInit(): log input parameters if loaded by iCustom()
-   if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
+   if (__isSuperContext && IsLogDebug()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,

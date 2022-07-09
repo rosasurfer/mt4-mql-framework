@@ -174,7 +174,7 @@ int onInit() {
    SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0);
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -307,7 +307,7 @@ int onTick() {
       prevSR = lineUp[bar] + lineDown[bar];
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       color trendColor = ifInt(lineUp[0]!=0, Support.Color, Resistance.Color);
       Trend.UpdateLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL, Time[0]);
    }

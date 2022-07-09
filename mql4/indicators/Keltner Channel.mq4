@@ -140,7 +140,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
    // chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
       RegisterObject(legendLabel);
    }
@@ -221,7 +221,7 @@ int onTick() {
          lowerBand[bar] = ma[bar] - atr;
       }
    }
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
    }
    return(last_error);

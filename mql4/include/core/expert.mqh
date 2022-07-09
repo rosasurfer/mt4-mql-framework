@@ -54,6 +54,8 @@ bool   test.initialized = false;
  * @return int - error status
  */
 int init() {
+   __isSuperContext = false;
+
    if (__STATUS_OFF) {                                         // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason != ERR_TERMINAL_INIT_FAILURE)
          ShowStatus(__STATUS_OFF.reason);

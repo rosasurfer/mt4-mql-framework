@@ -149,7 +149,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
        RegisterObject(legendLabel);
    }
@@ -254,7 +254,7 @@ int onTick() {
 
 
    // update chart legend
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);

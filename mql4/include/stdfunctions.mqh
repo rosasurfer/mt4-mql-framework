@@ -3955,8 +3955,7 @@ bool Tester.IsStopped() {
  * @return string - label name
  */
 string CreateLegendLabel() {
-   if (IsSuperContext())
-      return("");
+   if (__isSuperContext) return("");
 
    string label = "rsf.Legend."+ __ExecutionContext[EC.pid];
    int xDistance =  5;
@@ -6255,16 +6254,6 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
- * Whether the current program is an indicator loaded by iCustom().
- *
- * @return bool
- */
-bool IsSuperContext() {
-   return(__lpSuperContext != 0);
-}
-
-
-/**
  * Round a lot value according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
  * @param  double lots              - lot size
@@ -7222,7 +7211,6 @@ void __DummyCalls() {
    IsScript();
    IsShortOrderType(NULL);
    IsStopOrderType(NULL);
-   IsSuperContext();
    IsTicket(NULL);
    IsVisualModeFix();
    JoinStrings(sNulls);
