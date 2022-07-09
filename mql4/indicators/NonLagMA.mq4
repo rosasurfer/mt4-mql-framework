@@ -72,6 +72,8 @@ double uptrend  [];                                      // uptrend values:     
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
+int    waveCycles = 4;
+int    waveCyclePeriods;
 int    maPeriods;
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
@@ -92,6 +94,10 @@ string signalTrendChange.mailReceiver = "";
 bool   signalTrendChange.sms;
 string signalTrendChange.smsReceiver = "";
 
+// period stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
+
 
 /**
  * Initialization
@@ -103,7 +109,7 @@ int onInit() {
 
    // validate inputs
    // Periods
-   int waveCycles=4, waveCyclePeriods=Periods;
+   waveCyclePeriods = Periods;
    if (AutoConfiguration) waveCyclePeriods = GetConfigInt(indicator, "Periods", waveCyclePeriods);
    if (waveCyclePeriods < 3)                                 return(catch("onInit(1)  invalid input parameter Periods: "+ waveCyclePeriods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
    // AppliedPrice
@@ -163,24 +169,12 @@ int onInit() {
       else signalTrendChange = false;
    }
 
-   // buffer management
+   // buffer management and display options
    SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
    SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
-
-   // names, labels and display options
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = indicator +"("+ Periods + sAppliedPrice +")";
-   string shortName = "NLMA("+ Periods +")";
-   IndicatorShortName(shortName);                        // chart tooltips and context menu
-   SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexLabel(MODE_UPTREND,   NULL);
-   SetIndexLabel(MODE_DOWNTREND, NULL);
-   SetIndexLabel(MODE_UPTREND2,  NULL);
-   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
    // calculate NLMA bar weights
@@ -271,21 +265,6 @@ int onTick() {
 
 
 /**
- * Process an incoming command.
- *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
- *
- * @return bool - success status of the executed command
- */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
-}
-
-
-/**
  * Event handler for trend changes.
  *
  * @param  int trend - direction
@@ -325,6 +304,59 @@ bool onTrendChange(int trend) {
 
 
 /**
+ * Process an incoming command.
+ *
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
+
+   static int lastTickcount = 0;
+   int tickcount = StrToInteger(params);
+   if (tickcount <= lastTickcount) return(false);
+   lastTickcount = tickcount;
+
+   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
+   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
+
+   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+}
+
+
+/**
+ * Change the currently active parameter "Periods".
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ *
+ * @return bool - success status
+ */
+bool PeriodStepper(int direction) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   if (waveCyclePeriods + direction*PeriodStepper.StepSize < 3) {
+      PlaySoundEx("Plonk.wav");
+      return(false);
+   }
+   if (direction == STEP_UP) waveCyclePeriods += PeriodStepper.StepSize;
+   else                      waveCyclePeriods -= PeriodStepper.StepSize;
+
+   ChangedBars = Bars;
+   ValidBars   = 0;
+   ShiftedBars = 0;
+
+   if (NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights)) {
+      maPeriods = ArraySize(maWeights);
+      return(true);
+   }
+   return(false);
+}
+
+
+/**
  * Get the price of the specified type at the given bar offset.
  *
  * @param  int type - price type
@@ -355,13 +387,19 @@ double GetPrice(int type, int i) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods + sAppliedPrice +")";
+   string shortName = "NLMA("+ waveCyclePeriods +")";
+   IndicatorShortName(shortName);
+
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA,        shortName);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,     shortName +" trend");
+   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,   NULL);
+   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND, NULL);
+   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,  NULL);
+   IndicatorDigits(Digits);
 }
 
 
