@@ -44,8 +44,7 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     add step filter
- *     replace Buzzer (it's replicated)
+ *     replace Buzzer
  *     2nd parameter stepper for step filter using VK_SHIFT
  *     fix positioning bug of multiple legends
  *
