@@ -10006,11 +10006,9 @@ name=ZigZag.
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=18
+ZigZag.Periods=10
 ZigZag.Type=Line | Semaphores*
-ZigZag.Width=1
 ZigZag.Color=16711680
-Donchian.ShowCrossings=off | first* | all
 Donchian.ShowChannel=1
 Donchian.Upper.Color=16748574
 Donchian.Lower.Color=16711935
