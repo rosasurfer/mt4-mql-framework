@@ -1,7 +1,7 @@
 /**
  * Arnaud Legoux Moving Average
  *
- * A moving average with bar weights using a Gaussian distribution function (algorithm by Arnaud Legoux).
+ * A moving average using a Gaussian distribution function for calculating bar weights (algorithm by Arnaud Legoux).
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values

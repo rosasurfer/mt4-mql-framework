@@ -45,8 +45,8 @@
  * TODO:
  *  - rewrite NonLagMA + ALMA
  *     add step filter
+ *     replace Buzzer (it's replicated)
  *     2nd parameter stepper for step filter using VK_SHIFT
- *     replace Buzzer
  *     fix positioning bug of multiple legends
  *
  *  - Superbars: implement more timeframes

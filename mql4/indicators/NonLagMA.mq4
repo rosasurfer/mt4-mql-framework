@@ -1,8 +1,8 @@
 /**
  * NonLag Moving Average
  *
- * Fixed and enhanced version of the "NonLag Moving Average" created by Igor Durkin aka igorad. It uses five cosine wave
- * cycles for calculating the MA weights.
+ * A moving average using a cosine wave function for calculating bar weights. Corrected and enhanced version of the original
+ * version published by Igor Durkin aka igorad.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -23,7 +23,7 @@ int __DeinitFlags[];
 
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.MinChange                   = 0;                 // min. MA change for a trend reversal in std-deviations
+extern double MA.Filter                      = 0.68;              // min. MA change in std-deviations for a trend reversal (use half of igorad's PctFilter for corresponding filtering)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -58,10 +58,12 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND2         4
 #define MODE_MA_RAW           5
+#define MODE_MA_CHANGE        6
+#define MODE_AVG              7
 
 #property indicator_chart_window
 #property indicator_buffers   5                          // visible buffers
-int       terminal_buffers  = 6;                         // all buffers
+int       terminal_buffers  = 8;                         // all buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -76,12 +78,14 @@ double uptrend   [];                                     // uptrend values:     
 double downtrend [];                                     // downtrend values:        visible
 double uptrend2  [];                                     // single-bar uptrends:     visible
 
-int    waveCycles = 4;                                   // 4 initial cycles (1 more wave is added later)
+double maChange  [];                                     // absolute change of current maRaw[] to previous maFiltered[]
+double maAverage [];                                     // average of maChange[] over the last 'waveCyclePeriods' bars
+
+int    waveCycles = 4;                                   // 4 initial cycles (1 more is added later)
 int    waveCyclePeriods;
 int    maPeriods;
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
-double maMinChange;                                      // min. change of consecutive MA values in std-deviations
 int    drawType;
 int    maxValues;
 
@@ -128,10 +132,9 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-   // MA.MinChange
-   maMinChange = MA.MinChange;
-   if (AutoConfiguration) maMinChange = GetConfigDouble(indicator, "MA.MinChange", maMinChange);
-   if (maMinChange < 0)                                      return(catch("onInit(3)  invalid input parameter MA.MinChange: "+ NumberToStr(maMinChange, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.Filter
+   if (AutoConfiguration) MA.Filter = GetConfigDouble(indicator, "MA.Filter", MA.Filter);
+   if (MA.Filter < 0)                                        return(catch("onInit(3)  invalid input parameter MA.Filter: "+ NumberToStr(MA.Filter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -179,12 +182,14 @@ int onInit() {
    }
 
    // buffer management and display options
-   SetIndexBuffer(MODE_MA_RAW,      maRaw     );      // MA raw main values:      invisible
-   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);      // MA filtered main values: invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,       trend     );      // trend direction:         invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,     uptrend   );      // uptrend values:          visible
-   SetIndexBuffer(MODE_DOWNTREND,   downtrend );      // downtrend values:        visible
-   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );      // single-bar uptrends:     visible
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:     visible
+   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                          invisible
+   SetIndexBuffer(MODE_AVG,         maAverage );   //                          invisible
    SetIndicatorOptions();
 
    // calculate NLMA bar weights
@@ -231,6 +236,8 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(maRaw,                0);
       ArrayInitialize(maFiltered, EMPTY_VALUE);
+      ArrayInitialize(maChange,             0);
+      ArrayInitialize(maAverage,            0);
       ArrayInitialize(trend,                0);
       ArrayInitialize(uptrend,    EMPTY_VALUE);
       ArrayInitialize(downtrend,  EMPTY_VALUE);
@@ -242,6 +249,8 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(maRaw,      Bars, ShiftedBars,           0);
       ShiftDoubleIndicatorBuffer(maFiltered, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(maChange,   Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(maAverage,  Bars, ShiftedBars,           0);
       ShiftDoubleIndicatorBuffer(trend,      Bars, ShiftedBars,           0);
       ShiftDoubleIndicatorBuffer(uptrend,    Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(downtrend,  Bars, ShiftedBars, EMPTY_VALUE);
@@ -253,6 +262,8 @@ int onTick() {
    int startbar = Min(bars-1, Bars-maPeriods);
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ maPeriods, ERR_HISTORY_INSUFFICIENT));
 
+   double sum, stdDev, minChange;
+
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       maRaw[bar] = 0;
@@ -260,13 +271,35 @@ int onTick() {
          maRaw[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
       maFiltered[bar] = maRaw[bar];
+
+      if (MA.Filter > 0) {
+         maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
+         sum = 0;
+         for (i=0; i < waveCyclePeriods; i++) {                      // calculate average(change) over last 'waveCyclePeriods'
+            sum += maChange[bar+i];
+         }
+         maAverage[bar] = sum/waveCyclePeriods;
+
+         if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = possible trend reversal
+            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'waveCyclePeriods'
+            for (i=0; i < waveCyclePeriods; i++) {
+               sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
+            }
+            stdDev = MathSqrt(sum/waveCyclePeriods);
+            minChange = MA.Filter * stdDev;                          // calculate required min. change
+
+            if (MathAbs(maChange[bar]) < minChange) {
+               maFiltered[bar] = maFiltered[bar+1];                  // discard current raw MA if change is smaller
+            }
+         }
+      }
       Trend.UpdateDirection(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
 
-      // monitor trend changes
+      // monitor trend reversals
       if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
@@ -424,23 +457,23 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";", NL,
-                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";", NL,
-                            "MA.MinChange=",                   NumberToStr(MA.MinChange, ".1+"),               ";"+ NL,
+   return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";"+ NL,
+                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+                            "MA.Filter=",                      NumberToStr(MA.Filter, ".1+"),                  ";"+ NL,
 
-                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";", NL,
-                            "Draw.Width=",                     Draw.Width,                                     ";", NL,
-                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";", NL,
-                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";", NL,
-                            "Max.Bars=",                       Max.Bars,                                       ";", NL,
-                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";", NL,
+                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
+                            "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
+                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
+                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
+                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";"+ NL,
 
-                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";", NL,
-                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";", NL,
-                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";", NL,
-                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";", NL,
-                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";", NL,
-                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";", NL,
+                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
+                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,
+                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
+                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
+                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";"+ NL,
+                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";"+ NL,
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
 }
