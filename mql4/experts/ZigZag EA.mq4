@@ -44,7 +44,7 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     2nd parameter stepper for step filter using VK_SHIFT
+ *     fix signal info in legend
  *
  *  - Superbars: implement more timeframes
  *  - Grid: fix price levels

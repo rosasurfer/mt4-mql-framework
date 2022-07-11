@@ -22,15 +22,16 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
+extern int    WaveCycle.Periods.StepSize     = 0;                 // step size for a stepped parameter
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double MA.Filter                      = 0.7;               // min. MA change in std-deviations for a trend reversal (use half of igorad's PctFilter for similar results)
+extern double MA.Filter.StepSize             = 0;                 // step size for a stepped parameter
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = RoyalBlue;
 extern color  Color.DownTrend                = Red;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
-extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for WaveCycle.Periods
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -121,6 +122,9 @@ int onInit() {
    waveCyclePeriods = WaveCycle.Periods;
    if (AutoConfiguration) waveCyclePeriods = GetConfigInt(indicator, "WaveCycle.Periods", waveCyclePeriods);
    if (waveCyclePeriods < 3)                                 return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ waveCyclePeriods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
+   // WaveCycle.Periods.StepSize
+   if (AutoConfiguration) WaveCycle.Periods.StepSize = GetConfigInt(indicator, "WaveCycle.Periods.StepSize", WaveCycle.Periods.StepSize);
+   if (WaveCycle.Periods.StepSize < 0)                       return(catch("onInit(2)  invalid input parameter WaveCycle.Periods.StepSize: "+ WaveCycle.Periods.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -130,11 +134,14 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // MA.Filter
    if (AutoConfiguration) MA.Filter = GetConfigDouble(indicator, "MA.Filter", MA.Filter);
-   if (MA.Filter < 0)                                        return(catch("onInit(3)  invalid input parameter MA.Filter: "+ NumberToStr(MA.Filter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.Filter < 0)                                        return(catch("onInit(4)  invalid input parameter MA.Filter: "+ NumberToStr(MA.Filter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.Filter.StepSize
+   if (AutoConfiguration) MA.Filter.StepSize = GetConfigDouble(indicator, "MA.Filter.StepSize", MA.Filter.StepSize);
+   if (MA.Filter.StepSize < 0)                               return(catch("onInit(5)  invalid input parameter MA.Filter.StepSize: "+ MA.Filter.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -145,10 +152,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                      return(catch("onInit(4)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                                      return(catch("onInit(6)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                       return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                                       return(catch("onInit(7)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -156,10 +163,8 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // Max.Bars
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(6)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                        return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
-   // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(7)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
 
    // signaling
    signalTrendChange       = Signal.onTrendChange;
@@ -205,7 +210,7 @@ int onInit() {
    else {
       enableMultiColoring = false;
    }
-   return(catch("onInit(8)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -230,7 +235,7 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
+   if (__isChart && (WaveCycle.Periods.StepSize || MA.Filter.StepSize)) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -362,42 +367,72 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 
    static int lastTickcount = 0;
    int tickcount = StrToInteger(params);
-   if (tickcount <= lastTickcount) return(false);
+
+   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
+   if (__isChart) {
+      string label = "rsf."+ ProgramName(MODE_NICE) +".cmd.tickcount";
+      if (ObjectFind(label) == 0) {
+         lastTickcount = StrToInteger(ObjectDescription(label));
+      }
+      if (tickcount <= lastTickcount) return(false);
+      if (ObjectFind(label) != 0) {
+         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+         ObjectSet   (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      }
+      ObjectSetText(label, ""+ tickcount);
+   }
+   else if (tickcount <= lastTickcount) return(false);
    lastTickcount = tickcount;
 
-   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
-   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
+   bool shiftKey = (modifiers == "VK_SHIFT");
+
+   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, shiftKey));
+   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, shiftKey));
 
    return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
 }
 
 
 /**
- * Change the currently active parameter "Periods".
+ * Step up/down input parameter "WaveCycle.Periods" or "MA.Filter".
  *
- * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int  direction - STEP_UP | STEP_DOWN
+ * @param  bool shiftKey  - whether VK_SHIFT was pressed when receiving the stepper command
  *
  * @return bool - success status
  */
-bool PeriodStepper(int direction) {
-   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool ParameterStepper(int direction, bool shiftKey) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   shiftKey = shiftKey!=0;
 
-   if (waveCyclePeriods + direction*PeriodStepper.StepSize < 3) {
-      PlaySoundEx("Plonk.wav");
-      return(false);
+   if (!shiftKey) {
+      // step up/down input parameter "WaveCycle.Periods"
+      if (waveCyclePeriods + direction*WaveCycle.Periods.StepSize < 3) {
+         PlaySoundEx("Plonk.wav");                                         // parameter limit reached
+         return(false);
+      }
+      if (direction == STEP_UP) waveCyclePeriods += WaveCycle.Periods.StepSize;
+      else                      waveCyclePeriods -= WaveCycle.Periods.StepSize;
+
+      if (!NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights)) return(false);
+      maPeriods = ArraySize(maWeights);
    }
-   if (direction == STEP_UP) waveCyclePeriods += PeriodStepper.StepSize;
-   else                      waveCyclePeriods -= PeriodStepper.StepSize;
+   else {
+      // step up/down input parameter "MA.Filter"
+      if (MA.Filter + direction*MA.Filter.StepSize < 0) {
+         PlaySoundEx("Plonk.wav");                                         // parameter limit reached
+         return(false);
+      }
+      if (direction == STEP_UP) MA.Filter += MA.Filter.StepSize;
+      else                      MA.Filter -= MA.Filter.StepSize;
+   }
 
    ChangedBars = Bars;
    ValidBars   = 0;
    ShiftedBars = 0;
 
-   if (NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights)) {
-      maPeriods = ArraySize(maWeights);
-      return(true);
-   }
-   return(false);
+   PlaySoundEx("Tick.wav");
+   return(true);
 }
 
 
@@ -436,7 +471,7 @@ void SetIndicatorOptions() {
 
    string sMaFilter     = ifString(MA.Filter > 0, "/"+ NumberToStr(MA.Filter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods +"/"+ maPeriods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize, "step:", "") + waveCyclePeriods +"/"+ maPeriods + sMaFilter + sAppliedPrice +")";
    string shortName     = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 
@@ -458,15 +493,16 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";"+ NL,
+                            "WaveCycle.Periods.StepSize=",     WaveCycle.Periods.StepSize,                     ";"+ NL,
                             "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
                             "MA.Filter=",                      NumberToStr(MA.Filter, ".1+"),                  ";"+ NL,
+                            "MA.Filter.StepSize=",             NumberToStr(MA.Filter.StepSize, ".1+"),         ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
-                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,
