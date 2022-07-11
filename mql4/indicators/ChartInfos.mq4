@@ -1562,9 +1562,11 @@ bool UpdateStopoutLevel() {
    double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
    double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
    double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
-   if (!Bid || !tickSize || !tickValue) {
-      logInfo("UpdateStopoutLevel(2)  Bid="+ Bid +"  tickSize="+ tickSize +"  tickValue="+ tickValue, ERR_SYMBOL_NOT_AVAILABLE);
-      return(!SetLastError(ERR_SYMBOL_NOT_AVAILABLE));                                 // Symbol (noch) nicht subscribed (Start, Account- oder Templatewechsel) oder Offline-Chart
+   error = GetLastError();
+   if (error || !Bid || !tickSize || !tickValue) {
+      if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
+         return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
+      return(!catch("UpdateStopoutLevel(2)", error));
    }
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
@@ -1585,7 +1587,7 @@ bool UpdateStopoutLevel() {
    ObjectSetText(label.stopoutLevel, text);
 
    error = GetLastError();
-   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                               // on ObjectDrag or opened "Properties" dialog
+   if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
    return(!catch("UpdateStopoutLevel(3)", error));
 }

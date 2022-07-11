@@ -484,7 +484,6 @@ bool CheckErrors(string caller, int error = NULL) {
       case ERS_EXECUTION_STOPPING:
          break;
       default:
-         logInfo("CheckErrors(1)  setting __STATUS_OFF due to mql_error: ", mql_error);
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = mql_error;                   // MQL errors have higher severity than DLL errors
    }
@@ -498,7 +497,6 @@ bool CheckErrors(string caller, int error = NULL) {
       case ERS_EXECUTION_STOPPING:
          break;
       default:
-         logInfo("CheckErrors(2)  setting __STATUS_OFF due to last_error: ", last_error);
          __STATUS_OFF        = true;
          __STATUS_OFF.reason = last_error;                  // main module errors have higher severity than library errors
    }
