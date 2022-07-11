@@ -44,9 +44,7 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     replace Buzzer
  *     2nd parameter stepper for step filter using VK_SHIFT
- *     fix positioning bug of multiple legends
  *
  *  - Superbars: implement more timeframes
  *  - Grid: fix price levels

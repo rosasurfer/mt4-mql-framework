@@ -23,12 +23,12 @@ int __DeinitFlags[];
 
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.Filter                      = 0.68;              // min. MA change in std-deviations for a trend reversal (use half of igorad's PctFilter for corresponding filtering)
+extern double MA.Filter                      = 0.7;               // min. MA change in std-deviations for a trend reversal (use half of igorad's PctFilter for similar results)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  Color.UpTrend                  = Magenta;  //RoyalBlue;
-extern color  Color.DownTrend                = Yellow;   //Red;
+extern color  Color.UpTrend                  = RoyalBlue;
+extern color  Color.DownTrend                = Red;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
 extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for WaveCycle.Periods
 
@@ -150,7 +150,7 @@ int onInit() {
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
    if (Draw.Width < 0)                                       return(catch("onInit(5)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
+   if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend);
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
    if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
@@ -280,7 +280,7 @@ int onTick() {
          }
          maAverage[bar] = sum/waveCyclePeriods;
 
-         if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = possible trend reversal
+         if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
             sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'waveCyclePeriods'
             for (i=0; i < waveCyclePeriods; i++) {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
@@ -289,7 +289,7 @@ int onTick() {
             minChange = MA.Filter * stdDev;                          // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
-               maFiltered[bar] = maFiltered[bar+1];                  // discard current raw MA if change is smaller
+               maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
             }
          }
       }
@@ -299,8 +299,7 @@ int onTick() {
    if (!__isSuperContext) {
       Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
 
-      // monitor trend reversals
-      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
+      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {               // monitor trend reversals
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
@@ -435,9 +434,10 @@ double GetPrice(int type, int i) {
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
 
+   string sMaFilter     = ifString(MA.Filter > 0, "/"+ NumberToStr(MA.Filter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods +"/"+ maPeriods + sAppliedPrice +")";
-   string shortName = "NLMA("+ waveCyclePeriods +")";
+   indicatorName        = "NonLagMA("+ ifString(PeriodStepper.StepSize, "var:", "") + waveCyclePeriods +"/"+ maPeriods + sMaFilter + sAppliedPrice +")";
+   string shortName     = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
