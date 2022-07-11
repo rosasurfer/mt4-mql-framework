@@ -24,13 +24,13 @@ int __DeinitFlags[];
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
 extern int    WaveCycle.Periods.StepSize     = 0;                 // step size for a stepped parameter
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.Filter                      = 0.7;               // min. MA change in std-deviations for a trend reversal (use half of igorad's PctFilter for similar results)
-extern double MA.Filter.StepSize             = 0;                 // step size for a stepped parameter
+extern double MA.Filter                      = 0.7;               // min. MA change in std-deviations for a trend reversal    // Use half of igorad's "PctFilter" for
+extern double MA.Filter.StepSize             = 0;                 // step size for a stepped parameter                        // similar results.
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  Color.UpTrend                  = RoyalBlue;
-extern color  Color.DownTrend                = Red;
+extern color  Color.UpTrend                  = Magenta;
+extern color  Color.DownTrend                = Yellow;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___a__________________________ = "=== Signaling ===";
