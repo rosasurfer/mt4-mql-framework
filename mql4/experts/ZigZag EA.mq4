@@ -48,15 +48,10 @@
  *     fix legend positioning when changing inputs of the top-most indicator
  *
  *  - Superbars: implement more timeframes
- *  - Grid: fix price levels
  *  - support for M5 and 4BF scalping
+ *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display
  *  - implement global var Indicator::CalculatedBars
- *
- *  - clicked in "MarketWatch" on "Hide all"
- *    INFO  US500,M5  ChartInfos::UpdateStopoutLevel(2)  Bid=3'866.60  tickSize=0.01  tickValue=0  [ERR_SYMBOL_NOT_AVAILABLE]
- *    INFO  US500,M5  ChartInfos::CheckErrors(1)  setting __STATUS_OFF due to mql_error:   [ERR_SYMBOL_NOT_AVAILABLE]
- *    INFO  US500,M5  ChartInfos::CheckErrors(2)  setting __STATUS_OFF due to last_error:   [ERR_SYMBOL_NOT_AVAILABLE]
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
