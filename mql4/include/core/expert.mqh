@@ -225,9 +225,9 @@ int init() {
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
-   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message
-      Chart.SendTick();                                                       // queue may be processed before this function
-   return(last_error);                                                        // is left and the tick might get lost.
+   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message queue may be processed
+      Chart.SendTick();                                                       // before this function is left and the tick might get lost.
+   return(last_error);
 }
 
 

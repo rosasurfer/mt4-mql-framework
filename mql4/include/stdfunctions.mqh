@@ -3534,18 +3534,16 @@ int Chart.Expert.Properties() {
  */
 int Chart.SendTick(bool sound = false) {
    sound = sound!=0;
-
    int hWnd = __ExecutionContext[EC.hChart];
 
    if (!__isTesting) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
-   }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // int lParam: 0 - doesn't trigger experts in offline charts
+   }                                                              //             1 - triggers experts in offline charts if a server connection is established
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
    if (sound) PlaySoundEx("Tick.wav");
-
    return(NO_ERROR);
 }
 
@@ -3957,11 +3955,11 @@ bool Tester.IsStopped() {
 string CreateLegendLabel() {
    if (__isSuperContext) return("");
 
-   string label = "rsf.Legend."+ __ExecutionContext[EC.pid];
-   int xDistance =  5;
-   int yDistance = 21;
+   string prefix = "rsf.Legend.", label=prefix + __ExecutionContext[EC.pid];
+   int xDist =  5;
+   int yDist = 20;
 
-   if (ObjectFind(label) >= 0) {
+   if (ObjectFind(label) == 0) {
       // reuse the existing label
    }
    else {
@@ -3971,19 +3969,19 @@ string CreateLegendLabel() {
       for (int i=0; i < objects && labels; i++) {
          string name = ObjectName(i);
          if (ObjectType(name) == OBJ_LABEL) {
-            if (StrStartsWith(name, "rsf.Legend."))
-               yDistance += 19;
+            if (StrStartsWith(name, prefix))
+               yDist += 19;
             labels--;
          }
       }
       if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
          ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xDistance);
-         ObjectSet(label, OBJPROP_YDISTANCE, yDistance);
+         ObjectSet(label, OBJPROP_XDISTANCE, xDist);
+         ObjectSet(label, OBJPROP_YDISTANCE, yDist);
       }
       else GetLastError();
+      ObjectSetText(label, " ");
    }
-   ObjectSetText(label, " ");
 
    return(ifString(catch("CreateLegendLabel(1)"), "", label));
 }
