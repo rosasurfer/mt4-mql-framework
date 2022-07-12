@@ -169,6 +169,7 @@ int onInit() {
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, signalTrendChange.smsReceiver))                                 return(last_error);
       if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
          legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
+         legendInfo = "("+ legendInfo +")";
       }
       else signalTrendChange = false;
    }
@@ -214,6 +215,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   int starttime = GetTickCount();
+
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -263,6 +266,9 @@ int onTick() {
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
+
+   int millis = (GetTickCount()-starttime);
+   //if (!ValidBars) debug("onTick(0.1)  Tick="+ Ticks +"  bars="+ (startbar+1) +"  time="+ DoubleToStr(millis/1000., 3) +" sec");
    return(last_error);
 
    // Speed test on Toshiba Satellite
@@ -283,11 +289,21 @@ int onTick() {
    //
    // Speed test on Dell Precision
    // ---------------------------------------------------------------------------------------------------
-   // as above            ALMA(168)    as above                   bars(2000)=0.062 sec   as above
+   // as above            ALMA(168)    as above                   bars(2000)=0.062 sec   as above           // no quantifiable difference between iMA() and GetPrice()
    // ...                 ALMA(336)    ...                        bars(2000)=0.109 sec   ...
    // ...                 ALMA(672)    ...                        bars(2000)=0.218 sec   ...
    // ...                 ALMA(2016)   ...                        bars(2000)=0.671 sec   ...
    // ...                 ALMA(10080)  ...                        bars(2000)=3.323 sec   ...
+   //                     ALMA(38)     ...                       bars(10000)=0.063 sec
+   //
+   // Speed test on Dell Precision NonLagMA
+   // ---------------------------------------------------------------------------------------------------
+   //                     NLMA(34)     weights(169)               bars(2000)=0.062 sec   as above           // no quantifiable difference between iMA() and GetPrice()
+   //                     NLMA(68)     weights(339)               bars(2000)=0.125 sec   ...
+   //                     NLMA(135)    weights(674)               bars(2000)=0.234 sec   ...
+   //                     NLMA(404)    weights(2019)              bars(2000)=0.733 sec   ...
+   //                     NLMA(2016)   weights(10079)             bars(2000)=3.557 sec   ...
+   //                     NLMA(20)     weights(99)               bars(10000)=0.187 sec
    //
    // Conclusion: Weights calculation can be ignored, bottleneck is the nested loop in MA calculation.
 }
@@ -378,7 +394,9 @@ bool PeriodStepper(int direction) {
    ValidBars   = 0;
    ShiftedBars = 0;
 
-   return(ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights));
+   if (!ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights)) return(false);
+   PlaySoundEx("Parameter Step.wav");
+   return(true);
 }
 
 

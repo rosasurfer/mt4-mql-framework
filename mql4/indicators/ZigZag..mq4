@@ -236,6 +236,7 @@ int onInit() {
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
          legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
+         legendInfo = "("+ legendInfo +")";
       }
       else signalReversal = false;
    }
@@ -532,6 +533,7 @@ bool PeriodStepper(int direction) {
    ValidBars   = 0;
    ShiftedBars = 0;
 
+   PlaySoundEx("Parameter Step.wav");
    return(true);
 }
 
@@ -548,7 +550,7 @@ void UpdateLegend() {
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       if (!tickSize) tickSize = GetTickSize();
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
-      string sSignal   = ifString(signalReversal, "   ("+ legendInfo +")", "");
+      string sSignal   = ifString(signalReversal, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;
