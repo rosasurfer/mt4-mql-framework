@@ -10034,8 +10034,8 @@ window_num=0
 WaceCycle.Periods=20
 MA.Filter=0.7
 Draw.Width=3
-Color.UpTrend=16760576
-Color.DownTrend=42495
+Color.UpTrend=16711935
+Color.DownTrend=65535
 </inputs>
 </expert>
 weight_0=0

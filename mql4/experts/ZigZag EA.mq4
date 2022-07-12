@@ -44,7 +44,6 @@
  *
  * TODO:
  *  - rewrite NonLagMA + ALMA
- *     fix signal info in legend
  *     fix legend positioning when changing inputs of the top-most indicator
  *
  *  - Superbars: implement more timeframes
@@ -143,6 +142,8 @@
  *  - TradeManager for custom positions
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
+ *  - rewrite parameter stepping: remove commands from channel after processing
+ *  - rewrite range bar generator (after some time it's bringing everything to a halt)
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - VPS: monitor and notify of incoming emails
  *  - realtime equity charts

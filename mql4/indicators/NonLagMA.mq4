@@ -182,6 +182,7 @@ int onInit() {
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, signalTrendChange.smsReceiver))                                 return(last_error);
       if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
          legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
+         legendInfo = "("+ legendInfo +")";
       }
       else signalTrendChange = false;
    }
@@ -231,6 +232,8 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   int starttime = GetTickCount();
+
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -310,6 +313,9 @@ int onTick() {
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
+
+   int millis = (GetTickCount()-starttime);
+   //if (!ValidBars) debug("onTick(0.1)  Tick="+ Ticks +"  bars="+ (startbar+1) +"  time="+ DoubleToStr(millis/1000., 3) +" sec");
    return(last_error);
 }
 
@@ -431,7 +437,7 @@ bool ParameterStepper(int direction, bool shiftKey) {
    ValidBars   = 0;
    ShiftedBars = 0;
 
-   PlaySoundEx("Tick.wav");
+   PlaySoundEx("Parameter Step.wav");
    return(true);
 }
 
@@ -471,7 +477,7 @@ void SetIndicatorOptions() {
 
    string sMaFilter     = ifString(MA.Filter > 0, "/"+ NumberToStr(MA.Filter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize, "step:", "") + waveCyclePeriods +"/"+ maPeriods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
    string shortName     = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 

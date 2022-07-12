@@ -160,7 +160,7 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
          else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(name, "    ", sValue, sTrend, status, sOnTrendChange);
+      string text = StringConcatenate(name, "    ", sValue, sTrend, sOnTrendChange, status);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
