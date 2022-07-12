@@ -134,27 +134,19 @@ int CreateChartObjects() {
 
    // background rectangles
    string label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == 0) ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yPos);
-      ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yPos);
+   ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
 
    n++;
    label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == 0) ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yPos+124);          // line height: 14 pt
-      ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yPos+124);          // line height: 14 pt
+   ObjectSetText(label, "g", bgFontSize, bgFontName, bgColor);
 
    // text labels: lines with additional margin-top
    int marginTop  [] = {I_DIGITS, I_ADR, I_STOPLEVEL, I_LOTSIZE, I_MARGIN_INITIAL, I_MARGIN_INITIAL_DATA, I_SPREAD, I_SWAPLONG, I_ACCOUNT_LEVERAGE, I_SERVER_NAME};
@@ -171,46 +163,42 @@ int CreateChartObjects() {
    for (int i=0; i < size; i++) {
       n++;
       label = indicatorName +"."+ n +"."+ labels[i];
-      if (ObjectFind(label) == 0) ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
 
-         if (IntInArray(col2Lots, i)) {                  // lots column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else if (IntInArray(col2Margin, i)) {           // margin column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else if (IntInArray(col2Spread, i)) {           // spread column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else if (IntInArray(col2Swap, i)) {             // swap column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else if (IntInArray(col2Account, i)) {          // account column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else if (IntInArray(col2Server, i)) {           // server column 2
-            xCoord = xPos + 148;
-            yCoord -= 16;
-         }
-         else {                                          // all remaining fields: column 1
-            xCoord = xPos + 6;
-            if (IntInArray(marginTop, i)) yCoord += 8;
-         }
-
-         ObjectSet(label, OBJPROP_XDISTANCE, xCoord);
-         ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
-         ObjectSetText(label, " ", fontSize, fontName);
-         RegisterObject(label);
-         labels[i] = label;
+      if (IntInArray(col2Lots, i)) {                  // lots column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
       }
-      else GetLastError();
+      else if (IntInArray(col2Margin, i)) {           // margin column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
+      }
+      else if (IntInArray(col2Spread, i)) {           // spread column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
+      }
+      else if (IntInArray(col2Swap, i)) {             // swap column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
+      }
+      else if (IntInArray(col2Account, i)) {          // account column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
+      }
+      else if (IntInArray(col2Server, i)) {           // server column 2
+         xCoord = xPos + 148;
+         yCoord -= 16;
+      }
+      else {                                          // all remaining fields: column 1
+         xCoord = xPos + 6;
+         if (IntInArray(marginTop, i)) yCoord += 8;
+      }
+
+      ObjectSet(label, OBJPROP_XDISTANCE, xCoord);
+      ObjectSet(label, OBJPROP_YDISTANCE, yCoord + i*16);
+      ObjectSetText(label, " ", fontSize, fontName);
+      labels[i] = label;
    }
    return(catch("CreateChartObjects(1)"));
 }

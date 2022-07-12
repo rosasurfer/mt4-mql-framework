@@ -4599,10 +4599,7 @@ int CreateStatusBox() {
 
    for (int i=0; i < rectangles; i++) {
       label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
-      if (ObjectFind(label) != 0) {
-         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-         RegisterObject(label);
-      }
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, y);

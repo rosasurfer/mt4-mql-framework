@@ -35,17 +35,6 @@ int onInit() {
 
 
 /**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   DeleteRegisteredObjects();
-   return(catch("onDeinit(1)"));
-}
-
-
-/**
  * Main function
  *
  * @return int - error status
@@ -147,31 +136,25 @@ int DrawGrid() {
       label = TimeToStr(time);
       label = StringConcatenate(GmtTimeFormat(time, "%a"), " ", StringSubstr(label, 8, 2), ".", StringSubstr(label, 5, 2), ".", StringSubstr(label, 0, 4));
 
-      if (lastChartTime == chartTime)                                         // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
-         ObjectDelete(lastLabel);                                             // Separator für die fehlende Periode wieder löschen
-
+      if (lastChartTime == chartTime) ObjectDelete(lastLabel);                // Bars der vorherigen Periode fehlen (noch laufendes ERS_HISTORY_UPDATE oder Kurslücke)
+                                                                              // Separator für die fehlende Periode wieder löschen
       // Separator zeichnen
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_VLINE, 0, chartTime, 0)) {
-         sepStyle = STYLE_DOT;
-         sepColor = Color.RegularGrid;
-         if (Period() < PERIOD_H4) {
-            if (dow == MONDAY) {
-               sepStyle = STYLE_DASHDOTDOT;
-               sepColor = Color.SuperGrid;
-            }
-         }
-         else if (Period() == PERIOD_H4) {
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_VLINE, 0, chartTime, 0, 0, 0, 0, 0)) return(false);
+      sepStyle = STYLE_DOT;
+      sepColor = Color.RegularGrid;
+      if (Period() < PERIOD_H4) {
+         if (dow == MONDAY) {
             sepStyle = STYLE_DASHDOTDOT;
             sepColor = Color.SuperGrid;
          }
-         ObjectSet(label, OBJPROP_STYLE, sepStyle);
-         ObjectSet(label, OBJPROP_COLOR, sepColor);
-         ObjectSet(label, OBJPROP_BACK , true  );
-         RegisterObject(label);
       }
-      else GetLastError();
+      else if (Period() == PERIOD_H4) {
+         sepStyle = STYLE_DASHDOTDOT;
+         sepColor = Color.SuperGrid;
+      }
+      ObjectSet(label, OBJPROP_STYLE, sepStyle);
+      ObjectSet(label, OBJPROP_COLOR, sepColor);
+      ObjectSet(label, OBJPROP_BACK,  true);
       lastChartTime = chartTime;
       lastLabel     = label;                                                  // Daten des letzten Separators für Lückenerkennung merken
 

@@ -43,10 +43,33 @@
  *
  *
  * TODO:
- *  - rewrite NonLagMA + ALMA
- *     fix legend positioning when changing inputs of the top-most indicator
+ *  - Superbars
+ *     ValidBars is 0, ShiftedBars is not set
+ *      in range bar offline charts
+ *      in offline charts receiving mixed ticks (refresh + standard tick)
+ *      in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
+ *      in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
  *
- *  - Superbars: implement more timeframes
+ *     regular charts: thousands of non-stopping calls of RegisterObject()       // 106.000 initial calls with 7 open charts
+ *     range bar offline charts: superTF=H1 => 271 calls of RegisterObject() on every tick
+ *      ValidBars is always 0, all Superbars are redrawn
+ *     implement more timeframes
+ *     improve: return(__ExecutionContext[EC.mqlError])
+ *
+ *  - fix legend positioning
+ *     detect and remove orphaned legends from crashed programs (at terminal start and runtime)
+ *     keep order when changing indicator inputs
+ *     don't remove legend at every init cycle
+ *
+ *     stdfunctions::CreateLegendLabel()
+ *     rsfLib::RepositionLegend()
+ *     rsfLib::RegisterObject()
+ *     rsfLib::DeleteRegisteredObjects()
+ *
+ *  - rewrite ZigZag, NonLagMA, ALMA, T3
+ *     auto-configuration
+ *     parameter stepper
+ *
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display

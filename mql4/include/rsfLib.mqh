@@ -215,7 +215,7 @@
    int      IncreasePeriod(int period);
    int      DecreasePeriod(int period);
 
-   int      RegisterObject(string label);
+   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    int      DeleteRegisteredObjects();
    int      RepositionLegend();
 

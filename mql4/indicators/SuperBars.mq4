@@ -370,12 +370,16 @@ bool UpdateSuperBars() {
       }
    }
 
+   if (Period()==202 || ((Symbol()=="US500" || Symbol()=="USDLFX") && Period()==1)) {
+      //debug("UpdateSuperBarsBar(0.1)  Tick="+ Ticks +"  Bars="+ Bars +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars +"  ShiftedBars="+ ShiftedBars);
+   }
+
    // update superbars
    // ----------------
    //  - drawing range is ChangedBars but we don't use a loop over it
    //  - the youngest (still unfinished) SuperBar is limited on the right by Bar[0] and grows with progression of time
    //  - the oldest SuperBar exceedes ChangedBars on the left if Bars > ChangedBars (the regular case)
-   //  - "super session" doesn't mean 24h but the superbar period
+   //  - "super session" means the superbar period
    datetime openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv;
    int openBar, closeBar, lastChartBar=Bars-1;
 
@@ -454,13 +458,9 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          justifiedCloseBar--;
       }
    }
-   if (ObjectFind   (label) == 0) ObjectDelete(label);
-   if (ObjectCreate (label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[justifiedCloseBar], Low[lowBar])) {
-      ObjectSet     (label, OBJPROP_COLOR, barColor);
-      ObjectSet     (label, OBJPROP_BACK,  true);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[justifiedCloseBar], Low[lowBar], 0, 0)) return(false);
+   ObjectSet(label, OBJPROP_COLOR, barColor);
+   ObjectSet(label, OBJPROP_BACK,  true);
 
    // draw close marker
    if (closeBar > 0) {                                               // except for the youngest (still unfinished) SuperBar
@@ -477,19 +477,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          }
          labelWithPrice = labelWithoutPrice +" "+ NumberToStr(Close[closeBar], PriceFormat);
 
-         if (ObjectCreate (labelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
-            ObjectSet     (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-            ObjectSetText (labelWithoutPrice, labelWithPrice);
-            RegisterObject(labelWithoutPrice);
-         } else GetLastError();
+         if (!ObjectCreateRegister(labelWithoutPrice, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet    (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         ObjectSetText(labelWithoutPrice, labelWithPrice);
 
-         if (ObjectCreate (labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar])) {
-            ObjectSet     (labelWithPrice, OBJPROP_RAY,   false);
-            ObjectSet     (labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet     (labelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
-            ObjectSet     (labelWithPrice, OBJPROP_BACK,  true);
-            RegisterObject(labelWithPrice);
-         } else GetLastError();
+         if (!ObjectCreateRegister(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar], 0, 0)) return(false);
+         ObjectSet(labelWithPrice, OBJPROP_RAY,   false);
+         ObjectSet(labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSet(labelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
+         ObjectSet(labelWithPrice, OBJPROP_BACK,  true);
       }
    }
 
@@ -526,21 +522,16 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       string ethLabel   = label +" ETH";
       string ethBgLabel = label +" ETH background";
 
-      // drwa ETH background (creates an optical whole in the Superbar)
-      if (ObjectFind(ethBgLabel) == 0) ObjectDelete(ethBgLabel);
-      if (ObjectCreate(ethBgLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
-         ObjectSet     (ethBgLabel, OBJPROP_COLOR, barColor);
-         ObjectSet     (ethBgLabel, OBJPROP_BACK, true);
-         RegisterObject(ethBgLabel);                                             // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      }                                                                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
-                                                                                 // White. White mixed with another color gives again the original color. With this we create an "optical whole" in the color
-      // draw ETH bar (fills the whole with the ETH color)                       // of the chart background in the SuperBar. Then we draw the ETH bar into this "whole". It's color doesn't get mixed with the
-      if (ObjectFind(ethLabel) == 0) ObjectDelete(ethLabel);                     // "whole"'s color Presumably because the terminal uses a different drawing mode for this mixing.
-      if (ObjectCreate(ethLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow)) {
-         ObjectSet     (ethLabel, OBJPROP_COLOR, ETH.Color);
-         ObjectSet     (ethLabel, OBJPROP_BACK,  true);
-         RegisterObject(ethLabel);
-      }
+      // drwa ETH background (creates an optical hole in the Superbar)
+      if (ObjectFind(ethBgLabel) == -1) if (!ObjectCreateRegister(ethBgLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
+      ObjectSet(ethBgLabel, OBJPROP_COLOR, barColor);                            // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      ObjectSet(ethBgLabel, OBJPROP_BACK,  true);                                // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+                                                                                 // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
+      // draw ETH bar (fills the hole with the ETH color)                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
+      if (ObjectFind(ethLabel) == -1)                                            // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
+         if (!ObjectCreateRegister(ethLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
+      ObjectSet(ethLabel, OBJPROP_COLOR, ETH.Color);
+      ObjectSet(ethLabel, OBJPROP_BACK,  true);
 
       // draw ETH close marker if the RTH session has started
       if (TimeServer() >= ethCloseTimeSrv) {
@@ -557,19 +548,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             }
             ethLabelWithPrice = ethLabelWithoutPrice +" "+ NumberToStr(ethClose, PriceFormat);
 
-            if (ObjectCreate(ethLabelWithoutPrice, OBJ_LABEL, 0, 0, 0)) {
-               ObjectSet    (ethLabelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-               ObjectSetText(ethLabelWithoutPrice, ethLabelWithPrice);
-               RegisterObject(ethLabelWithoutPrice);
-            } else GetLastError();
+            if (!ObjectCreateRegister(ethLabelWithoutPrice, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+            ObjectSet    (ethLabelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+            ObjectSetText(ethLabelWithoutPrice, ethLabelWithPrice);
 
-            if (ObjectCreate(ethLabelWithPrice, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose)) {
-               ObjectSet    (ethLabelWithPrice, OBJPROP_RAY,   false);
-               ObjectSet    (ethLabelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
-               ObjectSet    (ethLabelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
-               ObjectSet    (ethLabelWithPrice, OBJPROP_BACK,  true);
-               RegisterObject(ethLabelWithPrice);
-            } else GetLastError();
+            if (!ObjectCreate(ethLabelWithPrice, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose)) return(false);
+            ObjectSet(ethLabelWithPrice, OBJPROP_RAY,   false);
+            ObjectSet(ethLabelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet(ethLabelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
+            ObjectSet(ethLabelWithPrice, OBJPROP_BACK,  true);
          }
       }
       break;
@@ -643,26 +630,21 @@ bool UpdateDescription() {
 /**
  * Create a text label for the indicator status.
  *
- * @return string - the label or an empty string in case of errors
+ * @return string - the label name or an empty string in case of errors
  */
 string CreateStatusLabel() {
    if (__isSuperContext) return("");
 
-   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
+   string name = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER,    legendCorner);
-      ObjectSet    (label, OBJPROP_XDISTANCE, legend_xDistance);
-      ObjectSet    (label, OBJPROP_YDISTANCE, legend_yDistance);
-      ObjectSetText(label, " ", 1);
-      RegisterObject(label);
-   }
+   if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   ObjectSet    (name, OBJPROP_CORNER,    legendCorner);
+   ObjectSet    (name, OBJPROP_XDISTANCE, legend_xDistance);
+   ObjectSet    (name, OBJPROP_YDISTANCE, legend_yDistance);
+   ObjectSetText(name, " ", 1);
 
    if (!catch("CreateStatusLabel(1)"))
-      return(label);
+      return(name);
    return("");
 }
 
@@ -683,9 +665,7 @@ bool StoreRuntimeStatus() {
    SetWindowIntegerA(hWnd, label, superTimeframe);
 
    // store timeframe in the chart
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   ObjectCreate (label, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ superTimeframe);
 
@@ -711,7 +691,6 @@ bool RestoreStatus() {
          string value = ObjectDescription(label);
          if (StrIsInteger(value))
             result = StrToInteger(value);
-         ObjectDelete(label);
       }
    }
    if (result != 0) superTimeframe = result;

@@ -3956,32 +3956,27 @@ string CreateLegendLabel() {
    if (__isSuperContext) return("");
 
    string prefix = "rsf.Legend.", label=prefix + __ExecutionContext[EC.pid];
-   int xDist =  5;
-   int yDist = 20;
 
-   if (ObjectFind(label) == 0) {
-      // reuse the existing label
-   }
-   else {
-      // create a new label
-      int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
+   // reuse an existing label
+   if (ObjectFind(label) != -1)
+      return(label);
 
-      for (int i=0; i < objects && labels; i++) {
-         string name = ObjectName(i);
-         if (ObjectType(name) == OBJ_LABEL) {
-            if (StrStartsWith(name, prefix))
-               yDist += 19;
-            labels--;
-         }
+   // create a new label
+   int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL), xDist=5, yDist=20;
+
+   for (int i=0; i < objects && labels; i++) {
+      string name = ObjectName(i);
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StrStartsWith(name, prefix))
+            yDist += 19;
+         labels--;
       }
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xDist);
-         ObjectSet(label, OBJPROP_YDISTANCE, yDist);
-      }
-      else GetLastError();
-      ObjectSetText(label, " ");
    }
+   if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet(label, OBJPROP_XDISTANCE, xDist);
+   ObjectSet(label, OBJPROP_YDISTANCE, yDist);
+   ObjectSetText(label, " ");
 
    return(ifString(catch("CreateLegendLabel(1)"), "", label));
 }
@@ -7355,6 +7350,7 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
+   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);
