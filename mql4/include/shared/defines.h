@@ -237,9 +237,9 @@
 
 
 // normalizing modes, see NormalizeLots()
-#define MODE_FLOOR                              1        // normalize down to the next smallest absolute value
+#define MODE_FLOOR                              1        // normalize to the next smallest absolute value (towards zero)
 #define MODE_DEFAULT                            2        // normalize according to standard rounding rules
-#define MODE_CEIL                               3        // normalize up to the next largest absolute value
+#define MODE_CEIL                               3        // normalize to the next largest absolute value (away from zero)
 
 
 // file function flags
