@@ -7043,14 +7043,13 @@ if (hFile) {
       caption=ObjectFind()
       type=int
       <content>
-Search for an object with the specified name and return the index of the chart window containing the object or -1 if no such object was found.
-The main chart window has the index 0. Chart subwindows (if any) are numbered starting from 1.
+        Search for the object with the specified name and return the index of the chart window containing it or <span class="number">-1</span> if no such object was found.
+        The main chart window has index <span class="number">0</span>, chart subwindows (if any) are numbered starting from <span class="number">1</span>.
       </content>
       <example>
-<span class="type">int</span> index = 0;
-<br/>
-<span class="keyword">if</span> (<span class="function">ObjectFind</span>(<span class="string">&quot;line_object2&quot;</span>) != index) {
-   <span class="keyword">return</span>(<span class="number">0</span>);
+<span class="type code">int</span> index = <span class="number code">0</span>;<br/>
+<span class="keyword code">if</span> (<span class="function code">ObjectFind</span>(<span class="string code">"line_object2"</span>) != index) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
 }
       </example>
       <parameter>

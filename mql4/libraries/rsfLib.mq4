@@ -303,8 +303,8 @@ bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nex
 }
 
 
-string lock.names   [];                                           // Namen der Locks, die vom aktuellen Programm gehalten werden
-int    lock.counters[];                                           // Anzahl der akquirierten Locks je Name
+string __lockNames   [];                                          // Namen der Locks, die vom Programm gehalten werden
+int    __lockCounters[];                                          // Anzahl der akquirierten Locks je Name
 
 
 /**
@@ -321,9 +321,9 @@ bool AquireLock(string mutexName, bool wait) {
    if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
 
    // check if we already own the lock
-   int i = SearchStringArray(lock.names, mutexName);
+   int i = SearchStringArray(__lockNames, mutexName);
    if (i > -1) {                                               // yes
-      lock.counters[i]++;
+      __lockCounters[i]++;
       return(true);
    }
 
@@ -333,8 +333,8 @@ bool AquireLock(string mutexName, bool wait) {
    // loop until lock is aquired
    while (true) {
       if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
-         ArrayPushString(lock.names, mutexName);               // got it
-         ArrayPushInt   (lock.counters,      1);
+         ArrayPushString(__lockNames, mutexName);               // got it
+         ArrayPushInt   (__lockCounters,      1);
          return(true);
       }
       error = GetLastError();
@@ -380,17 +380,17 @@ bool ReleaseLock(string mutexName) {
    if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
 
    // check, if we indeed own that lock
-   int i = SearchStringArray(lock.names, mutexName);
+   int i = SearchStringArray(__lockNames, mutexName);
    if (i == -1)
       return(!catch("ReleaseLock(2)  do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR));
 
    // we do, decrease the counter
-   lock.counters[i]--;
+   __lockCounters[i]--;
 
    // remove it, if counter is zero
-   if (lock.counters[i] == 0) {
-      ArraySpliceStrings(lock.names,    i, 1);
-      ArraySpliceInts   (lock.counters, i, 1);
+   if (__lockCounters[i] == 0) {
+      ArraySpliceStrings(__lockNames,    i, 1);
+      ArraySpliceInts   (__lockCounters, i, 1);
 
       string globalVarName = mutexName;
 
@@ -416,9 +416,9 @@ bool ReleaseLock(string mutexName) {
 int CheckLocks() {
    int error = NO_ERROR;
 
-   for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
-      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
-      if (!ReleaseLock(lock.names[i]))
+   for (int i=ArraySize(__lockNames)-1; i >= 0; i--) {
+      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
+      if (!ReleaseLock(__lockNames[i]))
          error = last_error;
    }
    return(error);
@@ -891,33 +891,30 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 int RepositionLegend() {
    if (__isSuperContext) return(true);
 
-   int objects = ObjectsTotal(),
-       labels  = ObjectsTotal(OBJ_LABEL);
+   int iObjects=ObjectsTotal(), iLabels=ObjectsTotal(OBJ_LABEL);
 
-   string legends[];       ArrayResize(legends,    0);   // Namen der gefundenen Label
-   int    yDistances[][2]; ArrayResize(yDistances, 0);   // Y-Distance und legends[]-Index, um Label nach Position sortieren zu können
+   string sLabels[];   ArrayResize(sLabels, 0);    // Namen der gefundenen Label
+   int    yDists[][2]; ArrayResize(yDists,  0);    // Y-Distance und sLabels[]-Index, um Label nach Position sortieren zu können
 
-   int legendLabels;
-
-   for (int i=0; i < objects && labels > 0; i++) {
+   for (int i=0, n; i < iObjects && iLabels; i++) {
       string objName = ObjectName(i);
       if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "Legend.")) {
-            legendLabels++;
-            ArrayResize(legends,    legendLabels);
-            ArrayResize(yDistances, legendLabels);
-            legends   [legendLabels-1]    = objName;
-            yDistances[legendLabels-1][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
-            yDistances[legendLabels-1][1] = legendLabels-1;
+         if (StrStartsWith(objName, "rsf.Legend.")) {
+            ArrayResize(sLabels, n+1);
+            ArrayResize(yDists,  n+1);
+            sLabels[n]    = objName;
+            yDists [n][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
+            yDists [n][1] = n;
+            n++;
          }
-         labels--;
+         iLabels--;
       }
    }
 
-   if (legendLabels > 0) {
-      ArraySort(yDistances);
-      for (i=0; i < legendLabels; i++) {
-         ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
+   if (n > 0) {
+      ArraySort(yDists);
+      for (i=0; i < n; i++) {
+         ObjectSet(sLabels[yDists[i][1]], OBJPROP_YDISTANCE, 20 + i*19);
       }
    }
    return(catch("RepositionLegend(1)"));
@@ -4431,7 +4428,8 @@ int IncreasePeriod(int period = 0) {
 }
 
 
-string registeredObjects[];
+string __registeredObjects[];
+int    __registeredOjectsCounter = 0;
 
 
 /**
@@ -4439,13 +4437,28 @@ string registeredObjects[];
  *
  * @param  string label - object label
  *
- * @return int - number of registered objects or -1 in case of errors
+ * @return int - total number of registered objects or -1 in case of errors
+ *
+ * TODO:
+ *  - 106.000 initial calls on terminal start with 7 open charts
+ *  - SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
+ *  - SuperBars in offline charts: 271 calls on every tick
+ *  - move to EXECUTION_CONTEXT as the library is not a singleton (there can be multiple instances)
  */
 int RegisterObject(string label) {
-   int size = ArraySize(registeredObjects);        // TODO: Needs massive performance improvement.
-   ArrayResize(registeredObjects, size+1);         //       On terminal start with 7 open charts we observe 106.000 calls.
-   registeredObjects[size] = label;
-   return(size+1);
+   int size = ArraySize(__registeredObjects);
+
+   if (size <= __registeredOjectsCounter) {
+      if (!size) size = 512;
+      size <<= 1;                                     // prevent re-allocation on every call (initial size 1024)
+      ArrayResize(__registeredObjects, size);
+      if (size >= 1048576) debug("RegisterObject(0.1)  sizeOf(__registeredObjects) = "+ size);
+   }
+   __registeredObjects[__registeredOjectsCounter] = label;
+   __registeredOjectsCounter++;
+
+   //debug("RegisterObject(0.2)  "+ __registeredOjectsCounter +"  \""+ label +"\"");
+   return(__registeredOjectsCounter);
 }
 
 
@@ -4455,16 +4468,13 @@ int RegisterObject(string label) {
  * @return int - error status
  */
 int DeleteRegisteredObjects() {
-   int size = ArraySize(registeredObjects);
-   if (!size) return(NO_ERROR);
-
-   for (int i=0; i < size; i++) {
-      if (ObjectFind(registeredObjects[i]) != -1) {
-         if (!ObjectDelete(registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+   for (int i=0; i < __registeredOjectsCounter; i++) {
+      if (ObjectFind(__registeredObjects[i]) != -1) {
+         if (!ObjectDelete(__registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(label=\""+ __registeredObjects[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR));
       }
    }
-   ArrayResize(registeredObjects, 0);
-
+   ArrayResize(__registeredObjects, 0);
+   __registeredOjectsCounter = 0;
    return(catch("DeleteRegisteredObjects(2)"));
 }
 
@@ -8446,8 +8456,11 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
  * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
 void onLibraryInit() {
-   ArrayResize(lock.names,    0);
-   ArrayResize(lock.counters, 0);
+   ArrayResize(__lockNames,    0);
+   ArrayResize(__lockCounters, 0);
+
+   ArrayResize(__registeredObjects, 0);
+   __registeredOjectsCounter = 0;
 }
 
 
