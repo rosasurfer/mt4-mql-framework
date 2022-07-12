@@ -198,14 +198,11 @@ bool UpdateSignalMarker(int bar) {
       prefix = StringConcatenate(ProgramName(MODE_NICE), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
-   bool objExists = !ObjectFind(label);
+   bool objExists = (ObjectFind(label) != -1);
    double price;
 
    if (trend[bar]==1 || trend[bar]==-1) {                                     // set marker long|short
-      if (!objExists) {
-         ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
-         RegisterObject(label);
-      }
+      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW, 0, 0, 0, 0, 0, 0, 0)) return(false);
       if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar) * 1.1;
       else               price = High[bar] + iATR(NULL, NULL, 10, bar) * 1.1;
 

@@ -1043,7 +1043,7 @@ bool CreateLabels() {
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
-   label.customPosition = programName +".CustomPosition";                                 // base value for actual row/column labels
+   label.customPosition = programName +".CustomPosition";                           // base value for actual row/column labels
    label.totalPosition  = programName +".TotalPosition";
    label.unitSize       = programName +".UnitSize";
    label.accountBalance = programName +".AccountBalance";
@@ -1054,16 +1054,11 @@ bool CreateLabels() {
    int corner, xDist, yDist, build=GetTerminalBuild();
 
    // instrument name (the text is set immediately here)
-   if (build <= 509) {                                                                    // only builds <= 509, newer builds already display the symbol here
-      if (ObjectFind(label.instrument) != -1)
-         ObjectDelete(label.instrument);
-      if (ObjectCreate(label.instrument, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet    (label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));   // On builds > 478 the label is inset to account for the arrow of the
-         ObjectSet    (label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));   // "One-Click-Trading" feature.
-         RegisterObject(label.instrument);
-      }
-      else GetLastError();
+   if (build <= 509) {                                                              // only builds <= 509, newer builds already display the symbol here
+      if (ObjectFind(label.instrument) == -1) if (!ObjectCreateRegister(label.instrument, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(label.instrument, OBJPROP_CORNER, CORNER_TOP_LEFT);
+      ObjectSet(label.instrument, OBJPROP_XDISTANCE, ifInt(build < 479, 4, 13));    // On builds > 478 the label is inset to account for the arrow of the
+      ObjectSet(label.instrument, OBJPROP_YDISTANCE, ifInt(build < 479, 1,  3));    // "One-Click-Trading" feature.
       string name = GetLongSymbolNameOrAlt(Symbol(), GetSymbolName(Symbol()));
       if      (StrEndsWithI(Symbol(), "_ask")) name = name +" (Ask)";
       else if (StrEndsWithI(Symbol(), "_avg")) name = name +" (Avg)";
@@ -1071,31 +1066,21 @@ bool CreateLabels() {
    }
 
    // price
-   if (ObjectFind(label.price) != -1)
-      ObjectDelete(label.price);
-   if (ObjectCreate(label.price, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label.price, OBJPROP_XDISTANCE, 14);
-      ObjectSet    (label.price, OBJPROP_YDISTANCE, 15);
-      ObjectSetText(label.price, " ", 1);
-      RegisterObject(label.price);
-   }
-   else GetLastError();
+   if (ObjectFind(label.price) == -1) if (!ObjectCreateRegister(label.price, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.price, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label.price, OBJPROP_XDISTANCE, 14);
+   ObjectSet    (label.price, OBJPROP_YDISTANCE, 15);
+   ObjectSetText(label.price, " ", 1);
 
    // spread
    corner = CORNER_TOP_RIGHT;
    xDist  = 33;
    yDist  = 38;
-   if (ObjectFind(label.spread) != -1)
-      ObjectDelete(label.spread);
-   if (ObjectCreate(label.spread, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.spread, OBJPROP_CORNER,   corner);
-      ObjectSet    (label.spread, OBJPROP_XDISTANCE, xDist);
-      ObjectSet    (label.spread, OBJPROP_YDISTANCE, yDist);
-      ObjectSetText(label.spread, " ", 1);
-      RegisterObject(label.spread);
-   }
-   else GetLastError();
+   if (ObjectFind(label.spread) == -1) if (!ObjectCreateRegister(label.spread, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.spread, OBJPROP_CORNER,   corner);
+   ObjectSet    (label.spread, OBJPROP_XDISTANCE, xDist);
+   ObjectSet    (label.spread, OBJPROP_YDISTANCE, yDist);
+   ObjectSetText(label.spread, " ", 1);
 
    // unit size
    corner = unitSize.corner;
@@ -1106,67 +1091,42 @@ bool CreateLabels() {
       case CORNER_BOTTOM_LEFT:              break;
       case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
    }
-   if (ObjectFind(label.unitSize) != -1)
-      ObjectDelete(label.unitSize);
-   if (ObjectCreate(label.unitSize, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
-      ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
-      ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, yDist);
-      ObjectSetText(label.unitSize, " ", 1);
-      RegisterObject(label.unitSize);
-   }
-   else GetLastError();
+   if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.unitSize, OBJPROP_CORNER,   corner);
+   ObjectSet    (label.unitSize, OBJPROP_XDISTANCE, xDist);
+   ObjectSet    (label.unitSize, OBJPROP_YDISTANCE, yDist);
+   ObjectSetText(label.unitSize, " ", 1);
 
    // total position
    corner = totalPosition.corner;
    xDist  = 9;
    yDist  = ObjectGet(label.unitSize, OBJPROP_YDISTANCE) + 20;    // 1 line above unitsize
-   if (ObjectFind(label.totalPosition) != -1)
-      ObjectDelete(label.totalPosition);
-   if (ObjectCreate(label.totalPosition, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
-      ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
-      ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, yDist);
-      ObjectSetText(label.totalPosition, " ", 1);
-      RegisterObject(label.totalPosition);
-   }
-   else GetLastError();
+   if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
+   ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
+   ObjectSet    (label.totalPosition, OBJPROP_YDISTANCE, yDist);
+   ObjectSetText(label.totalPosition, " ", 1);
 
    // account balance
-   if (ObjectFind(label.accountBalance) != -1)
-      ObjectDelete(label.accountBalance);
-   if (ObjectCreate(label.accountBalance, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 330);
-      ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.accountBalance, " ", 1);
-      RegisterObject(label.accountBalance);
-   }
-   else GetLastError();
+   if (ObjectFind(label.accountBalance) == -1) if (!ObjectCreateRegister(label.accountBalance, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.accountBalance, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet    (label.accountBalance, OBJPROP_XDISTANCE, 330);
+   ObjectSet    (label.accountBalance, OBJPROP_YDISTANCE,   9);
+   ObjectSetText(label.accountBalance, " ", 1);
 
    // order counter
-   if (ObjectFind(label.orderCounter) != -1)
-      ObjectDelete(label.orderCounter);
-   if (ObjectCreate(label.orderCounter, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
-      ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
-      ObjectSetText(label.orderCounter, " ", 1);
-      RegisterObject(label.orderCounter);
-   }
-   else GetLastError();
+   if (ObjectFind(label.orderCounter) == -1) if (!ObjectCreateRegister(label.orderCounter, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.orderCounter, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet    (label.orderCounter, OBJPROP_XDISTANCE, 500);
+   ObjectSet    (label.orderCounter, OBJPROP_YDISTANCE,   9);
+   ObjectSetText(label.orderCounter, " ", 1);
 
    // trade account
-   if (ObjectFind(label.tradeAccount) != -1)
-      ObjectDelete(label.tradeAccount);
-   if (ObjectCreate(label.tradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(label.tradeAccount, " ", 1);
-      RegisterObject(label.tradeAccount);
-   }
-   else GetLastError();
+   if (ObjectFind(label.tradeAccount) == -1) if (!ObjectCreateRegister(label.tradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label.tradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet    (label.tradeAccount, OBJPROP_XDISTANCE, 6);
+   ObjectSet    (label.tradeAccount, OBJPROP_YDISTANCE, 4);
+   ObjectSetText(label.tradeAccount, " ", 1);
 
    return(!catch("CreateLabels(1)"));
 }
@@ -1304,16 +1264,13 @@ bool UpdatePositions() {
 
    // PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName(MODE_NICE) +".PendingTickets";
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
+   if (ObjectFind(label) != -1) ObjectDelete(label);
    if (isPendings) {
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
-         ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-         ObjectSetText(label, "n", 6, "Webdings", Orange);     // Webdings "dot"
-         RegisterObject(label);
-      }
+      if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
+      ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
+      ObjectSetText(label, "n", 6, "Webdings", Orange);        // Webdings "dot"
    }
 
    // custom positions bottom-left
@@ -1358,14 +1315,11 @@ bool UpdatePositions() {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          xDist = xPrev + xOffset[col];
-         if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-            ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
-            ObjectSet    (label, OBJPROP_XDISTANCE, xDist);
-            ObjectSet    (label, OBJPROP_YDISTANCE, yDist);
-            ObjectSetText(label, " ", 1);
-            RegisterObject(label);
-         }
-         else GetLastError();
+         if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_LEFT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, xDist);
+         ObjectSet    (label, OBJPROP_YDISTANCE, yDist);
+         ObjectSetText(label, " ", 1);
          xPrev = xDist;
       }
    }
@@ -1574,13 +1528,10 @@ bool UpdateStopoutLevel() {
    else                   soPrice = NormalizeDouble(Ask + soDistance, Digits);
 
    // Stopout-Preis anzeigen
-   if (ObjectFind(label.stopoutLevel) == -1) {
-      ObjectCreate (label.stopoutLevel, OBJ_HLINE, 0, 0, 0);
-      ObjectSet    (label.stopoutLevel, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet    (label.stopoutLevel, OBJPROP_COLOR, OrangeRed  );
-      ObjectSet    (label.stopoutLevel, OBJPROP_BACK , true       );
-      RegisterObject(label.stopoutLevel);
-   }
+   if (ObjectFind(label.stopoutLevel) == -1) if (!ObjectCreateRegister(label.stopoutLevel, OBJ_HLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet(label.stopoutLevel, OBJPROP_STYLE,  STYLE_SOLID);
+   ObjectSet(label.stopoutLevel, OBJPROP_COLOR,  OrangeRed);
+   ObjectSet(label.stopoutLevel, OBJPROP_BACK,   true);
    ObjectSet(label.stopoutLevel, OBJPROP_PRICE1, soPrice);
       if (soMode == MSM_PERCENT) string text = StringConcatenate("Stopout  ", Round(AccountStopoutLevel()), "%  =  ", NumberToStr(soPrice, PriceFormat));
       else                              text = StringConcatenate("Stopout  ", DoubleToStr(soEquity, 2), AccountCurrency(), "  =  ", NumberToStr(soPrice, PriceFormat));
@@ -4502,13 +4453,11 @@ string InputsToStr() {
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   int      DeleteRegisteredObjects();
    datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);
    string   IntsToStr(int array[], string separator);
-   int      RegisterObject(string label);
    bool     ReleaseLock(string mutexName);
    int      SearchStringArrayI(string haystack[], string needle);
    bool     SortOpenTickets(int &keys[][]);

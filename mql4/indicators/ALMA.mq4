@@ -188,7 +188,6 @@ int onInit() {
    // chart legend and coloring
    if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
       enableMultiColoring = true;
    }
    else {

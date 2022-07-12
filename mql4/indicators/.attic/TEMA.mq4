@@ -106,7 +106,6 @@ int onInit() {
    // (3) data display configuration, names and labels
    if (!__isSuperContext) {                                    // no chart legend if called by iCustom()
        legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
    }
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);

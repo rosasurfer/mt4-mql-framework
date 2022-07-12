@@ -247,7 +247,6 @@ int onInit() {
    SetIndicatorOptions();
    if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
    }
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent

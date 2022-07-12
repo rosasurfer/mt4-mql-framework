@@ -43,18 +43,17 @@ int onInit() {
 
    // Anzeigeoptionen
    string indicatorName = "Donchian Channel("+ Periods +")";
-   IndicatorShortName(indicatorName);                               // chart tooltips and context menu
-   SetIndexLabel(0, "Donchian Upper("+ Periods +")");               // chart tooltips and "Data" window
+   IndicatorShortName(indicatorName);                             // chart tooltips and context menu
+   SetIndexLabel(0, "Donchian Upper("+ Periods +")");             // chart tooltips and "Data" window
    SetIndexLabel(1, "Donchian Lower("+ Periods +")");
    IndicatorDigits(Digits);
 
    // Legende
    if (!__isSuperContext) {
        string legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-       ObjectSetText (legendLabel, indicatorName, 9, "Arial Fett", Blue);
+       ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
-       if (error!=NO_ERROR) /*&&*/ if (error!=ERR_OBJECT_DOES_NOT_EXIST)   // on ObjectDrag or opened "Properties" dialog
+       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)             // on ObjectDrag or opened "Properties" dialog
           return(catch("onInit(2)", error));
    }
 

@@ -88,7 +88,6 @@ int onInit() {
    // indicator labels and display options
    if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
    }
    indicatorName = ProgramName(MODE_NICE);
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);

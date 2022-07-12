@@ -2695,11 +2695,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    // store status in the chart to enable remote access by scripts
    string label = "XMT-Scalper.status";
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      RegisterObject(label);
-   }
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
 
    error = intOr(catch("ShowStatus(1)"), error);

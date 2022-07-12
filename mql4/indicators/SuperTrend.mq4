@@ -166,7 +166,6 @@ int onInit() {
    // chart legend
    if (!__isSuperContext) {
       legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
    }
 
    // names, labels and display options

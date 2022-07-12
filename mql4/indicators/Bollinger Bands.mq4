@@ -151,7 +151,6 @@ int onInit() {
 
    if (!__isSuperContext) {
        legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
    }
 
    // data display configuration, names and labels

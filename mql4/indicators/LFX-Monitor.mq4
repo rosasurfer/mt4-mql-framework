@@ -467,16 +467,11 @@ int CreateLabels() {
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
-   if (ObjectFind(statusLabelTradeAccount) == 0)
-      ObjectDelete(statusLabelTradeAccount);
-   if (ObjectCreate(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(statusLabelTradeAccount, " ", 1);
-      RegisterObject(statusLabelTradeAccount);
-   }
-   else GetLastError();
+   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
+   ObjectSetText(statusLabelTradeAccount, " ", 1);
 
    // index display
    int xCoord  = status_xDistance;                       // horizontal display position
@@ -485,30 +480,20 @@ int CreateLabels() {
 
    // background rectangles
    string label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
 
    counter++;
    yCoord += 74;
    label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
 
    color fontColor = ifInt(Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
 
@@ -516,31 +501,21 @@ int CreateLabels() {
    counter++;
    yCoord -= 72;
    label = StringConcatenate(indicatorName, ".", counter, ".Header.animation");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, animationChars[0], statusFontSize, statusFontName, fontColor);
-      RegisterObject(label);
-      statusLabelAnimation = label;
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, animationChars[0], statusFontSize, statusFontName, fontColor);
+   statusLabelAnimation = label;
 
    // recording status
    label = StringConcatenate(indicatorName, ".", counter, ".Recording.status");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
-      ObjectSetText(label, text, statusFontSize, statusFontName, fontColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
+   ObjectSetText(label, text, statusFontSize, statusFontName, fontColor);
 
    // data rows
    yCoord += statusLineHeight + 1;
@@ -550,44 +525,29 @@ int CreateLabels() {
 
       // symbol
       label = StringConcatenate(indicatorName, ".", counter, ".", syntheticSymbols[i]);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-         ObjectSetText(label, syntheticSymbols[i] +":", statusFontSize, statusFontName, fontColor);
-         RegisterObject(label);
-         statusLabels[i] = label;
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      ObjectSetText(label, syntheticSymbols[i] +":", statusFontSize, statusFontName, fontColor);
+      statusLabels[i] = label;
 
       // price
       label = StringConcatenate(statusLabels[i], ".quote");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-            text = ifString(!isEnabled[i], "off", "n/a");
-         ObjectSetText(label, text, statusFontSize, statusFontName, statusFontColor.inactive);
-         RegisterObject(label);
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      text = ifString(!isEnabled[i], "off", "n/a");
+      ObjectSetText(label, text, statusFontSize, statusFontName, statusFontColor.inactive);
 
       // spread
       label = StringConcatenate(statusLabels[i], ".spread");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-         ObjectSetText(label, " ");
-         RegisterObject(label);
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      ObjectSetText(label, " ");
    }
 
    return(catch("CreateLabels(1)"));
