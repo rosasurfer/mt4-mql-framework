@@ -413,24 +413,28 @@ bool ParameterStepper(int direction, bool shiftKey) {
 
    if (!shiftKey) {
       // step up/down input parameter "WaveCycle.Periods"
-      if (waveCyclePeriods + direction*WaveCycle.Periods.StepSize < 3) {
-         PlaySoundEx("Plonk.wav");                                         // parameter limit reached
+      double step = WaveCycle.Periods.StepSize;
+
+      if (!step || waveCyclePeriods + direction*step < 3) {
+         PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
          return(false);
       }
-      if (direction == STEP_UP) waveCyclePeriods += WaveCycle.Periods.StepSize;
-      else                      waveCyclePeriods -= WaveCycle.Periods.StepSize;
+      if (direction == STEP_UP) waveCyclePeriods += step;
+      else                      waveCyclePeriods -= step;
 
       if (!NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights)) return(false);
       maPeriods = ArraySize(maWeights);
    }
    else {
       // step up/down input parameter "MA.Filter"
-      if (MA.Filter + direction*MA.Filter.StepSize < 0) {
-         PlaySoundEx("Plonk.wav");                                         // parameter limit reached
+      step = MA.Filter.StepSize;
+
+      if (!step || MA.Filter + direction*step < 0) {
+         PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
          return(false);
       }
-      if (direction == STEP_UP) MA.Filter += MA.Filter.StepSize;
-      else                      MA.Filter -= MA.Filter.StepSize;
+      if (direction == STEP_UP) MA.Filter += step;
+      else                      MA.Filter -= step;
    }
 
    ChangedBars = Bars;
@@ -477,7 +481,7 @@ void SetIndicatorOptions() {
 
    string sMaFilter     = ifString(MA.Filter > 0, "/"+ NumberToStr(MA.Filter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize || MA.Filter.StepSize, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
    string shortName     = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 

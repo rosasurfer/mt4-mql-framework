@@ -382,13 +382,15 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 bool PeriodStepper(int direction) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (maPeriods + direction*PeriodStepper.StepSize < 1) {
-      PlaySoundEx("Plonk.wav");
+   int step = PeriodStepper.StepSize;
+
+   if (!step || maPeriods + direction*step < 1) {
+      PlaySoundEx("Plonk.wav");                       // no stepping or parameter limit reached
       return(false);
    }
 
-   if (direction == STEP_UP) maPeriods += PeriodStepper.StepSize;
-   else                      maPeriods -= PeriodStepper.StepSize;
+   if (direction == STEP_UP) maPeriods += step;
+   else                      maPeriods -= step;
 
    ChangedBars = Bars;
    ValidBars   = 0;
