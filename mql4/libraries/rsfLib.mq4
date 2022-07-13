@@ -4494,13 +4494,14 @@ bool ObjectCreateRegister(string name, int type, int window, datetime time1, dou
       if (!size) size = 512;
       size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
       ArrayResize(__registeredObjects, size);
-      if (size >= 262144) debug("ObjectCreateRegister(2)  sizeOf(registeredObjects) = "+ size);
+      if (size >= 65536) debug("ObjectCreateRegister(2)  sizeOf(registeredObjects) = "+ size);
    }
    __registeredObjects[__registeredOjectsCounter] = name;
    __registeredOjectsCounter++;
 
    //if (Period() == 202)
-   //debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objectsCounter="+ __registeredOjectsCounter +"  \""+ name +"\"");
+      //if (Symbol()=="US500" || Symbol()=="USDLFX")
+         //debug("ObjectCreateRegister(0.1)  Tick="+ __ExecutionContext[EC.ticks] +"  objectsCounter="+ __registeredOjectsCounter +"  \""+ name +"\"");
    return(true);
 }
 
