@@ -270,10 +270,11 @@ int start() {
       }
    }
 
-   // speed-up offline chart calculations
-   // -----------------------------------
-   // In offline charts IndicatorCounted() always reports all bars as changed and standard indicators have to recalculate all bars on every tick. By defining ShiftedBars
-   // and redefining ChangedBars indicators may use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
+   // determine ShiftedBars to speed-up offline chart calculations
+   // ------------------------------------------------------------
+   // On Chart->Refresh IndicatorCounted() reports all bars as changed. This affects user-updated offline charts as standard indicators will recalculate all bars on
+   // every tick. By defining "ShiftedBars" an indicator can use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
+   // "ShiftedBars" will be defined only on an offline refresh, that's when IndicatorCounted() repeatedly reports all bars as changed (prevBars && !ValidBars).
    //
    // The below code works under the following assumptions:
    // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
@@ -281,54 +282,71 @@ int start() {
    // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
    // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
    //
-   static int prevBars = -1;
+   static int prevBars;
    static datetime prevFirstBarTime, prevLastBarTime;
 
-   if (!isAccountChange && !ValidBars && prevBars>=0 && !IsConnected()) {        // Detects offline charts and regular charts on a disconnected terminal.
-      bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
-      bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
-
-      // if number of bars is the same
-      if (Bars == prevBars) {
-         if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
-            ShiftedBars = 0;
-            ChangedBars = 1;                                                     // a new tick
-         }
-         else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
-            for (int i=1; i < Bars; i++) {
-               if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
-            }
-            if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
-               ShiftedBars = i;
-               ChangedBars = ShiftedBars + 1;
-            }
+   static bool isOfflineChart = -1; if (isOfflineChart == -1) {
+      if (IsCustomTimeframe(Period())) {
+         isOfflineChart = true;
+      }
+      else {
+         string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]);
+         if (StringLen(wndTitle) > 0) {
+            isOfflineChart = StrEndsWith(wndTitle, "(offline)");
          }
       }
+   }
 
-      // if number of bars increased
-      else if (Bars > prevBars) {
-         if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
-            if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
-               ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
-               ChangedBars = ShiftedBars + 1;
+   if (!isAccountChange && prevBars && !ValidBars) {
+      if (isOfflineChart==true || !IsConnected()) {
+         bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
+         bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
+
+         // if number of bars is the same
+         if (Bars == prevBars) {
+            if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
+               ShiftedBars = 0;
+               ChangedBars = 1;                                                     // a new tick
+            }
+            else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
+               for (int i=1; i < Bars; i++) {
+                  if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
+               }
+               if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
+                  ShiftedBars = i;
+                  ChangedBars = ShiftedBars + 1;
+               }
             }
          }
-      }                                                                          // all other cases: all bars stay invalidated
+
+         // if number of bars increased
+         else if (Bars > prevBars) {
+            if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
+               if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
+                  ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
+                  ChangedBars = ShiftedBars + 1;
+               }
+            }
+         }                                                                          // all other cases: all bars stay invalidated
+         //if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.1)  Tick="+ StrPadRight(Ticks, 3) +" offline refresh:    Bars="+ Bars +"  ChangedBars="+ StrPadRight(ChangedBars, 4) +"  ShiftedBars="+ ShiftedBars);
+      }
+      //else if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.2)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    }
+   //else if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.3)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    prevBars         = Bars;
    prevFirstBarTime = Time[0];
    prevLastBarTime  = Time[Bars-1];
-   ValidBars        = Bars - ChangedBars;                                        // update ValidBars accordingly
+   ValidBars        = Bars - ChangedBars;                                           // update ValidBars accordingly
 
    // reset last_error
    prev_error = last_error;
    ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-   // final update of ChangedBars                                                // TODO: replace by global var CalculatedBars
+   // final update of ChangedBars                                                   // TODO: replace by global var CalculatedBars
    if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
    else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
    else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-   if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE may be signaled in two places
+   if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;                // *_HISTORY_UPDATE may be signaled in two places
    __STATUS_HISTORY_UPDATE = false;
    if (!ValidBars) ShiftedBars = 0;
    ChangedBars = Bars - ValidBars;
@@ -346,7 +364,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(7)", error);
+      CheckErrors("start(7)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
