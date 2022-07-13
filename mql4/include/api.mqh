@@ -327,7 +327,7 @@ int      iBarShiftPrevious(string symbol=NULL, int period=NULL, datetime time, i
 int      iChangedBars(string symbol=NULL, int timeframe=NULL);;
 int      iCopyRates(double target[][6], string symbol=NULL, int timeframe=NULL);;
 int      InitializeByteBuffer(int &buffer[], int bytes);;
-bool     iPreviousPeriodTimes(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true);;
+bool     iPreviousPeriod(int timeframe=NULL, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true);;
 bool     IsBarOpen(int timeframe = NULL);;
 bool     IsChartCommand(string channel, bool remove, string &commands[]);;
 string   JoinBools(bool &values[], string separator = ", ");;
