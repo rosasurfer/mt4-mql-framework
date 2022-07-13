@@ -1233,7 +1233,7 @@ bool UpdatePositions() {
    }
    if (mode.intern && !mm.done) {
       if (!CalculateUnitSize()) return(false);
-      if (!mm.done)             return(true);      // on terminal not yet ready
+      if (!mm.done)             return(true);                  // on terminal not yet ready
    }
 
    // total position bottom-right
@@ -1264,14 +1264,14 @@ bool UpdatePositions() {
 
    // PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName(MODE_NICE) +".PendingTickets";
-   if (ObjectFind(label) != -1) ObjectDelete(label);
-   if (isPendings) {
+   if (ObjectFind(label) == -1) {
       if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
       ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-      ObjectSetText(label, "n", 6, "Webdings", Orange);        // Webdings "dot"
+      ObjectSetText(label, "n", 6, "Webdings", Orange);        // a Webdings "dot"
    }
+   ObjectSet(label, OBJPROP_TIMEFRAMES, ifInt(isPendings, OBJ_PERIODS_ALL, OBJ_PERIODS_NONE));
 
    // custom positions bottom-left
    static int  lines, cols, percentCol, commentCol, xPrev, xOffset[], xDist, yStart=6, yDist;

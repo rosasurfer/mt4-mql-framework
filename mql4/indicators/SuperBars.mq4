@@ -59,7 +59,7 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 #define PERIOD_D1_ETH   1439                          // that's PERIOD_D1 - 1
 
 int    superTimeframe;                                // the currently active super bar period
-double maxChangeUnchanged = 0.05;                     // max. price change in % for a superbar to be drawn as unchanged
+double maxChangeUnchanged = 0.05;                     // max. price change in % for a SuperBar to be drawn as unchanged
 bool   ethEnabled;                                    // whether CME sessions are enabled
 bool   weekendEnabled;                                // whether weekend data is enabled
 int    maxBarsH1;                                     // max. number of H1 superbars to draw (performance)
@@ -252,8 +252,8 @@ bool SwitchSuperTimeframe(int direction) {
 
 
 /**
- * Checks whether the selected superbar period can be displayed and disables superbars for the current chart period if this
- * is not the case (e.g. superbar period H1 can't be displayed on an H4 chart).
+ * Checks whether the selected SuperBar period can be displayed and disables superbars for the current chart period if this
+ * is not the case (e.g. SuperBar period H1 can't be displayed on an H4 chart).
  *
  * @return bool - success status
  */
@@ -411,13 +411,13 @@ bool UpdateSuperBars() {
 
 
 /**
- * Draw a single superbar.
+ * Draw a single SuperBar.
  *
  * @param  _In_    int      openBar     - chart bar offset of the SuperBar's open bar
  * @param  _In_    int      closeBar    - chart bar offset of the SuperBar's close bar
  * @param  _In_    datetime openTimeFxt - super period starttime in FXT
  * @param  _In_    datetime openTimeSrv - super period starttime in server time
- * @param  _InOut_ bool     &drawETH    - Whether the ETH period of a D1 superbar is to be drawn. Switches to FALSE once all
+ * @param  _InOut_ bool     &drawETH    - Whether the ETH period of a D1 SuperBar can be drawn. Switches to FALSE once all
  *                                        available M15 data is processed, irrespective of further D1 SuperBars.
  * @return bool - success status
  */
@@ -437,57 +437,61 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       else if (openPrice > Close[closeBar]) barColor = DownBars.Color;
    }
 
-   // define object labels
-   string label = "";
+   // Each SuperBar consists of 3 objects: an OBJ_RECTANGLE representing the SuperBar body, an OBJ_TREND line with the close
+   // price in the tooltip representing the SuperBar's close, and an OBJ_LABEL holding a reference to the close marker. On data
+   // pumping an already drawed SuperBar and/or it's close price may change. With the reference in the label the close marker
+   // can be found and updated without iterating over all chart objects.
+   string nameRectangle="", nameRectangleBg="", nameTrendline="", nameOldTrendline="", nameLabel="";
+
+   // define object names
    switch (superTimeframe) {
-      case PERIOD_H1    : label =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
+      case PERIOD_H1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%d.%m.%Y %H:%M");                   break;
       case PERIOD_D1_ETH:
-      case PERIOD_D1    : label =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break; // "aaa dd.mm.YYYY" is already used by the Grid indicator
-      case PERIOD_W1    : label = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
-      case PERIOD_MN1   : label =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
-      case PERIOD_Q1    : label = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
+      case PERIOD_D1    : nameRectangle =          GmtTimeFormat(openTimeFxt, "%a %d.%m.%Y ");                     break;  // plus an extra space as "%a %d.%m.%Y" is already used by the Grid indicator
+      case PERIOD_W1    : nameRectangle = "Week "+ GmtTimeFormat(openTimeFxt,    "%d.%m.%Y");                      break;
+      case PERIOD_MN1   : nameRectangle =          GmtTimeFormat(openTimeFxt,       "%B %Y");                      break;
+      case PERIOD_Q1    : nameRectangle = ((TimeMonth(openTimeFxt)-1)/3+1) +". Quarter "+ TimeYearEx(openTimeFxt); break;
    }
 
-   // draw Superbar
-   int justifiedCloseBar = closeBar;
-   if (closeBar > 0) {                                               // check for consecutive bars and widen rectangles to the right to make bars touch each other
+   // draw SuperBar body
+   int adjustedCloseBar = closeBar;
+   if (closeBar > 0) {                                                           // check for consecutive bars and widen rectangles to the right to make bars touch each other
       if (Time[closeBar] + Period()*MINUTES >= Time[closeBar-1]) {
-         justifiedCloseBar--;
+         adjustedCloseBar--;
       }
    }
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[justifiedCloseBar], Low[lowBar], 0, 0)) return(false);
-   ObjectSet(label, OBJPROP_COLOR, barColor);
-   ObjectSet(label, OBJPROP_BACK,  true);
+   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[adjustedCloseBar], Low[lowBar], 0, 0)) return(false);
+   ObjectSet(nameRectangle, OBJPROP_COLOR, barColor);
+   ObjectSet(nameRectangle, OBJPROP_BACK,  true);
 
-   // draw close marker
-   if (closeBar > 0) {                                               // except for the youngest (still unfinished) SuperBar
-      int centerBar = (openBar+closeBar)/2;                          // TODO: draw close marker for the youngest bar after market-close (weekend)
+   // draw SuperBar close marker and referencing label
+   if (closeBar > 0) {                                                           // except for the youngest (still unfinished) SuperBar
+      int centerBar = (openBar+closeBar)/2;                                      // TODO: draw close marker for the youngest bar after market-close (weekend)
 
       if (centerBar > closeBar) {
-         string labelWithPrice="", labelWithoutPrice=label +" Close";
+         nameLabel     = nameRectangle +" Close";
+         nameTrendline = nameLabel +" "+ NumberToStr(Close[closeBar], PriceFormat);
 
-         if (ObjectFind(labelWithoutPrice) == 0) {                   // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-            labelWithPrice = ObjectDescription(labelWithoutPrice);   // holding in the description the dynamic name of the visible marker (2nd object).
-            if (ObjectFind(labelWithPrice) == 0)                     // This way an existing marker can be found and replaced even if the dynamic name changes.
-               ObjectDelete(labelWithPrice);
-            ObjectDelete(labelWithoutPrice);
+         if (ObjectFind(nameLabel) != -1) {
+            nameOldTrendline = ObjectDescription(nameLabel);                     // delete an existing close marker with an outdated price
+            if (nameOldTrendline != nameTrendline) {
+               if (ObjectFind(nameOldTrendline) != -1) ObjectDelete(nameOldTrendline);
+            }
          }
-         labelWithPrice = labelWithoutPrice +" "+ NumberToStr(Close[closeBar], PriceFormat);
 
-         if (!ObjectCreateRegister(labelWithoutPrice, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-         ObjectSet    (labelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-         ObjectSetText(labelWithoutPrice, labelWithPrice);
+         if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         ObjectSetText(nameLabel, nameTrendline);
 
-         if (!ObjectCreateRegister(labelWithPrice, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar], 0, 0)) return(false);
-         ObjectSet(labelWithPrice, OBJPROP_RAY,   false);
-         ObjectSet(labelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet(labelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
-         ObjectSet(labelWithPrice, OBJPROP_BACK,  true);
+         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar], 0, 0)) return(false);
+         ObjectSet(nameTrendline, OBJPROP_RAY,   false);
+         ObjectSet(nameTrendline, OBJPROP_STYLE, STYLE_SOLID);
+         ObjectSet(nameTrendline, OBJPROP_COLOR, CloseMarker.Color);
+         ObjectSet(nameTrendline, OBJPROP_BACK,  true);
       }
    }
 
-
-   // draw ETH session if enough M15 data is available
+   // for D1 draw the ETH session if M15 data is available
    while (drawETH) {                                                             // the loop declares just a block which can be more easily left via "break"
       // resolve High and Low
       datetime ethOpenTimeSrv  = openTimeSrv;                                    // as regular starttime of a 24h session (00:00 FXT)
@@ -515,45 +519,45 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       double ethLow   = iLow  (NULL, PERIOD_M15, ethM15lowBar  );
       double ethClose = iClose(NULL, PERIOD_M15, ethM15closeBar);
 
-      // define labels
-      string ethLabel   = label +" ETH";
-      string ethBgLabel = label +" ETH background";
+      // define object names
+      nameRectangle   = nameRectangle +" ETH";
+      nameRectangleBg = nameRectangle +" background";
 
-      // drwa ETH background (creates an optical hole in the Superbar)
-      if (ObjectFind(ethBgLabel) == -1) if (!ObjectCreateRegister(ethBgLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
-      ObjectSet(ethBgLabel, OBJPROP_COLOR, barColor);                            // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      ObjectSet(ethBgLabel, OBJPROP_BACK,  true);                                // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+      // draw ETH background (creates an optical hole in the SuperBar)
+      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
+      ObjectSet(nameRectangleBg, OBJPROP_COLOR, barColor);                       // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      ObjectSet(nameRectangleBg, OBJPROP_BACK,  true);                           // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
                                                                                  // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
       // draw ETH bar (fills the hole with the ETH color)                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
-      if (ObjectFind(ethLabel) == -1)                                            // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
-         if (!ObjectCreateRegister(ethLabel, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
-      ObjectSet(ethLabel, OBJPROP_COLOR, ETH.Color);
-      ObjectSet(ethLabel, OBJPROP_BACK,  true);
+      if (ObjectFind(nameRectangle) == -1)                                       // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
+         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
+      ObjectSet(nameRectangle, OBJPROP_COLOR, ETH.Color);
+      ObjectSet(nameRectangle, OBJPROP_BACK,  true);
 
       // draw ETH close marker if the RTH session has started
       if (TimeServer() >= ethCloseTimeSrv) {
          int ethCenterBar = (ethOpenBar+ethCloseBar)/2;
 
          if (ethCenterBar > ethCloseBar) {
-            string ethLabelWithPrice="", ethLabelWithoutPrice=ethLabel +" Close";
+            nameLabel     = nameRectangle +" Close";
+            nameTrendline = nameLabel +" "+ NumberToStr(ethClose, PriceFormat);
 
-            if (ObjectFind(ethLabelWithoutPrice) == 0) {                         // Every marker consists of two objects: an invisible label (1st object) with a fixed name
-               ethLabelWithPrice = ObjectDescription(ethLabelWithoutPrice);      // holding in the description the dynamic and variable name of the visible marker (2nd object).
-               if (ObjectFind(ethLabelWithPrice) == 0)                           // This way an existing ETH marker can be found and replaced, even if the dynamic name changes.
-                  ObjectDelete(ethLabelWithPrice);
-               ObjectDelete(ethLabelWithoutPrice);
+            if (ObjectFind(nameLabel) != -1) {
+               nameOldTrendline = ObjectDescription(nameLabel);                  // delete an existing close marker with an outdated price
+               if (nameOldTrendline != nameTrendline) {
+                  if (ObjectFind(nameOldTrendline) != -1) ObjectDelete(nameOldTrendline);
+               }
             }
-            ethLabelWithPrice = ethLabelWithoutPrice +" "+ NumberToStr(ethClose, PriceFormat);
 
-            if (!ObjectCreateRegister(ethLabelWithoutPrice, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-            ObjectSet    (ethLabelWithoutPrice, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-            ObjectSetText(ethLabelWithoutPrice, ethLabelWithPrice);
+            if (ObjectFind(nameLabel) == -1) if (!ObjectCreateRegister(nameLabel, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+            ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+            ObjectSetText(nameLabel, nameTrendline);
 
-            if (!ObjectCreate(ethLabelWithPrice, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose)) return(false);
-            ObjectSet(ethLabelWithPrice, OBJPROP_RAY,   false);
-            ObjectSet(ethLabelWithPrice, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet(ethLabelWithPrice, OBJPROP_COLOR, CloseMarker.Color);
-            ObjectSet(ethLabelWithPrice, OBJPROP_BACK,  true);
+            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreate(nameTrendline, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose)) return(false);
+            ObjectSet(nameTrendline, OBJPROP_RAY,   false);
+            ObjectSet(nameTrendline, OBJPROP_STYLE, STYLE_SOLID);
+            ObjectSet(nameTrendline, OBJPROP_COLOR, CloseMarker.Color);
+            ObjectSet(nameTrendline, OBJPROP_BACK,  true);
          }
       }
       break;
@@ -578,7 +582,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
 
 /**
- * Update the Superbar legend.
+ * Update the SuperBar legend.
  *
  * @return bool - success status
  */
