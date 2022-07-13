@@ -43,31 +43,23 @@
  *
  *
  * TODO:
- *  - Superbars
+ *  - SuperBars
+ *     check all ObjectDelete()
+ *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set
- *      in range bar offline charts
- *      in offline charts receiving mixed ticks (refresh + standard tick)
+ *      fix testing in core/indicator.mqh
  *      in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
  *      in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
- *
- *     regular charts: thousands of non-stopping calls of RegisterObject()
- *     range bar offline charts: superTF=H1 => 271 calls of RegisterObject() on every tick
- *      ValidBars is always 0, all Superbars are redrawn
- *
- *     implement more timeframes
  *     improve: return(__ExecutionContext[EC.mqlError])
- *
- *
+ *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
+ *     implement more timeframes
  *
  *  - fix legend positioning
  *     detect and remove orphaned legends from crashed programs (at terminal start and runtime)
  *     keep order when changing indicator inputs
  *     don't remove legend at every init cycle
- *
- *     stdfunctions::CreateLegendLabel()
- *     rsfLib::RepositionLegend()
- *     rsfLib::RegisterObject()
- *     rsfLib::DeleteRegisteredObjects()
+ *      stdfunctions::CreateLegendLabel()
+ *      rsfLib::RepositionLegend()
  *
  *  - rewrite ZigZag, NonLagMA, ALMA, T3
  *     auto-configuration
@@ -76,7 +68,7 @@
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display
- *  - implement global var Indicator::CalculatedBars
+ *  - implement global var indicator::CalculatedBars
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command

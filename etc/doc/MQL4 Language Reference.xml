@@ -184,7 +184,6 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
         <li><a href="help://basics_types_datetime">Date and time (datetime)</a></li>
         <li><a href="help://basics_types_string">String (string)</a></li>
       </ul>
-      <p>Only implicit <a href="help://basics_types_casting">type casting</a> is used in <a href="help://basics_operations_expression">expressions</a>.</p>
     </content>
 
     <text>
@@ -278,7 +277,7 @@ bool c = 1;</pre>
 
     <text>
       tag=basics_types_double
-      caption=Floating-point numbers (double)
+      caption=Floating-point numbers
       keywords=;double;
       <content>
         <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer
