@@ -158,17 +158,17 @@ int init() {
 bool init_Globals() {
    // Terminal bug 1: On opening of a new chart window and on account change the global vars Digits and Point are set to the
    //                 values stored in the applied template, irrespective of the real symbol properties. This affects only
-   //                 the first init() call, in start() corrected values have been applied.
+   //                 the first init() call, in start() the true values have been applied.
    //
    // Terminal bug 2: In terminals build ???-??? above bug is permanent and the built-in vars Digits and Point are unusable.
    //
-   // Workaround: In init() correct Digits and Point values must be read from "symbols.raw". To work around broker configura-
-   //             tion errors there should be a way to overwrite specific properties via the framework configuration.
+   // Workaround: In init() Digits and Point must be read from "symbols.raw". To work around broker possible configuration
+   //             errors there should be a way to overwrite specific properties via the framework configuration.
    //
-   // TODO: implement workaround in MT4Expander
+   // TODO: implement workaround in the Expander
    //
-   __isChart   = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    PipDigits      = Digits & (~1);
@@ -231,9 +231,8 @@ int start() {
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
 
-
-   // handle account changes
-   // ----------------------
+   // detect and handle account changes
+   // ---------------------------------
    // The tick on which AccountNumber() reports a new account the first time is executed either on new history (if it exists)
    // or on old history (if no history exists for the new account). Depending on it ValidBars will be either 0 (new history)
    // or not 0 (old history). Only the first tick with a new account number may be executed on old history. After a successfull
@@ -241,7 +240,6 @@ int start() {
    //
    // At terminal start AccountNumber() reports 0 (zero) until the connection is fully established. An account change at runtime
    // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
-   //
    static int prevAccount;
    int currAccount = AccountNumber();
    bool isAccountChange = (prevAccount && currAccount!=prevAccount);
@@ -256,7 +254,7 @@ int start() {
    if (__CoreFunction == CF_INIT) {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
-      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing a repetition of init()
+      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing repetition of the init() call
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          logDebug("start(4)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          prev_error = last_error;
@@ -270,13 +268,12 @@ int start() {
             return(error);
          }                                                                       // last_error may hold another non-critical init() error which is discarded
       }
-   } //else (a regular tick)
-
+   }
 
    // speed-up offline chart calculations
    // -----------------------------------
    // In offline charts IndicatorCounted() always reports all bars as changed and standard indicators have to recalculate all bars on every tick. By defining ShiftedBars
-   // and redefining ChangedBars indicators may use the various ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
+   // and redefining ChangedBars indicators may use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
    //
    // The below code works under the following assumptions:
    // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
@@ -323,11 +320,9 @@ int start() {
    prevLastBarTime  = Time[Bars-1];
    ValidBars        = Bars - ChangedBars;                                        // update ValidBars accordingly
 
-
    // reset last_error
    prev_error = last_error;
    ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
-
 
    // final update of ChangedBars                                                // TODO: replace by global var CalculatedBars
    if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
@@ -337,7 +332,6 @@ int start() {
    __STATUS_HISTORY_UPDATE = false;
    if (!ValidBars) ShiftedBars = 0;
    ChangedBars = Bars - ValidBars;
-
 
    // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
