@@ -49,7 +49,7 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
-#include <functions/iPreviousPeriodTimes.mqh>
+#include <functions/iPreviousPeriod.mqh>
 #include <win32api.mqh>
 
 #property indicator_chart_window
@@ -302,7 +302,7 @@ bool CheckTimeframeAvailability() {
 
 
 /**
- * Update the superbars display.
+ * Update the displayed superbars.
  *
  * @return bool - success status
  */
@@ -345,7 +345,7 @@ bool UpdateSuperBars() {
          break;
    }
 
-   // With enabled ETH sessions the range of ChangedBars must include the range of iChangedBars(PERIOD_M15).
+   // With enabled ETH sessions the range of ChangedBars must also include the range of iChangedBars(PERIOD_M15).
    int  changedBars=ChangedBars, timeframe=superTimeframe;
    bool drawETH;
    if (isTimeframeChange)
@@ -370,22 +370,19 @@ bool UpdateSuperBars() {
       }
    }
 
-   if (Period()==202 || ((Symbol()=="US500" || Symbol()=="USDLFX") && Period()==1)) {
-      //debug("UpdateSuperBarsBar(0.1)  Tick="+ Ticks +"  Bars="+ Bars +"  ValidBars="+ ValidBars +"  ChangedBars="+ ChangedBars +"  ShiftedBars="+ ShiftedBars);
-   }
-
    // update superbars
    // ----------------
-   //  - drawing range is ChangedBars but we don't use a loop over it
-   //  - the youngest (still unfinished) SuperBar is limited on the right by Bar[0] and grows with progression of time
-   //  - the oldest SuperBar exceedes ChangedBars on the left if Bars > ChangedBars (the regular case)
-   //  - "super session" means the superbar period
-   datetime openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv;
+   // - Update range is var "changedBars" from young to old.
+   // - The youngest and still unfinished SuperBar is limited to the right by Bar[0] and grows with time.
+   // - The oldest SuperBar to update exceedes var "changedBars" to the left if Bars > changedBars (the regular case).
+   // - "Super session" means the SuperBar period.
+   datetime openTimeFxt=NULL, closeTimeFxt, openTimeSrv, closeTimeSrv;
    int openBar, closeBar, lastChartBar=Bars-1;
 
-   // loop over all superbars from young to old (right to left)
+   // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
-      if (!iPreviousPeriodTimes(timeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
+      // get start/end times of every previous timeframe period, starting with the current unfinshed one
+      if (!iPreviousPeriod(timeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
 
       // In periods >= PERIOD_D1 timeseries times are set to full days only. The wrong timezone offset can shift the start of such a period wrongly
       // to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
@@ -405,7 +402,7 @@ bool UpdateSuperBars() {
       else {
          i--;                                                              // no bars available for this super session
       }
-      if (openBar >= changedBars-1) break;                                 // update superbars until max. changedBars
+      if (openBar >= changedBars-1) break;                                 // only update the range of var "changedBars"
    }
 
    lastSuperTimeframe = superTimeframe;

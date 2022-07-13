@@ -1,9 +1,9 @@
 /**
- * Calculate start/end times of the latest complete time period fully preceding parameter 'openTimeFxt'. Supports MT4 standard
- * timeframes plus the custom timeframe PERIOD_Q1.
+ * Calculate start/end times of the timeframe period preceding parameter 'openTimeFxt'. Supports MT4 standard timeframes plus
+ * the custom timeframe PERIOD_Q1. If 'openTimeFxt' is NULL the calculated period is the current still unfinished time period.
  *
- * @param  _In_    int      timeframe               - target timeframe (NULL: the current chart timeframe)
- * @param  _InOut_ datetime &openTimeFxt            - IN: reference time in FXT (NULL: interpreted as in the future of the current (still unfinished) time period
+ * @param  _In_    int      timeframe               - target timeframe (NULL: the current timeframe)
+ * @param  _InOut_ datetime &openTimeFxt            - IN:  reference time in FXT (NULL: interpreted as in the future of the current time period
  *                                                    OUT: start time of the resulting time period in FXT
  * @param  _Out_   datetime &closeTimeFxt           - end time of the resulting time period in FXT
  * @param  _Out_   datetime &openTimeSrv            - start time of the resulting time period in server time
@@ -14,7 +14,7 @@
  *
  * NOTE: This function doesn't access any timeseries. Results are purely calculated.
  */
-bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true) {
+bool iPreviousPeriod(int timeframe/*=NULL*/, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true) {
    if (!timeframe) timeframe = Period();
    if (!openTimeFxt) {
       datetime nowFxt = TimeFXT(); if (!nowFxt) return(false);
@@ -217,10 +217,10 @@ bool iPreviousPeriodTimes(int timeframe/*=NULL*/, datetime &openTimeFxt, datetim
          else if (dow == MONDAY) closeTimeFxt -= 2*DAYS;
       }
    }
-   else return(!catch("iPreviousPeriodTimes(1)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+   else return(!catch("iPreviousPeriod(1)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
 
    // calculate corresponding server times
    openTimeSrv  = FxtToServerTime(openTimeFxt);  if (openTimeSrv  == NaT) return(false);
    closeTimeSrv = FxtToServerTime(closeTimeFxt); if (closeTimeSrv == NaT) return(false);
-   return(!catch("iPreviousPeriodTimes(2)"));
+   return(!catch("iPreviousPeriod(2)"));
 }
