@@ -4492,9 +4492,9 @@ bool ObjectCreateRegister(string name, int type, int window, datetime time1, dou
    int size = ArraySize(__registeredObjects);
    if (size <= __registeredOjectsCounter) {
       if (!size) size = 512;
-      size <<= 1;                                     // prevent re-allocation on every call (initial size 1024)
+      size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
       ArrayResize(__registeredObjects, size);
-      if (size >= 1048576) debug("ObjectCreateRegister(2)  sizeOf(registeredObjects) = "+ size);
+      if (size >= 262144) debug("ObjectCreateRegister(2)  sizeOf(registeredObjects) = "+ size);
    }
    __registeredObjects[__registeredOjectsCounter] = name;
    __registeredOjectsCounter++;

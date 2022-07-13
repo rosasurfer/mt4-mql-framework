@@ -50,11 +50,14 @@
  *      in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
  *      in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
  *
- *     regular charts: thousands of non-stopping calls of RegisterObject()       // 106.000 initial calls with 7 open charts
+ *     regular charts: thousands of non-stopping calls of RegisterObject()
  *     range bar offline charts: superTF=H1 => 271 calls of RegisterObject() on every tick
  *      ValidBars is always 0, all Superbars are redrawn
+ *
  *     implement more timeframes
  *     improve: return(__ExecutionContext[EC.mqlError])
+ *
+ *
  *
  *  - fix legend positioning
  *     detect and remove orphaned legends from crashed programs (at terminal start and runtime)
