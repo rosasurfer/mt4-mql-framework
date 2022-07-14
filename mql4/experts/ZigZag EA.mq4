@@ -44,14 +44,14 @@
  *
  * TODO:
  *  - SuperBars
- *     check all ObjectDelete()
+ *     improve: return(__ExecutionContext[EC.mqlError])
+ *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
+ *
  *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set
  *      fix testing in core/indicator.mqh
  *      in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
  *      in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
- *     improve: return(__ExecutionContext[EC.mqlError])
- *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
  *     implement more timeframes
  *
  *  - fix legend positioning
@@ -478,7 +478,7 @@ bool ToggleOpenOrders() {
          string name = ObjectName(i);
 
          if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name)==OBJ_ARROW) {
+            if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
                color clr = ObjectGet(name, OBJPROP_COLOR);
 
@@ -512,11 +512,10 @@ bool GetOpenOrderDisplayStatus() {
 
    // look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -536,7 +535,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
@@ -555,13 +554,10 @@ int ShowOpenOrders() {
 
    if (open.ticket != NULL) {
       string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, open.time, open.price)) {
-         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
-         ObjectSetText(label, sequence.name);
-      }
+      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, open.time, open.price)) return(EMPTY);
+      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+      ObjectSetText(label, sequence.name);
       openOrders++;
    }
 
@@ -631,11 +627,10 @@ bool GetTradeHistoryDisplayStatus() {
 
    // look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -655,7 +650,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status);
 
    return(!catch("SetTradeHistoryDisplayStatus(1)"));
@@ -691,34 +686,28 @@ int ShowTradeHistory() {
 
       // open marker
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == 0)
-         ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
-         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (openLabel, OBJPROP_COLOR, iOpenColors[type]);
-         ObjectSetText(openLabel, sequence.name);
-      }
+      if (ObjectFind(openLabel) == -1)
+         ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
+      ObjectSetText(openLabel, sequence.name);
 
       // trend line
       lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-      if (ObjectFind(lineLabel) == 0)
-         ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-         ObjectSet(lineLabel, OBJPROP_RAY,   false);
-         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(lineLabel, OBJPROP_COLOR, iLineColors[type]);
-         ObjectSet(lineLabel, OBJPROP_BACK,  true);
-      }
+      if (ObjectFind(lineLabel) == -1)
+         ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice);
+      ObjectSet(lineLabel, OBJPROP_RAY,   false);
+      ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR, iLineColors[type]);
+      ObjectSet(lineLabel, OBJPROP_BACK,  true);
 
       // close marker
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == 0)
-         ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
-         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
-         ObjectSetText(closeLabel, sequence.name);
-      }
+      if (ObjectFind(closeLabel) == -1)
+         ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSetText(closeLabel, sequence.name);
       closedTrades++;
    }
 

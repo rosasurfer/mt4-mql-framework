@@ -1008,9 +1008,7 @@ bool StoreTradeAccount() {
    string key  = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, tradeAccount.company);
 
@@ -1018,9 +1016,7 @@ bool StoreTradeAccount() {
    key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ tradeAccount.number);
 
@@ -1039,14 +1035,14 @@ string GetStoredTradeAccount() {
    string key = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
-      if (ObjectFind(key) == 0) company = ObjectDescription(key);
+      if (ObjectFind(key) != -1) company = ObjectDescription(key);
    }
 
    // account number
    key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
-      if (ObjectFind(key) == 0) accountNumber = StrToInteger(ObjectDescription(key));
+      if (ObjectFind(key) != -1) accountNumber = StrToInteger(ObjectDescription(key));
    }
 
    string result = "";

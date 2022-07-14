@@ -384,11 +384,10 @@ bool GetOpenOrderDisplayStatus() {
 
    // look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -432,24 +431,20 @@ int ShowOpenOrders() {
       if (long.openType[i] == OP_UNDEFINED) {
          // pending orders
          label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.pendingType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.pendingPrice[i], PriceFormat));
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), long.pendingPrice[i])) {
-            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
-         }
+         if (ObjectFind(label) == -1)
+            ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), long.pendingPrice[i]);
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+         ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
       }
       else {
          // open positions
          label = StringConcatenate("#", long.ticket[i], " ", orderTypes[long.openType[i]], " ", NumberToStr(long.lots[i], ".1+"), " at ", NumberToStr(long.openPrice[i], PriceFormat));
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
-            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (label, OBJPROP_COLOR,     colors[long.openType[i]]);
-            ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
-         }
+         if (ObjectFind(label) == -1)
+            ObjectCreate(label, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i]);
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     colors[long.openType[i]]);
+         ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
       }
       openOrders++;
    }
@@ -462,24 +457,20 @@ int ShowOpenOrders() {
       if (short.openType[i] == OP_UNDEFINED) {
          // pending orders
          label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.pendingType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.pendingPrice[i], PriceFormat));
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), short.pendingPrice[i])) {
-            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
-         }
+         if (ObjectFind(label) == -1)
+            ObjectCreate(label, OBJ_ARROW, 0, TimeServer(), short.pendingPrice[i]);
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+         ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
       }
       else {
          // open positions
          label = StringConcatenate("#", short.ticket[i], " ", orderTypes[short.openType[i]], " ", NumberToStr(short.lots[i], ".1+"), " at ", NumberToStr(short.openPrice[i], PriceFormat));
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
-            ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (label, OBJPROP_COLOR,     colors[short.openType[i]]);
-            ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
-         }
+         if (ObjectFind(label) == -1)
+            ObjectCreate(label, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i]);
+         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (label, OBJPROP_COLOR,     colors[short.openType[i]]);
+         ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
       }
       openOrders++;
    }
@@ -550,11 +541,10 @@ bool GetTradeHistoryDisplayStatus() {
 
    // look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -604,34 +594,28 @@ int ShowTradeHistory() {
 
          // open marker
          openLabel = StringConcatenate("#", long.ticket[i], " buy ", NumberToStr(long.lots[i], ".1+"), " at ", sOpenPrice);
-         if (ObjectFind(openLabel) == 0)
-            ObjectDelete(openLabel);
-         if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i])) {
-            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
-            ObjectSetText(openLabel, text);
-         }
+         if (ObjectFind(openLabel) == -1)
+            ObjectCreate(openLabel, OBJ_ARROW, 0, long.openTime[i], long.openPrice[i]);
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+         ObjectSetText(openLabel, text);
 
          // trend line
          lineLabel = StringConcatenate("#", long.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == 0)
-            ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.openTime[i], long.openPrice[i], long.closeTime[i], long.closePrice[i])) {
-            ObjectSet(lineLabel, OBJPROP_RAY,   false);
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-            ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
-            ObjectSet(lineLabel, OBJPROP_BACK,  true);
-         }
+         if (ObjectFind(lineLabel) == -1)
+            ObjectCreate(lineLabel, OBJ_TREND, 0, long.openTime[i], long.openPrice[i], long.closeTime[i], long.closePrice[i]);
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
 
          // close marker
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-         if (ObjectFind(closeLabel) == 0)
-            ObjectDelete(closeLabel);
-         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.closeTime[i], long.closePrice[i])) {
-            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-            ObjectSetText(closeLabel, text);
-         }
+         if (ObjectFind(closeLabel) == -1)
+            ObjectCreate(closeLabel, OBJ_ARROW, 0, long.closeTime[i], long.closePrice[i]);
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
          closedTrades++;
       }
 
@@ -647,34 +631,28 @@ int ShowTradeHistory() {
 
          // open marker
          openLabel = StringConcatenate("#", short.ticket[i], " sell ", NumberToStr(short.lots[i], ".1+"), " at ", sOpenPrice);
-         if (ObjectFind(openLabel) == 0)
-            ObjectDelete(openLabel);
-         if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i])) {
-            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
-            ObjectSetText(openLabel, text);
-         }
+         if (ObjectFind(openLabel) == -1)
+            ObjectCreate(openLabel, OBJ_ARROW, 0, short.openTime[i], short.openPrice[i]);
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+         ObjectSetText(openLabel, text);
 
          // trend line
          lineLabel = StringConcatenate("#", short.ticket[i], " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == 0)
-            ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.openTime[i], short.openPrice[i], short.closeTime[i], short.closePrice[i])) {
-            ObjectSet(lineLabel, OBJPROP_RAY,   false);
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-            ObjectSet(lineLabel, OBJPROP_COLOR, Red);
-            ObjectSet(lineLabel, OBJPROP_BACK,  true);
-         }
+         if (ObjectFind(lineLabel) == -1)
+            ObjectCreate(lineLabel, OBJ_TREND, 0, short.openTime[i], short.openPrice[i], short.closeTime[i], short.closePrice[i]);
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
 
          // close marker
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-         if (ObjectFind(closeLabel) == 0)
-            ObjectDelete(closeLabel);
-         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.closeTime[i], short.closePrice[i])) {
-            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-            ObjectSetText(closeLabel, text);
-         }
+         if (ObjectFind(closeLabel) == -1)
+            ObjectCreate(closeLabel, OBJ_ARROW, 0, short.closeTime[i], short.closePrice[i]);
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
          closedTrades++;
       }
    }
@@ -691,34 +669,28 @@ int ShowTradeHistory() {
 
       // open marker
       openLabel = StringConcatenate("#", _int(long.history[i][HI_TICKET]), " buy ", NumberToStr(long.history[i][HI_LOTS], ".1+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == 0)
-         ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE])) {
-         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
-         ObjectSetText(openLabel, text);
-      }
+      if (ObjectFind(openLabel) == -1)
+         ObjectCreate(openLabel, OBJ_ARROW, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE]);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_LONG);
+      ObjectSetText(openLabel, text);
 
       // trend line
       lineLabel = StringConcatenate("#", _int(long.history[i][HI_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
-      if (ObjectFind(lineLabel) == 0)
-         ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE], long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE])) {
-         ObjectSet(lineLabel, OBJPROP_RAY,   false);
-         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
-         ObjectSet(lineLabel, OBJPROP_BACK,  true);
-      }
+      if (ObjectFind(lineLabel) == -1)
+         ObjectCreate(lineLabel, OBJ_TREND, 0, long.history[i][HI_OPENTIME], long.history[i][HI_OPENPRICE], long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE]);
+      ObjectSet(lineLabel, OBJPROP_RAY,   false);
+      ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR, Blue);
+      ObjectSet(lineLabel, OBJPROP_BACK,  true);
 
       // close marker
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == 0)
-         ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE])) {
-         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-         ObjectSetText(closeLabel, text);
-      }
+      if (ObjectFind(closeLabel) == -1)
+         ObjectCreate(closeLabel, OBJ_ARROW, 0, long.history[i][HI_CLOSETIME], long.history[i][HI_CLOSEPRICE]);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSetText(closeLabel, text);
       closedTrades++;
    }
 
@@ -734,34 +706,28 @@ int ShowTradeHistory() {
 
       // open marker
       openLabel = StringConcatenate("#", _int(short.history[i][HI_TICKET]), " buy ", NumberToStr(short.history[i][HI_LOTS], ".1+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == 0)
-         ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE])) {
-         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
-         ObjectSetText(openLabel, text);
-      }
+      if (ObjectFind(openLabel) == -1)
+         ObjectCreate(openLabel, OBJ_ARROW, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE]);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     CLR_CLOSED_SHORT);
+      ObjectSetText(openLabel, text);
 
       // trend line
       lineLabel = StringConcatenate("#", _int(short.history[i][HI_TICKET]), " ", sOpenPrice, " -> ", sClosePrice);
-      if (ObjectFind(lineLabel) == 0)
-         ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE], short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE])) {
-         ObjectSet(lineLabel, OBJPROP_RAY,   false);
-         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(lineLabel, OBJPROP_COLOR, Red);
-         ObjectSet(lineLabel, OBJPROP_BACK,  true);
-      }
+      if (ObjectFind(lineLabel) == -1)
+         ObjectCreate(lineLabel, OBJ_TREND, 0, short.history[i][HI_OPENTIME], short.history[i][HI_OPENPRICE], short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE]);
+      ObjectSet(lineLabel, OBJPROP_RAY,   false);
+      ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR, Red);
+      ObjectSet(lineLabel, OBJPROP_BACK,  true);
 
       // close marker
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == 0)
-         ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE])) {
-         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
-         ObjectSetText(closeLabel, text);
-      }
+      if (ObjectFind(closeLabel) == -1)
+         ObjectCreate(closeLabel, OBJ_ARROW, 0, short.history[i][HI_CLOSETIME], short.history[i][HI_CLOSEPRICE]);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSetText(closeLabel, text);
       closedTrades++;
    }
 
