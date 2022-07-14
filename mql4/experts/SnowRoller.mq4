@@ -886,10 +886,10 @@ int CreateSequenceId() {
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from afterInit() only.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateStatusBox() {
-   if (!__isChart) return(NO_ERROR);
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, sizeofX=ArraySize(x);
    color  bgColor = C'248,248,248';                            // that's chart background color
@@ -897,13 +897,13 @@ int CreateStatusBox() {
 
    for (int i=0; i < sizeofX; i++) {
       label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet    (label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   return(catch("CreateStatusBox(1)"));
+   return(!catch("CreateStatusBox(1)"));
 }
 
 
