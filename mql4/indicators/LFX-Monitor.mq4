@@ -460,14 +460,14 @@ bool RefreshLfxOrders() {
 /**
  * Create and initialize text objects for the various display elements.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateLabels() {
+bool CreateLabels() {
    string indicatorName = ProgramName(MODE_NICE);
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
-   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
    ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
@@ -480,7 +480,7 @@ int CreateLabels() {
 
    // background rectangles
    string label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -489,7 +489,7 @@ int CreateLabels() {
    counter++;
    yCoord += 74;
    label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -501,7 +501,7 @@ int CreateLabels() {
    counter++;
    yCoord -= 72;
    label = StringConcatenate(indicatorName, ".", counter, ".Header.animation");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -510,7 +510,7 @@ int CreateLabels() {
 
    // recording status
    label = StringConcatenate(indicatorName, ".", counter, ".Recording.status");
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
    ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
@@ -525,7 +525,7 @@ int CreateLabels() {
 
       // symbol
       label = StringConcatenate(indicatorName, ".", counter, ".", syntheticSymbols[i]);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
@@ -534,7 +534,7 @@ int CreateLabels() {
 
       // price
       label = StringConcatenate(statusLabels[i], ".quote");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
@@ -543,14 +543,14 @@ int CreateLabels() {
 
       // spread
       label = StringConcatenate(statusLabels[i], ".spread");
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
       ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
       ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
       ObjectSetText(label, " ");
    }
 
-   return(catch("CreateLabels(1)"));
+   return(!catch("CreateLabels(1)"));
 }
 
 

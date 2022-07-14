@@ -44,8 +44,8 @@
  *
  * TODO:
  *  - SuperBars
- *     improve: return(__ExecutionContext[EC.mqlError])
  *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
+ *     rename StoreRuntimeStatus()
  *
  *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set

@@ -4554,10 +4554,10 @@ void SS.StopConditions() {
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from onInit() only.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateStatusBox() {
-   if (!__isChart) return(NO_ERROR);
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
 
    int x[]={2, 114}, y=58, fontSize=115, rectangles=ArraySize(x);
    color  bgColor = LemonChiffon;
@@ -4565,13 +4565,13 @@ int CreateStatusBox() {
 
    for (int i=0; i < rectangles; i++) {
       label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   return(catch("CreateStatusBox(1)"));
+   return(!catch("CreateStatusBox(1)"));
 }
 
 

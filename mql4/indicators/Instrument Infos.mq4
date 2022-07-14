@@ -120,9 +120,9 @@ int onTick() {
 /**
  * Create needed chart objects.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateChartObjects() {
+bool CreateChartObjects() {
    string indicatorName = ProgramName(MODE_NICE);
    color  bgColor    = C'212,208,200';
    string bgFontName = "Webdings";
@@ -134,7 +134,7 @@ int CreateChartObjects() {
 
    // background rectangles
    string label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
    ObjectSet    (label, OBJPROP_YDISTANCE, yPos);
@@ -142,7 +142,7 @@ int CreateChartObjects() {
 
    n++;
    label = indicatorName +"."+ n +".background";
-   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
    ObjectSet    (label, OBJPROP_XDISTANCE, xPos);
    ObjectSet    (label, OBJPROP_YDISTANCE, yPos+124);          // line height: 14 pt
@@ -163,7 +163,7 @@ int CreateChartObjects() {
    for (int i=0; i < size; i++) {
       n++;
       label = indicatorName +"."+ n +"."+ labels[i];
-      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
 
       if (IntInArray(col2Lots, i)) {                  // lots column 2
@@ -200,7 +200,7 @@ int CreateChartObjects() {
       ObjectSetText(label, " ", fontSize, fontName);
       labels[i] = label;
    }
-   return(catch("CreateChartObjects(1)"));
+   return(!catch("CreateChartObjects(1)"));
 }
 
 
