@@ -45,7 +45,6 @@
  * TODO:
  *  - SuperBars
  *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
- *      Stochastic
  *      ZigZag
  *
  *     current SuperBar is not updated
