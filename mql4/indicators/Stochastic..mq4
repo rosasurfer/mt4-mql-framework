@@ -212,9 +212,8 @@ bool UpdateSignalMarker(int bar) {
       ObjectSet(label, OBJPROP_PRICE1,    price);
       ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short") +" @ "+ NumberToStr(Close[bar], PriceFormat));
    }
-   else if (objExists) {                                                      // unset existing marker
-      ObjectDelete(label);
-   }
+   else if (objExists) ObjectDelete(label);                                   // unset existing marker
+
    return(!catch("UpdateSignalMarker(1)"));
 }
 

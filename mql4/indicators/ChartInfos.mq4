@@ -429,13 +429,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
             // create pending order marker
-            if (ObjectFind(label1) == 0)
-               ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
-               ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-               ObjectSetText(label1, comment);
-            }
+            if (ObjectFind(label1) == -1)
+               ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice);
+            ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSetText(label1, comment);
          }
          else {
             // an open position
@@ -445,13 +443,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (takeProfit != NULL) {
                sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
                label2 = StringConcatenate(label1, ",  ", sTP);
-               if (ObjectFind(label2) == 0)
-                  ObjectDelete(label2);
-               if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
-                  ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
-                  ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-                  ObjectSetText(label2, comment);
-               }
+               if (ObjectFind(label2) == -1)
+                  ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit);
+               ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
+               ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+               ObjectSetText(label2, comment);
             }
             else sTP = "";
 
@@ -459,24 +455,20 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (stopLoss != NULL) {
                sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
                label3 = StringConcatenate(label1, ",  ", sSL);
-               if (ObjectFind(label3) == 0)
-                  ObjectDelete(label3);
-               if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
-                  ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-                  ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-                  ObjectSetText(label3, comment);
-               }
+               if (ObjectFind(label3) == -1)
+                  ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss);
+               ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+               ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+               ObjectSetText(label3, comment);
             }
             else sSL = "";
 
             // create open position marker
-            if (ObjectFind(label1) == 0)
-               ObjectDelete(label1);
-            if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
-               ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-               ObjectSet    (label1, OBJPROP_COLOR,     colors[type]    );
-               ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
-            }
+            if (ObjectFind(label1) == -1)
+               ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice);
+            ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+            ObjectSet    (label1, OBJPROP_COLOR,     colors[type]    );
+            ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
          }
          returnValue++;
       }
@@ -505,12 +497,10 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // Order anzeigen
-         if (ObjectFind(label1) == 0)
-            ObjectDelete(label1);
-         if (ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice)) {
-            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         }
+         if (ObjectFind(label1) == -1)
+            ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice);
+         ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
       }
       else {
          // offene Position
@@ -520,12 +510,10 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (takeProfit != NULL) {
             sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
             label2 = StringConcatenate(label1, ",  ", sTP);
-            if (ObjectFind(label2) == 0)
-               ObjectDelete(label2);
-            if (ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit)) {
-               ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
-               ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-            }
+            if (ObjectFind(label2) == -1)
+               ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit);
+            ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
          }
          else sTP = "";
 
@@ -533,25 +521,21 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (stopLoss != NULL) {
             sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
             label3 = StringConcatenate(label1, ",  ", sSL);
-            if (ObjectFind(label3) == 0)
-               ObjectDelete(label3);
-            if (ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss)) {
-               ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-               ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-            }
+            if (ObjectFind(label3) == -1)
+               ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss);
+            ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+            ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
          }
          else sSL = "";
 
          // Order anzeigen
-         if (ObjectFind(label1) == 0)
-            ObjectDelete(label1);
-         if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {
-            ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet(label1, OBJPROP_COLOR,     colors[type]    );
-            if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrSubstr(comment, 1)));
-            else                             comment = "";
-            ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
-         }
+         if (ObjectFind(label1) == -1)
+            ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice);
+         ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet(label1, OBJPROP_COLOR,     colors[type]);
+         if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrSubstr(comment, 1)));
+         else                             comment = "";
+         ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
       }
       returnValue++;
    }
@@ -569,11 +553,10 @@ bool GetOpenOrderDisplayStatus() {
 
    // look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -660,11 +643,10 @@ bool GetTradeHistoryDisplayStatus() {
 
    // on error look-up a status stored in the chart
    string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -819,36 +801,30 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
-         if (ObjectFind(openLabel) == 0)
-            ObjectDelete(openLabel);
-         if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i])) {
-            ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (openLabel, OBJPROP_COLOR, markerColors[types[i]]);
-            ObjectSetText(openLabel, text);
-         }
+         if (ObjectFind(openLabel) == -1)
+            ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i]);
+         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+         ObjectSet    (openLabel, OBJPROP_COLOR,     markerColors[types[i]]);
+         ObjectSetText(openLabel, text);
 
          // Trendlinie anzeigen
          if (drawConnectors) {
             lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
-            if (ObjectFind(lineLabel) == 0)
-               ObjectDelete(lineLabel);
-            if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i])) {
-               ObjectSet    (lineLabel, OBJPROP_RAY  , false               );
-               ObjectSet    (lineLabel, OBJPROP_STYLE, STYLE_DOT           );
-               ObjectSet    (lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
-               ObjectSet    (lineLabel, OBJPROP_BACK , true                );
-            }
+            if (ObjectFind(lineLabel) == -1)
+               ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i]);
+            ObjectSet(lineLabel, OBJPROP_RAY,   false);
+            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
+            ObjectSet(lineLabel, OBJPROP_BACK,  true);
          }
 
          // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-         if (ObjectFind(closeLabel) == 0)
-            ObjectDelete(closeLabel);
-         if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i])) {
-            ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-            ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
-            ObjectSetText(closeLabel, text);
-         }
+         if (ObjectFind(closeLabel) == -1)
+            ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i]);
+         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+         ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSetText(closeLabel, text);
          returnValue++;
       }
       return(returnValue);
@@ -876,38 +852,32 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
 
       // Open-Marker anzeigen
       openLabel = StringConcatenate("#", ticket, " ", sTypes[type], " ", DoubleToStr(units, 1), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == 0)
-         ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
-         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN  );
-         ObjectSet    (openLabel, OBJPROP_COLOR    , markerColors[type]);
-            if (positions.absoluteProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
-            else                                          text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
-         ObjectSetText(openLabel, text);
-      }
+      if (ObjectFind(openLabel) == -1)
+         ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice);
+      ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
+         if (positions.absoluteProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
+         else                                          text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
+      ObjectSetText(openLabel, text);
 
       // Trendlinie anzeigen
       if (drawConnectors) {
          lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == 0)
-            ObjectDelete(lineLabel);
-         if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-            ObjectSet    (lineLabel, OBJPROP_RAY  , false           );
-            ObjectSet    (lineLabel, OBJPROP_STYLE, STYLE_DOT       );
-            ObjectSet    (lineLabel, OBJPROP_COLOR, lineColors[type]);
-            ObjectSet    (lineLabel, OBJPROP_BACK , true            );
-         }
+         if (ObjectFind(lineLabel) == -1)
+            ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice);
+         ObjectSet(lineLabel, OBJPROP_RAY,   false);
+         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
+         ObjectSet(lineLabel, OBJPROP_BACK,  true);
       }
 
       // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == 0)
-         ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
-         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR    , CLR_CLOSED       );
-         ObjectSetText(closeLabel, text);
-      }
+      if (ObjectFind(closeLabel) == -1)
+         ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSetText(closeLabel, text);
       returnValue++;
    }
    return(returnValue);
@@ -4027,14 +3997,11 @@ bool StoreStatus() {
    int value = ifInt(positions.absoluteProfits, 1, -1);
 
    // chart window
-   if (__isChart) {
-      SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
-   }
+   if (__isChart) SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
 
    // chart
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1)
+      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);
 

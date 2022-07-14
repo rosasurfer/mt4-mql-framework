@@ -1043,16 +1043,14 @@ void RedrawStartStop() {
       time   = sequence.start.time  [i];
       price  = sequence.start.price [i];
       profit = sequence.start.profit[i];
-
-      label = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
+      label  = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
+      if (ObjectFind(label) != -1) ObjectDelete(label);
 
       if (startStopDisplayMode != SDM_NONE) {
          ObjectCreate (label, OBJ_ARROW, 0, time, price);
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-         ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
+         ObjectSet    (label, OBJPROP_BACK,      false);
+         ObjectSet    (label, OBJPROP_COLOR,     Blue);
          ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
       }
    }
@@ -1063,16 +1061,14 @@ void RedrawStartStop() {
          time   = sequence.stop.time [i];
          price  = sequence.stop.price[i];
          profit = sequence.stop.profit[i];
-
-         label = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
+         label  = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
+         if (ObjectFind(label) != -1) ObjectDelete(label);
 
          if (startStopDisplayMode != SDM_NONE) {
             ObjectCreate (label, OBJ_ARROW, 0, time, price);
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-            ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
+            ObjectSet    (label, OBJPROP_BACK,      false);
+            ObjectSet    (label, OBJPROP_COLOR,     Blue);
             ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
          }
       }
