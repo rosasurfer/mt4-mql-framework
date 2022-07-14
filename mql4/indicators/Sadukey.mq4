@@ -101,7 +101,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = ProgramName(MODE_NICE);
+   indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");

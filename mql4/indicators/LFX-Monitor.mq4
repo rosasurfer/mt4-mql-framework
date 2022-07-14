@@ -208,7 +208,7 @@ int    statusLineHeight         = 15;
  */
 int onInit() {
    // read auto-configuration
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
    if (AutoConfiguration) {
       // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
@@ -463,7 +463,7 @@ bool RefreshLfxOrders() {
  * @return bool - success status
  */
 bool CreateLabels() {
-   string indicatorName = ProgramName(MODE_NICE);
+   string indicatorName = ProgramName();
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
@@ -1005,7 +1005,7 @@ bool UpdateAccountDisplay() {
 bool StoreTradeAccount() {
    // account company id
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
+   string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1013,7 +1013,7 @@ bool StoreTradeAccount() {
    ObjectSetText(key, tradeAccount.company);
 
    // account number
-   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
+   key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
    if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
@@ -1032,14 +1032,14 @@ bool StoreTradeAccount() {
 string GetStoredTradeAccount() {
    // account company id
    int hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";
+   string key = ProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
       if (ObjectFind(key) != -1) company = ObjectDescription(key);
    }
 
    // account number
-   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";
+   key = ProgramName() +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
       if (ObjectFind(key) != -1) accountNumber = StrToInteger(ObjectDescription(key));

@@ -86,7 +86,7 @@ double   latestIB.low;
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
 
    // validate inputs
    // Timeframe
@@ -207,7 +207,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = ProgramName(MODE_NICE) +": "+ Timeframe + signalInfo;
+   string text = ProgramName() +": "+ Timeframe + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(7)"));
@@ -972,7 +972,7 @@ int PlaySoundDX(string action) {
  * @return string - created label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
    if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
    ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);

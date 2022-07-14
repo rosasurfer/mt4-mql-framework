@@ -130,7 +130,7 @@ int onInit() {
 
 
    // (4) data display configuration, names and labels
-   indicatorName = ProgramName(MODE_NICE);
+   indicatorName = ProgramName();
    string signalInfo = ifString(signals, "   onLevel("+ Signal.Level +")="+ StrSubstr(ifString(signal.sound, ", Sound", "") + ifString(signal.mail, ", Mail", "") + ifString(signal.sms, ", SMS", ""), 2), "");
    IndicatorShortName(indicatorName + signalInfo +"  ");       // chart subwindow and context menu
    SetIndexLabel(MODE_DELTA_MAIN,   indicatorName);            // chart tooltips and "Data" window

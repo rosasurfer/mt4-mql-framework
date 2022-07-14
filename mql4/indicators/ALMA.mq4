@@ -103,7 +103,7 @@ string signalTrendChange.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
 
    // validate inputs
    // MA.Periods

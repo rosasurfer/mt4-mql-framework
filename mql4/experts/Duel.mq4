@@ -383,7 +383,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -404,7 +404,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart (for terminal restarts)
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -420,7 +420,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
  * @return int - number of displayed orders or EMPTY (-1) in case of errors
  */
 int ShowOpenOrders() {
-   string orderTypes[] = {"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"}, instanceName=ProgramName(MODE_NICE) +"."+ sequence.name, label="";
+   string orderTypes[] = {"buy", "sell", "buy limit", "sell limit", "buy stop", "sell stop"}, instanceName=ProgramName() +"."+ sequence.name, label="";
    color colors[] = {CLR_OPEN_LONG, CLR_OPEN_SHORT};
 
    // long
@@ -540,7 +540,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -561,7 +561,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -943,7 +943,7 @@ bool StartSequence(int signal) {
    if (sequence.status != STATUS_WAITING) return(!catch("StartSequence(1)  "+ sequence.name +" cannot start "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (!stop.lossAbs.condition && !stop.lossPct.condition) {
       PlaySoundEx("alert.wav");
-      MessageBoxEx(ProgramName(MODE_NICE) +"::StartSequence()", "Cannot start EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
+      MessageBoxEx(ProgramName() +"::StartSequence()", "Cannot start EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
    if (IsLogInfo()) logInfo("StartSequence(2)  "+ sequence.name +" starting sequence...");
@@ -988,7 +988,7 @@ bool ResumeSequence(int signal) {
    if (sequence.status != STATUS_STOPPED) return(!catch("ResumeSequence(1)  "+ sequence.name +" cannot resume "+ StatusDescription(sequence.status) +" sequence", ERR_ILLEGAL_STATE));
    if (!stop.lossAbs.condition && !stop.lossPct.condition) {
       PlaySoundEx("alert.wav");
-      MessageBoxEx(ProgramName(MODE_NICE) +"::ResumeSequence()", "Cannot resume EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
+      MessageBoxEx(ProgramName() +"::ResumeSequence()", "Cannot resume EA without a StopLoss condition!", MB_ICONERROR|MB_OK);
       return(false);
    }
    if (IsLogInfo()) logInfo("ResumeSequence(2)  "+ sequence.name +" resuming sequence...");
@@ -4084,7 +4084,7 @@ bool ReadStatus.ParseOrder(string key, string value) {
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   string name = ProgramName(MODE_NICE) +".Sequence.ID";
+   string name = ProgramName() +".Sequence.ID";
    string value = ifString(sequence.isTest, "T", "") + sequence.id;
 
    Sequence.ID = value;                                              // store in input parameter
@@ -4113,7 +4113,7 @@ bool RestoreSequenceId() {
 
    if (__isChart) {
       // check chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
       if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
@@ -4138,7 +4138,7 @@ bool RestoreSequenceId() {
 bool RemoveSequenceId() {
    if (__isChart) {
       // chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
       // chart
@@ -4269,7 +4269,7 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string msg = StringConcatenate(ProgramName(MODE_NICE), "           ", sSequence, sError,     NL,
+   string msg = StringConcatenate(ProgramName(), "           ", sSequence, sError,              NL,
                                                                                                 NL,
                                   "Grid:          ",  sGridParameters,                          NL,
                                   "Volatility:   ",   sGridVolatility,                          NL,
@@ -4564,7 +4564,7 @@ bool CreateStatusBox() {
    string label = "";
 
    for (int i=0; i < rectangles; i++) {
-      label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
+      label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);

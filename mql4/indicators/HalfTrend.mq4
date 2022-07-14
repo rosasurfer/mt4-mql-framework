@@ -118,7 +118,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onTrendChange, signals))                         return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals)) return(last_error);
    if (signals) {
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -143,7 +143,7 @@ int onInit() {
    }
 
    // names, labels and display options
-   indicatorName = ProgramName(MODE_NICE) +"("+ Periods +")";
+   indicatorName = ProgramName() +"("+ Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
@@ -330,8 +330,8 @@ void SetIndicatorOptions() {
       SetIndexLabel(MODE_LOWER_BAND, NULL);
    }
    else {
-      SetIndexLabel(MODE_UPPER_BAND, ProgramName(MODE_NICE) +" upper band");
-      SetIndexLabel(MODE_LOWER_BAND, ProgramName(MODE_NICE) +" lower band");
+      SetIndexLabel(MODE_UPPER_BAND, ProgramName() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, ProgramName() +" lower band");
    }
 }
 

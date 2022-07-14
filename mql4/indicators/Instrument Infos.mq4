@@ -123,7 +123,7 @@ int onTick() {
  * @return bool - success status
  */
 bool CreateChartObjects() {
-   string indicatorName = ProgramName(MODE_NICE);
+   string indicatorName = ProgramName();
    color  bgColor    = C'212,208,200';
    string bgFontName = "Webdings";
    int    bgFontSize = 238;

@@ -44,7 +44,7 @@
  *
  * TODO:
  *  - SuperBars
- *     drop ProgramName(MODE_NICE)
+ *     merge ModuleName() and FullModuleName() to ModuleName(bool fullName = false)
  *
  *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set
@@ -510,7 +510,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -531,7 +531,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart (for terminal restarts)
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -625,7 +625,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -646,7 +646,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -3110,7 +3110,7 @@ int onInputError(string message) {
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   string name = ProgramName(MODE_NICE) +".Sequence.ID";
+   string name = ProgramName() +".Sequence.ID";
    string value = ifString(sequence.isTest, "T", "") + sequence.id;
 
    Sequence.ID = value;                                              // store in input parameter
@@ -3139,7 +3139,7 @@ bool RestoreSequenceId() {
 
    if (__isChart) {
       // check chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
       if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
@@ -3164,7 +3164,7 @@ bool RestoreSequenceId() {
 bool RemoveSequenceId() {
    if (__isChart) {
       // chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
       // chart
@@ -3386,12 +3386,12 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(MODE_NICE), "    ", sStatus, sError, NL,
-                                                                                                                     NL,
-                                  "Lots:      ", sLots,                                                              NL,
-                                  "Start:    ",  sStartConditions,                                                   NL,
-                                  "Stop:     ",  sStopConditions,                                                    NL,
-                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,                        NL
+   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
+                                                                                                            NL,
+                                  "Lots:      ", sLots,                                                     NL,
+                                  "Start:    ",  sStartConditions,                                          NL,
+                                  "Stop:     ",  sStopConditions,                                           NL,
+                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,               NL
    );
 
    // 3 lines margin-top for instrument and indicator legends
