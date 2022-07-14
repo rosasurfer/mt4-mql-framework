@@ -44,8 +44,7 @@
  *
  * TODO:
  *  - SuperBars
- *     rename {name.} back to {name} and drop ProgramName(MODE_NICE)
- *      ZigZag
+ *     drop ProgramName(MODE_NICE)
  *
  *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set
