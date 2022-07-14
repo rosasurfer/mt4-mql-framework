@@ -148,7 +148,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   if (!StoreRuntimeStatus())                            // store runtime status in all deinit scenarios
+   if (!StoreStatus())                                   // store runtime status in all deinit scenarios
       return(last_error);
    return(NO_ERROR);
 }
@@ -656,7 +656,7 @@ string CreateStatusLabel() {
  *
  * @return bool - success status
  */
-bool StoreRuntimeStatus() {
+bool StoreStatus() {
    if (!superTimeframe) return(true);                             // skip on invalid timeframes
 
    string label = "rsf."+ ProgramName(MODE_NICE) +".superTimeframe";
@@ -670,7 +670,7 @@ bool StoreRuntimeStatus() {
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ superTimeframe);
 
-   return(catch("StoreRuntimeStatus(1)"));
+   return(catch("StoreStatus(1)"));
 }
 
 
