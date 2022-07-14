@@ -11,9 +11,6 @@
  * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developed over
  * time. The indicator supports signaling of new reversals.
  *
- * Notes:
- *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
- *
  *
  * TODO:
  *  - add auto-configuration
