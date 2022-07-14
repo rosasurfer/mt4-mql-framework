@@ -385,7 +385,7 @@ void ForceAlert(string message) {
    debug(message);                                                         // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(), ":  ", message);  // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", ModuleName(true), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1691,13 +1691,12 @@ string ProgramName() {
 
    if (!StringLen(name)) {
       if (IsLibrary()) {
-         if (!IsDllsAllowed()) return("???");
-         name = ec_ProgramName(__ExecutionContext);
+         if (IsDllsAllowed()) name = ec_ProgramName(__ExecutionContext);
+         if (!StringLen(name)) return("???");
       }
       else {
          name = WindowExpertName();
       }
-      if (!StringLen(name)) return("???");
    }
    return(name);
 }
@@ -1706,39 +1705,28 @@ string ProgramName() {
 /**
  * Return the current MQL module's name.
  *
- * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
- * @return string
- */
-string ModuleName() {
-   static string rawName="", niceName="";
-
-   if (!StringLen(rawName)) {
-      rawName = WindowExpertName();
-
-      niceName = rawName;
-      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
-      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
-      niceName = StringTrimRight(niceName);
-   }
-   return(rawName);
-}
-
-
-/**
- * Return the current MQL module's full name. For main modules this value matches the value of ProgramName(). For libraries
- * this value includes the name of the MQL main module, e.g. "{expert-name}::{library-name}".
+ * @param  bool fullName [optional] - whether to return the full module name (default: simple name)
  *
  * @return string
  */
-string FullModuleName() {
+string ModuleName(bool fullName = false) {
+   fullName = fullName!=0;
+   if (!fullName) return(WindowExpertName());
+
    static string name = "";
 
    if (!StringLen(name)) {
-      string programName = ProgramName();
-      string libraryName = "";
-      if (IsLibrary()) libraryName = "::"+ ModuleName();
-      if (programName == "???") return(programName + libraryName);
-      name = programName + libraryName;
+      if (IsLibrary()) {
+         string programName = ProgramName();
+         string libraryName = WindowExpertName();
+         if (programName == "???") {
+            return(programName +"::"+ libraryName);
+         }
+         name = programName +"::"+ libraryName;
+      }
+      else {
+         name = WindowExpertName();
+      }
    }
    return(name);
 }
@@ -7096,7 +7084,6 @@ void __DummyCalls() {
    FindStandardSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
-   FullModuleName();
    GE(NULL, NULL);
    GetAccountAlias();
    GetAccountCompanyId();

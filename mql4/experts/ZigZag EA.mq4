@@ -44,8 +44,6 @@
  *
  * TODO:
  *  - SuperBars
- *     merge ModuleName() and FullModuleName() to ModuleName(bool fullName = false)
- *
  *     current SuperBar is not updated
  *     ValidBars is 0, ShiftedBars is not set
  *      fix testing in core/indicator.mqh

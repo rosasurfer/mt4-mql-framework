@@ -62,7 +62,7 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
           sLoglevel = StrPadRight(sLoglevel, 6);
    string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
-   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", FullModuleName(), "::", StrReplace(StrReplace(message, NL+NL, NL, true), NL, " "), sError));
+   OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", StrReplace(StrReplace(message, NL+NL, NL, true), NL, " "), sError));
 
    isRecursion = false;
    return(error);
@@ -360,12 +360,12 @@ int log2Alert(string message, int error, int level) {
          string caption = "Strategy Tester "+ Symbol() +","+ PeriodDescription();
          int pos = StringFind(message, ") ");                                       // insert a line-wrap after the first closing function brace
          if (pos != -1) message = StrLeft(message, pos+1) + NL + StrTrim(StrSubstr(message, pos+2));
-         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+         message = TimeToStr(TimeLocal(), TIME_FULL) + NL + LoglevelDescription(level) +" in "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
          PlaySoundEx("alert.wav");
          MessageBoxEx(caption, message, MB_ICONERROR|MB_OK|MB_DONT_LOG);
       }
       else {
-         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", FullModuleName(), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
+         Alert(LoglevelDescription(level), ":   ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", message, ifString(error, "  ["+ ErrorToStr(error) +"]", ""));
       }
 
       ec_SetLoglevelAlert(__ExecutionContext, configLevel);                         // restore the configuration
@@ -499,7 +499,7 @@ int log2Mail(string message, int error, int level) {
          if (!StrIsEmailAddress(sValue)) return(_int(error, catch("log2Mail(4)  invalid mail receiver address configuration [Mail]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          receiver = sValue;
       }
-      message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
+      message = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "");
       string subject = StrReplace(message, NL, " ");
       string body    = message + NL +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
@@ -549,7 +549,7 @@ int log2SMS(string message, int error, int level) {
          if (!StrIsPhoneNumber(sValue)) return(_int(error, catch("log2SMS(3)  invalid phone number configuration: [SMS]->Receiver = "+ DoubleQuoteStr(sValue), ERR_INVALID_CONFIG_VALUE)));
          receiver = sValue;
       }
-      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ FullModuleName() +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
+      string text = LoglevelDescription(level) +":  "+ Symbol() +","+ PeriodDescription() +"  "+ ModuleName(true) +"::"+ message + ifString(error, "  ["+ ErrorToStr(error) +"]", "") + NL
                   +"("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (SendSMS(receiver, text)) {
