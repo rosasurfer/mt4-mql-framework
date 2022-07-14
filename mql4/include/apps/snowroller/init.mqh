@@ -133,7 +133,7 @@ int afterInit() {
       SetLogfile(GetLogFilename());                   // of a finished test (i.e. a test loaded into an online chart)
    }
 
-   string section = ProgramName(MODE_NICE);
+   string section = ProgramName();
    limitOrderTrailing = GetConfigInt(section, "LimitOrderTrailing", 3);
 
    if (__isTesting) {

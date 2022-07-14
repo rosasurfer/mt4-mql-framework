@@ -115,7 +115,7 @@ string signalTrendChange.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
 
    // validate inputs
    // WaveCycle.Periods
@@ -375,7 +375,7 @@ bool onCommand(string cmd, string params="", string modifiers="") {
 
    // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
    if (__isChart) {
-      string label = "rsf."+ ProgramName(MODE_NICE) +".cmd.tickcount";
+      string label = "rsf."+ ProgramName() +".cmd.tickcount";
       if (ObjectFind(label) == 0) {
          lastTickcount = StrToInteger(ObjectDescription(label));
       }

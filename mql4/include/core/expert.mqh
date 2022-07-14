@@ -657,8 +657,8 @@ bool init_Recorder() {
          }
          else {
             // create a single new equity symbol using default values
-            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                                 // sizeof(SYMBOL.description) = 64 chars
-            symbolDescr  = StrLeft(ProgramName(MODE_NICE), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
+            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
+            symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
             if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL, "", NULL)) return(false);
          }
@@ -771,7 +771,7 @@ string init_RecorderNewSymbol() {
    FileClose(hFile);
 
    // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(MODE_NICE), " ", ""), 7) +".";
+   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
    for (int i, maxId=0; i < symbolsSize; i++) {
       symbol = symbols_Name(symbols, i);
@@ -799,7 +799,7 @@ string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
 
    if (!StringLen(symbolGroup)) {
       if (!StringLen(defaultValue)) {
-         defaultValue = StrLeft(ProgramName(MODE_NICE), MAX_SYMBOL_GROUP_LENGTH);
+         defaultValue = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
       }
       symbolGroup = defaultValue;
    }

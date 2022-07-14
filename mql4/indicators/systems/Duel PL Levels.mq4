@@ -66,7 +66,7 @@ int onInit() {
    SetIndexBuffer(MODE_BE_SHORT, beShort); SetIndexEmptyValue(MODE_BE_SHORT, 0);
 
    // names, labels and display options
-   IndicatorShortName(ProgramName(MODE_NICE));           // chart tooltips and context menu
+   IndicatorShortName(ProgramName());                    // chart tooltips and context menu
    SetIndexLabel(MODE_BE_LONG,   "Duel BE long");        // chart tooltips and "Data" window
    SetIndexLabel(MODE_BE_SHORT,  "Duel BE short");
    IndicatorDigits(Digits);

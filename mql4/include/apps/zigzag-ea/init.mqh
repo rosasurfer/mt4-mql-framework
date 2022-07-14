@@ -115,7 +115,7 @@ int afterInit() {
    }
 
    // read debug config
-   string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
+   string section = ifString(__isTesting, "Tester.", "") + ProgramName();
    if (__isTesting) {
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
@@ -146,7 +146,7 @@ bool CreateStatusBox() {
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
-      string label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
+      string label = ProgramName() +".statusbox."+ (i+1);
       if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);

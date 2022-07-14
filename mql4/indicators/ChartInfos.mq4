@@ -552,7 +552,7 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -573,7 +573,7 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -642,7 +642,7 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // on error look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
@@ -663,7 +663,7 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -975,7 +975,7 @@ bool ToggleAccountBalance() {
  * @return bool - status: enabled/disabled
  */
 bool GetAccountBalanceDisplayStatus() {
-   string label = ProgramName(MODE_NICE) +".ShowAccountBalance";    // TODO: also store status in the chart window
+   string label = ProgramName() +".ShowAccountBalance";        // TODO: also store status in the chart window
    if (ObjectFind(label) != -1)
       return(StrToInteger(ObjectDescription(label)) != 0);
    return(false);
@@ -992,7 +992,7 @@ bool GetAccountBalanceDisplayStatus() {
 bool SetAccountBalanceDisplayStatus(bool status) {
    status = status!=0;
 
-   string label = ProgramName(MODE_NICE) +".ShowAccountBalance";    // TODO: also read status from the chart window
+   string label = ProgramName() +".ShowAccountBalance";        // TODO: also read status from the chart window
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
@@ -1009,7 +1009,7 @@ bool SetAccountBalanceDisplayStatus(bool status) {
  */
 bool CreateLabels() {
    // define labels
-   string programName = ProgramName(MODE_NICE);
+   string programName = ProgramName();
    label.instrument     = programName +".Instrument";
    label.price          = programName +".Price";
    label.spread         = programName +".Spread";
@@ -1233,7 +1233,7 @@ bool UpdatePositions() {
       return(!catch("UpdatePositions(1)", error));
 
    // PendingOrder-Marker unten rechts ein-/ausblenden
-   string label = ProgramName(MODE_NICE) +".PendingTickets";
+   string label = ProgramName() +".PendingTickets";
    if (ObjectFind(label) == -1) {
       if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
@@ -3993,7 +3993,7 @@ bool AnalyzePos.ProcessLfxProfits() {
 bool StoreStatus() {
    // stored vars:
    // bool positions.absoluteProfits
-   string key = ProgramName(MODE_NICE) +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value = ifInt(positions.absoluteProfits, 1, -1);
 
    // chart window
@@ -4017,7 +4017,7 @@ bool StoreStatus() {
 bool RestoreStatus() {
    // restored vars:
    // bool positions.absoluteProfits
-   string key = ProgramName(MODE_NICE) +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    bool result = false;
 
    // prefer chart window

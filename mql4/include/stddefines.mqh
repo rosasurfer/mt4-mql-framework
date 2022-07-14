@@ -258,11 +258,6 @@ double  N_INF;                                                    // -1.#INF: ne
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
 
 
-// name sanitizer modes for ProgramName(), ModuleName() and FullModuleName()
-#define MODE_RAW               0
-#define MODE_NICE              1
-
-
 // modes to specify the pool to select an order from; see OrderSelect()
 #define MODE_TRADES            0
 #define MODE_HISTORY           1

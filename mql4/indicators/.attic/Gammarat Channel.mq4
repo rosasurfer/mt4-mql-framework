@@ -164,7 +164,7 @@ int onInit() {
  */
 int afterInit() {
    if (__isTesting) {                                       // read test configuration
-      string section = ProgramName(MODE_NICE) +".Tester";
+      string section = ProgramName() +".Tester";
       test.onSignalPause = GetConfigBool(section, "OnSignalPause", false);
    }
    return(catch("afterInit(1)"));

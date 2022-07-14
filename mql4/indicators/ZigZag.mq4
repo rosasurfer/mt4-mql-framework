@@ -172,7 +172,7 @@ string   signalReversal.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
 
    // validate inputs
    // ZigZag.Periods
