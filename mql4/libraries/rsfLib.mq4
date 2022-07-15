@@ -884,44 +884,6 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 
 
 /**
- * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
- *
- * @return int - error status
- */
-int RepositionLegend() {
-   if (__isSuperContext) return(true);
-
-   int iObjects=ObjectsTotal(), iLabels=ObjectsTotal(OBJ_LABEL);
-
-   string sLabels[];   ArrayResize(sLabels, 0);    // Namen der gefundenen Label
-   int    yDists[][2]; ArrayResize(yDists,  0);    // Y-Distance und sLabels[]-Index, um Label nach Position sortieren zu können
-
-   for (int i=0, n; i < iObjects && iLabels; i++) {
-      string objName = ObjectName(i);
-      if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "rsf.Legend.")) {
-            ArrayResize(sLabels, n+1);
-            ArrayResize(yDists,  n+1);
-            sLabels[n]    = objName;
-            yDists [n][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
-            yDists [n][1] = n;
-            n++;
-         }
-         iLabels--;
-      }
-   }
-
-   if (n > 0) {
-      ArraySort(yDists);
-      for (i=0; i < n; i++) {
-         ObjectSet(sLabels[yDists[i][1]], OBJPROP_YDISTANCE, 20 + i*19);
-      }
-   }
-   return(catch("RepositionLegend(1)"));
-}
-
-
-/**
  * Ob ein Tradeserver-Fehler temporär (also vorübergehend) ist oder nicht. Bei einem vorübergehenden Fehler *kann* der erneute Versuch, die
  * Order auszuführen, erfolgreich sein.
  *

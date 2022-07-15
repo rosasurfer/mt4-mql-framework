@@ -30,7 +30,8 @@ extern int    Max.Bars        = 10000;                   // max. values to calcu
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_TEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1
@@ -104,9 +105,8 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   if (!__isSuperContext) {                                    // no chart legend if called by iCustom()
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
+
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "TEMA("+ MA.Periods + strAppliedPrice +")";

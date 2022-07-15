@@ -69,6 +69,7 @@ extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 #include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
+#include <functions/legend.mqh>
 #include <win32api.mqh>
 
 // indicator buffer ids
@@ -242,9 +243,7 @@ int onInit() {
 
    // buffer management, indicator names and display options
    SetIndicatorOptions();
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.

@@ -44,6 +44,7 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
+#include <functions/legend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
@@ -149,9 +150,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // data display configuration, names and labels
    string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));

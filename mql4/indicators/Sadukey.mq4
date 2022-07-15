@@ -29,7 +29,8 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/ParseTime.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1
@@ -96,9 +97,7 @@ int onInit() {
    SetIndexBuffer(MODE_BUFFER2, buffer2);
 
    // chart legend
-   if (!__isSuperContext) {
-      legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    indicatorName = ProgramName();
