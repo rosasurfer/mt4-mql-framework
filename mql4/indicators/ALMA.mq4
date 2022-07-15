@@ -1,7 +1,7 @@
 /**
  * Arnaud Legoux Moving Average
  *
- * A moving average using a Gaussian distribution function for calculating bar weights (algorithm by Arnaud Legoux).
+ * A moving average using a Gaussian distribution function for weight calculation.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -271,40 +271,44 @@ int onTick() {
    return(last_error);
 
    // Speed test on Toshiba Satellite
-   // ---------------------------------------------------------------------------------------------------
-   // ALMA(7xD1) on H1  = ALMA(168)    weights(  168)=0.009 sec   bars(2000)=0.110 sec   loops=   336,000
-   // ALMA(7xD1) on M30 = ALMA(336)    weights(  336)=0.009 sec   bars(2000)=0.250 sec   loops=   672,000
-   // ALMA(7xD1) on M15 = ALMA(672)    weights(  672)=0.009 sec   bars(2000)=0.453 sec   loops= 1,344,000
-   // ALMA(7xD1) on M5  = ALMA(2016)   weights( 2016)=0.016 sec   bars(2000)=1.547 sec   loops= 4,032,000
-   // ALMA(7xD1) on M1  = ALMA(10080)  weights(10080)=0.016 sec   bars(2000)=7.110 sec   loops=20,160,000
+   // -----------------------------------------------------------------------------------------------------
+   // ALMA(7xD1) on H1  = ALMA(168)      weights(  168)=0.009 sec   bars(2000)=0.110 sec   loops=   336,000
+   // ALMA(7xD1) on M30 = ALMA(336)      weights(  336)=0.009 sec   bars(2000)=0.250 sec   loops=   672,000
+   // ALMA(7xD1) on M15 = ALMA(672)      weights(  672)=0.009 sec   bars(2000)=0.453 sec   loops= 1,344,000
+   // ALMA(7xD1) on M5  = ALMA(2016)     weights( 2016)=0.016 sec   bars(2000)=1.547 sec   loops= 4,032,000
+   // ALMA(7xD1) on M1  = ALMA(10080)    weights(10080)=0.016 sec   bars(2000)=7.110 sec   loops=20,160,000
    //
    // Speed test on Toshiba Portege
-   // ---------------------------------------------------------------------------------------------------
-   // as above            ALMA(168)    as above                   bars(2000)=0.078 sec   as above
-   // ...                 ALMA(336)    ...                        bars(2000)=0.156 sec   ...
-   // ...                 ALMA(672)    ...                        bars(2000)=0.312 sec   ...
-   // ...                 ALMA(2016)   ...                        bars(2000)=0.952 sec   ...
-   // ...                 ALMA(10080)  ...                        bars(2000)=4.773 sec   ...
+   // -----------------------------------------------------------------------------------------------------
+   // as above            ALMA(168)      as above                   bars(2000)=0.078 sec   as above
+   // ...                 ALMA(336)      ...                        bars(2000)=0.156 sec   ...
+   // ...                 ALMA(672)      ...                        bars(2000)=0.312 sec   ...
+   // ...                 ALMA(2016)     ...                        bars(2000)=0.952 sec   ...
+   // ...                 ALMA(10080)    ...                        bars(2000)=4.773 sec   ...
    //
    // Speed test on Dell Precision
-   // ---------------------------------------------------------------------------------------------------
-   // as above            ALMA(168)    as above                   bars(2000)=0.062 sec   as above           // no quantifiable difference between iMA() and GetPrice()
-   // ...                 ALMA(336)    ...                        bars(2000)=0.109 sec   ...
-   // ...                 ALMA(672)    ...                        bars(2000)=0.218 sec   ...
-   // ...                 ALMA(2016)   ...                        bars(2000)=0.671 sec   ...
-   // ...                 ALMA(10080)  ...                        bars(2000)=3.323 sec   ...
-   //                     ALMA(38)     ...                       bars(10000)=0.063 sec
-   //
-   // Speed test on Dell Precision NonLagMA
-   // ---------------------------------------------------------------------------------------------------
-   //                     NLMA(34)     weights(169)               bars(2000)=0.062 sec   as above           // no quantifiable difference between iMA() and GetPrice()
-   //                     NLMA(68)     weights(339)               bars(2000)=0.125 sec   ...
-   //                     NLMA(135)    weights(674)               bars(2000)=0.234 sec   ...
-   //                     NLMA(404)    weights(2019)              bars(2000)=0.733 sec   ...
-   //                     NLMA(2016)   weights(10079)             bars(2000)=3.557 sec   ...
-   //                     NLMA(20)     weights(99)               bars(10000)=0.187 sec
-   //
-   // Conclusion: Weights calculation can be ignored, bottleneck is the nested loop in MA calculation.
+   // -----------------------------------------------------------------------------------------------------
+   // as above            ALMA(168)      as above                   bars(2000)=0.062 sec   as above           // no difference between iMA() and GetPrice()
+   // ...                 ALMA(336)      ...                        bars(2000)=0.109 sec   ...
+   // ...                 ALMA(672)      ...                        bars(2000)=0.218 sec   ...
+   // ...                 ALMA(2016)     ...                        bars(2000)=0.671 sec   ...
+   // ...                 ALMA(10080)    ...                        bars(2000)=3.323 sec   ...
+   //                     ALMA(38/0.7)   ...                       bars(10000)=?     sec   loops=  380,000
+   //                     ALMA(38/0.7)   ...                       bars(60000)=?     sec   loops=2,280,000
+   //                     ALMA(38/0.7)   ...                      bars(240000)=?     sec   loops=9,120,000
+
+   // Speed test on Dell Precision
+   // -----------------------------------------------------------------------------------------------------
+   //                     NLMA(34/0.7)   weights(169)               bars(2000)=0.062 sec   as above           // no difference between iMA() and GetPrice()
+   //                     NLMA(68/0.7)   weights(339)               bars(2000)=0.125 sec   ...
+   //                     NLMA(135/0.7)  weights(674)               bars(2000)=0.234 sec   ...
+   //                     NLMA(404/0.7)  weights(2019)              bars(2000)=0.733 sec   ...
+   //                     NLMA(2016/0.7) weights(10079)             bars(2000)=3.557 sec   ...
+   //                     NLMA(20/0.7)   weights(99)               bars(10000)=0.187 sec   loops=   990,000
+   //                     NLMA(20/0.7)   weights(99)               bars(60000)=0.904 sec   loops= 5,940,000
+   //                     NLMA(20/0.7)   weights(99)              bars(240000)=3.448 sec   loops=23,760,000
+
+   // Conclusion: Weight calculation can be ignored, bottleneck is the nested loop in MA calculation.
 }
 
 
