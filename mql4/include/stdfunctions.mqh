@@ -6584,13 +6584,13 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
  * @param  int    timeframe        - timeframe to load the indicator (NULL: the current timeframe)
  * @param  int    waveCyclePeriods - indicator parameter
  * @param  string maAppliedPrice   - indicator parameter
- * @param  double maFilter         - indicator parameter
+ * @param  double maReversalFilter - indicator parameter
  * @param  int    iBuffer          - indicator buffer index of the value to return
  * @param  int    iBar             - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maFilter, int iBuffer, int iBar) {
+double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
@@ -6598,8 +6598,8 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
                           waveCyclePeriods,                 // int    WaveCycle.Periods
                           0,                                // int    WaveCycle.Periods.StepSize
                           maAppliedPrice,                   // string MA.AppliedPrice
-                          maFilter,                         // double MA.Filter
-                          0,                                // double MA.Filter.StepSize
+                          maReversalFilter,                 // double MA.ReversalFilter
+                          0,                                // double MA.Filter.ReversalStepSize
 
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
