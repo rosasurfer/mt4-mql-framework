@@ -429,10 +429,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(lots, 2), " at ", NumberToStr(openPrice, PriceFormat));
 
             // create pending order marker
-            if (ObjectFind(label1) == -1)
-               ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice);
+            if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
             ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+            ObjectSet    (label1, OBJPROP_TIME1,     TimeServer());
+            ObjectSet    (label1, OBJPROP_PRICE1,    openPrice);
             ObjectSetText(label1, comment);
          }
          else {
@@ -443,10 +444,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (takeProfit != NULL) {
                sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
                label2 = StringConcatenate(label1, ",  ", sTP);
-               if (ObjectFind(label2) == -1)
-                  ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit);
+               if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+               ObjectSet    (label2, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label2, OBJPROP_PRICE1,    takeProfit);
                ObjectSetText(label2, comment);
             }
             else sTP = "";
@@ -455,19 +457,21 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (stopLoss != NULL) {
                sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
                label3 = StringConcatenate(label1, ",  ", sSL);
-               if (ObjectFind(label3) == -1)
-                  ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss);
+               if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+               ObjectSet    (label3, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label3, OBJPROP_PRICE1,    stopLoss);
                ObjectSetText(label3, comment);
             }
             else sSL = "";
 
             // create open position marker
-            if (ObjectFind(label1) == -1)
-               ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice);
+            if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-            ObjectSet    (label1, OBJPROP_COLOR,     colors[type]    );
+            ObjectSet    (label1, OBJPROP_COLOR,     colors[type]);
+            ObjectSet    (label1, OBJPROP_TIME1,     openTime);
+            ObjectSet    (label1, OBJPROP_PRICE1,    openPrice);
             ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
          }
          returnValue++;
@@ -497,10 +501,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          label1 = StringConcatenate("#", ticket, " ", orderTypes[type], " ", DoubleToStr(units, 1), " at ", NumberToStr(openPrice, PriceFormat));
 
          // Order anzeigen
-         if (ObjectFind(label1) == -1)
-            ObjectCreate(label1, OBJ_ARROW, 0, TimeServer(), openPrice);
+         if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
+         ObjectSet(label1, OBJPROP_TIME1,     TimeServer());
+         ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
       }
       else {
          // offene Position
@@ -510,10 +515,11 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (takeProfit != NULL) {
             sTP    = StringConcatenate("TP: ", NumberToStr(takeProfit, PriceFormat));
             label2 = StringConcatenate(label1, ",  ", sTP);
-            if (ObjectFind(label2) == -1)
-               ObjectCreate(label2, OBJ_ARROW, 0, TimeServer(), takeProfit);
+            if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
+            ObjectSet(label2, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label2, OBJPROP_PRICE1,    takeProfit);
          }
          else sTP = "";
 
@@ -521,18 +527,20 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (stopLoss != NULL) {
             sSL    = StringConcatenate("SL: ", NumberToStr(stopLoss, PriceFormat));
             label3 = StringConcatenate(label1, ",  ", sSL);
-            if (ObjectFind(label3) == -1)
-               ObjectCreate(label3, OBJ_ARROW, 0, TimeServer(), stopLoss);
+            if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
+            ObjectSet(label3, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label3, OBJPROP_PRICE1,    stopLoss);
          }
          else sSL = "";
 
          // Order anzeigen
-         if (ObjectFind(label1) == -1)
-            ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice);
+         if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label1, OBJPROP_COLOR,     colors[type]);
+         ObjectSet(label1, OBJPROP_TIME1,     openTime);
+         ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
          if (StrStartsWith(comment, "#")) comment = StringConcatenate(lfxCurrency, ".", StrToInteger(StrSubstr(comment, 1)));
          else                             comment = "";
          ObjectSetText(label1, StrTrim(StringConcatenate(comment, "   ", sTP, "   ", sSL)));
@@ -801,29 +809,34 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
 
          // Open-Marker anzeigen
          openLabel = StringConcatenate("#", tickets[i], " ", sTypes[types[i]], " ", DoubleToStr(lotSizes[i], 2), " at ", sOpenPrice);
-         if (ObjectFind(openLabel) == -1)
-            ObjectCreate(openLabel, OBJ_ARROW, 0, openTimes[i], openPrices[i]);
+         if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (openLabel, OBJPROP_COLOR,     markerColors[types[i]]);
+         ObjectSet    (openLabel, OBJPROP_TIME1,     openTimes[i]);
+         ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrices[i]);
          ObjectSetText(openLabel, text);
 
          // Trendlinie anzeigen
          if (drawConnectors) {
             lineLabel = StringConcatenate("#", tickets[i], " ", sOpenPrice, " -> ", sClosePrice);
-            if (ObjectFind(lineLabel) == -1)
-               ObjectCreate(lineLabel, OBJ_TREND, 0, openTimes[i], openPrices[i], closeTimes[i], closePrices[i]);
-            ObjectSet(lineLabel, OBJPROP_RAY,   false);
-            ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-            ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[types[i]]);
-            ObjectSet(lineLabel, OBJPROP_BACK,  true);
+            if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
+            ObjectSet(lineLabel, OBJPROP_RAY,    false);
+            ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
+            ObjectSet(lineLabel, OBJPROP_COLOR,  lineColors[types[i]]);
+            ObjectSet(lineLabel, OBJPROP_BACK,   true);
+            ObjectSet(lineLabel, OBJPROP_TIME1,  openTimes[i]);
+            ObjectSet(lineLabel, OBJPROP_PRICE1, openPrices[i]);
+            ObjectSet(lineLabel, OBJPROP_TIME2,  closeTimes[i]);
+            ObjectSet(lineLabel, OBJPROP_PRICE2, closePrices[i]);
          }
 
          // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
          closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-         if (ObjectFind(closeLabel) == -1)
-            ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTimes[i], closePrices[i]);
+         if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
          ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+         ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTimes[i]);
+         ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrices[i]);
          ObjectSetText(closeLabel, text);
          returnValue++;
       }
@@ -852,10 +865,11 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
 
       // Open-Marker anzeigen
       openLabel = StringConcatenate("#", ticket, " ", sTypes[type], " ", DoubleToStr(units, 1), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == -1)
-         ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice);
+      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet(openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
       ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
+      ObjectSet(openLabel, OBJPROP_TIME1,     openTime);
+      ObjectSet(openLabel, OBJPROP_PRICE1,    openPrice);
          if (positions.absoluteProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
          else                                          text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
       ObjectSetText(openLabel, text);
@@ -863,20 +877,24 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       // Trendlinie anzeigen
       if (drawConnectors) {
          lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-         if (ObjectFind(lineLabel) == -1)
-            ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice);
-         ObjectSet(lineLabel, OBJPROP_RAY,   false);
-         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(lineLabel, OBJPROP_COLOR, lineColors[type]);
-         ObjectSet(lineLabel, OBJPROP_BACK,  true);
+         if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
+         ObjectSet(lineLabel, OBJPROP_RAY,    false);
+         ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
+         ObjectSet(lineLabel, OBJPROP_COLOR,  lineColors[type]);
+         ObjectSet(lineLabel, OBJPROP_BACK,   true);
+         ObjectSet(lineLabel, OBJPROP_TIME1,  openTime);
+         ObjectSet(lineLabel, OBJPROP_PRICE1, openPrice);
+         ObjectSet(lineLabel, OBJPROP_TIME2,  closeTime);
+         ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
       }
 
       // Close-Marker anzeigen                                    // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == -1)
-         ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice);
+      if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
       ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
       ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
       ObjectSetText(closeLabel, text);
       returnValue++;
    }

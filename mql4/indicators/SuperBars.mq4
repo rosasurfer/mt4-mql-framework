@@ -312,7 +312,7 @@ bool UpdateSuperBars() {
    bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
 
    if (isTimeframeChange) {
-      if (PERIOD_M1 <= lastSuperTimeframe && lastSuperTimeframe <= PERIOD_Q1) {
+      if (lastSuperTimeframe >= PERIOD_M1 && lastSuperTimeframe <= PERIOD_Q1) {
          DeleteRegisteredObjects();                                  // in all other cases previous SuperBars have already been deleted
          legendLabel = CreateStatusLabel();
       }
@@ -346,13 +346,13 @@ bool UpdateSuperBars() {
    }
 
    // With enabled ETH sessions the range of ChangedBars must also include the range of iChangedBars(PERIOD_M15).
-   int  changedBars=ChangedBars, timeframe=superTimeframe;
+   int  changedBars=ChangedBars, superTimeframeBak=superTimeframe;
    bool drawETH;
    if (isTimeframeChange)
       changedBars = Bars;                                            // on isTimeframeChange mark all bars as changed
 
    if (ethEnabled && superTimeframe==PERIOD_D1_ETH) {
-      timeframe = PERIOD_D1;
+      superTimeframe = PERIOD_D1;
       // TODO: On isTimeframeChange the following block is obsolete (it holds: changedBars = Bars). However in this case
       //       DrawSuperBar() must again detect and handle ERS_HISTORY_UPDATE and ERR_SERIES_NOT_AVAILABLE.
       int changedBarsM15 = iChangedBars(NULL, PERIOD_M15);
@@ -382,11 +382,11 @@ bool UpdateSuperBars() {
    // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
       // get start/end times of every previous timeframe period, starting with the current unfinshed one
-      if (!iPreviousPeriod(timeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
+      if (!iPreviousPeriod(superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
 
       // In periods >= PERIOD_D1 timeseries times are set to full days only. The wrong timezone offset can shift the start of such a period wrongly
       // to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
-      if (Period()==PERIOD_D1) /*&&*/ if (timeframe >= PERIOD_MN1) {
+      if (superTimeframe >= PERIOD_MN1) /*&&*/ if (Period()==PERIOD_D1) {
          if (openTimeSrv  < openTimeFxt ) /*&&*/ if (TimeDayOfWeekEx(openTimeSrv )!=SUNDAY  ) openTimeSrv  = openTimeFxt;     // Sunday bar:   server timezone west of FXT
          if (closeTimeSrv > closeTimeFxt) /*&&*/ if (TimeDayOfWeekEx(closeTimeSrv)!=SATURDAY) closeTimeSrv = closeTimeFxt;    // Saturday bar: server timezone east of FXT
       }
@@ -405,7 +405,7 @@ bool UpdateSuperBars() {
       if (openBar >= changedBars-1) break;                                 // only update the range of var "changedBars"
    }
 
-   lastSuperTimeframe = superTimeframe;
+   lastSuperTimeframe = superTimeframeBak;
    return(true);
 }
 
@@ -460,9 +460,13 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          adjustedCloseBar--;
       }
    }
-   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, Time[openBar], High[highBar], Time[adjustedCloseBar], Low[lowBar], 0, 0)) return(false);
-   ObjectSet(nameRectangle, OBJPROP_COLOR, barColor);
-   ObjectSet(nameRectangle, OBJPROP_BACK,  true);
+   if (ObjectFind(nameRectangle) == -1) if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet(nameRectangle, OBJPROP_COLOR,  barColor);
+   ObjectSet(nameRectangle, OBJPROP_BACK,   true);
+   ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[openBar]);
+   ObjectSet(nameRectangle, OBJPROP_PRICE1, High[highBar]);
+   ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[adjustedCloseBar]);
+   ObjectSet(nameRectangle, OBJPROP_PRICE2, Low[lowBar]);
 
    // draw SuperBar close marker and referencing label
    if (closeBar > 0) {                                                           // except for the youngest (still unfinished) SuperBar
@@ -483,11 +487,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
          ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          ObjectSetText(nameLabel, nameTrendline);
 
-         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, Time[centerBar], Close[closeBar], Time[closeBar], Close[closeBar], 0, 0)) return(false);
-         ObjectSet(nameTrendline, OBJPROP_RAY,   false);
-         ObjectSet(nameTrendline, OBJPROP_STYLE, STYLE_SOLID);
-         ObjectSet(nameTrendline, OBJPROP_COLOR, CloseMarker.Color);
-         ObjectSet(nameTrendline, OBJPROP_BACK,  true);
+         if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+         ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+         ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+         ObjectSet(nameTrendline, OBJPROP_BACK,   true);
+         ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[centerBar]);
+         ObjectSet(nameTrendline, OBJPROP_PRICE1, Close[closeBar]);
+         ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[closeBar]);
+         ObjectSet(nameTrendline, OBJPROP_PRICE2, Close[closeBar]);
       }
    }
 
@@ -524,15 +532,23 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       nameRectangleBg = nameRectangle +" background";
 
       // draw ETH background (creates an optical hole in the SuperBar)
-      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
-      ObjectSet(nameRectangleBg, OBJPROP_COLOR, barColor);                       // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
-      ObjectSet(nameRectangleBg, OBJPROP_BACK,  true);                           // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
-                                                                                 // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
-      // draw ETH bar (fills the hole with the ETH color)                        // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
-      if (ObjectFind(nameRectangle) == -1)                                       // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
-         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, Time[ethOpenBar], ethHigh, Time[ethCloseBar], ethLow, 0, 0)) return(false);
-      ObjectSet(nameRectangle, OBJPROP_COLOR, ETH.Color);
-      ObjectSet(nameRectangle, OBJPROP_BACK,  true);
+      if (ObjectFind(nameRectangleBg) == -1) if (!ObjectCreateRegister(nameRectangleBg, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(nameRectangleBg, OBJPROP_COLOR,  barColor);                      // Colors of overlapping shapes are mixed with the chart background color according to gdi32::SetROP2(HDC hdc, R2_NOTXORPEN),
+      ObjectSet(nameRectangleBg, OBJPROP_BACK,   true);                          // see example at function end. As MQL4 can't read the chart background color we use a trick: A color mixed with itself gives
+      ObjectSet(nameRectangleBg, OBJPROP_TIME1,  Time[ethOpenBar]);              // White. White mixed with another color gives again the original color. With this we create an "optical hole" in the color
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE1, ethHigh);                       // of the chart background in the SuperBar. Then we draw the ETH bar into this "hole". It's color doesn't get mixed with the
+      ObjectSet(nameRectangleBg, OBJPROP_TIME2,  Time[ethCloseBar]);             // hole's color. Presumably because the terminal uses a different drawing mode for this mixing.
+      ObjectSet(nameRectangleBg, OBJPROP_PRICE2, ethLow);
+
+      // draw ETH bar (fills the hole with the ETH color)
+      if (ObjectFind(nameRectangle) == -1)
+         if (!ObjectCreateRegister(nameRectangle, OBJ_RECTANGLE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet(nameRectangle, OBJPROP_COLOR,  ETH.Color);
+      ObjectSet(nameRectangle, OBJPROP_BACK,   true);
+      ObjectSet(nameRectangle, OBJPROP_TIME1,  Time[ethOpenBar]);
+      ObjectSet(nameRectangle, OBJPROP_PRICE1, ethHigh);
+      ObjectSet(nameRectangle, OBJPROP_TIME2,  Time[ethCloseBar]);
+      ObjectSet(nameRectangle, OBJPROP_PRICE2, ethLow);
 
       // draw ETH close marker if the RTH session has started
       if (TimeServer() >= ethCloseTimeSrv) {
@@ -553,11 +569,15 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText(nameLabel, nameTrendline);
 
-            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose, 0, 0)) return(false);
-            ObjectSet(nameTrendline, OBJPROP_RAY,   false);
-            ObjectSet(nameTrendline, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet(nameTrendline, OBJPROP_COLOR, CloseMarker.Color);
-            ObjectSet(nameTrendline, OBJPROP_BACK,  true);
+            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+            ObjectSet(nameTrendline, OBJPROP_RAY,    false);
+            ObjectSet(nameTrendline, OBJPROP_STYLE,  STYLE_SOLID);
+            ObjectSet(nameTrendline, OBJPROP_COLOR,  CloseMarker.Color);
+            ObjectSet(nameTrendline, OBJPROP_BACK,   true);
+            ObjectSet(nameTrendline, OBJPROP_TIME1,  Time[ethCenterBar]);
+            ObjectSet(nameTrendline, OBJPROP_PRICE1, ethClose);
+            ObjectSet(nameTrendline, OBJPROP_TIME2,  Time[ethCloseBar]);
+            ObjectSet(nameTrendline, OBJPROP_PRICE2, ethClose);
          }
       }
       break;

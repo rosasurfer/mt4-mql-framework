@@ -3547,8 +3547,7 @@ bool Chart.StoreBool(string key, bool value) {
    if (!len)       return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
    if (len > 63)   return(!catch("Chart.StoreBool(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string)(int) bool
 
@@ -3571,8 +3570,7 @@ bool Chart.StoreInt(string key, int value) {
    if (!len)       return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
    if (len > 63)   return(!catch("Chart.StoreInt(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string) int
 
@@ -3595,8 +3593,7 @@ bool Chart.StoreColor(string key, color value) {
    if (!len)       return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
    if (len > 63)   return(!catch("Chart.StoreColor(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string) color
 
@@ -3619,8 +3616,7 @@ bool Chart.StoreDouble(string key, double value) {
    if (!len)       return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
    if (len > 63)   return(!catch("Chart.StoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, NumberToStr(value, ".+"));                  // (string) double
 
@@ -3648,8 +3644,7 @@ bool Chart.StoreString(string key, string value) {
 
    if (!len) value = "…(empty)…";                                 // mark empty string with magic value (0x85) as the terminal fails to restore them
 
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, value);                                     // string
 
