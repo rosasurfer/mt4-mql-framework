@@ -553,7 +553,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
             ObjectSet    (nameLabel, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
             ObjectSetText(nameLabel, nameTrendline);
 
-            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreate(nameTrendline, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose)) return(false);
+            if (ObjectFind(nameTrendline) == -1) if (!ObjectCreateRegister(nameTrendline, OBJ_TREND, 0, Time[ethCenterBar], ethClose, Time[ethCloseBar], ethClose, 0, 0)) return(false);
             ObjectSet(nameTrendline, OBJPROP_RAY,   false);
             ObjectSet(nameTrendline, OBJPROP_STYLE, STYLE_SOLID);
             ObjectSet(nameTrendline, OBJPROP_COLOR, CloseMarker.Color);
