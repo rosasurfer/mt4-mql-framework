@@ -217,7 +217,6 @@
 
    bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    int      DeleteRegisteredObjects();
-   int      RepositionLegend();
 
    bool     SortOpenTickets(int &keys[][]);
    int      SortTicketsChronological(int &tickets[]);

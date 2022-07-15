@@ -36,6 +36,7 @@ extern int    Max.Bars        = 10000;                            // max. values
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/Bands.mqh>
+#include <functions/legend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
@@ -140,9 +141,7 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
    // chart legend
-   if (!__isSuperContext) {
-      legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    string sMa            = MA.Method +"("+ maPeriods +")";

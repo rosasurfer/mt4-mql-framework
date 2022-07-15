@@ -38,6 +38,7 @@ extern bool   AlertsOn         = false;
 #include <rsfLib.mqh>
 #include <functions/Bands.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/legend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
@@ -131,9 +132,7 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
    // chart legend
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));

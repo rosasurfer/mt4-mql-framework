@@ -39,7 +39,7 @@ extern int    Max.Bars              = 10000;                // max. values to ca
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Trend.mqh>
+#include <functions/trend.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible to the user

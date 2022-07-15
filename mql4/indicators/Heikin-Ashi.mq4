@@ -40,7 +40,8 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
@@ -157,9 +158,7 @@ int onInit() {
    SetIndexBuffer(MODE_HA_LOW,      haLow     );
 
    // chart legend
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    indicatorName = "Heikin-Ashi";               // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)

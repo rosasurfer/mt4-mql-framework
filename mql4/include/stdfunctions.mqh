@@ -3897,41 +3897,6 @@ bool Tester.IsStopped() {
 
 
 /**
- * Create a new chart legend object for the current program. An existing legend object is reused.
- *
- * @return string - label name
- */
-string CreateLegendLabel() {
-   if (__isSuperContext) return("");
-
-   string prefix = "rsf.Legend.", label=prefix + __ExecutionContext[EC.pid];
-
-   // reuse an existing label
-   if (ObjectFind(label) != -1)
-      return(label);
-
-   // create a new label
-   int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL), xDist=5, yDist=20;
-
-   for (int i=0; i < objects && labels; i++) {
-      string name = ObjectName(i);
-      if (ObjectType(name) == OBJ_LABEL) {
-         if (StrStartsWith(name, prefix))
-            yDist += 19;
-         labels--;
-      }
-   }
-   if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
-   ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-   ObjectSet(label, OBJPROP_XDISTANCE, xDist);
-   ObjectSet(label, OBJPROP_YDISTANCE, yDist);
-   ObjectSetText(label, " ");
-
-   return(ifString(catch("CreateLegendLabel(1)"), "", label));
-}
-
-
-/**
  * Erzeugt einen neuen String der gewünschten Länge.
  *
  * @param  int length - Länge
@@ -7062,7 +7027,6 @@ void __DummyCalls() {
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
    CreateDirectory(NULL, NULL);
-   CreateLegendLabel();
    CreateString(NULL);
    DateTime1(NULL);
    DateTime2(iNulls);

@@ -24,6 +24,7 @@ extern int    Recording.HistoryFormat    = 401;                      // written 
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <rsfHistory.mqh>
+#include <functions/legend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers      1              // there's a minimum of 1 buffer
@@ -86,9 +87,7 @@ int onInit() {
    }
 
    // indicator labels and display options
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
    indicatorName = ProgramName();
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);

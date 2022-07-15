@@ -48,7 +48,8 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/ConfigureSignals.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 #include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
@@ -187,7 +188,7 @@ int onInit() {
 
    // chart legend and coloring
    if (!__isSuperContext) {
-      legendLabel = CreateLegendLabel();
+      legendLabel = CreateLegend();
       enableMultiColoring = true;
    }
    else {

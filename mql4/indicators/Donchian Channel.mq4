@@ -14,6 +14,7 @@ extern int Periods = 50;                        // Anzahl der auszuwertenden Per
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/legend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers   2
@@ -50,7 +51,7 @@ int onInit() {
 
    // Legende
    if (!__isSuperContext) {
-       string legendLabel = CreateLegendLabel();
+       string legendLabel = CreateLegend();
        ObjectSetText(legendLabel, indicatorName, 9, "Arial Fett", Blue);
        int error = GetLastError();
        if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)             // on ObjectDrag or opened "Properties" dialog

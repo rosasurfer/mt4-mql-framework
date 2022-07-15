@@ -36,7 +36,8 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -174,9 +175,7 @@ int onInit() {
    SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0);
 
    // chart legend
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    indicatorName = WindowExpertName();

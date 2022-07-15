@@ -47,7 +47,8 @@ extern string Signal.SMS             = "on | off | auto*";
 #include <functions/iBarShiftNext.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ParseTime.mqh>
-#include <functions/Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
@@ -168,9 +169,7 @@ int onInit() {
    SetIndexEmptyValue(MODE_TREND, 0);
 
    // chart legend
-   if (!__isSuperContext) {
-       legendLabel = CreateLegendLabel();
-   }
+   if (!__isSuperContext) legendLabel = CreateLegend();
 
    // names, labels and display options
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
