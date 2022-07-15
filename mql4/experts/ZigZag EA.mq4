@@ -43,11 +43,6 @@
  *
  *
  * TODO:
- *  - fix testing in core/indicator.mqh
- *  - test ValidBars, ShiftedBars
- *     in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
- *     in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
- *
  *  - SuperBars
  *     current SuperBar is not updated
  *     implement more timeframes

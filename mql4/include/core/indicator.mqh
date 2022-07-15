@@ -284,11 +284,9 @@ int start() {
    //
    static int prevBars;
    static datetime prevFirstBarTime, prevLastBarTime;
-
    static bool isOfflineChart = -1; if (isOfflineChart == -1) {
-      if (IsCustomTimeframe(Period())) {
-         isOfflineChart = true;
-      }
+      if      (__isTesting)                 isOfflineChart = false;
+      else if (IsCustomTimeframe(Period())) isOfflineChart = true;
       else {
          string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]);
          if (StringLen(wndTitle) > 0) {
@@ -328,11 +326,11 @@ int start() {
                }
             }
          }                                                                          // all other cases: all bars stay invalidated
-         //if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.1)  Tick="+ StrPadRight(Ticks, 3) +" offline refresh:    Bars="+ Bars +"  ChangedBars="+ StrPadRight(ChangedBars, 4) +"  ShiftedBars="+ ShiftedBars);
+         //if (1 || Symbol()=="USDLFX") debug("start(0.1)  Tick="+ StrPadRight(Ticks, 3) +" offline refresh:    Bars="+ Bars +"  ChangedBars="+ StrPadRight(ChangedBars, 4) +"  ShiftedBars="+ ShiftedBars);
       }
-      //else if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.2)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
+      //else if (1 || Symbol()=="USDLFX") debug("start(0.2)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    }
-   //else if (Symbol()=="US500" || Symbol()=="USDLFX") debug("start(0.3)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
+   //else if (1 || Symbol()=="USDLFX") debug("start(0.3)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    prevBars         = Bars;
    prevFirstBarTime = Time[0];
    prevLastBarTime  = Time[Bars-1];
