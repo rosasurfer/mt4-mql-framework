@@ -257,21 +257,44 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
       caption=Boolean values
       keywords=;bool;true;false;
       <content>
-        <p>Booleans can have the value of <span class="const">TRUE</span> or <span class="const">FALSE</span>, the numeric representation is 1 and 0.
-        <span class="const">True</span> or <span class="const">TRUE</span> and <span class="const">False</span> or
-        <span class="const">FALSE</span> can be used as well.</p>
+        <p>Booleans can have the value of <span class="const">true</span> or <span class="const">false</span>, the numeric representation is <span class="number">1</span> 
+        and <span class="number">0</span>. <span class="const">True</span> or <span class="const">TRUE</span> and <span class="const">False</span> or
+        <span class="const">FALSE</span> may be used as well.</p>
         <p class="doctabhdr">Examples:</p>
-        <pre class="docmql4">bool a = true;
-bool b = false;
-bool c = 1;</pre>
-        The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.<br/>
+        <pre class="docmql4">
+<span class="type code">bool</span> a = <span class="const code">true</span>;
+<span class="type code">bool</span> b = <span class="const code">false</span>;
+<span class="type code">bool</span> c = <span class="number code">1</span>;</pre>
+        The internal representation is a 4 byte long <a href="help://basics_types_integer">integer</a>, the external representation is the value <span class="number">0</span> 
+        or <span class="number">1</span>.<br/>
         <br/>
-        <span style="color:red">Bug:</span>
+        <b>Notes:</b>
         <br/>
-        Ausdr&uuml;cke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch f&uuml;r
-        die &Uuml;bergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">TRUE</span> oder
-        <span class="const">FALSE</span> schlagen immer fehl.<br/>
-        Workaround: Die Ausdr&uuml;cke m&uuml;ssen bei der Zuweisung explizit gecastet werden.
+        <li>Every expression assigned to a boolean variable is implicitely casted to an integer.<br/>
+            <span class="docmql4"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> yields a boolean of <span class="const">FALSE</span>.
+            <br/><br/></li>
+        
+        <li>An integer different from <span class="number">0</span> or <span class="number">1</span> can be assigned. The resulting variable is not a valid boolean and 
+            comparisons with both <span class="const">true</span> and <span class="const">false</span> will fail. This can be used for 
+            <a href="help://basics_variables_static">static</a> initialization of boolean variables:
+            <pre class="docmql4">
+<span class="keyword code">static</span> <span class="type code">bool</span> var = <span class="number code">-1</span>;<br/>
+
+<span class="keyword code">if</span> (var == <span class="number code">-1</span>) {
+   <span class="keyword code">if</span> (var == <span class="const code">true</span>)  {}   <span class="comment code">// not true</span>
+   <span class="keyword code">if</span> (var == <span class="const code">false</span>) {}   <span class="comment code">// not true</span><br/>
+
+   <span class="keyword code">if</span> (runtime-condition) var = <span class="const code">true</span>;
+   <span class="keyword code">else</span>                   var = <span class="const code">false</span>;
+}</pre><br/></li>
+
+        <li>In import declarations of DLL functions boolean parameters (not <span class="keyword">return</span> values) must be declared as integers:  
+            <pre class="docmql4">
+<span class="preproc code">#import</span> <span class="string code">"Example.dll"</span>
+   <span class="type code">bool</span> <span class="function code">Function1</span>(<span class="type code">bool</span> booleanParameter);     <span class="comment code">// invalid import declaration</span>
+   <span class="type code">bool</span> <span class="function code">Function2</span>(<span class="type code">int</span> booleanParameter);      <span class="comment code">// valid import declaration</span>
+<span class="preproc code">#import</span></pre></li>
+
       </content>
     </text>
 
