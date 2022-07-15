@@ -24,8 +24,8 @@ int __DeinitFlags[];
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
 extern int    WaveCycle.Periods.StepSize     = 0;                 // step size for a stepped parameter
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.Filter                      = 0.7;               // min. MA change in std-deviations for a trend reversal    // Use half of igorad's "PctFilter" for
-extern double MA.Filter.StepSize             = 0;                 // step size for a stepped parameter                        // similar results.
+extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal    // Use half of igorad's "PctFilter" for
+extern double MA.ReversalFilter.StepSize     = 0;                 // step size for a stepped parameter                        // similar results.
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -136,12 +136,12 @@ int onInit() {
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
    if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-   // MA.Filter
-   if (AutoConfiguration) MA.Filter = GetConfigDouble(indicator, "MA.Filter", MA.Filter);
-   if (MA.Filter < 0)                                        return(catch("onInit(4)  invalid input parameter MA.Filter: "+ NumberToStr(MA.Filter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // MA.Filter.StepSize
-   if (AutoConfiguration) MA.Filter.StepSize = GetConfigDouble(indicator, "MA.Filter.StepSize", MA.Filter.StepSize);
-   if (MA.Filter.StepSize < 0)                               return(catch("onInit(5)  invalid input parameter MA.Filter.StepSize: "+ MA.Filter.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter
+   if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
+   if (MA.ReversalFilter < 0)                                return(catch("onInit(4)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter.StepSize
+   if (AutoConfiguration) MA.ReversalFilter.StepSize = GetConfigDouble(indicator, "MA.ReversalFilter.StepSize", MA.ReversalFilter.StepSize);
+   if (MA.ReversalFilter.StepSize < 0)                       return(catch("onInit(5)  invalid input parameter MA.ReversalFilter.StepSize: "+ MA.ReversalFilter.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -237,7 +237,7 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (WaveCycle.Periods.StepSize || MA.Filter.StepSize)) HandleCommands("ParameterStepper", false);
+   if (__isChart && (WaveCycle.Periods.StepSize || MA.ReversalFilter.StepSize)) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -279,7 +279,7 @@ int onTick() {
       }
       maFiltered[bar] = maRaw[bar];
 
-      if (MA.Filter > 0) {
+      if (MA.ReversalFilter > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
          for (i=0; i < waveCyclePeriods; i++) {                      // calculate average(change) over last 'waveCyclePeriods'
@@ -293,7 +293,7 @@ int onTick() {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
             stdDev = MathSqrt(sum/waveCyclePeriods);
-            minChange = MA.Filter * stdDev;                          // calculate required min. change
+            minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
                maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
@@ -425,15 +425,15 @@ bool ParameterStepper(int direction, bool shiftKey) {
       maPeriods = ArraySize(maWeights);
    }
    else {
-      // step up/down input parameter "MA.Filter"
-      step = MA.Filter.StepSize;
+      // step up/down input parameter "MA.ReversalFilter"
+      step = MA.ReversalFilter.StepSize;
 
-      if (!step || MA.Filter + direction*step < 0) {
+      if (!step || MA.ReversalFilter + direction*step < 0) {
          PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
          return(false);
       }
-      if (direction == STEP_UP) MA.Filter += step;
-      else                      MA.Filter -= step;
+      if (direction == STEP_UP) MA.ReversalFilter += step;
+      else                      MA.ReversalFilter -= step;
    }
 
    ChangedBars = Bars;
@@ -478,9 +478,9 @@ double GetPrice(int type, int i) {
 void SetIndicatorOptions() {
    IndicatorBuffers(terminal_buffers);
 
-   string sMaFilter     = ifString(MA.Filter > 0, "/"+ NumberToStr(MA.Filter, ".1+"), "");
+   string sMaFilter     = ifString(MA.ReversalFilter > 0, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize || MA.Filter.StepSize, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.StepSize || MA.ReversalFilter.StepSize, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
    string shortName     = "NLMA("+ waveCyclePeriods +")";
    IndicatorShortName(shortName);
 
@@ -504,8 +504,8 @@ string InputsToStr() {
    return(StringConcatenate("WaveCycle.Periods=",              WaveCycle.Periods,                              ";"+ NL,
                             "WaveCycle.Periods.StepSize=",     WaveCycle.Periods.StepSize,                     ";"+ NL,
                             "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
-                            "MA.Filter=",                      NumberToStr(MA.Filter, ".1+"),                  ";"+ NL,
-                            "MA.Filter.StepSize=",             NumberToStr(MA.Filter.StepSize, ".1+"),         ";"+ NL,
+                            "MA.ReversalFilter=",              NumberToStr(MA.ReversalFilter, ".1+"),          ";"+ NL,
+                            "MA.ReversalFilter.StepSize=",     NumberToStr(MA.ReversalFilter.StepSize, ".1+"), ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,

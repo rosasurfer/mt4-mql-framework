@@ -10032,7 +10032,7 @@ flags=339
 window_num=0
 <inputs>
 WaceCycle.Periods=20
-MA.Filter=0.7
+MA.ReversalFilter=0.7
 Draw.Width=3
 Color.UpTrend=16711935
 Color.DownTrend=65535

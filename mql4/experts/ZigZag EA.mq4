@@ -56,6 +56,7 @@
  *
  *  - rewrite ZigZag, NonLagMA, ALMA, T3
  *     auto-configuration
+ *     MA.ReversalFilter
  *     parameter stepper
  *
  *  - implement global var indicator::CalculatedBars
