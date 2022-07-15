@@ -43,17 +43,14 @@
  *
  *
  * TODO:
- *  - SuperBars
- *     implement more timeframes
- *
  *  - fix legend positioning
  *     detect and remove orphaned legends from crashed programs (at terminal start and runtime)
  *     keep order when changing indicator inputs
  *     don't remove legend at every init cycle
- *      stdfunctions::CreateLegendLabel()
- *      rsfLib::RepositionLegend()
+ *      stdfunctions::CreateLegendLabel() => CreateLegend()
+ *      rsfLib::RepositionLegend()        => RemoveLegend()
  *
- *  - rewrite ZigZag, NonLagMA, ALMA, T3
+ *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD
  *     auto-configuration
  *     MA.ReversalFilter
  *     parameter stepper
@@ -63,6 +60,7 @@
  *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display
  *
+ *  - SuperBars: implement more timeframes
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
