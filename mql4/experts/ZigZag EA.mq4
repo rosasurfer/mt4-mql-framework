@@ -43,12 +43,13 @@
  *
  *
  * TODO:
+ *  - fix testing in core/indicator.mqh
+ *  - test ValidBars, ShiftedBars
+ *     in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
+ *     in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
+ *
  *  - SuperBars
  *     current SuperBar is not updated
- *     ValidBars is 0, ShiftedBars is not set
- *      fix testing in core/indicator.mqh
- *      in manually opened offline charts on manual Chart->Refresh when the same timeframe is not online
- *      in manually opened offline chart when the same timeframe was online before (on manual tick the offline charts updates)
  *     implement more timeframes
  *
  *  - fix legend positioning
@@ -62,10 +63,10 @@
  *     auto-configuration
  *     parameter stepper
  *
+ *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display
- *  - implement global var indicator::CalculatedBars
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
