@@ -6889,28 +6889,33 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    double value = iCustom(NULL, timeframe, "ZigZag",
                           "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
+                          0,                                // int    ZigZag.Periods.Step
                           "Line",                           // string ZigZag.Type
                           1,                                // int    ZigZag.Width
-                          Blue,                             // color  ZigZag.Color
+                          CLR_NONE,                         // color  ZigZag.Color
                           108,                              // int    ZigZag.Semaphores.Wingdings
 
                           "",                               // string ____________________________
-                          true,                             // bool   Donchian.ShowChannel
+                          false,                            // bool   Donchian.ShowChannel
                           "off",                            // string Donchian.ShowCrossings
-                          DodgerBlue,                       // color  Donchian.Upper.Color
-                          DodgerBlue,                       // color  Donchian.Lower.Color
+                          CLR_NONE,                         // color  Donchian.Upper.Color
+                          CLR_NONE,                         // color  Donchian.Lower.Color
                           161,                              // int    Donchian.Crossings.Wingdings
-
-                          "",                               // string ____________________________
                           -1,                               // int    Max.Bars
-                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
                           false,                            // bool   Signal.onReversal.Sound
+                          "",                               // string Signal.onReversal.SoundUp
+                          "",                               // string Signal.onReversal.SoundDown
                           false,                            // bool   Signal.onReversal.Popup
                           false,                            // bool   Signal.onReversal.Mail
                           false,                            // bool   Signal.onReversal.SMS
+
+                          "",                               // string ____________________________
+                          false,                            // bool   Sound.onCrossing
+                          "",                               // string Sound.onCrossing.Up
+                          "",                               // string Sound.onCrossing.Down
 
                           "",                               // string ____________________________
                           false,                            // bool   AutoConfiguration
