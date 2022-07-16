@@ -1,95 +1,91 @@
+
+#define CHARTLEGEND_PREFIX  "rsf.Legend."
+
+
 /**
- * Create a new object in the main chart for a program's legend. An existing object is reused.
+ * Create a text label object in the main chart for a program's chart legend.
  *
  * @return string - object name or an empty string in case of errors
  */
 string CreateLegend() {
-   // TODO: detect and remove legends from old/inactive programs
+   string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
 
-   string prefix="rsf.Legend.", newName=prefix + __ExecutionContext[EC.pid];
-   if (!__isChart || __isSuperContext) return(newName);
-
-   // look-up the pids of existing legends
-   int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
-   int pids[]; ArrayResize(pids, 0);
-
-   for (int i=0; i < objects && labels; i++) {
-      string name = ObjectName(i);
-      if (ObjectType(name) == OBJ_LABEL) {
-         if (StrStartsWith(name, prefix)) {
-            ArrayPushInt(pids, StrToInteger(StrRight(name, -StringLen(prefix))));
-         }
-         labels--;
+   if (__isChart && !__isSuperContext) {
+      if (ObjectFind(name) == -1) {                      // create a new label or reuse an existing one
+         if (!ObjectCreateRegister(name, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+         ObjectSetText(name, " ");
       }
+      RearrangeLegends();
    }
-
-   // create a new label or reuse an existing one
-   if (ObjectFind(newName) == -1) {
-      if (!ObjectCreateRegister(newName, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
-      ObjectSetText(newName, " ");
-      ArrayPushInt(pids, __ExecutionContext[EC.pid]);
-   }
-
-   // order and re-position all labels by pid
-   int size = ArraySize(pids);
-   ArraySort(pids);
-
-   int xDist      =  5;                               // x-position
-   int yDist      = 20;                               // y-position of the top-most legend
-   int lineHeight = 19;                               // line height of each legend
-
-   for (i=0; i < size; i++) {
-      name = prefix + pids[i];
-      ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet(name, OBJPROP_XDISTANCE, xDist);
-      ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
-   }
-
-   if (!catch("CreateLegend(1)"))
-      return(newName);
-   return("");
-
-   // dummy call
-   RepositionLegend();
+   return(name);
 }
 
 
 /**
- * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
+ * Remove a program's chart legend from the main chart.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int RepositionLegend() {
-   if (__isSuperContext) return(true);
+bool RemoveLegend() {
+   if (__isChart && !__isSuperContext) {
+      string name = CHARTLEGEND_PREFIX + __ExecutionContext[EC.pid] +"."+ __ExecutionContext[EC.hChart];
+      if (ObjectFind(name) != -1) {
+         ObjectDelete(name);
+         return(RearrangeLegends());
+      }
+   }
+   return(true);
+}
 
-   int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
 
-   string sLabels[];   ArrayResize(sLabels, 0);    // Namen der gefundenen Label
-   int    yDists[][2]; ArrayResize(yDists,  0);    // Y-Distance und sLabels[]-Index, um Label nach Position sortieren zu können
+/**
+ * Order and rearrange all chart legends. Discards obsolete legends of old or inactive programs.
+ *
+ * @return bool - success status
+ */
+bool RearrangeLegends() {
+   if (!__isChart || __isSuperContext) return(true);
 
-   for (int i=0, n; i < objects && labels; i++) {
-      string objName = ObjectName(i);
-      if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "rsf.Legend.")) {
-            ArrayResize(sLabels, n+1);
-            ArrayResize(yDists,  n+1);
-            sLabels[n]    = objName;
-            yDists [n][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
-            yDists [n][1] = n;
-            n++;
+   // collect the pids of existing legends
+   int objects = ObjectsTotal();
+   int labels  = ObjectsTotal(OBJ_LABEL);
+   int prefixLength = StringLen(CHARTLEGEND_PREFIX);
+   int pids[]; ArrayResize(pids, 0);
+
+   for (int i=objects-1; i >= 0 && labels; i--) {
+      string name = ObjectName(i);
+
+      if (ObjectType(name) == OBJ_LABEL) {
+         if (StrStartsWith(name, CHARTLEGEND_PREFIX)) {
+            string data = StrRight(name, -prefixLength);
+            int pid     = StrToInteger(data);
+            int hChart  = StrToInteger(StrRightFrom(data, "."));
+
+            if (pid && hChart==__ExecutionContext[EC.hChart]) {
+               ArrayPushInt(pids, pid);
+            }
+            else {
+               ObjectDelete(name);
+            }
          }
          labels--;
       }
    }
 
-   if (n > 0) {
-      ArraySort(yDists);
-      for (i=0; i < n; i++) {
-         ObjectSet(sLabels[yDists[i][1]], OBJPROP_YDISTANCE, 20 + i*19);
+   // order and re-position labels by pid
+   int xDist      =  5;                               // x-position
+   int yDist      = 20;                               // y-position of the top-most legend
+   int lineHeight = 19;                               // line height of each legend
+
+   int size = ArraySize(pids);
+   if (size > 0) {
+      ArraySort(pids);
+      for (i=0; i < size; i++) {
+         name = CHARTLEGEND_PREFIX + pids[i] +"."+ __ExecutionContext[EC.hChart];
+         ObjectSet(name, OBJPROP_CORNER, CORNER_TOP_LEFT);
+         ObjectSet(name, OBJPROP_XDISTANCE, xDist);
+         ObjectSet(name, OBJPROP_YDISTANCE, yDist + i*lineHeight);
       }
    }
-   return(catch("RepositionLegend(1)"));
-
-   // dummy call
-   CreateLegend();
+   return(!catch("RearrangeLegends(1)"));
 }

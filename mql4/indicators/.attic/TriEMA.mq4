@@ -162,10 +162,8 @@ int onInit() {
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // downtrend values:               visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // single-bar uptrends:            visible
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = ProgramName() +"("+ MA.Periods + sAppliedPrice +")";
    string shortName = ProgramName() +"("+ MA.Periods +")";
@@ -190,7 +188,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

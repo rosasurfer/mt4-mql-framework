@@ -168,10 +168,8 @@ int onInit() {
    SetIndexBuffer(MODE_TREND,         trend          );  // trend direction:        invisible (-n..+n), displayed in "Data" window
    SetIndexEmptyValue(MODE_TREND, 0);
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
    IndicatorShortName(indicatorName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_MA,            indicatorName);            // chart tooltips and "Data" window
@@ -195,7 +193,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

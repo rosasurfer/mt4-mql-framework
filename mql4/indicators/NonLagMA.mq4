@@ -204,13 +204,9 @@ int onInit() {
    maPeriods = ArraySize(maWeights);
 
    // chart legend and coloring
-   if (!__isSuperContext) {
-      legendLabel = CreateLegend();
-      enableMultiColoring = true;
-   }
-   else {
-      enableMultiColoring = false;
-   }
+   legendLabel = CreateLegend();
+   enableMultiColoring = !__isSuperContext;
+
    return(catch("onInit(9)"));
 }
 
@@ -221,7 +217,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

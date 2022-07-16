@@ -140,10 +140,8 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, upperBand);
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sMa            = MA.Method +"("+ maPeriods +")";
    string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
@@ -172,7 +170,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

@@ -265,10 +265,8 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sPhase = ifString(!Phase, "", ", Phase="+ Phase);
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
    indicatorName = "JMA("+ Periods + sPhase + sAppliedPrice +")";
@@ -292,7 +290,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

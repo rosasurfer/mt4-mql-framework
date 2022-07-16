@@ -138,10 +138,8 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER_BAND, upperBand);           // upper channel band: visible
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = ProgramName() +"("+ Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
@@ -161,7 +159,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

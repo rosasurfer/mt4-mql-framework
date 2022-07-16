@@ -131,10 +131,8 @@ int onInit() {
    SetIndexBuffer(MODE_REVERSAL_AGE,      reversalAge    ); SetIndexEmptyValue(MODE_REVERSAL_AGE,    0);
    SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = "TMA("+ maPeriods + sAppliedPrice +") Gammarat Channel"+ ifString(RepaintingMode, " RP", " NRP");
    string shortName = "TMA("+ maPeriods +") Gammarat Channel";
@@ -176,7 +174,7 @@ int afterInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

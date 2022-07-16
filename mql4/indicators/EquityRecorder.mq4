@@ -87,7 +87,7 @@ int onInit() {
    }
 
    // indicator labels and display options
-   if (!__isSuperContext) legendLabel = CreateLegend();
+   legendLabel = CreateLegend();
    indicatorName = ProgramName();
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
@@ -102,6 +102,8 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
+   RemoveLegend();
+
    // close open history sets
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {
