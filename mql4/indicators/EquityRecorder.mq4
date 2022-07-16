@@ -102,8 +102,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RemoveLegend();
-
    // close open history sets
    int size = ArraySize(hSet);
    for (int i=0; i < size; i++) {

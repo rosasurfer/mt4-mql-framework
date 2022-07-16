@@ -264,8 +264,6 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RemoveLegend();
-
    // remove an installed chart ticker
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;

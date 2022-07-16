@@ -66,17 +66,6 @@ int onInit() {
 
 
 /**
- * Deinitialisierung
- *
- * @return int - error status
- */
-int onDeinit() {
-   RemoveLegend();
-   return(catch("onDeinit(1)"));
-}
-
-
-/**
  * Main-Funktion
  *
  * @return int - error status

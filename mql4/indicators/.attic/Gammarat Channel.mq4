@@ -169,17 +169,6 @@ int afterInit() {
 
 
 /**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RemoveLegend();
-   return(catch("onDeinit(1)"));
-}
-
-
-/**
  * Main function
  *
  * @return int - error status
