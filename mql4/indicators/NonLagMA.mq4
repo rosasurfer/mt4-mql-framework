@@ -1,8 +1,8 @@
 /**
  * NonLag Moving Average
  *
- * A moving average using a cosine wave function for calculating bar weights. Corrected and enhanced version of the original
- * version published by Igor Durkin aka igorad.
+ * A moving average using a cosine wave function for weight calculation. Corrected and enhanced version of the original
+ * published by Igor Durkin aka igorad.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -22,10 +22,10 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
-extern int    WaveCycle.Periods.Step         = 0;                 // step size for a stepped input parameter
+extern int    WaveCycle.Periods.Step         = 0;                 // step size for stepped input parameter
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal    // Use half of igorad's "PctFilter" for
-extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter                  // similar results.
+extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.Step         = 0;                 // step size for stepped input parameter
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -104,7 +104,7 @@ string signalTrendChange.mailReceiver = "";
 bool   signalTrendChange.sms;
 string signalTrendChange.smsReceiver = "";
 
-// period stepper directions
+// parameter stepper directions
 #define STEP_UP    1
 #define STEP_DOWN -1
 
@@ -115,7 +115,7 @@ string signalTrendChange.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName();
+   string indicator = WindowExpertName();
 
    // validate inputs
    // WaveCycle.Periods
@@ -189,7 +189,7 @@ int onInit() {
    // restore a stored runtime status
    RestoreStatus();
 
-   // buffer management and display options
+   // buffer management and options
    SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
    SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
@@ -366,22 +366,19 @@ bool onTrendChange(int trend) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-
    static int lastTickcount = 0;
    int tickcount = StrToInteger(params);
 
    // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
    if (__isChart) {
-      string label = "rsf."+ ProgramName() +".cmd.tickcount";
-      if (ObjectFind(label) == 0) {
-         lastTickcount = StrToInteger(ObjectDescription(label));
-      }
+      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
+      bool objExists = (ObjectFind(label) != -1);
+
+      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
       if (tickcount <= lastTickcount) return(false);
-      if (ObjectFind(label) != 0) {
-         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-         ObjectSet   (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      }
+
+      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       ObjectSetText(label, ""+ tickcount);
    }
    else if (tickcount <= lastTickcount) return(false);
@@ -392,12 +389,12 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, shiftKey));
    if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, shiftKey));
 
-   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ modifiers +"\""));
 }
 
 
 /**
- * Step up/down input parameter "WaveCycle.Periods" or "MA.Filter".
+ * Step up/down an input parameter.
  *
  * @param  int  direction - STEP_UP | STEP_DOWN
  * @param  bool shiftKey  - whether VK_SHIFT was pressed when receiving the stepper command
@@ -412,8 +409,8 @@ bool ParameterStepper(int direction, bool shiftKey) {
       // step up/down input parameter "WaveCycle.Periods"
       double step = WaveCycle.Periods.Step;
 
-      if (!step || WaveCycle.Periods + direction*step < 3) {
-         PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
+      if (!step || WaveCycle.Periods + direction*step < 3) {   // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
          return(false);
       }
       if (direction == STEP_UP) WaveCycle.Periods += step;
@@ -426,8 +423,8 @@ bool ParameterStepper(int direction, bool shiftKey) {
       // step up/down input parameter "MA.ReversalFilter"
       step = MA.ReversalFilter.Step;
 
-      if (!step || MA.ReversalFilter + direction*step < 0) {
-         PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
+      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
          return(false);
       }
       if (direction == STEP_UP) MA.ReversalFilter += step;

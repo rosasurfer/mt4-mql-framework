@@ -20,16 +20,18 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods                     = 38;
+extern int    MA.Periods.Step                = 0;                 // step size for stepped input parameter
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
+extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.Step         = 0;                 // step size for stepped input parameter
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Blue;
 extern color  Color.DownTrend                = Red;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
-extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for MA.Periods
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
@@ -52,14 +54,18 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/trend.mqh>
 #include <functions/ta/ALMA.mqh>
 
-#define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
+#define MODE_MA_FILTERED      MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
 #define MODE_UPTREND2         4
+#define MODE_MA_RAW           5
+#define MODE_MA_CHANGE        6
+#define MODE_AVG              7
 
 #property indicator_chart_window
-#property indicator_buffers   5
+#property indicator_buffers   5                          // visible buffers
+int       terminal_buffers  = 8;                         // all buffers
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -67,13 +73,16 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double main     [];                                      // ALMA main values:    invisible, displayed in legend and "Data" window
-double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double uptrend  [];                                      // uptrend values:      visible
-double downtrend[];                                      // downtrend values:    visible
-double uptrend2 [];                                      // single-bar uptrends: visible
+double maRaw     [];                                     // ALMA raw main values:      invisible
+double maFiltered[];                                     // ALMA filtered main values: invisible, displayed in legend and "Data" window
+double trend     [];                                     // trend direction:           invisible, displayed in "Data" window
+double uptrend   [];                                     // uptrend values:            visible
+double downtrend [];                                     // downtrend values:          visible
+double uptrend2  [];                                     // single-bar uptrends:       visible
 
-int    maPeriods;
+double maChange  [];                                     // absolute change of current maRaw[] to previous maFiltered[]
+double maAverage [];                                     // average of maChange[] over the last 'MA.Periods' bars
+
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
 int    drawType;
@@ -93,7 +102,7 @@ string signalTrendChange.mailReceiver = "";
 bool   signalTrendChange.sms;
 string signalTrendChange.smsReceiver = "";
 
-// period stepper directions
+// parameter stepper directions
 #define STEP_UP    1
 #define STEP_DOWN -1
 
@@ -104,13 +113,15 @@ string signalTrendChange.smsReceiver = "";
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName();
+   string indicator = WindowExpertName();
 
    // validate inputs
    // MA.Periods
-   maPeriods = MA.Periods;
-   if (AutoConfiguration) maPeriods = GetConfigInt(indicator, "MA.Periods", maPeriods);
-   if (maPeriods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ maPeriods, ERR_INVALID_INPUT_PARAMETER));
+   if (AutoConfiguration) MA.Periods = GetConfigInt(indicator, "MA.Periods", MA.Periods);
+   if (MA.Periods < 1)                                       return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // MA.Periods.Step
+   if (AutoConfiguration) MA.Periods.Step = GetConfigInt(indicator, "MA.Periods.Step", MA.Periods.Step);
+   if (MA.Periods.Step < 0)                                  return(catch("onInit(2)  invalid input parameter MA.Periods.Step: "+ MA.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
    string sValues[], sValue = MA.AppliedPrice;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
@@ -120,14 +131,20 @@ int onInit() {
    }
    sValue = StrTrim(sValue);
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
    // Distribution.Offset
    if (AutoConfiguration) Distribution.Offset = GetConfigDouble(indicator, "Distribution.Offset", Distribution.Offset);
-   if (Distribution.Offset < 0 || Distribution.Offset > 1)   return(catch("onInit(3)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   if (Distribution.Offset < 0 || Distribution.Offset > 1)   return(catch("onInit(4)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
    // Distribution.Sigma
    if (AutoConfiguration) Distribution.Sigma = GetConfigDouble(indicator, "Distribution.Sigma", Distribution.Sigma);
-   if (Distribution.Sigma <= 0)                              return(catch("onInit(4)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   if (Distribution.Sigma <= 0)                              return(catch("onInit(5)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter
+   if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
+   if (MA.ReversalFilter < 0)                                return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // MA.ReversalFilter.StepS
+   if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
+   if (MA.ReversalFilter.Step < 0)                           return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ MA.ReversalFilter.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -138,10 +155,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                                      return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                                       return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -149,10 +166,8 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // Max.Bars
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                        return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
-   // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(8)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
 
    // signaling
    signalTrendChange       = Signal.onTrendChange;
@@ -175,22 +190,39 @@ int onInit() {
       else signalTrendChange = false;
    }
 
-   // buffer management and display options
-   SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
-   SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
-   SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
+   // restore a stored runtime status
+   RestoreStatus();
+
+   // buffer management and options
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // ALMA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // ALMA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:           invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:            visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:          visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:       visible
+   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                            invisible
+   SetIndexBuffer(MODE_AVG,         maAverage );   //                            invisible
    SetIndicatorOptions();
 
    // calculate ALMA bar weights
-   ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights);
+   ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
    legendLabel = CreateLegend();
    enableMultiColoring = !__isSuperContext;
 
-   return(catch("onInit(9)"));
+   return(catch("onInit(11)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   StoreStatus();                                  // store runtime status in all deinit scenarios
+   return(last_error);
 }
 
 
@@ -203,49 +235,79 @@ int onTick() {
    int starttime = GetTickCount();
 
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
-   if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+   if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
+   if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
-      ArrayInitialize(main,      EMPTY_VALUE);
-      ArrayInitialize(trend,               0);
-      ArrayInitialize(uptrend,   EMPTY_VALUE);
-      ArrayInitialize(downtrend, EMPTY_VALUE);
-      ArrayInitialize(uptrend2,  EMPTY_VALUE);
+      ArrayInitialize(maRaw,                0);
+      ArrayInitialize(maFiltered, EMPTY_VALUE);
+      ArrayInitialize(maChange,             0);
+      ArrayInitialize(maAverage,            0);
+      ArrayInitialize(trend,                0);
+      ArrayInitialize(uptrend,    EMPTY_VALUE);
+      ArrayInitialize(downtrend,  EMPTY_VALUE);
+      ArrayInitialize(uptrend2,   EMPTY_VALUE);
       SetIndicatorOptions();
    }
 
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
-      ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
-      ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(maRaw,      Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(maFiltered, Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(maChange,   Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(maAverage,  Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(trend,      Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(uptrend,    Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(downtrend,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend2,   Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-maPeriods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ maPeriods, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-MA.Periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
+
+   double sum, stdDev, minChange;
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      main[bar] = 0;
-      for (int i=0; i < maPeriods; i++) {
-         main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
+      maRaw[bar] = 0;
+      for (int i=0; i < MA.Periods; i++) {
+         maRaw[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
-      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
+      maFiltered[bar] = maRaw[bar];
+
+      if (MA.ReversalFilter > 0) {
+         maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
+         sum = 0;
+         for (i=0; i < MA.Periods; i++) {                            // calculate average(change) over last 'MA.Periods'
+            sum += maChange[bar+i];
+         }
+         maAverage[bar] = sum/MA.Periods;
+
+         if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
+            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'MA.Periods'
+            for (i=0; i < MA.Periods; i++) {
+               sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
+            }
+            stdDev = MathSqrt(sum/MA.Periods);
+            minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
+
+            if (MathAbs(maChange[bar]) < minChange) {
+               maFiltered[bar] = maFiltered[bar+1];                  // discard trend reversal if MA change is smaller
+            }
+         }
+      }
+      UpdateTrendDirection(maFiltered, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {
-      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, maFiltered[0], Digits, trend[0], Time[0]);
 
-      // monitor trend changes
-      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
+      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {               // monitor trend reversals
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
@@ -347,45 +409,75 @@ bool onTrendChange(int trend) {
  * @return bool - success status of the executed command
  */
 bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-
    static int lastTickcount = 0;
    int tickcount = StrToInteger(params);
-   if (tickcount <= lastTickcount) return(false);
+
+   // stepper cmds are not removed from the queue: compare tickcount with last processed command and skip if old
+   if (__isChart) {
+      string label = "rsf."+ WindowExpertName() +".cmd.tickcount";
+      bool objExists = (ObjectFind(label) != -1);
+
+      if (objExists) lastTickcount = StrToInteger(ObjectDescription(label));
+      if (tickcount <= lastTickcount) return(false);
+
+      if (!objExists) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+      ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+      ObjectSetText(label, ""+ tickcount);
+   }
+   else if (tickcount <= lastTickcount) return(false);
    lastTickcount = tickcount;
 
-   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
-   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
+   bool shiftKey = (modifiers == "VK_SHIFT");
 
-   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, shiftKey));
+   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, shiftKey));
+
+   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ modifiers +"\""));
 }
 
 
 /**
- * Change the currently active parameter "MA.Periods".
+ * Step up/down an input parameter.
  *
- * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int  direction - STEP_UP | STEP_DOWN
+ * @param  bool shiftKey  - whether VK_SHIFT was pressed when receiving the stepper command
  *
  * @return bool - success status
  */
-bool PeriodStepper(int direction) {
-   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+bool ParameterStepper(int direction, bool shiftKey) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   shiftKey = shiftKey!=0;
 
-   int step = PeriodStepper.StepSize;
+   if (!shiftKey) {
+      // step up/down input parameter "MA.Periods"
+      double step = MA.Periods.Step;
 
-   if (!step || maPeriods + direction*step < 1) {
-      PlaySoundEx("Plonk.wav");                       // no stepping or parameter limit reached
-      return(false);
+      if (!step || MA.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) MA.Periods += step;
+      else                      MA.Periods -= step;
+
+      if (!ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights)) return(false);
    }
+   else {
+      // step up/down input parameter "MA.ReversalFilter"
+      step = MA.ReversalFilter.Step;
 
-   if (direction == STEP_UP) maPeriods += step;
-   else                      maPeriods -= step;
+      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) MA.ReversalFilter += step;
+      else                      MA.ReversalFilter -= step;
+   }
 
    ChangedBars = Bars;
    ValidBars   = 0;
    ShiftedBars = 0;
 
-   if (!ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights)) return(false);
+
    PlaySoundEx("Parameter Step.wav");
    return(true);
 }
@@ -422,19 +514,70 @@ double GetPrice(int type, int i) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   IndicatorBuffers(terminal_buffers);
+
+   string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = "ALMA("+ ifString(PeriodStepper.StepSize, "var:", "") + maPeriods + sAppliedPrice +")";
-   string shortName = "ALMA("+ maPeriods +")";
+   indicatorName        = "ALMA("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
+   string shortName     = "ALMA("+ MA.Periods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA,        shortName);
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,   NULL);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND, NULL);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,  NULL);
+   SetIndexStyle(MODE_MA_FILTERED, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA_FILTERED, shortName);
+   SetIndexStyle(MODE_TREND,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,       shortName +" trend");
+   SetIndexStyle(MODE_UPTREND,     draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,     NULL);
+   SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   NULL);
+   SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
    IndicatorDigits(Digits);
+}
+
+
+/**
+ * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+
+      Chart.StoreInt   (prefix +"MA.Periods",             MA.Periods);
+      Chart.StoreInt   (prefix +"MA.Periods.Step",        MA.Periods.Step);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter",      MA.ReversalFilter);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter.Step", MA.ReversalFilter.Step);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
+ * reloads and/or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+
+      int iValue, iStep;
+      Chart.RestoreInt(prefix +"MA.Periods",      iValue);
+      Chart.RestoreInt(prefix +"MA.Periods.Step", iStep);
+      if (iStep == MA.Periods.Step) {
+         MA.Periods      = iValue;
+         MA.Periods.Step = iStep;
+      }
+
+      double dValue, dStep;
+      Chart.RestoreDouble(prefix +"MA.ReversalFilter",      dValue);
+      Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep);
+      if (EQ(dStep, MA.ReversalFilter.Step)) {
+         MA.ReversalFilter      = dValue;
+         MA.ReversalFilter.Step = dStep;
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
 }
 
 
@@ -445,16 +588,18 @@ void SetIndicatorOptions() {
  */
 string InputsToStr() {
    return(StringConcatenate("MA.Periods=",                     MA.Periods,                                     ";"+ NL,
+                            "MA.Periods.Step=",                MA.Periods.Step,                                ";"+ NL,
                             "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
                             "Distribution.Offset=",            NumberToStr(Distribution.Offset, ".1+"),        ";"+ NL,
                             "Distribution.Sigma=",             NumberToStr(Distribution.Sigma, ".1+"),         ";"+ NL,
+                            "MA.ReversalFilter=",              NumberToStr(MA.ReversalFilter, ".1+"),          ";"+ NL,
+                            "MA.ReversalFilter.Step=",         NumberToStr(MA.ReversalFilter.Step, ".1+"),     ";"+ NL,
 
                             "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
                             "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
                             "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
                             "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
                             "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
-                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";"+ NL,
 
                             "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
                             "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,

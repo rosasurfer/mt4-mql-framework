@@ -5695,7 +5695,7 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 4)                  return(!catch("GetALMA(7)  "+ sequence.name +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
+   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, 0, iBuffer, iBar));
 }
 
 
