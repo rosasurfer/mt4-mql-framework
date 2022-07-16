@@ -44,11 +44,8 @@
  *
  * TODO:
  *  - fix legend positioning
- *     detect and remove orphaned legends from crashed programs (at terminal start and runtime)
- *      stdfunctions::CreateLegend()
- *      rsfLib::RepositionLegend() => RemoveLegend()
- *
- *  - SuperBars: timeframe switching is broken (*Bak var?)
+ *     remove orphaned legends from inactive programs (at terminal start and runtime)
+ *     RepositionLegend() => RemoveLegend()
  *
  *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD
  *     auto-configuration

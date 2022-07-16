@@ -312,7 +312,7 @@ bool UpdateSuperBars() {
    bool isTimeframeChange = (superTimeframe != lastSuperTimeframe);  // for simplicity interpret the first comparison (lastSuperTimeframe==0) as a change, too
 
    if (isTimeframeChange) {
-      if (lastSuperTimeframe >= PERIOD_M1 && lastSuperTimeframe <= PERIOD_Q1) {
+      if (lastSuperTimeframe >=PERIOD_M1 && lastSuperTimeframe <= PERIOD_Q1) {
          DeleteRegisteredObjects();                                  // in all other cases previous SuperBars have already been deleted
          legendLabel = CreateStatusLabel();
       }
@@ -346,13 +346,13 @@ bool UpdateSuperBars() {
    }
 
    // With enabled ETH sessions the range of ChangedBars must also include the range of iChangedBars(PERIOD_M15).
-   int  changedBars=ChangedBars, superTimeframeBak=superTimeframe;
+   int  changedBars=ChangedBars, localSuperTimeframe=superTimeframe;
    bool drawETH;
    if (isTimeframeChange)
       changedBars = Bars;                                            // on isTimeframeChange mark all bars as changed
 
    if (ethEnabled && superTimeframe==PERIOD_D1_ETH) {
-      superTimeframe = PERIOD_D1;
+      localSuperTimeframe = PERIOD_D1;                               // for iPreviousPeriod() which bails on non-standard timeframes
       // TODO: On isTimeframeChange the following block is obsolete (it holds: changedBars = Bars). However in this case
       //       DrawSuperBar() must again detect and handle ERS_HISTORY_UPDATE and ERR_SERIES_NOT_AVAILABLE.
       int changedBarsM15 = iChangedBars(NULL, PERIOD_M15);
@@ -382,11 +382,11 @@ bool UpdateSuperBars() {
    // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
       // get start/end times of every previous timeframe period, starting with the current unfinshed one
-      if (!iPreviousPeriod(superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
+      if (!iPreviousPeriod(localSuperTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
 
-      // In periods >= PERIOD_D1 timeseries times are set to full days only. The wrong timezone offset can shift the start of such a period wrongly
-      // to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
-      if (superTimeframe >= PERIOD_MN1) /*&&*/ if (Period()==PERIOD_D1) {
+      // In periods >= PERIOD_D1 rate times are set to full days only which yields incorrect bar times in non-FXT timezones. The incorrect timestamp shifts the start of
+      // such a period wrongly to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
+      if (Period() >= PERIOD_D1 && superTimeframe >= PERIOD_MN1) {
          if (openTimeSrv  < openTimeFxt ) /*&&*/ if (TimeDayOfWeekEx(openTimeSrv )!=SUNDAY  ) openTimeSrv  = openTimeFxt;     // Sunday bar:   server timezone west of FXT
          if (closeTimeSrv > closeTimeFxt) /*&&*/ if (TimeDayOfWeekEx(closeTimeSrv)!=SATURDAY) closeTimeSrv = closeTimeFxt;    // Saturday bar: server timezone east of FXT
       }
@@ -405,7 +405,7 @@ bool UpdateSuperBars() {
       if (openBar >= changedBars-1) break;                                 // only update the range of var "changedBars"
    }
 
-   lastSuperTimeframe = superTimeframeBak;
+   lastSuperTimeframe = superTimeframe;
    return(true);
 }
 
