@@ -6188,27 +6188,30 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
  * @param  string maAppliedPrice     - indicator parameter
  * @param  double distributionOffset - indicator parameter
  * @param  double distributionSigma  - indicator parameter
+ * @param  double maReversalFilter   - indicator parameter
  * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "ALMA",
                           maPeriods,                        // int    MA.Periods
+                          0,                                // int    MA.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
                           distributionOffset,               // double Distribution.Offset
                           distributionSigma,                // double Distribution.Sigma
+                          maReversalFilter,                 // double MA.ReversalFilter
+                          0,                                // ouble MA.ReversalFilter.Step
 
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
@@ -7060,7 +7063,7 @@ void __DummyCalls() {
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
-   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icChartInfos();
    icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);

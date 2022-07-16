@@ -151,7 +151,7 @@ datetime GetServerTime();;
 string   GmtTimeFormat(datetime timestamp, string format);;
 bool     GT(double double1, double double2, int digits = 8);;
 string   HistoryFlagsToStr(int flags);;
-double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar);;
+double   icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar);;
 bool     icChartInfos();;
 double   icFATL(NULL, NULL, NULL);;
 double   icHalfTrend(int timeframe, int periods, int iBuffer, int iBar);;
