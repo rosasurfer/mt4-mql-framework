@@ -89,9 +89,9 @@
    int      GetBoolsAddress  (bool   values[]);
    int      GetIntsAddress   (int    values[]);
    int      GetDoublesAddress(double values[]);
-   int      GetStringAddress (string value   );          // Warning: GetStringAddress() must be used with string array elements only.
-   int      GetStringsAddress(string values[]);          //          Simple strings are passed to DLLs as copies. The resulting address
-   string   GetStringA(int address);                     //          is a dangling pointer and accessing it may cause a terminal crash.
+   int      GetStringAddress (string value   );                // Warning: GetStringAddress() must be used with string array elements only.
+   int      GetStringsAddress(string values[]);                //  Simple strings are passed to DLLs as copies. The resulting address
+   string   GetStringA(int address);                           //  is a dangling pointer and accessing it may cause a terminal crash.
    //string GetStringW(int address);
    bool     MemCompare(int lpBufferA, int lpBufferB, int size);
 
@@ -135,7 +135,7 @@
    string   DoubleQuoteStr(string value);
    string   ErrorToStrA(int error);
    string   InitFlagsToStr(int flags);
-   string   InitializeReasonToStr(int reason);           // alias of InitReasonToStr()
+   string   InitializeReasonToStr(int reason);                 // alias of InitReasonToStr()
    string   InitReasonToStr(int reason);
    string   IntToHexStr(int value);
    string   LoglevelToStr(int level);
@@ -144,16 +144,16 @@
    string   NumberFormat(double value, string format);
    string   OperationTypeDescription(int type);
    string   OperationTypeToStr(int type);
-   string   OrderTypeDescription(int type);              // alias
-   string   OrderTypeToStr(int type);                    // alias
+   string   OrderTypeDescription(int type);                    // alias
+   string   OrderTypeToStr(int type);                          // alias
    string   PeriodToStr(int period);
    string   ProgramTypeDescription(int type);
    string   ProgramTypeToStr(int type);
    string   ShowWindowCmdToStr(int cmdShow);
-   string   TimeframeToStr(int timeframe);               // alias of PeriodToStr()
+   string   TimeframeToStr(int timeframe);                     // alias of PeriodToStr()
    string   TradeDirectionDescription(int direction);
    string   TradeDirectionToStr(int direction);
-   string   UninitializeReasonToStr(int reason);         // alias of UninitReasonToStr()
+   string   UninitializeReasonToStr(int reason);               // alias of UninitReasonToStr()
    string   UninitReasonToStr(int reason);
 
    // window property management
@@ -175,12 +175,12 @@
    bool     IsProgramType(int type);
    bool     IsVirtualKeyDown(int vKey);
 
-   // Empty stubs for optional MQL event handlers. Overwritten by custom MQL implementations.
+   // Virtual no-ops. Automatically over-written by MQL implementations of the same name.
    int      onInit();
    int      onInitUser();
    int      onInitParameters();
-   int      onInitTimeframeChange();
    int      onInitSymbolChange();
+   int      onInitTimeframeChange();
    int      onInitProgram();
    int      onInitProgramAfterTest();
    int      onInitTemplate();
@@ -189,10 +189,9 @@
 
    int      onStart();                                         // scripts
    int      onTick();                                          // indicators and experts
-   int      onAccountChange(int oldAccount, int newAccount);   // indicators
 
    int      onDeinit();
-   int      onDeinitAccountChange();                           // experts
+   int      onDeinitAccountChange();
    int      onDeinitChartChange();
    int      onDeinitChartClose();
    int      onDeinitParameters();
@@ -204,12 +203,12 @@
    int      onDeinitTemplate();                                // ...
    int      afterDeinit();
 
-   // Error handlers for missing MQL implementations (if such functionality is used).
+   int      onAccountChange(int oldAccount, int newAccount);   // event handlers
    bool     onBarOpen();
 
-   // no-ops
-   void     DummyCalls();
+   void     DummyCalls();                                      // other virtual no-ops
    string   InputsToStr();
-   bool     Recorder_GetSymbolDefinitionA(int i, bool &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat);
+   bool     Recorder_GetSymbolDefinitionA(int i, int &enabled, string &symbol, string &symbolDescr, string &symbolGroup, int &symbolDigits, double &hstBase, int &hstMultiplier, string &hstDirectory, int &hstFormat);
+   bool     RemoveLegend();
    int      ShowStatus(int error);
 #import
