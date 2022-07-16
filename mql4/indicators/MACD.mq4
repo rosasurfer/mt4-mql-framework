@@ -16,7 +16,6 @@
  *
  * Notes:
  *  - The SMMA is not supported as SMMA(n) = EMA(2*n-1).
- *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -56,8 +55,8 @@ extern string Signal.SMS            = "on | off | auto*";
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
-#include <functions/@ALMA.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MAIN             MACD.MODE_MAIN                // indicator buffer ids
 #define MODE_SECTION          MACD.MODE_SECTION
@@ -195,7 +194,7 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onCross, signals))                               return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onCross, signals)) return(last_error);
    if (signals) {
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
@@ -233,9 +232,10 @@ int onInit() {
    IndicatorDigits(ifInt(isCentUnit, 3, 2));                            // or pip with 2 decimal digit otherwise:                         123.4 pip => 123.04
    SetIndicatorOptions();
 
-   // precalculate ALMA bar weights
-   if (fastMA.method == MODE_ALMA) @ALMA.CalculateWeights(fastALMA.weights, fastMA.periods);
-   if (slowMA.method == MODE_ALMA) @ALMA.CalculateWeights(slowALMA.weights, slowMA.periods);
+   // calculate ALMA bar weights
+   double almaOffset=0.85, almaSigma=6.0;
+   if (fastMA.method == MODE_ALMA) ALMA.CalculateWeights(fastMA.periods, almaOffset, almaSigma, fastALMA.weights);
+   if (slowMA.method == MODE_ALMA) ALMA.CalculateWeights(slowMA.periods, almaOffset, almaSigma, slowALMA.weights);
 
    return(catch("onInit(15)"));
 }
@@ -318,7 +318,7 @@ int onTick() {
    }
 
    // detect zero line crossings
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       if (signals) /*&&*/ if (IsBarOpen()) {
          static int lastSide; if (!lastSide) lastSide = bufferSection[2];
          int side = bufferSection[1];

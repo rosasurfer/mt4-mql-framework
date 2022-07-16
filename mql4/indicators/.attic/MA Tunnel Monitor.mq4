@@ -316,7 +316,7 @@ int onTick() {
  * @return bool - success status
  */
 bool CheckSignals() {
-   if (IsSuperContext()) return(true);
+   if (__isSuperContext) return(true);
 
    // detect tunnel breakouts to the opposite side of the current trend (skips trend continuation signals)
    if (Signal.onBreakout) /*&&*/ if (IsBarOpen()) {

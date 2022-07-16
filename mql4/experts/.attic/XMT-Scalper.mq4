@@ -463,7 +463,7 @@ int afterInit() {
    if (!InitMetrics()) return(last_error);
 
    if (__isTesting) {                                       // read test configuration
-      string section = ProgramName(MODE_NICE) +".Tester";
+      string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
@@ -2639,7 +2639,7 @@ int ShowStatus(int error = NO_ERROR) {
    if (currentSpread > MaxSpread || avgSpread > MaxSpread)
       sSpreadInfo = StringConcatenate("  =>  larger then MaxSpread of ", sMaxSpread);
 
-   string msg = StringConcatenate(ProgramName(MODE_NICE), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                 NL,
+   string msg = StringConcatenate(ProgramName(), sTradingModeStatus[tradingMode], "  (sid: ", sequence.id, ")", "           ", sError,                          NL,
                                                                                                                                                                 NL,
                                     "Spread:    ",  sCurrentSpread, "    Avg: ", sAvgSpread, sSpreadInfo,                                                       NL,
                                     "BarSize:    ", sCurrentBarSize, "    MinBarSize: ", sMinBarSize,                                                           NL,
@@ -2695,11 +2695,8 @@ int ShowStatus(int error = NO_ERROR) {
 
    // store status in the chart to enable remote access by scripts
    string label = "XMT-Scalper.status";
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      RegisterObject(label);
-   }
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, StringConcatenate(sequence.id, "|", TradingMode));
 
    error = intOr(catch("ShowStatus(1)"), error);
@@ -2991,7 +2988,7 @@ bool ValidateInputs() {
    int _EntryIndicator = EntryIndicator;
 
    // IndicatorTimeframe
-   if (!IsStdTimeframe(IndicatorTimeframe))                  return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
+   if (!IsStandardTimeframe(IndicatorTimeframe))             return(!onInputError("ValidateInputs(5)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe));
    if (__isTesting && IndicatorTimeframe!=Period())          return(!onInputError("ValidateInputs(6)  "+ sequence.name +" invalid input parameter IndicatorTimeframe: "+ IndicatorTimeframe +" (for test on "+ PeriodDescription(Period()) +")"));
    int _IndicatorTimeframe = IndicatorTimeframe;
 
@@ -3110,7 +3107,7 @@ bool InitMetrics() {
    }
 
    // read the metrics configuration (on every call)
-   string section = ProgramName(MODE_NICE) + ifString(__isTesting, ".Tester", "");
+   string section = ProgramName() + ifString(__isTesting, ".Tester", "");
    metrics.enabled[METRIC_RC1] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC1", true));
    metrics.enabled[METRIC_RC2] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC2", true));
    metrics.enabled[METRIC_RC3] = (tradingMode!=TRADINGMODE_VIRTUAL && Metrics.RecordPerformance && GetConfigBool(section, "Metric.RC3", true));

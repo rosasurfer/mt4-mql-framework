@@ -1,6 +1,6 @@
 /**
- * Data types and sizes in C, Win32 and MQL4
- * =========================================
+ * Data types and sizes in C, C++/Win32 and MQL4
+ * =============================================
  *
  * +---------+---------+--------+--------+--------+-----------------+--------------------+----------------------------+----------------------------+----------------+--------------------+----------------+-----------------+
  * |         |         |        |        |        |                 |          max (hex) |     signed range (decimal) |   unsigned range (decimal) |       C        |     C++/Win32      |      MQL4      |      MQL5       |
@@ -303,8 +303,8 @@ bool GetTimezoneTransitions(datetime serverTime, int &prevTransition[], int &nex
 }
 
 
-string lock.names   [];                                           // Namen der Locks, die vom aktuellen Programm gehalten werden
-int    lock.counters[];                                           // Anzahl der akquirierten Locks je Name
+string __lockNames   [];                                          // Namen der Locks, die vom Programm gehalten werden
+int    __lockCounters[];                                          // Anzahl der akquirierten Locks je Name
 
 
 /**
@@ -321,9 +321,9 @@ bool AquireLock(string mutexName, bool wait) {
    if (!StringLen(mutexName)) return(!catch("AquireLock(1)  illegal parameter mutexName: "+ DoubleQuoteStr(mutexName), ERR_INVALID_PARAMETER));
 
    // check if we already own the lock
-   int i = SearchStringArray(lock.names, mutexName);
+   int i = SearchStringArray(__lockNames, mutexName);
    if (i > -1) {                                               // yes
-      lock.counters[i]++;
+      __lockCounters[i]++;
       return(true);
    }
 
@@ -333,8 +333,8 @@ bool AquireLock(string mutexName, bool wait) {
    // loop until lock is aquired
    while (true) {
       if (GlobalVariableSetOnCondition(globalVar, 1, 0)) {     // try to get it
-         ArrayPushString(lock.names, mutexName);               // got it
-         ArrayPushInt   (lock.counters,      1);
+         ArrayPushString(__lockNames, mutexName);               // got it
+         ArrayPushInt   (__lockCounters,      1);
          return(true);
       }
       error = GetLastError();
@@ -347,9 +347,8 @@ bool AquireLock(string mutexName, bool wait) {
          continue;                                             // retry
       }
       if (IsError(error)) return(!catch("AquireLock(3)  failed to get lock on mutex "+ DoubleQuoteStr(mutexName), error));
-      if (IsStopped())    return(logWarn("AquireLock(4)  couldn't get lock on mutex "+ DoubleQuoteStr(mutexName) +", stopping..."));
-      if (!wait)
-         return(false);
+      if (IsStopped())    return(_true(logWarn("AquireLock(4)  couldn't yet get lock on mutex "+ DoubleQuoteStr(mutexName) +" but was ordered to stop, taking it...")));
+      if (!wait)          return(false);
 
       // warn every second, cancel after 10 seconds
       duration = GetTickCount() - startTime;
@@ -381,17 +380,17 @@ bool ReleaseLock(string mutexName) {
    if (!StringLen(mutexName)) return(!catch("ReleaseLock(1)  illegal parameter mutexName: \"\"", ERR_INVALID_PARAMETER));
 
    // check, if we indeed own that lock
-   int i = SearchStringArray(lock.names, mutexName);
+   int i = SearchStringArray(__lockNames, mutexName);
    if (i == -1)
       return(!catch("ReleaseLock(2)  do not own a lock for mutex \""+ mutexName +"\"", ERR_RUNTIME_ERROR));
 
    // we do, decrease the counter
-   lock.counters[i]--;
+   __lockCounters[i]--;
 
    // remove it, if counter is zero
-   if (lock.counters[i] == 0) {
-      ArraySpliceStrings(lock.names,    i, 1);
-      ArraySpliceInts   (lock.counters, i, 1);
+   if (__lockCounters[i] == 0) {
+      ArraySpliceStrings(__lockNames,    i, 1);
+      ArraySpliceInts   (__lockCounters, i, 1);
 
       string globalVarName = mutexName;
 
@@ -417,9 +416,9 @@ bool ReleaseLock(string mutexName) {
 int CheckLocks() {
    int error = NO_ERROR;
 
-   for (int i=ArraySize(lock.names)-1; i >= 0; i--) {
-      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(lock.names[i]));
-      if (!ReleaseLock(lock.names[i]))
+   for (int i=ArraySize(__lockNames)-1; i >= 0; i--) {
+      logWarn("CheckLocks(1)  unreleased lock found for mutex "+ DoubleQuoteStr(__lockNames[i]));
+      if (!ReleaseLock(__lockNames[i]))
          error = last_error;
    }
    return(error);
@@ -881,48 +880,6 @@ bool __SOT.SameOpenTimes(int &ticketData[][/*{OpenTime, Ticket}*/], int rowsToSo
 
    ArrayResize(rows.copy, 0);
    return(!catch("__SOT.SameOpenTimes(1)"));
-}
-
-
-/**
- * Positioniert die Legende neu (wird nach Entfernen eines Legendenlabels aufgerufen).
- *
- * @return int - error status
- */
-int RepositionLegend() {
-   if (IsSuperContext())
-      return(true);
-
-   int objects = ObjectsTotal(),
-       labels  = ObjectsTotal(OBJ_LABEL);
-
-   string legends[];       ArrayResize(legends,    0);   // Namen der gefundenen Label
-   int    yDistances[][2]; ArrayResize(yDistances, 0);   // Y-Distance und legends[]-Index, um Label nach Position sortieren zu können
-
-   int legendLabels;
-
-   for (int i=0; i < objects && labels > 0; i++) {
-      string objName = ObjectName(i);
-      if (ObjectType(objName) == OBJ_LABEL) {
-         if (StrStartsWith(objName, "Legend.")) {
-            legendLabels++;
-            ArrayResize(legends,    legendLabels);
-            ArrayResize(yDistances, legendLabels);
-            legends   [legendLabels-1]    = objName;
-            yDistances[legendLabels-1][0] = ObjectGet(objName, OBJPROP_YDISTANCE);
-            yDistances[legendLabels-1][1] = legendLabels-1;
-         }
-         labels--;
-      }
-   }
-
-   if (legendLabels > 0) {
-      ArraySort(yDistances);
-      for (i=0; i < legendLabels; i++) {
-         ObjectSet(legends[yDistances[i][1]], OBJPROP_YDISTANCE, 21 + i*19);
-      }
-   }
-   return(catch("RepositionLegend(1)"));
 }
 
 
@@ -4433,46 +4390,101 @@ int IncreasePeriod(int period = 0) {
 }
 
 
-string registeredObjects[];
+string __registeredObjects[];
+int    __registeredOjectsCounter = 0;
 
 
 /**
- * Register a chart object for auto-removal on Program::deinit().
+ * Create a chart object and register it for auto-removal on Program::deinit(). Function parameters are identical to the
+ * built-in function ObjectCreate().
  *
- * @param  string label - object label
+ * @param  string   name   - unique object name (max. 63 chars, may contain line breaks)
+ * @param  int      type   - object type identifier
+ * @param  int      window - index of the chart window to create the object in
+ * @param  datetime time1  - time value of the first coordinate pair
+ * @param  double   price1 - price value of the first coordinate pair
+ * @param  datetime time2  - time value of the second coordinate pair
+ * @param  double   price2 - price value of the second coordinate pair
+ * @param  datetime time3  - time value of the third coordinate pair
+ * @param  double   price3 - price value of the third coordinate pair
  *
- * @return int - number of registered objects or -1 in case of errors
+ * @return bool - success status
+ *
+ * TODO:
+ *  - 106.000 initial calls on terminal start with 7 open charts
+ *  - SuperBars in regular charts: permant non-stopping calls (after a few minutes more than 1.000.000)
+ *  - SuperBars in offline charts: 271 calls on every tick
+ *  - move elsewhere as the library is not a singleton (there can be multiple instances)
  */
-int RegisterObject(string label) {
-   int size = ArraySize(registeredObjects);        // TODO: Needs massive performance improvement.
-   ArrayResize(registeredObjects, size+1);         //       On terminal start with 7 open charts we observe 106.000 calls.
-   registeredObjects[size] = label;
-   return(size+1);
+bool ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3) {
+   bool success = false;
+
+   // create the object
+   switch (type) {
+      case OBJ_VLINE        :    // Vertical line. Uses time of first coordinate pair.
+      case OBJ_HLINE        :    // Horizontal line. Uses price of first coordinate pair.
+      case OBJ_TREND        :    // Trend line. Uses 2 coordinate pairs.
+      case OBJ_TRENDBYANGLE :    // Trend by angle. Uses 1 coordinate pair.
+      case OBJ_REGRESSION   :    // Regression. Uses times of first two coordinate pairs.
+      case OBJ_CHANNEL      :    // Channel. Uses 3 coordinate pairs.
+      case OBJ_STDDEVCHANNEL:    // Standard deviation channel. Uses times of first two coordinate pairs.
+      case OBJ_GANNLINE     :    // Gann line. Uses 2 coordinate pairs, price of second pair is ignored.
+      case OBJ_GANNFAN      :    // Gann fan. Uses 2 coordinate pairs, price of second pair is ignored.
+      case OBJ_GANNGRID     :    // Gann grid. Uses 2 coordinate pairs, price of second pair is ignored.
+      case OBJ_FIBO         :    // Fibonacci retracement. Uses 2 coordinate pairs.
+      case OBJ_FIBOTIMES    :    // Fibonacci time zones. Uses 2 coordinate pairs.
+      case OBJ_FIBOFAN      :    // Fibonacci fan. Uses 2 coordinate pairs.
+      case OBJ_FIBOARC      :    // Fibonacci arcs. Uses 2 coordinate pairs.
+      case OBJ_EXPANSION    :    // Fibonacci expansions. Uses 3 coordinate pairs.
+      case OBJ_FIBOCHANNEL  :    // Fibonacci channel. Uses 3 coordinate pairs.
+      case OBJ_RECTANGLE    :    // Rectangle. Uses 2 coordinate pairs.
+      case OBJ_TRIANGLE     :    // Triangle. Uses 3 coordinate pairs.
+      case OBJ_ELLIPSE      :    // Ellipse. Uses 2 coordinate pairs.
+      case OBJ_PITCHFORK    :    // Andrews pitchfork. Uses 3 coordinate pairs.
+      case OBJ_CYCLES       :    // Cycles. Uses 2 coordinate pairs.
+      case OBJ_TEXT         :    // Text. Uses 1 coordinate pair.
+      case OBJ_ARROW        :    // Arrows. Uses 1 coordinate pair.
+      case OBJ_LABEL        :    // Text label. Uses 1 coordinate pair in pixels.
+      default:
+         success = ObjectCreate(name, type, window, time1, price1, time2, price2, time3, price3);
+   }
+   if (!success) return(!catch("ObjectCreateRegister(1)  name=\""+ name +"\"  type="+ type +"  window="+ window, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+
+   // register the object for auto-removal
+   int size = ArraySize(__registeredObjects);
+   if (size <= __registeredOjectsCounter) {
+      if (!size) size = 512;
+      size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
+      ArrayResize(__registeredObjects, size);
+      if (size >= 32768) debug("ObjectCreateRegister(2)  objects="+ (__registeredOjectsCounter+1));
+   }
+   __registeredObjects[__registeredOjectsCounter] = name;
+   __registeredOjectsCounter++;
+
+   //debug("ObjectCreateRegister(3)  Tick="+ __ExecutionContext[EC.ticks] +"  objects="+ __registeredOjectsCounter +"  \""+ name +"\"");
+   return(true);
 }
 
 
 /**
- * Delete all chart objects registered for auto-removal. Called on Program::deinit().
+ * Delete all chart objects marked for auto-removal. Called on Program::deinit().
  *
  * @return int - error status
  */
 int DeleteRegisteredObjects() {
-   int size = ArraySize(registeredObjects);
-   if (!size) return(NO_ERROR);
-
-   for (int i=0; i < size; i++) {
-      if (ObjectFind(registeredObjects[i]) != -1) {
-         if (!ObjectDelete(registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(label="+ DoubleQuoteStr(registeredObjects[i]) +")", GetLastError());
+   for (int i=0; i < __registeredOjectsCounter; i++) {
+      if (ObjectFind(__registeredObjects[i]) != -1) {
+         if (!ObjectDelete(__registeredObjects[i])) logWarn("DeleteRegisteredObjects(1)->ObjectDelete(name=\""+ __registeredObjects[i] +"\")", intOr(GetLastError(), ERR_RUNTIME_ERROR));
       }
    }
-   ArrayResize(registeredObjects, 0);
-
+   ArrayResize(__registeredObjects, 0);
+   __registeredOjectsCounter = 0;
    return(catch("DeleteRegisteredObjects(2)"));
 }
 
 
 /**
- * Konvertiert die angegebene Serverzeit nach FXT (Forex Time).
+ * Konvertiert die angegebene Serverzeit nach FXT (Forex Standard Time).
  *
  * @param  datetime serverTime - Serverzeit
  *
@@ -7562,14 +7574,14 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
 
    // OrderOpen-Marker: setzen, korrigieren oder löschen                               // "#1 buy[ stop] 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label1) == 0) {
+   if (ObjectFind(label1) != -1) {
       if (markerColor == CLR_NONE) ObjectDelete(label1);                               // löschen
       else                         ObjectSet(label1, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label1, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet(label1, OBJPROP_COLOR    , markerColor     );
+         ObjectSet(label1, OBJPROP_COLOR,     markerColor);
          ObjectSetText(label1, comment);
       }
    }
@@ -7577,15 +7589,13 @@ bool ChartMarker.OrderSent_B(int ticket, int digits, color markerColor, int type
    // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(stopLoss, 0)) {
       string label2 = StringConcatenate(label1, " stop loss at ", DoubleToStr(stopLoss, digits));
-      if (ObjectFind(label2) == 0)
-         ObjectDelete(label2);
+      if (ObjectFind(label2) != -1) ObjectDelete(label2);
    }
 
    // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(takeProfit, 0)) {
       string label3 = StringConcatenate(label1, " take profit at ", DoubleToStr(takeProfit, digits));
-      if (ObjectFind(label3) == 0)
-         ObjectDelete(label3);
+      if (ObjectFind(label3) != -1) ObjectDelete(label3);
    }
 
    return(!catch("ChartMarker.OrderSent_B()"));
@@ -7657,17 +7667,17 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ");
    if (openModified) {
       string label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // alten Open-Marker löschen
       label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime-60*SECONDS));
-      if (ObjectFind(label) == 0)                                                      // #1 buy stop modified 2012.03.12 03:06
+      if (ObjectFind(label) != -1)                                                     // #1 buy stop modified 2012.03.12 03:06
          ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " ", types[type], " modified ", TimeToStr(modifyTime));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // Modify-Marker löschen, wenn er auf der aktuellen Minute liegt
    }
    label = StringConcatenate(label1, DoubleToStr(openPrice, digits));
-   if (ObjectFind(label) == 0) {
+   if (ObjectFind(label) != -1) {
       if (markerColor == CLR_NONE) ObjectDelete(label);                                // neuen Open-Marker löschen
       else {
          if (openModified)
@@ -7678,7 +7688,7 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
    else if (markerColor != CLR_NONE) {                                                 // neuen Open-Marker setzen
       if (ObjectCreate(label, OBJ_ARROW, 0, ifInt(openModified, modifyTime, openTime), openPrice)) {
          ObjectSet(label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet(label, OBJPROP_COLOR    , markerColor     );
+         ObjectSet(label, OBJPROP_COLOR,     markerColor);
          ObjectSetText(label, comment);
       }
    }
@@ -7686,30 +7696,30 @@ bool ChartMarker.OrderModified_B(int ticket, int digits, color markerColor, int 
    // StopLoss-Marker: immer löschen                                                   // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 stop loss at 1.52784"
    if (NE(oldStopLoss, 0)) {
       label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " stop loss at ", DoubleToStr(oldStopLoss, digits));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // alten löschen
    }
    if (slModified) {                                                                   // #1 sl modified 2012.03.12 03:06
       label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime-60*SECONDS));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " sl modified ", TimeToStr(modifyTime));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
    }
 
    // TakeProfit-Marker: immer löschen                                                 // "#1 buy[ stop] 0.10 GBPUSD at 1.52904 take profit at 1.58000"
    if (NE(oldTakeProfit, 0)) {
       label = StringConcatenate(label1, DoubleToStr(oldOpenPrice, digits), " take profit at ", DoubleToStr(oldTakeProfit, digits));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // alten löschen
    }
    if (tpModified) {                                                                   // #1 tp modified 2012.03.12 03:06
       label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime-60*SECONDS));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // neuen löschen, wenn er auf der vorherigen Minute liegt
       label = StringConcatenate("#", ticket, " tp modified ", TimeToStr(modifyTime));
-      if (ObjectFind(label) == 0)
+      if (ObjectFind(label) != -1)
          ObjectDelete(label);                                                          // neuen löschen, wenn er auf der aktuellen Minute liegt
    }
 
@@ -7769,29 +7779,26 @@ bool ChartMarker.OrderFilled_B(int ticket, int pendingType, double pendingPrice,
 
    // OrderOpen-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[pendingType], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(pendingPrice, digits));
-   if (ObjectFind(label1) == 0)
-      ObjectDelete(label1);
+   if (ObjectFind(label1) != -1) ObjectDelete(label1);
 
    // Trendlinie: immer löschen                                                        // "#1 1.52904 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(pendingPrice, digits), " -> ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label2) == 0)
-      ObjectDelete(label2);
+   if (ObjectFind(label2) != -1) ObjectDelete(label2);
 
    // OrderFill-Marker: immer löschen                                                  // "#1 buy stop 0.10 GBPUSD at 1.52904 buy[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label3) == 0)
-         ObjectDelete(label3);                                                         // löschen
+   if (ObjectFind(label3) != -1) ObjectDelete(label3);                                 // löschen
 
    // neuen OrderFill-Marker: setzen, korrigieren oder löschen                         // "#1 buy 0.10 GBPUSD at 1.52904"
    string label4 = StringConcatenate("#", ticket, " ", types[ifInt(IsLongOrderType(pendingType), OP_BUY, OP_SELL)], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
-   if (ObjectFind(label4) == 0) {
+   if (ObjectFind(label4) != -1) {
       if (markerColor == CLR_NONE) ObjectDelete(label4);                               // löschen
       else                         ObjectSet(label4, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label4, OBJ_ARROW, 0, openTime, openPrice)) {                   // setzen
          ObjectSet(label4, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet(label4, OBJPROP_COLOR    , markerColor     );
+         ObjectSet(label4, OBJPROP_COLOR,     markerColor);
          ObjectSetText(label4, comment);
       }
    }
@@ -7847,35 +7854,33 @@ bool ChartMarker.PositionClosed_B(int ticket, int digits, color markerColor, int
    // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1) == 0)
-         ObjectDelete(label1);                                                         // löschen
+      if (ObjectFind(label1) != -1) ObjectDelete(label1);                              // löschen
    }
 
    // Trendlinie: setzen oder löschen                                                  // "#1 1.53024 -> 1.52904"
    string label2 = StringConcatenate("#", ticket, " ", DoubleToStr(openPrice, digits), " -> ", DoubleToStr(closePrice, digits));
-   if (ObjectFind(label2) == 0) {
-      if (markerColor == CLR_NONE)
-         ObjectDelete(label2);                                                         // löschen
+   if (ObjectFind(label2) != -1) {
+      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // löschen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
       if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-         ObjectSet(label2, OBJPROP_RAY  , false    );
+         ObjectSet(label2, OBJPROP_RAY,   false);
          ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(label2, OBJPROP_COLOR, ifInt(type==OP_BUY, Blue, Red));
-         ObjectSet(label2, OBJPROP_BACK , true);
+         ObjectSet(label2, OBJPROP_BACK,  true);
       }
    }
 
    // Close-Marker: setzen, korrigieren oder löschen                                   // "#1 buy 0.10 GBPUSD at 1.53024 close[ by tester] at 1.52904"
    string label3 = StringConcatenate(label1, " close", ifString(__isTesting, " by tester", ""), " at ", DoubleToStr(closePrice, digits));
-   if (ObjectFind(label3) == 0) {
+   if (ObjectFind(label3) != -1) {
       if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label3, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
          ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet(label3, OBJPROP_COLOR    , markerColor      );
+         ObjectSet(label3, OBJPROP_COLOR,     markerColor);
       }
    }
 
@@ -7934,35 +7939,33 @@ bool ChartMarker.OrderDeleted_B(int ticket, int digits, color markerColor, int t
    // OrderOpen-Marker: ggf. löschen                                                   // "#1 buy stop 0.10 GBPUSD at 1.52904"
    string label1 = StringConcatenate("#", ticket, " ", types[type], " ", DoubleToStr(lots, 2), " ", symbol, " at ", DoubleToStr(openPrice, digits));
    if (markerColor == CLR_NONE) {
-      if (ObjectFind(label1) == 0)
-         ObjectDelete(label1);
+      if (ObjectFind(label1) != -1) ObjectDelete(label1);
    }
 
    // Trendlinie: setzen oder löschen                                                  // "#1 delete"
    string label2 = StringConcatenate("#", ticket, " delete");
-   if (ObjectFind(label2) == 0) {
-      if (markerColor == CLR_NONE)
-         ObjectDelete(label2);                                                         // löschen
+   if (ObjectFind(label2) != -1) {
+      if (markerColor == CLR_NONE) ObjectDelete(label2);                               // löschen
    }
    else if (markerColor != CLR_NONE) {                                                 // setzen
       if (ObjectCreate(label2, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-         ObjectSet(label2, OBJPROP_RAY  , false    );
+         ObjectSet(label2, OBJPROP_RAY,   false);
          ObjectSet(label2, OBJPROP_STYLE, STYLE_DOT);
          ObjectSet(label2, OBJPROP_COLOR, ifInt(IsLongOrderType(type), Blue, Red));
-         ObjectSet(label2, OBJPROP_BACK , true);
+         ObjectSet(label2, OBJPROP_BACK,  true);
       }
    }
 
    // OrderClose-Marker: setzen, korrigieren oder löschen                              // "#1 buy stop 0.10 GBPUSD at 1.52904 deleted"
    string label3 = StringConcatenate(label1, " deleted");
-   if (ObjectFind(label3) == 0) {
+   if (ObjectFind(label3) != -1) {
       if (markerColor == CLR_NONE) ObjectDelete(label3);                               // löschen
       else                         ObjectSet(label3, OBJPROP_COLOR, markerColor);      // korrigieren
    }
    else if (markerColor != CLR_NONE) {
       if (ObjectCreate(label3, OBJ_ARROW, 0, closeTime, closePrice)) {                 // setzen
          ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet(label3, OBJPROP_COLOR    , markerColor      );
+         ObjectSet(label3, OBJPROP_COLOR,     markerColor);
       }
    }
 
@@ -8448,8 +8451,11 @@ bool SetRawSymbolTemplate(/*SYMBOL*/int symbol[], int type) {
  * Custom handler called in tester from core/library::init() to reset global variables before the next test.
  */
 void onLibraryInit() {
-   ArrayResize(lock.names,    0);
-   ArrayResize(lock.counters, 0);
+   ArrayResize(__lockNames,    0);
+   ArrayResize(__lockCounters, 0);
+
+   ArrayResize(__registeredObjects, 0);
+   __registeredOjectsCounter = 0;
 }
 
 

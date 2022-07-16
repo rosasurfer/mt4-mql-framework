@@ -382,10 +382,10 @@ string Pluralize(int count, string singular="", string plural="s") {
  * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
-   debug(message);                                                                  // send the message to the debug output
+   debug(message);                                                         // send the message to the debug output
 
    string sPeriod = PeriodDescription();
-   Alert(Symbol(), ",", sPeriod, ": ", FullModuleName(MODE_NICE), ":  ", message);  // the message shows up in the terminal log
+   Alert(Symbol(), ",", sPeriod, ": ", ModuleName(true), ":  ", message);  // the message shows up in the terminal log
 
    if (IsTesting()) {
       // in tester no Alert() dialog was displayed
@@ -1684,92 +1684,51 @@ string _string(string param1, int param2=NULL, int param3=NULL, int param4=NULL,
 /**
  * Return the current MQL module's program name, i.e. the name of the program's main module.
  *
- * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
- *                               MODE_RAW:  return the raw unmodified name (default)
- *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
  * @return string
  */
-string ProgramName(int mode = MODE_RAW) {
-   static string rawName="", niceName="";
+string ProgramName() {
+   static string name = "";
 
-   if (!StringLen(rawName)) {
+   if (!StringLen(name)) {
       if (IsLibrary()) {
-         if (!IsDllsAllowed()) return("???");
-         rawName = ec_ProgramName(__ExecutionContext);
+         if (IsDllsAllowed()) name = ec_ProgramName(__ExecutionContext);
+         if (!StringLen(name)) return("???");
       }
       else {
-         rawName = ModuleName();
+         name = WindowExpertName();
       }
-      if (!StringLen(rawName)) return("???");
-
-      niceName = rawName;
-      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
-      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
-      niceName = StringTrimRight(niceName);
    }
-
-   if (mode == MODE_NICE)
-      return(niceName);
-   return(rawName);
+   return(name);
 }
 
 
 /**
- * Return the current MQL module's simple name. Alias of WindowExpertName().
+ * Return the current MQL module's name.
  *
- * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
- *                               MODE_RAW:  return the raw unmodified name (default)
- *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
+ * @param  bool fullName [optional] - whether to return the full module name (default: simple name)
+ *
  * @return string
  */
-string ModuleName(int mode = MODE_RAW) {
-   static string rawName="", niceName="";
+string ModuleName(bool fullName = false) {
+   fullName = fullName!=0;
+   if (!fullName) return(WindowExpertName());
 
-   if (!StringLen(rawName)) {
-      rawName = WindowExpertName();
+   static string name = "";
 
-      niceName = rawName;
-      if (StrEndsWith(niceName, ".rsf")) niceName = StrLeft(niceName, -4);
-      if (StrEndsWith(niceName, "."   )) niceName = StrLeft(niceName, -1);
-      niceName = StringTrimRight(niceName);
+   if (!StringLen(name)) {
+      if (IsLibrary()) {
+         string programName = ProgramName();
+         string libraryName = WindowExpertName();
+         if (programName == "???") {
+            return(programName +"::"+ libraryName);
+         }
+         name = programName +"::"+ libraryName;
+      }
+      else {
+         name = WindowExpertName();
+      }
    }
-
-   if (mode == MODE_NICE)
-      return(niceName);
-   return(rawName);
-}
-
-
-/**
- * Return the current MQL module's full name. For main modules this value matches the value of ProgramName(). For libraries
- * this value includes the name of the MQL main module, e.g. "{expert-name}::{library-name}".
- *
- * @param  int mode [optional] - whether to return the raw or a sanitized name (if different from the raw one)
- *                               MODE_RAW:  return the raw unmodified name (default)
- *                               MODE_NICE: return the name with trailing spaces and/or namespace suffixes removed
- * @return string
- */
-string FullModuleName(int mode = MODE_RAW) {
-   static string rawName="", niceName="";
-
-   if (!StringLen(rawName)) {
-      string programName = ProgramName();
-      string libraryName = "";
-      if (IsLibrary()) libraryName = "::"+ ModuleName();
-      if (programName == "???") return(programName + libraryName);
-
-      rawName = programName + libraryName;
-
-      niceName = programName;
-      if (StrEndsWith(programName, ".rsf")) programName = StrLeft(programName, -4);
-      if (StrEndsWith(programName, "."   )) programName = StrLeft(programName, -1);
-      programName = StringTrimRight(programName);
-      niceName = programName + libraryName;
-   }
-
-   if (mode == MODE_NICE)
-      return(niceName);
-   return(rawName);
+   return(name);
 }
 
 
@@ -3534,18 +3493,16 @@ int Chart.Expert.Properties() {
  */
 int Chart.SendTick(bool sound = false) {
    sound = sound!=0;
-
    int hWnd = __ExecutionContext[EC.hChart];
 
    if (!__isTesting) {
-      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // LPARAM lParam: 0 - doesn't trigger Expert::start() in offline charts
-   }                                                              //                1 - triggers Expert::start() in offline charts (if a server connection is established)
+      PostMessageA(hWnd, WM_MT4(), MT4_TICK, TICK_OFFLINE_EA);    // int lParam: 0 - doesn't trigger experts in offline charts
+   }                                                              //             1 - triggers experts in offline charts if a server connection is established
    else if (Tester.IsPaused()) {
       SendMessageA(hWnd, WM_COMMAND, ID_TESTER_TICK, 0);
    }
 
    if (sound) PlaySoundEx("Tick.wav");
-
    return(NO_ERROR);
 }
 
@@ -3584,19 +3541,16 @@ int Chart.Refresh() {
  */
 bool Chart.StoreBool(string key, bool value) {
    value = value!=0;
-   if (!__isChart) return(!catch("Chart.StoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.StoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len)       return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (len > 63)   return(!catch("Chart.StoreBool(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string)(int) bool
 
-   return(!catch("Chart.StoreBool(4)"));
+   return(!catch("Chart.StoreBool(3)"));
 }
 
 
@@ -3609,19 +3563,16 @@ bool Chart.StoreBool(string key, bool value) {
  * @return bool - success status
  */
 bool Chart.StoreInt(string key, int value) {
-   if (!__isChart) return(!catch("Chart.StoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.StoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len)       return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (len > 63)   return(!catch("Chart.StoreInt(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string) int
 
-   return(!catch("Chart.StoreInt(4)"));
+   return(!catch("Chart.StoreInt(3)"));
 }
 
 
@@ -3634,19 +3585,16 @@ bool Chart.StoreInt(string key, int value) {
  * @return bool - success status
  */
 bool Chart.StoreColor(string key, color value) {
-   if (!__isChart) return(!catch("Chart.StoreColor(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.StoreColor(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len)       return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (len > 63)   return(!catch("Chart.StoreColor(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ value);                                 // (string) color
 
-   return(!catch("Chart.StoreColor(4)"));
+   return(!catch("Chart.StoreColor(3)"));
 }
 
 
@@ -3659,19 +3607,16 @@ bool Chart.StoreColor(string key, color value) {
  * @return bool - success status
  */
 bool Chart.StoreDouble(string key, double value) {
-   if (!__isChart) return(!catch("Chart.StoreDouble(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.StoreDouble(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len)       return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (len > 63)   return(!catch("Chart.StoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, NumberToStr(value, ".+"));                  // (string) double
+   ObjectSetText(key, NumberToStr(value, ".1+"));                 // (string) double
 
-   return(!catch("Chart.StoreDouble(4)"));
+   return(!catch("Chart.StoreDouble(3)"));
 }
 
 
@@ -3684,24 +3629,21 @@ bool Chart.StoreDouble(string key, double value) {
  * @return bool - success status
  */
 bool Chart.StoreString(string key, string value) {
-   if (!__isChart) return(!catch("Chart.StoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.StoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
    int len = StringLen(key);
-   if (!len)       return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (len > 63)   return(!catch("Chart.StoreString(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (!len || len > 63) return(!catch("Chart.StoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
    len = StringLen(value);
-   if (len > 63)   return(!catch("Chart.StoreString(4)  invalid parameter value: "+ DoubleQuoteStr(value) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   if (len > 63)         return(!catch("Chart.StoreString(3)  invalid parameter value: "+ DoubleQuoteStr(value) +" (max. 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (!len) value = "…(empty)…";                                 // mark empty string with magic value (0x85) as the terminal fails to restore them
+   if (!len) value = "…(empty)…";                                 // mark empty strings with a magic value (0x85) as the terminal deserializes "" to "Text"
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, value);                                     // string
 
-   return(!catch("Chart.StoreString(5)"));
+   return(!catch("Chart.StoreString(4)"));
 }
 
 
@@ -3716,19 +3658,18 @@ bool Chart.StoreString(string key, string value) {
  */
 bool Chart.RestoreBool(string key, bool &var, bool remove = true) {
    remove = remove!=0;
-   if (!__isChart)  return(!catch("Chart.RestoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)                    return(!catch("Chart.RestoreBool(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
-   int keyLen = StringLen(key);
-   if (!keyLen)     return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63) return(!catch("Chart.RestoreBool(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   int len = StringLen(key);
+   if (!len || len > 63)              return(!catch("Chart.RestoreBool(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0) {
+   if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (sValue!="0" && sValue!="1") return(!catch("Chart.RestoreBool(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (sValue!="0" && sValue!="1") return(!catch("Chart.RestoreBool(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = (sValue == "1");                               // (bool) string
 
-      return(!catch("Chart.RestoreBool(5)"));
+      return(!catch("Chart.RestoreBool(4)"));
    }
    return(false);
 }
@@ -3745,19 +3686,18 @@ bool Chart.RestoreBool(string key, bool &var, bool remove = true) {
  */
 bool Chart.RestoreInt(string key, int &var, bool remove = true) {
    remove = remove!=0;
-   if (!__isChart)  return(!catch("Chart.RestoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)               return(!catch("Chart.RestoreInt(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
-   int keyLen = StringLen(key);
-   if (!keyLen)     return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63) return(!catch("Chart.RestoreInt(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   int len = StringLen(key);
+   if (!len || len > 63)         return(!catch("Chart.RestoreInt(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0) {
+   if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreInt(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreInt(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = StrToInteger(sValue);                          // (int) string
 
-      return(!catch("Chart.RestoreInt(5)"));
+      return(!catch("Chart.RestoreInt(4)"));
    }
    return(false);
 }
@@ -3776,20 +3716,19 @@ bool Chart.RestoreColor(string key, color &var, bool remove = true) {
    remove = remove!=0;
    if (!__isChart)               return(!catch("Chart.RestoreColor(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
-   int keyLen = StringLen(key);
-   if (!keyLen)                  return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63)              return(!catch("Chart.RestoreColor(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   int len = StringLen(key);
+   if (!len || len > 63)         return(!catch("Chart.RestoreColor(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0) {
+   if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsInteger(sValue)) return(!catch("Chart.RestoreColor(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
       int iValue = StrToInteger(sValue);
       if (iValue < CLR_NONE || iValue > C'255,255,255')
-                                 return(!catch("Chart.RestoreColor(5)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
+                                 return(!catch("Chart.RestoreColor(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue) +" (0x"+ IntToHexStr(iValue) +")", ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = iValue;                                        // (color)(int) string
 
-      return(!catch("Chart.RestoreColor(6)"));
+      return(!catch("Chart.RestoreColor(5)"));
    }
    return(false);
 }
@@ -3808,17 +3747,16 @@ bool Chart.RestoreDouble(string key, double &var, bool remove = true) {
    remove = remove!=0;
    if (!__isChart)               return(!catch("Chart.RestoreDouble(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
-   int keyLen = StringLen(key);
-   if (!keyLen)                  return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63)              return(!catch("Chart.RestoreDouble(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   int len = StringLen(key);
+   if (!len || len > 63)         return(!catch("Chart.RestoreDouble(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0) {
+   if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
-      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(4)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
+      if (!StrIsNumeric(sValue)) return(!catch("Chart.RestoreDouble(3)  illegal chart value "+ DoubleQuoteStr(key) +" = "+ DoubleQuoteStr(sValue), ERR_RUNTIME_ERROR));
       if (remove) ObjectDelete(key);
       var = StrToDouble(sValue);                            // (double) string
 
-      return(!catch("Chart.RestoreDouble(5)"));
+      return(!catch("Chart.RestoreDouble(4)"));
    }
    return(false);
 }
@@ -3835,19 +3773,18 @@ bool Chart.RestoreDouble(string key, double &var, bool remove = true) {
  */
 bool Chart.RestoreString(string key, string &var, bool remove = true) {
    remove = remove!=0;
-   if (!__isChart)  return(!catch("Chart.RestoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
+   if (!__isChart)       return(!catch("Chart.RestoreString(1)  illegal calling context (no chart)", ERR_RUNTIME_ERROR));
 
-   int keyLen = StringLen(key);
-   if (!keyLen)     return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (not a valid chart object identifier)", ERR_INVALID_PARAMETER));
-   if (keyLen > 63) return(!catch("Chart.RestoreString(3)  invalid parameter key: "+ DoubleQuoteStr(key) +" (more than 63 chars)", ERR_INVALID_PARAMETER));
+   int len = StringLen(key);
+   if (!len || len > 63) return(!catch("Chart.RestoreString(2)  invalid parameter key: "+ DoubleQuoteStr(key) +" (1 to 63 chars)", ERR_INVALID_PARAMETER));
 
-   if (ObjectFind(key) == 0) {
+   if (ObjectFind(key) != -1) {
       string sValue = ObjectDescription(key);
       if (remove) ObjectDelete(key);
-      if (sValue == "…(empty)…") var = "";                  // convert magic value to empty string as the terminal deserializes "" to the value "Text"
+      if (sValue == "…(empty)…") var = "";                  // convert magic value back to empty string as the terminal deserializes "" to "Text"
       else                       var = sValue;              // string
 
-      return(!catch("Chart.RestoreString(4)"));
+      return(!catch("Chart.RestoreString(3)"));
    }
    return(false);
 }
@@ -3947,47 +3884,6 @@ bool Tester.IsStopped() {
    }
    return(__ExecutionContext[EC.programCoreFunction] == CF_DEINIT);     // if in deinit() the tester was already stopped,
 }                                                                       // no matter whether in an expert or an indicator
-
-
-/**
- * Create a new chart legend object for the current program. An existing legend object is reused.
- *
- * @return string - label name
- */
-string CreateLegendLabel() {
-   if (IsSuperContext())
-      return("");
-
-   string label = "rsf.Legend."+ __ExecutionContext[EC.pid];
-   int xDistance =  5;
-   int yDistance = 21;
-
-   if (ObjectFind(label) >= 0) {
-      // reuse the existing label
-   }
-   else {
-      // create a new label
-      int objects=ObjectsTotal(), labels=ObjectsTotal(OBJ_LABEL);
-
-      for (int i=0; i < objects && labels; i++) {
-         string name = ObjectName(i);
-         if (ObjectType(name) == OBJ_LABEL) {
-            if (StrStartsWith(name, "rsf.Legend."))
-               yDistance += 19;
-            labels--;
-         }
-      }
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-         ObjectSet(label, OBJPROP_XDISTANCE, xDistance);
-         ObjectSet(label, OBJPROP_YDISTANCE, yDistance);
-      }
-      else GetLastError();
-   }
-   ObjectSetText(label, " ");
-
-   return(ifString(catch("CreateLegendLabel(1)"), "", label));
-}
 
 
 /**
@@ -5562,20 +5458,28 @@ string PeriodDescription(int period = NULL) {
    if (!period) period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return("M1" );     // 1 minute
-      case PERIOD_M5 : return("M5" );     // 5 minutes
+      case PERIOD_M1:  return("M1");      // 1 minute
+      case PERIOD_M2:  return("M2");      // 2 minutes  (custom timeframe)
+      case PERIOD_M3:  return("M3");      // 3 minutes  (custom timeframe)
+      case PERIOD_M4:  return("M4");      // 4 minutes  (custom timeframe)
+      case PERIOD_M5:  return("M5");      // 5 minutes
+      case PERIOD_M6:  return("M6");      // 6 minutes  (custom timeframe)
+      case PERIOD_M10: return("M10");     // 10 minutes (custom timeframe)
+      case PERIOD_M12: return("M12");     // 12 minutes (custom timeframe)
       case PERIOD_M15: return("M15");     // 15 minutes
+      case PERIOD_M20: return("M20");     // 20 minutes (custom timeframe)
       case PERIOD_M30: return("M30");     // 30 minutes
-      case PERIOD_H1 : return("H1" );     // 1 hour
-      case PERIOD_H2 : return("H2" );     // 2 hours (custom timeframe)
-      case PERIOD_H3 : return("H3" );     // 3 hours (custom timeframe)
-      case PERIOD_H4 : return("H4" );     // 4 hours
-      case PERIOD_H6 : return("H6" );     // 6 hours (custom timeframe)
-      case PERIOD_H8 : return("H8" );     // 8 hours (custom timeframe)
-      case PERIOD_D1 : return("D1" );     // 1 day
-      case PERIOD_W1 : return("W1" );     // 1 week
+      case PERIOD_H1:  return("H1");      // 1 hour
+      case PERIOD_H2:  return("H2");      // 2 hours    (custom timeframe)
+      case PERIOD_H3:  return("H3");      // 3 hours    (custom timeframe)
+      case PERIOD_H4:  return("H4");      // 4 hours
+      case PERIOD_H6:  return("H6");      // 6 hours    (custom timeframe)
+      case PERIOD_H8:  return("H8");      // 8 hours    (custom timeframe)
+      case PERIOD_H12: return("H12");     // 12 hours   (custom timeframe)
+      case PERIOD_D1:  return("D1");      // 1 day
+      case PERIOD_W1:  return("W1");      // 1 week
       case PERIOD_MN1: return("MN1");     // 1 month
-      case PERIOD_Q1 : return("Q1" );     // 1 quarter (custom timeframe)
+      case PERIOD_Q1:  return("Q1");      // 1 quarter  (custom timeframe)
    }
    return(""+ period);
 }
@@ -5607,20 +5511,28 @@ int PeriodFlag(int period = NULL) {
       period = Period();
 
    switch (period) {
-      case PERIOD_M1 : return(F_PERIOD_M1 );
-      case PERIOD_M5 : return(F_PERIOD_M5 );
+      case PERIOD_M1:  return(F_PERIOD_M1);
+      case PERIOD_M2:  return(F_PERIOD_M2);
+      case PERIOD_M3:  return(F_PERIOD_M3);
+      case PERIOD_M4:  return(F_PERIOD_M4);
+      case PERIOD_M5:  return(F_PERIOD_M5);
+      case PERIOD_M6:  return(F_PERIOD_M6);
+      case PERIOD_M10: return(F_PERIOD_M10);
+      case PERIOD_M12: return(F_PERIOD_M12);
       case PERIOD_M15: return(F_PERIOD_M15);
+      case PERIOD_M20: return(F_PERIOD_M20);
       case PERIOD_M30: return(F_PERIOD_M30);
-      case PERIOD_H1 : return(F_PERIOD_H1 );
-      case PERIOD_H2 : return(F_PERIOD_H2 );
-      case PERIOD_H3 : return(F_PERIOD_H3 );
-      case PERIOD_H4 : return(F_PERIOD_H4 );
-      case PERIOD_H6 : return(F_PERIOD_H6 );
-      case PERIOD_H8 : return(F_PERIOD_H8 );
-      case PERIOD_D1 : return(F_PERIOD_D1 );
-      case PERIOD_W1 : return(F_PERIOD_W1 );
+      case PERIOD_H1:  return(F_PERIOD_H1);
+      case PERIOD_H2:  return(F_PERIOD_H2);
+      case PERIOD_H3:  return(F_PERIOD_H3);
+      case PERIOD_H4:  return(F_PERIOD_H4);
+      case PERIOD_H6:  return(F_PERIOD_H6);
+      case PERIOD_H8:  return(F_PERIOD_H8);
+      case PERIOD_H12: return(F_PERIOD_H12);
+      case PERIOD_D1:  return(F_PERIOD_D1);
+      case PERIOD_W1:  return(F_PERIOD_W1);
       case PERIOD_MN1: return(F_PERIOD_MN1);
-      case PERIOD_Q1 : return(F_PERIOD_Q1 );
+      case PERIOD_Q1:  return(F_PERIOD_Q1);
    }
    return(_NULL(catch("PeriodFlag(1)  invalid parameter period: "+ period, ERR_INVALID_PARAMETER)));
 }
@@ -5651,20 +5563,28 @@ string PeriodFlagToStr(int flag) {
    string result = "";
 
    if (!flag)                    result = StringConcatenate(result, "|NULL");
-   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1"  );
-   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5"  );
-   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15" );
-   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30" );
-   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1"  );
-   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2"  );
-   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3"  );
-   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4"  );
-   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6"  );
-   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8"  );
-   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1"  );
-   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1"  );
-   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1" );
-   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1"  );
+   if (flag & F_PERIOD_M1  && 1) result = StringConcatenate(result, "|F_PERIOD_M1");
+   if (flag & F_PERIOD_M2  && 1) result = StringConcatenate(result, "|F_PERIOD_M2");
+   if (flag & F_PERIOD_M3  && 1) result = StringConcatenate(result, "|F_PERIOD_M3");
+   if (flag & F_PERIOD_M4  && 1) result = StringConcatenate(result, "|F_PERIOD_M4");
+   if (flag & F_PERIOD_M5  && 1) result = StringConcatenate(result, "|F_PERIOD_M5");
+   if (flag & F_PERIOD_M6  && 1) result = StringConcatenate(result, "|F_PERIOD_M6");
+   if (flag & F_PERIOD_M10 && 1) result = StringConcatenate(result, "|F_PERIOD_M10");
+   if (flag & F_PERIOD_M12 && 1) result = StringConcatenate(result, "|F_PERIOD_M12");
+   if (flag & F_PERIOD_M15 && 1) result = StringConcatenate(result, "|F_PERIOD_M15");
+   if (flag & F_PERIOD_M20 && 1) result = StringConcatenate(result, "|F_PERIOD_M20");
+   if (flag & F_PERIOD_M30 && 1) result = StringConcatenate(result, "|F_PERIOD_M30");
+   if (flag & F_PERIOD_H1  && 1) result = StringConcatenate(result, "|F_PERIOD_H1");
+   if (flag & F_PERIOD_H2  && 1) result = StringConcatenate(result, "|F_PERIOD_H2");
+   if (flag & F_PERIOD_H3  && 1) result = StringConcatenate(result, "|F_PERIOD_H3");
+   if (flag & F_PERIOD_H4  && 1) result = StringConcatenate(result, "|F_PERIOD_H4");
+   if (flag & F_PERIOD_H6  && 1) result = StringConcatenate(result, "|F_PERIOD_H6");
+   if (flag & F_PERIOD_H8  && 1) result = StringConcatenate(result, "|F_PERIOD_H8");
+   if (flag & F_PERIOD_H12 && 1) result = StringConcatenate(result, "|F_PERIOD_H12");
+   if (flag & F_PERIOD_D1  && 1) result = StringConcatenate(result, "|F_PERIOD_D1");
+   if (flag & F_PERIOD_W1  && 1) result = StringConcatenate(result, "|F_PERIOD_W1");
+   if (flag & F_PERIOD_MN1 && 1) result = StringConcatenate(result, "|F_PERIOD_MN1");
+   if (flag & F_PERIOD_Q1  && 1) result = StringConcatenate(result, "|F_PERIOD_Q1");
 
    if (StringLen(result) > 0)
       result = StrSubstr(result, 1);
@@ -5714,7 +5634,7 @@ string HistoryFlagsToStr(int flags) {
  * @param  string value
  * @param  int    flags [optional] - execution control flags (default: none)
  *                                   F_PARTIAL_ID:            recognize partial but unique identifiers, e.g. "Med" = "Median"
- *                                   F_ERR_INVALID_PARAMETER: don't trigger an internal error on unsupported parameters
+ *                                   F_ERR_INVALID_PARAMETER: don't trigger a fatal error on unsupported parameters
  *
  * @return int - price type constant or EMPTY (-1) if the value is not recognized
  */
@@ -5847,7 +5767,7 @@ string PriceTypeToStr(int type) {
       case PRICE_MEDIAN  : return("PRICE_MEDIAN"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("PRICE_TYPICAL" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("PRICE_WEIGHTED");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE:  return("PRICE_AVERAGE" );     // (O+H+L+C)/4
+      case PRICE_AVERAGE : return("PRICE_AVERAGE" );     // (O+H+L+C)/4
       case PRICE_BID     : return("PRICE_BID"     );
       case PRICE_ASK     : return("PRICE_ASK"     );
    }
@@ -5871,7 +5791,7 @@ string PriceTypeDescription(int type) {
       case PRICE_MEDIAN  : return("Median"  );     // (High+Low)/2
       case PRICE_TYPICAL : return("Typical" );     // (High+Low+Close)/3
       case PRICE_WEIGHTED: return("Weighted");     // (High+Low+Close+Close)/4
-      case PRICE_AVERAGE:  return("Average" );     // (O+H+L+C)/4
+      case PRICE_AVERAGE : return("Average" );     // (O+H+L+C)/4
       case PRICE_BID     : return("Bid"     );
       case PRICE_ASK     : return("Ask"     );
    }
@@ -5895,36 +5815,52 @@ int StrToPeriod(string value, int flags = NULL) {
    if (StrStartsWith(str, "PERIOD_"))
       str = StrSubstr(str, 7);
 
-   if (str ==           "M1" ) return(PERIOD_M1 );
-   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1 );
-   if (str ==           "M5" ) return(PERIOD_M5 );
-   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5 );
+   if (str ==           "M1" ) return(PERIOD_M1);
+   if (str == ""+ PERIOD_M1  ) return(PERIOD_M1);
+   if (str ==           "M5" ) return(PERIOD_M5);
+   if (str == ""+ PERIOD_M5  ) return(PERIOD_M5);
    if (str ==           "M15") return(PERIOD_M15);
    if (str == ""+ PERIOD_M15 ) return(PERIOD_M15);
    if (str ==           "M30") return(PERIOD_M30);
    if (str == ""+ PERIOD_M30 ) return(PERIOD_M30);
-   if (str ==           "H1" ) return(PERIOD_H1 );
-   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1 );
-   if (str ==           "H4" ) return(PERIOD_H4 );
-   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4 );
-   if (str ==           "D1" ) return(PERIOD_D1 );
-   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1 );
-   if (str ==           "W1" ) return(PERIOD_W1 );
-   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1 );
+   if (str ==           "H1" ) return(PERIOD_H1);
+   if (str == ""+ PERIOD_H1  ) return(PERIOD_H1);
+   if (str ==           "H4" ) return(PERIOD_H4);
+   if (str == ""+ PERIOD_H4  ) return(PERIOD_H4);
+   if (str ==           "D1" ) return(PERIOD_D1);
+   if (str == ""+ PERIOD_D1  ) return(PERIOD_D1);
+   if (str ==           "W1" ) return(PERIOD_W1);
+   if (str == ""+ PERIOD_W1  ) return(PERIOD_W1);
    if (str ==           "MN1") return(PERIOD_MN1);
    if (str == ""+ PERIOD_MN1 ) return(PERIOD_MN1);
 
    if (flags & F_CUSTOM_TIMEFRAME && 1) {
-      if (str ==           "H2" ) return(PERIOD_H2 );
-      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2 );
-      if (str ==           "H3" ) return(PERIOD_H3 );
-      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3 );
-      if (str ==           "H6" ) return(PERIOD_H6 );
-      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6 );
-      if (str ==           "H8" ) return(PERIOD_H8 );
-      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8 );
-      if (str ==           "Q1" ) return(PERIOD_Q1 );
-      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1 );
+      if (str ==           "M2" ) return(PERIOD_M2);
+      if (str == ""+ PERIOD_M2  ) return(PERIOD_M2);
+      if (str ==           "M3" ) return(PERIOD_M3);
+      if (str == ""+ PERIOD_M3  ) return(PERIOD_M3);
+      if (str ==           "M4" ) return(PERIOD_M4);
+      if (str == ""+ PERIOD_M4  ) return(PERIOD_M4);
+      if (str ==           "M6" ) return(PERIOD_M6);
+      if (str == ""+ PERIOD_M6  ) return(PERIOD_M6);
+      if (str ==           "M10") return(PERIOD_M10);
+      if (str == ""+ PERIOD_M10 ) return(PERIOD_M10);
+      if (str ==           "M12") return(PERIOD_M12);
+      if (str == ""+ PERIOD_M12 ) return(PERIOD_M12);
+      if (str ==           "M20") return(PERIOD_M20);
+      if (str == ""+ PERIOD_M20 ) return(PERIOD_M20);
+      if (str ==           "H2" ) return(PERIOD_H2);
+      if (str == ""+ PERIOD_H2  ) return(PERIOD_H2);
+      if (str ==           "H3" ) return(PERIOD_H3);
+      if (str == ""+ PERIOD_H3  ) return(PERIOD_H3);
+      if (str ==           "H6" ) return(PERIOD_H6);
+      if (str == ""+ PERIOD_H6  ) return(PERIOD_H6);
+      if (str ==           "H8" ) return(PERIOD_H8);
+      if (str == ""+ PERIOD_H8  ) return(PERIOD_H8);
+      if (str ==           "H12") return(PERIOD_H12);
+      if (str == ""+ PERIOD_H12 ) return(PERIOD_H12);
+      if (str ==           "Q1" ) return(PERIOD_Q1);
+      if (str == ""+ PERIOD_Q1  ) return(PERIOD_Q1);
    }
 
    if (flags & F_ERR_INVALID_PARAMETER && 1)
@@ -6215,16 +6151,6 @@ bool SendSMS(string receiver, string message) {
 
 
 /**
- * Whether the current program is an indicator loaded by iCustom().
- *
- * @return bool
- */
-bool IsSuperContext() {
-   return(__lpSuperContext != 0);
-}
-
-
-/**
  * Round a lot value according to the specified symbol's lot step value (MODE_LOTSTEP).
  *
  * @param  double lots              - lot size
@@ -6277,17 +6203,23 @@ double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distri
                           distributionOffset,               // double Distribution.Offset
                           distributionSigma,                // double Distribution.Sigma
 
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
+                          CLR_NONE,                         // color  Color.UpTrend
+                          CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+                          0,                                // int    PeriodStepper.StepSize
+
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6505,7 +6437,7 @@ double icMACD(int timeframe, int fastMaPeriods, string fastMaMethod, string fast
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "MACD.",
+   double value = iCustom(NULL, timeframe, "MACD",
                           fastMaPeriods,                    // int    Fast.MA.Periods
                           fastMaMethod,                     // string Fast.MA.Method
                           fastMaAppliedPrice,               // string Fast.MA.AppliedPrice
@@ -6599,33 +6531,42 @@ double icMovingAverage(int timeframe, int maPeriods, string maMethod, string maA
 /**
  * Load the "NonLagMA" indicator and return a value.
  *
- * @param  int    timeframe    - timeframe to load the indicator (NULL: the current timeframe)
- * @param  int    cycleLength  - indicator parameter
- * @param  string appliedPrice - indicator parameter
- * @param  int    iBuffer      - indicator buffer index of the value to return
- * @param  int    iBar         - bar index of the value to return
+ * @param  int    timeframe        - timeframe to load the indicator (NULL: the current timeframe)
+ * @param  int    waveCyclePeriods - indicator parameter
+ * @param  string maAppliedPrice   - indicator parameter
+ * @param  double maReversalFilter - indicator parameter
+ * @param  int    iBuffer          - indicator buffer index of the value to return
+ * @param  int    iBar             - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuffer, int iBar) {
+double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double maReversalFilter, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
-                          cycleLength,                      // int    Cycle.Length
-                          appliedPrice,                     // string AppliedPrice
+                          waveCyclePeriods,                 // int    WaveCycle.Periods
+                          0,                                // int    WaveCycle.Periods.Step
+                          maAppliedPrice,                   // string MA.AppliedPrice
+                          maReversalFilter,                 // double MA.ReversalFilter
+                          0,                                // double MA.ReversalFilter.Step
 
-                          Blue,                             // color  Color.UpTrend
-                          Red,                              // color  Color.DownTrend
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
+                          CLR_NONE,                         // color  Color.UpTrend
+                          CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          "",                               // string ____________________
-                          "off",                            // string Signal.onTrendChange
-                          "off",                            // string Signal.Sound
-                          "off",                            // string Signal.Mail
-                          "off",                            // string Signal.SMS
-                          "",                               // string ____________________
+
+                          "",                               // string ______________________________
+                          false,                            // bool   Signal.onTrendChange
+                          false,                            // bool   Signal.onTrendChange.Sound
+                          "",                               // string Signal.onTrendChange.SoundUp
+                          "",                               // string Signal.onTrendChange.SoundDown
+                          false,                            // bool   Signal.onTrendChange.Popup
+                          false,                            // bool   Signal.onTrendChange.Mail
+                          false,                            // bool   Signal.onTrendChange.SMS
+
+                          "",                               // string ______________________________
                           false,                            // bool   AutoConfiguration
                           lpSuperContext,                   // int    __lpSuperContext
 
@@ -6634,8 +6575,8 @@ double icNonLagMA(int timeframe, int cycleLength, string appliedPrice, int iBuff
    int error = GetLastError();
    if (error != NO_ERROR) {
       if (error != ERS_HISTORY_UPDATE)
-         return(!catch("icNonLagMA(1)", error));
-      logWarn("icNonLagMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
+         return(!catch("icNLMA(1)", error));
+      logWarn("icNLMA(2)  "+ PeriodDescription(ifInt(!timeframe, Period(), timeframe)) +" (tick="+ Ticks +")", ERS_HISTORY_UPDATE);
    }
 
    error = __ExecutionContext[EC.mqlError];                 // TODO: synchronize execution contexts
@@ -6942,7 +6883,7 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
-   double value = iCustom(NULL, timeframe, "ZigZag.",
+   double value = iCustom(NULL, timeframe, "ZigZag",
                           "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
                           "Line",                           // string ZigZag.Type
@@ -7076,7 +7017,6 @@ void __DummyCalls() {
    CopyMemory(NULL, NULL, NULL);
    CountDecimals(NULL);
    CreateDirectory(NULL, NULL);
-   CreateLegendLabel();
    CreateString(NULL);
    DateTime1(NULL);
    DateTime2(iNulls);
@@ -7093,7 +7033,6 @@ void __DummyCalls() {
    FindStandardSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
-   FullModuleName();
    GE(NULL, NULL);
    GetAccountAlias();
    GetAccountCompanyId();
@@ -7128,7 +7067,7 @@ void __DummyCalls() {
    icJMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icMACD(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icMovingAverage(NULL, NULL, NULL, NULL, NULL, NULL);
-   icNonLagMA(NULL, NULL, NULL, NULL, NULL);
+   icNLMA(NULL, NULL, NULL, NULL, NULL, NULL);
    icRSI(NULL, NULL, NULL, NULL, NULL);
    icSATL(NULL, NULL, NULL);
    icSuperSmoother(NULL, NULL, NULL, NULL, NULL);
@@ -7172,7 +7111,6 @@ void __DummyCalls() {
    IsScript();
    IsShortOrderType(NULL);
    IsStopOrderType(NULL);
-   IsSuperContext();
    IsTicket(NULL);
    IsVisualModeFix();
    JoinStrings(sNulls);
@@ -7314,6 +7252,7 @@ void __DummyCalls() {
    datetime GmtToFxtTime(datetime gmtTime);
    datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
+   bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
    datetime ServerToGmtTime(datetime serverTime);

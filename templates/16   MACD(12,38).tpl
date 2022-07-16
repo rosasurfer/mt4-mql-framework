@@ -9994,7 +9994,7 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=255
+period_flags=0
 show_data=0
 </indicator>
 
@@ -10023,7 +10023,7 @@ fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=MACD.
+name=MACD
 flags=339
 window_num=1
 <inputs>

@@ -98,38 +98,54 @@
 #define UNINITREASON_CLOSE                      9
 
 
-// timeframe identifiers (not to be combined)
+// timeframe identifiers (cannot be combined)
 #define PERIOD_M1                               1        // 1 minute
+#define PERIOD_M2                               2        // 2 minutes  (custom timeframe)
+#define PERIOD_M3                               3        // 3 minutes  (custom timeframe)
+#define PERIOD_M4                               4        // 4 minutes  (custom timeframe)
 #define PERIOD_M5                               5        // 5 minutes
+#define PERIOD_M6                               6        // 6 minutes  (custom timeframe)
+#define PERIOD_M10                             10        // 10 minutes (custom timeframe)
+#define PERIOD_M12                             12        // 12 minutes (custom timeframe)
 #define PERIOD_M15                             15        // 15 minutes
+#define PERIOD_M20                             20        // 20 minutes (custom timeframe)
 #define PERIOD_M30                             30        // 30 minutes
 #define PERIOD_H1                              60        // 1 hour
-#define PERIOD_H2                             120        // 2 hours (custom timeframe)
-#define PERIOD_H3                             180        // 3 hours (custom timeframe)
+#define PERIOD_H2                             120        // 2 hours    (custom timeframe)
+#define PERIOD_H3                             180        // 3 hours    (custom timeframe)
 #define PERIOD_H4                             240        // 4 hours
-#define PERIOD_H6                             360        // 6 hours (custom timeframe)
-#define PERIOD_H8                             480        // 8 hours (custom timeframe)
-#define PERIOD_D1                            1440        // 1 Tag
+#define PERIOD_H6                             360        // 6 hours    (custom timeframe)
+#define PERIOD_H8                             480        // 8 hours    (custom timeframe)
+#define PERIOD_H12                            720        // 12 hours   (custom timeframe)
+#define PERIOD_D1                            1440        // 1 day
 #define PERIOD_W1                           10080        // 1 week (7 days)
 #define PERIOD_MN1                          43200        // 1 month (30 days)
 #define PERIOD_Q1                          129600        // 1 quarter (3 months, custom timeframe)
 
 
-// timeframe flags (to be combined)
-#define F_PERIOD_M1                        0x0001        //    1
-#define F_PERIOD_M5                        0x0002        //    2
-#define F_PERIOD_M15                       0x0004        //    4
-#define F_PERIOD_M30                       0x0008        //    8
-#define F_PERIOD_H1                        0x0010        //   16
-#define F_PERIOD_H2                        0x0020        //   32 (custom timeframe)
-#define F_PERIOD_H3                        0x0040        //   64 (custom timeframe)
-#define F_PERIOD_H4                        0x0080        //  128
-#define F_PERIOD_H6                        0x0100        //  256 (custom timeframe)
-#define F_PERIOD_H8                        0x0200        //  512 (custom timeframe)
-#define F_PERIOD_D1                        0x0400        // 1024
-#define F_PERIOD_W1                        0x0800        // 2048
-#define F_PERIOD_MN1                       0x1000        // 4096
-#define F_PERIOD_Q1                        0x2000        // 8192 (custom timeframe)
+// timeframe flags (can be combined)
+#define F_PERIOD_M1                        0x0001        //
+#define F_PERIOD_M2                        0x0002        // custom timeframe
+#define F_PERIOD_M3                        0x0004        // custom timeframe
+#define F_PERIOD_M4                        0x0008        // custom timeframe
+#define F_PERIOD_M5                        0x0010        //
+#define F_PERIOD_M6                        0x0020        // custom timeframe
+#define F_PERIOD_M10                       0x0040        // custom timeframe
+#define F_PERIOD_M12                       0x0080        // custom timeframe
+#define F_PERIOD_M15                       0x0100        //
+#define F_PERIOD_M20                       0x0200        // custom timeframe
+#define F_PERIOD_M30                       0x0400        //
+#define F_PERIOD_H1                        0x0800        //
+#define F_PERIOD_H2                        0x1000        // custom timeframe
+#define F_PERIOD_H3                        0x2000        // custom timeframe
+#define F_PERIOD_H4                        0x4000        //
+#define F_PERIOD_H6                        0x8000        // custom timeframe
+#define F_PERIOD_H8                       0x10000        // custom timeframe
+#define F_PERIOD_H12                      0x20000        // custom timeframe
+#define F_PERIOD_D1                       0x40000        //
+#define F_PERIOD_W1                       0x80000        //
+#define F_PERIOD_MN1                     0x100000        //
+#define F_PERIOD_Q1                      0x200000        // custom timeframe
 #define F_PERIODS_ALL                  0x7FFFFFFF        // INT_MAX: covers all standard and custom timeframes
 
 
@@ -221,9 +237,9 @@
 
 
 // normalizing modes, see NormalizeLots()
-#define MODE_FLOOR                              1        // normalize down to the next smallest absolute value
+#define MODE_FLOOR                              1        // normalize to the next smallest absolute value (towards zero)
 #define MODE_DEFAULT                            2        // normalize according to standard rounding rules
-#define MODE_CEIL                               3        // normalize up to the next largest absolute value
+#define MODE_CEIL                               3        // normalize to the next largest absolute value (away from zero)
 
 
 // file function flags

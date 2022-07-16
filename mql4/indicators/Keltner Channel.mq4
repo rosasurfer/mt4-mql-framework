@@ -35,8 +35,9 @@ extern int    Max.Bars        = 10000;                            // max. values
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@ALMA.mqh>
-#include <functions/@Bands.mqh>
+#include <functions/Bands.mqh>
+#include <functions/legend.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA                       // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
@@ -139,13 +140,8 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, upperBand);
    SetIndexBuffer(MODE_LOWER, lowerBand);
 
-   // chart legend
-   if (!IsSuperContext()) {
-      legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sMa            = MA.Method +"("+ maPeriods +")";
    string sAtrMultiplier = ifString(atrMultiplier==1, "", NumberToStr(atrMultiplier, ".+") +"*");
    string sAtrTimeframe  = ifString(ATR.Timeframe=="current", "", "x"+ ATR.Timeframe);
@@ -159,21 +155,12 @@ int onInit() {
    IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate ALMA bar weights
-   if (maMethod == MODE_ALMA) @ALMA.CalculateWeights(almaWeights, maPeriods);
-
+   // calculate ALMA bar weights
+   if (maMethod == MODE_ALMA) {
+      double almaOffset=0.85, almaSigma=6.0;
+      ALMA.CalculateWeights(maPeriods, almaOffset, almaSigma, almaWeights);
+   }
    return(catch("onInit(8)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -219,8 +206,8 @@ int onTick() {
          lowerBand[bar] = ma[bar] - atr;
       }
    }
-   if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
+   if (!__isSuperContext) {
+      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBand[0], lowerBand[0], Digits, Time[0]);
    }
    return(last_error);
 }

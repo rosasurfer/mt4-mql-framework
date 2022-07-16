@@ -184,7 +184,6 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
         <li><a href="help://basics_types_datetime">Date and time (datetime)</a></li>
         <li><a href="help://basics_types_string">String (string)</a></li>
       </ul>
-      <p>Only implicit <a href="help://basics_types_casting">type casting</a> is used in <a href="help://basics_operations_expression">expressions</a>.</p>
     </content>
 
     <text>
@@ -258,27 +257,50 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
       caption=Boolean values
       keywords=;bool;true;false;
       <content>
-        <p>Booleans can have the value of <span class="const">TRUE</span> or <span class="const">FALSE</span>, the numeric representation is 1 and 0.
-        <span class="const">True</span> or <span class="const">TRUE</span> and <span class="const">False</span> or
-        <span class="const">FALSE</span> can be used as well.</p>
+        <p>Booleans can have the value of <span class="const">true</span> or <span class="const">false</span>, the numeric representation is <span class="number">1</span> 
+        and <span class="number">0</span>. <span class="const">True</span> or <span class="const">TRUE</span> and <span class="const">False</span> or
+        <span class="const">FALSE</span> may be used as well.</p>
         <p class="doctabhdr">Examples:</p>
-        <pre class="docmql4">bool a = true;
-bool b = false;
-bool c = 1;</pre>
-        The internal representation is a 4-byte long integer number, the external representation is one of the values 0 or 1.<br/>
+        <pre class="docmql4">
+<span class="type code">bool</span> a = <span class="const code">true</span>;
+<span class="type code">bool</span> b = <span class="const code">false</span>;
+<span class="type code">bool</span> c = <span class="number code">1</span>;</pre>
+        The internal representation is a 4 byte long <a href="help://basics_types_integer">integer</a>, the external representation is the value <span class="number">0</span> 
+        or <span class="number">1</span>.<br/>
         <br/>
-        <span style="color:red">Bug:</span>
+        <b>Notes:</b>
         <br/>
-        Ausdr&uuml;cke werden bei der Zuweisung an boolsche Variablen implizit in einen <a href="help://basics_types_integer">Integer</a> gecastet. Dies gilt auch f&uuml;r
-        die &Uuml;bergabe von Parametern an Funktionen. Die resultierende Variable ist kein Boolean mehr, Vergleiche mit <span class="const">TRUE</span> oder
-        <span class="const">FALSE</span> schlagen immer fehl.<br/>
-        Workaround: Die Ausdr&uuml;cke m&uuml;ssen bei der Zuweisung explizit gecastet werden.
+        <li>Every expression assigned to a boolean variable is implicitely casted to an integer.<br/>
+            <span class="docmql4"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> yields a boolean of <span class="const">FALSE</span>.
+            <br/><br/></li>
+        
+        <li>An integer different from <span class="number">0</span> or <span class="number">1</span> can be assigned. The resulting variable is not a valid boolean and 
+            comparisons with both <span class="const">true</span> and <span class="const">false</span> will fail. This can be used for 
+            <a href="help://basics_variables_static">static</a> initialization of boolean variables:
+            <pre class="docmql4">
+<span class="keyword code">static</span> <span class="type code">bool</span> var = <span class="number code">-1</span>;<br/>
+
+<span class="keyword code">if</span> (var == <span class="number code">-1</span>) {
+   <span class="keyword code">if</span> (var == <span class="const code">true</span>)  {}   <span class="comment code">// not true</span>
+   <span class="keyword code">if</span> (var == <span class="const code">false</span>) {}   <span class="comment code">// not true</span><br/>
+
+   <span class="keyword code">if</span> (runtime-condition) var = <span class="const code">true</span>;
+   <span class="keyword code">else</span>                   var = <span class="const code">false</span>;
+}</pre><br/></li>
+
+        <li>In import declarations of DLL functions boolean parameters (not <span class="keyword">return</span> values) must be declared as integers:  
+            <pre class="docmql4">
+<span class="preproc code">#import</span> <span class="string code">"Example.dll"</span>
+   <span class="type code">bool</span> <span class="function code">Function1</span>(<span class="type code">bool</span> booleanParameter);     <span class="comment code">// invalid import declaration</span>
+   <span class="type code">bool</span> <span class="function code">Function2</span>(<span class="type code">int</span> booleanParameter);      <span class="comment code">// valid import declaration</span>
+<span class="preproc code">#import</span></pre></li>
+
       </content>
     </text>
 
     <text>
       tag=basics_types_double
-      caption=Floating-point numbers (double)
+      caption=Floating-point numbers
       keywords=;double;
       <content>
         <p>Floating-point constants consist of an integer part, a point (.), and a fractional part. The integer
@@ -6914,42 +6936,39 @@ a loss of significance in the result occurs and the function returns <span class
       caption=ObjectCreate()
       type=bool
       <content>
-      Creates an object of the specified type in a chart window, with the provided name and coordinates properties. The number of required coordinates pairs depends
-      on the object type and varies between 1 and 3.<br/>
-      <br/>
-      Specified coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use
-      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_XDISTANCE</span>, ...) and
-      <a href="help://objects_ObjectSet">ObjectSet</a>(..., <span class="const">OBJPROP_YDISTANCE</span>, ...) instead.<br/>
-      <br/>
-      Returns the success status of the operation. Call <a href="help://runtimestatus_GetLastError">GetLastError()</a> to get detailed error information.<br/>
+      Creates a chart object of the specified type and with the provided properties. The number of required coordinate pairs depends on the object type and varies 
+      between <span class="number">1</span> and <span class="number">3</span>. Coordinates for objects of type <span class="const">OBJ_LABEL</span> are ignored, use
+      <a href="help://objects_ObjectSet">ObjectSet</a>(<span class="const">OBJPROP_XDISTANCE</span>) and
+      <a href="help://objects_ObjectSet">ObjectSet</a>(<span class="const">OBJPROP_YDISTANCE</span>) instead. Returns the success status of the operation.<br/>
       <br/>
 
       Notes:<br/>
-      <li>The main chart window always exists and has the index <span class="number">0</span>. Chart subwindows are indexed starting from <span class="number">1</span>.</li>
-
-      <li>Coordinates must be specified in pairs of a time and a price value, even if some object types need only a single value of a pair
+      <li>The main chart window has index <span class="number">0</span>, chart subwindows are indexed starting from <span class="number">1</span>.</li>
+      
+      <li>All coordinates must be specified in pairs of time and price, even if some object types need only a single value of a pair 
           (e.g. <span class="const">OBJ_VLINE</span> objects).</li>
       </content>
 
 <example>
 <span class="comment code">// new text object</span>
-<span class="function code">ObjectCreate</span>(<span class="string code">"text-id"</span>, <span class="const code">OBJ_TEXT</span>, <span class="number code">0</span>, D<span class="string code">'2004.02.20 12:30'</span>, <span class="number code">1.0045</span>);
-<br/>
+<span class="function code">ObjectCreate</span>(<span class="string code">"text-id"</span>, <span class="const code">OBJ_TEXT</span>, <span class="number code">0</span>, D<span class="string code">'2004.02.20 12:30'</span>, <span class="number code">1.0045</span>);<br/>
 
 <span class="comment code">// new label object</span>
-<span class="function code">ObjectCreate</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJ_LABEL</span>, <span class="number code">0</span>, <span class="number code">0</span>, <span class="number code">0</span>);
-<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_XDISTANCE</span>, <span class="number code">200</span>);
-<span class="function code">ObjectSet</span>(<span class="string code">"label-id"</span>, <span class="const code">OBJPROP_YDISTANCE</span>, <span class="number code">100</span>);
+<span class="type code">string</span> name = <span class="string code">"label-id"</span>;
+<span class="function code">ObjectCreate</span>(name, <span class="const code">OBJ_LABEL</span>, <span class="number code">0</span>, <span class="number code">0</span>, <span class="number code">0</span>);
+<span class="function code">ObjectSet</span>(name, <span class="const code">OBJPROP_CORNER</span>, <span class="const code">CORNER_TOP_LEFT</span>);
+<span class="function code">ObjectSet</span>(name, <span class="const code">OBJPROP_XDISTANCE</span>, <span class="number code">200</span>);
+<span class="function code">ObjectSet</span>(name, <span class="const code">OBJPROP_YDISTANCE</span>, <span class="number code">100</span>);
 </example>
       <parameter>
         type=string
         name=name
-        description=object name with a max. length of 63 characters (may contain line breaks)
+        description=unique object name (max. 63 chars, may contain line breaks)
       </parameter>
       <parameter>
         type=int
         name=type
-        description=object type, can be any of the <a href="help://constants_objects">object type</a> values
+        description=one of the <a href="help://constants_objects">object type</a> identifiers
       </parameter>
       <parameter>
         type=int
@@ -7043,14 +7062,13 @@ if (hFile) {
       caption=ObjectFind()
       type=int
       <content>
-Search for an object with the specified name and return the index of the chart window containing the object or -1 if no such object was found.
-The main chart window has the index 0. Chart subwindows (if any) are numbered starting from 1.
+        Search for the object with the specified name and return the index of the chart window containing it or <span class="number">-1</span> if no such object was found.
+        The main chart window has index <span class="number">0</span>, chart subwindows (if any) are numbered starting from <span class="number">1</span>.
       </content>
       <example>
-<span class="type">int</span> index = 0;
-<br/>
-<span class="keyword">if</span> (<span class="function">ObjectFind</span>(<span class="string">&quot;line_object2&quot;</span>) != index) {
-   <span class="keyword">return</span>(<span class="number">0</span>);
+<span class="type code">int</span> index = <span class="number code">0</span>;<br/>
+<span class="keyword code">if</span> (<span class="function code">ObjectFind</span>(<span class="string code">"line_object2"</span>) != index) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
 }
       </example>
       <parameter>

@@ -41,13 +41,13 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
-#define MODE_UPTREND1         MODE_UPTREND
 #define MODE_UPTREND2         4
 
 #property indicator_chart_window
@@ -61,7 +61,7 @@ extern string Signal.SMS           = "on | off | auto*";
 
 double main     [];                                      // filter main values:  invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double uptrend1 [];                                      // uptrend values:      visible
+double uptrend  [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
@@ -72,6 +72,7 @@ int    drawType;
 
 string indicatorName = "";
 string legendLabel   = "";
+string legendInfo    = "";                               // additional chart legend info
 
 bool   signals;                                          // whether any signal is enabled
 bool   signal.sound;
@@ -82,7 +83,6 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -115,13 +115,13 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onTrendChange, signals))                         return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals)) return(last_error);
    if (signals) {
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -129,22 +129,17 @@ int onInit() {
    // buffer management
    SetIndexBuffer(MODE_MA,        main     );            // filter main values:  invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:      visible
+   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
-   indicatorName = ProgramName(MODE_NICE);
+   legendLabel = CreateLegend();
+   indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
-   SetIndexLabel(MODE_UPTREND1,  NULL);
+   SetIndexLabel(MODE_UPTREND,   NULL);
    SetIndexLabel(MODE_DOWNTREND, NULL);
    SetIndexLabel(MODE_UPTREND2,  NULL);
    IndicatorDigits(Digits);
@@ -154,17 +149,6 @@ int onInit() {
    InitFilter();
 
    return(catch("onInit(4)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -181,7 +165,7 @@ int onTick() {
    if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(uptrend,   EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
       ArrayInitialize(uptrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
@@ -191,7 +175,7 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
@@ -208,11 +192,11 @@ int onTick() {
       for (int i=0; i < length; i++) {
          main[bar] += filterWeights[i] * Close[bar+i];
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, true, true, drawType, Digits);
    }
 
-   if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+   if (!__isSuperContext) {
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       if (signals) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[1]);
@@ -351,9 +335,9 @@ bool InitFilter() {
 void SetIndicatorOptions() {
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE);
+   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158);
    SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
    SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
 }

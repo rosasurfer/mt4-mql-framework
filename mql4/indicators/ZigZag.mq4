@@ -11,18 +11,14 @@
  * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developed over
  * time. The indicator supports signaling of new reversals.
  *
- * Notes:
- *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
- *
  *
  * TODO:
+ *  - add auto-configuration
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
  *  - fix positioning bug of multiple legends
  *  - move period stepper command to the window
  *  - after init cycle the period stepper forgets current values
- *  - remove logic from IsChartCommand() and replace processing by global include
  *  - add signal onZigZagBreakout
- *  - add auto-configuration
  *  - document inputs
  *  - document usage of iCustom()
  */
@@ -48,7 +44,7 @@ extern int    Donchian.Crossings.Wingdings   = 161;                     // a sma
 
 extern string ___c__________________________ = "=== Other ===";
 extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
-extern int    PeriodStepper.StepSize         = 0;                       // enable the period stepper with the specified step size
+extern int    PeriodStepper.StepSize         = 0;                       // parameter stepper for ZigZag.Periods
 
 extern string ___d__________________________ = "=== Reversal signaling ===";
 extern bool   Signal.onReversal              = false;                   // on ZigZag reversal (first channel crossing)
@@ -70,8 +66,10 @@ extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/ManageIntIndicatorBuffer.mqh>
+#include <functions/legend.mqh>
 #include <win32api.mqh>
 
 // indicator buffer ids
@@ -139,8 +137,6 @@ int      zigzagDrawType;
 int      crossingDrawType;
 string   crossingModeDescriptions[] = {"off", "first", "all"};
 int      maxValues;
-string   indicatorName = "";
-string   legendLabel   = "";
 int      tickTimerId;
 double   tickSize;
 datetime lastTick;
@@ -148,6 +144,10 @@ int      lastSound;
 datetime waitUntil;
 double   prevUpperBand;
 double   prevLowerBand;
+
+string   indicatorName = "";
+string   legendLabel   = "";
+string   legendInfo    = "";                                   // additional chart legend info
 
 bool     signalReversal;
 bool     signalReversal.sound;
@@ -157,7 +157,6 @@ string   signalReversal.mailSender   = "";
 string   signalReversal.mailReceiver = "";
 bool     signalReversal.sms;
 string   signalReversal.smsReceiver = "";
-string   signalInfo                 = "";
 
 // signal direction types
 #define D_LONG     TRADE_DIRECTION_LONG      // 1
@@ -174,8 +173,9 @@ string   signalInfo                 = "";
  * @return int - error status
  */
 int onInit() {
+   string indicator = ProgramName();
+
    // validate inputs
-   string indicator = ProgramName(MODE_NICE);
    // ZigZag.Periods
    if (ZigZag.Periods < 2)                 return(catch("onInit(1)  invalid input parameter ZigZag.Periods: "+ ZigZag.Periods, ERR_INVALID_INPUT_PARAMETER));
    zigzagPeriods = ZigZag.Periods;
@@ -213,7 +213,7 @@ int onInit() {
    if (Max.Bars < -1)                      return(catch("onInit(9)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
    // PeriodStepper.StepSize
-   if (PeriodStepper.StepSize < 0)         return(catch("onInit(10)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be non-negative)", ERR_INVALID_INPUT_PARAMETER));
+   if (PeriodStepper.StepSize < 0)         return(catch("onInit(10)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (ZigZag.Color         == 0xFF000000) ZigZag.Color         = CLR_NONE;
    if (Donchian.Upper.Color == 0xFF000000) Donchian.Upper.Color = CLR_NONE;
@@ -224,16 +224,17 @@ int onInit() {
    signalReversal.popup = Signal.onReversal.Popup;
    signalReversal.mail  = Signal.onReversal.Mail;
    signalReversal.sms   = Signal.onReversal.SMS;
-   signalInfo           = "";
+   legendInfo           = "";
    string signalId = "Signal.onReversal";
-   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal))                                                                        return(last_error);
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signalReversal)) return(last_error);
    if (signalReversal) {
       if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalReversal.sound))                                                        return(last_error);
       if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalReversal.popup))                                                        return(last_error);
       if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalReversal.mail, signalReversal.mailSender, signalReversal.mailReceiver)) return(last_error);
       if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalReversal.sms, signalReversal.smsReceiver))                              return(last_error);
       if (signalReversal.sound || signalReversal.popup || signalReversal.mail || signalReversal.sms) {
-         signalInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
+         legendInfo = StrLeft(ifString(signalReversal.sound, "sound,", "") + ifString(signalReversal.popup, "popup,", "") + ifString(signalReversal.mail, "mail,", "") + ifString(signalReversal.sms, "sms,", ""), -1);
+         legendInfo = "("+ legendInfo +")";
       }
       else signalReversal = false;
    }
@@ -242,10 +243,7 @@ int onInit() {
 
    // buffer management, indicator names and display options
    SetIndicatorOptions();
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
+   legendLabel = CreateLegend();
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
@@ -266,7 +264,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   // remove an installed chhart ticker
+   // remove an installed chart ticker
    if (tickTimerId > NULL) {
       int id = tickTimerId; tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
@@ -284,8 +282,8 @@ int onTick() {
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(semaphoreOpen)) return(logInfo("onTick(1)  sizeof(semaphoreOpen) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
-   // process incoming commands
-   if (__isChart && PeriodStepper.StepSize) HandleCommands();
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // manage framework buffers
    ManageDoubleIndicatorBuffer(MODE_UPPER_BAND,        upperBand      );
@@ -463,7 +461,7 @@ int onTick() {
       prevLowerBand = lowerBand[0];
    }
 
-   if (!IsSuperContext()) UpdateLegend();
+   if (!__isSuperContext) UpdateLegend();
    return(catch("onTick(5)"));
 }
 
@@ -488,62 +486,26 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * Dispatch incoming commands.
+ * Process an incoming command.
  *
- * @param  string commands[] - received commands
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
  *
- * @return bool - success status
+ * @return bool - success status of the executed command
  */
-bool onCommand(string commands[]) {
-   if (!ArraySize(commands)) return(!logWarn("onCommand(1)  empty parameter commands: {}"));
-   string cmd = commands[0];
-   if (IsLogDebug()) logDebug("onCommand(2)  "+ DoubleQuoteStr(cmd));
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
 
-   if (StrStartsWith(cmd, "up|"))   return(PeriodStepper(STEP_UP));
-   if (StrStartsWith(cmd, "down|")) return(PeriodStepper(STEP_DOWN));
+   static int lastTickcount = 0;
+   int tickcount = StrToInteger(params);
+   if (tickcount <= lastTickcount) return(false);
+   lastTickcount = tickcount;
 
-   return(!logNotice("onCommand(3)  unsupported command: "+ DoubleQuoteStr(cmd)));
-}
+   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
+   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
 
-
-/**
- * Check for received commands and pass them to the command handler.
- *
- * @return bool - success status
- */
-bool HandleCommands() {
-   string commands[];
-   ArrayResize(commands, 0);
-
-   if (IsChartCommand(commands))
-      return(onCommand(commands));
-   return(true);
-}
-
-
-/**
- * Whether a chart command was sent to the indicator. If true the command is retrieved and returned.
- *
- * @param  _InOut_ string &commands[] - array to add the received command to
- *
- * @return bool
- */
-bool IsChartCommand(string &commands[]) {
-   if (!__isChart) return(false);
-   string label = "PeriodStepper.command";
-
-   if (ObjectFind(label) == 0) {
-      string cmd = ObjectDescription(label);
-      int tickcount = StrToInteger(StrRightFrom(cmd, "|"));
-      static int lastTickcount;
-
-      if (tickcount > lastTickcount) {
-         ArrayPushString(commands, cmd);
-         lastTickcount = tickcount;
-         return(true);
-      }
-   }
-   return(false);
+   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
 }
 
 
@@ -564,6 +526,7 @@ bool PeriodStepper(int direction) {
    ValidBars   = 0;
    ShiftedBars = 0;
 
+   PlaySoundEx("Parameter Step.wav");
    return(true);
 }
 
@@ -580,7 +543,7 @@ void UpdateLegend() {
       string sUnknown  = ifString(!unknownTrend[0], "", "/"+ unknownTrend[0]);
       if (!tickSize) tickSize = GetTickSize();
       string sReversal = "   next reversal @" + NumberToStr(ifDouble(knownTrend[0] < 0, upperBand[0]+tickSize, lowerBand[0]-tickSize), PriceFormat);
-      string sSignal   = ifString(signalReversal, "   ("+ signalInfo +")", "");
+      string sSignal   = ifString(signalReversal, "  "+ legendInfo, "");
       string text      = StringConcatenate(indicatorName, sKnown, sUnknown, sReversal, sSignal);
 
       color clr = ZigZag.Color;
@@ -810,6 +773,7 @@ bool onReversal(int direction, int bar) {
       string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal("+ zigzagPeriods +"x"+ sPeriod +")  "+ message);
+      message            = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
 
       if (signalReversal.sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
@@ -817,8 +781,6 @@ bool onReversal(int direction, int bar) {
          else if (error == ERR_FILE_NOT_FOUND) signalReversal.sound = false;
          else                                  error |= error;
       }
-
-      message = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
       if (signalReversal.popup)           Alert(message);
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
@@ -878,7 +840,7 @@ bool IsPossibleDataPumping() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   indicatorName = "ZigZag("+ ifString(PeriodStepper.StepSize, "dyn:", "") + zigzagPeriods +")";
+   indicatorName = "ZigZag("+ ifString(PeriodStepper.StepSize, "var:", "") + zigzagPeriods +")";
    IndicatorShortName(indicatorName);
    IndicatorDigits(Digits);
 

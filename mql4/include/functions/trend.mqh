@@ -6,26 +6,21 @@
  * @param  _Out_ double trend[]                   - Buffer for trend direction and length: -n...-1 ... +1...+n.
  * @param  _Out_ double uptrend[]                 - Buffer for rising trendline values.
  * @param  _Out_ double downtrend[]               - Buffer for falling trendline values.
- * @param  _Out_ double uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and
- *                                                  downtrend[] to be visible.
- * @param  _In_  bool   enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring.
- *                                                  (default: no)
- * @param  _In_  bool   enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On).
- *                                                  (default: no)
- * @param  _In_  int    lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately
- *                                                  at the start of a trend. Otherwise MetaTrader needs at least two data
- *                                                  points to draw a line. (default: draw data points only)
- * @param  _In_  int    digits         [optional] - If set, trendline values are normalized to the specified number of digits.
- *                                                  (default: no normalization)
+ * @param  _Out_ double uptrend2[]                - Additional buffer for single-bar uptrends. Must overlay uptrend[] and downtrend[] to be visible.
+ * @param  _In_  bool   enableColoring [optional] - Whether to update the up/downtrend buffers for trend coloring (default: no).
+ * @param  _In_  bool   enableUptrend2 [optional] - Whether to update the single-bar uptrend buffer (if enableColoring=On, default: no).
+ * @param  _In_  int    lineStyle      [optional] - Trendline drawing style: If set to DRAW_LINE a line is drawn immediately at the start of a trend.
+ *                                                  Otherwise MetaTrader needs at least two data points to draw a line (default: draw data points only).
+ * @param  _In_  int    digits         [optional] - If set, trendline values are normalized to the specified number of digits (default: no normalization).
  *
  * @return bool - success status
  */
-bool @Trend.UpdateDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
+bool UpdateTrendDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 
    if (offset >= Bars-1) {
-      if (offset >= Bars) return(!catch("@Trend.UpdateDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
+      if (offset >= Bars) return(!catch("UpdateTrendDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
       trend[offset] = 0;
 
       if (enableColoring) {
@@ -125,39 +120,39 @@ bool @Trend.UpdateDirection(double values[], int offset, double &trend[], double
    */
 
    // dummy call
-   @Trend.UpdateLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
 /**
  * Update a trendline's chart legend.
  *
- * @param  string   label          - chart label of the legend object
- * @param  string   name           - indicator name
+ * @param  string   legendName     - the legend's chart object name
+ * @param  string   indicatorName  - displayed indicator name
  * @param  string   status         - additional status info (if any)
  * @param  color    uptrendColor   - the uptrend color
  * @param  color    downtrendColor - the downtrend color
  * @param  double   value          - indicator value to display
  * @param  int      digits         - digits of the value to display
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
- * @param  datetime barOpenTime    - bar opentime of the value to display
+ * @param  datetime time           - bar time of the value to display
  */
-void @Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime barOpenTime) {
+void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
+   static string   lastName = "";
    static double   lastValue;
    static int      lastTrend;
-   static datetime lastBarOpenTime;
+   static datetime lastTime;
    string sValue="", sTrend="", sOnTrendChange="";
 
    value = NormalizeDouble(value, digits);
    int trend = MathRound(dTrend);
 
-   // update if value, trend direction or bar changed
-   if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
+   // update if name, value, trend direction or bar changed
+   if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
       if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
       else                  sValue = DoubleToStr(value, digits);
 
-      if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
-
+      if (trend  != 0)  sTrend = StringConcatenate("  (", trend, ")");
       if (status != "") status = StringConcatenate("  ", status);
 
       if (uptrendColor != downtrendColor) {
@@ -165,7 +160,7 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
          else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(name, "    ", sValue, sTrend, status, sOnTrendChange);
+      string text = StringConcatenate(indicatorName, "    ", sValue, sTrend, sOnTrendChange, status);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
@@ -173,15 +168,16 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
       else if (textColor == Lime        ) textColor = LimeGreen;
       else if (textColor == Yellow      ) textColor = Orange;
 
-      ObjectSetText(label, text, 9, "Arial Fett", textColor);
+      ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
-         return(catch("@Trend.UpdateLegend(1)", error));
+         return(catch("UpdateTrendLegend(1)", error));
    }
 
-   lastValue       = value;
-   lastTrend       = trend;
-   lastBarOpenTime = barOpenTime;
+   lastName  = indicatorName;
+   lastValue = value;
+   lastTrend = trend;
+   lastTime  = time;
    return;
 
    /*                  [3] [2] [1] [0]
@@ -194,5 +190,5 @@ void @Trend.UpdateLegend(string label, string name, string status, color uptrend
 
    // dummy call
    double dNull[];
-   @Trend.UpdateDirection(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
+   UpdateTrendDirection(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
 }

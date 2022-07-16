@@ -36,7 +36,8 @@ extern color  ATR.Channel.Color     = CLR_NONE;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER_BAND       Bands.MODE_UPPER
@@ -173,13 +174,8 @@ int onInit() {
    SetIndexBuffer(MODE_LINE_DOWN,      lineDown     ); SetIndexEmptyValue(MODE_LINE_DOWN,      0);
    SetIndexBuffer(MODE_LINE_DOWNSTART, lineDownStart); SetIndexEmptyValue(MODE_LINE_DOWNSTART, 0);
 
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = WindowExpertName();
    IndicatorShortName(indicatorName);                                                                                               // chart tooltips and context menu
    SetIndexLabel(MODE_MA,         "KCh MA"   );      if (MA.Color          == CLR_NONE) SetIndexLabel(MODE_MA,             NULL);   // chart tooltips and "Data" window
@@ -193,17 +189,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(4)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -307,9 +292,9 @@ int onTick() {
       prevSR = lineUp[bar] + lineDown[bar];
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       color trendColor = ifInt(lineUp[0]!=0, Support.Color, Resistance.Color);
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL, Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, "", trendColor, trendColor, prevSR, Digits, NULL, Time[0]);
    }
    return(last_error);
 }

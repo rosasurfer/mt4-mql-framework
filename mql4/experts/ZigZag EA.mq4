@@ -43,16 +43,19 @@
  *
  *
  * TODO:
- *  - Superbars
- *     fix in range bar charts
- *     implement more timeframes
- *  - rewrite NonLagMA and replace Buzzer
+ *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD, Donchian
+ *     MA methods
+ *     auto-configuration
+ *     signaling
+ *     MA.ReversalFilter
+ *     parameter stepper
+ *
+ *  - implement global var indicator::CalculatedBars
+ *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
- *  - support for 4BF and M5 scalping
  *  - ChartInfos: include current daily range in ADR calculation/display
  *
- *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
- *  - VPS: monitor and notify of incoming emails
+ *  - SuperBars: implement more timeframes
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
@@ -75,12 +78,12 @@
  *  - reduce slippage on short reversal: enter market via StopSell
  *  - rename to Turtle EA
  *
- *  - visual/audible confirmation
- *     for manual orders (to detect execution errors)
- *  - notifications for open positions running into swap charges
- *  - support command "wait" in status "progressing"
+ *  - virtual trading
+ *     analyze PL differences DAX,M1 2022.01.04
+ *     adjust virtual commissions
  *
  *  - trading functionality
+ *     support command "wait" in status "progressing"
  *     rewrite and test all @profit() conditions
  *     breakeven stop
  *     trailing stop
@@ -88,10 +91,6 @@
  *     input parameter ZigZag.Timeframe
  *     support multiple units and targets (add new metrics)
  *     analyze channel contraction
- *
- *  - virtual trading
- *     analyze PL differences DAX,M1 2022.01.04
- *     adjust virtual commissions
  *
  *  - visualization
  *     a chart profile per instrument
@@ -144,12 +143,16 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - update signature of onTick() to onTick(int &prevCalculated)
- *  - ZigZag: remove logic from IsChartCommand() and use global include instead
  *  - TradeManager for custom positions
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
+ *  - rewrite parameter stepping: remove commands from channel after processing
+ *  - rewrite range bar generator (after some time it's bringing everything to a halt)
+ *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
+ *  - VPS: monitor and notify of incoming emails
  *  - realtime equity charts
+ *  - visual/audible confirmation for manual orders (to detect execution errors)
+ *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
  *  - fix log messages in ValidateInputs (conditionally display the sequence name)
  *  - implement GetAccountCompany() and read the name from the server file if not connected
@@ -161,7 +164,6 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - Inside Bars: check IsBarOpen(>=PERIOD_M15) with invalid bar alignments
  *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - ChartInfos: update unitsize positioning
@@ -462,7 +464,7 @@ bool ToggleOpenOrders() {
          string name = ObjectName(i);
 
          if (StringGetChar(name, 0) == '#') {
-            if (ObjectType(name)==OBJ_ARROW) {
+            if (ObjectType(name) == OBJ_ARROW) {
                int arrow = ObjectGet(name, OBJPROP_ARROWCODE);
                color clr = ObjectGet(name, OBJPROP_COLOR);
 
@@ -495,12 +497,11 @@ bool GetOpenOrderDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
-   if (ObjectFind(label) == 0) {
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -517,10 +518,9 @@ bool SetOpenOrderDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart (for terminal restarts)
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowOpenOrders";
-   if (ObjectFind(label) == -1)
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   string label = "rsf."+ ProgramName() +".ShowOpenOrders";
+   if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status);
 
    return(!catch("SetOpenOrderDisplayStatus(1)"));
@@ -539,13 +539,12 @@ int ShowOpenOrders() {
 
    if (open.ticket != NULL) {
       string label = StringConcatenate("#", open.ticket, " ", orderTypes[open.type], " ", NumberToStr(Lots, ".+"), " at ", NumberToStr(open.price, PriceFormat));
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_ARROW, 0, open.time, open.price)) {
-         ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
-         ObjectSetText(label, sequence.name);
-      }
+      if (ObjectFind(label) == -1) if (!ObjectCreate(label, OBJ_ARROW, 0, 0, 0)) return(EMPTY);
+      ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (label, OBJPROP_COLOR,     colors[open.type]);
+      ObjectSet    (label, OBJPROP_TIME1,     open.time);
+      ObjectSet    (label, OBJPROP_PRICE1,    open.price);
+      ObjectSetText(label, sequence.name);
       openOrders++;
    }
 
@@ -614,12 +613,11 @@ bool GetTradeHistoryDisplayStatus() {
    bool status = false;
 
    // look-up a status stored in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
-   if (ObjectFind(label) == 0) {
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
+   if (ObjectFind(label) != -1) {
       string sValue = ObjectDescription(label);
       if (StrIsInteger(sValue))
          status = (StrToInteger(sValue) != 0);
-      ObjectDelete(label);
    }
    return(status);
 }
@@ -636,10 +634,10 @@ bool SetTradeHistoryDisplayStatus(bool status) {
    status = status!=0;
 
    // store status in the chart
-   string label = "rsf."+ ProgramName(MODE_NICE) +".ShowTradeHistory";
+   string label = "rsf."+ ProgramName() +".ShowTradeHistory";
    if (ObjectFind(label) == -1)
       ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+   ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(label, ""+ status);
 
    return(!catch("SetTradeHistoryDisplayStatus(1)"));
@@ -675,34 +673,33 @@ int ShowTradeHistory() {
 
       // open marker
       openLabel = StringConcatenate("#", ticket, " ", sOperations[type], " ", NumberToStr(lots, ".+"), " at ", sOpenPrice);
-      if (ObjectFind(openLabel) == 0)
-         ObjectDelete(openLabel);
-      if (ObjectCreate(openLabel, OBJ_ARROW, 0, openTime, openPrice)) {
-         ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
-         ObjectSet    (openLabel, OBJPROP_COLOR, iOpenColors[type]);
-         ObjectSetText(openLabel, sequence.name);
-      }
+      if (ObjectFind(openLabel) == -1) ObjectCreate(openLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (openLabel, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
+      ObjectSet    (openLabel, OBJPROP_COLOR,     iOpenColors[type]);
+      ObjectSet    (openLabel, OBJPROP_TIME1,     openTime);
+      ObjectSet    (openLabel, OBJPROP_PRICE1,    openPrice);
+      ObjectSetText(openLabel, sequence.name);
 
       // trend line
       lineLabel = StringConcatenate("#", ticket, " ", sOpenPrice, " -> ", sClosePrice);
-      if (ObjectFind(lineLabel) == 0)
-         ObjectDelete(lineLabel);
-      if (ObjectCreate(lineLabel, OBJ_TREND, 0, openTime, openPrice, closeTime, closePrice)) {
-         ObjectSet(lineLabel, OBJPROP_RAY,   false);
-         ObjectSet(lineLabel, OBJPROP_STYLE, STYLE_DOT);
-         ObjectSet(lineLabel, OBJPROP_COLOR, iLineColors[type]);
-         ObjectSet(lineLabel, OBJPROP_BACK,  true);
-      }
+      if (ObjectFind(lineLabel) == -1) ObjectCreate(lineLabel, OBJ_TREND, 0, 0, 0, 0, 0);
+      ObjectSet(lineLabel, OBJPROP_RAY,    false);
+      ObjectSet(lineLabel, OBJPROP_STYLE,  STYLE_DOT);
+      ObjectSet(lineLabel, OBJPROP_COLOR,  iLineColors[type]);
+      ObjectSet(lineLabel, OBJPROP_BACK,   true);
+      ObjectSet(lineLabel, OBJPROP_TIME1,  openTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE1, openPrice);
+      ObjectSet(lineLabel, OBJPROP_TIME2,  closeTime);
+      ObjectSet(lineLabel, OBJPROP_PRICE2, closePrice);
 
       // close marker
       closeLabel = StringConcatenate(openLabel, " close at ", sClosePrice);
-      if (ObjectFind(closeLabel) == 0)
-         ObjectDelete(closeLabel);
-      if (ObjectCreate(closeLabel, OBJ_ARROW, 0, closeTime, closePrice)) {
-         ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
-         ObjectSet    (closeLabel, OBJPROP_COLOR, CLR_CLOSED);
-         ObjectSetText(closeLabel, sequence.name);
-      }
+      if (ObjectFind(closeLabel) == -1) ObjectCreate(closeLabel, OBJ_ARROW, 0, 0, 0);
+      ObjectSet    (closeLabel, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
+      ObjectSet    (closeLabel, OBJPROP_COLOR,     CLR_CLOSED);
+      ObjectSet    (closeLabel, OBJPROP_TIME1,     closeTime);
+      ObjectSet    (closeLabel, OBJPROP_PRICE1,    closePrice);
+      ObjectSetText(closeLabel, sequence.name);
       closedTrades++;
    }
 
@@ -3106,7 +3103,7 @@ int onInputError(string message) {
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   string name = ProgramName(MODE_NICE) +".Sequence.ID";
+   string name = ProgramName() +".Sequence.ID";
    string value = ifString(sequence.isTest, "T", "") + sequence.id;
 
    Sequence.ID = value;                                              // store in input parameter
@@ -3135,7 +3132,7 @@ bool RestoreSequenceId() {
 
    if (__isChart) {
       // check chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
       if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
@@ -3160,7 +3157,7 @@ bool RestoreSequenceId() {
 bool RemoveSequenceId() {
    if (__isChart) {
       // chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
       // chart
@@ -3382,12 +3379,12 @@ int ShowStatus(int error = NO_ERROR) {
    }
    if (__STATUS_OFF) sError = StringConcatenate("  [switched off => ", ErrorDescription(__STATUS_OFF.reason), "]");
 
-   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(MODE_NICE), "    ", sStatus, sError, NL,
-                                                                                                                     NL,
-                                  "Lots:      ", sLots,                                                              NL,
-                                  "Start:    ",  sStartConditions,                                                   NL,
-                                  "Stop:     ",  sStopConditions,                                                    NL,
-                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,                        NL
+   string text = StringConcatenate(sTradingModeStatus[tradingMode], ProgramName(), "    ", sStatus, sError, NL,
+                                                                                                            NL,
+                                  "Lots:      ", sLots,                                                     NL,
+                                  "Start:    ",  sStartConditions,                                          NL,
+                                  "Stop:     ",  sStopConditions,                                           NL,
+                                  "Profit:   ",  sSequenceTotalNetPL, "  ", sSequencePlStats,               NL
    );
 
    // 3 lines margin-top for instrument and indicator legends

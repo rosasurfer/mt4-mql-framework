@@ -208,7 +208,7 @@ int    statusLineHeight         = 15;
  */
 int onInit() {
    // read auto-configuration
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
    if (AutoConfiguration) {
       // manual indicator inputs
       AUDLFX.Enabled             = GetConfigBool  (indicator, "AUDLFX.Enabled",             AUDLFX.Enabled);
@@ -460,23 +460,18 @@ bool RefreshLfxOrders() {
 /**
  * Create and initialize text objects for the various display elements.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateLabels() {
-   string indicatorName = ProgramName(MODE_NICE);
+bool CreateLabels() {
+   string indicatorName = ProgramName();
 
    // trade account
    statusLabelTradeAccount = indicatorName +".TradeAccount";
-   if (ObjectFind(statusLabelTradeAccount) == 0)
-      ObjectDelete(statusLabelTradeAccount);
-   if (ObjectCreate(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
-      ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
-      ObjectSetText(statusLabelTradeAccount, " ", 1);
-      RegisterObject(statusLabelTradeAccount);
-   }
-   else GetLastError();
+   if (ObjectFind(statusLabelTradeAccount) == -1) if (!ObjectCreateRegister(statusLabelTradeAccount, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_XDISTANCE, 6);
+   ObjectSet    (statusLabelTradeAccount, OBJPROP_YDISTANCE, 4);
+   ObjectSetText(statusLabelTradeAccount, " ", 1);
 
    // index display
    int xCoord  = status_xDistance;                       // horizontal display position
@@ -485,30 +480,20 @@ int CreateLabels() {
 
    // background rectangles
    string label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
 
    counter++;
    yCoord += 74;
    label = StringConcatenate(indicatorName, ".", counter, ".Background");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, "g", 128, "Webdings", statusBgColor);
 
    color fontColor = ifInt(Recording.Enabled, statusFontColor.active, statusFontColor.inactive);
 
@@ -516,31 +501,21 @@ int CreateLabels() {
    counter++;
    yCoord -= 72;
    label = StringConcatenate(indicatorName, ".", counter, ".Header.animation");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      ObjectSetText(label, animationChars[0], statusFontSize, statusFontName, fontColor);
-      RegisterObject(label);
-      statusLabelAnimation = label;
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 3);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   ObjectSetText(label, animationChars[0], statusFontSize, statusFontName, fontColor);
+   statusLabelAnimation = label;
 
    // recording status
    label = StringConcatenate(indicatorName, ".", counter, ".Recording.status");
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
-      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
-      string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
-      ObjectSetText(label, text, statusFontSize, statusFontName, fontColor);
-      RegisterObject(label);
-   }
-   else GetLastError();
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 23);
+   ObjectSet    (label, OBJPROP_YDISTANCE, yCoord);
+   string text = ifString(Recording.Enabled, "Recording to: "+ StrRightFrom(recordingDirectory, "/", -1), "Recording:  off");
+   ObjectSetText(label, text, statusFontSize, statusFontName, fontColor);
 
    // data rows
    yCoord += statusLineHeight + 1;
@@ -550,47 +525,32 @@ int CreateLabels() {
 
       // symbol
       label = StringConcatenate(indicatorName, ".", counter, ".", syntheticSymbols[i]);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-         ObjectSetText(label, syntheticSymbols[i] +":", statusFontSize, statusFontName, fontColor);
-         RegisterObject(label);
-         statusLabels[i] = label;
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 122);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      ObjectSetText(label, syntheticSymbols[i] +":", statusFontSize, statusFontName, fontColor);
+      statusLabels[i] = label;
 
       // price
       label = StringConcatenate(statusLabels[i], ".quote");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-            text = ifString(!isEnabled[i], "off", "n/a");
-         ObjectSetText(label, text, statusFontSize, statusFontName, statusFontColor.inactive);
-         RegisterObject(label);
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 57);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      text = ifString(!isEnabled[i], "off", "n/a");
+      ObjectSetText(label, text, statusFontSize, statusFontName, statusFontColor.inactive);
 
       // spread
       label = StringConcatenate(statusLabels[i], ".spread");
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
-      if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-         ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
-         ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
-         ObjectSetText(label, " ");
-         RegisterObject(label);
-      }
-      else GetLastError();
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+      ObjectSet    (label, OBJPROP_XDISTANCE, xCoord + 8);
+      ObjectSet    (label, OBJPROP_YDISTANCE, yCoord + i*statusLineHeight);
+      ObjectSetText(label, " ");
    }
 
-   return(catch("CreateLabels(1)"));
+   return(!catch("CreateLabels(1)"));
 }
 
 
@@ -1045,22 +1005,18 @@ bool UpdateAccountDisplay() {
 bool StoreTradeAccount() {
    // account company id
    int    hWnd = __ExecutionContext[EC.hChart];
-   string key  = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
+   string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally
    SetWindowStringA(hWnd, key, tradeAccount.company);
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, tradeAccount.company);
 
    // account number
-   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
+   key = ProgramName() +".runtime.tradeAccount.number";            // TODO: add program pid and manage keys globally
    SetWindowIntegerA(hWnd, key, tradeAccount.number);
 
-   if (ObjectFind(key) == 0)
-      ObjectDelete(key);
-   ObjectCreate (key, OBJ_LABEL, 0, 0, 0);
+   if (ObjectFind(key) == -1) ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
    ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
    ObjectSetText(key, ""+ tradeAccount.number);
 
@@ -1076,17 +1032,17 @@ bool StoreTradeAccount() {
 string GetStoredTradeAccount() {
    // account company id
    int hWnd = __ExecutionContext[EC.hChart];
-   string key = ProgramName(MODE_NICE) +".runtime.tradeAccount.company";
+   string key = ProgramName() +".runtime.tradeAccount.company";
    string company = GetWindowStringA(hWnd, key);
    if (!StringLen(company)) {
-      if (ObjectFind(key) == 0) company = ObjectDescription(key);
+      if (ObjectFind(key) != -1) company = ObjectDescription(key);
    }
 
    // account number
-   key = ProgramName(MODE_NICE) +".runtime.tradeAccount.number";
+   key = ProgramName() +".runtime.tradeAccount.number";
    int accountNumber = GetWindowIntegerA(hWnd, key);
    if (!accountNumber) {
-      if (ObjectFind(key) == 0) accountNumber = StrToInteger(ObjectDescription(key));
+      if (ObjectFind(key) != -1) accountNumber = StrToInteger(ObjectDescription(key));
    }
 
    string result = "";

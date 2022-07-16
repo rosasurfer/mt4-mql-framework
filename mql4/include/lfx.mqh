@@ -129,11 +129,8 @@ bool InitTradeAccount(string accountId = "") {
 
    // store account identifier in the chart to enable remote access by other programs
    string label = "TradeAccount";
-   if (ObjectFind(label) != 0) {
-      ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-      ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-      RegisterObject(label);
-   }                                                                 // format "{account-company}:{account-number}"
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);           // format "{account-company}:{account-number}"
    ObjectSetText(label, StringConcatenate(tradeAccount.company, ":", tradeAccount.number));
 
    if (mode.extern) {
@@ -1274,7 +1271,7 @@ int HandleScriptError(string caller, string message, int error) {
       caller = " :: "+ caller;
 
    PlaySoundEx("Windows Chord.wav");
-   MessageBox(message, "Script "+ ProgramName(MODE_NICE) + caller, MB_ICONERROR|MB_OK);
+   MessageBox(message, "Script "+ ProgramName() + caller, MB_ICONERROR|MB_OK);
 
    return(SetLastError(error));
 }

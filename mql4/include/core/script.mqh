@@ -10,11 +10,9 @@ double  __rates[][6];                                                // current 
  * @return int - error status
  */
 int init() {
-   if (__STATUS_OFF)
-      return(__STATUS_OFF.reason);
-
-   if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
-      __CoreFunction = CF_INIT;
+   __isSuperContext = false;
+   if (__STATUS_OFF) return(__STATUS_OFF.reason);
+   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this script.");
@@ -148,7 +146,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(6)", error);
+      CheckErrors("start(6)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
    return(last_error);
 }
 

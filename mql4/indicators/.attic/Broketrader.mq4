@@ -47,7 +47,8 @@ extern string Signal.SMS             = "on | off | auto*";
 #include <functions/iBarShiftNext.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/ParseTime.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_HIST_L_PRICE1    0                             // indicator buffer ids
 #define MODE_HIST_L_PRICE2    1
@@ -94,6 +95,7 @@ bool     reversalInitialized;                               // whether the rever
 
 string   indicatorName = "";
 string   legendLabel   = "";
+string   legendInfo    = "";                                // additional chart legend info
 
 bool     signals;
 bool     signal.sound;
@@ -104,7 +106,6 @@ string   signal.mail.sender   = "";
 string   signal.mail.receiver = "";
 bool     signal.sms;
 string   signal.sms.receiver = "";
-string   signal.info = "";                                  // additional chart legend info
 
 #define D_LONG   TRADE_DIRECTION_LONG                       // 1
 #define D_SHORT TRADE_DIRECTION_SHORT                       // 2
@@ -151,7 +152,7 @@ int onInit() {
       if (!ConfigureSignalsByMail (Signal.Mail, signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,  signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "Reversal="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -167,13 +168,8 @@ int onInit() {
    SetIndexBuffer(MODE_TREND,         trend          );  // trend direction:        invisible (-n..+n), displayed in "Data" window
    SetIndexEmptyValue(MODE_TREND, 0);
 
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = "Broketrader SMA("+ smaPeriods +")";
    IndicatorShortName(indicatorName);                           // chart tooltips and context menu
    SetIndexLabel(MODE_MA,            indicatorName);            // chart tooltips and "Data" window
@@ -188,17 +184,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(9)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -342,9 +327,9 @@ int onTick() {
       if (bar > 0) prevReversal = currentReversal;
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       color legendColor = ifInt(trend[0] > 0, Green, DodgerBlue);
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, legendColor, legendColor, sma, Digits, trend[0], Time[0]);
 
       // monitor trend reversals
       if (signals) /*&&*/ if (IsBarOpen()) {

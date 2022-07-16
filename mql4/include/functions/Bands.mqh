@@ -10,7 +10,7 @@
  * @param  int      digits         - digits of the values to display
  * @param  datetime barOpenTime    - current bar opentime
  */
-void @Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime) {
+void Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime) {
    static double   lastUpperValue;
    static double   lastLowerValue;
    static datetime lastBarOpenTime;
@@ -41,7 +41,7 @@ void @Bands.UpdateLegend(string label, string name, string status, color bandsCo
 
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
-         return(catch("@Bands.UpdateLegend(1)", error));
+         return(catch("Bands.UpdateLegend(1)", error));
    }
 
    lastUpperValue  = upperValue;

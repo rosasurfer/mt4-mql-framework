@@ -28,14 +28,10 @@
  * The EA is not FIFO conforming and requires a "hedging" account with support for "close by opposite position". It does not
  * support bucketshop accounts, i.e. accounts where MODE_FREEZELEVEL or MODE_STOPLEVEL are not 0 (zero).
  *
- *  @link  https://sites.google.com/site/prof7bit/snowball#                                   ["Snowballs and the anti-grid"]
- *  @link  https://www.forexfactory.com/showthread.php?t=226059#                              ["Snowballs and the anti-grid"]
- *  @link  https://www.forexfactory.com/showthread.php?t=239717#               ["Trading the anti-grid with the Snowball EA"]
- *
- *  @see  "mql4/etc/SnowRoller process flow.png"
- *
- *
- * RISK WARNING: The market can range longer without reaching the profit target than a trading account may be able to survive.
+ *  @link  https://sites.google.com/site/prof7bit/snowball#                                     [Snowballs and the anti-grid]
+ *  @link  https://www.forexfactory.com/showthread.php?t=226059#                                [Snowballs and the anti-grid]
+ *  @link  https://www.forexfactory.com/showthread.php?t=239717#                 [Trading the anti-grid with the Snowball EA]
+ *  @see   "mql4/etc/SnowRoller process flow.png"                                                   [SnowRoller process flow]
  */
 #include <stddefines.mqh>
 #include <apps/snowroller/defines.mqh>
@@ -819,7 +815,7 @@ bool ConfirmFirstTickTrade(string caller, string message) {
    }
    else {
       PlaySoundEx("Windows Notify.wav");
-      result = (IDOK == MessageBoxEx(ProgramName(MODE_NICE) + ifString(StringLen(caller), " - "+ caller, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
+      result = (IDOK == MessageBoxEx(ProgramName() + ifString(StringLen(caller), " - "+ caller, ""), ifString(IsDemoFix(), "", "- Real Account -\n\n") + message, MB_ICONQUESTION|MB_OKCANCEL));
       RefreshRates();
    }
    confirmed = true;
@@ -890,27 +886,24 @@ int CreateSequenceId() {
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from afterInit() only.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateStatusBox() {
-   if (!__isChart) return(NO_ERROR);
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
 
    int x[]={2, 101, 165}, y=62, fontSize=75, sizeofX=ArraySize(x);
    color  bgColor = C'248,248,248';                            // that's chart background color
    string label = "";
 
    for (int i=0; i < sizeofX; i++) {
-      label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
-      if (ObjectFind(label) != 0) {
-         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-         RegisterObject(label);
-      }
+      label = ProgramName() +".statusbox."+ (i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet    (label, OBJPROP_XDISTANCE, x[i]);
-      ObjectSet    (label, OBJPROP_YDISTANCE, y   );
+      ObjectSet    (label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   return(catch("CreateStatusBox(1)"));
+   return(!catch("CreateStatusBox(1)"));
 }
 
 
@@ -1050,16 +1043,14 @@ void RedrawStartStop() {
       time   = sequence.start.time  [i];
       price  = sequence.start.price [i];
       profit = sequence.start.profit[i];
-
-      label = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
-      if (ObjectFind(label) == 0)
-         ObjectDelete(label);
+      label  = "SR."+ sequence.id +"."+ sCycle +".start."+ (i+1);
+      if (ObjectFind(label) != -1) ObjectDelete(label);
 
       if (startStopDisplayMode != SDM_NONE) {
          ObjectCreate (label, OBJ_ARROW, 0, time, price);
          ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-         ObjectSet    (label, OBJPROP_BACK,      false               );
-         ObjectSet    (label, OBJPROP_COLOR,     Blue                );
+         ObjectSet    (label, OBJPROP_BACK,      false);
+         ObjectSet    (label, OBJPROP_COLOR,     Blue);
          ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
       }
    }
@@ -1070,16 +1061,14 @@ void RedrawStartStop() {
          time   = sequence.stop.time [i];
          price  = sequence.stop.price[i];
          profit = sequence.stop.profit[i];
-
-         label = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
+         label  = "SR."+ sequence.id +"."+ sCycle +".stop."+ (i+1);
+         if (ObjectFind(label) != -1) ObjectDelete(label);
 
          if (startStopDisplayMode != SDM_NONE) {
             ObjectCreate (label, OBJ_ARROW, 0, time, price);
             ObjectSet    (label, OBJPROP_ARROWCODE, startStopDisplayMode);
-            ObjectSet    (label, OBJPROP_BACK,      false               );
-            ObjectSet    (label, OBJPROP_COLOR,     Blue                );
+            ObjectSet    (label, OBJPROP_BACK,      false);
+            ObjectSet    (label, OBJPROP_COLOR,     Blue);
             ObjectSetText(label, "Profit: "+ DoubleToStr(profit, 2));
          }
       }
@@ -1094,7 +1083,7 @@ void RedrawStartStop() {
  * @return bool - success status
  */
 bool StoreSequenceId() {
-   string name = ProgramName(MODE_NICE) +".Sequence.ID";
+   string name = ProgramName() +".Sequence.ID";
    string value = ifString(sequence.isTest, "T", "") + sequence.id;
 
    Sequence.ID = value;                                              // store in input parameter
@@ -1123,7 +1112,7 @@ bool RestoreSequenceId() {
 
    if (__isChart) {
       // check chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       value = GetWindowStringA(__ExecutionContext[EC.hChart], name);
       muteErrors = false;
       if (ApplySequenceId(value, muteErrors, "RestoreSequenceId(2)")) return(true);
@@ -1148,7 +1137,7 @@ bool RestoreSequenceId() {
 bool RemoveSequenceId() {
    if (__isChart) {
       // chart window
-      string name = ProgramName(MODE_NICE) +".Sequence.ID";
+      string name = ProgramName() +".Sequence.ID";
       RemoveWindowStringA(__ExecutionContext[EC.hChart], name);
 
       // chart
@@ -3763,7 +3752,7 @@ int ShowStatus(int error = NO_ERROR) {
       default:
          return(catch("ShowStatus(1)  "+ sequence.name +" illegal sequence status = "+ sequence.status, ERR_ILLEGAL_STATE));
    }
-   msg = StringConcatenate(ProgramName(MODE_NICE), "     ", msg, sError,               NL,
+   msg = StringConcatenate(ProgramName(), "     ", msg, sError,                        NL,
                                                                                        NL,
                            "Grid:              ",  GridSize, " pip", sGridBase,        NL,
                            "LotSize:          ",   sLotSize, sSequenceProfitPerLevel,  NL,
@@ -4912,7 +4901,7 @@ bool SynchronizeStatus() {
          if (orders.closeTime[i] == 0) {
             if (!IsTicket(orders.ticket[i])) {                             // bei fehlender History zur Erweiterung auffordern
                PlaySoundEx("Windows Notify.wav");
-               int button = MessageBoxEx(ProgramName(MODE_NICE) +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
+               int button = MessageBoxEx(ProgramName() +" - SynchronizeStatus()", "Ticket #"+ orders.ticket[i] +" not found.\nPlease expand the available trade history.", MB_ICONERROR|MB_RETRYCANCEL);
                if (button != IDRETRY)
                   return(!SetLastError(ERR_CANCELLED_BY_USER));
                return(SynchronizeStatus());
@@ -4990,7 +4979,7 @@ bool SynchronizeStatus() {
    if (size > 0) {
       ArraySort(orphanedClosedPositions);
       PlaySoundEx("Windows Notify.wav");
-      button = MessageBoxEx(ProgramName(MODE_NICE) +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Sequence "+ sequence.name +" orphaned closed position"+ Pluralize(size) +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
+      button = MessageBoxEx(ProgramName() +" - SynchronizeStatus()", ifString(IsDemoFix(), "", "- Real Account -\n\n") +"Sequence "+ sequence.name +" orphaned closed position"+ Pluralize(size) +" found: #"+ JoinInts(orphanedClosedPositions, ", #") +"\nDo you want to ignore "+ ifString(size==1, "it", "them") +"?", MB_ICONWARNING|MB_OKCANCEL);
       if (button != IDOK) return(!SetLastError(ERR_CANCELLED_BY_USER));
 
       MergeIntArrays(ignoreClosedPositions, orphanedClosedPositions, ignoreClosedPositions);
@@ -5918,7 +5907,7 @@ double GetNonLagMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 2)              return(!catch("GetNonLagMA(5)  "+ sequence.name +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(icNonLagMA(timeframe, cycleLength, appliedPrice, iBuffer, iBar));
+   return(icNLMA(timeframe, cycleLength, appliedPrice, 0, iBuffer, iBar));
 }
 
 

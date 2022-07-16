@@ -144,16 +144,12 @@ int afterInit() {
          tickTimerId = timerId;
 
          // display ticker status
-         string label = ProgramName(MODE_NICE) +".TickerStatus";
-         if (ObjectFind(label) == 0)
-            ObjectDelete(label);
-         if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-            ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
-            ObjectSet    (label, OBJPROP_XDISTANCE, 38);
-            ObjectSet    (label, OBJPROP_YDISTANCE, 38);
-            ObjectSetText(label, "n", 6, "Webdings", LimeGreen);        // a "dot" marker, Green = online
-            RegisterObject(label);
-         }
+         string label = ProgramName() +".TickerStatus";
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(__ExecutionContext[EC.mqlError]);
+         ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_RIGHT);
+         ObjectSet    (label, OBJPROP_XDISTANCE, 38);
+         ObjectSet    (label, OBJPROP_YDISTANCE, 38);
+         ObjectSetText(label, "n", 6, "Webdings", LimeGreen);     // a "dot" marker, Green = online
       }
    }
    return(catch("afterInit(2)"));
@@ -169,7 +165,7 @@ bool OrderTracker.Configure() {
    if (!mode.intern) return(true);
    orderTracker.enabled = false;
 
-   string sValues[], sValue = StrToLower(Track.Orders);     // default: "on | off | auto*"
+   string sValues[], sValue = StrToLower(Track.Orders);           // default: "on | off | auto*"
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];

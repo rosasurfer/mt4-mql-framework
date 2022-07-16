@@ -113,7 +113,7 @@ int onStart() {
       button = MessageBox(ifString(tradeAccount.type==ACCOUNT_TYPE_REAL, "- Real Account -\n\n", "")
                         +"The limit of "+ NumberToStr(LimitPrice, PriceFormat) +" will be triggered immediately (current price "+ NumberToStr(Close[0], PriceFormat) +").\n\n"
                         +"Do you really want to sell "+ NumberToStr(Units, ".+") + ifString(Units==1, " unit ", " units ") + lfxCurrency +"?",
-                        ProgramName(MODE_NICE),
+                        ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(3)"));
@@ -126,7 +126,7 @@ int onStart() {
                         +                                   "Limit: "+      NumberToStr(LimitPrice,      PriceFormat)
                         + ifString(!TakeProfitPrice, "", "   TakeProfit: "+ NumberToStr(TakeProfitPrice, PriceFormat))
                         + ifString(!StopLossPrice  , "", "   StopLoss: "+   NumberToStr(StopLossPrice,   PriceFormat)),
-                        ProgramName(MODE_NICE),
+                        ProgramName(),
                         MB_ICONQUESTION|MB_OKCANCEL);
       if (button != IDOK)
          return(catch("onStart(4)"));
