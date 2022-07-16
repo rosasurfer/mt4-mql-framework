@@ -45,7 +45,7 @@
  * TODO:
  *  - NonLagMA: on reversal filter stepping the chart legend is not updated
  *
- *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD
+ *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD, Donchian
  *     MA methods
  *     auto-configuration
  *     signaling

@@ -410,7 +410,10 @@ int deinit() {
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
-   if (!__isTesting) DeleteRegisteredObjects();
+   if (!__isTesting) {
+      RemoveLegend();
+      DeleteRegisteredObjects();
+   }
 
    return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
 }
@@ -550,6 +553,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int  ec_SetDllError           (int ec[], int error);
    int  ec_SetProgramCoreFunction(int ec[], int function);
 
+   bool RemoveLegend();
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
    int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);
