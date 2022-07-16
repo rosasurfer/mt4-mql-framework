@@ -133,10 +133,8 @@ int onInit() {
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MA,        indicatorName);         // chart tooltips and "Data" window
@@ -160,7 +158,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

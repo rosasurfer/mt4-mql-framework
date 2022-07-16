@@ -96,10 +96,8 @@ int onInit() {
    SetIndexBuffer(MODE_BUFFER1, buffer1);
    SetIndexBuffer(MODE_BUFFER2, buffer2);
 
-   // chart legend
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
@@ -116,7 +114,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

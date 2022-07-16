@@ -43,10 +43,6 @@
  *
  *
  * TODO:
- *  - fix legend positioning
- *     remove orphaned legends from inactive programs (at terminal start and runtime)
- *     RepositionLegend() => RemoveLegend()
- *
  *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD
  *     auto-configuration
  *     MA.ReversalFilter

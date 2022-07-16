@@ -105,8 +105,7 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   if (!__isSuperContext) legendLabel = CreateLegend();
-
+   legendLabel = CreateLegend();
    string shortName="TEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "TEMA("+ MA.Periods + strAppliedPrice +")";
@@ -134,7 +133,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 

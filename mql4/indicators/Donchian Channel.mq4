@@ -71,8 +71,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   // TODO: bei Parameteränderungen darf die vorhandene Legende nicht gelöscht werden
-   RepositionLegend();
+   RemoveLegend();
    return(catch("onDeinit(1)"));
 }
 
@@ -94,24 +93,20 @@ int onTick() {
       SetIndicatorOptions();
    }
 
-
    // synchronize buffers with a shifted offline chart
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(iUpperLevel, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(iLowerLevel, Bars, ShiftedBars, EMPTY_VALUE);
    }
 
-
    // Startbar ermitteln
    int startbar = Min(ChangedBars-1, Bars-Periods);
-
 
    // Schleife über alle zu aktualisierenden Bars
    for (int bar=startbar; bar >= 0; bar--) {
       iUpperLevel[bar] = High[iHighest(NULL, NULL, MODE_HIGH, Periods, bar+1)];
       iLowerLevel[bar] = Low [iLowest (NULL, NULL, MODE_LOW,  Periods, bar+1)];
    }
-
    return(last_error);
 }
 

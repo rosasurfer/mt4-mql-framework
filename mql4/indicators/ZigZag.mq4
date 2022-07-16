@@ -243,7 +243,7 @@ int onInit() {
 
    // buffer management, indicator names and display options
    SetIndicatorOptions();
-   if (!__isSuperContext) legendLabel = CreateLegend();
+   legendLabel = CreateLegend();
 
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
@@ -264,7 +264,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   RepositionLegend();
+   RemoveLegend();
 
    // remove an installed chart ticker
    if (tickTimerId > NULL) {
