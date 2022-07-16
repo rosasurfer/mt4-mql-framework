@@ -15,12 +15,12 @@
  *
  * @return bool - success status
  */
-bool Trend.UpdateDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
+bool UpdateTrendDirection(double values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int digits=EMPTY_VALUE) {
    enableColoring = enableColoring!=0;
    enableUptrend2 = enableColoring && enableUptrend2!=0;
 
    if (offset >= Bars-1) {
-      if (offset >= Bars) return(!catch("Trend.UpdateDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
+      if (offset >= Bars) return(!catch("UpdateTrendDirection(1)  illegal parameter offset: "+ offset +" (Bars="+ Bars +")", ERR_INVALID_PARAMETER));
       trend[offset] = 0;
 
       if (enableColoring) {
@@ -120,15 +120,15 @@ bool Trend.UpdateDirection(double values[], int offset, double &trend[], double 
    */
 
    // dummy call
-   Trend.UpdateLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   UpdateTrendLegend(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 }
 
 
 /**
  * Update a trendline's chart legend.
  *
- * @param  string   label          - chart label of the legend object
- * @param  string   name           - indicator name
+ * @param  string   legendName     - the legend's chart object name
+ * @param  string   indicatorName  - displayed indicator name
  * @param  string   status         - additional status info (if any)
  * @param  color    uptrendColor   - the uptrend color
  * @param  color    downtrendColor - the downtrend color
@@ -137,7 +137,7 @@ bool Trend.UpdateDirection(double values[], int offset, double &trend[], double 
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
  * @param  datetime time           - bar time of the value to display
  */
-void Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
+void UpdateTrendLegend(string legendName, string indicatorName, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
    static string   lastName = "";
    static double   lastValue;
    static int      lastTrend;
@@ -148,7 +148,7 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
    int trend = MathRound(dTrend);
 
    // update if name, value, trend direction or bar changed
-   if (name!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
+   if (indicatorName!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
       if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
       else                  sValue = DoubleToStr(value, digits);
 
@@ -160,7 +160,7 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
          else if (trend == -1) sOnTrendChange = "  turns down";         // ...
       }
 
-      string text = StringConcatenate(name, "    ", sValue, sTrend, sOnTrendChange, status);
+      string text = StringConcatenate(indicatorName, "    ", sValue, sTrend, sOnTrendChange, status);
       color  textColor = ifInt(trend > 0, uptrendColor, downtrendColor);
       if      (textColor == Aqua        ) textColor = DeepSkyBlue;
       else if (textColor == Gold        ) textColor = Orange;
@@ -168,13 +168,13 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
       else if (textColor == Lime        ) textColor = LimeGreen;
       else if (textColor == Yellow      ) textColor = Orange;
 
-      ObjectSetText(label, text, 9, "Arial Fett", textColor);
+      ObjectSetText(legendName, text, 9, "Arial Fett", textColor);
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                    // on ObjectDrag or opened "Properties" dialog
-         return(catch("Trend.UpdateLegend(1)", error));
+         return(catch("UpdateTrendLegend(1)", error));
    }
 
-   lastName  = name;
+   lastName  = indicatorName;
    lastValue = value;
    lastTrend = trend;
    lastTime  = time;
@@ -190,5 +190,5 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
 
    // dummy call
    double dNull[];
-   Trend.UpdateDirection(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
+   UpdateTrendDirection(dNull, NULL, dNull, dNull, dNull, dNull, NULL);
 }

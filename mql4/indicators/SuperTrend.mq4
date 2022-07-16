@@ -281,7 +281,7 @@ int onTick() {
    }
 
    if (!__isSuperContext) {
-      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {

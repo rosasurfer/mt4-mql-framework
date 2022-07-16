@@ -238,11 +238,11 @@ int onTick() {
       for (int i=0; i < maPeriods; i++) {
          main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
-      Trend.UpdateDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
+      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
    if (!__isSuperContext) {
-      Trend.UpdateLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // monitor trend changes
       if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
