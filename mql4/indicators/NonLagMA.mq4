@@ -84,7 +84,6 @@ double maChange  [];                                     // absolute change of c
 double maAverage [];                                     // average of maChange[] over the last 'waveCyclePeriods' bars
 
 int    waveCycles = 4;                                   // 4 initial cycles (1 more is added later)
-int    waveCyclePeriods;
 int    maPeriods;
 int    maAppliedPrice;
 double maWeights[];                                      // bar weighting of the MA
@@ -120,9 +119,8 @@ int onInit() {
 
    // validate inputs
    // WaveCycle.Periods
-   waveCyclePeriods = WaveCycle.Periods;
-   if (AutoConfiguration) waveCyclePeriods = GetConfigInt(indicator, "WaveCycle.Periods", waveCyclePeriods);
-   if (waveCyclePeriods < 3)                                 return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ waveCyclePeriods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
+   if (AutoConfiguration) WaveCycle.Periods = GetConfigInt(indicator, "WaveCycle.Periods", WaveCycle.Periods);
+   if (WaveCycle.Periods < 3)                                return(catch("onInit(1)  invalid input parameter WaveCycle.Periods: "+ WaveCycle.Periods +" (min. 3)", ERR_INVALID_INPUT_PARAMETER));
    // WaveCycle.Periods.Step
    if (AutoConfiguration) WaveCycle.Periods.Step = GetConfigInt(indicator, "WaveCycle.Periods.Step", WaveCycle.Periods.Step);
    if (WaveCycle.Periods.Step < 0)                           return(catch("onInit(2)  invalid input parameter WaveCycle.Periods.Step: "+ WaveCycle.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
@@ -188,6 +186,9 @@ int onInit() {
       else signalTrendChange = false;
    }
 
+   // restore a stored runtime status
+   RestoreStatus();
+
    // buffer management and display options
    SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
    SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
@@ -200,7 +201,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // calculate NLMA bar weights
-   NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights);
+   NLMA.CalculateWeights(waveCycles, WaveCycle.Periods, maWeights);
    maPeriods = ArraySize(maWeights);
 
    // chart legend and coloring
@@ -208,6 +209,17 @@ int onInit() {
    enableMultiColoring = !__isSuperContext;
 
    return(catch("onInit(9)"));
+}
+
+
+/**
+ * Deinitialization
+ *
+ * @return int - error status
+ */
+int onDeinit() {
+   StoreStatus();                                  // store runtime status in all deinit scenarios
+   return(last_error);
 }
 
 
@@ -268,17 +280,17 @@ int onTick() {
       if (MA.ReversalFilter > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
-         for (i=0; i < waveCyclePeriods; i++) {                      // calculate average(change) over last 'waveCyclePeriods'
+         for (i=0; i < WaveCycle.Periods; i++) {                     // calculate average(change) over last 'WaveCycle.Periods'
             sum += maChange[bar+i];
          }
-         maAverage[bar] = sum/waveCyclePeriods;
+         maAverage[bar] = sum/WaveCycle.Periods;
 
          if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
-            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'waveCyclePeriods'
-            for (i=0; i < waveCyclePeriods; i++) {
+            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'WaveCycle.Periods'
+            for (i=0; i < WaveCycle.Periods; i++) {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
-            stdDev = MathSqrt(sum/waveCyclePeriods);
+            stdDev = MathSqrt(sum/WaveCycle.Periods);
             minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
@@ -400,14 +412,14 @@ bool ParameterStepper(int direction, bool shiftKey) {
       // step up/down input parameter "WaveCycle.Periods"
       double step = WaveCycle.Periods.Step;
 
-      if (!step || waveCyclePeriods + direction*step < 3) {
+      if (!step || WaveCycle.Periods + direction*step < 3) {
          PlaySoundEx("Plonk.wav");                             // no stepping or parameter limit reached
          return(false);
       }
-      if (direction == STEP_UP) waveCyclePeriods += step;
-      else                      waveCyclePeriods -= step;
+      if (direction == STEP_UP) WaveCycle.Periods += step;
+      else                      WaveCycle.Periods -= step;
 
-      if (!NLMA.CalculateWeights(waveCycles, waveCyclePeriods, maWeights)) return(false);
+      if (!NLMA.CalculateWeights(waveCycles, WaveCycle.Periods, maWeights)) return(false);
       maPeriods = ArraySize(maWeights);
    }
    else {
@@ -466,8 +478,8 @@ void SetIndicatorOptions() {
 
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + waveCyclePeriods + sMaFilter + sAppliedPrice +")";
-   string shortName     = "NLMA("+ waveCyclePeriods +")";
+   indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + WaveCycle.Periods + sMaFilter + sAppliedPrice +")";
+   string shortName     = "NLMA("+ WaveCycle.Periods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
@@ -478,6 +490,54 @@ void SetIndicatorOptions() {
    SetIndexStyle(MODE_DOWNTREND,   draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND,   NULL);
    SetIndexStyle(MODE_UPTREND2,    draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,    NULL);
    IndicatorDigits(Digits);
+}
+
+
+/**
+ * Store the status of an active parameter stepper in the chart (for init cyles, template reloads and/or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool StoreStatus() {
+   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+
+      Chart.StoreInt   (prefix +"WaveCycle.Periods",      WaveCycle.Periods);
+      Chart.StoreInt   (prefix +"WaveCycle.Periods.Step", WaveCycle.Periods.Step);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter",      MA.ReversalFilter);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter.Step", MA.ReversalFilter.Step);
+   }
+   return(catch("StoreStatus(1)"));
+}
+
+
+/**
+ * Restore the status of the parameter stepper from the chart if it wasn't changed in between (for init cyles, template
+ * reloads and/or terminal restarts).
+ *
+ * @return bool - success status
+ */
+bool RestoreStatus() {
+   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
+      string prefix = "rsf."+ WindowExpertName() +".";
+
+      int iValue, iStep;
+      Chart.RestoreInt(prefix +"WaveCycle.Periods",      iValue);
+      Chart.RestoreInt(prefix +"WaveCycle.Periods.Step", iStep);
+      if (iStep == WaveCycle.Periods.Step) {
+         WaveCycle.Periods      = iValue;
+         WaveCycle.Periods.Step = iStep;
+      }
+
+      double dValue, dStep;
+      Chart.RestoreDouble(prefix +"MA.ReversalFilter",      dValue);
+      Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep);
+      if (EQ(dStep, MA.ReversalFilter.Step)) {
+         MA.ReversalFilter      = dValue;
+         MA.ReversalFilter.Step = dStep;
+      }
+   }
+   return(!catch("RestoreStatus(1)"));
 }
 
 

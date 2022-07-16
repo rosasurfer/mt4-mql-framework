@@ -43,9 +43,6 @@
  *
  *
  * TODO:
- *  - NonLagMA
- *     on init cycle/template reload current values are not remembered
- *
  *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD, Donchian
  *     MA methods
  *     auto-configuration
