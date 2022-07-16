@@ -221,7 +221,7 @@ int onInit() {
  * @return int - error status
  */
 int onDeinit() {
-   StoreStatus();                                  // store runtime status in all deinit scenarios
+   StoreStatus();
    return(last_error);
 }
 
@@ -514,8 +514,6 @@ double GetPrice(int type, int i) {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   IndicatorBuffers(terminal_buffers);
-
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = "ALMA("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
@@ -524,6 +522,7 @@ void SetIndicatorOptions() {
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
+   IndicatorBuffers(terminal_buffers);
    SetIndexStyle(MODE_MA_FILTERED, DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA_FILTERED, shortName);
    SetIndexStyle(MODE_TREND,       DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,       shortName +" trend");
    SetIndexStyle(MODE_UPTREND,     draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,     NULL);
@@ -564,18 +563,14 @@ bool RestoreStatus() {
       int iValue, iStep;
       Chart.RestoreInt(prefix +"MA.Periods",      iValue);
       Chart.RestoreInt(prefix +"MA.Periods.Step", iStep);
-      if (iStep == MA.Periods.Step) {
-         MA.Periods      = iValue;
-         MA.Periods.Step = iStep;
-      }
+      if (iStep == MA.Periods.Step)
+         MA.Periods = iValue;
 
       double dValue, dStep;
       Chart.RestoreDouble(prefix +"MA.ReversalFilter",      dValue);
       Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep);
-      if (EQ(dStep, MA.ReversalFilter.Step)) {
-         MA.ReversalFilter      = dValue;
-         MA.ReversalFilter.Step = dStep;
-      }
+      if (EQ(dStep, MA.ReversalFilter.Step))
+         MA.ReversalFilter = dValue;
    }
    return(!catch("RestoreStatus(1)"));
 }

@@ -43,7 +43,7 @@
  *
  *
  * TODO:
- *  - rewrite ZigZag, T3, Moving Average, MACD, Donchian
+ *  - rewrite T3, Moving Average, MACD, Donchian
  *     MA methods
  *     auto-configuration
  *     signaling
