@@ -135,24 +135,24 @@ bool Trend.UpdateDirection(double values[], int offset, double &trend[], double 
  * @param  double   value          - indicator value to display
  * @param  int      digits         - digits of the value to display
  * @param  double   dTrend         - trend direction of the value to display (type double allows passing of non-normalized values)
- * @param  datetime barOpenTime    - bar opentime of the value to display
+ * @param  datetime time           - bar time of the value to display
  */
-void Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime barOpenTime) {
+void Trend.UpdateLegend(string label, string name, string status, color uptrendColor, color downtrendColor, double value, int digits, double dTrend, datetime time) {
+   static string   lastName = "";
    static double   lastValue;
    static int      lastTrend;
-   static datetime lastBarOpenTime;
+   static datetime lastTime;
    string sValue="", sTrend="", sOnTrendChange="";
 
    value = NormalizeDouble(value, digits);
    int trend = MathRound(dTrend);
 
-   // update if value, trend direction or bar changed
-   if (value!=lastValue || trend!=lastTrend || barOpenTime!=lastBarOpenTime) {
+   // update if name, value, trend direction or bar changed
+   if (name!=lastName || value!=lastValue || trend!=lastTrend || time!=lastTime) {
       if (digits == Digits) sValue = NumberToStr(value, PriceFormat);
       else                  sValue = DoubleToStr(value, digits);
 
-      if (trend != 0) sTrend = StringConcatenate("  (", trend, ")");
-
+      if (trend  != 0)  sTrend = StringConcatenate("  (", trend, ")");
       if (status != "") status = StringConcatenate("  ", status);
 
       if (uptrendColor != downtrendColor) {
@@ -174,9 +174,10 @@ void Trend.UpdateLegend(string label, string name, string status, color uptrendC
          return(catch("Trend.UpdateLegend(1)", error));
    }
 
-   lastValue       = value;
-   lastTrend       = trend;
-   lastBarOpenTime = barOpenTime;
+   lastName  = name;
+   lastValue = value;
+   lastTrend = trend;
+   lastTime  = time;
    return;
 
    /*                  [3] [2] [1] [0]

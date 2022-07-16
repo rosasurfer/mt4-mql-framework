@@ -6556,10 +6556,10 @@ double icNLMA(int timeframe, int waveCyclePeriods, string maAppliedPrice, double
 
    double value = iCustom(NULL, timeframe, "NonLagMA",
                           waveCyclePeriods,                 // int    WaveCycle.Periods
-                          0,                                // int    WaveCycle.Periods.StepSize
+                          0,                                // int    WaveCycle.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
                           maReversalFilter,                 // double MA.ReversalFilter
-                          0,                                // double MA.Filter.ReversalStepSize
+                          0,                                // double MA.ReversalFilter.Step
 
                           "Dot",                            // string Draw.Type
                           1,                                // int    Draw.Width
