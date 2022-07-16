@@ -29,10 +29,11 @@ int init() {
    if (IsError(error)) return(error);
 
    // globale Variablen initialisieren
+   __lpSuperContext =  __ExecutionContext[EC.superContext];
+   __isSuperContext = (__lpSuperContext != 0);
    __isChart        = (__ExecutionContext[EC.hChart] != 0);
    __isTesting      = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
-   __lpSuperContext =  __ExecutionContext[EC.superContext];
 
    PipDigits        = Digits & (~1);
    PipPoints        = MathRound(MathPow(10, Digits & 1));

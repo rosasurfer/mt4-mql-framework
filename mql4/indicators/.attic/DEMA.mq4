@@ -30,7 +30,8 @@ extern int    Max.Bars        = 10000;                   // max. values to calcu
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_DEMA             MovingAverage.MODE_MA
 #define MODE_EMA_1            1
@@ -101,10 +102,7 @@ int onInit() {
 
 
    // (3) data display configuration, names and labels
-   if (!IsSuperContext()) {                                    // no chart legend if called by iCustom()
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
+   legendLabel = CreateLegend();
    string shortName="DEMA("+ MA.Periods +")", strAppliedPrice="";
    if (ma.appliedPrice != PRICE_CLOSE) strAppliedPrice = ", "+ PriceTypeDescription(ma.appliedPrice);
    ma.name = "DEMA("+ MA.Periods + strAppliedPrice +")";
@@ -122,17 +120,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(6)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -176,8 +163,8 @@ int onTick() {
 
 
    // (3) update chart legend
-   if (!IsSuperContext()) {
-       @Trend.UpdateLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0], Digits, NULL, Time[0]);
+   if (!__isSuperContext) {
+       UpdateTrendLegend(legendLabel, ma.name, "", MA.Color, MA.Color, dema[0], Digits, NULL, Time[0]);
    }
    return(last_error);
 }

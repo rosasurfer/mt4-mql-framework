@@ -71,7 +71,7 @@
 
 // Runtime errors
 #define ERR_NO_MQLERROR                                            4000    // never generated error
-#define ERR_ARRAY_INDEX_OUT_OF_RANGE                               4002
+#define ERR_ARRAY_INDEX_OUT_OF_RANGE                               4002    // MQL5 for MT4: without "#property strict" this error is ignored and never set
 #define ERR_NOT_ENOUGH_STACK_FOR_PARAM                             4005
 #define ERR_NOT_INITIALIZED_STRING                                 4008
 #define ERR_NOT_INITIALIZED_ARRAYSTRING                            4009

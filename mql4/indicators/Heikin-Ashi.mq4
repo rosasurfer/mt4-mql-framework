@@ -39,8 +39,9 @@ extern int    Max.Bars          = 10000;                                // max. 
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@Trend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_OUT_OPEN         HeikinAshi.MODE_OPEN    // indicator buffer ids
 #define MODE_OUT_CLOSE        HeikinAshi.MODE_CLOSE   //
@@ -156,13 +157,8 @@ int onInit() {
    SetIndexBuffer(MODE_HA_HIGH,     haHigh    );
    SetIndexBuffer(MODE_HA_LOW,      haLow     );
 
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    indicatorName = "Heikin-Ashi";               // or  Heikin-Ashi(SMA(10))  or  EMA(Heikin-Ashi(SMA(10)), 5)
    if (!IsEmpty(inputMaMethod))  indicatorName = indicatorName +"("+ Input.MA.Method +"("+ inputMaPeriods +"))";
    if (!IsEmpty(outputMaMethod)) indicatorName = Output.MA.Method +"("+ indicatorName +", "+ outputMaPeriods +")";
@@ -190,17 +186,6 @@ int onInit() {
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 
    return(catch("onInit(8)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -312,8 +297,8 @@ int onTick() {
       UpdateTrend(bar);
    }
 
-   if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
+   if (!__isSuperContext) {
+      UpdateTrendLegend(legendLabel, indicatorName, "", Color.BarUp, Color.BarDown, outClose[0], Digits, trend[0], Time[0]);
    }
    return(last_error);
 }

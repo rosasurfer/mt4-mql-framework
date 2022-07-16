@@ -9910,7 +9910,7 @@ window_num=0
 <inputs>
 </inputs>
 </expert>
-period_flags=255
+period_flags=0
 show_data=0
 </indicator>
 
@@ -9921,9 +9921,10 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
+WaceCycle.Periods=20
+MA.ReversalFilter=0
 Color.UpTrend=14772545
 Color.DownTrend=65535
-Draw.Type=Line
 </inputs>
 </expert>
 weight_0=0

@@ -1,8 +1,7 @@
 /**
  * Arnaud Legoux Moving Average
  *
- * A moving average with bar weights using a Gaussian distribution function.
- *
+ * A moving average using a Gaussian distribution function for weight calculation.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -10,7 +9,8 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/
+ *  @link  http://web.archive.org/web/20180307031850/http://www.arnaudlegoux.com/#             [Arnaud Legoux Moving Average]
+ *  @link  https://www.forexfactory.com/thread/251668#                                         [Arnaud Legoux Moving Average]
  *
  */
 #include <stddefines.mqh>
@@ -19,22 +19,26 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Periods           = 38;
-extern string MA.AppliedPrice      = "Open | High | Low | Close* | Median | Typical | Weighted";
-extern double Distribution.Offset  = 0.85;               // Gaussian distribution offset (offset of parabola vertex: 0..1)
-extern double Distribution.Sigma   = 6.0;                // Gaussian distribution sigma (parabola steepness)
+extern int    MA.Periods                     = 38;
+extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
+extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
+extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
 
-extern color  Color.UpTrend        = Blue;
-extern color  Color.DownTrend      = Red;
-extern string Draw.Type            = "Line* | Dot";
-extern int    Draw.Width           = 3;
-extern int    Max.Bars             = 10000;              // max. values to calculate (-1: all available)
-extern string ___a__________________________;
+extern string Draw.Type                      = "Line* | Dot";
+extern int    Draw.Width                     = 3;
+extern color  Color.UpTrend                  = Blue;
+extern color  Color.DownTrend                = Red;
+extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
+extern int    PeriodStepper.StepSize         = 0;                 // parameter stepper for MA.Periods
 
-extern string Signal.onTrendChange = "on | off | auto*";
-extern string Signal.Sound         = "on | off | auto*";
-extern string Signal.Mail          = "on | off | auto*";
-extern string Signal.SMS           = "on | off | auto*";
+extern string ___a__________________________ = "=== Signaling ===";
+extern bool   Signal.onTrendChange           = false;
+extern bool   Signal.onTrendChange.Sound     = true;
+extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
+extern string Signal.onTrendChange.SoundDown = "Signal Down.wav";
+extern bool   Signal.onTrendChange.Popup     = false;
+extern bool   Signal.onTrendChange.Mail      = false;
+extern bool   Signal.onTrendChange.SMS       = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,18 +46,16 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ConfigureSignals.mqh>
-#include <functions/ConfigureSignalsByMail.mqh>
-#include <functions/ConfigureSignalsBySMS.mqh>
-#include <functions/ConfigureSignalsBySound.mqh>
+#include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/@ALMA.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               MovingAverage.MODE_MA      // indicator buffer ids
 #define MODE_TREND            MovingAverage.MODE_TREND
 #define MODE_UPTREND          2
 #define MODE_DOWNTREND        3
-#define MODE_UPTREND1         MODE_UPTREND
 #define MODE_UPTREND2         4
 
 #property indicator_chart_window
@@ -67,29 +69,33 @@ extern string Signal.SMS           = "on | off | auto*";
 
 double main     [];                                      // ALMA main values:    invisible, displayed in legend and "Data" window
 double trend    [];                                      // trend direction:     invisible, displayed in "Data" window
-double uptrend1 [];                                      // uptrend values:      visible
+double uptrend  [];                                      // uptrend values:      visible
 double downtrend[];                                      // downtrend values:    visible
 double uptrend2 [];                                      // single-bar uptrends: visible
 
+int    maPeriods;
 int    maAppliedPrice;
-double almaWeights[];                                    // bar weights
-
-int    maxValues;
+double maWeights[];                                      // bar weighting of the MA
 int    drawType;
+int    maxValues;
 
 string indicatorName = "";
 string legendLabel   = "";
+string legendInfo    = "";                               // additional chart legend info
+bool   enableMultiColoring;
 
-bool   signals;
-bool   signal.sound;
-string signal.sound.trendChange_up   = "Signal Up.wav";
-string signal.sound.trendChange_down = "Signal Down.wav";
-bool   signal.mail;
-string signal.mail.sender   = "";
-string signal.mail.receiver = "";
-bool   signal.sms;
-string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
+bool   signalTrendChange;
+bool   signalTrendChange.sound;
+bool   signalTrendChange.popup;
+bool   signalTrendChange.mail;
+string signalTrendChange.mailSender   = "";
+string signalTrendChange.mailReceiver = "";
+bool   signalTrendChange.sms;
+string signalTrendChange.smsReceiver = "";
+
+// period stepper directions
+#define STEP_UP    1
+#define STEP_DOWN -1
 
 
 /**
@@ -98,98 +104,93 @@ string signal.info = "";                                 // additional chart leg
  * @return int - error status
  */
 int onInit() {
+   string indicator = ProgramName();
+
    // validate inputs
    // MA.Periods
-   if (MA.Periods < 1) return(catch("onInit(1)  invalid input parameter MA.Periods: "+ MA.Periods, ERR_INVALID_INPUT_PARAMETER));
-
+   maPeriods = MA.Periods;
+   if (AutoConfiguration) maPeriods = GetConfigInt(indicator, "MA.Periods", maPeriods);
+   if (maPeriods < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Periods: "+ maPeriods, ERR_INVALID_INPUT_PARAMETER));
    // MA.AppliedPrice
-   string sValues[], sValue = StrToLower(MA.AppliedPrice);
+   string sValues[], sValue = MA.AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   if (sValue == "") sValue = "close";                   // default price type
    maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_WEIGHTED)
-                       return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(MA.AppliedPrice), ERR_INVALID_INPUT_PARAMETER));
+   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(2)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
-
-   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
-   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
-   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
-
+   // Distribution.Offset
+   if (AutoConfiguration) Distribution.Offset = GetConfigDouble(indicator, "Distribution.Offset", Distribution.Offset);
+   if (Distribution.Offset < 0 || Distribution.Offset > 1)   return(catch("onInit(3)  invalid input parameter Distribution.Offset: "+ NumberToStr(Distribution.Offset, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   // Distribution.Sigma
+   if (AutoConfiguration) Distribution.Sigma = GetConfigDouble(indicator, "Distribution.Sigma", Distribution.Sigma);
+   if (Distribution.Sigma <= 0)                              return(catch("onInit(4)  invalid input parameter Distribution.Sigma: "+ NumberToStr(Distribution.Sigma, ".1+") +" (must be positive)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
-   sValue = StrToLower(Draw.Type);
+   sValue = Draw.Type;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
-   sValue = StrTrim(sValue);
+   sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                return(catch("onInit(3)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(Draw.Type), ERR_INVALID_INPUT_PARAMETER));
-
+   else                                                      return(catch("onInit(5)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
-   if (Draw.Width < 0) return(catch("onInit(4)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
-
+   if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
+   if (Draw.Width < 0)                                       return(catch("onInit(6)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
+   if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
+   if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
+   if (Color.UpTrend   == 0xFF000000) Color.UpTrend   = CLR_NONE;
+   if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // Max.Bars
-   if (Max.Bars < -1)  return(catch("onInit(5)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
+   if (Max.Bars < -1)                                        return(catch("onInit(7)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
+   // PeriodStepper.StepSize
+   if (PeriodStepper.StepSize < 0)                           return(catch("onInit(8)  invalid input parameter PeriodStepper.StepSize: "+ PeriodStepper.StepSize +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
 
    // signaling
-   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onTrendChange, signals))                         return(last_error);
-   if (signals) {
-      if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
-      if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
-      if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
-      if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+   signalTrendChange       = Signal.onTrendChange;
+   signalTrendChange.sound = Signal.onTrendChange.Sound;
+   signalTrendChange.popup = Signal.onTrendChange.Popup;
+   signalTrendChange.mail  = Signal.onTrendChange.Mail;
+   signalTrendChange.sms   = Signal.onTrendChange.SMS;
+   legendInfo              = "";
+   string signalId = "Signal.onTrendChange";
+   if (!ConfigureSignals2(signalId, AutoConfiguration, signalTrendChange)) return(last_error);
+   if (signalTrendChange) {
+      if (!ConfigureSignalsBySound2(signalId, AutoConfiguration, signalTrendChange.sound))                                                              return(last_error);
+      if (!ConfigureSignalsByPopup (signalId, AutoConfiguration, signalTrendChange.popup))                                                              return(last_error);
+      if (!ConfigureSignalsByMail2 (signalId, AutoConfiguration, signalTrendChange.mail, signalTrendChange.mailSender, signalTrendChange.mailReceiver)) return(last_error);
+      if (!ConfigureSignalsBySMS2  (signalId, AutoConfiguration, signalTrendChange.sms, signalTrendChange.smsReceiver))                                 return(last_error);
+      if (signalTrendChange.sound || signalTrendChange.popup || signalTrendChange.mail || signalTrendChange.sms) {
+         legendInfo = StrLeft(ifString(signalTrendChange.sound, "sound,", "") + ifString(signalTrendChange.popup, "popup,", "") + ifString(signalTrendChange.mail, "mail,", "") + ifString(signalTrendChange.sms, "sms,", ""), -1);
+         legendInfo = "("+ legendInfo +")";
       }
-      else signals = false;
+      else signalTrendChange = false;
    }
 
-   // buffer management
+   // buffer management and display options
    SetIndexBuffer(MODE_MA,        main     );            // MA main values:      invisible, displayed in legend and "Data" window
    SetIndexBuffer(MODE_TREND,     trend    );            // trend direction:     invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND1,  uptrend1 );            // uptrend values:      visible
+   SetIndexBuffer(MODE_UPTREND,   uptrend  );            // uptrend values:      visible
    SetIndexBuffer(MODE_DOWNTREND, downtrend);            // downtrend values:    visible
    SetIndexBuffer(MODE_UPTREND2,  uptrend2 );            // single-bar uptrends: visible
-
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
-   // names, labels and display options
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = ProgramName(MODE_NICE) +"("+ MA.Periods + sAppliedPrice +")";
-   string shortName = ProgramName(MODE_NICE) +"("+ MA.Periods +")";
-   IndicatorShortName(shortName);                        // chart tooltips and context menu
-   SetIndexLabel(MODE_MA,        shortName);             // chart tooltips and "Data" window
-   SetIndexLabel(MODE_TREND,     shortName +" trend");
-   SetIndexLabel(MODE_UPTREND1,  NULL);
-   SetIndexLabel(MODE_DOWNTREND, NULL);
-   SetIndexLabel(MODE_UPTREND2,  NULL);
-   IndicatorDigits(Digits);
    SetIndicatorOptions();
 
-   // pre-calculate ALMA bar weights
-   @ALMA.CalculateWeights(almaWeights, MA.Periods, Distribution.Offset, Distribution.Sigma);
+   // calculate ALMA bar weights
+   ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights);
 
-   return(catch("onInit(6)"));
-}
+   // chart legend and coloring
+   legendLabel = CreateLegend();
+   enableMultiColoring = !__isSuperContext;
 
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
+   return(catch("onInit(9)"));
 }
 
 
@@ -199,14 +200,19 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   int starttime = GetTickCount();
+
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(main)) return(logInfo("onTick(1)  sizeof(main) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
+
+   // process incoming commands (may rewrite ValidBars/ChangedBars/ShiftedBars)
+   if (__isChart && PeriodStepper.StepSize) HandleCommands("ParameterStepper", false);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
       ArrayInitialize(main,      EMPTY_VALUE);
       ArrayInitialize(trend,               0);
-      ArrayInitialize(uptrend1,  EMPTY_VALUE);
+      ArrayInitialize(uptrend,   EMPTY_VALUE);
       ArrayInitialize(downtrend, EMPTY_VALUE);
       ArrayInitialize(uptrend2,  EMPTY_VALUE);
       SetIndicatorOptions();
@@ -216,62 +222,79 @@ int onTick() {
    if (ShiftedBars > 0) {
       ShiftDoubleIndicatorBuffer(main,      Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(trend,     Bars, ShiftedBars,           0);
-      ShiftDoubleIndicatorBuffer(uptrend1,  Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(uptrend,   Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(downtrend, Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(uptrend2,  Bars, ShiftedBars, EMPTY_VALUE);
    }
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-MA.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Periods, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-maPeriods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ maPeriods, ERR_HISTORY_INSUFFICIENT));
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       main[bar] = 0;
-      for (int i=0; i < MA.Periods; i++) {
-         main[bar] += almaWeights[i] * iMA(NULL, NULL, 1, 0, MODE_SMA, maAppliedPrice, bar+i);
+      for (int i=0; i < maPeriods; i++) {
+         main[bar] += maWeights[i] * GetPrice(maAppliedPrice, bar+i);
       }
-      @Trend.UpdateDirection(main, bar, trend, uptrend1, downtrend, uptrend2, true, true, drawType, Digits);
+      UpdateTrendDirection(main, bar, trend, uptrend, downtrend, uptrend2, enableMultiColoring, enableMultiColoring, drawType, Digits);
    }
 
-   if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+   if (!__isSuperContext) {
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // monitor trend changes
-      if (signals) /*&&*/ if (IsBarOpen()) {
+      if (signalTrendChange) /*&&*/ if (IsBarOpen()) {
          int iTrend = Round(trend[1]);
          if      (iTrend ==  1) onTrendChange(MODE_UPTREND);
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
+
+   int millis = (GetTickCount()-starttime);
+   //if (!ValidBars) debug("onTick(0.1)  Tick="+ Ticks +"  bars="+ (startbar+1) +"  time="+ DoubleToStr(millis/1000., 3) +" sec");
    return(last_error);
 
    // Speed test on Toshiba Satellite
-   // ------------------------------------------------------------------------------------------
-   // H1   ALMA(7xD1)  weights(  168)=0.009 sec   maxBars(2000)=0.110 sec   loops=   336,000
-   // M30  ALMA(7xD1)  weights(  336)=0.009 sec   maxBars(2000)=0.250 sec   loops=   672,000
-   // M15  ALMA(7xD1)  weights(  672)=0.009 sec   maxBars(2000)=0.453 sec   loops= 1,344,000
-   // M5   ALMA(7xD1)  weights( 2016)=0.016 sec   maxBars(2000)=1.547 sec   loops= 4,032,000
-   // M1   ALMA(7xD1)  weights(10080)=0.016 sec   maxBars(2000)=7.110 sec   loops=20,160,000
+   // -----------------------------------------------------------------------------------------------------
+   // ALMA(7xD1) on H1  = ALMA(168)      weights(  168)=0.009 sec   bars(2000)=0.110 sec   loops=   336,000
+   // ALMA(7xD1) on M30 = ALMA(336)      weights(  336)=0.009 sec   bars(2000)=0.250 sec   loops=   672,000
+   // ALMA(7xD1) on M15 = ALMA(672)      weights(  672)=0.009 sec   bars(2000)=0.453 sec   loops= 1,344,000
+   // ALMA(7xD1) on M5  = ALMA(2016)     weights( 2016)=0.016 sec   bars(2000)=1.547 sec   loops= 4,032,000
+   // ALMA(7xD1) on M1  = ALMA(10080)    weights(10080)=0.016 sec   bars(2000)=7.110 sec   loops=20,160,000
    //
    // Speed test on Toshiba Portege
-   // -------------------------------------------------------------------------------------------------
-   // H1   ALMA(7xD1)  weights(  168)             maxBars(2000)=0.078 sec   as above
-   // M30  ALMA(7xD1)  weights(  336)             maxBars(2000)=0.156 sec   ...
-   // M15  ALMA(7xD1)  weights(  672)             maxBars(2000)=0.312 sec   ...
-   // M5   ALMA(7xD1)  weights( 2016)             maxBars(2000)=0.952 sec   ...
-   // M1   ALMA(7xD1)  weights(10080)             maxBars(2000)=4.773 sec   ...
+   // -----------------------------------------------------------------------------------------------------
+   // as above            ALMA(168)      as above                   bars(2000)=0.078 sec   as above
+   // ...                 ALMA(336)      ...                        bars(2000)=0.156 sec   ...
+   // ...                 ALMA(672)      ...                        bars(2000)=0.312 sec   ...
+   // ...                 ALMA(2016)     ...                        bars(2000)=0.952 sec   ...
+   // ...                 ALMA(10080)    ...                        bars(2000)=4.773 sec   ...
    //
    // Speed test on Dell Precision
-   // -------------------------------------------------------------------------------------------------
-   // M1    ALMA(168)  weights(  168)             maxBars(2000)=0.062 sec   as above
-   // M1    ALMA(336)  weights(  336)             maxBars(2000)=0.109 sec   ...
-   // M1    ALMA(672)  weights(  672)             maxBars(2000)=0.218 sec   ...
-   // M1   ALMA(2016)  weights( 2016)             maxBars(2000)=0.671 sec   ...
-   // M1  ALMA(10080)  weights(10080)             maxBars(2000)=3.323 sec   ...
-   //
-   // Conclusion: Weights calculation is ignorable, bottleneck is the nested loop in MA calculation.
+   // -----------------------------------------------------------------------------------------------------
+   // as above            ALMA(168)      as above                   bars(2000)=0.062 sec   as above            no measurable difference between iMA() and GetPrice()
+   // ...                 ALMA(336)      ...                        bars(2000)=0.109 sec   ...
+   // ...                 ALMA(672)      ...                        bars(2000)=0.218 sec   ...
+   // ...                 ALMA(2016)     ...                        bars(2000)=0.671 sec   ...
+   // ...                 ALMA(10080)    ...                        bars(2000)=3.323 sec   ...
+   //                     ALMA(38/0.7)   ...                       bars(10000)=?     sec   loops=  380,000
+   //                     ALMA(38/0.7)   ...                       bars(60000)=?     sec   loops=2,280,000
+   //                     ALMA(38/0.7)   ...                      bars(240000)=?     sec   loops=9,120,000
+
+   // Speed test on Dell Precision
+   // -----------------------------------------------------------------------------------------------------
+   //                     NLMA(34/0.7)   weights(169)               bars(2000)=0.062 sec   as above            ...
+   //                     NLMA(68/0.7)   weights(339)               bars(2000)=0.125 sec   ...
+   //                     NLMA(135/0.7)  weights(674)               bars(2000)=0.234 sec   ...
+   //                     NLMA(404/0.7)  weights(2019)              bars(2000)=0.733 sec   ...
+   //                     NLMA(2016/0.7) weights(10079)             bars(2000)=3.557 sec   ...
+   //                     NLMA(20/0.7)   weights(99)               bars(10000)=0.187 sec   loops=   990,000
+   //                     NLMA(20/0.7)   weights(99)               bars(60000)=0.904 sec   loops= 5,940,000
+   //                     NLMA(20/0.7)   weights(99)              bars(240000)=3.448 sec   loops=23,760,000
+
+   // Conclusion: Weight calculation can be ignored, bottleneck is the nested loop in MA calculation.
 }
 
 
@@ -287,24 +310,26 @@ bool onTrendChange(int trend) {
    int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
-      message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = indicatorName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+      if (signalTrendChange.popup)          Alert(message);
+      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundUp);
+      if (signalTrendChange.mail)  error |= !SendEmail(signalTrendChange.mailSender, signalTrendChange.mailReceiver, message, message + NL + accountTime);
+      if (signalTrendChange.sms)   error |= !SendSMS(signalTrendChange.smsReceiver, message + NL + accountTime);
       return(!error);
    }
 
    if (trend == MODE_DOWNTREND) {
-      message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
+      message = indicatorName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
-      if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
-      if (signal.mail)  error |= !SendEmail(signal.mail.sender, signal.mail.receiver, message, message + NL + accountTime);
-      if (signal.sms)   error |= !SendSMS(signal.sms.receiver, message + NL + accountTime);
+      if (signalTrendChange.popup)          Alert(message);
+      if (signalTrendChange.sound) error |= PlaySoundEx(Signal.onTrendChange.SoundDown);
+      if (signalTrendChange.mail)  error |= !SendEmail(signalTrendChange.mailSender, signalTrendChange.mailReceiver, message, message + NL + accountTime);
+      if (signalTrendChange.sms)   error |= !SendSMS(signalTrendChange.smsReceiver, message + NL + accountTime);
       return(!error);
    }
 
@@ -313,17 +338,103 @@ bool onTrendChange(int trend) {
 
 
 /**
+ * Process an incoming command.
+ *
+ * @param  string cmd                  - command name
+ * @param  string params [optional]    - command parameters (default: none)
+ * @param  string modifiers [optional] - command modifiers (default: none)
+ *
+ * @return bool - success status of the executed command
+ */
+bool onCommand(string cmd, string params="", string modifiers="") {
+   string fullCmd = cmd +":"+ params +":"+ modifiers;
+
+   static int lastTickcount = 0;
+   int tickcount = StrToInteger(params);
+   if (tickcount <= lastTickcount) return(false);
+   lastTickcount = tickcount;
+
+   if (cmd == "parameter-up")   return(PeriodStepper(STEP_UP));
+   if (cmd == "parameter-down") return(PeriodStepper(STEP_DOWN));
+
+   return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+}
+
+
+/**
+ * Change the currently active parameter "MA.Periods".
+ *
+ * @param  int direction - STEP_UP | STEP_DOWN
+ *
+ * @return bool - success status
+ */
+bool PeriodStepper(int direction) {
+   if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("PeriodStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+
+   int step = PeriodStepper.StepSize;
+
+   if (!step || maPeriods + direction*step < 1) {
+      PlaySoundEx("Plonk.wav");                       // no stepping or parameter limit reached
+      return(false);
+   }
+
+   if (direction == STEP_UP) maPeriods += step;
+   else                      maPeriods -= step;
+
+   ChangedBars = Bars;
+   ValidBars   = 0;
+   ShiftedBars = 0;
+
+   if (!ALMA.CalculateWeights(maPeriods, Distribution.Offset, Distribution.Sigma, maWeights)) return(false);
+   PlaySoundEx("Parameter Step.wav");
+   return(true);
+}
+
+
+/**
+ * Get the price of the specified type at the given bar offset.
+ *
+ * @param  int type - price type
+ * @param  int i    - bar offset
+ *
+ * @return double - price or NULL in case of errors
+ */
+double GetPrice(int type, int i) {
+   if (i < 0 || i >= Bars) return(!catch("GetPrice(1)  invalid parameter i: "+ i +" (out of range)", ERR_INVALID_PARAMETER));
+
+   switch (type) {
+      case PRICE_CLOSE:                                                          // 0
+      case PRICE_BID:      return(Close[i]);                                     // 8
+      case PRICE_OPEN:     return( Open[i]);                                     // 1
+      case PRICE_HIGH:     return( High[i]);                                     // 2
+      case PRICE_LOW:      return(  Low[i]);                                     // 3
+      case PRICE_MEDIAN:                                                         // 4: (H+L)/2
+      case PRICE_TYPICAL:                                                        // 5: (H+L+C)/3
+      case PRICE_WEIGHTED: return(iMA(NULL, NULL, 1, 0, MODE_SMA, type, i));     // 6: (H+L+C+C)/4
+      case PRICE_AVERAGE:  return((Open[i] + High[i] + Low[i] + Close[i])/4);    // 7: (O+H+L+C)/4
+   }
+   return(!catch("GetPrice(2)  invalid or unsupported price type: "+ type, ERR_INVALID_PARAMETER));
+}
+
+
+/**
  * Workaround for various terminal bugs when setting indicator options. Usually options are set in init(). However after
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
+   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
+   indicatorName = "ALMA("+ ifString(PeriodStepper.StepSize, "var:", "") + maPeriods + sAppliedPrice +")";
+   string shortName = "ALMA("+ maPeriods +")";
+   IndicatorShortName(shortName);
+
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
 
-   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );
-   SetIndexStyle(MODE_UPTREND1,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND1,  158);
-   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158);
-   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158);
+   SetIndexStyle(MODE_MA,        DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_MA,        shortName);
+   SetIndexStyle(MODE_TREND,     DRAW_NONE, EMPTY, EMPTY,      CLR_NONE       );                                     SetIndexLabel(MODE_TREND,     shortName +" trend");
+   SetIndexStyle(MODE_UPTREND,   draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND,   158); SetIndexLabel(MODE_UPTREND,   NULL);
+   SetIndexStyle(MODE_DOWNTREND, draw_type, EMPTY, Draw.Width, Color.DownTrend); SetIndexArrow(MODE_DOWNTREND, 158); SetIndexLabel(MODE_DOWNTREND, NULL);
+   SetIndexStyle(MODE_UPTREND2,  draw_type, EMPTY, Draw.Width, Color.UpTrend  ); SetIndexArrow(MODE_UPTREND2,  158); SetIndexLabel(MODE_UPTREND2,  NULL);
+   IndicatorDigits(Digits);
 }
 
 
@@ -333,18 +444,24 @@ void SetIndicatorOptions() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Periods=",           MA.Periods,                              ";", NL,
-                            "MA.AppliedPrice=",      DoubleQuoteStr(MA.AppliedPrice),         ";", NL,
-                            "Distribution.Offset=",  NumberToStr(Distribution.Offset, ".1+"), ";", NL,
-                            "Distribution.Sigma=",   NumberToStr(Distribution.Sigma, ".1+"),  ";", NL,
-                            "Color.UpTrend=",        ColorToStr(Color.UpTrend),               ";", NL,
-                            "Color.DownTrend=",      ColorToStr(Color.DownTrend),             ";", NL,
-                            "Draw.Type=",            DoubleQuoteStr(Draw.Type),               ";", NL,
-                            "Draw.Width=",           Draw.Width,                              ";", NL,
-                            "Max.Bars=",             Max.Bars,                                ";", NL,
-                            "Signal.onTrendChange=", DoubleQuoteStr(Signal.onTrendChange),    ";", NL,
-                            "Signal.Sound=",         DoubleQuoteStr(Signal.Sound),            ";", NL,
-                            "Signal.Mail=",          DoubleQuoteStr(Signal.Mail),             ";", NL,
-                            "Signal.SMS=",           DoubleQuoteStr(Signal.SMS),              ";")
+   return(StringConcatenate("MA.Periods=",                     MA.Periods,                                     ";"+ NL,
+                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+                            "Distribution.Offset=",            NumberToStr(Distribution.Offset, ".1+"),        ";"+ NL,
+                            "Distribution.Sigma=",             NumberToStr(Distribution.Sigma, ".1+"),         ";"+ NL,
+
+                            "Draw.Type=",                      DoubleQuoteStr(Draw.Type),                      ";"+ NL,
+                            "Draw.Width=",                     Draw.Width,                                     ";"+ NL,
+                            "Color.DownTrend=",                ColorToStr(Color.DownTrend),                    ";"+ NL,
+                            "Color.UpTrend=",                  ColorToStr(Color.UpTrend),                      ";"+ NL,
+                            "Max.Bars=",                       Max.Bars,                                       ";"+ NL,
+                            "PeriodStepper.StepSize=",         PeriodStepper.StepSize,                         ";"+ NL,
+
+                            "Signal.onTrendChange=",           BoolToStr(Signal.onTrendChange),                ";"+ NL,
+                            "Signal.onTrendChange.Sound=",     BoolToStr(Signal.onTrendChange.Sound),          ";"+ NL,
+                            "Signal.onTrendChange.SoundUp=",   DoubleQuoteStr(Signal.onTrendChange.SoundUp),   ";"+ NL,
+                            "Signal.onTrendChange.SoundDown=", DoubleQuoteStr(Signal.onTrendChange.SoundDown), ";"+ NL,
+                            "Signal.onTrendChange.Popup=",     BoolToStr(Signal.onTrendChange.Popup),          ";"+ NL,
+                            "Signal.onTrendChange.Mail=",      BoolToStr(Signal.onTrendChange.Mail),           ";"+ NL,
+                            "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
 }

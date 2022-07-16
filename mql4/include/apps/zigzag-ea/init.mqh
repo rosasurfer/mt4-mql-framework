@@ -115,7 +115,7 @@ int afterInit() {
    }
 
    // read debug config
-   string section = ifString(__isTesting, "Tester.", "") + ProgramName(MODE_NICE);
+   string section = ifString(__isTesting, "Tester.", "") + ProgramName();
    if (__isTesting) {
       test.onReversalPause     = GetConfigBool(section, "OnReversalPause",     false);
       test.onSessionBreakPause = GetConfigBool(section, "OnSessionBreakPause", false);
@@ -137,24 +137,21 @@ int afterInit() {
  * Create the status display box. It consists of overlapping rectangles made of font "Webdings", char "g".
  * Called from onInit() only.
  *
- * @return int - error status
+ * @return bool - success status
  */
-int CreateStatusBox() {
-   if (!__isChart) return(NO_ERROR);
+bool CreateStatusBox() {
+   if (!__isChart) return(true);
 
    int x[]={2, 70, 120}, y=50, fontSize=47, sizeofX=ArraySize(x);
    color bgColor = LemonChiffon;
 
    for (int i=0; i < sizeofX; i++) {
-      string label = ProgramName(MODE_NICE) +".statusbox."+ (i+1);
-      if (ObjectFind(label) != 0) {
-         ObjectCreate(label, OBJ_LABEL, 0, 0, 0);
-         RegisterObject(label);
-      }
+      string label = ProgramName() +".statusbox."+ (i+1);
+      if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
       ObjectSet(label, OBJPROP_CORNER, CORNER_TOP_LEFT);
       ObjectSet(label, OBJPROP_XDISTANCE, x[i]);
       ObjectSet(label, OBJPROP_YDISTANCE, y);
       ObjectSetText(label, "g", fontSize, "Webdings", bgColor);
    }
-   return(catch("CreateStatusBox(1)"));
+   return(!catch("CreateStatusBox(1)"));
 }

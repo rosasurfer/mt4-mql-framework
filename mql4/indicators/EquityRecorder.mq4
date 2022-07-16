@@ -24,6 +24,7 @@ extern int    Recording.HistoryFormat    = 401;                      // written 
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <rsfHistory.mqh>
+#include <functions/legend.mqh>
 
 #property indicator_chart_window
 #property indicator_buffers      1              // there's a minimum of 1 buffer
@@ -56,7 +57,7 @@ string legendLabel   = "";
  */
 int onInit() {
    // read auto-configuration
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
    if (AutoConfiguration) {
       Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
       Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
@@ -86,11 +87,8 @@ int onInit() {
    }
 
    // indicator labels and display options
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-   indicatorName = ProgramName(MODE_NICE);
+   legendLabel = CreateLegend();
+   indicatorName = ProgramName();
    SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
 
@@ -131,7 +129,7 @@ int onTick() {
    if (!CollectData()) return(last_error);
    if (!RecordData())  return(last_error);
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       if (NE(currEquity[0], prevEquity[0], 2)) {
          ObjectSetText(legendLabel, indicatorName +"   "+ DoubleToStr(currEquity[0], 2), 9, "Arial Fett", Blue);
          int error = GetLastError();

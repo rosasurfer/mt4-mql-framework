@@ -9995,22 +9995,20 @@ name=SuperBars
 flags=339
 window_num=0
 </expert>
-period_flags=255
+period_flags=0
 show_data=0
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag.
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=10
 ZigZag.Type=Line | Semaphores*
-ZigZag.Width=1
 ZigZag.Color=16711680
-Donchian.ShowCrossings=off | first* | all
 Donchian.ShowChannel=1
 Donchian.Upper.Color=16748574
 Donchian.Lower.Color=16711935
@@ -10029,21 +10027,19 @@ show_data=1
 <indicator>
 name=Custom Indicator
 <expert>
-name=Buzzer MA
+name=NonLagMA
 flags=339
 window_num=0
 <inputs>
-Price=0
-Length=20
-AlertOn=0
+WaceCycle.Periods=20
+MA.ReversalFilter=0.7
+Draw.Width=3
+Color.UpTrend=16711935
+Color.DownTrend=65535
 </inputs>
 </expert>
-draw_1=0
-color_1=16760576
-weight_1=3
-draw_2=0
-color_2=42495
-weight_2=3
+weight_0=0
+weight_1=0
 period_flags=0
 show_data=1
 </indicator>

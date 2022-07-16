@@ -155,7 +155,7 @@ int onStart() {
          msg = "Do you really want to close all "+ (sizeOfPendingOrders + sizeOfOpenPositions) +" open orders?";
       }
 
-      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(MODE_NICE), MB_ICONQUESTION|MB_OKCANCEL);
+      int button = MessageBox(ifString(IsDemoFix(), "", "- Real Account -\n\n") + msg, ProgramName(), MB_ICONQUESTION|MB_OKCANCEL);
       if (button == IDOK) {
          int oe[], oes[][ORDER_EXECUTION_intSize], oeFlags=NULL;
 
@@ -168,7 +168,7 @@ int onStart() {
       }
    }
    else {
-      MessageBox("No matching orders found.", ProgramName(MODE_NICE), MB_ICONEXCLAMATION|MB_OK);
+      MessageBox("No matching orders found.", ProgramName(), MB_ICONEXCLAMATION|MB_OK);
    }
    return(catch("onStart(1)"));
 }

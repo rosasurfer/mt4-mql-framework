@@ -29,7 +29,8 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
 #include <functions/ParseTime.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_BUFFER1         0                                       // indicator buffer ids
 #define MODE_BUFFER2         1
@@ -95,31 +96,15 @@ int onInit() {
    SetIndexBuffer(MODE_BUFFER1, buffer1);
    SetIndexBuffer(MODE_BUFFER2, buffer2);
 
-   // chart legend
-   if (!IsSuperContext()) {
-      legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
-   indicatorName = ProgramName(MODE_NICE);
+   legendLabel = CreateLegend();
+   indicatorName = ProgramName();
    IndicatorShortName(indicatorName);                 // chart tooltips and context menu
    SetIndexLabel(MODE_BUFFER1, indicatorName +" 1");  // chart tooltips and "Data" window
    SetIndexLabel(MODE_BUFFER2, indicatorName +" 2");
    IndicatorDigits(Digits);
    SetIndicatorOptions();
    return(catch("onInit(3)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -300,10 +285,10 @@ int onTick() {
       }
    }
 
-   if (!IsSuperContext()) {
+   if (!__isSuperContext) {
       double value = (buffer1[0]+buffer2[0]) / 2;
       color  clr   = ifInt(buffer1[0] > buffer2[0], Color.UpTrend, Color.DownTrend);
-      @Trend.UpdateLegend(legendLabel, indicatorName, "", clr, clr, value, Digits, NULL, Time[0]);
+      UpdateTrendLegend(legendLabel, indicatorName, "", clr, clr, value, Digits, NULL, Time[0]);
    }
    return(last_error);
 }

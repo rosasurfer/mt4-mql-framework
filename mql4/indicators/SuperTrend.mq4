@@ -58,7 +58,8 @@ extern string Signal.SMS           = "on | off | auto*";
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
 #include <functions/IsBarOpen.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/legend.mqh>
+#include <functions/trend.mqh>
 
 #define MODE_MAIN             SuperTrend.MODE_MAIN       // indicator buffer ids
 #define MODE_TREND            SuperTrend.MODE_TREND
@@ -92,6 +93,7 @@ int    drawType;
 
 string indicatorName = "";
 string legendLabel   = "";
+string legendInfo    = "";                               // additional chart legend info
 
 bool   signals;
 bool   signal.sound;
@@ -102,7 +104,6 @@ string signal.mail.sender   = "";
 string signal.mail.receiver = "";
 bool   signal.sms;
 string signal.sms.receiver = "";
-string signal.info = "";                                 // additional chart legend info
 
 
 /**
@@ -143,13 +144,13 @@ int onInit() {
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
-   if (!ConfigureSignals(ProgramName(MODE_NICE), Signal.onTrendChange, signals))                         return(last_error);
+   if (!ConfigureSignals(ProgramName(), Signal.onTrendChange, signals)) return(last_error);
    if (signals) {
       if (!ConfigureSignalsBySound(Signal.Sound, signal.sound                                         )) return(last_error);
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "TrendChange="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -163,14 +164,9 @@ int onInit() {
    SetIndexBuffer(MODE_LOWER_BAND, lowerBand);           // lower channel band: visible
    SetIndexBuffer(MODE_MA,         sma      );           // MA                  visible
 
-   // chart legend
-   if (!IsSuperContext()) {
-      legendLabel = CreateLegendLabel();
-      RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
-   indicatorName = ProgramName(MODE_NICE) +"("+ ATR.Periods +")";
+   legendLabel = CreateLegend();
+   indicatorName = ProgramName() +"("+ ATR.Periods +")";
    IndicatorShortName(indicatorName);                    // chart tooltips and context menu
    SetIndexLabel(MODE_MAIN,      indicatorName);         // chart tooltips and "Data" window
    SetIndexLabel(MODE_TREND,     indicatorName +" trend");
@@ -180,17 +176,6 @@ int onInit() {
    SetIndicatorOptions();
 
    return(catch("onInit(6)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -295,8 +280,8 @@ int onTick() {
       }
    }
 
-   if (!IsSuperContext()) {
-      @Trend.UpdateLegend(legendLabel, indicatorName, signal.info, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
+   if (!__isSuperContext) {
+      UpdateTrendLegend(legendLabel, indicatorName, legendInfo, Color.UpTrend, Color.DownTrend, main[0], Digits, trend[0], Time[0]);
 
       // signal trend changes
       if (signals) /*&&*/ if (IsBarOpen()) {
@@ -366,12 +351,12 @@ void SetIndicatorOptions() {
       SetIndexLabel(MODE_LOWER_BAND, NULL);
    }
    else {
-      SetIndexLabel(MODE_UPPER_BAND, ProgramName(MODE_NICE) +" upper band");
-      SetIndexLabel(MODE_LOWER_BAND, ProgramName(MODE_NICE) +" lower band");
+      SetIndexLabel(MODE_UPPER_BAND, ProgramName() +" upper band");
+      SetIndexLabel(MODE_LOWER_BAND, ProgramName() +" lower band");
    }
 
    if (Color.MovingAverage == CLR_NONE) SetIndexLabel(MODE_MA, NULL);
-   else                                 SetIndexLabel(MODE_MA, ProgramName(MODE_NICE) +" SMA("+ SMA.Periods +")");
+   else                                 SetIndexLabel(MODE_MA, ProgramName() +" SMA("+ SMA.Periods +")");
 }
 
 

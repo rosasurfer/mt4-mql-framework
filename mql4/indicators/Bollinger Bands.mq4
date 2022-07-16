@@ -39,12 +39,13 @@ extern string Signal.SMS         = "on | off | auto*";
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@ALMA.mqh>
-#include <functions/@Bands.mqh>
+#include <functions/Bands.mqh>
 #include <functions/ConfigureSignals.mqh>
 #include <functions/ConfigureSignalsByMail.mqh>
 #include <functions/ConfigureSignalsBySMS.mqh>
 #include <functions/ConfigureSignalsBySound.mqh>
+#include <functions/legend.mqh>
+#include <functions/ta/ALMA.mqh>
 
 #define MODE_MA               Bands.MODE_MA           // indicator buffer ids
 #define MODE_UPPER            Bands.MODE_UPPER
@@ -67,9 +68,9 @@ double almaWeights[];
 
 string indicatorName = "";                            // name for chart legend
 string legendLabel   = "";
+string legendInfo    = "";                            // additional chart legend info
 
 bool   signals;
-string signal.info = "";                              // info text in chart legend
 bool   signal.sound;
 string signal.sound.touchBand = "Signal Up.wav";
 bool   signal.mail;
@@ -139,7 +140,7 @@ int onInit() {
       if (!ConfigureSignalsByMail (Signal.Mail,  signal.mail, signal.mail.sender, signal.mail.receiver)) return(last_error);
       if (!ConfigureSignalsBySMS  (Signal.SMS,   signal.sms,                      signal.sms.receiver )) return(last_error);
       if (signal.sound || signal.mail || signal.sms) {
-         signal.info = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
+         legendInfo = "TouchBand="+ StrLeft(ifString(signal.sound, "Sound+", "") + ifString(signal.mail, "Mail+", "") + ifString(signal.sms, "SMS+", ""), -1);
       }
       else signals = false;
    }
@@ -149,15 +150,11 @@ int onInit() {
    SetIndexBuffer(MODE_UPPER, bufferUpper);                    // upper band values: visible, displayed in "Data" window
    SetIndexBuffer(MODE_LOWER, bufferLower);                    // lower band values: visible, displayed in "Data" window
 
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // data display configuration, names and labels
+   legendLabel = CreateLegend();
    string sMaAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName = ProgramName(MODE_NICE) +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
-   IndicatorShortName(ProgramName(MODE_NICE) +"("+ MA.Periods +")");    // chart tooltips and context menu
+   indicatorName = ProgramName() +"("+ MA.Method +"("+ MA.Periods + sMaAppliedPrice +") ± "+ NumberToStr(Bands.StdDevs, ".1+") +")";
+   IndicatorShortName(ProgramName() +"("+ MA.Periods +")");    // chart tooltips and context menu
    if (!MA.LineWidth || MA.Color==CLR_NONE) SetIndexLabel(MODE_MA, NULL);
    else                                     SetIndexLabel(MODE_MA, MA.Method +"("+ MA.Periods + sMaAppliedPrice +")");
    SetIndexLabel(MODE_UPPER, "UpperBand("+ MA.Periods +")");   // chart tooltips and "Data" window
@@ -175,20 +172,10 @@ int onInit() {
 
    // initialize indicator calculation
    if (maMethod==MODE_ALMA && MA.Periods > 1) {
-      @ALMA.CalculateWeights(almaWeights, MA.Periods);
+      double almaOffset=0.85, almaSigma=6.0;
+      ALMA.CalculateWeights(MA.Periods, almaOffset, almaSigma, almaWeights);
    }
    return(catch("onInit(9)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -253,8 +240,8 @@ int onTick() {
 
 
    // update chart legend
-   if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, signal.info, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
+   if (!__isSuperContext) {
+      Bands.UpdateLegend(legendLabel, indicatorName, legendInfo, Bands.Color, bufferUpper[0], bufferLower[0], Digits, Time[0]);
    }
    return(last_error);
 }

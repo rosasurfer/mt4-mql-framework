@@ -17,11 +17,9 @@ double __rates[][6];                                                 // current 
  * @return int - error status
  */
 int init() {
-   if (__STATUS_OFF)
-      return(__STATUS_OFF.reason);
-
-   if (__CoreFunction == NULL)                                       // init() called by the terminal, all variables are reset
-      __CoreFunction = CF_INIT;
+   __isSuperContext = (__lpSuperContext != 0);
+   if (__STATUS_OFF) return(__STATUS_OFF.reason);
+   if (__CoreFunction == NULL) __CoreFunction = CF_INIT;             // init() called by the terminal, all variables are reset
 
    if (!IsDllsAllowed()) {
       ForceAlert("Please enable DLL function calls for this indicator.");
@@ -64,15 +62,14 @@ int init() {
    int initFlags = __ExecutionContext[EC.programInitFlags];
 
    if (initFlags & INIT_TIMEZONE && 1) {                             // check timezone configuration
-      if (!StringLen(GetServerTimezone())) return(_last_error(CheckErrors("init(3)")));
+      if (!StringLen(GetServerTimezone()))          return(_last_error(CheckErrors("init(3)")));
    }
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // fails if there is no tick yet, e.g.
       error = GetLastError();                                        // - symbol not yet subscribed (on start or account/template change), it shows up later
       if (IsError(error)) {                                          // - synthetic symbol in offline chart
-         if (error == ERR_SYMBOL_NOT_AVAILABLE)
-            return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
-         if (CheckErrors("init(6)", error)) return(last_error);
+         if (error == ERR_SYMBOL_NOT_AVAILABLE)     return(_last_error(logInfo("init(4)  MarketInfo(MODE_TICKSIZE) => ERR_SYMBOL_NOT_AVAILABLE", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(5)")));
+         if (CheckErrors("init(6)", error))         return(last_error);
       }
       if (!tickSize) return(_last_error(logInfo("init(7)  MarketInfo(MODE_TICKSIZE=0)", SetLastError(ERS_TERMINAL_NOT_YET_READY)), CheckErrors("init(8)")));
 
@@ -86,7 +83,7 @@ int init() {
    }
 
    // before onInit(): log input parameters if loaded by iCustom()
-   if (IsSuperContext()) /*&&*/ if (IsLogDebug()) {
+   if (__isSuperContext && IsLogDebug()) {
       string sInputs = InputsToStr();
       if (StringLen(sInputs) > 0) {
          sInputs = StringConcatenate(sInputs,
@@ -161,17 +158,17 @@ int init() {
 bool init_Globals() {
    // Terminal bug 1: On opening of a new chart window and on account change the global vars Digits and Point are set to the
    //                 values stored in the applied template, irrespective of the real symbol properties. This affects only
-   //                 the first init() call, in start() corrected values have been applied.
+   //                 the first init() call, in start() the true values have been applied.
    //
    // Terminal bug 2: In terminals build ???-??? above bug is permanent and the built-in vars Digits and Point are unusable.
    //
-   // Workaround: In init() correct Digits and Point values must be read from "symbols.raw". To work around broker configura-
-   //             tion errors there should be a way to overwrite specific properties via the framework configuration.
+   // Workaround: In init() Digits and Point must be read from "symbols.raw". To work around broker possible configuration
+   //             errors there should be a way to overwrite specific properties via the framework configuration.
    //
-   // TODO: implement workaround in MT4Expander
+   // TODO: implement workaround in the Expander
    //
-   __isChart   = (__ExecutionContext[EC.hChart] != 0);
-   __isTesting = (__ExecutionContext[EC.testing] || IsTesting());
+   __isChart      = (__ExecutionContext[EC.hChart] != 0);
+   __isTesting    = (__ExecutionContext[EC.testing] || IsTesting());
    if (__isTesting) __Test.barModel = Tester.GetBarModel();
 
    PipDigits      = Digits & (~1);
@@ -225,7 +222,7 @@ int start() {
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
-         if (CheckErrors("start(3)", error)) return(last_error);
+         if (CheckErrors("start(3)  Tick.time = 0", error)) return(last_error);
       }
    }
    static int prevVolume;
@@ -234,9 +231,8 @@ int start() {
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
 
-
-   // handle account changes
-   // ----------------------
+   // detect and handle account changes
+   // ---------------------------------
    // The tick on which AccountNumber() reports a new account the first time is executed either on new history (if it exists)
    // or on old history (if no history exists for the new account). Depending on it ValidBars will be either 0 (new history)
    // or not 0 (old history). Only the first tick with a new account number may be executed on old history. After a successfull
@@ -244,7 +240,6 @@ int start() {
    //
    // At terminal start AccountNumber() reports 0 (zero) until the connection is fully established. An account change at runtime
    // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
-   //
    static int prevAccount;
    int currAccount = AccountNumber();
    bool isAccountChange = (prevAccount && currAccount!=prevAccount);
@@ -259,7 +254,7 @@ int start() {
    if (__CoreFunction == CF_INIT) {
       __CoreFunction = ec_SetProgramCoreFunction(__ExecutionContext, CF_START);
 
-      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing a repetition of init()
+      // check initialization result: ERS_TERMINAL_NOT_YET_READY is the only error causing repetition of the init() call
       if (last_error == ERS_TERMINAL_NOT_YET_READY) {
          logDebug("start(4)  init() returned ERS_TERMINAL_NOT_YET_READY, retrying...");
          prev_error = last_error;
@@ -273,74 +268,86 @@ int start() {
             return(error);
          }                                                                       // last_error may hold another non-critical init() error which is discarded
       }
-   } //else (a regular tick)
+   }
 
-
-   // speed-up offline chart calculations
-   // -----------------------------------
-   // In offline charts IndicatorCounted() always reports all bars as changed and standard indicators have to recalculate all bars on every tick. By defining ShiftedBars
-   // and redefining ChangedBars indicators may use the various ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
+   // determine ShiftedBars to speed-up offline chart calculations
+   // ------------------------------------------------------------
+   // On Chart->Refresh IndicatorCounted() reports all bars as changed. This affects user-updated offline charts as standard indicators will recalculate all bars on
+   // every tick. By defining "ShiftedBars" an indicator can use the ShiftIndicatorBuffer() functions to achieve the same calculation performance as in online charts.
+   // "ShiftedBars" will be defined only on an offline refresh, that's when IndicatorCounted() repeatedly reports all bars as changed (prevBars && !ValidBars).
    //
    // The below code works under the following assumptions:
    // - new bars/ticks may only be added to history begin and old bars may only be shifted off from history end
    // - all updates must include either the begin or the end of the history (no separate updates in the middle)
-   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a single random second)
+   // - if the full history is replaced then either number of Bars, Time[0] or Time[Bars-1] must change (e.g. by modifying the timestamp of Time[Bars-1] by a random second)
    // - if neither number of Bars, Time[0] nor Time[Bars-1] changed it's assumed that only the newest bar changed (i.e. a new tick was added)
    //
-   static int prevBars = -1;
+   static int prevBars;
    static datetime prevFirstBarTime, prevLastBarTime;
-
-   if (!isAccountChange && !ValidBars && prevBars>=0 && !IsConnected()) {        // Detects offline charts and regular charts on a disconnected terminal.
-      bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
-      bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
-
-      // if number of bars is the same
-      if (Bars == prevBars) {
-         if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
-            ShiftedBars = 0;
-            ChangedBars = 1;                                                     // a new tick
-         }
-         else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
-            for (int i=1; i < Bars; i++) {
-               if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
-            }
-            if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
-               ShiftedBars = i;
-               ChangedBars = ShiftedBars + 1;
-            }
+   static bool isOfflineChart = -1; if (isOfflineChart == -1) {
+      if      (__isTesting)                 isOfflineChart = false;
+      else if (IsCustomTimeframe(Period())) isOfflineChart = true;
+      else {
+         string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]);
+         if (StringLen(wndTitle) > 0) {
+            isOfflineChart = StrEndsWith(wndTitle, "(offline)");
          }
       }
+   }
 
-      // if number of bars increased
-      else if (Bars > prevBars) {
-         if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
-            if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
-               ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
-               ChangedBars = ShiftedBars + 1;
+   if (!isAccountChange && prevBars && !ValidBars) {
+      if (isOfflineChart==true || !IsConnected()) {
+         bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
+         bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
+
+         // if number of bars is the same
+         if (Bars == prevBars) {
+            if (sameFirst && sameLast) {                                            // first and last bar still the same (common use case: a single tick was added)
+               ShiftedBars = 0;
+               ChangedBars = 1;                                                     // a new tick
+            }
+            else if (Time[Bars-1] > prevLastBarTime && Time[0] > prevFirstBarTime) {// old bars have been shifted off the end and new bars have been appended (rare use case)
+               for (int i=1; i < Bars; i++) {
+                  if (Time[i] <= prevFirstBarTime) break;                           // look up prevFirstBar
+               }
+               if (Time[i] == prevFirstBarTime) {                                   // found (no ERR_ARRAY_INDEX_OUT_OF_RANGE on Times[Bar])
+                  ShiftedBars = i;
+                  ChangedBars = ShiftedBars + 1;
+               }
             }
          }
-      }                                                                          // all other cases: all bars stay invalidated
+
+         // if number of bars increased
+         else if (Bars > prevBars) {
+            if (sameLast && Time[0] > prevFirstBarTime) {                           // last bar still the same and new bars have been appended (common use case: a new bar was added)
+               if (Time[Bars-prevBars] == prevFirstBarTime) {                       // inspect prevFirstBar
+                  ShiftedBars = Bars-prevBars;                                      // newer bars have been appended only, nothing was inserted
+                  ChangedBars = ShiftedBars + 1;
+               }
+            }
+         }                                                                          // all other cases: all bars stay invalidated
+         //if (1 || Symbol()=="USDLFX") debug("start(0.1)  Tick="+ StrPadRight(Ticks, 3) +" offline refresh:    Bars="+ Bars +"  ChangedBars="+ StrPadRight(ChangedBars, 4) +"  ShiftedBars="+ ShiftedBars);
+      }
+      //else if (1 || Symbol()=="USDLFX") debug("start(0.2)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    }
+   //else if (1 || Symbol()=="USDLFX") debug("start(0.3)  Tick="+ StrPadRight(Ticks, 3) +" no offline refresh: Bars="+ Bars +"  ChangedBars="+ ChangedBars);
    prevBars         = Bars;
    prevFirstBarTime = Time[0];
    prevLastBarTime  = Time[Bars-1];
-   ValidBars        = Bars - ChangedBars;                                        // update ValidBars accordingly
-
+   ValidBars        = Bars - ChangedBars;                                           // update ValidBars accordingly
 
    // reset last_error
    prev_error = last_error;
    ec_SetDllError(__ExecutionContext, SetLastError(NO_ERROR));
 
-
-   // final update of ChangedBars                                                // TODO: replace by global var CalculatedBars
+   // final update of ChangedBars                                                   // TODO: replace by global var CalculatedBars
    if      (prev_error == ERS_TERMINAL_NOT_YET_READY) ValidBars = 0;
    else if (prev_error == ERR_HISTORY_INSUFFICIENT  ) ValidBars = 0;
    else if (prev_error == ERS_HISTORY_UPDATE        ) ValidBars = 0;
-   if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;             // *_HISTORY_UPDATE may be signaled in two places
+   if      (__STATUS_HISTORY_UPDATE                 ) ValidBars = 0;                // *_HISTORY_UPDATE may be signaled in two places
    __STATUS_HISTORY_UPDATE = false;
    if (!ValidBars) ShiftedBars = 0;
    ChangedBars = Bars - ValidBars;
-
 
    // synchronize EXECUTION_CONTEXT
    ArrayCopyRates(__rates);
@@ -355,7 +362,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(7)", error);
+      CheckErrors("start(7)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
@@ -403,7 +410,10 @@ int deinit() {
       }                                                                 //
    }                                                                    //
    if (!error) error = afterDeinit();                                   // postprocessing hook
-   if (!__isTesting) DeleteRegisteredObjects();
+   if (!__isTesting) {
+      RemoveLegend();
+      DeleteRegisteredObjects();
+   }
 
    return(CheckErrors("deinit(4)") + LeaveContext(__ExecutionContext));
 }
@@ -543,6 +553,7 @@ bool CheckErrors(string caller, int error = NULL) {
    int  ec_SetDllError           (int ec[], int error);
    int  ec_SetProgramCoreFunction(int ec[], int function);
 
+   bool RemoveLegend();
    bool ShiftDoubleIndicatorBuffer(double buffer[], int size, int count, double emptyValue);
 
    int  SyncMainContext_init  (int ec[], int programType, string programName, int unintReason, int initFlags, int deinitFlags, string symbol, int timeframe, int digits, double point, int recordMode, int isTesting, int isVisualMode, int isOptimization, int isExternalReporting, int lpSec, int hChart, int droppedOnChart, int droppedOnPosX, int droppedOnPosY);

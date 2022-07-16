@@ -54,6 +54,8 @@ bool   test.initialized = false;
  * @return int - error status
  */
 int init() {
+   __isSuperContext = false;
+
    if (__STATUS_OFF) {                                         // TODO: process ERR_INVALID_INPUT_PARAMETER (enable re-input)
       if (__STATUS_OFF.reason != ERR_TERMINAL_INIT_FAILURE)
          ShowStatus(__STATUS_OFF.reason);
@@ -223,9 +225,9 @@ int init() {
    }
 
    // immediately send a virtual tick, except on UR_CHARTCHANGE
-   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message
-      Chart.SendTick();                                                       // queue may be processed before this function
-   return(last_error);                                                        // is left and the tick might get lost.
+   if (UninitializeReason() != UR_CHARTCHANGE)                                // At the very end, otherwise the window message queue may be processed
+      Chart.SendTick();                                                       // before this function is left and the tick might get lost.
+   return(last_error);
 }
 
 
@@ -358,7 +360,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      return(_last_error(CheckErrors("start(11)", error)));
+      return(_last_error(CheckErrors("start(11)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error)));
    return(ShowStatus(NO_ERROR));
 }
 
@@ -655,8 +657,8 @@ bool init_Recorder() {
          }
          else {
             // create a single new equity symbol using default values
-            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                                 // sizeof(SYMBOL.description) = 64 chars
-            symbolDescr  = StrLeft(ProgramName(MODE_NICE), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
+            symbol       = init_RecorderNewSymbol(); if (!StringLen(symbol)) return(false);                        // sizeof(SYMBOL.description) = 64 chars
+            symbolDescr  = StrLeft(ProgramName(), 43) +" "+ LocalTimeFormat(GetGmtTime(), "%d.%m.%Y %H:%M:%S");    // 43 + 1 + 19 = 63 chars
             symbolDigits = 2;
             if (!init_RecorderAddSymbol(0, true, symbol, symbolDescr, "", symbolDigits, NULL, NULL, "", NULL)) return(false);
          }
@@ -769,7 +771,7 @@ string init_RecorderNewSymbol() {
    FileClose(hFile);
 
    // iterate over all symbols and determine the next available one matching "{ExpertName}.{001-xxx}"
-   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(MODE_NICE), " ", ""), 7) +".";
+   string symbol="", suffix="", name=StrLeft(StrReplace(ProgramName(), " ", ""), 7) +".";
 
    for (int i, maxId=0; i < symbolsSize; i++) {
       symbol = symbols_Name(symbols, i);
@@ -797,7 +799,7 @@ string init_RecorderSymbolGroup(string caller, string symbolGroup = "") {
 
    if (!StringLen(symbolGroup)) {
       if (!StringLen(defaultValue)) {
-         defaultValue = StrLeft(ProgramName(MODE_NICE), MAX_SYMBOL_GROUP_LENGTH);
+         defaultValue = StrLeft(ProgramName(), MAX_SYMBOL_GROUP_LENGTH);
       }
       symbolGroup = defaultValue;
    }

@@ -12,9 +12,6 @@
  *  • Stochastic.MODE_TREND:  direction and age of the last signal
  *    - signal direction:     positive values denote a long signal (+1...+n), negative values a short signal (-1...-n)
  *    - signal age:           the absolute value is the age of the signal in bars since its occurrence
- *
- * Notes:
- *  - The additional dot in the name prevents the indicator to be overwritten by the MetaQuotes indicator of the same name.
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -195,17 +192,14 @@ int onTick() {
  */
 bool UpdateSignalMarker(int bar) {
    static string prefix = ""; if (!StringLen(prefix)) {
-      prefix = StringConcatenate(ProgramName(MODE_NICE), "[", __ExecutionContext[EC.pid], "] Signal ");
+      prefix = StringConcatenate(ProgramName(), "[", __ExecutionContext[EC.pid], "] Signal ");
    }
    string label = StringConcatenate(prefix, TimeToStr(Time[bar]+Period()*MINUTES, TIME_DATE|TIME_MINUTES));
-   bool objExists = !ObjectFind(label);
+   bool objExists = (ObjectFind(label) != -1);
    double price;
 
    if (trend[bar]==1 || trend[bar]==-1) {                                     // set marker long|short
-      if (!objExists) {
-         ObjectCreate(label, OBJ_ARROW, 0, NULL, NULL);
-         RegisterObject(label);
-      }
+      if (!objExists) if (!ObjectCreateRegister(label, OBJ_ARROW, 0, 0, 0, 0, 0, 0, 0)) return(false);
       if (trend[bar]==1) price =  Low[bar] - iATR(NULL, NULL, 10, bar) * 1.1;
       else               price = High[bar] + iATR(NULL, NULL, 10, bar) * 1.1;
 
@@ -215,9 +209,8 @@ bool UpdateSignalMarker(int bar) {
       ObjectSet(label, OBJPROP_PRICE1,    price);
       ObjectSetText(label, ifString(trend[bar]==1, "Long", "Short") +" @ "+ NumberToStr(Close[bar], PriceFormat));
    }
-   else if (objExists) {                                                      // unset existing marker
-      ObjectDelete(label);
-   }
+   else if (objExists) ObjectDelete(label);                                   // unset existing marker
+
    return(!catch("UpdateSignalMarker(1)"));
 }
 

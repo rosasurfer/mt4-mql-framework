@@ -36,8 +36,9 @@ extern bool   AlertsOn         = false;
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@Bands.mqh>
+#include <functions/Bands.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/legend.mqh>
 #include <functions/ManageDoubleIndicatorBuffer.mqh>
 
 #define MODE_TMA_RP              0                 // indicator buffer ids
@@ -130,13 +131,8 @@ int onInit() {
    SetIndexBuffer(MODE_REVERSAL_AGE,      reversalAge    ); SetIndexEmptyValue(MODE_REVERSAL_AGE,    0);
    SetIndexBuffer(MODE_UPPER_VARIANCE_RP, upperVarianceRP);                                              // not visible
 
-   // chart legend
-   if (!IsSuperContext()) {
-       legendLabel = CreateLegendLabel();
-       RegisterObject(legendLabel);
-   }
-
    // names, labels and display options
+   legendLabel = CreateLegend();
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName = "TMA("+ maPeriods + sAppliedPrice +") Gammarat Channel"+ ifString(RepaintingMode, " RP", " NRP");
    string shortName = "TMA("+ maPeriods +") Gammarat Channel";
@@ -165,21 +161,10 @@ int onInit() {
  */
 int afterInit() {
    if (__isTesting) {                                       // read test configuration
-      string section = ProgramName(MODE_NICE) +".Tester";
+      string section = ProgramName() +".Tester";
       test.onSignalPause = GetConfigBool(section, "OnSignalPause", false);
    }
    return(catch("afterInit(1)"));
-}
-
-
-/**
- * Deinitialization
- *
- * @return int - error status
- */
-int onDeinit() {
-   RepositionLegend();
-   return(catch("onDeinit(1)"));
 }
 
 
@@ -290,8 +275,8 @@ void CalculateRepaintingTMA(int startbar) {
       lowerBandRP[i] = tmaRP[i] - Bands.Deviations * MathSqrt(lowerVarianceRP[i]);
    }
 
-   if (!IsSuperContext()) {
-      @Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
+   if (!__isSuperContext) {
+      Bands.UpdateLegend(legendLabel, indicatorName, "", Bands.Color, upperBandRP[0], lowerBandRP[0], Digits, Time[0]);
    }
    return(last_error);
 }

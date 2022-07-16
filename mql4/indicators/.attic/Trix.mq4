@@ -39,7 +39,7 @@ extern int    Max.Bars              = 10000;                // max. values to ca
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/@Trend.mqh>
+#include <functions/trend.mqh>
 
 #property indicator_separate_window
 #property indicator_buffers   4                             // buffers visible to the user
@@ -206,7 +206,7 @@ int onTick() {
       else                   { trixUpper[bar] = EMPTY_VALUE;   trixLower[bar] = trixMain[bar]; }
 
       // trend direction and length
-      @Trend.UpdateDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
+      UpdateTrendDirection(trixMain, bar, trixTrend, dNull, dNull, dNull);
    }
    return(last_error);
 }

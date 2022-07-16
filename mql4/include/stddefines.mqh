@@ -1,25 +1,27 @@
 /**
- * Global constants and variables.
+ * Global constants and variables
  */
-#property stacksize 32768                                         // According to various MetaQuotes sources the default stacksize per MQL module in 2019 is 256KB
-                                                                  // (some even claim 1-8MB). In build 225 the default stacksize was 16KB which at some point had
-#include <mqldefines.mqh>                                         // to be increased. Using 32KB has always been sufficient.
+#property stacksize 32768                                         // According to different MetaQuotes infos the default stacksize per MQL module in 2019 is 256KB
+                                                                  // (some even claim 1-8MB). In build 225 the default stacksize was 16KB which had to be increased.
+#include <mqldefines.mqh>                                         // Using 32KB has always been sufficient.
 #include <win32defines.mqh>                                       //
-#include <structs/sizes.mqh>                                      //  @see  https://docs.mql4.com/basis/variables/local#stack
-                                                                  //  @see  https://docs.mql4.com/basis/preprosessor/compilation
+#include <structs/sizes.mqh>                                      // @see  https://docs.mql4.com/basis/variables/local#stack
+                                                                  // @see  https://docs.mql4.com/basis/preprosessor/compilation
 
 // global variables
 int      __ExecutionContext[EXECUTION_CONTEXT_intSize];           // EXECUTION_CONTEXT
-//int    __lpSuperContext;                                        // address of the super EXECUTION_CONTEXT (in indicators loaded by iCustom() and their libraries only)
+//int    __lpSuperContext;                                        // address of the parent EXECUTION_CONTEXT, set only in indicators loaded by iCustom()
 //int    __lpTestedExpertContext;                                 // im Tester Zeiger auf den ExecutionContext des Experts (noch nicht implementiert)
-//int    __CoreFunction;                                          // the core function currently executed by the MQL main module: CF_INIT|CF_START|CF_DEINIT
+//int    __CoreFunction;                                          // the current MQL core function executed by the program's main module: CF_INIT|CF_START|CF_DEINIT
+
 bool     __isChart;                                               // Whether the program runs on a visible chart. FALSE only in tester with "VisualMode=Off" or "Optimization=On".
-bool     __isTesting;                                             // Whether the program runs in the tester (experts, indicators and scripts).
+bool     __isTesting;                                             // Whether the program runs in the tester or on a test chart (experts, indicators and scripts).
+bool     __isSuperContext;                                        // Whether the current program is an indicator loaded by iCustom().
 int      __Test.barModel;                                         // the bar model of a test
 
 bool     __STATUS_HISTORY_UPDATE;                                 // History-Update wurde getriggert
-bool     __STATUS_OFF;                                            // Programm komplett abgebrochen (switched off)
-int      __STATUS_OFF.reason;                                     // Ursache für Programmabbruch: Fehlercode (kann, muß aber nicht gesetzt sein)
+bool     __STATUS_OFF;                                            // flag for user-land program termination, if TRUE the program's main functions are no longer executed: onInit|onTick|onStart|onDeinit
+int      __STATUS_OFF.reason;                                     // reason of program termination (error code)
 
 double   Pip;                                                     // Betrag eines Pips des aktuellen Symbols (z.B. 0.0001 = Pip-Size)
 int      PipDigits;                                               // Digits eines Pips des aktuellen Symbols (Annahme: Pip sind gradzahlig)
@@ -28,9 +30,9 @@ string   PriceFormat="", PipPriceFormat="";                       // Preisformat
 int      Ticks;                                                   // number of times MQL::start() was called (value survives init cycles, also in indicators)
 datetime Tick.time;                                               // server time of the last received tick
 bool     Tick.isVirtual;
-int      ChangedBars;                                             // in indicators, it holds: Bars = ValidBars + ChangedBars (in experts and scripts: always -1)
-int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts: always -1)
-int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts: always -1)
+int      ChangedBars;                                             // in indicators, it holds: Bars = ValidBars + ChangedBars (in experts and scripts always -1)
+int      ValidBars;                                               // in indicators: ValidBars = IndicatorCounted()           (in experts and scripts always -1)
+int      ShiftedBars;                                             // in indicators: non-zero in offline charts only          (in experts and scripts always -1)
 
 int      last_error;                                              // last error of the current execution
 int      prev_error;                                              // last error of the previous start() call
@@ -254,11 +256,6 @@ double  N_INF;                                                    // -1.#INF: ne
 #define OBJ_PERIOD_MN1         0x0100           // 256: object is shown on MN1 charts
 #define OBJ_PERIODS_ALL        0x01FF           // 511: object is shown on all timeframes (same as specifying NULL)
 #define OBJ_PERIODS_NONE       EMPTY            //  -1: object is hidden on all timeframes
-
-
-// name sanitizer modes for ProgramName(), ModuleName() and FullModuleName()
-#define MODE_RAW               0
-#define MODE_NICE              1
 
 
 // modes to specify the pool to select an order from; see OrderSelect()

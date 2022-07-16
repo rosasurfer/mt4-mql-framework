@@ -15,7 +15,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string Timeframe                      = "H1";                          // inside bar timeframe to process
-extern int    NumberOfInsideBars             = 1;                             // number of inside bars to display (-1: all)
+extern int    NumberOfInsideBars             = 2;                             // number of inside bars to display (-1: all)
 
 extern string ___a__________________________ = "=== Signaling ===";
 extern bool   Signal.onInsideBar             = false;
@@ -86,7 +86,7 @@ double   latestIB.low;
  * @return int - error status
  */
 int onInit() {
-   string indicator = ProgramName(MODE_NICE);
+   string indicator = ProgramName();
 
    // validate inputs
    // Timeframe
@@ -207,7 +207,7 @@ int onInit() {
    string label = CreateStatusLabel();
    string fontName = "";                                       // "" => menu font family
    int    fontSize = 8;                                        // 8  => menu font size
-   string text = ProgramName(MODE_NICE) +": "+ Timeframe + signalInfo;
+   string text = ProgramName() +": "+ Timeframe + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
    return(catch("onInit(7)"));
@@ -726,37 +726,34 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
 
    // vertical line at IB open
    string label = sTimeframe +" inside bar: "+ NumberToStr(high, PriceFormat) +"-"+ NumberToStr(low, PriceFormat) +" (size "+ DoubleToStr(barSize/Pip, Digits & 1) +") ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget)) {
-      ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet     (label, OBJPROP_COLOR, Blue);
-      ObjectSet     (label, OBJPROP_RAY,   false);
-      ObjectSet     (label, OBJPROP_BACK,  true);
-      RegisterObject(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, chartOpenTime, shortTarget, 0, 0)) {
+      ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet      (label, OBJPROP_COLOR, Blue);
+      ObjectSet      (label, OBJPROP_RAY,   false);
+      ObjectSet      (label, OBJPROP_BACK,  true);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(1)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
 
    // horizontal line at long projection
    label = sTimeframe +" inside bar: +100 = "+ NumberToStr(longTarget, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget)) {
-      ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet     (label, OBJPROP_COLOR, Blue);
-      ObjectSet     (label, OBJPROP_RAY,   false);
-      ObjectSet     (label, OBJPROP_BACK,  true);
-      ObjectSetText (label, " "+ sTimeframe);
-      RegisterObject(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, longTarget, closeTime, longTarget, 0, 0)) {
+      ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet      (label, OBJPROP_COLOR, Blue);
+      ObjectSet      (label, OBJPROP_RAY,   false);
+      ObjectSet      (label, OBJPROP_BACK,  true);
+      ObjectSetText  (label, " "+ sTimeframe);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(2)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(2)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
 
    // horizontal line at short projection
    label = sTimeframe +" inside bar: -100 = "+ NumberToStr(shortTarget, PriceFormat) +" ["+ counter +"]";
-   if (ObjectCreate (label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget)) {
-      ObjectSet     (label, OBJPROP_STYLE, STYLE_DOT);
-      ObjectSet     (label, OBJPROP_COLOR, Blue);
-      ObjectSet     (label, OBJPROP_RAY,   false);
-      ObjectSet     (label, OBJPROP_BACK,  true);
-      RegisterObject(label);
+   if (ObjectCreateRegister(label, OBJ_TREND, 0, chartOpenTime, shortTarget, closeTime, shortTarget, 0, 0)) {
+      ObjectSet      (label, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet      (label, OBJPROP_COLOR, Blue);
+      ObjectSet      (label, OBJPROP_RAY,   false);
+      ObjectSet      (label, OBJPROP_BACK,  true);
       ArrayPushString(labels, label);
-   } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), GetLastError());
+   } else debug("CreateInsideBar(3)  label="+ DoubleQuoteStr(label), __ExecutionContext[EC.mqlError]);
 
    // store data of the latest inside bar for projection monitoring
    if (openTime > latestIB.openTime) {
@@ -767,7 +764,7 @@ bool CreateInsideBar(int timeframe, datetime openTime, double high, double low) 
    }
 
    // signal new inside bars
-   if (signalInsideBar) /*&&*/ if (!IsSuperContext()) /*&&*/ if (IsBarOpen(timeframe)) {
+   if (signalInsideBar && !__isSuperContext) /*&&*/ if (IsBarOpen(timeframe)) {
       return(onInsideBar(timeframe, closeTime, high, low));
    }
    return(true);
@@ -975,18 +972,13 @@ int PlaySoundDX(string action) {
  * @return string - created label or an empty string in case of errors
  */
 string CreateStatusLabel() {
-   string label = "rsf."+ ProgramName(MODE_NICE) +".status["+ __ExecutionContext[EC.pid] +"]";
+   string label = "rsf."+ ProgramName() +".status["+ __ExecutionContext[EC.pid] +"]";
 
-   if (ObjectFind(label) == 0)
-      ObjectDelete(label);
-
-   if (ObjectCreate(label, OBJ_LABEL, 0, 0, 0)) {
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
-      ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
-      ObjectSet    (label, OBJPROP_YDISTANCE,   3);
-      ObjectSetText(label, " ", 1);
-      RegisterObject(label);
-   }
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return("");
+   ObjectSet    (label, OBJPROP_CORNER, CORNER_TOP_LEFT);
+   ObjectSet    (label, OBJPROP_XDISTANCE, 500);            // the SuperBars label starts at xDist=300
+   ObjectSet    (label, OBJPROP_YDISTANCE,   3);
+   ObjectSetText(label, " ", 1);
 
    if (!catch("CreateStatusLabel(1)"))
       return(label);
