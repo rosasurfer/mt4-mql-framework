@@ -43,13 +43,20 @@
  *
  *
  * TODO:
- *  - rewrite T3, Moving Average, MACD
+ *  - rewrite T3
+ *     auto-configuration
+ *     signaling
+ *     MA.ReversalFilter
+ *     parameter stepper
+ *
+ *  - rewrite ADR, Moving Average, MACD
  *     MA methods
  *     auto-configuration
  *     signaling
  *     MA.ReversalFilter
  *     parameter stepper
  *
+ *  - move iCustom() to ta/includes
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
