@@ -10008,7 +10008,7 @@ window_num=0
 MA.Periods=38
 Color.UpTrend=16711680
 Color.DownTrend=255
-Draw.Type=Dot
+Draw.Type=Line | Dot*
 Draw.Width=3
 </inputs>
 </expert>

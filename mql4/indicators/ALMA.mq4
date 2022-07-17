@@ -24,7 +24,7 @@ extern int    MA.Periods.Step                = 0;                 // step size f
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
-extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter              = 0.4;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for stepped input parameter
 
 extern string Draw.Type                      = "Line* | Dot";
@@ -205,6 +205,7 @@ int onInit() {
    SetIndicatorOptions();
 
    // calculate ALMA bar weights
+   debug("onInit(0.1)  MA.Periods="+ MA.Periods);
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
@@ -560,17 +561,20 @@ bool RestoreStatus() {
    if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep;
-      Chart.RestoreInt(prefix +"MA.Periods",      iValue);
-      Chart.RestoreInt(prefix +"MA.Periods.Step", iStep);
-      if (iStep == MA.Periods.Step)
+      int iValue, iStep, restored=1;
+      restored &= Chart.RestoreInt(prefix +"MA.Periods",     iValue) + 0;
+      restored &= Chart.RestoreInt(prefix +"MA.Periods.Step", iStep) + 0;
+      if (restored && iStep && iStep==MA.Periods.Step) {
          MA.Periods = iValue;
+      }
 
       double dValue, dStep;
-      Chart.RestoreDouble(prefix +"MA.ReversalFilter",      dValue);
-      Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep);
-      if (EQ(dStep, MA.ReversalFilter.Step))
+      restored = 1;
+      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter",     dValue) + 0;
+      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep) + 0;
+      if (restored && dStep && EQ(dStep, MA.ReversalFilter.Step)) {
          MA.ReversalFilter = dValue;
+      }
    }
    return(!catch("RestoreStatus(1)"));
 }
