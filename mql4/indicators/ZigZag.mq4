@@ -926,12 +926,14 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart && ZigZag.Periods.Step) {
+   if (__isChart) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
       int iValue;
       if (Chart.RestoreInt(prefix +"ZigZag.Periods", iValue)) {
-         if (iValue >= 2) ZigZag.Periods = iValue;             // silent validation
+         if (ZigZag.Periods.Step > 0) {
+            if (iValue >= 2) ZigZag.Periods = iValue;          // silent validation
+         }
       }
    }
    return(!catch("RestoreStatus(1)"));

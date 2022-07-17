@@ -516,16 +516,16 @@ bool RestoreStatus() {
    if (__isChart) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      if (WaveCycle.Periods.Step > 0) {
-         int iValue;
-         if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {
+      int iValue;
+      if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {
+         if (WaveCycle.Periods.Step > 0) {
             if (iValue >= 3) WaveCycle.Periods = iValue;       // silent validation
          }
       }
 
-      if (MA.ReversalFilter.Step > 0) {
-         double dValue;
-         if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
+      double dValue;
+      if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
+         if (MA.ReversalFilter.Step > 0) {
             if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
          }
       }
