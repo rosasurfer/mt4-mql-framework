@@ -73,12 +73,12 @@ int       terminal_buffers  = 8;                         // all buffers
 #property indicator_color4    CLR_NONE
 #property indicator_color5    CLR_NONE
 
-double maRaw     [];                                     // ALMA raw main values:      invisible
-double maFiltered[];                                     // ALMA filtered main values: invisible, displayed in legend and "Data" window
-double trend     [];                                     // trend direction:           invisible, displayed in "Data" window
-double uptrend   [];                                     // uptrend values:            visible
-double downtrend [];                                     // downtrend values:          visible
-double uptrend2  [];                                     // single-bar uptrends:       visible
+double maRaw     [];                                     // MA raw main values:      invisible
+double maFiltered[];                                     // MA filtered main values: invisible, displayed in legend and "Data" window
+double trend     [];                                     // trend direction:         invisible, displayed in "Data" window
+double uptrend   [];                                     // uptrend values:          visible
+double downtrend [];                                     // downtrend values:        visible
+double uptrend2  [];                                     // single-bar uptrends:     visible
 
 double maChange  [];                                     // absolute change of current maRaw[] to previous maFiltered[]
 double maAverage [];                                     // average of maChange[] over the last 'MA.Periods' bars
@@ -89,6 +89,7 @@ int    drawType;
 int    maxValues;
 
 string indicatorName = "";
+string shortName     = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
 bool   enableMultiColoring;
@@ -194,18 +195,17 @@ int onInit() {
    RestoreStatus();
 
    // buffer management and options
-   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // ALMA raw main values:      invisible
-   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // ALMA filtered main values: invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:           invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:            visible
-   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:          visible
-   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:       visible
-   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                            invisible
-   SetIndexBuffer(MODE_AVG,         maAverage );   //                            invisible
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:     visible
+   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                          invisible
+   SetIndexBuffer(MODE_AVG,         maAverage );   //                          invisible
    SetIndicatorOptions();
 
    // calculate ALMA bar weights
-   debug("onInit(0.1)  MA.Periods="+ MA.Periods);
    ALMA.CalculateWeights(MA.Periods, Distribution.Offset, Distribution.Sigma, maWeights);
 
    // chart legend and coloring
@@ -373,7 +373,7 @@ bool onTrendChange(int trend) {
    int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
-      message = indicatorName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+      message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -385,7 +385,7 @@ bool onTrendChange(int trend) {
    }
 
    if (trend == MODE_DOWNTREND) {
-      message = indicatorName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+      message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -518,7 +518,7 @@ void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = "ALMA("+ ifString(MA.Periods.Step || MA.ReversalFilter.Step, "step:", "") + MA.Periods + sMaFilter + sAppliedPrice +")";
-   string shortName     = "ALMA("+ MA.Periods +")";
+   shortName            = "ALMA("+ MA.Periods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);

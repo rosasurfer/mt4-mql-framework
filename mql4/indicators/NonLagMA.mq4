@@ -91,6 +91,7 @@ int    drawType;
 int    maxValues;
 
 string indicatorName = "";
+string shortName     = "";
 string legendLabel   = "";
 string legendInfo    = "";                               // additional chart legend info
 bool   enableMultiColoring;
@@ -329,7 +330,7 @@ bool onTrendChange(int trend) {
    int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
-      message = indicatorName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+      message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -341,7 +342,7 @@ bool onTrendChange(int trend) {
    }
 
    if (trend == MODE_DOWNTREND) {
-      message = indicatorName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
+      message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
@@ -474,7 +475,7 @@ void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
    indicatorName        = "NonLagMA("+ ifString(WaveCycle.Periods.Step || MA.ReversalFilter.Step, "step:", "") + WaveCycle.Periods + sMaFilter + sAppliedPrice +")";
-   string shortName     = "NLMA("+ WaveCycle.Periods +")";
+   shortName            = "NLMA("+ WaveCycle.Periods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);

@@ -138,6 +138,7 @@ double   prevUpperBand;
 double   prevLowerBand;
 
 string   indicatorName = "";
+string   shortName     = "";
 string   legendLabel   = "";
 string   legendInfo    = "";                                   // additional chart legend info
 
@@ -522,7 +523,7 @@ bool onReversal(int direction, int bar) {
       string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
       string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
       if (IsLogInfo()) logInfo("onReversal("+ ZigZag.Periods +"x"+ sPeriod +")  "+ message);
-      message            = Symbol() +","+ PeriodDescription() +": "+ indicatorName +" reversal "+ message;
+      message            = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
 
       if (signalReversal.sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
@@ -869,8 +870,8 @@ bool IsPossibleDataPumping() {
  * recompilation options must be set in start() to not be ignored.
  */
 void SetIndicatorOptions() {
-   indicatorName    = "ZigZag("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
-   string shortName = "ZigZag("+ ZigZag.Periods +")";
+   indicatorName = "ZigZag("+ ifString(ZigZag.Periods.Step, "step:", "") + ZigZag.Periods +")";
+   shortName     = "ZigZag("+ ZigZag.Periods +")";
    IndicatorShortName(shortName);
 
    IndicatorBuffers(terminal_buffers);
