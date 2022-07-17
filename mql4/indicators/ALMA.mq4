@@ -542,10 +542,8 @@ bool StoreStatus() {
    if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"MA.Periods",             MA.Periods);
-      Chart.StoreInt   (prefix +"MA.Periods.Step",        MA.Periods.Step);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter",      MA.ReversalFilter);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter.Step", MA.ReversalFilter.Step);
+      Chart.StoreInt   (prefix +"MA.Periods",        MA.Periods);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -558,22 +556,21 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart && (MA.Periods.Step || MA.ReversalFilter.Step)) {
+   if (__isChart) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep, restored=1;
-      restored &= Chart.RestoreInt(prefix +"MA.Periods",     iValue) + 0;
-      restored &= Chart.RestoreInt(prefix +"MA.Periods.Step", iStep) + 0;
-      if (restored && iStep && iStep==MA.Periods.Step) {
-         MA.Periods = iValue;
+      if (MA.Periods.Step > 0) {
+         int iValue;
+         if (Chart.RestoreInt(prefix +"MA.Periods", iValue)) {
+            if (iValue >= 1) MA.Periods = iValue;              // silent validation
+         }
       }
 
-      double dValue, dStep;
-      restored = 1;
-      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter",     dValue) + 0;
-      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep) + 0;
-      if (restored && dStep && EQ(dStep, MA.ReversalFilter.Step)) {
-         MA.ReversalFilter = dValue;
+      if (MA.ReversalFilter.Step > 0) {
+         double dValue;
+         if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
+            if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
+         }
       }
    }
    return(!catch("RestoreStatus(1)"));
