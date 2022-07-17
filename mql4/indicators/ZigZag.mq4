@@ -912,8 +912,7 @@ bool StoreStatus() {
    if (__isChart && ZigZag.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt(prefix +"ZigZag.Periods",      ZigZag.Periods);
-      Chart.StoreInt(prefix +"ZigZag.Periods.Step", ZigZag.Periods.Step);
+      Chart.StoreInt(prefix +"ZigZag.Periods", ZigZag.Periods);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -929,11 +928,9 @@ bool RestoreStatus() {
    if (__isChart && ZigZag.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep, restored=1;
-      restored &= Chart.RestoreInt(prefix +"ZigZag.Periods",     iValue) + 0;
-      restored &= Chart.RestoreInt(prefix +"ZigZag.Periods.Step", iStep) + 0;
-      if (restored && iStep && iStep==ZigZag.Periods.Step) {
-         ZigZag.Periods = iValue;
+      int iValue;
+      if (Chart.RestoreInt(prefix +"ZigZag.Periods", iValue)) {
+         if (iValue >= 2) ZigZag.Periods = iValue;             // silent validation
       }
    }
    return(!catch("RestoreStatus(1)"));

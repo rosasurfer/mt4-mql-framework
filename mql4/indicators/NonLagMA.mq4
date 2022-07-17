@@ -498,10 +498,8 @@ bool StoreStatus() {
    if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"WaveCycle.Periods",      WaveCycle.Periods);
-      Chart.StoreInt   (prefix +"WaveCycle.Periods.Step", WaveCycle.Periods.Step);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter",      MA.ReversalFilter);
-      Chart.StoreDouble(prefix +"MA.ReversalFilter.Step", MA.ReversalFilter.Step);
+      Chart.StoreInt   (prefix +"WaveCycle.Periods", WaveCycle.Periods);
+      Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
    }
    return(catch("StoreStatus(1)"));
 }
@@ -514,22 +512,21 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
-   if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
+   if (__isChart) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep, restored=1;
-      restored &= Chart.RestoreInt(prefix +"WaveCycle.Periods",     iValue) + 0;
-      restored &= Chart.RestoreInt(prefix +"WaveCycle.Periods.Step", iStep) + 0;
-      if (restored && iStep && iStep==WaveCycle.Periods.Step) {
-         WaveCycle.Periods = iValue;
+      if (WaveCycle.Periods.Step > 0) {
+         int iValue;
+         if (Chart.RestoreInt(prefix +"WaveCycle.Periods", iValue)) {
+            if (iValue >= 3) WaveCycle.Periods = iValue;       // silent validation
+         }
       }
 
-      double dValue, dStep;
-      restored = 1;
-      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter",     dValue) + 0;
-      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep) + 0;
-      if (restored && dStep && EQ(dStep, MA.ReversalFilter.Step)) {
-         MA.ReversalFilter = dValue;
+      if (MA.ReversalFilter.Step > 0) {
+         double dValue;
+         if (Chart.RestoreDouble(prefix +"MA.ReversalFilter", dValue)) {
+            if (dValue >= 0) MA.ReversalFilter = dValue;       // silent validation
+         }
       }
    }
    return(!catch("RestoreStatus(1)"));
