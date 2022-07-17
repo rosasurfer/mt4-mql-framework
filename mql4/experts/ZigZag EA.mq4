@@ -43,7 +43,7 @@
  *
  *
  * TODO:
- *  - rewrite T3, Moving Average, MACD, Donchian
+ *  - rewrite T3, Moving Average, MACD
  *     MA methods
  *     auto-configuration
  *     signaling
@@ -164,7 +164,7 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
+ *  - Superbars: ETH/RTH separation for Frankfurt session
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - ChartInfos: update unitsize positioning
  *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again

@@ -517,17 +517,20 @@ bool RestoreStatus() {
    if (__isChart && (WaveCycle.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep;
-      Chart.RestoreInt(prefix +"WaveCycle.Periods",      iValue);
-      Chart.RestoreInt(prefix +"WaveCycle.Periods.Step", iStep);
-      if (iStep == WaveCycle.Periods.Step)
+      int iValue, iStep, restored=1;
+      restored &= Chart.RestoreInt(prefix +"WaveCycle.Periods",     iValue) + 0;
+      restored &= Chart.RestoreInt(prefix +"WaveCycle.Periods.Step", iStep) + 0;
+      if (restored && iStep && iStep==WaveCycle.Periods.Step) {
          WaveCycle.Periods = iValue;
+      }
 
       double dValue, dStep;
-      Chart.RestoreDouble(prefix +"MA.ReversalFilter",      dValue);
-      Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep);
-      if (EQ(dStep, MA.ReversalFilter.Step))
+      restored = 1;
+      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter",     dValue) + 0;
+      restored &= Chart.RestoreDouble(prefix +"MA.ReversalFilter.Step", dStep) + 0;
+      if (restored && dStep && EQ(dStep, MA.ReversalFilter.Step)) {
          MA.ReversalFilter = dValue;
+      }
    }
    return(!catch("RestoreStatus(1)"));
 }

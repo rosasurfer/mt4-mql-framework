@@ -929,11 +929,12 @@ bool RestoreStatus() {
    if (__isChart && ZigZag.Periods.Step) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      int iValue, iStep;
-      Chart.RestoreInt(prefix +"ZigZag.Periods", iValue);
-      Chart.RestoreInt(prefix +"ZigZag.Periods.Step", iStep);
-      if (iStep == ZigZag.Periods.Step)
+      int iValue, iStep, restored=1;
+      restored &= Chart.RestoreInt(prefix +"ZigZag.Periods",     iValue) + 0;
+      restored &= Chart.RestoreInt(prefix +"ZigZag.Periods.Step", iStep) + 0;
+      if (restored && iStep && iStep==ZigZag.Periods.Step) {
          ZigZag.Periods = iValue;
+      }
    }
    return(!catch("RestoreStatus(1)"));
 }
