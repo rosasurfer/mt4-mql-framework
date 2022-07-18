@@ -14,19 +14,11 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).
+ * Note: The SMMA is not supported as SMMA(n) = EMA(2*n-1).  @see https://en.wikipedia.org/wiki/Moving_average#Modified_moving_average
  *
  *
- * TODO:
- *  - EMA calculation:
- *     https://y.com.sb/watch?v=86XfPyb2Ay4
- *     https://sciencing.com/calculate-moving-range-4963173.html
- *     https://groww.in/p/exponential-moving-average
- *     https://corporatefinanceinstitute.com/resources/knowledge/trading-investing/exponential-moving-average-ema/
- *     https://school.stockcharts.com/doku.php?id=technical_indicators:moving_averages
- *     https://www.investopedia.com/ask/answers/122314/what-exponential-moving-average-ema-formula-and-how-ema-calculated.asp
- *     https://www.mql5.com/en/forum/259662
- *     https://www.mql5.com/en/forum/156804#comment_3804470 [WHR]
+ * EMA calculation:
+ *  https://en.wikipedia.org/wiki/Moving_average#Exponential_moving_average
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
