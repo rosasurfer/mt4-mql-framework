@@ -224,36 +224,46 @@ int onInit() {
    RestoreStatus();
 
    // buffer management and options
-   SetIndexBuffer(MODE_MA_RAW,      maRaw     );   // MA raw main values:      invisible
-   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);   // MA filtered main values: invisible, displayed in legend and "Data" window
-   SetIndexBuffer(MODE_TREND,       trend     );   // trend direction:         invisible, displayed in "Data" window
-   SetIndexBuffer(MODE_UPTREND,     uptrend   );   // uptrend values:          visible
-   SetIndexBuffer(MODE_DOWNTREND,   downtrend );   // downtrend values:        visible
-   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );   // single-bar uptrends:     visible
-   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );   //                          invisible
-   SetIndexBuffer(MODE_AVG,         maAverage );   //                          invisible
+   SetIndexBuffer(MODE_MA_RAW,      maRaw     );      // MA raw main values:      invisible
+   SetIndexBuffer(MODE_MA_FILTERED, maFiltered);      // MA filtered main values: invisible, displayed in legend and "Data" window
+   SetIndexBuffer(MODE_TREND,       trend     );      // trend direction:         invisible, displayed in "Data" window
+   SetIndexBuffer(MODE_UPTREND,     uptrend   );      // uptrend values:          visible
+   SetIndexBuffer(MODE_DOWNTREND,   downtrend );      // downtrend values:        visible
+   SetIndexBuffer(MODE_UPTREND2,    uptrend2  );      // single-bar uptrends:     visible
+   SetIndexBuffer(MODE_MA_CHANGE,   maChange  );      //                          invisible
+   SetIndexBuffer(MODE_AVG,         maAverage );      //                          invisible
    SetIndicatorOptions();
 
    // chart legend and coloring
    legendLabel = CreateLegend();
    enableMultiColoring = !__isSuperContext;
 
-   // initialize T3 coefficients and weight of the current price (alpha)
-   double v  = T3.VolumeFactor;
-   c1 = -1*v*v*v;                                  // -1v³
-   c2 =  3*v*v*v +3*v*v;                           //  3v³ +3v²
-   c3 = -3*v*v*v -6*v*v -3*v;                      // -3v³ -6v² -3v
-   c4 =  1*v*v*v +3*v*v +3*v +1;                   //  1v³ +3v² +3v +1
-   alpha = 4./(T3.Periods + 3);                    // 2/(N+1) with N = (N-1)/2 + 1     (makes lag equivalent to SMA/EMA)
+   InitializeT3();
+   return(catch("onInit(11)"));
+}
 
-   // initialize reqired bars for 99% reliable values (6 EMAs, 3 DEMAs)
-   double rEMA = MathPow(0.99, 1/3.);              // desired reliability per EMA
-   double bars = MathLog(1-rEMA)/MathLog(1-alpha); // k = log(1-r)/log(1-alpha)        (see notes at the end of this file)
+
+/**
+ * Initialize T3 calculation.
+ *
+ * @return bool - success status
+ */
+bool InitializeT3() {                                 // see notes at the end of this file
+   double v = T3.VolumeFactor;
+
+   // initialize T3 coefficients and weight of the current price (alpha)
+   c1 = -1*v*v*v;                                     // -1v³
+   c2 =  3*v*v*v +3*v*v;                              //  3v³ +3v²
+   c3 = -3*v*v*v -6*v*v -3*v;                         // -3v³ -6v² -3v
+   c4 =  1*v*v*v +3*v*v +3*v +1;                      //  1v³ +3v² +3v +1
+   alpha = 4./(T3.Periods + 3);                       // Matulich: 2/(N+1) with N = (N-1)/2 + 1
+
+   // initialize required bars for 99.9% of weights covered by known data
+   double rel   = MathPow(0.999, 1/6.);               // 99.9% reliability for all EMAs => 99.98% per single EMA
+   double bars  = MathLog(1-rel)/MathLog(1-alpha);    // k = log(1-rel)/log(1-alpha)
    requiredBars = MathCeil(bars);
 
-   debug("onInit(0.1)  Bars="+ Bars +"  T3Periods="+ T3.Periods +"  alpha="+ NumberToStr(alpha, ".1+") +"  neededBars="+ requiredBars);
-
-   return(catch("onInit(11)"));
+   return(!catch("InitializeT3(1)"));
 }
 
 
@@ -327,26 +337,48 @@ int onTick() {
    }
 
    // calculate start bar
-   int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-T3.Periods);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
+   int limit = Min(ChangedBars, Bars-1, maxValues+requiredBars-1);      // how many bars need recalculation
+   int startbar = limit-1;
+   if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
+
+   if (!ValidBars) {
+      string name = "T3MA() first accessed bar";
+      if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_VLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (name, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet    (name, OBJPROP_COLOR, Blue);
+      ObjectSet    (name, OBJPROP_BACK,  true);
+      ObjectSet    (name, OBJPROP_TIME1, Time[limit]);
+      ObjectSetText(name, "T3("+ T3.Periods +") first accessed bar");
+
+      name = "T3MA() first reliable bar";
+      if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_VLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
+      ObjectSet    (name, OBJPROP_STYLE, STYLE_SOLID);
+      ObjectSet    (name, OBJPROP_COLOR, Blue);
+      ObjectSet    (name, OBJPROP_BACK,  true);
+      ObjectSet    (name, OBJPROP_TIME1, Time[limit-requiredBars]);
+      ObjectSetText(name, "T3("+ T3.Periods +") first reliable bar");
+
+      debug("onTick(0.1)  Bars="+ Bars +"  T3.Periods="+ T3.Periods +"  alpha="+ StrPadRight(NumberToStr(alpha, ".1+"), 10) +"  requiredBars="+ requiredBars);
+   }
 
    double price, sum, stdDev, minChange;
 
-   if (!ema1[startbar+1]) {
-      price = GetPrice(appliedPrice, startbar+1);
-      ema1[startbar+1] = price;
-      ema2[startbar+1] = price;
-      ema3[startbar+1] = price;
-      ema4[startbar+1] = price;
-      ema5[startbar+1] = price;
-      ema6[startbar+1] = price;
+   // initialize an empty previous bar
+   if (!ema1[limit]) {
+      price = GetPrice(appliedPrice, limit);
+      ema1      [limit] = price;
+      ema2      [limit] = price;
+      ema3      [limit] = price;
+      ema4      [limit] = price;
+      ema5      [limit] = price;
+      ema6      [limit] = price;
+      maRaw     [limit] = price;
+      maFiltered[limit] = price;
    }
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
       price = GetPrice(appliedPrice, bar);
-
       ema1[bar] = ema1[bar+1] + alpha * (price     - ema1[bar+1]);
       ema2[bar] = ema2[bar+1] + alpha * (ema1[bar] - ema2[bar+1]);
       ema3[bar] = ema3[bar+1] + alpha * (ema2[bar] - ema3[bar+1]);
@@ -494,7 +526,9 @@ bool ParameterStepper(int direction, bool shiftKey) {
    if (direction == STEP_UP) T3.Periods += step;
    else                      T3.Periods -= step;
 
-   ChangedBars = Bars;                                // TODO: recalculate volume coefficients
+   if (!InitializeT3()) return(false);
+
+   ChangedBars = Bars;
    ValidBars   = 0;
    ShiftedBars = 0;
 
@@ -655,10 +689,10 @@ EMA = EMA(prev) + weight * (price-EMA(prev))
                                                    // @see  https://en.wikipedia.org/wiki/Moving_average#Approximating_the_EMA_with_a_limited_number_of_terms
 required values: k = log(0.001)/log(1-alpha)       // 99.9% of weights are covered by known data, 0.1% = 0.001 are covered by unknown data:
 
-Std-EMA: alpha = 2/(N + 1)                         // @see  https://en.wikipedia.org/wiki/Moving_average#Relationship_between_SMA_and_EMA
-equals:  N     = 2/alpha - 1
+EMA:    alpha = 2/(N + 1)                          // @see  https://en.wikipedia.org/wiki/Moving_average#Relationship_between_SMA_and_EMA
+equals: N     = 2/alpha - 1
 
-Std-EMA(10) - an EMA having weights with the same "center of mass" as an SMA(10): alpha = 0.181818
+EMA(10) - an EMA having weights with the same "center of mass" as an SMA(10): alpha = 0.181818
 - requires 19.5 values to be reliable to 98%
 - requires 22.9 values to be reliable to 99%
 - requires 34.4 values to be reliable to 99.9%
@@ -667,6 +701,6 @@ Fast-EMA: substitutes N = (N-1)/2 + 1              // Matulich: The Length param
           alpha = 4/(N + 3)                        // moving averages. This way the T3 can be used with the same Length parameter as an SMA or EMA.
 equals:   N     = 4/alpha - 3                      // @see  http://unicorn.us.com/trading/el.html#_T3Average
 
-it holds: SMMA(n)    = Std-EMA(2*n-1)              // For the same N all three EMAs are identical (length looks different, alpha is the same).
-          Std-EMA(n) = Fast-EMA(2*n-1)
+it holds: SMMA(n) = EMA(2*n-1)                     // All three EMAs are identical (length looks different, alpha is the same).
+          EMA(n)  = Fast-EMA(2*n-1)                // e.g. SMMA(10) = EMA(19) = Fast-EMA(37)
 */

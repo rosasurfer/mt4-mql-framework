@@ -44,10 +44,11 @@
  *
  * TODO:
  *  - rewrite T3
- *     auto-configuration
- *     signaling
  *     MA.ReversalFilter
  *     parameter stepper
+ *      reversal filter
+ *      volume
+ *     remove debug code
  *
  *  - rewrite ADR, Moving Average, MACD
  *     MA methods
@@ -57,11 +58,11 @@
  *     parameter stepper
  *
  *  - move iCustom() to ta/includes
+ *  - rename Max.Bars to MaxBarsBack
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
  *  - ChartInfos: include current daily range in ADR calculation/display
- *  - rename Max.Bars to MaxBarsBack
  *
  *  - SuperBars: implement more timeframes
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
