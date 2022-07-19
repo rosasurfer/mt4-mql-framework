@@ -1,6 +1,11 @@
 /**
  * T3 Moving Average by Tim Tillson
  *
+ * The T3 is a six-pole nonlinear Kalman filter. Kalman filters use the error to correct themselves. In technical analysis
+ * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
+ *
+ * The input parameter 'T3.Periods' is adjusted following Matulich (3) which makes SMA, EMA and T3 look more synchron when
+ * using the same parameter.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -8,8 +13,11 @@
  *    - trend direction:        positive values denote an uptrend (+1...+n), negative values a downtrend (-1...-n)
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
- *  @see  https://www.tradingpedia.com/forex-trading-indicators/t3-moving-average-indicator/#
- *  @see  https://ctrader.com/algos/indicators/show/2044#
+ *  @see   (1) "/etc/doc/t3ma/Smoothing Techniques for More Accurate Signals [Tillson].pdf"    [Stocks & Commodities, 1998/1]
+ *  @link  (2) https://www.tradingpedia.com/forex-trading-indicators/t3-moving-average-indicator/#        [T3 Moving Average]
+ *  @link  (3) http://unicorn.us.com/trading/el.html#_T3Average                                 [T3 Moving Average, Matulich]
+ *
+ *  @see   additional notes at the end of this file
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -17,19 +25,25 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern int    MA.Length                      = 14;                // bar periods for alpha calculation
-extern int    MA.Length.Step                 = 0;                 // step size for stepped input parameter
-extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
-extern double MA.ReversalFilter              = 0;                 // min. MA change in std-deviations for a trend reversal
-extern double MA.ReversalFilter.Step         = 0;                 // step size for stepped input parameter
+extern string ___a__________________________ = "=== T3 settings ===";
+extern int    T3.Periods                     = 14;                // bar periods for alpha calculation
+extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (default keys)
+extern double T3.VolumeFactor                = 0.6;
+extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (default keys + VK_LWIN)
+extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 
+extern string ___b__________________________ = "=== Trend reversal filter ===";
+extern double MA.ReversalFilter              = 0;                 // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (default keys + VK_SHIFT)
+
+extern string ___c__________________________ = "=== Drawing options ===";
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
 extern color  Color.UpTrend                  = Magenta;
 extern color  Color.DownTrend                = Yellow;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
 
-extern string ___a__________________________ = "=== Signaling ===";
+extern string ___d__________________________ = "=== Signaling ===";
 extern bool   Signal.onTrendChange           = false;
 extern bool   Signal.onTrendChange.Sound     = true;
 extern string Signal.onTrendChange.SoundUp   = "Signal Up.wav";
@@ -46,6 +60,7 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #include <functions/ConfigureSignals.mqh>
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
+#include <functions/ManageDoubleIndicatorBuffer.mqh>
 #include <functions/legend.mqh>
 #include <functions/trend.mqh>
 
@@ -57,10 +72,17 @@ extern bool   Signal.onTrendChange.SMS       = false;
 #define MODE_MA_RAW           5
 #define MODE_MA_CHANGE        6
 #define MODE_AVG              7
+#define MODE_EMA1             8
+#define MODE_EMA2             9
+#define MODE_EMA3            10
+#define MODE_EMA4            11
+#define MODE_EMA5            12
+#define MODE_EMA6            13
 
 #property indicator_chart_window
 #property indicator_buffers   5                          // visible buffers
-int       terminal_buffers  = 8;                         // all buffers
+int       terminal_buffers  = 8;                         // buffers managed by the terminal
+int       framework_buffers = 6;                         // buffers managed by the framework
 
 #property indicator_color1    CLR_NONE
 #property indicator_color2    CLR_NONE
@@ -75,10 +97,24 @@ double uptrend   [];                                     // uptrend values:     
 double downtrend [];                                     // downtrend values:        visible
 double uptrend2  [];                                     // single-bar uptrends:     visible
 
-double maChange  [];                                     // absolute change of current maRaw[] to previous maFiltered[]
-double maAverage [];                                     // average of maChange[] over the last 'MA.Periods' bars
+double maChange [];                                      // absolute change of current maRaw[] to previous maFiltered[]
+double maAverage[];                                      // average of maChange[] over the last 'MA.Periods' bars
 
-int    maAppliedPrice;
+double ema1[];                                           // EMA buffers
+double ema2[];                                           //
+double ema3[];                                           //
+double ema4[];                                           //
+double ema5[];                                           //
+double ema6[];                                           //
+
+double c1;                                               // T3 coefficients
+double c2;                                               //
+double c3;                                               //
+double c4;                                               //
+double alpha;                                            // weight of the current price
+
+int    appliedPrice;
+int    requiredBars;
 int    drawType;
 int    maxValues;
 
@@ -111,29 +147,35 @@ int onInit() {
    string indicator = WindowExpertName();
 
    // validate inputs
-   // MA.Length
-   if (AutoConfiguration) MA.Length = GetConfigInt(indicator, "MA.Length", MA.Length);
-   if (MA.Length < 1)                                        return(catch("onInit(1)  invalid input parameter MA.Length: "+ MA.Length, ERR_INVALID_INPUT_PARAMETER));
-   // MA.Length.Step
-   if (AutoConfiguration) MA.Length.Step = GetConfigInt(indicator, "MA.Length.Step", MA.Length.Step);
-   if (MA.Length.Step < 0)                                   return(catch("onInit(2)  invalid input parameter MA.Length.Step: "+ MA.Length.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
-   // MA.AppliedPrice
-   string sValues[], sValue = MA.AppliedPrice;
-   if (AutoConfiguration) sValue = GetConfigString(indicator, "MA.AppliedPrice", sValue);
+   // T3.Periods
+   if (AutoConfiguration) T3.Periods = GetConfigDouble(indicator, "T3.Periods", T3.Periods);
+   if (T3.Periods < 1)                                   return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
+   // T3.Periods.Step
+   if (AutoConfiguration) T3.Periods.Step = GetConfigInt(indicator, "T3.Periods.Step", T3.Periods.Step);
+   if (T3.Periods.Step < 0)                              return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // T3.VolumeFactor
+   if (AutoConfiguration) T3.VolumeFactor = GetConfigDouble(indicator, "T3.VolumeFactor", T3.VolumeFactor);
+   if (LT(T3.VolumeFactor, 0) || GT(T3.VolumeFactor, 1)) return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   // T3.VolumeFactor.Step
+   if (AutoConfiguration) T3.VolumeFactor.Step = GetConfigDouble(indicator, "T3.VolumeFactor.Step", T3.VolumeFactor.Step);
+   if (T3.VolumeFactor.Step < 0)                         return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // T3.AppliedPrice
+   string sValues[], sValue = T3.AppliedPrice;
+   if (AutoConfiguration) sValue = GetConfigString(indicator, "T3.AppliedPrice", sValue);
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrTrim(sValue);
-   maAppliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
-   if (maAppliedPrice==-1 || maAppliedPrice > PRICE_AVERAGE) return(catch("onInit(3)  invalid input parameter MA.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-   MA.AppliedPrice = PriceTypeDescription(maAppliedPrice);
+   appliedPrice = StrToPriceType(sValue, F_PARTIAL_ID|F_ERR_INVALID_PARAMETER);
+   if (appliedPrice==-1 || appliedPrice > PRICE_AVERAGE) return(catch("onInit(5)  invalid input parameter T3.AppliedPrice: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   T3.AppliedPrice = PriceTypeDescription(appliedPrice);
    // MA.ReversalFilter
    if (AutoConfiguration) MA.ReversalFilter = GetConfigDouble(indicator, "MA.ReversalFilter", MA.ReversalFilter);
-   if (MA.ReversalFilter < 0)                                return(catch("onInit(4)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter < 0)                            return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0)                           return(catch("onInit(5)  invalid input parameter MA.ReversalFilter.Step: "+ MA.ReversalFilter.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)                       return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
@@ -144,10 +186,10 @@ int onInit() {
    sValue = StrToLower(StrTrim(sValue));
    if      (StrStartsWith("line", sValue)) { drawType = DRAW_LINE;  Draw.Type = "Line"; }
    else if (StrStartsWith("dot",  sValue)) { drawType = DRAW_ARROW; Draw.Type = "Dot";  }
-   else                                                      return(catch("onInit(6)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   else                                                  return(catch("onInit(8)  invalid input parameter Draw.Type: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
    // Draw.Width
    if (AutoConfiguration) Draw.Width = GetConfigInt(indicator, "Draw.Width", Draw.Width);
-   if (Draw.Width < 0)                                       return(catch("onInit(7)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
+   if (Draw.Width < 0)                                   return(catch("onInit(9)  invalid input parameter Draw.Width: "+ Draw.Width, ERR_INVALID_INPUT_PARAMETER));
    // colors: after deserialization the terminal might turn CLR_NONE (0xFFFFFFFF) into Black (0xFF000000)
    if (AutoConfiguration) Color.UpTrend   = GetConfigColor(indicator, "Color.UpTrend",   Color.UpTrend  );
    if (AutoConfiguration) Color.DownTrend = GetConfigColor(indicator, "Color.DownTrend", Color.DownTrend);
@@ -155,7 +197,7 @@ int onInit() {
    if (Color.DownTrend == 0xFF000000) Color.DownTrend = CLR_NONE;
    // Max.Bars
    if (AutoConfiguration) Max.Bars = GetConfigInt(indicator, "Max.Bars", Max.Bars);
-   if (Max.Bars < -1)                                        return(catch("onInit(8)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
+   if (Max.Bars < -1)                                    return(catch("onInit(10)  invalid input parameter Max.Bars: "+ Max.Bars, ERR_INVALID_INPUT_PARAMETER));
    maxValues = ifInt(Max.Bars==-1, INT_MAX, Max.Bars);
 
    // signaling
@@ -197,9 +239,22 @@ int onInit() {
    legendLabel = CreateLegend();
    enableMultiColoring = !__isSuperContext;
 
-   return(catch("onInit(9)"));
-}
+   // initialize T3 coefficients and weight of the current price (alpha)
+   double v  = T3.VolumeFactor;
+   c1 = -1*v*v*v;                                  // -1v³
+   c2 =  3*v*v*v +3*v*v;                           //  3v³ +3v²
+   c3 = -3*v*v*v -6*v*v -3*v;                      // -3v³ -6v² -3v
+   c4 =  1*v*v*v +3*v*v +3*v +1;                   //  1v³ +3v² +3v +1
+   alpha = 4./(T3.Periods + 3);                    // 2/(N+1) with N = (N-1)/2 + 1     (makes lag equivalent to SMA/EMA)
 
+   // initialize reqired bars for 99% reliable values (6 EMAs, 3 DEMAs)
+   double rEMA = MathPow(0.99, 1/3.);              // desired reliability per EMA
+   double bars = MathLog(1-rEMA)/MathLog(1-alpha); // k = log(1-r)/log(1-alpha)        @see  https://en.wikipedia.org/wiki/Moving_average#Approximating_the_EMA_with_a_limited_number_of_terms
+   requiredBars = MathCeil(bars);                  //
+                                                   // e.g. EMA(10) with alpha = 0.181818:
+   return(catch("onInit(11)"));                    // - requires 19.5 values to be reliable to 98%
+}                                                  // - requires 22.9 values to be reliable to 99%
+                                                   // - requires 34.4 values to be reliable to 99.9%
 
 /**
  * Deinitialization
@@ -224,7 +279,14 @@ int onTick() {
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (MA.Length.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
+   if (__isChart && (T3.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
+
+   ManageDoubleIndicatorBuffer(MODE_EMA1, ema1);
+   ManageDoubleIndicatorBuffer(MODE_EMA2, ema2);
+   ManageDoubleIndicatorBuffer(MODE_EMA3, ema3);
+   ManageDoubleIndicatorBuffer(MODE_EMA4, ema4);
+   ManageDoubleIndicatorBuffer(MODE_EMA5, ema5);
+   ManageDoubleIndicatorBuffer(MODE_EMA6, ema6);
 
    // reset buffers before performing a full recalculation
    if (!ValidBars) {
@@ -236,6 +298,12 @@ int onTick() {
       ArrayInitialize(uptrend,    EMPTY_VALUE);
       ArrayInitialize(downtrend,  EMPTY_VALUE);
       ArrayInitialize(uptrend2,   EMPTY_VALUE);
+      ArrayInitialize(ema1,                 0);
+      ArrayInitialize(ema2,                 0);
+      ArrayInitialize(ema3,                 0);
+      ArrayInitialize(ema4,                 0);
+      ArrayInitialize(ema5,                 0);
+      ArrayInitialize(ema6,                 0);
       SetIndicatorOptions();
    }
 
@@ -249,76 +317,57 @@ int onTick() {
       ShiftDoubleIndicatorBuffer(uptrend,    Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(downtrend,  Bars, ShiftedBars, EMPTY_VALUE);
       ShiftDoubleIndicatorBuffer(uptrend2,   Bars, ShiftedBars, EMPTY_VALUE);
+      ShiftDoubleIndicatorBuffer(ema1,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ema2,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ema3,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ema4,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ema5,       Bars, ShiftedBars,           0);
+      ShiftDoubleIndicatorBuffer(ema6,       Bars, ShiftedBars,           0);
    }
 
    // calculate start bar
    int bars     = Min(ChangedBars, maxValues);
-   int startbar = Min(bars-1, Bars-MA.Length);
-   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ MA.Length, ERR_HISTORY_INSUFFICIENT));
+   int startbar = Min(bars-1, Bars-T3.Periods);
+   if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
    double sum, stdDev, minChange;
 
-   /*
-   T3 calculation                          https://www.tradingpedia.com/forex-trading-indicators/t3-moving-average-indicator/#
-   ---------------
-   int periods = 8;        // T3 length
-   double v    = 0.7;      // T3 volume factor between 0 and 5 (default: 0.7)
-
-   double ema1 = ema(PRICE_CLOSE, periods)
-   double ema2 = ema(ema1, periods)
-   double ema3 = ema(ema2, periods)
-   double ema4 = ema(ema3, periods)
-   double ema5 = ema(ema4, periods)
-   double ema6 = ema(ema5, periods)
-   double c1   = -1v³
-   double c2   =  3v³ +3v²
-   double c3   = -3v³ -6v² -3v
-   double c4   =  1v³ +3v² +3v +1
-   double T3   = c1*ema6 + c2*ema5 + c3*ema4 + c4*ema3
-
-
-   EMA calculation
-   ---------------
-   EMA = weight * price + (1-weight) * EMA(prev)      // "weigth" = "alpha"
-   or
-   EMA = EMA(prev) + weight * (price-EMA(prev))
-
-   commonly used: alpha = 2/(N + 1)                   // @see  https://en.wikipedia.org/wiki/Moving_average#Relationship_between_SMA_and_EMA
-   equals:        N = 2/alpha - 1
-                                                      // @see  https://en.wikipedia.org/wiki/Moving_average#Approximating_the_EMA_with_a_limited_number_of_terms
-   required values: k = log(0.001)/log(1-alpha)       // 99.9% of weights are covered by known data, 0.1% = 0.001 are covered by unknown data.
-                                                      // For "alpha = 2/(N+1)" it simplifies to "k = 3.45*(N+1)" or "N = k/3.45 - 1".
-
-   A commonly called EMA(10) - an EMA having weights with the same "center of mass" as an SMA(10) - with alpha = 0.181818
-   - requires 19.5 values to be reliable to 98%
-   - requires 22.9 values to be reliable to 99%
-   - requires 34.4 values to be reliable to 99.9%
-
-   igorad/mladen: alpha = 2/((N-1)/2 + 2)
-   equals:        N = 4/alpha - 3
-   */
-
-
-
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      maRaw     [bar] = GetPrice(maAppliedPrice, bar);               // TODO: implement iT3MA()
+      double price = GetPrice(appliedPrice, bar);
+
+      if (!ema1[bar+1]) {
+         ema1[bar+1] = GetPrice(appliedPrice, bar+1);
+         ema2[bar+1] = ema1[bar+1];
+         ema3[bar+1] = ema2[bar+1];
+         ema4[bar+1] = ema3[bar+1];
+         ema5[bar+1] = ema4[bar+1];
+         ema6[bar+1] = ema5[bar+1];
+      }
+      ema1[bar] = ema1[bar+1] + alpha * (price     - ema1[bar+1]);
+      ema2[bar] = ema2[bar+1] + alpha * (ema1[bar] - ema2[bar+1]);
+      ema3[bar] = ema3[bar+1] + alpha * (ema2[bar] - ema3[bar+1]);
+      ema4[bar] = ema4[bar+1] + alpha * (ema3[bar] - ema4[bar+1]);
+      ema5[bar] = ema5[bar+1] + alpha * (ema4[bar] - ema5[bar+1]);
+      ema6[bar] = ema6[bar+1] + alpha * (ema5[bar] - ema6[bar+1]);
+
+      maRaw     [bar] = c1 * ema6[bar] + c2 * ema5[bar] + c3 * ema4[bar] + c4 * ema3[bar];
       maFiltered[bar] = maRaw[bar];
 
       if (MA.ReversalFilter > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
-         for (int i=0; i < MA.Length; i++) {                         // calculate average(change) over last 'MA.Length'
+         for (int i=0; i < T3.Periods; i++) {                        // calculate average(change) over last 'T3.Periods'
             sum += maChange[bar+i];
          }
-         maAverage[bar] = sum/MA.Length;
+         maAverage[bar] = sum/T3.Periods;
 
          if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
-            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'MA.Length'
-            for (i=0; i < MA.Length; i++) {
+            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'T3.Periods'
+            for (i=0; i < T3.Periods; i++) {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
-            stdDev = MathSqrt(sum/MA.Length);
+            stdDev = MathSqrt(sum/T3.Periods);
             minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
@@ -433,16 +482,16 @@ bool ParameterStepper(int direction, bool shiftKey) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    shiftKey = shiftKey!=0;
 
-   double step = MA.Length.Step;
+   double step = T3.Periods.Step;
 
-   if (!step || MA.Length + direction*step < 1) {              // no stepping if parameter limit reached
+   if (!step || T3.Periods + direction*step < 1) {    // no stepping if parameter limit reached
       PlaySoundEx("Plonk.wav");
       return(false);
    }
-   if (direction == STEP_UP) MA.Length += step;
-   else                      MA.Length -= step;
+   if (direction == STEP_UP) T3.Periods += step;
+   else                      T3.Periods -= step;
 
-   ChangedBars = Bars;
+   ChangedBars = Bars;                                // TODO: recalculate volume coefficients
    ValidBars   = 0;
    ShiftedBars = 0;
 
@@ -483,9 +532,9 @@ double GetPrice(int type, int i) {
  */
 void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
-   string sAppliedPrice = ifString(maAppliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(maAppliedPrice));
-   indicatorName        = "T3MA("+ ifString(MA.Length.Step || MA.ReversalFilter.Step, "step:", "") + MA.Length + sMaFilter + sAppliedPrice +")";
-   shortName            = "T3MA("+ MA.Length +")";
+   string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
+   indicatorName        = "T3MA("+ ifString(T3.Periods.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods + sMaFilter + sAppliedPrice +")";
+   shortName            = "T3MA("+ T3.Periods +")";
    IndicatorShortName(shortName);
 
    int draw_type = ifInt(Draw.Width, drawType, DRAW_NONE);
@@ -506,10 +555,10 @@ void SetIndicatorOptions() {
  * @return bool - success status
  */
 bool StoreStatus() {
-   if (__isChart && (MA.Length.Step || MA.ReversalFilter.Step)) {
+   if (__isChart && (T3.Periods.Step || MA.ReversalFilter.Step)) {
       string prefix = "rsf."+ WindowExpertName() +".";
 
-      Chart.StoreInt   (prefix +"MA.Length",         MA.Length);
+      Chart.StoreInt   (prefix +"T3.Periods",        T3.Periods);
       Chart.StoreDouble(prefix +"MA.ReversalFilter", MA.ReversalFilter);
    }
    return(catch("StoreStatus(1)"));
@@ -527,9 +576,9 @@ bool RestoreStatus() {
       string prefix = "rsf."+ WindowExpertName() +".";
 
       int iValue;
-      if (Chart.RestoreInt(prefix +"MA.Length", iValue)) {
-         if (MA.Length.Step > 0) {
-            if (iValue >= 1) MA.Length = iValue;               // silent validation
+      if (Chart.RestoreInt(prefix +"T3.Periods", iValue)) {
+         if (T3.Periods.Step > 0) {
+            if (iValue >= 1) T3.Periods = iValue;              // silent validation
          }
       }
 
@@ -550,9 +599,12 @@ bool RestoreStatus() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("MA.Length=",                      MA.Length,                                      ";"+ NL,
-                            "MA.Length.Step=",                 MA.Length.Step,                                 ";"+ NL,
-                            "MA.AppliedPrice=",                DoubleQuoteStr(MA.AppliedPrice),                ";"+ NL,
+   return(StringConcatenate("T3.Periods=",                     T3.Periods,                                     ";"+ NL,
+                            "T3.Periods.Step=",                T3.Periods.Step,                                ";"+ NL,
+                            "T3.VolumeFactor=",                NumberToStr(T3.VolumeFactor, ".1+"),            ";"+ NL,
+                            "T3.VolumeFactor.Step=",           NumberToStr(T3.VolumeFactor.Step, ".1+"),       ";"+ NL,
+                            "T3.AppliedPrice=",                DoubleQuoteStr(T3.AppliedPrice),                ";"+ NL,
+
                             "MA.ReversalFilter=",              NumberToStr(MA.ReversalFilter, ".1+"),          ";"+ NL,
                             "MA.ReversalFilter.Step=",         NumberToStr(MA.ReversalFilter.Step, ".1+"),     ";"+ NL,
 
@@ -571,3 +623,38 @@ string InputsToStr() {
                             "Signal.onTrendChange.SMS=",       BoolToStr(Signal.onTrendChange.SMS),            ";")
    );
 }
+
+
+/*
+T3 calculation
+--------------
+double v  = 0.7;                                   // volume factor between 0 and 1 (default: 0.7)
+double c1 = -1v³
+double c2 =  3v³ +3v²
+double c3 = -3v³ -6v² -3v
+double c4 =  1v³ +3v² +3v +1
+double T3 = c1*ema6 + c2*ema5 + c3*ema4 + c4*ema3
+
+EMA calculation
+---------------
+EMA = weight * price + (1-weight) * EMA(prev)      // "weigth" = "alpha"
+or
+EMA = EMA(prev) + weight * (price-EMA(prev))
+                                                   // @see  https://en.wikipedia.org/wiki/Moving_average#Approximating_the_EMA_with_a_limited_number_of_terms
+required values: k = log(0.001)/log(1-alpha)       // 99.9% of weights are covered by known data, 0.1% = 0.001 are covered by unknown data:
+
+Std-EMA: alpha = 2/(N + 1)                         // @see  https://en.wikipedia.org/wiki/Moving_average#Relationship_between_SMA_and_EMA
+equals:  N     = 2/alpha - 1
+
+Std-EMA(10) - an EMA having weights with the same "center of mass" as an SMA(10): alpha = 0.181818
+- requires 19.5 values to be reliable to 98%
+- requires 22.9 values to be reliable to 99%
+- requires 34.4 values to be reliable to 99.9%
+
+Fast-EMA: substitutes N = (N-1)/2 + 1              // Matulich: The Length parameter is divided by two to make the T3's lag equivalent to the lag of traditional
+          alpha = 4/(N + 3)                        // moving averages. This way the T3 can be used with the same Length parameter as an SMA or EMA.
+equals:   N     = 4/alpha - 3                      // @see  http://unicorn.us.com/trading/el.html#_T3Average
+
+it holds: SMMA(n)    = Std-EMA(2*n-1)              // For the same N all three EMAs are identical (length looks different, alpha is the same).
+          Std-EMA(n) = Fast-EMA(2*n-1)
+*/

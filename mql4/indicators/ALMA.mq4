@@ -20,12 +20,12 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods                     = 38;
-extern int    MA.Periods.Step                = 0;                 // step size for stepped input parameter
+extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (default keys)
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
 extern double MA.ReversalFilter              = 0.4;               // min. MA change in std-deviations for a trend reversal
-extern double MA.ReversalFilter.Step         = 0;                 // step size for stepped input parameter
+extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (default keys + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
@@ -145,7 +145,7 @@ int onInit() {
    if (MA.ReversalFilter < 0)                                return(catch("onInit(6)  invalid input parameter MA.ReversalFilter: "+ NumberToStr(MA.ReversalFilter, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // MA.ReversalFilter.StepS
    if (AutoConfiguration) MA.ReversalFilter.Step = GetConfigDouble(indicator, "MA.ReversalFilter.Step", MA.ReversalFilter.Step);
-   if (MA.ReversalFilter.Step < 0)                           return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ MA.ReversalFilter.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   if (MA.ReversalFilter.Step < 0)                           return(catch("onInit(7)  invalid input parameter MA.ReversalFilter.Step: "+ NumberToStr(MA.ReversalFilter.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // Draw.Type
    sValue = Draw.Type;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Draw.Type", sValue);
