@@ -52,7 +52,7 @@ extern bool   AlertsOn         = false;
 #define MODE_LOWER_VARIANCE_RP   8                 // managed by the framework
 
 #property indicator_chart_window
-#property indicator_buffers   7                    // buffers visible to the user
+#property indicator_buffers   7                    // visible buffers
 int       terminal_buffers  = 8;                   // buffers managed by the terminal
 int       framework_buffers = 1;                   // buffers managed by the framework
 

@@ -26,7 +26,7 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
-extern int    ZigZag.Periods.Step            = 0;                       // step size for stepped input parameter
+extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (default keys)
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
 extern color  ZigZag.Color                   = Blue;
@@ -85,7 +85,7 @@ extern string Sound.onCrossing.Down          = "Chotoneto.wav";
 #define MODE_UNKNOWN_TREND         15                          // 15: not yet known trend
 
 #property indicator_chart_window
-#property indicator_buffers   8                                // buffers visible to the user
+#property indicator_buffers   8                                // visible buffers
 int       terminal_buffers  = 8;                               // buffers managed by the terminal
 int       framework_buffers = 8;                               // buffers managed by the framework
 
