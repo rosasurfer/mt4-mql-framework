@@ -20,7 +20,11 @@ int onStart() {
 
    string command   = "parameter-down";
    string params    = GetTickCount();
-   string modifiers = ifString(IsVirtualKeyDown(VK_SHIFT), "VK_SHIFT", "");
+   string modifiers = "";
+   if (IsVirtualKeyDown(VK_CAPITAL)) modifiers = modifiers + ",VK_CAPITAL";
+   if (IsVirtualKeyDown(VK_SHIFT))   modifiers = modifiers + ",VK_SHIFT";
+   if (IsVirtualKeyDown(VK_LWIN))    modifiers = modifiers + ",VK_LWIN";
+   modifiers = StrRight(modifiers, -1);
 
    command = command +":"+ params +":"+ modifiers;
 
