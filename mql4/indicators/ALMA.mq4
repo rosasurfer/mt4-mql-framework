@@ -478,7 +478,6 @@ bool ParameterStepper(int direction, bool shiftKey) {
    ValidBars   = 0;
    ShiftedBars = 0;
 
-
    PlaySoundEx("Parameter Step.wav");
    return(true);
 }
