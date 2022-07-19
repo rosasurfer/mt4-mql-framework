@@ -4,8 +4,8 @@
  * The T3 is a six-pole nonlinear Kalman filter. Kalman filters use the error to correct themselves. In technical analysis
  * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
  *
- * The input parameter 'T3.Periods' is adjusted following Matulich (3) which makes SMA, EMA and T3 look more synchron when
- * using the same parameter.
+ * The input parameter 'T3.Periods' is scaled following Matulich (2). This modification is of cosmetic nature only, it makes
+ * the T3 look more synchron with an SMA or EMA with the same 'Periods' parameter.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -14,8 +14,7 @@
  *    - trend length:           the absolute direction value is the length of the trend in bars since the last reversal
  *
  *
- *  @link  (2) https://www.tradingpedia.com/forex-trading-indicators/t3-moving-average-indicator/#        [T3 Moving Average]
- *  @link  (3) http://unicorn.us.com/trading/el.html#_T3Average                                 [T3 Moving Average, Matulich]
+ *  @link  (2) http://unicorn.us.com/trading/el.html#_T3Average                                 [T3 Moving Average, Matulich]
  *
  *  @see   additional notes at the end of this file
  */
@@ -28,7 +27,7 @@ int __DeinitFlags[];
 extern string ___a__________________________ = "=== T3 settings ===";
 extern int    T3.Periods                     = 14;                // bar periods for alpha calculation
 extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (default keys)
-extern double T3.VolumeFactor                = 0.6;
+extern double T3.VolumeFactor                = 0.7;
 extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (default keys + VK_LWIN)
 extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 
@@ -249,12 +248,14 @@ int onInit() {
 
    // initialize reqired bars for 99% reliable values (6 EMAs, 3 DEMAs)
    double rEMA = MathPow(0.99, 1/3.);              // desired reliability per EMA
-   double bars = MathLog(1-rEMA)/MathLog(1-alpha); // k = log(1-r)/log(1-alpha)        @see  https://en.wikipedia.org/wiki/Moving_average#Approximating_the_EMA_with_a_limited_number_of_terms
-   requiredBars = MathCeil(bars);                  //
-                                                   // e.g. EMA(10) with alpha = 0.181818:
-   return(catch("onInit(11)"));                    // - requires 19.5 values to be reliable to 98%
-}                                                  // - requires 22.9 values to be reliable to 99%
-                                                   // - requires 34.4 values to be reliable to 99.9%
+   double bars = MathLog(1-rEMA)/MathLog(1-alpha); // k = log(1-r)/log(1-alpha)        (see notes at the end of this file)
+   requiredBars = MathCeil(bars);
+
+   debug("onInit(0.1)  Bars="+ Bars +"  T3Periods="+ T3.Periods +"  alpha="+ NumberToStr(alpha, ".1+") +"  neededBars="+ requiredBars);
+
+   return(catch("onInit(11)"));
+}
+
 
 /**
  * Deinitialization
@@ -330,20 +331,22 @@ int onTick() {
    int startbar = Min(bars-1, Bars-T3.Periods);
    if (startbar < 0) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
-   double sum, stdDev, minChange;
+   double price, sum, stdDev, minChange;
+
+   if (!ema1[startbar+1]) {
+      price = GetPrice(appliedPrice, startbar+1);
+      ema1[startbar+1] = price;
+      ema2[startbar+1] = price;
+      ema3[startbar+1] = price;
+      ema4[startbar+1] = price;
+      ema5[startbar+1] = price;
+      ema6[startbar+1] = price;
+   }
 
    // recalculate changed bars
    for (int bar=startbar; bar >= 0; bar--) {
-      double price = GetPrice(appliedPrice, bar);
+      price = GetPrice(appliedPrice, bar);
 
-      if (!ema1[bar+1]) {
-         ema1[bar+1] = GetPrice(appliedPrice, bar+1);
-         ema2[bar+1] = ema1[bar+1];
-         ema3[bar+1] = ema2[bar+1];
-         ema4[bar+1] = ema3[bar+1];
-         ema5[bar+1] = ema4[bar+1];
-         ema6[bar+1] = ema5[bar+1];
-      }
       ema1[bar] = ema1[bar+1] + alpha * (price     - ema1[bar+1]);
       ema2[bar] = ema2[bar+1] + alpha * (ema1[bar] - ema2[bar+1]);
       ema3[bar] = ema3[bar+1] + alpha * (ema2[bar] - ema3[bar+1]);
@@ -628,12 +631,21 @@ string InputsToStr() {
 /*
 T3 calculation
 --------------
-double v  = 0.7;                                   // volume factor between 0 and 1 (default: 0.7)
-double c1 = -1v³
-double c2 =  3v³ +3v²
-double c3 = -3v³ -6v² -3v
-double c4 =  1v³ +3v² +3v +1
-double T3 = c1*ema6 + c2*ema5 + c3*ema4 + c4*ema3
+int periods = 8;                                   // T3 length
+double v    = 0.7;                                 // volume factor between 0 and 1 (default: 0.7)
+
+double ema1 = ema(PRICE_CLOSE, periods)
+double ema2 = ema(ema1, periods)
+double ema3 = ema(ema2, periods)
+double ema4 = ema(ema3, periods)
+double ema5 = ema(ema4, periods)
+double ema6 = ema(ema5, periods)
+double c1   = -1v³
+double c2   =  3v³ +3v²
+double c3   = -3v³ -6v² -3v
+double c4   =  1v³ +3v² +3v +1
+double T3   = c1*ema6 + c2*ema5 + c3*ema4 + c4*ema3
+
 
 EMA calculation
 ---------------
