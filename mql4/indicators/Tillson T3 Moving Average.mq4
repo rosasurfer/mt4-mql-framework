@@ -361,7 +361,7 @@ int onTick() {
       debug("onTick(0.1)  Bars="+ Bars +"  T3.Periods="+ T3.Periods +"  alpha="+ StrPadRight(NumberToStr(alpha, ".1+"), 10) +"  requiredBars="+ requiredBars);
    }
 
-   double price, sum, stdDev, minChange;
+   double price, sum, stdDev, minChange, maFilterPeriods=T3.Periods;
 
    // initialize an empty previous bar
    if (!ema1[limit]) {
@@ -392,17 +392,17 @@ int onTick() {
       if (MA.ReversalFilter > 0) {
          maChange[bar] = maFiltered[bar] - maFiltered[bar+1];        // calculate the change of current raw to previous filtered MA
          sum = 0;
-         for (int i=0; i < T3.Periods; i++) {                        // calculate average(change) over last 'T3.Periods'
+         for (int i=0; i < maFilterPeriods; i++) {                   // calculate average(change) over last 'maFilterPeriods'
             sum += maChange[bar+i];
          }
-         maAverage[bar] = sum/T3.Periods;
+         maAverage[bar] = sum/maFilterPeriods;
 
          if (maChange[bar] * trend[bar+1] < 0) {                     // on opposite signs = trend reversal
-            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'T3.Periods'
-            for (i=0; i < T3.Periods; i++) {
+            sum = 0;                                                 // calculate stdDeviation(maChange[]) over last 'maFilterPeriods'
+            for (i=0; i < maFilterPeriods; i++) {
                sum += MathPow(maChange[bar+i] - maAverage[bar+i], 2);
             }
-            stdDev = MathSqrt(sum/T3.Periods);
+            stdDev = MathSqrt(sum/maFilterPeriods);
             minChange = MA.ReversalFilter * stdDev;                  // calculate required min. change
 
             if (MathAbs(maChange[bar]) < minChange) {
@@ -517,16 +517,30 @@ bool ParameterStepper(int direction, bool shiftKey) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
    shiftKey = shiftKey!=0;
 
-   double step = T3.Periods.Step;
+   if (!shiftKey) {
+      // step up/down input parameter "T3.Periods"
+      double step = T3.Periods.Step;
 
-   if (!step || T3.Periods + direction*step < 1) {    // no stepping if parameter limit reached
-      PlaySoundEx("Plonk.wav");
-      return(false);
+      if (!step || T3.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) T3.Periods += step;
+      else                      T3.Periods -= step;
+
+      if (!InitializeT3()) return(false);
    }
-   if (direction == STEP_UP) T3.Periods += step;
-   else                      T3.Periods -= step;
+   else {
+      // step up/down input parameter "MA.ReversalFilter"
+      step = MA.ReversalFilter.Step;
 
-   if (!InitializeT3()) return(false);
+      if (!step || MA.ReversalFilter + direction*step < 0) {   // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) MA.ReversalFilter += step;
+      else                      MA.ReversalFilter -= step;
+   }
 
    ChangedBars = Bars;
    ValidBars   = 0;

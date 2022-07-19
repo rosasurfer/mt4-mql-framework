@@ -44,9 +44,7 @@
  *
  * TODO:
  *  - rewrite T3
- *     MA.ReversalFilter
  *     parameter stepper
- *      reversal filter
  *      volume
  *     remove debug code
  *
@@ -57,6 +55,7 @@
  *     MA.ReversalFilter
  *     parameter stepper
  *
+ *  - MAs: log reversal statistics if reversal stepper is active
  *  - move iCustom() to ta/includes
  *  - rename Max.Bars to MaxBarsBack
  *  - implement global var indicator::CalculatedBars
