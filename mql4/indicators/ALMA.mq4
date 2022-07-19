@@ -20,12 +20,12 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    MA.Periods                     = 38;
-extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (default keys)
+extern int    MA.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkeys)
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double Distribution.Offset            = 0.85;              // Gaussian distribution offset (offset of parabola vertex: 0..1)
 extern double Distribution.Sigma             = 6.0;               // Gaussian distribution sigma (parabola steepness)
 extern double MA.ReversalFilter              = 0.4;               // min. MA change in std-deviations for a trend reversal
-extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (default keys + VK_SHIFT)
+extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkeys + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;

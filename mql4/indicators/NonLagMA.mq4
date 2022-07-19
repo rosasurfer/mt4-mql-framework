@@ -22,10 +22,10 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern int    WaveCycle.Periods              = 20;                // bar periods per cosine wave cycle
-extern int    WaveCycle.Periods.Step         = 0;                 // step size for a stepped input parameter (default keys)
+extern int    WaveCycle.Periods.Step         = 0;                 // step size for a stepped input parameter (hotkeys)
 extern string MA.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 extern double MA.ReversalFilter              = 0.7;               // min. MA change in std-deviations for a trend reversal
-extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (default keys + VK_SHIFT)
+extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkeys + VK_SHIFT)
 
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
