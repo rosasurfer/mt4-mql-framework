@@ -265,19 +265,17 @@ int onAccountChange(int previous, int current) {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-
+bool onCommand(string cmd, string params, int keys) {
    if (cmd == "log-custom-positions") {
-      int flags = F_LOG_TICKETS;                                  // default:  don't log empty tickets
-      if (modifiers != "VK_SHIFT") flags |= F_LOG_SKIP_EMPTY;     // VK_SHIFT: log empty tickets
-      if (!AnalyzePositions(flags)) return(false);
+      int flags = F_LOG_TICKETS;                                  // log tickets
+      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;          // without VK_SHIFT: skip empty tickets (default)
+      if (!AnalyzePositions(flags)) return(false);                // with VK_SHIFT:    log empty tickets
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -285,22 +283,22 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-open-orders") {
-      if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CUSTOM_POSITIONS;
-         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
-         ArrayResize(positions.config.comments, 0);
-      }
-      else flags = NULL;
+      if (keys & F_VK_SHIFT != 0) {
+         flags = F_SHOW_CUSTOM_POSITIONS;                         // with VK_SHIFT:
+         ArrayResize(positions.config,          0);               // reparse configuration and show only custom positions
+         ArrayResize(positions.config.comments, 0);               //
+      }                                                           //
+      else flags = NULL;                                          // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
    }
 
    else if (cmd == "toggle-trade-history") {
-      if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CUSTOM_HISTORY;
-         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
-         ArrayResize(positions.config.comments, 0);
-      }
-      else flags = NULL;
+      if (keys & F_VK_SHIFT != 0) {
+         flags = F_SHOW_CUSTOM_HISTORY;                           // with VK_SHIFT:
+         ArrayResize(positions.config,          0);               // reparse configuration and show only custom history
+         ArrayResize(positions.config.comments, 0);               //
+      }                                                           //
+      else flags = NULL;                                          // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
    }
 
@@ -309,14 +307,13 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "trade-account") {
-      string key = params +":"+ modifiers;
-      if (key == ":") key = "";
+      string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
       ArrayResize(positions.config,          0);                  // let the position configuration be reparsed
       ArrayResize(positions.config.comments, 0);
    }
-   else return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+   else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
    return(!catch("onCommand(2)"));
 }

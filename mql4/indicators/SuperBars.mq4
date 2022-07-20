@@ -169,20 +169,18 @@ int onTick() {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-
+bool onCommand(string cmd, string params, int keys) {
    if (cmd == "timeframe") {
       if (params == "up")   return(SwitchSuperTimeframe(STF_UP));
       if (params == "down") return(SwitchSuperTimeframe(STF_DOWN));
    }
-   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(fullCmd)));
+   return(!logNotice("onCommand(1)  unsupported command: "+ DoubleQuoteStr(cmd +":"+ params +":"+ keys)));
 }
 
 

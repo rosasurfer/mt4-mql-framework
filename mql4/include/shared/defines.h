@@ -177,9 +177,15 @@
 #define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
 
 
-// other flags
+// other control flags
 #define F_CUSTOM_TIMEFRAME             0x00100000        // 1048576  support for custom timeframes
 #define F_PARTIAL_ID                   0x00200000        // 2097152  parser support for incomplete identifiers
+
+
+// virtual key code flags, see HandleCommands()
+#define F_VK_CAPITAL                            1        // VK_CAPITAL (capslock)
+#define F_VK_SHIFT                              2        // VK_SHIFT
+#define F_VK_LWIN                               4        // VK_LWIN (left Windows key)
 
 
 // order and operation types
