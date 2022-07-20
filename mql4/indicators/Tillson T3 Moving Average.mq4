@@ -5,7 +5,7 @@
  * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
  *
  * The input parameter 'T3.Periods' is scaled following Matulich (2). This modification is of cosmetic nature only, it makes
- * the T3 look more synchron with an SMA or EMA with the same 'Periods' parameter.
+ * the T3 look more synchronized with an SMA or EMA of the same length.
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -154,7 +154,7 @@ int onInit() {
    if (T3.Periods.Step < 0)                              return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
    // T3.VolumeFactor
    if (AutoConfiguration) T3.VolumeFactor = GetConfigDouble(indicator, "T3.VolumeFactor", T3.VolumeFactor);
-   if (LT(T3.VolumeFactor, 0) || GT(T3.VolumeFactor, 1)) return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
+   if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1)       return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
    // T3.VolumeFactor.Step
    if (AutoConfiguration) T3.VolumeFactor.Step = GetConfigDouble(indicator, "T3.VolumeFactor.Step", T3.VolumeFactor.Step);
    if (T3.VolumeFactor.Step < 0)                         return(catch("onInit(4)  invalid input parameter T3.VolumeFactor.Step: "+ NumberToStr(T3.VolumeFactor.Step, ".1+") +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
@@ -263,6 +263,9 @@ bool InitializeT3() {                                 // see notes at the end of
    double bars  = MathLog(1-rel)/MathLog(1-alpha);    // k = log(1-rel)/log(1-alpha)
    requiredBars = MathCeil(bars);
 
+   if (maxValues + requiredBars < 0) {
+      maxValues -= requiredBars;                      // prevent integer overflow
+   }
    return(!catch("InitializeT3(1)"));
 }
 
@@ -284,13 +287,11 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   int starttime = GetTickCount();
-
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
    // process incoming commands (rewrites ValidBars/ChangedBars/ShiftedBars)
-   if (__isChart && (T3.Periods.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
+   if (__isChart && (T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step)) HandleCommands("ParameterStepper", false);
 
    ManageDoubleIndicatorBuffer(MODE_EMA1, ema1);
    ManageDoubleIndicatorBuffer(MODE_EMA2, ema2);
@@ -339,27 +340,7 @@ int onTick() {
    // calculate start bar
    int limit = Min(ChangedBars, Bars-1, maxValues+requiredBars-1);      // how many bars need recalculation
    int startbar = limit-1;
-   if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  needed="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
-
-   if (!ValidBars) {
-      string name = "T3MA() first accessed bar";
-      if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_VLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet    (name, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet    (name, OBJPROP_COLOR, Blue);
-      ObjectSet    (name, OBJPROP_BACK,  true);
-      ObjectSet    (name, OBJPROP_TIME1, Time[limit]);
-      ObjectSetText(name, "T3("+ T3.Periods +") first accessed bar");
-
-      name = "T3MA() first reliable bar";
-      if (ObjectFind(name) == -1) if (!ObjectCreateRegister(name, OBJ_VLINE, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet    (name, OBJPROP_STYLE, STYLE_SOLID);
-      ObjectSet    (name, OBJPROP_COLOR, Blue);
-      ObjectSet    (name, OBJPROP_BACK,  true);
-      ObjectSet    (name, OBJPROP_TIME1, Time[limit-requiredBars]);
-      ObjectSetText(name, "T3("+ T3.Periods +") first reliable bar");
-
-      debug("onTick(0.1)  Bars="+ Bars +"  T3.Periods="+ T3.Periods +"  alpha="+ StrPadRight(NumberToStr(alpha, ".1+"), 10) +"  requiredBars="+ requiredBars);
-   }
+   if (Bars < requiredBars) return(logInfo("onTick(2)  Tick="+ Ticks +"  Bars="+ Bars +"  required="+ requiredBars, ERR_HISTORY_INSUFFICIENT));
 
    double price, sum, stdDev, minChange, maFilterPeriods=T3.Periods;
 
@@ -423,8 +404,6 @@ int onTick() {
       }
    }
 
-   int millis = (GetTickCount()-starttime);
-   //if (!ValidBars) debug("onTick(0.1)  Tick="+ Ticks +"  bars="+ (startbar+1) +"  time="+ DoubleToStr(millis/1000., 3) +" sec");
    return(last_error);
 }
 
@@ -514,20 +493,21 @@ bool onCommand(string cmd, string params, int keys) {
 bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 
-   if (!keys & F_VK_SHIFT) {
-      // step up/down input parameter "T3.Periods"
-      double step = T3.Periods.Step;
-
-      if (!step || T3.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+   if (keys & F_VK_LWIN != 0) {
+      // step up/down input parameter "T3.VolumeFactor"
+      double step = T3.VolumeFactor.Step;
+                                                               // no stepping if parameter limit reached
+      if (!step || T3.VolumeFactor + direction*step < 0 || T3.VolumeFactor + direction*step > 1) {
          PlaySoundEx("Plonk.wav");
          return(false);
       }
-      if (direction == STEP_UP) T3.Periods += step;
-      else                      T3.Periods -= step;
+
+      if (direction == STEP_UP) T3.VolumeFactor += step;
+      else                      T3.VolumeFactor -= step;
 
       if (!InitializeT3()) return(false);
    }
-   else {
+   else if (keys & F_VK_SHIFT != 0) {
       // step up/down input parameter "MA.ReversalFilter"
       step = MA.ReversalFilter.Step;
 
@@ -537,6 +517,19 @@ bool ParameterStepper(int direction, int keys) {
       }
       if (direction == STEP_UP) MA.ReversalFilter += step;
       else                      MA.ReversalFilter -= step;
+   }
+   else {
+      // step up/down input parameter "T3.Periods"
+      step = T3.Periods.Step;
+
+      if (!step || T3.Periods + direction*step < 1) {          // no stepping if parameter limit reached
+         PlaySoundEx("Plonk.wav");
+         return(false);
+      }
+      if (direction == STEP_UP) T3.Periods += step;
+      else                      T3.Periods -= step;
+
+      if (!InitializeT3()) return(false);
    }
 
    ChangedBars = Bars;
@@ -581,7 +574,7 @@ double GetPrice(int type, int i) {
 void SetIndicatorOptions() {
    string sMaFilter     = ifString(MA.ReversalFilter || MA.ReversalFilter.Step, "/"+ NumberToStr(MA.ReversalFilter, ".1+"), "");
    string sAppliedPrice = ifString(appliedPrice==PRICE_CLOSE, "", ", "+ PriceTypeDescription(appliedPrice));
-   indicatorName        = "T3MA("+ ifString(T3.Periods.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods + sMaFilter + sAppliedPrice +")";
+   indicatorName        = "T3MA("+ ifString(T3.Periods.Step || T3.VolumeFactor.Step || MA.ReversalFilter.Step, "step:", "") + T3.Periods +","+ NumberToStr(T3.VolumeFactor, ".1+") + sMaFilter + sAppliedPrice +")";
    shortName            = "T3MA("+ T3.Periods +")";
    IndicatorShortName(shortName);
 

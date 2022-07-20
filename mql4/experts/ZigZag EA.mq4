@@ -43,11 +43,6 @@
  *
  *
  * TODO:
- *  - rewrite T3
- *     parameter stepper
- *      volume
- *     remove debug code
- *
  *  - rewrite ADR, Moving Average, MACD
  *     MA methods
  *     auto-configuration
