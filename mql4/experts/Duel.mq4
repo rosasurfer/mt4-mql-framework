@@ -282,14 +282,14 @@ int onTick() {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
+bool onCommand(string cmd, string params, int keys) {
+   string fullCmd = cmd +":"+ params +":"+ keys;
 
    if (cmd == "start") {
       switch (sequence.status) {

@@ -360,13 +360,13 @@ bool onTrendChange(int trend) {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
+bool onCommand(string cmd, string params, int keys) {
    static int lastTickcount = 0;
    int tickcount = StrToInteger(params);
 
@@ -385,28 +385,25 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    else if (tickcount <= lastTickcount) return(false);
    lastTickcount = tickcount;
 
-   bool shiftKey = (modifiers == "VK_SHIFT");
+   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, keys));
+   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, keys));
 
-   if (cmd == "parameter-up")   return(ParameterStepper(STEP_UP, shiftKey));
-   if (cmd == "parameter-down") return(ParameterStepper(STEP_DOWN, shiftKey));
-
-   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ modifiers +"\""));
+   return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 }
 
 
 /**
  * Step up/down an input parameter.
  *
- * @param  int  direction - STEP_UP | STEP_DOWN
- * @param  bool shiftKey  - whether VK_SHIFT was pressed when receiving the stepper command
+ * @param  int direction - STEP_UP | STEP_DOWN
+ * @param  int keys      - pressed modifier keys
  *
  * @return bool - success status
  */
-bool ParameterStepper(int direction, bool shiftKey) {
+bool ParameterStepper(int direction, int keys) {
    if (direction!=STEP_UP && direction!=STEP_DOWN) return(!catch("ParameterStepper(1)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
-   shiftKey = shiftKey!=0;
 
-   if (!shiftKey) {
+   if (!keys & F_VK_SHIFT) {
       // step up/down input parameter "WaveCycle.Periods"
       double step = WaveCycle.Periods.Step;
 
