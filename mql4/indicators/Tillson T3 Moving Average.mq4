@@ -4,8 +4,8 @@
  * The T3 is a six-pole nonlinear Kalman filter. Kalman filters use the error to correct themselves. In technical analysis
  * they are called adaptive moving averages, they track the time series more aggressively when it makes large moves.
  *
- * The input parameter 'T3.Periods' is scaled following Matulich (2). This modification is of cosmetic nature only, it makes
- * the T3 look more synchronized with an SMA or EMA of the same length.
+ * The input parameter 'T3.Periods' can be scaled following Matulich (2) which is just cosmetics and makes the T3 look more
+ * synchronized with an SMA or EMA of the same length (MA calculation does not change).
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -25,21 +25,22 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string ___a__________________________ = "=== T3 settings ===";
-extern int    T3.Periods                     = 14;                // bar periods for alpha calculation
+extern int    T3.Periods                     = 10;                // bar periods for alpha calculation
 extern int    T3.Periods.Step                = 0;                 // step size for a stepped input parameter (hotkeys)
+extern bool   T3.Periods.MatulichScale       = true;
 extern double T3.VolumeFactor                = 0.7;
 extern double T3.VolumeFactor.Step           = 0;                 // step size for a stepped input parameter (hotkeys + VK_LWIN)
 extern string T3.AppliedPrice                = "Open | High | Low | Close* | Median | Average | Typical | Weighted";
 
 extern string ___b__________________________ = "=== Trend reversal filter ===";
-extern double MA.ReversalFilter              = 0;                 // min. MA change in std-deviations for a trend reversal
+extern double MA.ReversalFilter              = 0.1;               // min. MA change in std-deviations for a trend reversal
 extern double MA.ReversalFilter.Step         = 0;                 // step size for a stepped input parameter (hotkeys + VK_SHIFT)
 
 extern string ___c__________________________ = "=== Drawing options ===";
 extern string Draw.Type                      = "Line* | Dot";
 extern int    Draw.Width                     = 3;
-extern color  Color.UpTrend                  = Magenta;
-extern color  Color.DownTrend                = Yellow;
+extern color  Color.UpTrend                  = Blue;
+extern color  Color.DownTrend                = Aqua;
 extern int    Max.Bars                       = 10000;             // max. values to calculate (-1: all available)
 
 extern string ___d__________________________ = "=== Signaling ===";
@@ -152,6 +153,8 @@ int onInit() {
    // T3.Periods.Step
    if (AutoConfiguration) T3.Periods.Step = GetConfigInt(indicator, "T3.Periods.Step", T3.Periods.Step);
    if (T3.Periods.Step < 0)                              return(catch("onInit(2)  invalid input parameter T3.Periods.Step: "+ T3.Periods.Step +" (must be >= 0)", ERR_INVALID_INPUT_PARAMETER));
+   // T3.Periods.MatulichScale
+   if (AutoConfiguration) T3.Periods.MatulichScale = GetConfigBool(indicator, "T3.Periods.MatulichScale", T3.Periods.MatulichScale);
    // T3.VolumeFactor
    if (AutoConfiguration) T3.VolumeFactor = GetConfigDouble(indicator, "T3.VolumeFactor", T3.VolumeFactor);
    if (T3.VolumeFactor < 0 || T3.VolumeFactor > 1)       return(catch("onInit(3)  invalid input parameter T3.VolumeFactor: "+ NumberToStr(T3.VolumeFactor, ".1+") +" (must be from 0 to 1)", ERR_INVALID_INPUT_PARAMETER));
@@ -248,23 +251,25 @@ int onInit() {
  *
  * @return bool - success status
  */
-bool InitializeT3() {                                 // see notes at the end of this file
+bool InitializeT3() {                                          // see notes at the end of this file
    double v = T3.VolumeFactor;
 
    // initialize T3 coefficients and weight of the current price (alpha)
-   c1 = -1*v*v*v;                                     // -1v³
-   c2 =  3*v*v*v +3*v*v;                              //  3v³ +3v²
-   c3 = -3*v*v*v -6*v*v -3*v;                         // -3v³ -6v² -3v
-   c4 =  1*v*v*v +3*v*v +3*v +1;                      //  1v³ +3v² +3v +1
-   alpha = 4./(T3.Periods + 3);                       // Matulich: 2/(N+1) with N = (N-1)/2 + 1
+   c1 = -1*v*v*v;                                              // -1v³
+   c2 =  3*v*v*v +3*v*v;                                       //  3v³ +3v²
+   c3 = -3*v*v*v -6*v*v -3*v;                                  // -3v³ -6v² -3v
+   c4 =  1*v*v*v +3*v*v +3*v +1;                               //  1v³ +3v² +3v +1
+
+   if (T3.Periods.MatulichScale) alpha = 4/(T3.Periods + 3.);  // N = (N-1)/2+1
+   else                          alpha = 2/(T3.Periods + 1.);
 
    // initialize required bars for 99.9% of weights covered by known data
-   double rel   = MathPow(0.999, 1/6.);               // 99.9% reliability for all EMAs => 99.98% per single EMA
-   double bars  = MathLog(1-rel)/MathLog(1-alpha);    // k = log(1-rel)/log(1-alpha)
+   double rel   = MathPow(0.999, 1/6.);                        // 99.9% reliability for all EMAs => 99.98% per single EMA
+   double bars  = MathLog(1-rel)/MathLog(1-alpha);             // k = log(1-rel)/log(1-alpha)
    requiredBars = MathCeil(bars);
 
    if (maxValues + requiredBars < 0) {
-      maxValues -= requiredBars;                      // prevent integer overflow
+      maxValues -= requiredBars;                               // prevent integer overflow
    }
    return(!catch("InitializeT3(1)"));
 }
@@ -642,6 +647,7 @@ bool RestoreStatus() {
 string InputsToStr() {
    return(StringConcatenate("T3.Periods=",                     T3.Periods,                                     ";"+ NL,
                             "T3.Periods.Step=",                T3.Periods.Step,                                ";"+ NL,
+                            "T3.Periods.MatulichScale=",       BoolToStr(T3.Periods.MatulichScale),            ";"+ NL,
                             "T3.VolumeFactor=",                NumberToStr(T3.VolumeFactor, ".1+"),            ";"+ NL,
                             "T3.VolumeFactor.Step=",           NumberToStr(T3.VolumeFactor.Step, ".1+"),       ";"+ NL,
                             "T3.AppliedPrice=",                DoubleQuoteStr(T3.AppliedPrice),                ";"+ NL,
