@@ -53,6 +53,7 @@
  *  - MAs: log reversal statistics if reversal stepper is active
  *  - move iCustom() to ta/includes
  *  - rename Max.Bars to MaxBarsBack
+ *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
