@@ -6897,9 +6897,10 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "",                               // string ____________________________
                           false,                            // bool   Donchian.ShowChannel
-                          "off",                            // string Donchian.ShowCrossings
                           CLR_NONE,                         // color  Donchian.Upper.Color
                           CLR_NONE,                         // color  Donchian.Lower.Color
+                          "off",                            // string Donchian.ShowCrossings
+                          1,                                // int    Donchian.Crossings.Width
                           161,                              // int    Donchian.Crossings.Wingdings
                           -1,                               // int    Max.Bars
 
