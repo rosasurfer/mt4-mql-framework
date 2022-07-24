@@ -9969,7 +9969,7 @@ value_0=22000
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel Monitor
+name=.attic/MA Tunnel Monitor
 flags=339
 window_num=0
 <inputs>
