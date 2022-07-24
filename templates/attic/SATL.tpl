@@ -10001,7 +10001,7 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=SATL
+name=.attic/SATL
 flags=339
 window_num=0
 <inputs>
