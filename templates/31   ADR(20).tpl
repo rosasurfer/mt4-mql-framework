@@ -4,7 +4,7 @@ period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=1
 graph=1
 fore=0
 grid=0
@@ -36,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=277
+height=250
 
 <indicator>
 name=main
@@ -9878,6 +9878,91 @@ weight=1
 background=1
 value_0=16250
 </object>
+
+<object>
+type=1
+object_name=Horizontal Line 19000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 19500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 22000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=22000
+</object>
 </indicator>
 
 <indicator>
@@ -9915,26 +10000,22 @@ show_data=0
 </window>
 
 <window>
-height=73
+height=100
 fixed_height=0
 <indicator>
-name=Average True Range
-period=1
-apply=0
-color=4294967295
-style=0
-weight=1
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Moving Average
-period=20
-method=3
-apply=7
-color=16711680
-weight=2
+name=Custom Indicator
+<expert>
+name=Average Range
+flags=339
+window_num=1
+<inputs>
+MA.Periods=20
+MA.Method=SMA | LWMA* | EMA | SMMA
+TrueRange=0
+</inputs>
+</expert>
+color_0=16711680
+weight_0=2
 period_flags=0
 show_data=1
 </indicator>

@@ -44,7 +44,9 @@
  *
  * TODO:
  *  - rewrite ADR
- *     toggle switch for std-range/true-range
+ *     fix EMPTY_VALUE
+ *     integrate required bars in startbar calculation
+ *     MTF option for lower TF data on higher TFs (to display more data than a single screen)
  *
  *  - rewrite Moving Average, MACD
  *     MA methods

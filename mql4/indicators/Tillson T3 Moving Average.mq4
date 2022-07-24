@@ -148,7 +148,7 @@ int onInit() {
 
    // validate inputs
    // T3.Periods
-   if (AutoConfiguration) T3.Periods = GetConfigDouble(indicator, "T3.Periods", T3.Periods);
+   if (AutoConfiguration) T3.Periods = GetConfigInt(indicator, "T3.Periods", T3.Periods);
    if (T3.Periods < 1)                                   return(catch("onInit(1)  invalid input parameter T3.Periods: "+ T3.Periods, ERR_INVALID_INPUT_PARAMETER));
    // T3.Periods.Step
    if (AutoConfiguration) T3.Periods.Step = GetConfigInt(indicator, "T3.Periods.Step", T3.Periods.Step);
