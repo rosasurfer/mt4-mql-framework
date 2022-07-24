@@ -43,7 +43,10 @@
  *
  *
  * TODO:
- *  - rewrite ADR, Moving Average, MACD
+ *  - rewrite ADR
+ *     toggle switch for std-range/true-range
+ *
+ *  - rewrite Moving Average, MACD
  *     MA methods
  *     auto-configuration
  *     signaling
