@@ -6,7 +6,9 @@
 # @see  https://www.metatrader5.com/en/metaeditor/help/beginning/integration_ide#compiler
 # @see  https://www.mql5.com/en/forum/155846
 # @see  https://stackoverflow.com/questions/14539064/how-to-compile-an-mql4-file-with-a-command-line-tool
-# @see  https://stackoverflow.com/questions/41580912/compiler-outputs-the-errors-under-wine-but-not-on-windows 
+# @see  https://stackoverflow.com/questions/41580912/compiler-outputs-the-errors-under-wine-but-not-on-windows
+#
+# @see  https://stackoverflow.com/questions/356100/how-to-wait-in-bash-for-several-subprocesses-to-finish-and-return-exit-code-0 
 #
 set -e
 
@@ -23,6 +25,7 @@ mqlc=
 [ -z "$mqlc" ] &&   command -v metalang >/dev/null  && mqlc="metalang"                      `# prefer a compiler in the system PATH `
 [ -z "$mqlc" ] && [ -f "$SCRIPT_DIR/metalang.exe" ] && mqlc="$SCRIPT_DIR/metalang.exe"      `# or use the included compiler         `
 [ -z "$mqlc" ] && { error "ERROR: MQL compiler not found."; exit 1; }
+
 
 # call it
 $mqlc "$@"
