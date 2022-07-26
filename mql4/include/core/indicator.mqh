@@ -9,6 +9,7 @@ extern int    __lpSuperContext;
 
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
+bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
 
 
 /**
@@ -81,6 +82,9 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
+
+   // before onInit(): read "TrackExecutionTime" configuration
+   __trackExecutionTime = GetConfigBool(WindowExpertName(), "TrackExecutionTime");
 
    // before onInit(): log input parameters if loaded by iCustom()
    if (__isSuperContext && IsLogDebug()) {
@@ -355,14 +359,21 @@ int start() {
       if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
+   int starttime = GetTickCount();
+
    // call the userland main function
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
 
+   if (__trackExecutionTime && !ValidBars) {
+      int millis = (GetTickCount()-starttime);
+      debug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+   }
+
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(7)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(8)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
