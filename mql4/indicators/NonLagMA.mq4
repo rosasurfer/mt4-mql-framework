@@ -230,8 +230,6 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
-   int starttime = GetTickCount();
-
    // on the first tick after terminal start buffers may not yet be initialized (spurious issue)
    if (!ArraySize(maRaw)) return(logInfo("onTick(1)  sizeof(maRaw) = 0", SetLastError(ERS_TERMINAL_NOT_YET_READY)));
 
@@ -311,9 +309,6 @@ int onTick() {
          else if (iTrend == -1) onTrendChange(MODE_DOWNTREND);
       }
    }
-
-   int millis = (GetTickCount()-starttime);
-   //if (!ValidBars) debug("onTick(0.1)  Tick="+ Ticks +"  bars="+ (startbar+1) +"  time="+ DoubleToStr(millis/1000., 3) +" sec");
    return(last_error);
 }
 
