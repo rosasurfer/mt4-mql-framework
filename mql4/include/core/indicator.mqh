@@ -10,6 +10,7 @@ extern int    __lpSuperContext;
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
 bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
+bool   __isAccountChange    = false;
 
 
 /**
@@ -246,8 +247,8 @@ int start() {
    // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
    static int prevAccount;
    int currAccount = AccountNumber();
-   bool isAccountChange = (prevAccount && currAccount!=prevAccount);
-   if (isAccountChange) {
+   __isAccountChange = (prevAccount && currAccount!=prevAccount);
+   if (__isAccountChange) {
       __ExecutionContext[EC.currTickTime] = 0;
       __ExecutionContext[EC.prevTickTime] = 0;
       onAccountChange(prevAccount, currAccount);                                 // TODO: handle errors
@@ -299,7 +300,7 @@ int start() {
       }
    }
 
-   if (!isAccountChange && prevBars && !ValidBars) {
+   if (!__isAccountChange && prevBars && !ValidBars) {
       if (isOfflineChart==true || !IsConnected()) {
          bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
          bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
@@ -365,9 +366,9 @@ int start() {
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
 
-   if (__trackExecutionTime && !ValidBars) {
+   if (!__isTesting) /*&&*/ if (!ValidBars && __trackExecutionTime) {
       int millis = (GetTickCount()-starttime);
-      debug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+      logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
    }
 
    // check all errors
