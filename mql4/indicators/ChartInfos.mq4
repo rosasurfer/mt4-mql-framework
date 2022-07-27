@@ -258,6 +258,7 @@ int onTick() {
  */
 int onAccountChange(int previous, int current) {
    ArrayResize(trackedOrders, 0);
+   debug("onAccountChange(0.1)  from "+ previous +" to "+ current +"  OrdersTotal()="+ OrdersTotal());
    return(onInit());
 }
 
@@ -4069,6 +4070,8 @@ bool RestoreStatus() {
  * @return bool - success status
  */
 bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], int &failedOrders[]) {
+   if (__isAccountChange) return(true);                                          // skip to prevent synchronization errors
+
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------
