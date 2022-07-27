@@ -258,7 +258,6 @@ int onTick() {
  */
 int onAccountChange(int previous, int current) {
    ArrayResize(trackedOrders, 0);
-   debug("onAccountChange(0.1)  from "+ previous +" to "+ current +"  OrdersTotal()="+ OrdersTotal());
    return(onInit());
 }
 
