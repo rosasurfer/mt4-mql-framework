@@ -4356,6 +4356,9 @@ datetime GmtToFxtTime(datetime gmtTime) {
  * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
+
+   // TODO: check details at https://www.mql5.com/en/forum/214954/page6
+
    int offset = GetGmtToServerTimeOffset(gmtTime);
    if (offset == EMPTY_VALUE)
       return(NaT);
