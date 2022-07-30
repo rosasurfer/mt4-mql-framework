@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=4
+scale=8
 graph=1
 fore=0
 grid=0
@@ -10008,6 +10008,7 @@ window_num=0
 <inputs>
 ZigZag.Periods=10
 ZigZag.Type=Line | Semaphores*
+ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
 Donchian.Upper.Color=16748574
