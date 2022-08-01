@@ -27,13 +27,9 @@ int onInit() {
    if (!UpdateAccountDisplay()) return(last_error);
 
    // resolve the price type to display
-   string section="", key="", stdSymbol=StdSymbol();
-   if (!IsVisualModeFix()) {
-      section = "ChartInfos";
-      key     = "DisplayedPrice."+ stdSymbol;
-      sValue  = StrToLower(GetConfigString(section, key, "median"));
-   }
-   else sValue="bid";                                          // in tester always display the Bid
+   string section = "ChartInfos";
+   string key     = "DisplayedPrice."+ StdSymbol();
+   sValue  = StrToLower(GetConfigString(section, key, "Bid"));    // default: Bid
    if      (sValue == "bid"   ) displayedPrice = PRICE_BID;
    else if (sValue == "ask"   ) displayedPrice = PRICE_ASK;
    else if (sValue == "median") displayedPrice = PRICE_MEDIAN;
