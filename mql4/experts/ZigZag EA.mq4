@@ -43,17 +43,15 @@
  *
  *
  * TODO:
- *  - rewrite ADR
+ *  - AverageRange
  *     fix EMPTY_VALUE
  *     integrate required bars in startbar calculation
  *     MTF option for lower TF data on higher TFs (to display more data than a single screen)
+ *     one more buffer for current range
  *
- *  - rewrite Moving Average, MACD
- *     MA methods
- *     auto-configuration
- *     signaling
- *     MA.ReversalFilter
- *     parameter stepper
+ *  - SuperBars
+ *     fix gap between days/weeks if market doesn't work 24h
+ *     implement more timeframes
  *
  *  - MAs: log reversal statistics if reversal stepper is active
  *  - move iCustom() to ta/includes
@@ -62,9 +60,11 @@
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
- *  - ChartInfos: include current daily range in ADR calculation/display
  *
- *  - SuperBars: implement more timeframes
+ *  - ChartInfos
+ *     include current daily range in ADR calculation/display
+ *     only on SMS/mail: onSignal: NOTICE: ZigZag::GetAccountAlias(2)  no account alias found for account "***:***"
+ *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
