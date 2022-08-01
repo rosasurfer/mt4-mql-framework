@@ -525,10 +525,8 @@ bool onReversal(int direction, int bar) {
    int error = NO_ERROR;
 
    if (!isSignaled) {
-      string message     = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      string accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      string message = ifString(direction==D_LONG, "up", "down") +" (bid: "+ NumberToStr(Bid, PriceFormat) +")", accountTime="";
       if (IsLogInfo()) logInfo("onReversal("+ ZigZag.Periods +"x"+ sPeriod +")  "+ message);
-      message            = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
 
       if (signalReversal.sound) {
          error = PlaySoundEx(ifString(direction==D_LONG, Signal.onReversal.SoundUp, Signal.onReversal.SoundDown));
@@ -536,10 +534,14 @@ bool onReversal(int direction, int bar) {
          else if (error == ERR_FILE_NOT_FOUND) signalReversal.sound = false;
          else                                  error |= error;
       }
+
+      message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
+      if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+
       if (signalReversal.popup)           Alert(message);
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
       if (signalReversal.sms)   error |= !SendSMS(signalReversal.smsReceiver, message + NL + accountTime);
-      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark as signaled
+      if (hWnd > 0) SetPropA(hWnd, sEvent, 1);                                // mark event as signaled
    }
    return(!error);
 }
