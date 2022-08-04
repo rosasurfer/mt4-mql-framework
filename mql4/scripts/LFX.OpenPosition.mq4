@@ -38,41 +38,38 @@ double leverage;
  * @return int - error status
  */
 int onInit() {
-   // (1) TradeAccount und Status initialisieren
+   // TradeAccount und Status initialisieren
    if (!InitTradeAccount())
       return(last_error);
 
-
-   // (2.1) Parametervalidierung: LFX.Currency
+   // Parametervalidierung: LFX.Currency
    string value = StrToUpper(StrTrim(LFX.Currency));
    string currencies[] = {"AUD", "CAD", "CHF", "EUR", "GBP", "JPY", "NZD", "USD"};
-   if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency: \""+ LFX.Currency +"\"\n(not a LFX currency)", ERR_INVALID_INPUT_PARAMETER));
+   if (!StringInArray(currencies, value)) return(HandleScriptError("onInit(1)", "Invalid parameter LFX.Currency: \""+ LFX.Currency +"\"\n(not an LFX currency)", ERR_INVALID_INPUT_PARAMETER));
    lfxCurrency   = value;
    lfxCurrencyId = GetCurrencyId(lfxCurrency);
 
-   // (2.2) Direction
+   // Direction
    value = StrToUpper(StrTrim(Direction));
    if      (value=="B" || value=="BUY"  || value=="L" || value=="LONG" ) { Direction = "long";  direction = OP_BUY;  }
    else if (value=="S" || value=="SELL"               || value=="SHORT") { Direction = "short"; direction = OP_SELL; }
    else                                   return(HandleScriptError("onInit(2)", "Invalid parameter Direction: \""+ Direction +"\"", ERR_INVALID_INPUT_PARAMETER));
 
-   // (2.3) Units
+   // Units
    if (!EQ(MathModFix(Units, 0.1), 0))    return(HandleScriptError("onInit(3)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(not a multiple of 0.1)", ERR_INVALID_INPUT_PARAMETER));
    if (Units < 0.1 || Units > 3)          return(HandleScriptError("onInit(4)", "Invalid parameter Units: "+ NumberToStr(Units, ".+") +"\n(valid range is from 0.1 to 3.0)", ERR_INVALID_INPUT_PARAMETER));
    Units = NormalizeDouble(Units, 1);
 
-
-   // (3) Leverage-Konfiguration einlesen und validieren
+   // Leverage-Konfiguration einlesen und validieren
    string section = "MoneyManagement";
    string key     = "BasketLeverage";
-   if (!IsGlobalConfigKeyA(section, key)) return(HandleScriptError("onInit(5)", "Missing global MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
-   value = GetGlobalConfigString(section, key);
+   if (!IsConfigKey(section, key))        return(HandleScriptError("onInit(5)", "Missing MetaTrader config value ["+ section +"]->"+ key, ERR_INVALID_CONFIG_VALUE));
+   value = GetConfigString(section, key);
    if (!StrIsNumeric(value))              return(HandleScriptError("onInit(6)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = \""+ value +"\"", ERR_INVALID_CONFIG_VALUE));
    leverage = StrToDouble(value);
    if (leverage < 1)                      return(HandleScriptError("onInit(7)", "Invalid MetaTrader config value ["+ section +"]->"+ key +" = "+ NumberToStr(leverage, ".+"), ERR_INVALID_CONFIG_VALUE));
 
-
-   // (4) alle Orders des Symbols einlesen
+   // alle Orders des Symbols einlesen
    int size = LFX.GetOrders(lfxCurrency, NULL, lfxOrders);
    if (size < 0)
       return(last_error);

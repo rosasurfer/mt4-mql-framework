@@ -2197,7 +2197,7 @@ bool ComputeTargets() {
       //}
    }
 
-   if (IsVisualMode()) {
+   if (__isChart) {
       // also store results in the chart window (for target indicator)
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",   long.bePrice);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", short.bePrice);

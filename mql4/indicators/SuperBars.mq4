@@ -675,7 +675,7 @@ string CreateStatusLabel() {
  * @return bool - success status
  */
 bool StoreStatus() {
-   if (!superTimeframe) return(true);                             // skip on invalid timeframes
+   if (!__isChart || !superTimeframe) return(true);                              // skip on invalid timeframes
 
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
@@ -698,6 +698,8 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
+   if (!__isChart) return(true);
+
    string label = "rsf."+ ProgramName() +".superTimeframe";
 
    // look-up a stored timeframe in the window

@@ -1001,6 +1001,8 @@ bool UpdateAccountDisplay() {
  * @return bool - success status
  */
 bool StoreTradeAccount() {
+   if (!__isChart) return(true);
+
    // account company id
    int    hWnd = __ExecutionContext[EC.hChart];
    string key  = ProgramName() +".runtime.tradeAccount.company";   // TODO: add program pid and manage keys globally

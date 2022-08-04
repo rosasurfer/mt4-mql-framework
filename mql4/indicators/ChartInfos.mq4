@@ -4004,13 +4004,15 @@ bool AnalyzePos.ProcessLfxProfits() {
  * @return bool - success status
  */
 bool StoreStatus() {
+   if (!__isChart) return(true);
+
    // stored vars:
    // bool positions.absoluteProfits
    string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value = ifInt(positions.absoluteProfits, 1, -1);
 
    // chart window
-   if (__isChart) SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
+   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
 
    // chart
    if (ObjectFind(key) == -1)
@@ -4028,16 +4030,16 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
+   if (!__isChart) return(true);
+
    // restored vars:
    // bool positions.absoluteProfits
    string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    bool result = false;
 
    // prefer chart window
-   if (__isChart) {
-      int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      result = (value != 0);
-   }
+   int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+   result = (value != 0);
 
    // then check chart
    if (!result) {
