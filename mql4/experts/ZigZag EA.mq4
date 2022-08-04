@@ -60,7 +60,12 @@
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
- *  - ChartInfos: include current daily range in ADR calculation/display
+ *
+ *  - ChartInfos
+ *     include current daily range in ADR calculation/display
+ *     improve pending order markers (it's not visible whether a TP/SL covers the full position)
+ *      if TP exists => mark partial TP
+ *      if SL exists => mark partial SL
  *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command

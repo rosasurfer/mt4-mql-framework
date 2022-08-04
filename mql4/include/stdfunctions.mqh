@@ -379,7 +379,7 @@ string Pluralize(int count, string singular="", string plural="s") {
  *
  * @param  string message
  *
- * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
+ * Notes: This function must not MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
    debug(message);                                                         // send the message to the debug output

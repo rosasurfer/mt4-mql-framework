@@ -57,8 +57,8 @@ int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
    isRecursion = true;
 
    // add prefix "MetaTrader" or "T" for message filtering by DebugView
-   string sPrefix   = "MetaTrader"; if (__isTesting) sPrefix = GmtTimeFormat(TimeCurrent(), "T %d.%m.%Y %H:%M:%S");
-   string sLoglevel = ""; if (loglevel != LOG_DEBUG) sLoglevel = LoglevelDescription(loglevel);
+   string sPrefix   = "MetaTrader"; if (__isTesting || IsTesting()) sPrefix = GmtTimeFormat(TimeCurrent(), "T %d.%m.%Y %H:%M:%S");
+   string sLoglevel = ""; if (loglevel != LOG_DEBUG)              sLoglevel = LoglevelDescription(loglevel);
           sLoglevel = StrPadRight(sLoglevel, 6);
    string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
