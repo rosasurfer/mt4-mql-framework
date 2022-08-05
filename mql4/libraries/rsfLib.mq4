@@ -3520,7 +3520,7 @@ datetime GetSessionStartTime(datetime time, int tz) {
    switch (tz) {
       case TZ_FXT:
          time -= time%DAYS;
-         int dow = TimeDayOfWeekEx(time);                            // check for weekends
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
          return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
 
       case TZ_GMT:
@@ -3578,11 +3578,51 @@ datetime GetSessionEndTime(datetime time, int tz) {
 }
 
 
+/**
+ * Return the start time of the 24h trade session fully preceding the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or NaT in case of errors
+ */
+datetime GetPrevSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         if      (dow == SATURDAY) time -= 1*DAY;
+         else if (dow == SUNDAY)   time -= 2*DAYS;
+         return(time);
+
+      case TZ_GMT:
+      case TZ_SERVER:
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
 
 
+/**
+ * Gibt die Startzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
+ *
+ * @param  datetime gmtTime - GMT-Zeit
+ *
+ * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
+ */
+datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
+   datetime fxtTime = GmtToFxtTime(gmtTime);
+   if (fxtTime == NaT) return(NaT);
 
+   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
+   if (startTime == NaT) return(NaT);
 
-
+   return(FxtToGmtTime(startTime));
+}
 
 
 /**
@@ -3594,15 +3634,32 @@ datetime GetSessionEndTime(datetime time, int tz) {
  */
 datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
    datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NaT)
-      return(NaT);
+   if (fxtTime == NaT) return(NaT);
 
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
+   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
+   if (startTime == NaT) return(NaT);
 
    return(FxtToServerTime(startTime));
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -3654,26 +3711,6 @@ datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
       return(NaT);
 
    return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToGmtTime(startTime));
 }
 
 
@@ -3730,30 +3767,6 @@ datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
 
 
 /**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebe FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
-   if (fxtTime < 0)
-      return(_NaT(catch("GetPrevSessionStartTime.fxt(1)  invalid parameter fxtTime: "+ fxtTime, ERR_INVALID_PARAMETER)));
-
-   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
-   if (startTime < 0)
-      return(_NaT(catch("GetPrevSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
-
-   // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekEx(startTime);
-   if      (dow == SATURDAY) startTime -= 1*DAY;
-   else if (dow == SUNDAY  ) startTime -= 2*DAYS;
-
-   return(startTime);
-}
-
-
-/**
  * Gibt die Endzeit der vorherigen Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
  *
  * @param  datetime fxtTime - FXT-Zeit
@@ -3761,9 +3774,8 @@ datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
  * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
+   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
+   if (startTime == NaT) return(NaT);
 
    return(startTime + 1*DAY);
 }
