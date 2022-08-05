@@ -51,13 +51,7 @@
  *     datetime GetNextSessionStartTime();
  *     datetime GetNextSessionEndTime();
  *
- *  - implement
- *     GetSessionStartTime(..., TZ_LOCAL)
- *     GetSessionEndTime(..., TZ_LOCAL)
- *     GetPrevSessionStartTime(..., TZ_LOCAL)
- *     GetPrevSessionEndTime(..., TZ_LOCAL)
- *     GetNextSessionStartTime(..., TZ_LOCAL)
- *     GetNextSessionEndTime(..., TZ_LOCAL)
+ *  - implement Get(Prev|Next)?Session(Start|End)Time(..., TZ_LOCAL)
  *
  *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *  - time functions returning modeled time must log errors
