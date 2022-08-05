@@ -44,6 +44,13 @@
  *
  * TODO:
  *  - simplify
+ *     datetime GetSessionStartTime.gmt(datetime gmtTime);
+ *     datetime GetSessionStartTime.srv(datetime serverTime);
+ *
+ *     datetime GetSessionEndTime.fxt(datetime fxtTime);
+ *     datetime GetSessionEndTime.gmt(datetime gmtTime);
+ *     datetime GetSessionEndTime.srv(datetime serverTime);
+ *
  *     datetime GetPrevSessionStartTime.fxt(datetime fxtTime);
  *     datetime GetPrevSessionStartTime.gmt(datetime gmtTime);
  *     datetime GetPrevSessionStartTime.srv(datetime serverTime);
@@ -51,14 +58,6 @@
  *     datetime GetPrevSessionEndTime.fxt(datetime fxtTime);
  *     datetime GetPrevSessionEndTime.gmt(datetime gmtTime);
  *     datetime GetPrevSessionEndTime.srv(datetime serverTime);
- *
- *     datetime GetSessionStartTime.fxt(datetime fxtTime);
- *     datetime GetSessionStartTime.gmt(datetime gmtTime);
- *     datetime GetSessionStartTime.srv(datetime serverTime);
- *
- *     datetime GetSessionEndTime.fxt(datetime fxtTime);
- *     datetime GetSessionEndTime.gmt(datetime gmtTime);
- *     datetime GetSessionEndTime.srv(datetime serverTime);
  *
  *     datetime GetNextSessionStartTime.fxt(datetime fxtTime);
  *     datetime GetNextSessionStartTime.gmt(datetime gmtTime);

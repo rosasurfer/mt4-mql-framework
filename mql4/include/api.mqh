@@ -660,7 +660,7 @@ int      GetServerToGmtTimeOffset(datetime serverTime);;
 datetime GetSessionEndTime.fxt(datetime fxtTime);;
 datetime GetSessionEndTime.gmt(datetime gmtTime);;
 datetime GetSessionEndTime.srv(datetime serverTime);;
-datetime GetSessionStartTime.fxt(datetime fxtTime);;
+datetime GetSessionStartTime(datetime time, int tz);;
 datetime GetSessionStartTime.gmt(datetime gmtTime);;
 datetime GetSessionStartTime.srv(datetime serverTime);;
 int      GetSymbolGroups(int sgs[], string directory = "");;
