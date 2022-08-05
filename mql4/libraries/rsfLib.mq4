@@ -3524,20 +3524,14 @@ datetime GetSessionStartTime(datetime time, int tz) {
          return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
 
       case TZ_GMT:
-         time = GmtToFxtTime(time);
-         if (time == NaT) return(NaT);
-
-         time = GetSessionStartTime(time, TZ_FXT);
-         if (time == NaT)   return(NaT);
+         time = GmtToFxtTime(time);                if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(FxtToGmtTime(time));
 
       case TZ_SERVER:
-         time = ServerToFxtTime(time);
-         if (time == NaT) return(NaT);
-
-         time = GetSessionStartTime(time, TZ_FXT);
-         if (time == NaT)   return(NaT);
+         time = ServerToFxtTime(time);             if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(FxtToServerTime(time));
 
@@ -3598,30 +3592,16 @@ datetime GetPrevSessionStartTime(datetime time, int tz) {
          return(time);
 
       case TZ_GMT:
+         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToGmtTime(time));
+
       case TZ_SERVER:
       case TZ_LOCAL:
          return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
 
    return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT) return(NaT);
-
-   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
-   if (startTime == NaT) return(NaT);
-
-   return(FxtToGmtTime(startTime));
 }
 
 
@@ -3722,9 +3702,8 @@ datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
  * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
-   datetime startTime = GetPrevSessionStartTime.gmt(gmtTime);
-   if (startTime == NaT)
-      return(NaT);
+   datetime startTime = GetPrevSessionStartTime(gmtTime, TZ_GMT);
+   if (startTime == NaT) return(NaT);
 
    return(startTime + 1*DAY);
 }
