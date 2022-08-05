@@ -48,20 +48,16 @@
  *     datetime GetSessionEndTime();
  *     datetime GetPrevSessionStartTime();
  *     datetime GetPrevSessionEndTime();
- *
- *     datetime GetNextSessionStartTime.fxt(datetime fxtTime);
- *     datetime GetNextSessionStartTime.gmt(datetime gmtTime);
- *     datetime GetNextSessionStartTime.srv(datetime serverTime);
- *
- *     datetime GetNextSessionEndTime.fxt(datetime fxtTime);
- *     datetime GetNextSessionEndTime.gmt(datetime gmtTime);
- *     datetime GetNextSessionEndTime.srv(datetime serverTime);
+ *     datetime GetNextSessionStartTime();
+ *     datetime GetNextSessionEndTime();
  *
  *  - implement
  *     GetSessionStartTime(..., TZ_LOCAL)
  *     GetSessionEndTime(..., TZ_LOCAL)
  *     GetPrevSessionStartTime(..., TZ_LOCAL)
  *     GetPrevSessionEndTime(..., TZ_LOCAL)
+ *     GetNextSessionStartTime(..., TZ_LOCAL)
+ *     GetNextSessionEndTime(..., TZ_LOCAL)
  *
  *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *  - time functions returning modeled time must log errors

@@ -54,15 +54,14 @@ int onTick() {
  * @return bool - success status
  */
 int DrawGrid() {
+   // due to init flag INIT_TIMEZONE we don't have to check for timezone related errors
    datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
    int      dow, dd, mm, yyyy, bar, sepColor, sepStyle;
    string   label="", lastLabel="";
 
    // Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime time    = ServerToFxtTime(Time[Bars-1]);                if (time    == NaT) return(_false(debug("DrawGrid(0.1)")));
-   datetime fromFXT = GetNextSessionStartTime.fxt(time - 1*SECOND); if (fromFXT == NaT) return(_false(debug("DrawGrid(0.2)")));
-            time    = ServerToFxtTime(Time[0]);                     if (time    == NaT) return(_false(debug("DrawGrid(0.3)")));
-   datetime toFXT   = GetNextSessionStartTime.fxt(time);            if (toFXT   == NaT) return(_false(debug("DrawGrid(0.4)")));
+   datetime fromFXT = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
+   datetime toFXT   = GetNextSessionStartTime(ServerToFxtTime(Time[0]),                 TZ_FXT);
 
    // Tagesseparatoren
    if (Period() < PERIOD_H4) {
@@ -115,8 +114,8 @@ int DrawGrid() {
    }
 
    // Separatoren zeichnen
-   for (time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FxtToServerTime(time);                                  // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+   for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
+      separatorTime = FxtToServerTime(time);
       dow           = TimeDayOfWeekEx(time);
 
       // Bar und Chart-Time des Separators ermitteln

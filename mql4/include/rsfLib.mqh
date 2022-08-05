@@ -126,13 +126,8 @@
    datetime GetPrevSessionStartTime(datetime time, int tz);
    datetime GetPrevSessionEndTime  (datetime time, int tz);
 
-   datetime GetNextSessionStartTime.fxt(datetime fxtTime   );
-   datetime GetNextSessionStartTime.gmt(datetime gmtTime   );
-   datetime GetNextSessionStartTime.srv(datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
-
-   datetime GetNextSessionEndTime.fxt  (datetime fxtTime   );
-   datetime GetNextSessionEndTime.gmt  (datetime gmtTime   );
-   datetime GetNextSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
+   datetime GetNextSessionStartTime(datetime time, int tz);
+   datetime GetNextSessionEndTime  (datetime time, int tz);
 
 
    // colors
