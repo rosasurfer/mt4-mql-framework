@@ -131,8 +131,6 @@
    datetime GetPrevSessionEndTime.gmt  (datetime gmtTime   );
    datetime GetPrevSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionEndTime.srv      (datetime serverTime);                                         // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
-
    datetime GetNextSessionStartTime.fxt(datetime fxtTime   );
    datetime GetNextSessionStartTime.gmt(datetime gmtTime   );
    datetime GetNextSessionStartTime.srv(datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG

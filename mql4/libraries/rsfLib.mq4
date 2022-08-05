@@ -3563,18 +3563,12 @@ datetime GetSessionEndTime(datetime time, int tz) {
 
    switch (tz) {
       case TZ_FXT:
-         time = GetSessionStartTime(time, tz);
-         if (time == NaT)   return(NaT);
-         if (time == EMPTY) return(NaT);
-         return(time + 1*DAY);
-
       case TZ_GMT:
+      case TZ_SERVER:
          time = GetSessionStartTime(time, tz);
          if (time == NaT)   return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(time + 1*DAY);
-
-      case TZ_SERVER:
 
       case TZ_LOCAL:
          return(_NaT(catch("GetSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
@@ -3582,61 +3576,6 @@ datetime GetSessionEndTime(datetime time, int tz) {
 
    return(_NaT(catch("GetSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
 }
-
-
-
-
-
-
-
-
-
-
-/**
- * Gibt die Endzeit der Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionEndTime.gmt(datetime gmtTime) {
-   datetime startTime = GetSessionStartTime(datetime gmtTime, TZ_GMT);
-   if (startTime == NaT  ) return(NaT);
-   if (startTime == EMPTY) return(EMPTY);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Endzeit der Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionEndTime.srv(datetime serverTime) {
-   datetime startTime = GetSessionStartTime(serverTime, TZ_SERVER);
-   if (startTime == NaT)   return(NaT);
-   if (startTime == EMPTY) return(EMPTY);
-
-   return(startTime + 1*DAY);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
