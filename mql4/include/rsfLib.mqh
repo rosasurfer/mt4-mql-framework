@@ -120,6 +120,8 @@
    int      GetLocalToGmtTimeOffset();
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
+   datetime GetSessionStartTime(datetime time, int tz);
+
    datetime GetPrevSessionStartTime.fxt(datetime fxtTime   );
    datetime GetPrevSessionStartTime.gmt(datetime gmtTime   );
    datetime GetPrevSessionStartTime.srv(datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
@@ -128,7 +130,6 @@
    datetime GetPrevSessionEndTime.gmt  (datetime gmtTime   );
    datetime GetPrevSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionStartTime.fxt    (datetime fxtTime   );                                         // throws ERR_MARKET_CLOSED
    datetime GetSessionStartTime.gmt    (datetime gmtTime   );                                         // throws ERR_MARKET_CLOSED
    datetime GetSessionStartTime.srv    (datetime serverTime);                                         // throws ERR_MARKET_CLOSED, ERR_INVALID_TIMEZONE_CONFIG
 
