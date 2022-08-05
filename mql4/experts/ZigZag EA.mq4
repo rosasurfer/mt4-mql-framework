@@ -47,7 +47,6 @@
  *     datetime GetSessionStartTime();
  *     datetime GetSessionEndTime();
  *
- *     datetime GetSessionEndTime.gmt(datetime gmtTime);
  *     datetime GetSessionEndTime.srv(datetime serverTime);
  *
  *     datetime GetPrevSessionStartTime.fxt(datetime fxtTime);
