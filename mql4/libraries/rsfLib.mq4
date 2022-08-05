@@ -3509,7 +3509,7 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
  * Return the start time of the 24h trade session for the specified time.
  *
  * @param  datetime time - time
- * @param  int      tz   - timezone identifier, one of: TIME_SERVER|TIME_LOCAL|TIME_FXT|TIME_UTC
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
  *
  * @return datetime - session start time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
  *                    NaT in case of errors
@@ -3518,49 +3518,36 @@ datetime GetSessionStartTime(datetime time, int tz) {
    if (time <= 0) return(_NaT(catch("GetSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
    switch (tz) {
-      case TIME_FXT:
+      case TZ_FXT:
          time -= time%DAYS;
          int dow = TimeDayOfWeekEx(time);                            // check for weekends
          return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
 
-      case TIME_GMT:
+      case TZ_GMT:
          time = GmtToFxtTime(time);
          if (time == NaT) return(NaT);
 
-         time = GetSessionStartTime(time, TIME_FXT);
+         time = GetSessionStartTime(time, TZ_FXT);
          if (time == NaT  ) return(NaT);
          if (time == EMPTY) return(EMPTY);
          return(FxtToGmtTime(time));
 
-      case TIME_SERVER:
-         break;
-      case TIME_LOCAL:
-      default:
-         return(_NaT(catch("GetSessionStartTime(2)  invalid/unsupported parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);
+         if (time == NaT) return(NaT);
+
+         time = GetSessionStartTime(time, TZ_FXT);
+         if (time == NaT  ) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
-   return(NaT);
+
+   return(_NaT(catch("GetSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
 }
 
-
-/**
- * Gibt die Startzeit der Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Startzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionStartTime.srv(datetime serverTime) {
-   int offset = GetServerToFxtTimeOffset(datetime serverTime);
-   if (offset == EMPTY_VALUE) return(NaT);
-
-   datetime fxtTime = serverTime - offset;
-   if (fxtTime < 0) return(_NaT(catch("GetSessionStartTime.srv(1)  illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
-
-   int dayOfWeek = TimeDayOfWeekEx(fxtTime);
-   if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY) return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
-
-   return(fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + offset);
-}
 
 
 
@@ -3620,10 +3607,10 @@ datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
  *
  * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
-datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.srv(serverTime);
-   if (startTime == NaT)
-      return(NaT);
+datetime GetSessionEndTime.srv(datetime serverTime) {
+   datetime startTime = GetSessionStartTime(serverTime, TZ_SERVER);
+   if (startTime == NaT)   return(NaT);
+   if (startTime == EMPTY) return(EMPTY);
 
    return(startTime + 1*DAY);
 }
@@ -3708,8 +3695,8 @@ datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
  *
  * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
-datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime(datetime gmtTime, TIME_GMT);
+datetime GetSessionEndTime.gmt(datetime gmtTime) {
+   datetime startTime = GetSessionStartTime(datetime gmtTime, TZ_GMT);
    if (startTime == NaT  ) return(NaT);
    if (startTime == EMPTY) return(EMPTY);
 
@@ -3800,8 +3787,8 @@ datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
  *
  * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
  */
-datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime(fxtTime, TIME_FXT);
+datetime GetSessionEndTime.fxt(datetime fxtTime) {
+   datetime startTime = GetSessionStartTime(fxtTime, TZ_FXT);
    if (startTime==EMPTY || startTime==NaT) return(NaT);
 
    return(startTime + 1*DAY);

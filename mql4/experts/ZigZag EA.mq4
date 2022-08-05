@@ -44,7 +44,7 @@
  *
  * TODO:
  *  - simplify
- *     datetime GetSessionStartTime.srv(datetime serverTime);
+ *     datetime GetSessionStartTime(datetime time);
  *
  *     datetime GetSessionEndTime.fxt(datetime fxtTime);
  *     datetime GetSessionEndTime.gmt(datetime gmtTime);
@@ -66,6 +66,7 @@
  *     datetime GetNextSessionEndTime.gmt(datetime gmtTime);
  *     datetime GetNextSessionEndTime.srv(datetime serverTime);
  *
+ *  - implement GetSessionStartTime(..., TZ_LOCAL)
  *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *  - time functions returning modeled time must log errors
  *

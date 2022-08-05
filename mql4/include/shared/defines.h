@@ -349,11 +349,11 @@
 
 
 // identifiers for timezone related functionality
-#define TIME_SERVER                             1        // the current trade server timezone
-#define TIME_LOCAL                              2        // the timezone of the local system
-#define TIME_FXT                                3        // FXT (Forex Standard Time, aka America/New_York+0700)
-#define TIME_GMT                                4        // GMT (Greenwich Mean Time, aka UTC)
-#define TIME_UTC                         TIME_GMT        // alias
+#define TZ_SERVER                               1        // the current trade server timezone
+#define TZ_LOCAL                                2        // the timezone of the local system
+#define TZ_FXT                                  3        // FXT (Forex Standard Time, aka America/New_York+0700)
+#define TZ_GMT                                  4        // GMT (Greenwich Mean Time, aka UTC)
+#define TZ_UTC                             TZ_GMT        // alias
 
 
 // init() flags
