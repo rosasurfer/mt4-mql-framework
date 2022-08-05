@@ -17,7 +17,13 @@
 bool iPreviousPeriod(int timeframe/*=NULL*/, datetime &openTimeFxt, datetime &closeTimeFxt, datetime &openTimeSrv, datetime &closeTimeSrv, bool skipWeekends = true) {
    if (!timeframe) timeframe = Period();
    if (!openTimeFxt) {
-      datetime nowFxt = TimeFXT(); if (!nowFxt) return(false);
+      datetime nowFxt;
+      if (__isTesting && !TimeCurrent()) {
+         nowFxt = ServerToFxtTime(Time[0]); if (nowFxt == NaT) return(_false(logDebug("iPreviousPeriod(1)->ServerToFxtTime() => NaT")));
+      }
+      else {
+         nowFxt = TimeFXT();                if (!nowFxt)       return(_false(logDebug("iPreviousPeriod(2)->TimeFXT() => NULL")));
+      }
    }
    skipWeekends = skipWeekends!=0;
 
@@ -217,10 +223,10 @@ bool iPreviousPeriod(int timeframe/*=NULL*/, datetime &openTimeFxt, datetime &cl
          else if (dow == MONDAY) closeTimeFxt -= 2*DAYS;
       }
    }
-   else return(!catch("iPreviousPeriod(1)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
+   else return(!catch("iPreviousPeriod(3)  invalid parameter timeframe: "+ timeframe, ERR_INVALID_PARAMETER));
 
    // calculate corresponding server times
    openTimeSrv  = FxtToServerTime(openTimeFxt);  if (openTimeSrv  == NaT) return(false);
    closeTimeSrv = FxtToServerTime(closeTimeFxt); if (closeTimeSrv == NaT) return(false);
-   return(!catch("iPreviousPeriod(2)"));
+   return(!catch("iPreviousPeriod(4)"));
 }

@@ -43,6 +43,34 @@
  *
  *
  * TODO:
+ *  - simplify
+ *     datetime GetPrevSessionStartTime.fxt(datetime fxtTime);
+ *     datetime GetPrevSessionStartTime.gmt(datetime gmtTime);
+ *     datetime GetPrevSessionStartTime.srv(datetime serverTime);
+ *
+ *     datetime GetPrevSessionEndTime.fxt(datetime fxtTime);
+ *     datetime GetPrevSessionEndTime.gmt(datetime gmtTime);
+ *     datetime GetPrevSessionEndTime.srv(datetime serverTime);
+ *
+ *     datetime GetSessionStartTime.fxt(datetime fxtTime);
+ *     datetime GetSessionStartTime.gmt(datetime gmtTime);
+ *     datetime GetSessionStartTime.srv(datetime serverTime);
+ *
+ *     datetime GetSessionEndTime.fxt(datetime fxtTime);
+ *     datetime GetSessionEndTime.gmt(datetime gmtTime);
+ *     datetime GetSessionEndTime.srv(datetime serverTime);
+ *
+ *     datetime GetNextSessionStartTime.fxt(datetime fxtTime);
+ *     datetime GetNextSessionStartTime.gmt(datetime gmtTime);
+ *     datetime GetNextSessionStartTime.srv(datetime serverTime);
+ *
+ *     datetime GetNextSessionEndTime.fxt(datetime fxtTime);
+ *     datetime GetNextSessionEndTime.gmt(datetime gmtTime);
+ *     datetime GetNextSessionEndTime.srv(datetime serverTime);
+ *
+ *  - TimeServer() as replacement for TimeCurrent() adds nothing
+ *  - time functions returning modeled time must log errors
+ *
  *  - AverageRange
  *     fix EMPTY_VALUE
  *     integrate required bars in startbar calculation
@@ -53,7 +81,6 @@
  *     fix gap between days/weeks if market doesn't work 24h
  *     implement more timeframes
  *
- *  - MAs: log reversal statistics if reversal stepper is active
  *  - move iCustom() to ta/includes
  *  - rename Max.Bars to MaxBarsBack
  *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows

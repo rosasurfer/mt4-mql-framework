@@ -3971,9 +3971,6 @@ int MarketWatch.Symbols() {
 datetime TimeServer(bool watchLastTick = true) {
    watchLastTick = watchLastTick!=0;         // (bool) int
 
-   static bool isLibrary = -1;
-   if (isLibrary == -1) isLibrary = IsLibrary();
-
    if (__isTesting)
       return(TimeCurrent());
 
@@ -4015,8 +4012,8 @@ datetime TimeGMT() {
  * @return datetime - trade server time in FXT or NULL (0) in case of errors
  */
 datetime TimeFXT() {
-   datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   datetime gmt = TimeGMT();         if (!gmt)       return(_NULL(logDebug("TimeFXT(1)->TimeGMT() => NULL")));
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("TimeFXT(2)->GmtToFxtTime() => NaT")));
    return(fxt);
 }
 
@@ -4029,8 +4026,8 @@ datetime TimeFXT() {
  * @see  TimeFXT() to return the modeled FXT time in tester
  */
 datetime GetFxtTime() {
-   datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
+   datetime gmt = GetGmtTime();      if (!gmt)       return(_NULL(logDebug("GetFxtTime(1)->GetGmtTime() => NULL")));
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("GetFxtTime(2)->GmtToFxtTime() => NaT")));
    return(fxt);
 }
 
@@ -4042,8 +4039,8 @@ datetime GetFxtTime() {
  * @return datetime - Serverzeit oder NULL, falls ein Fehler auftrat
  */
 datetime GetServerTime() {
-   datetime gmt  = GetGmtTime();         if (!gmt)        return(NULL);
-   datetime time = GmtToServerTime(gmt); if (time == NaT) return(NULL);
+   datetime gmt  = GetGmtTime();         if (!gmt)        return(_NULL(logDebug("GetServerTime(1)->GetGmtTime() => NULL")));
+   datetime time = GmtToServerTime(gmt); if (time == NaT) return(_NULL(logDebug("GetServerTime(2)->GmtToServerTime() => NaT")));
    return(time);
 }
 

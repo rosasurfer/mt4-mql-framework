@@ -45,22 +45,31 @@
  * @return int - the same error
  */
 int debug(string message, int error=NO_ERROR, int loglevel=LOG_DEBUG) {
-   // Note: This function must not call MQL library functions. Using DLLs is ok.
+   // Note: This function MUST NOT call MQL library functions. Calling DLL functions is fine.
    if (!IsDllsAllowed()) {
-      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");                 // directly alert instead
+      Alert("debug(1)  DLLs are not enabled (", message, ", error: ", error, ")");
       return(error);
    }
    static bool isRecursion = false; if (isRecursion) {
-      Alert("debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(loglevel));  // should never happen
+      Alert("debug(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(loglevel));
       return(error);
    }
    isRecursion = true;
 
-   // add prefix "MetaTrader" or "T" for message filtering by DebugView
-   string sPrefix   = "MetaTrader"; if (__isTesting || IsTesting()) sPrefix = GmtTimeFormat(TimeCurrent(), "T %d.%m.%Y %H:%M:%S");
-   string sLoglevel = ""; if (loglevel != LOG_DEBUG)              sLoglevel = LoglevelDescription(loglevel);
-          sLoglevel = StrPadRight(sLoglevel, 6);
-   string sError    = ""; if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
+   // compose message details
+   string sPrefix = "MetaTrader";                              // add a prefix for message filtering by DebugView: "MetaTrader" or "T"
+   if (__isTesting || IsTesting()) {                           // if called very early global vars may not yet be set
+      datetime time = TimeCurrent();                           // may be NULL, intentionally no error handling as it would cause recursion
+      if (!time && Bars) time = Time[0];
+      sPrefix = GmtTimeFormat(time, "T %d.%m.%Y %H:%M:%S");
+   }
+
+   string sLoglevel = "";
+   if (loglevel != LOG_DEBUG) sLoglevel = LoglevelDescription(loglevel);
+   sLoglevel = StrPadRight(sLoglevel, 6);
+
+   string sError = "";
+   if (error != NO_ERROR) sError = StringConcatenate("  [", ErrorToStr(error), "]");
 
    OutputDebugStringA(StringConcatenate(sPrefix, " ", sLoglevel, " ", Symbol(), ",", PeriodDescription(), "  ", ModuleName(true), "::", StrReplace(StrReplace(message, NL+NL, NL, true), NL, " "), sError));
 
@@ -88,7 +97,7 @@ int catch(string caller, int error=NO_ERROR, bool popOrder=false) {
 
    if (error != 0) {
       if (isRecursion) {
-         Alert("catch(1)  recursion: ", caller, ", error: ", error);          // should never happen
+         Alert("catch(1)  recursion: ", caller, ", error: ", error);
          return(debug("catch(1)  recursion: "+ caller, error, LOG_ERROR));
       }
       isRecursion = true;
@@ -349,7 +358,7 @@ int log2Alert(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2Alert(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
@@ -400,7 +409,7 @@ int log2Debugger(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2Debugger(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
@@ -441,14 +450,17 @@ int log2File(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2File(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
       isRecursion = true;
       ec_SetLoglevelFile(__ExecutionContext, LOG_OFF);                              // prevent recursive calls
 
-      AppendLogMessageA(__ExecutionContext, TimeCurrent(), message, error, level);
+      datetime time = TimeCurrent();                                                // may be NULL, intentionally no error handling as it would cause recursion
+      if (!time && __isTesting && Bars) time = Time[0];
+
+      AppendLogMessageA(__ExecutionContext, time, message, error, level);
 
       ec_SetLoglevelFile(__ExecutionContext, configLevel);                          // restore the configuration
       isRecursion = false;
@@ -482,7 +494,7 @@ int log2Mail(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2Mail(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
@@ -537,7 +549,7 @@ int log2SMS(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2SMS(2)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
@@ -587,7 +599,7 @@ int log2Terminal(string message, int error, int level) {
 
    // apply the configured loglevel filter
    if (level >= configLevel) {
-      static bool isRecursion = false; if (isRecursion) {                           // should never happen
+      static bool isRecursion = false; if (isRecursion) {
          Alert("log2Terminal(1)  recursion: ", message, ", error: ", error, ", ", LoglevelToStr(level));
          return(error);
       }
