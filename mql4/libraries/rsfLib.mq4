@@ -3609,38 +3609,42 @@ datetime GetPrevSessionStartTime(datetime time, int tz) {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
+ * Return the end time of the 24h trade session fully preceding the specified time.
  *
- * @param  datetime serverTime - Serverzeit
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
  *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
+ * @return datetime - session end time or NaT in case of errors
  */
-datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetPrevSessionStartTime(serverTime, TZ_SERVER);
-   if (startTime == NaT) return(NaT);
+datetime GetPrevSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
 
-   return(startTime + 1*DAY);
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetPrevSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -3680,21 +3684,6 @@ datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_
 
 
 /**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
-   datetime startTime = GetPrevSessionStartTime(gmtTime, TZ_GMT);
-   if (startTime == NaT) return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
  * Gibt die Startzeit der nächsten Handelssession für die angegebene GMT-Zeit zurück.
  *
  * @param  datetime gmtTime - GMT-Zeit
@@ -3728,23 +3717,6 @@ datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
 
    return(startTime + 1*DAY);
 }
-
-
-/**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
-   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
-   if (startTime == NaT) return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
 
 
 /**
