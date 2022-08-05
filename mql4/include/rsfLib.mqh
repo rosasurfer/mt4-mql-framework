@@ -125,8 +125,6 @@
 
    datetime GetPrevSessionStartTime(datetime time, int tz);
 
-   datetime GetPrevSessionStartTime.srv(datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG
-
    datetime GetPrevSessionEndTime.fxt  (datetime fxtTime   );
    datetime GetPrevSessionEndTime.gmt  (datetime gmtTime   );
    datetime GetPrevSessionEndTime.srv  (datetime serverTime);                                         // throws ERR_INVALID_TIMEZONE_CONFIG

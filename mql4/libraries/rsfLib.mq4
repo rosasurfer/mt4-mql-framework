@@ -3597,29 +3597,15 @@ datetime GetPrevSessionStartTime(datetime time, int tz) {
          return(FxtToGmtTime(time));
 
       case TZ_SERVER:
+         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToServerTime(time));
+
       case TZ_LOCAL:
          return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
    }
 
    return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NaT) return(NaT);
-
-   datetime startTime = GetPrevSessionStartTime(fxtTime, TZ_FXT);
-   if (startTime == NaT) return(NaT);
-
-   return(FxtToServerTime(startTime));
 }
 
 
@@ -3650,9 +3636,8 @@ datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALI
  * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetPrevSessionStartTime.srv(serverTime);
-   if (startTime == NaT)
-      return(NaT);
+   datetime startTime = GetPrevSessionStartTime(serverTime, TZ_SERVER);
+   if (startTime == NaT) return(NaT);
 
    return(startTime + 1*DAY);
 }
