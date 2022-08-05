@@ -397,7 +397,7 @@ D<span class="string code">'01.01.2004'</span>                 <span class="comm
 D<span class="string code">'12:30:27'</span>                   <span class="comment code">// evaluates to D'{compilation-date} 12:30:27'</span>
 D<span class="string code">''</span>                           <span class="comment code">// evaluates to D'{compilation-date} 00:00:00'</span>
 </pre>
-      <p>The internal representation is a long integer value consuming 4 bytes. The value represents the amount of seconds since 00:00 Jan 1, 1970.</p>
+      <p>The internal representation is a long integer value consuming 4 bytes. The value is a UNIX timestamp (seconds since 01.01.1970 00:00).</p>
       </content>
     </text>
   </group>
@@ -4635,23 +4635,23 @@ Sleep(10000);
       caption=StrToTime()
       type=datetime
       <content>
-      Converts a string in the format &quot;yyyy.mm.dd hh:mm:ss&quot; to a datetime value (amount of seconds since 1st of January 1970).<br/>
+      Converts a string in the format "yyyy.mm.dd hh:mm:ss" to a UNIX timestamp (seconds since 01.01.1970 00:00).<br/>
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Sind die einzelnen Werte nicht in voller L&auml;nge angegeben, werden teilweise (nicht immer) die Sekunden verschluckt:<br/>
-      <span class="function">StrToTime</span>(<span class="string">"2014.4.23 14:2:50"</span>) => <span class="string">"2014.04.23 14:02:00"</span><br/>
-      Workaround: Werte in voller L&auml;nge formatieren
+      During conversion seconds <span class="italic">may</span> get lost if numeric time parts are not padded to two digits:<br/>
+      <span class="code function">TimeToStr</span>(<span class="code function">StrToTime</span>(<span class="code string">"2014.04.23 14:2:50"</span>), <span class="code const">TIME_FULL</span>) => <span class="code string">"2014.04.23 14:02:00"</span><br/>
+      Workaround: make sure single digit numbers are padded with zeros
       </content>
       <example>
-  datetime value1 = StrToTime(<span class="string">&quot;2003.8.12 17:35&quot;</span>);
-  datetime value2 = StrToTime(<span class="string">&quot;17:35&quot;</span>);            // current date with the given time
-  datetime value3 = StrToTime(<span class="string">&quot;2003.8.12&quot;</span>);        // given date with a time of &quot;00:00&quot;
+<span class="code type">datetime</span> time1 = <span class="code function">StrToTime</span>(<span class="code string">"2003.8.12 17:35"</span>);
+<span class="code type">datetime</span> time2 = <span class="code function">StrToTime</span>(<span class="code string">"17:35"</span>);             <span class="code comment">// current date with the given time</span>
+<span class="code type">datetime</span> time3 = <span class="code function">StrToTime</span>(<span class="code string">"2003.8.12"</span>);         <span class="code comment">// given date with a time of "00:00"</span>
       </example>
       <parameter>
         type=string
         name=value
-        description=String representing a date/time value formatted as &quot;yyyy.mm.dd hh:mm:ss&quot;
+        description=string representing a date/time value formatted as "yyyy.mm.dd hh:mm:ss"
       </parameter>
     </function>
 
@@ -4664,7 +4664,7 @@ Sleep(10000);
       </content>
       keywords=;TIME_DATE;TIME_MINUTES;TIME_SECONDS;
       <example>
-  string var1=TimeToStr(TimeCurrent(),TIME_DATE|TIME_SECONDS);
+string s1 = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
       </example>
       <parameter>
         type=datetime
