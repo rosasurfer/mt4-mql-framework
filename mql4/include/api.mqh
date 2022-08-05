@@ -657,7 +657,7 @@ datetime GetPrevSessionStartTime.srv(datetime serverTime);;
 string   GetServerTimezone();;
 int      GetServerToFxtTimeOffset(datetime serverTime);;
 int      GetServerToGmtTimeOffset(datetime serverTime);;
-datetime GetSessionEndTime.fxt(datetime fxtTime);;
+datetime GetSessionEndTime(datetime time, int tz);;
 datetime GetSessionEndTime.gmt(datetime gmtTime);;
 datetime GetSessionEndTime.srv(datetime serverTime);;
 datetime GetSessionStartTime(datetime time, int tz);;

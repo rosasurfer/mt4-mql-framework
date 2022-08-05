@@ -44,9 +44,9 @@
  *
  * TODO:
  *  - simplify
- *     datetime GetSessionStartTime(datetime time);
+ *     datetime GetSessionStartTime();
+ *     datetime GetSessionEndTime();
  *
- *     datetime GetSessionEndTime.fxt(datetime fxtTime);
  *     datetime GetSessionEndTime.gmt(datetime gmtTime);
  *     datetime GetSessionEndTime.srv(datetime serverTime);
  *
