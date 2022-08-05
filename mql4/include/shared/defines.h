@@ -338,7 +338,7 @@
 #define FEB                              FEBRUARY
 #define MAR                                 MARCH
 #define APR                                 APRIL
-//      MAY                                   MAY        // short form equals long form
+//      MAY                                   MAY        // short equals long form
 #define JUN                                  JUNE
 #define JUL                                  JULY
 #define AUG                                AUGUST
@@ -349,7 +349,7 @@
 
 
 // timezone identifiers
-#define TZ_SERVER                               1        // the current trade server timezone
+#define TZ_SERVER                               1        // the current trade server's timezone
 #define TZ_LOCAL                                2        // the timezone of the local system
 #define TZ_FXT                                  3        // FXT (Forex Standard Time, aka America/New_York+0700)
 #define TZ_GMT                                  4        // GMT (Greenwich Mean Time, aka UTC)
@@ -360,7 +360,7 @@
 #define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // executable without price history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
 #define INIT_NO_EXTERNAL_REPORTING             32        // disable external test reporting (experts only)
 

@@ -4097,6 +4097,199 @@ string LocalTimeFormat(datetime timestamp, string format) {
 
 
 /**
+ * Return the start time of the 24h trade session for the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
+ *                    NaT in case of errors
+ */
+datetime GetSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);             if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session for the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
+ *                    NaT in case of errors
+ */
+datetime GetSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetSessionStartTime(time, tz);
+         if (time == NaT)   return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the start time of the 24h trade session fully preceding the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or NaT in case of errors
+ */
+datetime GetPrevSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         if      (dow == SATURDAY) time -= 1*DAY;
+         else if (dow == SUNDAY)   time -= 2*DAYS;
+         return(time);
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session fully preceding the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or NaT in case of errors
+ */
+datetime GetPrevSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetPrevSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the start time of the 24h trade session following the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or NaT in case of errors
+ */
+datetime GetNextSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetNextSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         if      (dow == SATURDAY) time += 2*DAYS;
+         else if (dow == SUNDAY)   time += 1*DAY;
+         return(time);
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetNextSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetNextSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session following the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or NaT in case of errors
+ */
+datetime GetNextSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetNextSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetNextSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetNextSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetNextSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Generate a random integer value between the specified minimum and maximum values.
  *
  * @param  int min - minimum value
@@ -7061,8 +7254,14 @@ void __DummyCalls() {
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetMqlSandboxPath();
+   GetNextSessionStartTime(NULL, NULL);
+   GetNextSessionEndTime(NULL, NULL);
+   GetPrevSessionEndTime(NULL, NULL);
+   GetPrevSessionStartTime(NULL, NULL);
    GetRandomValue(NULL, NULL);
    GetServerTime();
+   GetSessionEndTime(NULL, NULL);
+   GetSessionStartTime(NULL, NULL);
    GmtTimeFormat(NULL, NULL);
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);

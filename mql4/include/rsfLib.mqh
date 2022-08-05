@@ -120,15 +120,6 @@
    int      GetLocalToGmtTimeOffset();
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
 
-   datetime GetSessionStartTime(datetime time, int tz);
-   datetime GetSessionEndTime  (datetime time, int tz);
-
-   datetime GetPrevSessionStartTime(datetime time, int tz);
-   datetime GetPrevSessionEndTime  (datetime time, int tz);
-
-   datetime GetNextSessionStartTime(datetime time, int tz);
-   datetime GetNextSessionEndTime  (datetime time, int tz);
-
 
    // colors
    color    RGB(int red, int green, int blue);
