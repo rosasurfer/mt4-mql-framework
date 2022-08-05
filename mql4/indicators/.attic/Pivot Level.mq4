@@ -228,7 +228,7 @@ int iPivotLevel_new(datetime time, int period/*=NULL*/, double &results[]) {
          // Start- und Endbar der vorangegangenen Session ermitteln
          datetime endTime = GetPrevSessionEndTime.srv(time);
          endBar   = iBarShiftPrevious(NULL, period, endTime-1*SECOND);     // TODO: endBar kann WE-Bar sein
-         startBar = iBarShiftNext(NULL, period, GetSessionStartTime.srv(iTime(NULL, period, endBar)));
+         startBar = iBarShiftNext(NULL, period, GetSessionStartTime(iTime(NULL, period, endBar), TZ_SERVER));
          break;                                                            // TODO: iBarShift() und iTime() auf ERS_HISTORY_UPDATE prüfen
 
       default:

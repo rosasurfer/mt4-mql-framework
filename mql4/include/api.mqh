@@ -661,7 +661,6 @@ datetime GetSessionEndTime.fxt(datetime fxtTime);;
 datetime GetSessionEndTime.gmt(datetime gmtTime);;
 datetime GetSessionEndTime.srv(datetime serverTime);;
 datetime GetSessionStartTime(datetime time, int tz);;
-datetime GetSessionStartTime.srv(datetime serverTime);;
 int      GetSymbolGroups(int sgs[], string directory = "");;
 string   GetSymbolName(string symbol);;
 string   GetSymbolNameOrAlt(string symbol, string altValue = "");;
