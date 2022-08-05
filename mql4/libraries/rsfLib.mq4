@@ -3563,12 +3563,16 @@ datetime GetSessionEndTime(datetime time, int tz) {
 
    switch (tz) {
       case TZ_FXT:
-         time = GetSessionStartTime(time, TZ_FXT);
+         time = GetSessionStartTime(time, tz);
          if (time == NaT)   return(NaT);
          if (time == EMPTY) return(NaT);
          return(time + 1*DAY);
 
       case TZ_GMT:
+         time = GetSessionStartTime(time, tz);
+         if (time == NaT)   return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(time + 1*DAY);
 
       case TZ_SERVER:
 
@@ -3578,12 +3582,6 @@ datetime GetSessionEndTime(datetime time, int tz) {
 
    return(_NaT(catch("GetSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
 }
-
-
-
-
-
-
 
 
 
