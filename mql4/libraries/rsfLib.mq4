@@ -3523,33 +3523,22 @@ datetime GetSessionStartTime(datetime time, int tz) {
          int dow = TimeDayOfWeekEx(time);                            // check for weekends
          return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
 
-      case TIME_SERVER:
       case TIME_GMT:
-         break;
+         time = GmtToFxtTime(time);
+         if (time == NaT) return(NaT);
 
+         time = GetSessionStartTime(time, TIME_FXT);
+         if (time == NaT  ) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToGmtTime(time));
+
+      case TIME_SERVER:
+         break;
       case TIME_LOCAL:
       default:
          return(_NaT(catch("GetSessionStartTime(2)  invalid/unsupported parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
    }
    return(NaT);
-}
-
-
-/**
- * Gibt die Startzeit der Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit or NaT in case of errors
- */
-datetime GetSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT) return(NaT);
-
-   datetime startTime = GetSessionStartTime(fxtTime, TIME_FXT);
-   if (startTime==EMPTY || startTime==NaT) return(NaT);
-
-   return(FxtToGmtTime(startTime));
 }
 
 
@@ -3720,9 +3709,9 @@ datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
  * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
  */
 datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.gmt(datetime gmtTime);
-   if (startTime == NaT)
-      return(NaT);
+   datetime startTime = GetSessionStartTime(datetime gmtTime, TIME_GMT);
+   if (startTime == NaT  ) return(NaT);
+   if (startTime == EMPTY) return(EMPTY);
 
    return(startTime + 1*DAY);
 }
