@@ -4097,6 +4097,90 @@ string LocalTimeFormat(datetime timestamp, string format) {
 
 
 /**
+ * Convert the specified FXT time to GMT.
+ *
+ * @param  datetime time - FXT time
+ *
+ * @return datetime - GMT time or NaT in case of errors
+ */
+datetime FxtToGmtTime(datetime time) {
+   int offset = GetFxtToGmtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified FXT time to server time.
+ *
+ * @param  datetime time - FXT time
+ *
+ * @return datetime - server time or NaT in case of errors
+ */
+datetime FxtToServerTime(datetime time) {
+   int offset = GetFxtToServerTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified GMT time to FXT time.
+ *
+ * @param  datetime time - GMT time
+ *
+ * @return datetime - FXT time or NaT in case of errors
+ */
+datetime GmtToFxtTime(datetime time) {
+   int offset = GetGmtToFxtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified GMT time to server time.
+ *
+ * @param  datetime time - GMT time
+ *
+ * @return datetime - server time or NaT in case of errors
+ */
+datetime GmtToServerTime(datetime time) {
+   int offset = GetGmtToServerTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified server time to FXT time.
+ *
+ * @param  datetime time - server time
+ *
+ * @return datetime - FXT time or NaT in case of errors
+ */
+datetime ServerToFxtTime(datetime time) {
+   int offset = GetServerToFxtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified server time to GMT.
+ *
+ * @param  datetime time - server time
+ *
+ * @return datetime - GMT time or NaT in case of errors
+ */
+datetime ServerToGmtTime(datetime time) {
+   int offset = GetServerToGmtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
  * Return the start time of the 24h trade session for the specified time.
  *
  * @param  datetime time - time
@@ -7232,6 +7316,8 @@ void __DummyCalls() {
    FindStandardSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
+   FxtToGmtTime(NULL);
+   FxtToServerTime(NULL);
    GE(NULL, NULL);
    GetAccountAlias();
    GetAccountCompanyId();
@@ -7263,6 +7349,8 @@ void __DummyCalls() {
    GetSessionEndTime(NULL, NULL);
    GetSessionStartTime(NULL, NULL);
    GmtTimeFormat(NULL, NULL);
+   GmtToFxtTime(NULL);
+   GmtToServerTime(NULL);
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
    icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -7366,6 +7454,8 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
+   ServerToFxtTime(NULL);
+   ServerToGmtTime(NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
@@ -7450,17 +7540,18 @@ void __DummyCalls() {
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
+   int      GetFxtToGmtTimeOffset(datetime time);
+   int      GetFxtToServerTimeOffset(datetime time);
+   int      GetGmtToFxtTimeOffset(datetime time);
+   int      GetGmtToServerTimeOffset(datetime time);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetAccountServer();
    string   GetServerTimezone();
-   datetime GmtToFxtTime(datetime gmtTime);
-   datetime GmtToServerTime(datetime gmtTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
-   datetime ServerToGmtTime(datetime serverTime);
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);

@@ -537,10 +537,10 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
    }
    else if (lTimezone=="fxt-0200" || lTimezone=="america/new_york+0500") {
-      datetime fxtTime = serverTime + PLUS_2_H;
-      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
-      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2_H;
-      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
+      datetime fxtTime = serverTime + PLUS_2h;
+      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2h;
+      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2h;
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2h;
    }
    else return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -3625,36 +3625,6 @@ int DecreasePeriod(int period = 0) {
 
 
 /**
- * Konvertiert die angegebene FXT-Zeit (Forex Time) nach GMT.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime FxtToGmtTime(datetime fxtTime) {
-   int offset = GetFxtToGmtTimeOffset(fxtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(fxtTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene FXT-Zeit (Forex Time) nach Serverzeit.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   int offset = GetFxtToServerTimeOffset(fxtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(fxtTime - offset);
-}
-
-
-/**
  * Zerlegt einen String in Teilstrings.
  *
  * @param  _In_  string input            - zu zerlegender String
@@ -3899,9 +3869,9 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
    }
    else if (lTimezone=="fxt-0200" || lTimezone=="america/new_york+0500") {
-      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
-      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2_H;
-      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2h;
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2h;
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2h;
    }
    else return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -3992,39 +3962,6 @@ string GetServerTimezone() {
 
    lastTick = tick;
    return(lastResult[IDX_TIMEZONE]);
-}
-
-
-/**
- * Konvertiert die angegebene GMT-Zeit nach FXT-Zeit (Forex Time).
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GmtToFxtTime(datetime gmtTime) {
-   int offset = GetGmtToFxtTimeOffset(gmtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(gmtTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene GMT-Zeit nach Serverzeit.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-
-   // TODO: check details at https://www.mql5.com/en/forum/214954/page6
-
-   int offset = GetGmtToServerTimeOffset(gmtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(gmtTime - offset);
 }
 
 
@@ -4145,36 +4082,6 @@ int DeleteRegisteredObjects() {
    ArrayResize(__registeredObjects, 0);
    __registeredOjectsCounter = 0;
    return(catch("DeleteRegisteredObjects(2)"));
-}
-
-
-/**
- * Konvertiert die angegebene Serverzeit nach FXT (Forex Standard Time).
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime ServerToFxtTime(datetime serverTime) {
-   int offset = GetServerToFxtTimeOffset(serverTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(serverTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene Serverzeit nach GMT.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime ServerToGmtTime(datetime serverTime) {
-   int offset = GetServerToGmtTimeOffset(serverTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(serverTime - offset);
 }
 
 

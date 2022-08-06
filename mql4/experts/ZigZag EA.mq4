@@ -43,15 +43,17 @@
  *
  *
  * TODO:
- *  - simplify
+ *  - merge
  *     datetime GetSessionStartTime();
- *     datetime GetSessionEndTime();
  *     datetime GetPrevSessionStartTime();
- *     datetime GetPrevSessionEndTime();
  *     datetime GetNextSessionStartTime();
+ *
+ *     datetime GetSessionEndTime();
+ *     datetime GetPrevSessionEndTime();
  *     datetime GetNextSessionEndTime();
  *
  *  - implement Get(Prev|Next)?Session(Start|End)Time(..., TZ_LOCAL)
+ *  - implement (Fxt|Gmt|Server)ToLocalTime() and LocalTo(Fxt|Gmt|Server)Time()
  *
  *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *  - time functions returning modeled time must log errors

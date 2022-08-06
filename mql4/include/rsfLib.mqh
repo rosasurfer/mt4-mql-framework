@@ -99,26 +99,17 @@
 
 
    // date/time
-   datetime FxtToGmtTime   (datetime fxtTime);
-   datetime FxtToServerTime(datetime fxtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
-
-   datetime GmtToFxtTime   (datetime gmtTime);
-   datetime GmtToServerTime(datetime gmtTime);                                                        // throws ERR_INVALID_TIMEZONE_CONFIG
-
-   datetime ServerToFxtTime(datetime serverTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime ServerToGmtTime(datetime serverTime);                                                     // throws ERR_INVALID_TIMEZONE_CONFIG
-
    int      GetFxtToGmtTimeOffset   (datetime fxtTime);
-   int      GetFxtToServerTimeOffset(datetime fxtTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetFxtToServerTimeOffset(datetime fxtTime);
 
    int      GetGmtToFxtTimeOffset   (datetime gmtTime);
-   int      GetGmtToServerTimeOffset(datetime gmtTime);                                               // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetGmtToServerTimeOffset(datetime gmtTime);
 
-   int      GetServerToFxtTimeOffset(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
-   int      GetServerToGmtTimeOffset(datetime serverTime);                                            // throws ERR_INVALID_TIMEZONE_CONFIG
+   int      GetServerToFxtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime);
 
    int      GetLocalToGmtTimeOffset();
-   bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);  // throws ERR_INVALID_TIMEZONE_CONFIG
+   bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);
 
 
    // colors
