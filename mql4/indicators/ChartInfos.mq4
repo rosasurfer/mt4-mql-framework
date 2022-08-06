@@ -4437,7 +4437,6 @@ string InputsToStr() {
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);
