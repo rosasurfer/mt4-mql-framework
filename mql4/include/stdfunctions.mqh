@@ -3961,6 +3961,57 @@ int MarketWatch.Symbols() {
 
 
 /**
+ * Drop-in replacement for the flawed built-in function TimeLocal().
+ *
+ * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
+ * the local timezone is set to the trade server's timezone.
+ *
+ * @param  string caller [optional] - location identifier of the caller (default: none)
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ *
+ * NOTE: This function signals an error if TimeLocal() returns an invalid value.
+ */
+datetime TimeLocalEx(string caller = "") {
+   datetime time = TimeLocal();
+   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+   return(time);
+}
+
+
+/**
+ * Return the current trade server time in FXT. In tester the time is modeled.
+ *
+ * @return datetime - trade server time in FXT or NULL (0) in case of errors
+ */
+datetime TimeFXT() {
+   datetime gmt = TimeGMT();         if (!gmt)       return(_NULL(logDebug("TimeFXT(1)->TimeGMT() => NULL")));
+   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("TimeFXT(2)->GmtToFxtTime() => NaT")));
+   return(fxt);
+}
+
+
+/**
+ * Return the current trade server time in GMT. In tester the time is modeled.
+ *
+ * @return datetime - trade server time in GMT or NULL (0) in case of errors
+ */
+datetime TimeGMT() {
+   datetime gmt;
+
+   if (__isTesting) {
+      // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
+      datetime localTime = Tick.time;
+      gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
+   }
+   else {
+      gmt = GetGmtTime();
+   }
+   return(gmt);
+}
+
+
+/**
  * Return the current trade server time. In tester this time is modeled. Different from the last known tick time which is only
  * updated on new ticks.
  *
@@ -3986,36 +4037,11 @@ datetime TimeServer(bool watchLastTick = true) {
 }
 
 
-/**
- * Return the current trade server time in GMT. In tester the time is modeled.
- *
- * @return datetime - trade server time in GMT or NULL (0) in case of errors
- */
-datetime TimeGMT() {
-   datetime gmt;
-
-   if (__isTesting) {
-      // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = Tick.time;
-      gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
-   }
-   else {
-      gmt = GetGmtTime();
-   }
-   return(gmt);
-}
 
 
-/**
- * Return the current trade server time in FXT. In tester the time is modeled.
- *
- * @return datetime - trade server time in FXT or NULL (0) in case of errors
- */
-datetime TimeFXT() {
-   datetime gmt = TimeGMT();         if (!gmt)       return(_NULL(logDebug("TimeFXT(1)->TimeGMT() => NULL")));
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("TimeFXT(2)->GmtToFxtTime() => NaT")));
-   return(fxt);
-}
+
+
+
 
 
 /**
@@ -4042,57 +4068,6 @@ datetime GetServerTime() {
    datetime gmt  = GetGmtTime();         if (!gmt)        return(_NULL(logDebug("GetServerTime(1)->GetGmtTime() => NULL")));
    datetime time = GmtToServerTime(gmt); if (time == NaT) return(_NULL(logDebug("GetServerTime(2)->GmtToServerTime() => NaT")));
    return(time);
-}
-
-
-/**
- * Drop-in replacement for the flawed built-in function TimeLocal().
- *
- * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
- * the local timezone is set to the trade server's timezone.
- *
- * @param  string caller [optional] - location identifier of the caller (default: none)
- *
- * @return datetime - time or NULL (0) in case of errors
- *
- * NOTE: This function signals an error if TimeLocal() returns an invalid value.
- */
-datetime TimeLocalEx(string caller = "") {
-   datetime time = TimeLocal();
-   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
-   return(time);
-}
-
-
-/**
- * Format a timestamp as a string representing GMT time. MQL wrapper for the ANSI function of the MT4Expander.
- *
- * @param  datetime timestamp - Unix timestamp (GMT)
- * @param  string   format    - format control string supported by strftime()
- *
- * @return string - GMT time string or an empty string in case of errors
- *
- * @link  http://www.cplusplus.com/reference/ctime/strftime/
- * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
- */
-string GmtTimeFormat(datetime timestamp, string format) {
-   return(GmtTimeFormatA(timestamp, format));
-}
-
-
-/**
- * Format a timestamp as a string representing local time. MQL wrapper for the ANSI function of the MT4Expander.
- *
- * @param  datetime timestamp - Unix timestamp (GMT)
- * @param  string   format    - format control string supported by strftime()
- *
- * @return string - local time string or an empty string in case of errors
- *
- * @link  http://www.cplusplus.com/reference/ctime/strftime/
- * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
- */
-string LocalTimeFormat(datetime timestamp, string format) {
-   return(LocalTimeFormatA(timestamp, format));
 }
 
 
@@ -4177,6 +4152,38 @@ datetime ServerToGmtTime(datetime time) {
    int offset = GetServerToGmtTimeOffset(time);
    if (offset == EMPTY_VALUE) return(NaT);
    return(time - offset);
+}
+
+
+/**
+ * Format a timestamp as a string representing GMT time.
+ *
+ * @param  datetime timestamp - Unix timestamp (GMT)
+ * @param  string   format    - format control string supported by C++ strftime()
+ *
+ * @return string - GMT time string or an empty string in case of errors
+ *
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ */
+string GmtTimeFormat(datetime timestamp, string format) {
+   return(GmtTimeFormatA(timestamp, format));
+}
+
+
+/**
+ * Format a timestamp as a string representing local time.
+ *
+ * @param  datetime timestamp - Unix timestamp (GMT)
+ * @param  string   format    - format control string supported by C++ strftime()
+ *
+ * @return string - local time string or an empty string in case of errors
+ *
+ * @link  http://www.cplusplus.com/reference/ctime/strftime/
+ * @link  ms-help://MS.VSCC.v90/MS.MSDNQTR.v90.en/dv_vccrt/html/6330ff20-4729-4c4a-82af-932915d893ea.htm
+ */
+string LocalTimeFormat(datetime timestamp, string format) {
+   return(LocalTimeFormatA(timestamp, format));
 }
 
 
