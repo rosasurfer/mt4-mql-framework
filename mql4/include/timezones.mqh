@@ -25,16 +25,16 @@
  *
  *
  * Notes:
- *  @see  https://www.appsloveworld.com/cplus/100/28/are-windows-timezone-written-in-registry-reliable                             [Dynamic timezones explained]
- *  @see  https://www.anycodings.com/questions/windows-timezone-transition-information                                                [Historic transition data]
+ *  @see  https://www.appsloveworld.com/cplus/100/28/are-windows-timezone-written-in-registry-reliable#                            [Dynamic timezones explained]
+ *  @see  https://www.anycodings.com/questions/windows-timezone-transition-information#                                               [Historic transition data]
  *  @see  https://www.ais.com/beware-daylight-saving-time-transitions-in-dot-net/
  *  @see  http://winapi.freetechsecrets.com/win32/WIN32System_Time00002387.htm
  *  @see  https://itecnote.com/tecnote/how-to-convert-gmt-to-localtime-in-win32-c/
  *  @see  http://web.archive.org/web/20080605162533/http://www.eggheadcafe.com/software/aspnet/31656478/get-current-time-in-diffe.aspx
  *  @see  https://zetcode.com/gui/winapi/datetime/
- *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformation                        [GetTimeZoneInformation()]
- *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformationforyear          [GetTimeZoneInformationForYear()]
- *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/ns-timezoneapi-dynamic_time_zone_information     [struct DYNAMIC_TIME_ZONE_INFORMATION]
+ *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformation#                       [GetTimeZoneInformation()]
+ *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformationforyear#         [GetTimeZoneInformationForYear()]
+ *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/ns-timezoneapi-dynamic_time_zone_information#    [struct DYNAMIC_TIME_ZONE_INFORMATION]
  *  @see  https://social.msdn.microsoft.com/Forums/windowsapps/en-US/ef486e53-a27b-4dc9-8b5b-b56abdbb8723/how-to-get-a-different-timezone-from-gettimezoneinformationforyear?forum=vclanguage
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-systemtimetotzspecificlocaltime
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-tzspecificlocaltimetosystemtime
@@ -46,7 +46,7 @@
  *  @see  https://stackoverflow.com/questions/597554/how-to-convert-between-timezones-with-win32-api
  *  @see  https://stackoverflow.com/questions/466071/how-do-i-get-a-specific-time-zone-information-struct-in-win32
  *  @see  https://stackoverflow.com/questions/3623471/how-do-you-get-info-for-an-arbitrary-time-zone-in-windows
- *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-tzspecificlocaltimetosystemtimeex?redirectedfrom=MSDN
+ *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-tzspecificlocaltimetosystemtimeex
  */
 
 

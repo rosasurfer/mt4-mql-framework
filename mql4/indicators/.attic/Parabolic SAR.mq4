@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|                                                Parabolic SAR.mq4 |
 //|                                                 Copyleft removed |
-//|                                       http://www.metaquotes.net/ |
+//|                                      http://www.metaquotes.net/# |
 //+------------------------------------------------------------------+
 #include <stddefines.mqh>
 int   __InitFlags[];
