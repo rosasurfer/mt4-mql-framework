@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <!--
-Q: Where can I find the original version of the MQL4 language reference?
+Q: Where can I find the original unmodified version of the MQL4 language reference?
 A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30ebd8/doc/MQL4%20Reference.xml#
 -->
 <dictionary>
@@ -38,15 +38,10 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   
-  /* 
-  .docmql4_inline can be used for inline code:
-  <p>Lorem ipsum dolor <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> sit amet, consectetur adipiscing elit.</p>
-  */
-
   .code           { font-family:monospace;            }
   .italic         { font-style:italic;                }
   .const          { color:#980000;                    }
-  .function       { color:#000093;                    }  /* same as <a/> */
+  .function       { color:#000093;                    }  /* same color as <a/> */
   .core-function  { color:Red;                        }
   .global-var     { color:#980000; font-style:italic; }
   .keyword        { color:#D000D0;                    }
@@ -56,6 +51,12 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .char           { color:#008080;                    }
   .type           { color:Olive;                      }
   .comment        { color:Blue;                       }
+  
+  /* 
+  .docmql4_inline can be used for inline code:
+  --------------------------------------------
+  <p>Lorem ipsum dolor <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> sit amet, consectetur adipiscing elit.</p>
+  */
   </styles>
 
 
@@ -411,7 +412,7 @@ D<span class="string code">''</span>                           <span class="comm
 
   <group>
     tag=basics_operations
-    caption=Operations &amp; Expressions
+    caption=<nobr>Operations &amp; Expressions</nobr>
     <content>
      Some characters and character sequences are of a special importance. These are so-called operation symbols, for example:
 <pre class="docmql4">
@@ -780,7 +781,7 @@ must be enclosed in parentheses and should not contain an assignment operator.</
 
     <text>
       tag=basics_operators_if
-      caption=Conditional operator if-else
+      caption=<nobr>Conditional operator if-else</nobr>
       keywords=;else;
       <content>
         <p>If the expression is <span class="const">TRUE</span>, operator1 is executed and the control is given to the operator that follows
@@ -5266,12 +5267,85 @@ int init() {
     A group of functions to work with date/time related data and types.
     </content>
 
+
+    <function>
+      tag=dateandtime_TimeCurrent
+      caption=TimeCurrent()
+      type=datetime
+      <content>
+      Returns the server time of the last tick of all subscribed symbols. In tester the time is modelled.<br/>
+      <br/>
+      May return <span class="number">0</span> under various conditions without signaling an error (e.g. if no locally stored ticks are available or in older builds in 
+      tester when loading standalone indicators).<br/>
+      Use the framework function <span class="function">TimeCurrentEx</span>() for stricter handling of such situations.<br/>  
+      </content>
+      <example>
+<span class="keyword code">if</span> (<span class="function code">TimeCurrent</span>()-<span class="function code">OrderOpenTime</span>() &lt; <span class="number code">360</span>) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
+}
+      </example>
+    </function>
+
+
+    <function>
+      tag=dateandtime_TimeLocal
+      caption=TimeLocal()
+      type=datetime
+      <content>
+      Returns local time as seconds since 01.01.1970 00:00 LocalTimezone. In tester the time is modelled and mapped to <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, and the 
+      modelled local timezone matches the server timezone.<br/> 
+      <br/>
+      Due to this mapping the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a> in tester, and may return <span class="number">0</span>.
+      Use the framework function <span class="function">TimeLocalEx</span>() for stricter handling of such situations.<br/>  
+      </content>
+      <example>
+<span class="keyword code">if</span> (<span class="function code">TimeLocal</span>()-D<span class="string code">'2012.01.03 10:00:00'</span> &lt; <span class="number code">360</span>) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
+}
+      </example>
+    </function>
+
+
+    <group>
+      tag=empty
+      caption=
+      <content></content>
+    </group>
+
+
+    <function>
+      tag=dateandtime_Year
+      caption=Year()
+      type=int
+      <content>
+      Returns the year of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
+      </content>
+      <example>
+  // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
+    if(Year()==2006 &amp;&amp; Month()&lt;5)
+    return(0);
+      </example>
+    </function>
+
+    <function>
+      tag=dateandtime_Month
+      caption=Month()
+      type=int
+      <content>
+      Returns the month (1-12) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
+      </content>
+      <example>
+  if(Month()&lt;=5)
+    return(&quot;the first half year&quot;);
+      </example>
+    </function>
+
     <function>
       tag=dateandtime_Day
       caption=Day()
       type=int
       <content>
-      Returns the day of the month (1-31) of the time returned by TimeCurrent().
+      Returns the day of the month (1-31) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
 <span class="keyword">if</span> (Day() &lt; <span class="number">5</span>)
@@ -5284,7 +5358,7 @@ int init() {
       caption=DayOfWeek()
       type=int
       <content>
-      Returns the zero-based day of the week (0 = Sunday) of the time returned by TimeCurrent().
+      Returns the zero-based day of the week (0 = Sunday) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   // does not work on holidays.
@@ -5297,7 +5371,7 @@ int init() {
       caption=DayOfYear()
       type=int
       <content>
-      Returns the day of the year (1-365) of the time returned by TimeCurrent().
+      Returns the day of the year (1-365) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(DayOfYear()==245)
@@ -5310,7 +5384,7 @@ int init() {
       caption=Hour()
       type=int
       <content>
-      Returns the hour (0-23) of the time returned by TimeCurrent().
+      Returns the hour (0-23) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   bool is_siesta=false;
@@ -5324,7 +5398,7 @@ int init() {
       caption=Minute()
       type=int
       <content>
-      Returns the minute (0-59) of the time returned by TimeCurrent().
+      Returns the minute (0-59) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(Minute()&lt;=15)
@@ -5333,24 +5407,11 @@ int init() {
     </function>
 
     <function>
-      tag=dateandtime_Month
-      caption=Month()
-      type=int
-      <content>
-      Returns the month (1-12) of the time returned by TimeCurrent().
-      </content>
-      <example>
-  if(Month()&lt;=5)
-    return(&quot;the first half year&quot;);
-      </example>
-    </function>
-
-    <function>
       tag=dateandtime_Seconds
       caption=Seconds()
       type=int
       <content>
-      Returns the seconds (0-59) of the minute of the time returned by TimeCurrent().
+      Returns the seconds (0-59) of the minute of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5358,33 +5419,53 @@ int init() {
       </example>
     </function>
 
-    <function>
-      tag=dateandtime_TimeCurrent
-      caption=TimeCurrent()
-      type=datetime
-      <content>
-      Unlike to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of all selected symbols
-      as a Unix timestamp. In tester this time is modelled.<br/>
-      <br/>
-      <span style="color:red">Bugs:</span>
-      <li>Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
-          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zur&uuml;ck.</li>
-      <li>Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zur&uuml;ck, ohne einen Fehler zu melden.</li>
-      <br/>
-      <br/>
-      <span style="color:green">Note:</span><br/>
-      Don't use this function. Instead use either the variable <span class="global-var">Tick.time</span> or the function <span class="function">TimeServer</span>().<br/>
 
+    <group>
+      tag=empty
+      caption=
+      <content></content>
+    </group>
+
+
+    <function>
+      tag=dateandtime_TimeYear
+      caption=TimeYear()
+      type=int
+      <content>
+      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.<br/>
       <br/>
-      <span style="color:red">TODO:</span><br/>
-      Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
-      in Standalone-Indikatoren unter Test).<br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
+      <br/>
+      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
+      <br/>
       </content>
       <example>
-if (TimeCurrent()-OrderOpenTime() &lt; 360) {
-   return(0);
-}
+  int y=TimeYear(TimeCurrent());
       </example>
+      <parameter>
+        type=datetime
+        name=time
+        description=Datetime value.
+      </parameter>
+    </function>
+
+    <function>
+      tag=dateandtime_TimeMonth
+      caption=TimeMonth()
+      type=int
+      <content>
+      Returns the month (1-12) of the specified time.
+      </content>
+      <example>
+  int m=TimeMonth(TimeCurrent());
+      </example>
+      <parameter>
+        type=datetime
+        name=time
+        description=Datetime value.
+      </parameter>
     </function>
 
     <function>
@@ -5471,30 +5552,6 @@ if (TimeCurrent()-OrderOpenTime() &lt; 360) {
       </parameter>
     </function>
 
-    <function>
-      tag=dateandtime_TimeLocal
-      caption=TimeLocal()
-      type=datetime
-      <content>
-      Returns local computer time as seconds since 00:00 January 1, 1970. In the Tester local time is modelled and is the same as the modelled server time.<br/>
-      <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zur&uuml;ck, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).
-      Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch &uuml;bernommener Wert
-      (<span class="const">NULL</span>) zur&uuml;ckgegeben.<br/>
-      Workaround: noch nicht implementiert (siehe Notes)<br/>
-
-      <br/>
-      <span style="color:red">Notes:</span> <br/>
-      <li>Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
-          in Standalone-Indikatoren unter Test).</li>
-      <li>Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tats&auml;chlichen lokalen Zeitzone.
-          Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.</li>
-      </content>
-      <example>
-if (TimeLocal()-OrderOpenTime() &lt; 360)
-   return(0);
-      </example>
-    </function>
 
     <function>
       tag=dateandtime_TimeMinute
@@ -5505,23 +5562,6 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       </content>
       <example>
   int m=TimeMinute(TimeCurrent());
-      </example>
-      <parameter>
-        type=datetime
-        name=time
-        description=Datetime value.
-      </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_TimeMonth
-      caption=TimeMonth()
-      type=int
-      <content>
-      Returns the month (1-12) of the specified time.
-      </content>
-      <example>
-  int m=TimeMonth(TimeCurrent());
       </example>
       <parameter>
         type=datetime
@@ -5545,44 +5585,6 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
         name=time
         description=Datetime value.
       </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_TimeYear
-      caption=TimeYear()
-      type=int
-      <content>
-      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.<br/>
-      <br/>
-      <span style="color:red">Bug:</span>
-      <br/>
-      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
-      <br/>
-      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
-      <br/>
-      </content>
-      <example>
-  int y=TimeYear(TimeCurrent());
-      </example>
-      <parameter>
-        type=datetime
-        name=time
-        description=Datetime value.
-      </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_Year
-      caption=Year()
-      type=int
-      <content>
-      Returns the year of the time returned by TimeCurrent().
-      </content>
-      <example>
-  // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
-    if(Year()==2006 &amp;&amp; Month()&lt;5)
-    return(0);
-      </example>
     </function>
   </group>
 

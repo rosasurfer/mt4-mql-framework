@@ -43,6 +43,27 @@
  *
  *
  * TODO:
+ *  - time functions returning modeled time must log errors
+ *     built-in:
+ *      TimeCurrent()     time of last tick        in tester: modeled
+ *      TimeLocal()       current local time       in tester: modeled and same as TimeCurrent()
+ *
+ *     needed:
+ *      TimeCurrentEx()
+ *      TimeLocalEx()
+ *
+ *      TimeFxt()         current FXT time         in tester: modeled
+ *      TimeGmt()         current GMT time         in tester: modeled
+ *      TimeServer()      current server time      in tester: modeled and same as TimeCurrent()
+ *
+ *      GetFxtTime()                               in tester: real time, not modeled
+ *      GetGmtTime()                               in tester: real time, not modeled
+ *      GetLocalTime()                             in tester: real time, not modeled
+ *      GetServerTime()                            in tester: real time, not modeled
+ *
+ *
+ *
+ *
  *  - merge Get(Prev|Next)?SessionStartTime()
  *  - merge Get(Prev|Next)?SessionEndTime()
  *
@@ -50,7 +71,6 @@
  *  - implement (Fxt|Gmt|Server)ToLocalTime() and LocalTo(Fxt|Gmt|Server)Time()
  *
  *  - TimeServer() as replacement for TimeCurrent() adds nothing
- *  - time functions returning modeled time must log errors
  *
  *  - AverageRange
  *     fix EMPTY_VALUE
