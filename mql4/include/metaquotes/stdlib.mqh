@@ -1,7 +1,7 @@
 //+------------------------------------------------------------------+
 //|                                                       stdlib.mqh |
 //|                      Copyright © 2004, MetaQuotes Software Corp. |
-//|                                       http://www.metaquotes.net/ |
+//|                                      http://www.metaquotes.net/# |
 //+------------------------------------------------------------------+
 
 #import "stdlib.ex4"

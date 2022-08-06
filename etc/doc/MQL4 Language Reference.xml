@@ -31,11 +31,17 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .doctable       { border-top:1px solid #DADADA; }
   .docvar         { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
   .doctabhdr      { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
-  .docmql4        { font-family:monospace; background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt 2pt 2pt 2pt; margin:2pt 0pt 2pt 15pt; font-family:monospace; }
+  .docmql4        { background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt; margin:2pt 2pt 2pt 15pt; font-family:monospace; }
+  .docmql4_inline { background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt; margin:2pt; font-family:monospace; }
   .docparams      { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
   .docenums       { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
   .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
+  
+  /* 
+  .docmql4_inline can be used for inline code:
+  <p>Lorem ipsum dolor <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> sit amet, consectetur adipiscing elit.</p>
+  */
 
   .code           { font-family:monospace;            }
   .italic         { font-style:italic;                }
@@ -270,8 +276,8 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
         <br/>
         <b>Notes:</b>
         <br/>
-        <li>Every expression assigned to a boolean variable is implicitely casted to an integer.<br/>
-            <span class="docmql4"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> yields a boolean of <span class="const">FALSE</span>.
+        <li>Every expression assigned to a boolean variable is implicitely casted to an integer. 
+            <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> gives a boolean of <span class="const">FALSE</span>.
             <br/><br/></li>
         
         <li>An integer different from <span class="number">0</span> or <span class="number">1</span> can be assigned. The resulting variable is not a valid boolean and 

@@ -3911,7 +3911,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @return string - timezone identifier or an empty string in case of errors
  *
- * @see  http://en.wikipedia.org/wiki/Tz_database     [Olson Timezone Database]
+ * @see  http://en.wikipedia.org/wiki/Tz_database#    [Olson Timezone Database]
  */
 string GetServerTimezone() {
    // - The resolved timezone can only change when the trade account changes.

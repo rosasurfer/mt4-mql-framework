@@ -43,14 +43,8 @@
  *
  *
  * TODO:
- *  - merge
- *     datetime GetSessionStartTime();
- *     datetime GetPrevSessionStartTime();
- *     datetime GetNextSessionStartTime();
- *
- *     datetime GetSessionEndTime();
- *     datetime GetPrevSessionEndTime();
- *     datetime GetNextSessionEndTime();
+ *  - merge Get(Prev|Next)?SessionStartTime()
+ *  - merge Get(Prev|Next)?SessionEndTime()
  *
  *  - implement Get(Prev|Next)?Session(Start|End)Time(..., TZ_LOCAL)
  *  - implement (Fxt|Gmt|Server)ToLocalTime() and LocalTo(Fxt|Gmt|Server)Time()
@@ -163,8 +157,8 @@
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
- *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
- *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
+ *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
+ *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
