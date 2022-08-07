@@ -4062,22 +4062,6 @@ datetime GetFxtTime() {
 
 
 /**
- *
- */
-datetime GetGmtTime() {
-   return(GetSystemTimeAsUnixTime());
-}
-
-
-/**
- *
- */
-datetime GetLocalTime() {
-   return(GetLocalTimeAsUnixTime());
-}
-
-
-/**
  * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie
  * von TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
  *
@@ -7361,12 +7345,10 @@ void __DummyCalls() {
    GetCurrencyId(NULL);
    GetExternalAssets();
    GetFxtTime();
-   GetGmtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
-   GetLocalTime();
    GetMqlSandboxPath();
    GetNextSessionStartTime(NULL, NULL);
    GetNextSessionEndTime(NULL, NULL);

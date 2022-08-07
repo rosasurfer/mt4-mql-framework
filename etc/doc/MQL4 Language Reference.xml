@@ -5279,7 +5279,7 @@ int init() {
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the server time of the last tick of all subscribed symbols (<span class="number">0</span> = 01.01.1970 00:00 server time). In tester the time is modelled.<br/>
+      Returns the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00 server time). In tester this time is modelled.<br/>
       <br/>
       May return <span class="number">0</span> without signaling an error under various conditions (e.g. if no locally stored ticks are available or in older builds in 
       tester when loading standalone indicators).<br/>
@@ -5300,14 +5300,14 @@ int init() {
       caption=TimeLocal()
       type=datetime
       <content>
-      Returns the system's local time (<span class="number">0</span> = 01.01.1970 00:00 local time). In tester the time is modelled and mapped to 
-      <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, meaning the modelled local time always matches the server time.<br/> 
+      Returns the system's local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time). In tester this time is modelled and mapped to 
+      <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, meaning the modelled local time matches the modelled server time.<br/> 
       <br/>
-      Due to the mapping in tester the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, and may return 
+      Due to the mapping in tester the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a> and may return 
       <span class="number">0</span> without signaling an error.<br/> 
       Use the framework function <span class="docmql4_inline function">TimeLocalEx()</span> for stricter handling of such cases.<br/>  
       <br/>
-      Use the framework function <span class="docmql4_inline function">GetLocalTime()</span> to get the real non-modelled local time in tester.<br/>  
+      Use the framework function <span class="docmql4_inline function">GetLocalTime()</span> to get the non-modelled local time in tester.<br/>  
       </content>
       <example>
 <span class="keyword code">if</span> (<span class="function code">TimeLocal</span>()-D<span class="string code">'2012.01.03 10:00:00'</span> &lt; <span class="number code">360</span>) {
