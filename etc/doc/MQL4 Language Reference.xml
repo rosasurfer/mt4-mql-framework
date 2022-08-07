@@ -5283,7 +5283,7 @@ int init() {
       <br/>
       May return <span class="number">0</span> without signaling an error under various conditions (e.g. if no locally stored ticks are available or in older builds in 
       tester when loading standalone indicators).<br/>
-      Use the framework function <span class="docmql4_inline function">TimeCurrentEx()</span> for stricter handling of such cases.<br/>
+      Use the framework function <span class="docmql4_inline function">TimeCurrentEx()</span> for improved handling of such cases.<br/>
       <br/>  
       Use the framework function <span class="docmql4_inline function">TimeServer()</span> to get the server time irrespective of received ticks.<br/>  
       </content>
@@ -5305,7 +5305,7 @@ int init() {
       <br/>
       Due to the mapping in tester the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a> and may return 
       <span class="number">0</span> without signaling an error.<br/> 
-      Use the framework function <span class="docmql4_inline function">TimeLocalEx()</span> for stricter handling of such cases.<br/>  
+      Use the framework function <span class="docmql4_inline function">TimeLocalEx()</span> for improved handling of such cases.<br/>  
       <br/>
       Use the framework function <span class="docmql4_inline function">GetLocalTime()</span> to get the non-modelled local time in tester.<br/>  
       </content>
