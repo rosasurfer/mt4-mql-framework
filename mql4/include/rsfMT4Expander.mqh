@@ -66,8 +66,8 @@
    bool     IsTerminalConfigKeyA(string section, string key);
 
    // date/time
-   datetime GetGmtTime();
-   datetime GetLocalTime();
+   datetime GetLocalTimeAsUnixTime();
+   datetime GetSystemTimeAsUnixTime();
    string   GmtTimeFormatA(datetime timestamp, string format);
    string   LocalTimeFormatA(datetime timestamp, string format);
 
