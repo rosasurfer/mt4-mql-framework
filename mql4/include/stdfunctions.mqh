@@ -379,7 +379,7 @@ string Pluralize(int count, string singular="", string plural="s") {
  *
  * @param  string message
  *
- * Notes: This function must not MQL library functions. Calling DLL functions is fine.
+ * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
    debug(message);                                                         // send the message to the debug output
@@ -3961,6 +3961,54 @@ int MarketWatch.Symbols() {
 
 
 /**
+ * Extended version of TimeCurrent().
+ *
+ * Returns the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00
+ * server time). In tester this time is modelled. Use TimeServer() to get the server time irrespective of received ticks.
+ *
+ * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
+ * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log all
+ * error cases (and apply the parameter 'caller' to the log message if provided). The parameter 'flags' controls further
+ * behaviour in error cases.
+ *
+ * @param  string caller [optional] - location identifier of the caller (default: none)
+ * @param  int    flags  [optional] - flags controlling error handling (default: none)
+ *                                    DT_USE_LAST_BAR: if TimeCurrent() returns 0 and this flag is set the function returns
+ *                                     the open time of the last bar instead; if this flag is not set behaviour is controlled
+ *                                     by the flag F_STRICT
+ *                                    DT_STRICT: if set an error causes a fatal terminating error; if not set it's the caller's
+ *                                     responsibility to handle the error
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeCurrentEx(string caller="", int flags=NULL) {
+   datetime time = TimeCurrent();
+
+   if (!time) {
+      if (caller != "") caller = caller +"->";
+
+      if (flags & DT_USE_LAST_BAR && Bars) {
+         time = Time[0];
+      }
+      else if (flags & DT_STRICT && 1) {
+         catch(caller +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
+      }
+      if (!(flags & DT_STRICT)) {
+         logDebug(caller +"TimeCurrentEx(2)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
+      }
+   }
+   return(time);
+}
+
+
+
+
+
+
+
+
+
+/**
  * More strict replacement for the built-in function TimeLocal().
  *
  * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
@@ -7516,6 +7564,7 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
+   TimeCurrentEx();
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();
@@ -7523,6 +7572,7 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
+   TimeCurrentEx();
    TimeLocalEx();
    TimeServer();
    TimeYearEx(NULL);

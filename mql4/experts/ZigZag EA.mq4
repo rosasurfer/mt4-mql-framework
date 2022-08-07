@@ -49,28 +49,25 @@
  *      TimeLocal()       current local time       in tester: modelled and same as TimeCurrent()      OK
  *
  *     needed:
- *      TimeCurrentEx()
+ *      TimeCurrentEx()                                                                               OK
  *      TimeLocalEx()
  *
  *      TimeFxt()         current FXT time         in tester: modelled
  *      TimeGmt()         current GMT time         in tester: modelled
  *      TimeServer()      current server time      in tester: modelled and same as TimeCurrent()
  *
- *      GetFxtTime()                               in tester: real time
- *      GetGmtTime()                               in tester: real time                               OK
- *      GetLocalTime()                             in tester: real time                               OK
- *      GetServerTime()                            in tester: real time
+ *      GetFxtTime()      current FXT time         in tester: real time
+ *      GetGmtTime()      current GMT time         in tester: real time                               OK
+ *      GetLocalTime()    current local time       in tester: real time                               OK
+ *      GetServerTime()   current server time      in tester: real time
  *
- *
- *
+ *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *
  *  - merge Get(Prev|Next)?SessionStartTime()
  *  - merge Get(Prev|Next)?SessionEndTime()
  *
  *  - implement Get(Prev|Next)?Session(Start|End)Time(..., TZ_LOCAL)
  *  - implement (Fxt|Gmt|Server)ToLocalTime() and LocalTo(Fxt|Gmt|Server)Time()
- *
- *  - TimeServer() as replacement for TimeCurrent() adds nothing
  *
  *  - AverageRange
  *     fix EMPTY_VALUE
