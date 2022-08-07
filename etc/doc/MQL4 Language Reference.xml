@@ -5279,11 +5279,13 @@ int init() {
       caption=TimeCurrent()
       type=datetime
       <content>
-      Returns the server time of the last tick of all subscribed symbols. In tester the time is modelled.<br/>
+      Returns the server time of the last tick of all subscribed symbols (<span class="number">0</span> = 01.01.1970 00:00 server time). In tester the time is modelled.<br/>
       <br/>
-      May return <span class="number">0</span> under various conditions without signaling an error (e.g. if no locally stored ticks are available or in older builds in 
+      May return <span class="number">0</span> without signaling an error under various conditions (e.g. if no locally stored ticks are available or in older builds in 
       tester when loading standalone indicators).<br/>
-      Use the framework function <span class="function">TimeCurrentEx</span>() for stricter handling of such situations.<br/>  
+      Use the framework function <span class="docmql4_inline function">TimeCurrentEx()</span> for stricter handling of such cases.<br/>
+      <br/>  
+      Use the framework function <span class="docmql4_inline function">TimeServer()</span> to get the server time irrespective of received ticks.<br/>  
       </content>
       <example>
 <span class="keyword code">if</span> (<span class="function code">TimeCurrent</span>()-<span class="function code">OrderOpenTime</span>() &lt; <span class="number code">360</span>) {
@@ -5298,11 +5300,14 @@ int init() {
       caption=TimeLocal()
       type=datetime
       <content>
-      Returns local time as seconds since 01.01.1970 00:00 LocalTimezone. In tester the time is modelled and mapped to <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, and the 
-      modelled local timezone matches the server timezone.<br/> 
+      Returns the system's local time (<span class="number">0</span> = 01.01.1970 00:00 local time). In tester the time is modelled and mapped to 
+      <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, meaning the modelled local time always matches the server time.<br/> 
       <br/>
-      Due to this mapping the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a> in tester, and may return <span class="number">0</span>.
-      Use the framework function <span class="function">TimeLocalEx</span>() for stricter handling of such situations.<br/>  
+      Due to the mapping in tester the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, and may return 
+      <span class="number">0</span> without signaling an error.<br/> 
+      Use the framework function <span class="docmql4_inline function">TimeLocalEx()</span> for stricter handling of such cases.<br/>  
+      <br/>
+      Use the framework function <span class="docmql4_inline function">GetLocalTime()</span> to get the real non-modelled local time in tester.<br/>  
       </content>
       <example>
 <span class="keyword code">if</span> (<span class="function code">TimeLocal</span>()-D<span class="string code">'2012.01.03 10:00:00'</span> &lt; <span class="number code">360</span>) {

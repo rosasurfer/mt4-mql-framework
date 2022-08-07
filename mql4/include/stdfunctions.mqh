@@ -3961,7 +3961,7 @@ int MarketWatch.Symbols() {
 
 
 /**
- * Drop-in replacement for the flawed built-in function TimeLocal().
+ * More strict replacement for the built-in function TimeLocal().
  *
  * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
  * the local timezone is set to the trade server's timezone.
@@ -3970,7 +3970,7 @@ int MarketWatch.Symbols() {
  *
  * @return datetime - time or NULL (0) in case of errors
  *
- * NOTE: This function signals an error if TimeLocal() returns an invalid value.
+ * NOTE: This function signals an error if TimeLocal() returns 0 (zero).
  */
 datetime TimeLocalEx(string caller = "") {
    datetime time = TimeLocal();
@@ -4058,6 +4058,22 @@ datetime GetFxtTime() {
    datetime gmt = GetGmtTime();      if (!gmt)       return(_NULL(logDebug("GetFxtTime(1)->GetGmtTime() => NULL")));
    datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("GetFxtTime(2)->GmtToFxtTime() => NaT")));
    return(fxt);
+}
+
+
+/**
+ *
+ */
+datetime GetGmtTime() {
+   return(GetSystemTimeAsUnixTime());
+}
+
+
+/**
+ *
+ */
+datetime GetLocalTime() {
+   return(GetLocalTimeAsUnixTime());
 }
 
 
@@ -7345,10 +7361,12 @@ void __DummyCalls() {
    GetCurrencyId(NULL);
    GetExternalAssets();
    GetFxtTime();
+   GetGmtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
+   GetLocalTime();
    GetMqlSandboxPath();
    GetNextSessionStartTime(NULL, NULL);
    GetNextSessionEndTime(NULL, NULL);
@@ -7558,6 +7576,8 @@ void __DummyCalls() {
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetAccountServer();
    string   GetServerTimezone();
+   int      GetServerToFxtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutexName);
