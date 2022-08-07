@@ -43,23 +43,23 @@
  *
  *
  * TODO:
- *  - time functions returning modeled time must log errors
+ *  - time functions returning modelled time must log errors
  *     built-in:
- *      TimeCurrent()     time of last tick        in tester: modeled
- *      TimeLocal()       current local time       in tester: modeled and same as TimeCurrent()
+ *      TimeCurrent()     time of last tick        in tester: modelled                                OK
+ *      TimeLocal()       current local time       in tester: modelled and same as TimeCurrent()      OK
  *
  *     needed:
  *      TimeCurrentEx()
  *      TimeLocalEx()
  *
- *      TimeFxt()         current FXT time         in tester: modeled
- *      TimeGmt()         current GMT time         in tester: modeled
- *      TimeServer()      current server time      in tester: modeled and same as TimeCurrent()
+ *      TimeFxt()         current FXT time         in tester: modelled
+ *      TimeGmt()         current GMT time         in tester: modelled
+ *      TimeServer()      current server time      in tester: modelled and same as TimeCurrent()
  *
- *      GetFxtTime()                               in tester: real time, not modeled
- *      GetGmtTime()                               in tester: real time, not modeled
- *      GetLocalTime()                             in tester: real time, not modeled
- *      GetServerTime()                            in tester: real time, not modeled
+ *      GetFxtTime()                               in tester: real time
+ *      GetGmtTime()                               in tester: real time                               OK
+ *      GetLocalTime()                             in tester: real time                               OK
+ *      GetServerTime()                            in tester: real time
  *
  *
  *
