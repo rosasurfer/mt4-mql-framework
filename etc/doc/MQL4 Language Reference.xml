@@ -32,7 +32,7 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .docvar         { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
   .doctabhdr      { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
   .docmql4        { background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt; margin:2pt 2pt 2pt 15pt; font-family:monospace; }
-  .docmql4_inline { background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt; margin:2pt; font-family:monospace; }
+  .docmql4_inline { background-color:#F6F9FC; border:1px #d8dfea solid; padding:1pt; margin:2pt; font-family:monospace; }
   .docparams      { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
   .docenums       { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
   .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
@@ -353,36 +353,37 @@ struct MqlStr {
       caption=Colors
       keywords=;color;
       <content>
-<p>Colors can be expressed in three ways: as literals, as integer values or by named color constants (web color set only).</p>
+        <p>Colors can be expressed in three ways: as literals, as integer values or by named color constants (web color set only).</p>
+        
+        <p>Literal representation consists of three parts representing numerical rate values of three main color components: red, green, blue.
+        Literals start with the letter C and are enclosed by single quotes. Numeric color component values can be in the range from 0 to 255.</p>
+        
+        <p>Integer value representation is written as a hexadecimal or decimal number. A hexadecimal number looks like 0x00BBGGRR where RR is the value of the red color component,
+        GG the value of the green color component and BB the value of the blue color component. Decimal constants are not directly reflected in RGB. They represent a decimal value
+        of the hexadecimal integer representation.</p>
+        
+        <p>See also: <a href="help://constants_colors">Web color set</a></p>
 
-<p>Literal representation consists of three parts representing numerical rate values of three main color components: red, green, blue.
-Literals start with the letter C and are enclosed by single quotes. Numeric color component values can be in the range from 0 to 255.</p>
+        <p class="doctabhdr">Examples:</p>
+        <pre class="docmql4">
+<span class="comment code">// color literals</span>
+<span class="type code">color</span> c1 = C<span class="string code">'128,128,128'</span>;    <span class="comment code">// Gray</span>
+<span class="type code">color</span> c2 = C<span class="string code">'0x00,0x00,0xFF'</span>; <span class="comment code">// Blue</span><br/>
 
-<p>Integer value representation is written as a hexadecimal or decimal number. A hexadecimal number looks like 0x00BBGGRR where RR is the value of the red color component,
-GG the value of the green color component and BB the value of the blue color component. Decimal constants are not directly reflected in RGB. They represent a decimal value
-of the hexadecimal integer representation.</p>
+<span class="comment code">// named color constants</span>
+<span class="type code">color</span> c3 = <span class="const code">Red</span>;
+<span class="type code">color</span> c4 = <span class="const code">Yellow</span>;
+<span class="type code">color</span> c5 = <span class="const code">Black</span>;<br/>
 
-<p>See also: <a href="help://constants_colors">Web color set</a></p>
-
-<p class="doctabhdr">Examples:</p>
-<pre class="docmql4">
-// color literals
-C<span class="string">'128,128,128'</span>    // gray
-C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
-
-// named color constants
-<span class="const">Red</span>
-<span class="const">Yellow</span>
-<span class="const">Black</span><br/>
-
-// integer-valued representation
-0xFFFFFF          // white
-16777215          // white
-0x008000          // green
-32768             // green
-</pre>
-
-<p>Its internal representation is a long integer number of 4 bytes. The first byte will not be considered. The other three bytes contain RGB components.</p>
+<span class="comment code">// integer representation</span>
+<span class="type code">color</span> c6 = <span class="number code">0x00FFFF</span>;          <span class="comment code">// White</span>
+<span class="type code">color</span> c7 = <span class="number code">16777215</span>;          <span class="comment code">// White</span>
+<span class="type code">color</span> c8 = <span class="number code">0x008000</span>;          <span class="comment code">// Green</span>
+<span class="type code">color</span> c9 = <span class="number code">32768</span>;             <span class="comment code">// Green</span>
+        </pre>
+        <p>The internal representation is a long integer value consuming 4 bytes. The first byte distinguishes <span class="const">White</span> 
+        (<span class="number">0x00FFFFFF</span>) from the no-color value <span class="const">CLR_NONE</span> (<span class="number">0xFFFFFFFF</span>).
+        The other three bytes contain RGB components.</p>
       </content>
     </text>
 
@@ -391,10 +392,15 @@ C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
       caption=Datetime values
       keywords=;datetime;
       <content>
-<p>Datetime values can be expressed as literals consisting of values for year, month, date, hours, minutes and seconds. Literals are enclosed in single quotes
-and preceeded by the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be omitted.
-Datetime literals cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
-<p class="doctabhdr">Examples:</p>
+        <p>Datetime values are UNIX timestamps (seconds since 01.01.1970 00:00) without timezone information. They can be expressed by literals 
+        consisting of values for year, month, date, hours, minutes and seconds.<br/>
+        Datetime literals are enclosed in single quotes and preceeded by the letter D. Either the date part (year, month, day), the time part 
+        (hours, minutes, seconds) or both of them can be omitted.<br/>
+        Datetime literals can cover the range from <span class="docmql4_inline">D<span class="string code">'1970.01.01 00:00:00'</span></span> to 
+        <span class="docmql4_inline">D<span class="string code">'2037.12.31 23:59:59'</span></span>.
+        </p>
+        
+        <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
 D<span class="string code">'2004.01.01 00:00'</span>           <span class="comment code">// New Year</span>
 D<span class="string code">'1980.07.19 12:30:27'</span>
@@ -404,7 +410,7 @@ D<span class="string code">'01.01.2004'</span>                 <span class="comm
 D<span class="string code">'12:30:27'</span>                   <span class="comment code">// evaluates to D'{compilation-date} 12:30:27'</span>
 D<span class="string code">''</span>                           <span class="comment code">// evaluates to D'{compilation-date} 00:00:00'</span>
 </pre>
-      <p>The internal representation is a long integer value consuming 4 bytes. The value is a UNIX timestamp (seconds since 01.01.1970 00:00).</p>
+        <p>The internal representation is a long integer value consuming 4 bytes.</p>
       </content>
     </text>
   </group>
