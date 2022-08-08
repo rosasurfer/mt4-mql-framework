@@ -307,7 +307,7 @@ bool     Tester.IsPaused();;
 bool     Tester.IsStopped();;
 int      Tester.Pause(string caller = "");;
 int      Tester.Stop(string caller = "");;
-datetime TimeCurrentEx(string caller="", int flags=NULL);;
+datetime TimeCurrentEx(string caller, int flags = NULL);;
 int      TimeDayEx(datetime time);;
 int      TimeDayOfWeekEx(datetime time);;
 string   TimeframeDescription(int timeframe = NULL);;

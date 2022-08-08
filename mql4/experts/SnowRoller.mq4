@@ -5526,7 +5526,7 @@ bool ShowProfitTargets() {
    if (IsLastError())       return(false);
    if (!sequence.breakeven) return(true);       // BE is not calculated if test.showBreakeven = Off
 
-   datetime time = TimeCurrentEx(); time -= time % MINUTES;
+   datetime time = TimeCurrentEx("ShowProfitTargets(1)"); time -= time % MINUTES;
    string label = "arrow_"+ time;
    double price = sequence.breakeven;
 
@@ -5542,7 +5542,7 @@ bool ShowProfitTargets() {
    ObjectSet(label, OBJPROP_COLOR,  Blue);
    ObjectSet(label, OBJPROP_BACK,   true);
 
-   return(!catch("ShowProfitTargets(1)"));
+   return(!catch("ShowProfitTargets(2)"));
 }
 
 
