@@ -3968,33 +3968,34 @@ int MarketWatch.Symbols() {
  *
  * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
  * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log all
- * error cases (and apply the parameter 'caller' to the log message if provided). The parameter 'flags' controls further
- * behaviour in error cases.
+ * errors. The parameter 'flags' controls further behaviour.
  *
- * @param  string caller [optional] - location identifier of the caller (default: none)
- * @param  int    flags  [optional] - flags controlling error handling (default: none)
- *                                    DT_USE_LAST_BAR: if TimeCurrent() returns 0 and this flag is set the function returns
- *                                     the open time of the last bar instead; if this flag is not set behaviour is controlled
- *                                     by the flag F_STRICT
- *                                    DT_STRICT: if set an error causes a fatal terminating error; if not set it's the caller's
- *                                     responsibility to handle the error
+ * @param  string caller           - location identifier of the caller
+ * @param  int    flags [optional] - flags controlling error handling (default: none)
+ *                                   DT_USE_LAST_BAR: if TimeCurrent() returns 0 and this flag is set the function returns
+ *                                    the open time of the last bar instead; if this flag is not set behaviour is controlled
+ *                                    by the flag DT_STRICT
+ *                                   DT_STRICT: if set an error causes a fatal terminating error; if not set it's the caller's
+ *                                    responsibility to handle the error
  *
  * @return datetime - time or NULL (0) in case of errors
  */
-datetime TimeCurrentEx(string caller="", int flags=NULL) {
+datetime TimeCurrentEx(string caller, int flags = NULL) {
    datetime time = TimeCurrent();
 
    if (!time) {
       if (caller != "") caller = caller +"->";
+      int isLogged = 0;
 
       if (flags & DT_USE_LAST_BAR && Bars) {
          time = Time[0];
       }
       else if (flags & DT_STRICT && 1) {
-         catch(caller +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
+         isLogged |= catch(caller +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
       }
-      if (!(flags & DT_STRICT)) {
-         logDebug(caller +"TimeCurrentEx(2)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
+
+      if (!isLogged) {
+         isLogged |= logDebug(caller +"TimeCurrentEx(2)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
       }
    }
    return(time);
@@ -7564,7 +7565,7 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
-   TimeCurrentEx();
+   TimeCurrentEx(NULL);
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();
@@ -7572,7 +7573,6 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
-   TimeCurrentEx();
    TimeLocalEx();
    TimeServer();
    TimeYearEx(NULL);
