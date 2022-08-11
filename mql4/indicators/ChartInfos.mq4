@@ -405,7 +405,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
 
       for (i=0; i < orders; i++) {
          if (customTicketsSize > 0) {
-            if (!customTickets[i]) continue;
+            if (!customTickets[i] || customTickets[i]==1)             continue;     // skip virtual positions
             if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
          else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
