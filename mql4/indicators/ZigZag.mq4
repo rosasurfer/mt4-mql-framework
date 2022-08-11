@@ -35,11 +35,11 @@ extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a lar
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
-extern color  Donchian.Upper.Color           = DodgerBlue;
-extern color  Donchian.Lower.Color           = Magenta;
 extern string Donchian.ShowCrossings         = "off | first* | all";    // which channel crossings to display
 extern int    Donchian.Crossings.Width       = 1;
 extern int    Donchian.Crossings.Wingdings   = 161;                     // a small circle
+extern color  Donchian.Upper.Color           = DodgerBlue;
+extern color  Donchian.Lower.Color           = Magenta;
 extern int    Max.Bars                       = 10000;                   // max. values to calculate (-1: all available)
 
 extern string ___c__________________________ = "=== Reversal signaling ===";
@@ -958,11 +958,11 @@ string InputsToStr() {
                             "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings                 +";"+ NL,
 
                             "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)             +";"+ NL,
-                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)            +";"+ NL,
-                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)            +";"+ NL,
                             "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)      +";"+ NL,
                             "Donchian.Crossings.Width=",     Donchian.Crossings.Width                    +";"+ NL,
                             "Donchian.Crossings.Wingdings=", Donchian.Crossings.Wingdings                +";"+ NL,
+                            "Donchian.Upper.Color=",         ColorToStr(Donchian.Upper.Color)            +";"+ NL,
+                            "Donchian.Lower.Color=",         ColorToStr(Donchian.Lower.Color)            +";"+ NL,
                             "Max.Bars=",                     Max.Bars                                    +";"+ NL,
 
                             "Signal.onReversal=",            BoolToStr(Signal.onReversal)                +";"+ NL,
