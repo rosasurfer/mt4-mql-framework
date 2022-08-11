@@ -112,7 +112,6 @@
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
- *  - rename to Turtle EA
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -134,6 +133,7 @@
  *     ChartInfos: read/display symbol description as long name
  *
  *  - performance tracking
+ *     realtime equity charts
  *     notifications for price feed outages
  *     daily metric variants
  *
@@ -179,7 +179,6 @@
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
- *  - realtime equity charts
  *  - TradeManager for custom positions
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)

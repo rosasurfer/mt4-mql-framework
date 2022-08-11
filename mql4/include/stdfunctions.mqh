@@ -7230,11 +7230,11 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
 
                           "",                               // string ____________________________
                           false,                            // bool   Donchian.ShowChannel
-                          CLR_NONE,                         // color  Donchian.Upper.Color
-                          CLR_NONE,                         // color  Donchian.Lower.Color
                           "off",                            // string Donchian.ShowCrossings
                           1,                                // int    Donchian.Crossings.Width
                           161,                              // int    Donchian.Crossings.Wingdings
+                          CLR_NONE,                         // color  Donchian.Upper.Color
+                          CLR_NONE,                         // color  Donchian.Lower.Color
                           -1,                               // int    Max.Bars
 
                           "",                               // string ____________________________
