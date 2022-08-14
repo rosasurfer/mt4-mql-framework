@@ -2624,16 +2624,16 @@ datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
    int pt[]; ArrayCopy(pt, parsed);
 
    if (!pt[PT_HAS_DATE]) {
-      if (flags & DATE_OF_ERA == DATE_OF_ERA) {
-         pt[PT_YEAR    ] = 1970;
-         pt[PT_MONTH   ] = 1;
-         pt[PT_DAY     ] = 1;
+      if (flags & DATE_OF_ERA && 1) {
+         pt[PT_YEAR ] = 1970;
+         pt[PT_MONTH] = 1;
+         pt[PT_DAY  ] = 1;
       }
       else {
-         datetime now = TimeLocalEx();
-         pt[PT_YEAR    ] = TimeYearEx(now);
-         pt[PT_MONTH   ] = TimeMonth(now);
-         pt[PT_DAY     ] = TimeDayEx(now);
+         datetime now = TimeLocalEx("DateTime2(3)");
+         pt[PT_YEAR ] = TimeYearEx(now);
+         pt[PT_MONTH] = TimeMonth(now);
+         pt[PT_DAY  ] = TimeDayEx(now);
       }
       pt[PT_HAS_DATE] = 1;
    }
@@ -2678,7 +2678,7 @@ int TimeDayOfWeekEx(datetime time) {
 
 
 /**
- * Return the year of the specified time: 1970...2037
+ * Return the year of the specified time: 1970..2037
  *
  * Fixes the broken built-in function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
@@ -3967,174 +3967,190 @@ int MarketWatch.Symbols() {
  * server time). In tester this time is modelled. Use TimeServer() to get the server time irrespective of received ticks.
  *
  * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
- * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log all
- * errors. The parameter 'flags' controls further behaviour.
+ * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log such
+ * errors.
  *
- * @param  string caller           - location identifier of the caller
- * @param  int    flags [optional] - flags controlling error handling (default: none)
- *                                   DT_USE_LAST_BAR: if TimeCurrent() returns 0 and this flag is set the function returns
- *                                    the open time of the last bar instead; if this flag is not set behaviour is controlled
- *                                    by the flag DT_STRICT
- *                                   DT_STRICT: if set an error causes a fatal terminating error; if not set it's the caller's
- *                                    responsibility to handle the error
+ * @param  string caller                - location identifier of the caller
+ * @param  bool   useLastBar [optional] - whether to return the time of the last bar if TimeLocal() returns 0 (default: no)
+ * @param  bool   strict     [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
  *
  * @return datetime - time or NULL (0) in case of errors
  */
-datetime TimeCurrentEx(string caller, int flags = NULL) {
+datetime TimeCurrentEx(string caller, bool useLastBar=false, bool strict=true) {
+   useLastBar = useLastBar != 0;
+   strict     = strict != 0;
    datetime time = TimeCurrent();
 
    if (!time) {
-      if (caller != "") caller = caller +"->";
-      int isLogged = 0;
-
-      if (flags & DT_USE_LAST_BAR && Bars) {
-         time = Time[0];
-      }
-      else if (flags & DT_STRICT && 1) {
-         isLogged |= catch(caller +"TimeCurrentEx(1)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
-      }
-
-      if (!isLogged) {
-         isLogged |= logDebug(caller +"TimeCurrentEx(2)->TimeCurrent() = 0", ERR_RUNTIME_ERROR);
-      }
+      if (useLastBar && Bars) time = Time[0];
+      else if (strict) catch(caller +"->TimeCurrentEx(1)->TimeCurrent() => 0", ERR_RUNTIME_ERROR);
+      else           logInfo(caller +"->TimeCurrentEx(2)->TimeCurrent() => 0");
    }
    return(time);
 }
 
 
-
-
-
-
-
-
-
 /**
- * More strict replacement for the built-in function TimeLocal().
+ * Extended version of TimeLocal().
  *
- * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
- * the local timezone is set to the trade server's timezone.
+ * Returns the system's local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
  *
- * @param  string caller [optional] - location identifier of the caller (default: none)
+ * In tester this time is modelled and mapped to TimeCurrent(), meaning the modelled local time matches the modelled server
+ * time. This mapping may return 0 without signaling an error under various conditions (e.g. if no locally stored ticks are
+ * available or in older builds in tester when loading standalone indicators). This function will log such errors.
+ *
+ * Use GetLocalTime() to get the non-modelled local time in tester.
+ *
+ * @param  string caller            - location identifier of the caller
+ * @param  bool   strict [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
  *
  * @return datetime - time or NULL (0) in case of errors
- *
- * NOTE: This function signals an error if TimeLocal() returns 0 (zero).
  */
-datetime TimeLocalEx(string caller = "") {
+datetime TimeLocalEx(string caller, bool strict = true) {
+   strict = strict != 0;
    datetime time = TimeLocal();
-   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+
+   if (!time) {
+      if (strict) catch(caller +"->TimeLocalEx(1)->TimeLocal() => 0", ERR_RUNTIME_ERROR);
+      else      logInfo(caller +"->TimeLocalEx(2)->TimeLocal() => 0");
+   }
    return(time);
 }
 
 
-
-
-
 /**
- * Return the current trade server time in FXT. In tester the time is modeled.
+ * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
  *
- * @return datetime - trade server time in FXT or NULL (0) in case of errors
+ * In tester this time is modelled. Use GetFxtTime() to get the non-modelled FXT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
  */
 datetime TimeFXT() {
-   datetime gmt = TimeGMT();         if (!gmt)       return(_NULL(logDebug("TimeFXT(1)->TimeGMT() => NULL")));
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("TimeFXT(2)->GmtToFxtTime() => NaT")));
-   return(fxt);
-}
-
-
-/**
- * Return the current trade server time in GMT. In tester the time is modeled.
- *
- * @return datetime - trade server time in GMT or NULL (0) in case of errors
- */
-datetime TimeGMT() {
-   datetime gmt;
-
-   if (__isTesting) {
-      // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = Tick.time;
-      gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
-   }
-   else {
-      gmt = GetGmtTime();
-   }
-   return(gmt);
-}
-
-
-/**
- * Return the current trade server time. In tester this time is modeled. Different from the last known tick time which is only
- * updated on new ticks.
- *
- * @param  bool watchLastTick [optional] - account for a server clock being fast wich happens quite often (default: yes)
- *
- * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
- */
-datetime TimeServer(bool watchLastTick = true) {
-   watchLastTick = watchLastTick!=0;         // (bool) int
-
-   if (__isTesting)
-      return(TimeCurrent());
-
-   datetime serverTime = GmtToServerTime(GetGmtTime());
-   if (serverTime == NaT) return(NULL);
-
-   if (watchLastTick) {
-      datetime lastTickTime = TimeCurrent();
-      if (lastTickTime > serverTime)
-         return(lastTickTime);
-   }
-   return(serverTime);
-}
-
-
-
-
-
-
-
-
-
-/**
- * Return the current system time in FXT (also in tester).
- *
- * @return datetime - system time in FXT or NULL in case of errors
- *
- * @see  TimeFXT() to return the modeled FXT time in tester
- */
-datetime GetFxtTime() {
-   datetime gmt = GetGmtTime();      if (!gmt)       return(_NULL(logDebug("GetFxtTime(1)->GetGmtTime() => NULL")));
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(_NULL(logDebug("GetFxtTime(2)->GmtToFxtTime() => NaT")));
-   return(fxt);
-}
-
-
-/**
- * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie
- * von TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
- *
- * @return datetime - Serverzeit oder NULL, falls ein Fehler auftrat
- */
-datetime GetServerTime() {
-   datetime gmt  = GetGmtTime();         if (!gmt)        return(_NULL(logDebug("GetServerTime(1)->GetGmtTime() => NULL")));
-   datetime time = GmtToServerTime(gmt); if (time == NaT) return(_NULL(logDebug("GetServerTime(2)->GmtToServerTime() => NaT")));
+   datetime time = TimeGMT(); if (!time)       return(!logInfo("TimeFXT(1)->TimeGMT() => 0",        __ExecutionContext[EC.mqlError]));
+   time = GmtToFxtTime(time); if (time == NaT) return(!logInfo("TimeFXT(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
    return(time);
 }
 
 
 /**
- * Convert the specified FXT time to GMT.
+ * Returns the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
  *
- * @param  datetime time - FXT time
+ * In tester this time is modelled. Use GetGmtTime() to get the non-modelled GMT time in tester.
  *
- * @return datetime - GMT time or NaT in case of errors
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeGMT() {
+   if (!__isTesting) return(GetGmtTime());
+
+   datetime time = TimeServer("TimeGMT(1)"); if (!time)       return(NULL);
+   time = ServerToGmtTime(time);             if (time == NaT) return(!logInfo("TimeGMT(2)->ServerToGmtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * known tick time which is updated on new ticks only.
+ *
+ * In tester this time is modelled. Use GetServerTime() to get the non-modelled server time in tester.
+ *
+ * @param  string caller     [optional] - location identifier of the caller (default: none)
+ * @param  bool   useLastBar [optional] - whether to return the time of the last bar if server time is not available (default: no)
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeServer(string caller="", bool useLastBar=false) {
+   if (caller != "") caller = caller +"->";
+
+   if (__isTesting) {
+      datetime time = TimeCurrentEx(caller +"TimeServer(1)", true);                 // always use last bar in tester
+      if (!time) {
+         if (caller == "") logInfo("TimeServer(2)->TimeCurrentEx() => 0", __ExecutionContext[EC.mqlError]);
+      }
+      return(time);
+   }
+
+   time = GmtToServerTime(GetGmtTime());
+   if (time == NaT) return(!logInfo("TimeServer(3)->GmtToServerTime() => NaT", __ExecutionContext[EC.mqlError]));
+
+   datetime lastTickTime = TimeCurrentEx(caller +"TimeServer(4)", useLastBar);      // optionally use last bar
+   if (!lastTickTime) {
+      if (caller == "") logInfo("TimeServer(5)->TimeCurrentEx() => 0", __ExecutionContext[EC.mqlError]);
+      return(NULL);
+   }
+
+   return(Max(lastTickTime, time));
+}
+
+
+/**
+ * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
+ *
+ * Not modelled in tester. Use TimeFXT() to get the modelled FXT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime GetFxtTime() {
+   datetime time = GetGmtTime(); if (!time)       return(!logInfo("GetFxtTime(1)->GetGmtTime() => 0",     __ExecutionContext[EC.mqlError]));
+   time = GmtToFxtTime(time);    if (time == NaT) return(!logInfo("GetFxtTime(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * known tick time which is updated on new ticks only.
+ *
+ * Not modelled in tester. Use TimeServer() to get the modelled server time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime GetServerTime() {
+   datetime time = GetGmtTime(); if (!time)       return(!logInfo("GetServerTime(1)->GetGmtTime() => 0",        __ExecutionContext[EC.mqlError]));
+   time = GmtToServerTime(time); if (time == NaT) return(!logInfo("GetServerTime(2)->GmtToServerTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Convert an FXT timestamp to GMT.
+ *
+ * @param  datetime time - FXT timestamp (seconds since 01.01.1970 00:00 FXT)
+ *
+ * @return datetime - GMT timestamp (seconds since 01.01.1970 00:00 GMT) or NaT in case of errors
  */
 datetime FxtToGmtTime(datetime time) {
    int offset = GetFxtToGmtTimeOffset(time);
-   if (offset == EMPTY_VALUE) return(NaT);
+   if (offset == EMPTY_VALUE) return(_NaT(logInfo("FxtToGmtTime(1)->GetFxtToGmtTimeOffset() => EMPTY_VALUE", __ExecutionContext[EC.mqlError])));
    return(time - offset);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -6458,7 +6474,7 @@ bool SendSMS(string receiver, string message) {
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
    string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6466,7 +6482,7 @@ bool SendSMS(string receiver, string message) {
 
    // execute shell command
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(7)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    // TODO: analyse the response
    // --------------------------
@@ -6478,8 +6494,8 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogDebug()) logDebug("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
-   return(!catch("SendSMS(9)"));
+   if (IsLogDebug()) logDebug("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
+   return(!catch("SendSMS(10)"));
 }
 
 
@@ -7573,7 +7589,7 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
-   TimeLocalEx();
+   TimeLocalEx(NULL);
    TimeServer();
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);

@@ -42,7 +42,7 @@ color  fontColorDisabled = Gray;
 string fontName          = "Tahoma";
 int    fontSize          = 9;
 
-string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","LOTSTEP","MINLOT","STOPLOSS_SIZE","MAXLOT","MARGIN_INITIAL","MARGIN_INITIAL_DATA","MARGIN_MINLOT","MARGIN_MINLOT_DATA","MARGIN_MAINTENANCE","MARGIN_MAINTENANCE_DATA","MARGIN_HEDGED","MARGIN_HEDGED_DATA","SPREAD","SPREAD_DATA","COMMISSION","COMMISSION_DATA","TOTAL_COST","TOTAL_COST_DATA","SWAPLONG","SWAPLONG_DATA","SWAPSHORT","SWAPSHORT_DATA","ACCOUNT_LEVERAGE","ACCOUNT_LEVERAGE_DATA","ACCOUNT_STOPOUT","ACCOUNT_STOPOUT_DATA","ACCOUNT_MM","ACCOUNT_MM_DATA","ACCOUNT_REQUIRED","ACCOUNT_REQUIRED_DATA","SERVER_NAME","SERVER_NAME_DATA","SERVER_TIMEZONE","SERVER_TIMEZONE_DATA","SERVER_SESSION","SERVER_SESSION_DATA"};
+string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVEL","FREEZELEVEL","LOTSIZE","LOTSTEP","MINLOT","STOPLOSS_SIZE","MAXLOT","MARGIN_INITIAL","MARGIN_INITIAL_DATA","MARGIN_MAINTENANCE","MARGIN_MAINTENANCE_DATA","MARGIN_HEDGED","MARGIN_HEDGED_DATA","MARGIN_MINLOT","MARGIN_MINLOT_DATA","SPREAD","SPREAD_DATA","COMMISSION","COMMISSION_DATA","TOTAL_COST","TOTAL_COST_DATA","SWAPLONG","SWAPLONG_DATA","SWAPSHORT","SWAPSHORT_DATA","ACCOUNT_LEVERAGE","ACCOUNT_LEVERAGE_DATA","ACCOUNT_STOPOUT","ACCOUNT_STOPOUT_DATA","ACCOUNT_MM","ACCOUNT_MM_DATA","ACCOUNT_REQUIRED","ACCOUNT_REQUIRED_DATA","SERVER_NAME","SERVER_NAME_DATA","SERVER_TIMEZONE","SERVER_TIMEZONE_DATA","SERVER_SESSION","SERVER_SESSION_DATA"};
 
 #define I_TRADEALLOWED             0
 #define I_DIGITS                   1
@@ -58,12 +58,12 @@ string labels[] = {"TRADEALLOWED","DIGITS","TICKSIZE","PIPVALUE","ADR","STOPLEVE
 #define I_MAXLOT                  11
 #define I_MARGIN_INITIAL          12
 #define I_MARGIN_INITIAL_DATA     13
-#define I_MARGIN_MINLOT           14
-#define I_MARGIN_MINLOT_DATA      15
-#define I_MARGIN_MAINTENANCE      16
-#define I_MARGIN_MAINTENANCE_DATA 17
-#define I_MARGIN_HEDGED           18
-#define I_MARGIN_HEDGED_DATA      19
+#define I_MARGIN_MAINTENANCE      14
+#define I_MARGIN_MAINTENANCE_DATA 15
+#define I_MARGIN_HEDGED           16
+#define I_MARGIN_HEDGED_DATA      17
+#define I_MARGIN_MINLOT           18
+#define I_MARGIN_MINLOT_DATA      19
 #define I_SPREAD                  20
 #define I_SPREAD_DATA             21
 #define I_COMMISSION              22
@@ -327,14 +327,14 @@ int UpdateInstrumentInfos() {
    ObjectSetText(labels[I_STOPLOSS_SIZE          ],                      ifString(!stopPct,  "", NumberToStr(StopLoss.Size, ".+") +" pip = "+ NumberToStr(NormalizeDouble(stopPct, Max(0, 1-DoubleExp(stopPct))), ".+") +"%"), fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_MARGIN_INITIAL         ], "Margin initial:",                                                                                                                                                         fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MAINTENANCE     ], "Margin maintenance:",                                                                                                                                                     fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_HEDGED          ], "Margin hedged:",                                                                                                                                                          fontSize, fontName, fontColor);
    ObjectSetText(labels[I_MARGIN_MINLOT          ], "Margin minLot:",                                                                                                                                                          fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MAINTENANCE     ], "Margin maintenance:",                                                                                                                                                        fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_HEDGED          ], "Margin hedged:",                                                                                                                                                             fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_MARGIN_INITIAL_DATA    ],                      ifString(!marginInitial, " ", NumberToStr(marginInitial, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(symbolLeverage) +")"),                        fontSize, fontName, fontColor);
-   ObjectSetText(labels[I_MARGIN_MINLOT_DATA     ],                      ifString(!marginMinLot,  " ", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                              fontSize, fontName, fontColor);
    ObjectSetText(labels[I_MARGIN_MAINTENANCE_DATA],                      ifString(!marginMaintnc, " ", NumberToStr(marginMaintnc, ",'.2R") +" "+ accountCurrency +"  (1:"+ Round(maintncLeverage) +")"),                       fontSize, fontName, fontColor);
    ObjectSetText(labels[I_MARGIN_HEDGED_DATA     ],                      ifString(!marginInitial, " ", ifString(!marginHedged, "none", Round(marginHedged) +"%")),                                                             fontSize, fontName, fontColor);
+   ObjectSetText(labels[I_MARGIN_MINLOT_DATA     ],                      ifString(!marginMinLot,  " ", NumberToStr(marginMinLot, ",'.2R") +" "+ accountCurrency),                                                              fontSize, fontName, fontColor);
 
    ObjectSetText(labels[I_SPREAD                 ], "Spread:",                                                                                                                                                                 fontSize, fontName, fontColor);
    ObjectSetText(labels[I_COMMISSION             ], "Commission:",                                                                                                                                                             fontSize, fontName, fontColor);

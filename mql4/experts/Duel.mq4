@@ -433,7 +433,7 @@ int ShowOpenOrders() {
          if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet    (label, OBJPROP_TIME1,     TimeServer());
+         ObjectSet    (label, OBJPROP_TIME1,     Tick.time);
          ObjectSet    (label, OBJPROP_PRICE1,    long.pendingPrice[i]);
          ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
       }
@@ -461,7 +461,7 @@ int ShowOpenOrders() {
          if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet    (label, OBJPROP_TIME1,     TimeServer());
+         ObjectSet    (label, OBJPROP_TIME1,     Tick.time);
          ObjectSet    (label, OBJPROP_PRICE1,    short.pendingPrice[i]);
          ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
       }

@@ -536,7 +536,7 @@ bool onReversal(int direction, int bar) {
       }
 
       message = Symbol() +","+ PeriodDescription() +": "+ shortName +" reversal "+ message;
-      if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+      if (signalReversal.mail || signalReversal.sms) accountTime = "("+ TimeToStr(TimeLocalEx("onReversal(3)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
 
       if (signalReversal.popup)           Alert(message);
       if (signalReversal.mail)  error |= !SendEmail(signalReversal.mailSender, signalReversal.mailReceiver, message, message + NL + accountTime);
@@ -564,9 +564,9 @@ bool onChannelCrossing(int direction) {
       if      (!error)                      lastSound = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
 
-      if (IsLogDebug()) logDebug("onChannelCrossing(2)  new "+ ifString(direction==D_LONG, "High", "Low") +": "+ NumberToStr(upperBand[0], PriceFormat));
+      //debug("onChannelCrossing(0.1)  new "+ ifString(direction==D_LONG, "High", "Low") +": "+ NumberToStr(upperBand[0], PriceFormat));
    }
-   return(!catch("onChannelCrossing(3)"));
+   return(!catch("onChannelCrossing(2)"));
 }
 
 

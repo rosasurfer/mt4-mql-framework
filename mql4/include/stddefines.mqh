@@ -134,11 +134,6 @@ double  N_INF;                                                    // -1.#INF: ne
 #define TIME_FULL                   7           // TIME_DATE | TIME_MINUTES | TIME_SECONDS
 
 
-// flags for error handling of Time*() functions
-#define DT_USE_LAST_BAR             1           // use open time of last bar instead of last tick time
-#define DT_STRICT                   2           // strict error handling
-
-
 // DateTime2() flags
 #define DATE_OF_ERA                 1           // relative to the era (1970-01-01)
 #define DATE_OF_TODAY               2           // relative to today

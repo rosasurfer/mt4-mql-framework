@@ -114,8 +114,8 @@ int start() {
    __CoreFunction = CF_START;
 
    Ticks++;                                                                   // einfache Zähler, die konkreten Werte haben keine Bedeutung
-   Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im synthetischen Chart NULL               !!!
-   Tick.isVirtual = true;                                                     // TODO: !!! MODE_TIME und TimeCurrent() sind im Tester-Chart falsch !!!
+   Tick.time      = MarketInfo(Symbol(), MODE_TIME);                          // TODO: !!! MODE_TIME ist im Tester- und Offline-Chart falsch !!!
+   Tick.isVirtual = true;                                                     //
    ChangedBars    = -1;                                                       // in scripts not available
    ValidBars      = -1;                                                       // ...
    ShiftedBars    = -1;                                                       // ...

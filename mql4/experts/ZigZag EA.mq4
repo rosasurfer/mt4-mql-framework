@@ -43,25 +43,28 @@
  *
  *
  * TODO:
- *  - time functions returning modelled time must log errors
- *     built-in:
- *      TimeCurrent()     time of last tick        in tester: modelled                                OK
- *      TimeLocal()       current local time       in tester: modelled and same as TimeCurrent()      OK
+ *  - time functions
+ *      TimeCurrentEx()    check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeLocalEx()      check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeFXT()
+ *      TimeGMT()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeServer()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *
- *     needed:
- *      TimeCurrentEx()                                                                               OK
- *      TimeLocalEx()
+ *      FxtToGmtTime
+ *      FxtToLocalTime
+ *      FxtToServerTime
  *
- *      TimeFxt()         current FXT time         in tester: modelled
- *      TimeGmt()         current GMT time         in tester: modelled
- *      TimeServer()      current server time      in tester: modelled and same as TimeCurrent()
+ *      GmtToFxtTime
+ *      GmtToLocalTime                 https://stackoverflow.com/questions/66615978/how-to-get-a-datetimes-offset-from-utc
+ *      GmtToServerTime
  *
- *      GetFxtTime()      current FXT time         in tester: real time
- *      GetGmtTime()      current GMT time         in tester: real time                               OK
- *      GetLocalTime()    current local time       in tester: real time                               OK
- *      GetServerTime()   current server time      in tester: real time
+ *      LocalToFxtTime
+ *      LocalToGmtTime
+ *      LocalToServerTime
  *
- *  - TimeServer() as replacement for TimeCurrent() adds nothing
+ *      ServerToFxtTime
+ *      ServerToGmtTime
+ *      ServerToLocalTime
  *
  *  - merge Get(Prev|Next)?SessionStartTime()
  *  - merge Get(Prev|Next)?SessionEndTime()
@@ -76,7 +79,7 @@
  *     one more buffer for current range
  *
  *  - SuperBars
- *     fix gap between days/weeks if market doesn't work 24h
+ *     fix gap between days/weeks if market is not open 24h
  *     implement more timeframes
  *
  *  - move iCustom() to ta/includes
@@ -88,7 +91,7 @@
  *
  *  - ChartInfos
  *     include current daily range in ADR calculation/display
- *     improve pending order markers (it's not visible whether a TP/SL covers the full position)
+ *     improve pending order markers (it's not visible whether a pending target covers the full position)
  *      if TP exists => mark partial TP
  *      if SL exists => mark partial SL
  *

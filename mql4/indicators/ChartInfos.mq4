@@ -405,7 +405,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
 
       for (i=0; i < orders; i++) {
          if (customTicketsSize > 0) {
-            if (!customTickets[i] || customTickets[i]==1)             continue;     // skip virtual positions
+            if (customTickets[i] <= 1)                                continue;     // skip virtual positions
             if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
          else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
@@ -429,7 +429,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
             ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-            ObjectSet    (label1, OBJPROP_TIME1,     TimeServer());
+            ObjectSet    (label1, OBJPROP_TIME1,     Tick.time);
             ObjectSet    (label1, OBJPROP_PRICE1,    openPrice);
             ObjectSetText(label1, comment);
          }
@@ -444,7 +444,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
                if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-               ObjectSet    (label2, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label2, OBJPROP_TIME1,     Tick.time);
                ObjectSet    (label2, OBJPROP_PRICE1,    takeProfit);
                ObjectSetText(label2, comment);
             }
@@ -457,7 +457,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
                if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-               ObjectSet    (label3, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label3, OBJPROP_TIME1,     Tick.time);
                ObjectSet    (label3, OBJPROP_PRICE1,    stopLoss);
                ObjectSetText(label3, comment);
             }
@@ -501,7 +501,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet(label1, OBJPROP_TIME1,     TimeServer());
+         ObjectSet(label1, OBJPROP_TIME1,     Tick.time);
          ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
       }
       else {
@@ -515,7 +515,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-            ObjectSet(label2, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label2, OBJPROP_TIME1,     Tick.time);
             ObjectSet(label2, OBJPROP_PRICE1,    takeProfit);
          }
          else sTP = "";
@@ -527,7 +527,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-            ObjectSet(label3, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label3, OBJPROP_TIME1,     Tick.time);
             ObjectSet(label3, OBJPROP_PRICE1,    stopLoss);
          }
          else sSL = "";
@@ -2661,10 +2661,9 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
    value = StrTrim(value); if (value == "") return(NULL);
 
-
    // (1) Ausdruck parsen
    if (!StrIsDigits(StrLeft(value, 1))) {
-      datetime date, now = TimeFXT(); if (!now) return(NaT);
+      datetime date, now = TimeFXT(); if (!now) return(_NaT(logInfo("ParseDateTimeEx(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR)));
 
       // (1.1) alphabetischer Ausdruck
       if (StrEndsWith(value, "DAY")) {

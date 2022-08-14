@@ -789,10 +789,10 @@ bool onInsideBar(int timeframe, datetime closeTime, double high, double low) {
    string sBarHigh   = NumberToStr(high, PriceFormat);
    string sBarLow    = NumberToStr(low, PriceFormat);
    string sBarTime   = TimeToStr(closeTime, TIME_DATE|TIME_MINUTES);
-   string sLocalTime = "("+ GmtTimeFormat(TimeLocal(), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
+   string sLocalTime = "("+ GmtTimeFormat(TimeLocalEx("onInsideBar(1)"), "%a, %d.%m.%Y %H:%M:%S") +", "+ GetAccountAlias() +")";
    string message    = "new "+ sTimeframe +" inside bar";
 
-   if (IsLogInfo()) logInfo("onInsideBar(1)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
+   if (IsLogInfo()) logInfo("onInsideBar(2)  "+ message +" at "+ sBarTime +"  H="+ sBarHigh +"  L="+ sBarLow);
    message = Symbol() +": "+ message;
 
    int error = NO_ERROR;
