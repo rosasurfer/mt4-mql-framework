@@ -351,12 +351,12 @@ int onTick() {
  * @return bool - success status
  */
 bool onReversal(int direction) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onReversal(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = 0;
 
    if (direction == D_LONG) {
       message = "Broketrader LONG signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onReversal(1)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
@@ -367,7 +367,7 @@ bool onReversal(int direction) {
 
    if (direction == D_SHORT) {
       message = "Broketrader SHORT signal (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onReversal(2)  "+ message);
+      if (IsLogInfo()) logInfo("onReversal(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
@@ -376,7 +376,7 @@ bool onReversal(int direction) {
       return(!error);
    }
 
-   return(!catch("onReversal(3)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
+   return(!catch("onReversal(4)  invalid parameter direction: "+ direction, ERR_INVALID_PARAMETER));
 }
 
 

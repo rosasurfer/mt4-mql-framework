@@ -397,7 +397,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
    string   symbol.i = los.Currency(orders, i) +"."+ StrToInteger(StrSubstr(los.Comment(orders, i), 1));
    string   logMsg="", trigger="", limitValue="", currentValue="", separator="", limitPercent="", currentPercent="", priceFormat=",'R.4'";
    int      /*LFX_ORDER*/order[];
-   datetime triggerTime, now=TimeFXT(); if (!now) return(false);
+   datetime triggerTime, now=TimeFXT(); if (!now) return(!logInfo("LFX.SendTradeCommand(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
 
    switch (limitType) {
       case NO_LIMIT_TRIGGERED: return(true);
@@ -410,7 +410,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          triggerTime = los.CloseTriggerTime(orders, i); break;
 
       default:
-         return(!catch("LFX.SendTradeCommand(1)  invalid parameter limitType: "+ limitType +" (no limit type)", ERR_INVALID_PARAMETER));
+         return(!catch("LFX.SendTradeCommand(2)  invalid parameter limitType: "+ limitType +" (no limit type)", ERR_INVALID_PARAMETER));
    }
 
    /*
@@ -458,7 +458,7 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
          else                                { trigger = "TP price at "+ NumberToStr(los.TakeProfitPrice(orders, i), priceFormat) +" triggered";                                                 logMsg = trigger +" (current="+ NumberToStr(los.ClosePrice(orders, i), priceFormat) +")"; }
       }
       logMsg = symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg;
-      logDebug("LFX.SendTradeCommand(2)  "+ logMsg);
+      logDebug("LFX.SendTradeCommand(3)  "+ logMsg);
 
       // (1.2) Auslösen speichern und TradeCommand verschicken
       if (limitType == OPEN_LIMIT_TRIGGERED)        los.setOpenTriggerTime    (orders, i, now );
@@ -496,19 +496,19 @@ bool LFX.SendTradeCommand(/*LFX_ORDER*/int orders[][], int i, int limitType) {
       }
 
       // aktuell gespeicherte Version der Order holen
-      int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(!catch("LFX.SendTradeCommand(3)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
+      int result = LFX.GetOrder(los.Ticket(orders, i), order); if (result != 1) return(!catch("LFX.SendTradeCommand(4)->LFX.GetOrder(ticket="+ los.Ticket(orders, i) +") => "+ result, ERR_RUNTIME_ERROR));
 
       if (lo.Version(order) != los.Version(orders, i)) {                               // Gespeicherte Version ist modifiziert (kann nur neuer sein)
          // Die Order wurde ausgeführt oder ein Fehler trat auf. In beiden Fällen erfolgte jedoch keine Benachrichtigung.
          // Diese Prüfung wird als ausreichende Benachrichtigung gewertet und fortgefahren.
-         logDebug("LFX.SendTradeCommand(4)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
-         if (limitType == OPEN_LIMIT_TRIGGERED) logDebug("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
-         else                                   logDebug("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
+         logDebug("LFX.SendTradeCommand(5)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");    // TODO: !!! Keine Warnung, solange möglicherweise gar kein Receiver existiert.
+         if (limitType == OPEN_LIMIT_TRIGGERED) logDebug("LFX.SendTradeCommand(6)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsOpenError (order), "position was opened", "opening of position failed"));
+         else                                   logDebug("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ lo.Ticket(order) +" "+ ifString(!lo.IsCloseError(order), "position was closed", "closing of position failed"));
          ArraySetInts(orders, i, order);                                               // lokale Order mit neu eingelesener Order überschreiben
       }
       else {
          // Order ist unverändert, Fehler melden und speichern.
-         logWarn("LFX.SendTradeCommand(7)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
+         logWarn("LFX.SendTradeCommand(8)  "+ symbol.i +" #"+ los.Ticket(orders, i) +" "+ logMsg +", continuing...");
          if (limitType == OPEN_LIMIT_TRIGGERED) los.setOpenTime (orders, i, -now);     // Sollte die Order nach dieser Zeit doch noch erfolgreich ausgeführt werden, wird dieser
          else                                   los.setCloseTime(orders, i, -now);     // Fehler mit dem letztendlichen Erfolg überschrieben. Dies tritt z.B. auf, wenn der
          if (!LFX.SaveOrder(orders, i)) return(false);                                 // Trade-Server vor der letztendlichen Ausführung mehrere Minuten hängt (z.B. Demo-Server).
@@ -912,7 +912,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    string sClosePrice          =                ifString(!lo.ClosePrice         (order), "0", DoubleToStr(lo.ClosePrice(order), lo.Digits(order)));                                          sClosePrice        = StrPadLeft (sClosePrice       , 10, " ");
    string sProfit              =                ifString(!lo.Profit             (order), "0", DoubleToStr(lo.Profit    (order), 2));                                                         sProfit            = StrPadLeft (sProfit           ,  7, " ");
 
-     datetime modificationTime = TimeFXT(); if (!modificationTime) return(false);
+     datetime modificationTime = TimeFXT(); if (!modificationTime) return(!logInfo("LFX.SaveOrder(8)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
      int      version          = lo.Version(order) + 1;
 
    string sModificationTime    = TimeToStr(modificationTime, TIME_FULL);
@@ -926,7 +926,7 @@ bool LFX.SaveOrder(/*LFX_ORDER*/int orders[], int index=NULL, int fCatch=NULL) {
    string value   = StringConcatenate(sSymbol, ", ", sComment, ", ", sOperationType, ", ", sUnits, ", ", sOpenEquity, ", ", sOpenTriggerTime, ", ", sOpenTime, ", ", sOpenPrice, ", ", sTakeProfitPrice, ", ", sTakeProfitValue, ", ", sTakeProfitPercent, ", ", sTakeProfitTriggered, ", ", sStopLossPrice, ", ", sStopLossValue, ", ", sStopLossPercent, ", ", sStopLossTriggered, ", ", sCloseTriggerTime, ", ", sCloseTime, ", ", sClosePrice, ", ", sProfit, ", ", sModificationTime, ", ", sVersion);
 
    if (!WritePrivateProfileStringA(section, key, " "+ value, file))
-      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(8)->kernel32::WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
+      return(!__LFX.SaveOrder.HandleError("LFX.SaveOrder(9)->WritePrivateProfileStringA(section=\""+ section +"\", key=\""+ key +"\", value=\""+ StrReplace(StrReplace(value, " ,", ",", true), ",  ", ", ", true) +"\", fileName=\""+ file +"\")", ERR_WIN32_ERROR, fCatch));
 
 
    // (5) Version der übergebenen Order aktualisieren

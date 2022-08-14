@@ -992,7 +992,7 @@ bool IsEntrySignal(int &signal) {
 bool IsTradeSessionBreak() {
    if (last_error != NO_ERROR) return(false);
 
-   datetime serverTime = TimeServer();
+   datetime serverTime = TimeServer(); if (!serverTime) return(!logInfo("IsTradeSessionBreak(1)->TimeServer() => 0", ERR_RUNTIME_ERROR));
 
    // check whether to recalculate sessionbreak times
    if (serverTime >= sessionbreak.endtime) {
@@ -1026,7 +1026,7 @@ bool IsTradeSessionBreak() {
       }
       sessionbreak.starttime = FxtToServerTime(fxtTime);
 
-      if (IsLogDebug()) logDebug("IsTradeSessionBreak(1)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
+      if (IsLogDebug()) logDebug("IsTradeSessionBreak(2)  "+ sequence.name +" recalculated "+ ifString(serverTime >= sessionbreak.starttime, "current", "next") +" sessionbreak: from "+ GmtTimeFormat(sessionbreak.starttime, "%a, %Y.%m.%d %H:%M:%S") +" to "+ GmtTimeFormat(sessionbreak.endtime, "%a, %Y.%m.%d %H:%M:%S"));
    }
 
    // perform the actual check

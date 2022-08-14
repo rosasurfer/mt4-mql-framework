@@ -223,7 +223,7 @@ int start() {
 
    // determine tick status
    Ticks++;                                                                      // an increasing counter without actual meaning
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: in synthetic charts MODE_TIME and TimeCurrent() are 0 (1970.01.01 00:00:00)
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: MODE_TIME is in synthetic charts 0
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick

@@ -421,12 +421,12 @@ int onTick() {
  * @return bool - success status
  */
 bool onTrendChange(int trend) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
       message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signalTrendChange.popup)          Alert(message);
@@ -438,7 +438,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signalTrendChange.popup)          Alert(message);
@@ -448,7 +448,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

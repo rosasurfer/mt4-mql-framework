@@ -1,8 +1,8 @@
 /**
  * NonLag Moving Average
  *
- * A moving average using a cosine wave function for weight calculation. Corrected and enhanced version of the original
- * published by Igor Durkin aka igorad.
+ * A moving average using a cosine wave function for weight calculation. Corrected and enhanced version of the original code
+ * published by Igor Durkin (aka igorad).
  *
  * Indicator buffers for iCustom():
  *  • MovingAverage.MODE_MA:    MA values
@@ -12,8 +12,9 @@
  *
  *  @link  https://www.forexfactory.com/thread/571026#                                           [NonLag Moving Average v4.0]
  *  @link  http://www.yellowfx.com/nonlagma-v7-1-mq4-indicator.htm#                              [NonLag Moving Average v7.1]
- *  @link  http://www.mql5.com/en/forum/175037/page62#comment_4583907                            [NonLag Moving Average v7.8]
+ *  @link  https://www.mql5.com/en/forum/175037/page62#comment_4583907                           [NonLag Moving Average v7.8]
  *  @link  https://www.mql5.com/en/forum/175037/page74#comment_4584032                           [NonLag Moving Average v7.9]
+ *  @link  https://www.forexfactory.com/thread/561195-scalping-strategy#                          [Scalping Strategy M5 & M1]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
@@ -321,12 +322,12 @@ int onTick() {
  * @return bool - success status
  */
 bool onTrendChange(int trend) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = NO_ERROR;
 
    if (trend == MODE_UPTREND) {
       message = shortName +" turned up (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signalTrendChange.popup)          Alert(message);
@@ -338,7 +339,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = shortName +" turned down (bid: "+ NumberToStr(Bid, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signalTrendChange.popup)          Alert(message);
@@ -348,7 +349,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

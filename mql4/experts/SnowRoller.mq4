@@ -1705,7 +1705,7 @@ bool ResetSequence(double gridbase, int level) {
    //sequence.id           = ...                         // unchanged
    sequence.cycle++;                                     // increase restart cycle
    //sequence.name         = ...                         // unchanged
-   sequence.created        = TimeLocal();
+   sequence.created        = TimeLocalEx("ResetSequence(4)");
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
@@ -1830,8 +1830,8 @@ bool ResetSequence(double gridbase, int level) {
    SS.All();
    SaveStatus();
 
-   if (IsLogDebug()) logDebug("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
-   return(!catch("ResetSequence(5)"));
+   if (IsLogDebug()) logDebug("ResetSequence(5)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
+   return(!catch("ResetSequence(6)"));
 }
 
 

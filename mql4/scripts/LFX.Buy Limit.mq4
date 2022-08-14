@@ -132,9 +132,8 @@ int onStart() {
          return(catch("onStart(4)"));
    }
 
-
-   // (2) Order erzeugen und speichern
-   datetime now = TimeFXT(); if (!now) return(last_error);
+   // Order erzeugen und speichern
+   datetime now = TimeFXT(); if (!now) return(_last_error(logInfo("onStart(5)->TimeFXT() => 0", ERR_RUNTIME_ERROR)));
 
    /*LFX_ORDER*/int order[]; InitializeByteBuffer(order, LFX_ORDER_size);
       lo.setTicket           (order, LFX.CreateMagicNumber(lfxOrders, lfxCurrency));   // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können

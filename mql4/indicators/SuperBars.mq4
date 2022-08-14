@@ -58,21 +58,22 @@ extern string Weekend.Symbols     = "";               // comma-separated list of
 #define STF_DOWN          -1
 #define PERIOD_D1_ETH   1439                          // that's PERIOD_D1 - 1
 
-int    superTimeframe;                                // the currently active super bar period
-double maxChangeUnchanged = 0.05;                     // max. price change in % for a SuperBar to be drawn as unchanged
-bool   ethEnabled;                                    // whether CME sessions are enabled
-bool   weekendEnabled;                                // whether weekend data is enabled
-int    maxBarsH1;                                     // max. number of H1 superbars to draw (performance)
+int      superTimeframe;                              // the currently active super bar period
+double   maxChangeUnchanged = 0.05;                   // max. price change in % for a SuperBar to be drawn as unchanged
+bool     ethEnabled;                                  // whether CME sessions are enabled
+bool     weekendEnabled;                              // whether weekend data is enabled
+datetime serverTime;                                  // most recent server time
+int      maxBarsH1;                                   // max. number of H1 superbars to draw (performance)
 
-string legendLabel      = "";
-int    legendCorner     = CORNER_TOP_LEFT;
-int    legend_xDistance = 300;
-int    legend_yDistance = 3;
-string legendFontName   = "";                         // default: empty = menu font ("MS Sans Serif")
-int    legendFontSize   = 8;                          // "MS Sans Serif", size 8 corresponds matches the menu font/size
-color  legendFontColor  = Black;
+string   legendLabel      = "";
+int      legendCorner     = CORNER_TOP_LEFT;
+int      legend_xDistance = 300;
+int      legend_yDistance = 3;
+string   legendFontName   = "";                       // default: empty = menu font ("MS Sans Serif")
+int      legendFontSize   = 8;                        // "MS Sans Serif", size 8 corresponds matches the menu font/size
+color    legendFontColor  = Black;
 
-string errorSound = "";                               // sound played when timeframe cycling is at min/max (default: none)
+string   errorSound = "";                             // sound played when timeframe cycling is at min/max (default: none)
 
 
 /**
@@ -160,6 +161,9 @@ int onDeinit() {
  * @return int - error status
  */
 int onTick() {
+   serverTime = TimeServer("onTick(1)", true);
+   if (!serverTime) return(ERR_RUNTIME_ERROR);
+
    HandleCommands();                                     // process incoming commands
    UpdateSuperBars();                                    // update superbars
    return(last_error);
@@ -549,7 +553,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
       ObjectSet(nameRectangle, OBJPROP_PRICE2, ethLow);
 
       // draw ETH close marker if the RTH session has started
-      if (TimeServer() >= ethCloseTimeSrv) {
+      if (serverTime >= ethCloseTimeSrv) {
          int ethCenterBar = (ethOpenBar+ethCloseBar)/2;
 
          if (ethCenterBar > ethCloseBar) {

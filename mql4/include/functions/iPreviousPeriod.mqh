@@ -19,7 +19,7 @@ bool iPreviousPeriod(int timeframe/*=NULL*/, datetime &openTimeFxt, datetime &cl
    if (!timeframe) timeframe = Period();
 
    if (!openTimeFxt) {
-      datetime nowFxt = TimeFXT(); if (!nowFxt) return(_false(logDebug("iPreviousPeriod(1)->TimeFXT() => NULL")));
+      datetime nowFxt = TimeFXT(); if (!nowFxt) return(!logInfo("iPreviousPeriod(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
    }
 
    // --- PERIOD_M1 ---------------------------------------------------------------------------------------------------------

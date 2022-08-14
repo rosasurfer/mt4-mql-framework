@@ -268,7 +268,7 @@ int onStart() {
 
 
    // (7) neue LFX-Order erzeugen und speichern
-   datetime now.fxt = TimeFXT(); if (!now.fxt) return(_last_error(ReleaseLock(mutex)));
+   datetime now.fxt = TimeFXT(); if (!now.fxt) return(_last_error(logInfo("onStart(9)->TimeFXT() => 0", ERR_RUNTIME_ERROR), ReleaseLock(mutex)));
 
    /*LFX_ORDER*/int lo[]; InitializeByteBuffer(lo, LFX_ORDER_size);
       lo.setTicket           (lo, magicNumber);                                        // Ticket immer zuerst, damit im Struct Currency-ID und Digits ermittelt werden können
@@ -287,7 +287,7 @@ int onStart() {
 
 
    // (8) Logmessage ausgeben
-   logDebug("onStart(9)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   logDebug("onStart(10)  "+ lfxCurrency +"."+ marker +" "+ ifString(direction==OP_BUY, "long", "short") +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    // (9) Order freigeben
