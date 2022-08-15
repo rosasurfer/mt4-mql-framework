@@ -94,9 +94,6 @@
 
 
 // Win32 structs
-#define FILETIME_size                        8
-#define FILETIME_intSize                     2
-
 #define PROCESS_INFORMATION_size            16
 #define PROCESS_INFORMATION_intSize          4
 
