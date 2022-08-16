@@ -162,7 +162,7 @@ int onDeinit() {
  */
 int onTick() {
    serverTime = TimeServer("onTick(1)", true);
-   if (!serverTime) return(ERR_RUNTIME_ERROR);
+   if (!serverTime) return(last_error);
 
    HandleCommands();                                     // process incoming commands
    UpdateSuperBars();                                    // update superbars
