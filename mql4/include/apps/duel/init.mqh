@@ -29,11 +29,11 @@ int onInitUser() {
          sequence.isTest  = __isTesting;
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
-         sequence.created = TimeLocal();
+         sequence.created = TimeLocalEx("onInitUser(2)");
          sequence.cycle   = 1;
          sequence.status  = STATUS_WAITING;
          if (!ConfigureGrid(sequence.gridvola, sequence.gridsize, sequence.unitsize)) {
-            return(onInputError("onInitUser(2)  "+ sequence.name +" invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
+            return(onInputError("onInitUser(3)  "+ sequence.name +" invalid parameter combination GridVolatility="+ DoubleQuoteStr(GridVolatility) +" / GridSize="+ DoubleQuoteStr(GridSize) +" / UnitSize="+ NumberToStr(UnitSize, ".+")));
          }
 
          // warn if starting with too little free margin
@@ -48,9 +48,9 @@ int onInitUser() {
          double maxLongLots  = MathMax(longLotsPlus, longLotsMinus);
          double maxShortLots = MathMax(shortLotsPlus, shortLotsMinus);
          double maxLots      = MathMax(maxLongLots, maxShortLots);   // max. lots at maxGridLevel in any direction
-         if (IsError(catch("onInitUser(3)"))) return(last_error);    // reset last error
+         if (IsError(catch("onInitUser(4)"))) return(last_error);    // reset last error
          if (AccountFreeMarginCheck(Symbol(), OP_BUY, maxLots) < 0 || GetLastError()==ERR_NOT_ENOUGH_MONEY) {
-            logWarn("onInitUser(4)  "+ sequence.name +" not enough money to open "+ MaxUnits +" units with a size of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
+            logWarn("onInitUser(5)  "+ sequence.name +" not enough money to open "+ MaxUnits +" units with a size of "+ NumberToStr(sequence.unitsize, ".+") +" lot", ERR_NOT_ENOUGH_MONEY);
          }
 
          // confirm dangerous live modes
@@ -59,7 +59,7 @@ int onInitUser() {
                PlaySoundEx("Windows Notify.wav");
                if (IDOK != MessageBoxEx(ProgramName() +"::StartSequence()", "WARNING: "+ ifString(sequence.martingaleEnabled, "Martingale", "Bi-directional") +" mode!\n\nDid you check news and holidays?", MB_ICONQUESTION|MB_OKCANCEL)) {
                   StopSequence(NULL);
-                  return(catch("onInitUser(5)"));
+                  return(catch("onInitUser(6)"));
                }
             }
          }

@@ -21,6 +21,8 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
 #include <functions/iBarShiftNext.mqh>
 
 #property indicator_chart_window
+#property indicator_buffers      1
+#property indicator_color1       CLR_NONE
 
 
 /**
@@ -29,6 +31,7 @@ extern color Color.SuperGrid   = LightGray;                          // C'211,21
  * @return int - error status
  */
 int onInit() {
+   SetIndexStyle(0, DRAW_NONE, EMPTY, EMPTY, CLR_NONE);
    SetIndexLabel(0, NULL);
    return(catch("onInit(1)"));
 }
@@ -40,8 +43,7 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   if (!ValidBars)
-      DrawGrid();
+   if (!ValidBars) DrawGrid();
    return(last_error);
 }
 
@@ -52,20 +54,19 @@ int onTick() {
  * @return bool - success status
  */
 int DrawGrid() {
+   // due to init flag INIT_TIMEZONE we don't have to check for timezone related errors
    datetime firstWeekDay, separatorTime, chartTime, lastChartTime;
    int      dow, dd, mm, yyyy, bar, sepColor, sepStyle;
    string   label="", lastLabel="";
 
-
-   // (1) Zeitpunkte des ältesten und jüngsten Separators berechen
-   datetime time    = ServerToFxtTime(Time[Bars-1]);                if (time    == NaT) return(false);
-   datetime fromFXT = GetNextSessionStartTime.fxt(time - 1*SECOND); if (fromFXT == NaT) return(false);
-   datetime now.fxt = TimeFXT();                                    if (!now.fxt)       return(false); // nicht TimeCurrent() verwenden, kann 0 sein
-   datetime toFXT   = GetNextSessionStartTime.fxt(now.fxt);         if (toFXT   == NaT) return(false);
+   // Zeitpunkte des ältesten und jüngsten Separators berechen
+   datetime fromFXT = GetNextSessionStartTime(ServerToFxtTime(Time[Bars-1]) - 1*SECOND, TZ_FXT);
+   datetime toFXT   = GetNextSessionStartTime(ServerToFxtTime(Time[0]),                 TZ_FXT);
 
    // Tagesseparatoren
-   if (Period() < PERIOD_H4) {                                                // fromFXT bleibt unverändert
-      toFXT += (8-TimeDayOfWeekEx(toFXT))%7 * DAYS;                           // toFXT ist der nächste Montag (die restliche Woche wird komplett dargestellt)
+   if (Period() < PERIOD_H4) {
+      //fromFXT = ...                                                         // fromFXT bleibt unverändert
+      //toFXT   = ...                                                         // toFXT bleibt unverändert
    }
 
    // Wochenseparatoren
@@ -111,12 +112,10 @@ int DrawGrid() {
          firstWeekDay = GetFirstWeekdayOfMonth(yyyy+1, 1);
       toFXT = firstWeekDay;
    }
-   //debug("DrawGrid()  from \""+ GmtTimeFormat(fromFXT, "%a, %d.%m.%Y %H:%M") +"\" to \""+ GmtTimeFormat(fromFXT, "%a, %d.%m.%Y %H:%M") +"\"");
 
-
-   // (2) Separatoren zeichnen
-   for (time=fromFXT; time <= toFXT; time+=1*DAY) {
-      separatorTime = FxtToServerTime(time);                                  // ERR_INVALID_TIMEZONE_CONFIG wird in onInit() abgefangen
+   // Separatoren zeichnen
+   for (datetime time=fromFXT; time <= toFXT; time+=1*DAY) {
+      separatorTime = FxtToServerTime(time);
       dow           = TimeDayOfWeekEx(time);
 
       // Bar und Chart-Time des Separators ermitteln
@@ -158,8 +157,7 @@ int DrawGrid() {
       lastChartTime = chartTime;
       lastLabel     = label;                                                  // Daten des letzten Separators für Lückenerkennung merken
 
-
-      // (2.1) je nach Periode einen Tag *vor* den nächsten Separator springen
+      // je nach Periode einen Tag *vor* den nächsten Separator springen
       // Tagesseparatoren
       if (Period() < PERIOD_H4) {
          if (dow == FRIDAY)                                                   // Wochenenden überspringen

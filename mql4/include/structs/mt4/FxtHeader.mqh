@@ -16,8 +16,8 @@ string   s_symbol;                                    // 12 bytes               
 int      i_period;                                                                      //  208 + 4
 int      i_model=0;                                   // every tick model               //  212 + 4
 int      i_bars=0;                                    // bars processed                 //  216 + 4
-datetime t_fromdate = 0;                              // begin modelling date           //  220 + 4
-datetime t_todate   = 0;                              // end modelling date             //  224 + 4
+datetime t_fromdate = 0;                              // begin modeling date            //  220 + 4
+datetime t_todate   = 0;                              // end modeling date              //  224 + 4
 //++++ add 4 bytes to align the next double                                             +++++++
 double   d_modelquality = 99.0;                                                         //  232 + 8
 //---- common parameters                                                                -------

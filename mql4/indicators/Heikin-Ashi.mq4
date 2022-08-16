@@ -54,7 +54,7 @@ extern int    Max.Bars          = 10000;                                // max. 
 #define MODE_HA_CLOSE         8                       // managed by the framework
 
 #property indicator_chart_window
-#property indicator_buffers   4                       // buffers visible to the user
+#property indicator_buffers   4                       // visible buffers
 int       terminal_buffers  = 8;                      // buffers managed by the terminal
 int       framework_buffers = 1;                      // buffers managed by the framework
 
@@ -181,7 +181,7 @@ int onInit() {
       outputMaPeriods = 1;
    }
 
-   // resolve lookback init periods: IIR filters (EMA, SMMA) need at least 10 bars for initialization
+   // resolve lookback init periods: EMAs need at least 10 bars for initialization
    inputInitPeriods  = ifInt( inputMaMethod==MODE_EMA ||  inputMaMethod==MODE_SMMA, Max(10,  inputMaPeriods*3),  inputMaPeriods);
    outputInitPeriods = ifInt(outputMaMethod==MODE_EMA || outputMaMethod==MODE_SMMA, Max(10, outputMaPeriods*3), outputMaPeriods);
 

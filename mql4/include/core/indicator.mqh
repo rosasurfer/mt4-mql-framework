@@ -9,6 +9,8 @@ extern int    __lpSuperContext;
 
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
+bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
+bool   __isAccountChange    = false;
 
 
 /**
@@ -81,6 +83,9 @@ int init() {
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {                  // not yet implemented
    }
+
+   // before onInit(): read "TrackExecutionTime" configuration
+   __trackExecutionTime = GetConfigBool(WindowExpertName(), "TrackExecutionTime");
 
    // before onInit(): log input parameters if loaded by iCustom()
    if (__isSuperContext && IsLogDebug()) {
@@ -218,7 +223,7 @@ int start() {
 
    // determine tick status
    Ticks++;                                                                      // an increasing counter without actual meaning
-   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: in synthetic charts MODE_TIME and TimeCurrent() are 0 (1970.01.01 00:00:00)
+   Tick.time = MarketInfo(Symbol(), MODE_TIME);                                  // TODO: MODE_TIME is in synthetic charts 0
    if (!Tick.time) {
       int error = GetLastError();
       if (error && error!=ERR_SYMBOL_NOT_AVAILABLE) {                            // ignore ERR_SYMBOL_NOT_AVAILABLE as we can't yet safely detect an offline chart on the 1st tick
@@ -242,8 +247,8 @@ int start() {
    // causes a new tick where AccountNumber() immediately reports the new account and IsConnected() returns FALSE.
    static int prevAccount;
    int currAccount = AccountNumber();
-   bool isAccountChange = (prevAccount && currAccount!=prevAccount);
-   if (isAccountChange) {
+   __isAccountChange = (prevAccount && currAccount!=prevAccount);
+   if (__isAccountChange) {
       __ExecutionContext[EC.currTickTime] = 0;
       __ExecutionContext[EC.prevTickTime] = 0;
       onAccountChange(prevAccount, currAccount);                                 // TODO: handle errors
@@ -295,7 +300,7 @@ int start() {
       }
    }
 
-   if (!isAccountChange && prevBars && !ValidBars) {
+   if (!__isAccountChange && prevBars && !ValidBars) {
       if (isOfflineChart==true || !IsConnected()) {
          bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
          bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
@@ -355,14 +360,21 @@ int start() {
       if (CheckErrors("start(5)->SyncMainContext_start()")) return(last_error);
    }
 
+   int starttime = GetTickCount();
+
    // call the userland main function
    error = onTick();
    if (error && error!=last_error) CheckErrors("start(6)", error);
 
+   if (!__isTesting) /*&&*/ if (!ValidBars && __trackExecutionTime) {
+      int millis = (GetTickCount()-starttime);
+      logDebug("start(7)  Tick="+ Ticks +"  Bars="+ Bars +"  full recalculation="+ DoubleToStr(millis/1000., 3) +" sec");
+   }
+
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(7)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(8)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }

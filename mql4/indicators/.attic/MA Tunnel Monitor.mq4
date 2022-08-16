@@ -340,12 +340,12 @@ bool CheckSignals() {
  * @return bool - success status
  */
 bool onBreakout(int mode) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onBreakout(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = NO_ERROR;
 
    if (mode == MODE_LONG) {
       message = "MA tunnel breakout LONG ("+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onBreakout(1)  "+ message);
+      if (IsLogInfo()) logInfo("onBreakout(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
@@ -357,7 +357,7 @@ bool onBreakout(int mode) {
 
    if (mode == MODE_SHORT) {
       message = "MA tunnel breakout SHORT ("+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onBreakout(2)  "+ message);
+      if (IsLogInfo()) logInfo("onBreakout(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (Signal.onBreakout.Popup)           Alert(message);               // before "Sound" to overwrite an enabled alert sound
@@ -367,7 +367,7 @@ bool onBreakout(int mode) {
       return(!error);
    }
 
-   return(!catch("onBreakout(3)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
+   return(!catch("onBreakout(4)  invalid parameter mode: "+ mode, ERR_INVALID_PARAMETER));
 }
 
 

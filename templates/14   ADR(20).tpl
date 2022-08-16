@@ -1,10 +1,10 @@
 <chart>
 symbol=GBPUSD
-period=30
+period=60
 digits=5
 
 leftpos=9229
-scale=4
+scale=1
 graph=1
 fore=0
 grid=0
@@ -23,7 +23,6 @@ window_top=0
 window_right=1292
 window_bottom=812
 window_type=3
-
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -37,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+height=250
 
 <indicator>
 name=main
@@ -9998,31 +9997,27 @@ window_num=0
 period_flags=0
 show_data=0
 </indicator>
+</window>
 
+<window>
+height=100
+fixed_height=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=ZigZag
+name=Average Range
 flags=339
-window_num=0
+window_num=1
 <inputs>
-ZigZag.Periods=10
-ZigZag.Type=Line | Semaphores*
-ZigZag.Color=16711680
-Donchian.ShowChannel=1
-Donchian.Upper.Color=16748574
-Donchian.Lower.Color=16711935
+MA.Periods=20
+MA.Method=SMA | LWMA* | EMA | SMMA
+TrueRange=0
 </inputs>
 </expert>
-style_2=2
-style_3=2
-weight_4=0
-weight_5=0
-color_6=4294967295
-color_7=4294967295
+color_0=16711680
+weight_0=2
 period_flags=0
 show_data=1
 </indicator>
-
 </window>
 </chart>

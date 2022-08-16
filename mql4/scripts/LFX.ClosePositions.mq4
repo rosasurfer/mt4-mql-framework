@@ -158,40 +158,36 @@ int onStart() {
       if (currency == "JPY")
          closePrice *= 100;                                          // JPY wird normalisiert
 
-
-      // (7) LFX-Order aktualisieren und speichern
+      // LFX-Order aktualisieren und speichern
       /*LFX_ORDER*/int lo[];
       int result = LFX.GetOrder(magics[i], lo);
-      if (result < 1) { if (!result) return(last_error); return(catch("onStart(5)  LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR)); }
-         datetime now.fxt = TimeFXT(); if (!now.fxt) return(last_error);
-         lo.setCloseTime (lo, now.fxt   );
-         lo.setClosePrice(lo, closePrice);
-         lo.setProfit    (lo, profit    );
-            string comment = lo.Comment(lo);
-               if (StrStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
-               if (StrStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
-               if (StrStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
-               int counter = StrToInteger(comment);
-            string sCounter = ifString(!counter, "", "."+ counter);  // letzten Counter ermitteln
-         lo.setComment   (lo, ""        );
-      if (!LFX.SaveOrder(lo))
-         return(last_error);
+      if (result < 1) {
+         if (!result) return(last_error);
+         return(catch("onStart(4)  LFX order "+ magics[i] +" not found", ERR_RUNTIME_ERROR));
+      }
+      datetime now.fxt = TimeFXT(); if (!now.fxt) return(_last_error(logInfo("onStart(5)->TimeFXT() => 0", ERR_RUNTIME_ERROR)));
+      lo.setCloseTime (lo, now.fxt   );
+      lo.setClosePrice(lo, closePrice);
+      lo.setProfit    (lo, profit    );
+         string comment = lo.Comment(lo);
+            if (StrStartsWith(comment, lo.Currency(lo))) comment = StringSubstr(comment, 3);
+            if (StrStartsWith(comment, "."            )) comment = StringSubstr(comment, 1);
+            if (StrStartsWith(comment, "#"            )) comment = StringSubstr(comment, 1);
+            int counter = StrToInteger(comment);
+         string sCounter = ifString(!counter, "", "."+ counter);  // letzten Counter ermitteln
+      lo.setComment(lo, "");
+      if (!LFX.SaveOrder(lo)) return(last_error);
 
+      logDebug("onStart(6)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
-      // (8) Logmessage ausgeben
-      logDebug("onStart(4)  "+ currency + sCounter +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
-
-
-      // (9) LFX-Terminal benachrichtigen
-      if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1"))
-         return(last_error);
+      // LFX-Terminal benachrichtigen
+      if (!QC.SendOrderNotification(lo.CurrencyId(lo), "LFX:"+ lo.Ticket(lo) +":close=1")) return(last_error);
    }
 
-
-   // (9) Orders wieder freigeben
+   // Orders wieder freigeben
    for (i=0; i < magicsSize; i++) {
       //if (!ReleaseLock("mutex.LFX.#"+ magics[i]))
       //   return(ERR_RUNTIME_ERROR);
    }
-   return(catch("onStart(6)"));
+   return(catch("onStart(7)"));
 }

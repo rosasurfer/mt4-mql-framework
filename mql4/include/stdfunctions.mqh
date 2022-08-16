@@ -379,7 +379,7 @@ string Pluralize(int count, string singular="", string plural="s") {
  *
  * @param  string message
  *
- * Notes: This function must not call .EX4 library functions. Calling DLL functions is fine.
+ * Notes: This function must not call MQL library functions. Calling DLL functions is fine.
  */
 void ForceAlert(string message) {
    debug(message);                                                         // send the message to the debug output
@@ -2624,16 +2624,16 @@ datetime DateTime2(int parsed[], int flags = DATE_OF_TODAY) {
    int pt[]; ArrayCopy(pt, parsed);
 
    if (!pt[PT_HAS_DATE]) {
-      if (flags & DATE_OF_ERA == DATE_OF_ERA) {
-         pt[PT_YEAR    ] = 1970;
-         pt[PT_MONTH   ] = 1;
-         pt[PT_DAY     ] = 1;
+      if (flags & DATE_OF_ERA && 1) {
+         pt[PT_YEAR ] = 1970;
+         pt[PT_MONTH] = 1;
+         pt[PT_DAY  ] = 1;
       }
       else {
-         datetime now = TimeLocalEx();
-         pt[PT_YEAR    ] = TimeYearEx(now);
-         pt[PT_MONTH   ] = TimeMonth(now);
-         pt[PT_DAY     ] = TimeDayEx(now);
+         datetime now = TimeLocalEx("DateTime2(3)");
+         pt[PT_YEAR ] = TimeYearEx(now);
+         pt[PT_MONTH] = TimeMonth(now);
+         pt[PT_DAY  ] = TimeDayEx(now);
       }
       pt[PT_HAS_DATE] = 1;
    }
@@ -2678,7 +2678,7 @@ int TimeDayOfWeekEx(datetime time) {
 
 
 /**
- * Return the year of the specified time: 1970...2037
+ * Return the year of the specified time: 1970..2037
  *
  * Fixes the broken built-in function TimeYear() which returns 1900 instead of 1970 for D'1970.01.01 00:00:00'.
  *
@@ -3961,117 +3961,273 @@ int MarketWatch.Symbols() {
 
 
 /**
- * Return the current trade server time. In tester this time is modeled. Different from the last known tick time which is only
- * updated on new ticks.
+ * Extended version of TimeCurrent().
  *
- * @param  bool watchLastTick [optional] - account for a server clock being fast wich happens quite often (default: yes)
+ * Returns the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00
+ * server time). In tester this time is modelled. Use TimeServer() to get the server time irrespective of received ticks.
  *
- * @return datetime - the larger one of last tick time and trade server time or NULL (0) in case of errors
- */
-datetime TimeServer(bool watchLastTick = true) {
-   watchLastTick = watchLastTick!=0;         // (bool) int
-
-   static bool isLibrary = -1;
-   if (isLibrary == -1) isLibrary = IsLibrary();
-
-   if (__isTesting)
-      return(TimeCurrent());
-
-   datetime serverTime = GmtToServerTime(GetGmtTime());
-   if (serverTime == NaT) return(NULL);
-
-   if (watchLastTick) {
-      datetime lastTickTime = TimeCurrent();
-      if (lastTickTime > serverTime)
-         return(lastTickTime);
-   }
-   return(serverTime);
-}
-
-
-/**
- * Return the current trade server time in GMT. In tester the time is modeled.
+ * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
+ * stored ticks are available or in older builds in tester when loading standalone indicators). This function will log such
+ * errors.
  *
- * @return datetime - trade server time in GMT or NULL (0) in case of errors
- */
-datetime TimeGMT() {
-   datetime gmt;
-
-   if (__isTesting) {
-      // TODO: Scripte und Indikatoren sehen bei Aufruf von TimeLocal() im Tester u.U. nicht die modellierte, sondern die reale Zeit oder sogar NULL.
-      datetime localTime = Tick.time;
-      gmt = ServerToGmtTime(localTime);            // the last tick time entspricht im Tester der Serverzeit
-   }
-   else {
-      gmt = GetGmtTime();
-   }
-   return(gmt);
-}
-
-
-/**
- * Return the current trade server time in FXT. In tester the time is modeled.
- *
- * @return datetime - trade server time in FXT or NULL (0) in case of errors
- */
-datetime TimeFXT() {
-   datetime gmt = TimeGMT();         if (!gmt)       return(NULL);
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
-   return(fxt);
-}
-
-
-/**
- * Return the current system time in FXT (also in tester).
- *
- * @return datetime - system time in FXT or NULL in case of errors
- *
- * @see  TimeFXT() to return the modeled FXT time in tester
- */
-datetime GetFxtTime() {
-   datetime gmt = GetGmtTime();      if (!gmt)       return(NULL);
-   datetime fxt = GmtToFxtTime(gmt); if (fxt == NaT) return(NULL);
-   return(fxt);
-}
-
-
-/**
- * Gibt die aktuelle Serverzeit zurück (auch im Tester). Dies ist nicht der Zeitpunkt des letzten eingetroffenen Ticks wie
- * von TimeCurrent() zurückgegeben, sondern die auf dem Server tatsächlich gültige Zeit (in seiner Zeitzone).
- *
- * @return datetime - Serverzeit oder NULL, falls ein Fehler auftrat
- */
-datetime GetServerTime() {
-   datetime gmt  = GetGmtTime();         if (!gmt)        return(NULL);
-   datetime time = GmtToServerTime(gmt); if (time == NaT) return(NULL);
-   return(time);
-}
-
-
-/**
- * Drop-in replacement for the flawed built-in function TimeLocal().
- *
- * Returns the system's local time. In tester the time is modeled and the same as trade server time. This means during testing
- * the local timezone is set to the trade server's timezone.
- *
- * @param  string caller [optional] - location identifier of the caller (default: none)
+ * @param  string caller                - location identifier of the caller
+ * @param  bool   useLastBar [optional] - whether to return the time of the last bar if TimeLocal() returns 0 (default: no)
+ * @param  bool   strict     [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
  *
  * @return datetime - time or NULL (0) in case of errors
- *
- * NOTE: This function signals an error if TimeLocal() returns an invalid value.
  */
-datetime TimeLocalEx(string caller = "") {
-   datetime time = TimeLocal();
-   if (!time) return(!catch(caller + ifString(!StringLen(caller), "", "->") +"TimeLocalEx(1)->TimeLocal() = 0", ERR_RUNTIME_ERROR));
+datetime TimeCurrentEx(string caller, bool useLastBar=false, bool strict=true) {
+   useLastBar = useLastBar != 0;
+   strict     = strict != 0;
+   datetime time = TimeCurrent();
+
+   if (!time) {
+      if (useLastBar && Bars) time = Time[0];
+      else if (strict) catch(caller +"->TimeCurrentEx(1)->TimeCurrent() => 0", ERR_RUNTIME_ERROR);
+      else           logInfo(caller +"->TimeCurrentEx(2)->TimeCurrent() => 0");
+   }
    return(time);
 }
 
 
 /**
- * Format a timestamp as a string representing GMT time. MQL wrapper for the ANSI function of the MT4Expander.
+ * Extended version of TimeLocal().
+ *
+ * Returns the system's local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
+ *
+ * In tester this time is modelled and mapped to TimeCurrent(), meaning the modelled local time matches the modelled server
+ * time. This mapping may return 0 without signaling an error under various conditions (e.g. if no locally stored ticks are
+ * available or in older builds in tester when loading standalone indicators). This function will log such errors.
+ *
+ * Use GetLocalTime() to get the non-modelled local time in tester.
+ *
+ * @param  string caller            - location identifier of the caller
+ * @param  bool   strict [optional] - whether TimeLocal() returning 0 causes a fatal terminating error (default: yes)
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeLocalEx(string caller, bool strict = true) {
+   strict = strict != 0;
+   datetime time = TimeLocal();
+
+   if (!time) {
+      if (strict) catch(caller +"->TimeLocalEx(1)->TimeLocal() => 0", ERR_RUNTIME_ERROR);
+      else      logInfo(caller +"->TimeLocalEx(2)->TimeLocal() => 0");
+   }
+   return(time);
+}
+
+
+/**
+ * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
+ *
+ * In tester this time is modelled. Use GetFxtTime() to get the non-modelled FXT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeFXT() {
+   datetime time = TimeGMT(); if (!time)       return(!logInfo("TimeFXT(1)->TimeGMT() => 0",        __ExecutionContext[EC.mqlError]));
+   time = GmtToFxtTime(time); if (time == NaT) return(!logInfo("TimeFXT(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Returns the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
+ *
+ * In tester this time is modelled. Use GetGmtTime() to get the non-modelled GMT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeGMT() {
+   if (!__isTesting) return(GetGmtTime());
+
+   datetime time = TimeServer("TimeGMT(1)"); if (!time)       return(NULL);
+   time = ServerToGmtTime(time);             if (time == NaT) return(!logInfo("TimeGMT(2)->ServerToGmtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * known tick time which is updated on new ticks only.
+ *
+ * In tester this time is modelled. Use GetServerTime() to get the non-modelled server time in tester.
+ *
+ * @param  string caller     [optional] - location identifier of the caller (default: none)
+ * @param  bool   useLastBar [optional] - whether to return the time of the last bar if server time is not available (default: no)
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeServer(string caller="", bool useLastBar=false) {
+   if (caller != "") caller = caller +"->";
+
+   if (__isTesting) {
+      datetime time = TimeCurrentEx(caller +"TimeServer(1)", true);                 // always use last bar in tester
+      if (!time) {
+         if (caller == "") logInfo("TimeServer(2)->TimeCurrentEx() => 0", __ExecutionContext[EC.mqlError]);
+      }
+      return(time);
+   }
+
+   time = GmtToServerTime(GetGmtTime());
+   if (time == NaT) return(!logInfo("TimeServer(3)->GmtToServerTime() => NaT", __ExecutionContext[EC.mqlError]));
+
+   datetime lastTickTime = TimeCurrentEx(caller +"TimeServer(4)", useLastBar);      // optionally use last bar
+   if (!lastTickTime) {
+      if (caller == "") logInfo("TimeServer(5)->TimeCurrentEx() => 0", __ExecutionContext[EC.mqlError]);
+      return(NULL);
+   }
+
+   return(Max(lastTickTime, time));
+}
+
+
+/**
+ * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
+ *
+ * Not modelled in tester. Use TimeFXT() to get the modelled FXT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime GetFxtTime() {
+   datetime time = GetGmtTime(); if (!time)       return(!logInfo("GetFxtTime(1)->GetGmtTime() => 0",     __ExecutionContext[EC.mqlError]));
+   time = GmtToFxtTime(time);    if (time == NaT) return(!logInfo("GetFxtTime(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * known tick time which is updated on new ticks only.
+ *
+ * Not modelled in tester. Use TimeServer() to get the modelled server time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime GetServerTime() {
+   datetime time = GetGmtTime(); if (!time)       return(!logInfo("GetServerTime(1)->GetGmtTime() => 0",        __ExecutionContext[EC.mqlError]));
+   time = GmtToServerTime(time); if (time == NaT) return(!logInfo("GetServerTime(2)->GmtToServerTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Convert an FXT timestamp to GMT.
+ *
+ * @param  datetime time - FXT timestamp (seconds since 01.01.1970 00:00 FXT)
+ *
+ * @return datetime - GMT timestamp (seconds since 01.01.1970 00:00 GMT) or NaT in case of errors
+ */
+datetime FxtToGmtTime(datetime time) {
+   int offset = GetFxtToGmtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(_NaT(logInfo("FxtToGmtTime(1)->GetFxtToGmtTimeOffset() => EMPTY_VALUE", __ExecutionContext[EC.mqlError])));
+   return(time - offset);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * Convert the specified FXT time to server time.
+ *
+ * @param  datetime time - FXT time
+ *
+ * @return datetime - server time or NaT in case of errors
+ */
+datetime FxtToServerTime(datetime time) {
+   int offset = GetFxtToServerTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified GMT time to FXT time.
+ *
+ * @param  datetime time - GMT time
+ *
+ * @return datetime - FXT time or NaT in case of errors
+ */
+datetime GmtToFxtTime(datetime time) {
+   int offset = GetGmtToFxtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified GMT time to server time.
+ *
+ * @param  datetime time - GMT time
+ *
+ * @return datetime - server time or NaT in case of errors
+ */
+datetime GmtToServerTime(datetime time) {
+   int offset = GetGmtToServerTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified server time to FXT time.
+ *
+ * @param  datetime time - server time
+ *
+ * @return datetime - FXT time or NaT in case of errors
+ */
+datetime ServerToFxtTime(datetime time) {
+   int offset = GetServerToFxtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Convert the specified server time to GMT.
+ *
+ * @param  datetime time - server time
+ *
+ * @return datetime - GMT time or NaT in case of errors
+ */
+datetime ServerToGmtTime(datetime time) {
+   int offset = GetServerToGmtTimeOffset(time);
+   if (offset == EMPTY_VALUE) return(NaT);
+   return(time - offset);
+}
+
+
+/**
+ * Format a timestamp as a string representing GMT time.
  *
  * @param  datetime timestamp - Unix timestamp (GMT)
- * @param  string   format    - format control string supported by strftime()
+ * @param  string   format    - format control string supported by C++ strftime()
  *
  * @return string - GMT time string or an empty string in case of errors
  *
@@ -4084,10 +4240,10 @@ string GmtTimeFormat(datetime timestamp, string format) {
 
 
 /**
- * Format a timestamp as a string representing local time. MQL wrapper for the ANSI function of the MT4Expander.
+ * Format a timestamp as a string representing local time.
  *
  * @param  datetime timestamp - Unix timestamp (GMT)
- * @param  string   format    - format control string supported by strftime()
+ * @param  string   format    - format control string supported by C++ strftime()
  *
  * @return string - local time string or an empty string in case of errors
  *
@@ -4096,6 +4252,199 @@ string GmtTimeFormat(datetime timestamp, string format) {
  */
 string LocalTimeFormat(datetime timestamp, string format) {
    return(LocalTimeFormatA(timestamp, format));
+}
+
+
+/**
+ * Return the start time of the 24h trade session for the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
+ *                    NaT in case of errors
+ */
+datetime GetSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         return(ifInt(dow==SATURDAY || dow==SUNDAY, EMPTY, time));
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);             if (time == NaT) return(NaT);
+         time = GetSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session for the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or EMPTY (-1) if there's no session covering the specified time (e.g. at weekends);
+ *                    NaT in case of errors
+ */
+datetime GetSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetSessionStartTime(time, tz);
+         if (time == NaT)   return(NaT);
+         if (time == EMPTY) return(EMPTY);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the start time of the 24h trade session fully preceding the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or NaT in case of errors
+ */
+datetime GetPrevSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         if      (dow == SATURDAY) time -= 1*DAY;
+         else if (dow == SUNDAY)   time -= 2*DAYS;
+         return(time);
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
+         time = GetPrevSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session fully preceding the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or NaT in case of errors
+ */
+datetime GetPrevSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetPrevSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetPrevSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetPrevSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetPrevSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the start time of the 24h trade session following the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session start time or NaT in case of errors
+ */
+datetime GetNextSessionStartTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetNextSessionStartTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+         time -= time%DAYS;
+         int dow = TimeDayOfWeekEx(time);             // check for weekends
+         if      (dow == SATURDAY) time += 2*DAYS;
+         else if (dow == SUNDAY)   time += 1*DAY;
+         return(time);
+
+      case TZ_GMT:
+         time = GmtToFxtTime(time);                    if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToGmtTime(time));
+
+      case TZ_SERVER:
+         time = ServerToFxtTime(time);                 if (time == NaT) return(NaT);
+         time = GetNextSessionStartTime(time, TZ_FXT); if (time == NaT) return(NaT);
+         return(FxtToServerTime(time));
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetNextSessionStartTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetNextSessionStartTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
+ * Return the end time of the 24h trade session following the specified time.
+ *
+ * @param  datetime time - time
+ * @param  int      tz   - timezone identifier, one of: TZ_SERVER|TZ_LOCAL|TZ_FXT|TZ_UTC
+ *
+ * @return datetime - session end time or NaT in case of errors
+ */
+datetime GetNextSessionEndTime(datetime time, int tz) {
+   if (time <= 0) return(_NaT(catch("GetNextSessionEndTime(1)  invalid parameter time: "+ time +" (must be positive)", ERR_INVALID_PARAMETER)));
+
+   switch (tz) {
+      case TZ_FXT:
+      case TZ_GMT:
+      case TZ_SERVER:
+         time = GetNextSessionStartTime(time, tz); if (time == NaT) return(NaT);
+         return(time + 1*DAY);
+
+      case TZ_LOCAL:
+         return(_NaT(catch("GetNextSessionEndTime(2)  unsupported parameter tz: TZ_LOCAL", ERR_NOT_IMPLEMENTED)));
+   }
+
+   return(_NaT(catch("GetNextSessionEndTime(3)  invalid parameter tz: "+ tz, ERR_INVALID_PARAMETER)));
 }
 
 
@@ -6125,7 +6474,7 @@ bool SendSMS(string receiver, string message) {
    // compose shell command line
    string url          = "https://api.clickatell.com/http/sendmsg?user="+ username +"&password="+ password +"&api_id="+ api_id +"&to="+ _receiver +"&text="+ UrlEncode(message);
    string filesDir     = GetMqlSandboxPath();
-   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx(), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
+   string responseFile = filesDir +"/sms_"+ GmtTimeFormat(TimeLocalEx("SendSMS(7)"), "%Y-%m-%d %H.%M.%S") +"_"+ GetCurrentThreadId() +".response";
    string logFile      = filesDir +"/sms.log";
    string cmd          = GetMqlDirectoryA() +"/libraries/wget.exe";
    string arguments    = "-b --no-check-certificate \""+ url +"\" -O \""+ responseFile +"\" -a \""+ logFile +"\"";
@@ -6133,7 +6482,7 @@ bool SendSMS(string receiver, string message) {
 
    // execute shell command
    int result = WinExec(cmdLine, SW_HIDE);
-   if (result < 32) return(!catch("SendSMS(7)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
+   if (result < 32) return(!catch("SendSMS(8)->kernel32::WinExec(cmdLine="+ DoubleQuoteStr(cmdLine) +")  "+ ShellExecuteErrorDescription(result), ERR_WIN32_ERROR+result));
 
    // TODO: analyse the response
    // --------------------------
@@ -6145,8 +6494,8 @@ bool SendSMS(string receiver, string message) {
    // Connecting to api.clickatell.com|196.216.236.7|:443... failed: Permission denied.
    // Giving up.
 
-   if (IsLogDebug()) logDebug("SendSMS(8)  SMS sent to "+ receiver +": \""+ message +"\"");
-   return(!catch("SendSMS(9)"));
+   if (IsLogDebug()) logDebug("SendSMS(9)  SMS sent to "+ receiver +": \""+ message +"\"");
+   return(!catch("SendSMS(10)"));
 }
 
 
@@ -6188,27 +6537,30 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
  * @param  string maAppliedPrice     - indicator parameter
  * @param  double distributionOffset - indicator parameter
  * @param  double distributionSigma  - indicator parameter
+ * @param  double maReversalFilter   - indicator parameter
  * @param  int    iBuffer            - indicator buffer index of the value to return
  * @param  int    iBar               - bar index of the value to return
  *
  * @return double - indicator value or NULL in case of errors
  */
-double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, int iBuffer, int iBar) {
+double icALMA(int timeframe, int maPeriods, string maAppliedPrice, double distributionOffset, double distributionSigma, double maReversalFilter, int iBuffer, int iBar) {
    static int lpSuperContext = 0; if (!lpSuperContext)
       lpSuperContext = GetIntsAddress(__ExecutionContext);
 
    double value = iCustom(NULL, timeframe, "ALMA",
                           maPeriods,                        // int    MA.Periods
+                          0,                                // int    MA.Periods.Step
                           maAppliedPrice,                   // string MA.AppliedPrice
                           distributionOffset,               // double Distribution.Offset
                           distributionSigma,                // double Distribution.Sigma
+                          maReversalFilter,                 // double MA.ReversalFilter
+                          0,                                // ouble MA.ReversalFilter.Step
 
                           "Line",                           // string Draw.Type
                           1,                                // int    Draw.Width
                           CLR_NONE,                         // color  Color.UpTrend
                           CLR_NONE,                         // color  Color.DownTrend
                           -1,                               // int    Max.Bars
-                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ______________________________
                           false,                            // bool   Signal.onTrendChange
@@ -6886,28 +7238,34 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
    double value = iCustom(NULL, timeframe, "ZigZag",
                           "",                               // string ____________________________
                           periods,                          // int    ZigZag.Periods
+                          0,                                // int    ZigZag.Periods.Step
                           "Line",                           // string ZigZag.Type
                           1,                                // int    ZigZag.Width
-                          Blue,                             // color  ZigZag.Color
+                          CLR_NONE,                         // color  ZigZag.Color
                           108,                              // int    ZigZag.Semaphores.Wingdings
 
                           "",                               // string ____________________________
-                          true,                             // bool   Donchian.ShowChannel
+                          false,                            // bool   Donchian.ShowChannel
                           "off",                            // string Donchian.ShowCrossings
-                          DodgerBlue,                       // color  Donchian.Upper.Color
-                          DodgerBlue,                       // color  Donchian.Lower.Color
+                          1,                                // int    Donchian.Crossings.Width
                           161,                              // int    Donchian.Crossings.Wingdings
-
-                          "",                               // string ____________________________
+                          CLR_NONE,                         // color  Donchian.Upper.Color
+                          CLR_NONE,                         // color  Donchian.Lower.Color
                           -1,                               // int    Max.Bars
-                          0,                                // int    PeriodStepper.StepSize
 
                           "",                               // string ____________________________
                           false,                            // bool   Signal.onReversal
                           false,                            // bool   Signal.onReversal.Sound
+                          "",                               // string Signal.onReversal.SoundUp
+                          "",                               // string Signal.onReversal.SoundDown
                           false,                            // bool   Signal.onReversal.Popup
                           false,                            // bool   Signal.onReversal.Mail
                           false,                            // bool   Signal.onReversal.SMS
+
+                          "",                               // string ____________________________
+                          false,                            // bool   Sound.onCrossing
+                          "",                               // string Sound.onCrossing.Up
+                          "",                               // string Sound.onCrossing.Down
 
                           "",                               // string ____________________________
                           false,                            // bool   AutoConfiguration
@@ -7033,6 +7391,8 @@ void __DummyCalls() {
    FindStandardSymbol(NULL);
    Floor(NULL);
    ForceAlert(NULL);
+   FxtToGmtTime(NULL);
+   FxtToServerTime(NULL);
    GE(NULL, NULL);
    GetAccountAlias();
    GetAccountCompanyId();
@@ -7055,12 +7415,20 @@ void __DummyCalls() {
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
    GetMqlSandboxPath();
+   GetNextSessionStartTime(NULL, NULL);
+   GetNextSessionEndTime(NULL, NULL);
+   GetPrevSessionEndTime(NULL, NULL);
+   GetPrevSessionStartTime(NULL, NULL);
    GetRandomValue(NULL, NULL);
    GetServerTime();
+   GetSessionEndTime(NULL, NULL);
+   GetSessionStartTime(NULL, NULL);
    GmtTimeFormat(NULL, NULL);
+   GmtToFxtTime(NULL);
+   GmtToServerTime(NULL);
    GT(NULL, NULL);
    HistoryFlagsToStr(NULL);
-   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+   icALMA(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
    icChartInfos();
    icFATL(NULL, NULL, NULL);
    icHalfTrend(NULL, NULL, NULL, NULL);
@@ -7161,6 +7529,8 @@ void __DummyCalls() {
    SendChartCommand(NULL, NULL, NULL);
    SendEmail(NULL, NULL, NULL, NULL);
    SendSMS(NULL, NULL);
+   ServerToFxtTime(NULL);
+   ServerToGmtTime(NULL);
    SetLastError(NULL, NULL);
    ShellExecuteErrorDescription(NULL);
    Sign(NULL);
@@ -7211,6 +7581,7 @@ void __DummyCalls() {
    Tester.IsStopped();
    Tester.Pause();
    Tester.Stop();
+   TimeCurrentEx(NULL);
    TimeDayEx(NULL);
    TimeDayOfWeekEx(NULL);
    TimeframeDescription();
@@ -7218,7 +7589,7 @@ void __DummyCalls() {
    TimeframeFlagToStr(NULL);
    TimeFXT();
    TimeGMT();
-   TimeLocalEx();
+   TimeLocalEx(NULL);
    TimeServer();
    TimeYearEx(NULL);
    Toolbar.Experts(NULL);
@@ -7245,17 +7616,20 @@ void __DummyCalls() {
    string   DoubleToStrEx(double value, int digits);
    int      Explode(string input, string separator, string results[], int limit);
    int      GetAccountNumber();
+   int      GetFxtToGmtTimeOffset(datetime time);
+   int      GetFxtToServerTimeOffset(datetime time);
+   int      GetGmtToFxtTimeOffset(datetime time);
+   int      GetGmtToServerTimeOffset(datetime time);
    string   GetHostName();
    int      GetIniKeys(string fileName, string section, string keys[]);
    string   GetAccountServer();
    string   GetServerTimezone();
-   datetime GmtToFxtTime(datetime gmtTime);
-   datetime GmtToServerTime(datetime gmtTime);
+   int      GetServerToFxtTimeOffset(datetime serverTime);
+   int      GetServerToGmtTimeOffset(datetime serverTime);
    int      InitializeStringBuffer(string buffer[], int length);
    bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);
    bool     ReleaseLock(string mutexName);
    bool     ReverseStringArray(string array[]);
-   datetime ServerToGmtTime(datetime serverTime);
 
 #import "rsfMT4Expander.dll"
    string   ec_ProgramName(int ec[]);

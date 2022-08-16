@@ -18,7 +18,7 @@
  *
  * @return double - JMA value or NULL in case of errors (see var last_error)  TODO: or if bar is greater than iMaxBar-30
  *
- * @links  https://www.mql5.com/en/articles/1450                                               [NK-Library, Nikolay Kositsin]
+ * @links  https://www.mql5.com/en/articles/1450#                                              [NK-Library, Nikolay Kositsin]
  */
 double JMASeries(int h, int iMaxBar, int iStartbar, int length, int phase, double series, int bar) {
 

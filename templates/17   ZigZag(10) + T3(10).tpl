@@ -1,10 +1,10 @@
 <chart>
-symbol=USDCHF
-period=60
+symbol=GBPUSD
+period=30
 digits=5
 
-leftpos=13564
-scale=2
+leftpos=9229
+scale=8
 graph=1
 fore=0
 grid=0
@@ -20,9 +20,10 @@ shift_size=50
 fixed_pos=620
 window_left=0
 window_top=0
-window_right=1304
-window_bottom=1032
+window_right=1292
+window_bottom=812
 window_type=3
+
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -36,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=300
 
 <indicator>
 name=main
@@ -10001,13 +10002,48 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=SATL
+name=ZigZag
 flags=339
 window_num=0
 <inputs>
-Draw.Type=Dot
+ZigZag.Periods=10
+ZigZag.Type=Line | Semaphores*
+ZigZag.Color=16711680
+Donchian.ShowChannel=1
+Donchian.Upper.Color=16748574
+Donchian.Lower.Color=16711935
 </inputs>
 </expert>
+style_2=2
+style_3=2
+weight_4=0
+weight_5=0
+color_6=4294967295
+color_7=4294967295
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=Tillson T3 Moving Average
+flags=339
+window_num=0
+<inputs>
+T3.Periods=10
+T3.Periods.MatulichScale=1
+T3.VolumeFactor=0.7
+MA.ReversalFilter=0.1
+Draw.Width=3
+Color.UpTrend=16711935
+Color.DownTrend=65535
+</inputs>
+</expert>
+weight_0=0
+weight_1=0
+period_flags=0
+show_data=1
 </indicator>
 
 </window>
