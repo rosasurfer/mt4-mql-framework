@@ -43,6 +43,9 @@
  *
  *
  * TODO:
+ *  - visible/audible alert at daily loss limit
+ *  - visible alert at profit target
+ *
  *  - time functions
  *      TimeCurrentEx()    check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *      TimeLocalEx()      check scripts/standalone-indicators in tester/offline charts in old/current terminals
