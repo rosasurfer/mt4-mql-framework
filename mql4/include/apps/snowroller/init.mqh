@@ -31,15 +31,15 @@ int onInitUser() {
          sequence.id      = CreateSequenceId();
          Sequence.ID      = ifString(sequence.isTest, "T", "") + sequence.id; SS.SequenceName();
          sequence.cycle   = 1;
-         sequence.created = TimeLocal();
+         sequence.created = TimeLocalEx("onInitUser(1)");
          sequence.status  = STATUS_WAITING;
          SaveStatus();
 
          if (IsLogDebug()) {
-            logDebug("onInitUser(1)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
+            logDebug("onInitUser(2)  sequence "+ sequence.name +" created"+ ifString(start.conditions, ", waiting for start condition", ""));
          }
          else if (__isTesting && !IsVisualMode()) {
-            debug("onInitUser(2)  sequence "+ sequence.name +" created");
+            debug("onInitUser(3)  sequence "+ sequence.name +" created");
          }
       }
    }

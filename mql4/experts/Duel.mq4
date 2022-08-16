@@ -282,14 +282,14 @@ int onTick() {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
+bool onCommand(string cmd, string params, int keys) {
+   string fullCmd = cmd +":"+ params +":"+ keys;
 
    if (cmd == "start") {
       switch (sequence.status) {
@@ -433,7 +433,7 @@ int ShowOpenOrders() {
          if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet    (label, OBJPROP_TIME1,     TimeServer());
+         ObjectSet    (label, OBJPROP_TIME1,     Tick.time);
          ObjectSet    (label, OBJPROP_PRICE1,    long.pendingPrice[i]);
          ObjectSetText(label, instanceName +"."+ NumberToStr(long.level[i], "+."));
       }
@@ -461,7 +461,7 @@ int ShowOpenOrders() {
          if (ObjectFind(label) == -1) ObjectCreate(label, OBJ_ARROW, 0, 0, 0);
          ObjectSet    (label, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet    (label, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet    (label, OBJPROP_TIME1,     TimeServer());
+         ObjectSet    (label, OBJPROP_TIME1,     Tick.time);
          ObjectSet    (label, OBJPROP_PRICE1,    short.pendingPrice[i]);
          ObjectSetText(label, instanceName +"."+ NumberToStr(short.level[i], "+."));
       }
@@ -2197,7 +2197,7 @@ bool ComputeTargets() {
       //}
    }
 
-   if (IsVisualMode()) {
+   if (__isChart) {
       // also store results in the chart window (for target indicator)
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.long",   long.bePrice);
       SetWindowDoubleA(__ExecutionContext[EC.hChart], "Duel.breakeven.short", short.bePrice);

@@ -265,19 +265,17 @@ int onAccountChange(int previous, int current) {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
-
+bool onCommand(string cmd, string params, int keys) {
    if (cmd == "log-custom-positions") {
-      int flags = F_LOG_TICKETS;                                  // default:  don't log empty tickets
-      if (modifiers != "VK_SHIFT") flags |= F_LOG_SKIP_EMPTY;     // VK_SHIFT: log empty tickets
-      if (!AnalyzePositions(flags)) return(false);
+      int flags = F_LOG_TICKETS;                                  // log tickets
+      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;          // without VK_SHIFT: skip empty tickets (default)
+      if (!AnalyzePositions(flags)) return(false);                // with VK_SHIFT:    log empty tickets
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -285,22 +283,22 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "toggle-open-orders") {
-      if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CUSTOM_POSITIONS;
-         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
-         ArrayResize(positions.config.comments, 0);
-      }
-      else flags = NULL;
+      if (keys & F_VK_SHIFT != 0) {
+         flags = F_SHOW_CUSTOM_POSITIONS;                         // with VK_SHIFT:
+         ArrayResize(positions.config,          0);               // reparse configuration and show only custom positions
+         ArrayResize(positions.config.comments, 0);               //
+      }                                                           //
+      else flags = NULL;                                          // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
    }
 
    else if (cmd == "toggle-trade-history") {
-      if (modifiers == "VK_SHIFT") {
-         flags = F_SHOW_CUSTOM_HISTORY;
-         ArrayResize(positions.config,          0);               // trigger reparsing of the position configuration
-         ArrayResize(positions.config.comments, 0);
-      }
-      else flags = NULL;
+      if (keys & F_VK_SHIFT != 0) {
+         flags = F_SHOW_CUSTOM_HISTORY;                           // with VK_SHIFT:
+         ArrayResize(positions.config,          0);               // reparse configuration and show only custom history
+         ArrayResize(positions.config.comments, 0);               //
+      }                                                           //
+      else flags = NULL;                                          // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
    }
 
@@ -309,14 +307,13 @@ bool onCommand(string cmd, string params="", string modifiers="") {
    }
 
    else if (cmd == "trade-account") {
-      string key = params +":"+ modifiers;
-      if (key == ":") key = "";
+      string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
       ArrayResize(positions.config,          0);                  // let the position configuration be reparsed
       ArrayResize(positions.config.comments, 0);
    }
-   else return(!logNotice("onCommand(1)  unsupported command: \""+ fullCmd +"\""));
+   else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
    return(!catch("onCommand(2)"));
 }
@@ -408,7 +405,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
 
       for (i=0; i < orders; i++) {
          if (customTicketsSize > 0) {
-            if (!customTickets[i]) continue;
+            if (customTickets[i] <= 1)                                continue;     // skip virtual positions
             if (!SelectTicket(customTickets[i], "ShowOpenOrders(1)")) break;
          }
          else if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
@@ -432,7 +429,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
             ObjectSet    (label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
             ObjectSet    (label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-            ObjectSet    (label1, OBJPROP_TIME1,     TimeServer());
+            ObjectSet    (label1, OBJPROP_TIME1,     Tick.time);
             ObjectSet    (label1, OBJPROP_PRICE1,    openPrice);
             ObjectSetText(label1, comment);
          }
@@ -447,7 +444,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
                if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE  );
                ObjectSet    (label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-               ObjectSet    (label2, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label2, OBJPROP_TIME1,     Tick.time);
                ObjectSet    (label2, OBJPROP_PRICE1,    takeProfit);
                ObjectSetText(label2, comment);
             }
@@ -460,7 +457,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
                if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
                ObjectSet    (label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
                ObjectSet    (label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-               ObjectSet    (label3, OBJPROP_TIME1,     TimeServer());
+               ObjectSet    (label3, OBJPROP_TIME1,     Tick.time);
                ObjectSet    (label3, OBJPROP_PRICE1,    stopLoss);
                ObjectSetText(label3, comment);
             }
@@ -504,7 +501,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
          if (ObjectFind(label1) == -1) ObjectCreate(label1, OBJ_ARROW, 0, 0, 0);
          ObjectSet(label1, OBJPROP_ARROWCODE, SYMBOL_ORDEROPEN);
          ObjectSet(label1, OBJPROP_COLOR,     CLR_OPEN_PENDING);
-         ObjectSet(label1, OBJPROP_TIME1,     TimeServer());
+         ObjectSet(label1, OBJPROP_TIME1,     Tick.time);
          ObjectSet(label1, OBJPROP_PRICE1,    openPrice);
       }
       else {
@@ -518,7 +515,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label2) == -1) ObjectCreate(label2, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label2, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label2, OBJPROP_COLOR,     CLR_OPEN_TAKEPROFIT);
-            ObjectSet(label2, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label2, OBJPROP_TIME1,     Tick.time);
             ObjectSet(label2, OBJPROP_PRICE1,    takeProfit);
          }
          else sTP = "";
@@ -530,7 +527,7 @@ int ShowOpenOrders(int customTickets[], int flags = NULL) {
             if (ObjectFind(label3) == -1) ObjectCreate(label3, OBJ_ARROW, 0, 0, 0);
             ObjectSet(label3, OBJPROP_ARROWCODE, SYMBOL_ORDERCLOSE);
             ObjectSet(label3, OBJPROP_COLOR,     CLR_OPEN_STOPLOSS);
-            ObjectSet(label3, OBJPROP_TIME1,     TimeServer());
+            ObjectSet(label3, OBJPROP_TIME1,     Tick.time);
             ObjectSet(label3, OBJPROP_PRICE1,    stopLoss);
          }
          else sSL = "";
@@ -1252,14 +1249,12 @@ bool UpdatePositions() {
 
    // PendingOrder-Marker unten rechts ein-/ausblenden
    string label = ProgramName() +".PendingTickets";
-   if (ObjectFind(label) == -1) {
-      if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
-      ObjectSet    (label, OBJPROP_CORNER, CORNER_BOTTOM_RIGHT);
-      ObjectSet    (label, OBJPROP_XDISTANCE,                       12);
-      ObjectSet    (label, OBJPROP_YDISTANCE, ifInt(isPosition, 48, 30));
-      ObjectSetText(label, "n", 6, "Webdings", Orange);        // a Webdings "dot"
-   }
+   if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
+   ObjectSet(label, OBJPROP_CORNER,     CORNER_BOTTOM_RIGHT);
+   ObjectSet(label, OBJPROP_XDISTANCE,  12);
+   ObjectSet(label, OBJPROP_YDISTANCE,  ifInt(isPosition, 48, 30));
    ObjectSet(label, OBJPROP_TIMEFRAMES, ifInt(isPendings, OBJ_PERIODS_ALL, OBJ_PERIODS_NONE));
+   ObjectSetText(label, "n", 6, "Webdings", Orange);           // a Webdings "dot"
 
    // custom positions bottom-left
    static int  lines, cols, percentCol, commentCol, xPrev, xOffset[], xDist, yStart=6, yDist;
@@ -2666,10 +2661,9 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
 
    value = StrTrim(value); if (value == "") return(NULL);
 
-
    // (1) Ausdruck parsen
    if (!StrIsDigits(StrLeft(value, 1))) {
-      datetime date, now = TimeFXT(); if (!now) return(NaT);
+      datetime date, now = TimeFXT(); if (!now) return(_NaT(logInfo("ParseDateTimeEx(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR)));
 
       // (1.1) alphabetischer Ausdruck
       if (StrEndsWith(value, "DAY")) {
@@ -3343,7 +3337,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
          positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;        // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
+         positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity && equity > fullProfit, fullProfit, 0)) * 100;
 
          return(!catch("StorePosition(3)"));
       }
@@ -3405,7 +3399,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity && equity > fullProfit, fullProfit, 0)) * 100;
 
       pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3468,7 +3462,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;           // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
+      positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity && equity > fullProfit, fullProfit, 0)) * 100;
 
       pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
@@ -3496,7 +3490,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_CLOSED_PROFIT   ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT ] = adjustedProfit; fullProfit = openProfit + closedProfit + adjustedProfit;
    positions.dData[size][I_FULL_PROFIT_ABS ] = fullProfit;              // Bei customEquity wird der gemachte Profit nicht vom Equitywert abgezogen.
-   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity, fullProfit, 0)) * 100;
+   positions.dData[size][I_FULL_PROFIT_PCT ] = MathDiv(fullProfit, equity-ifDouble(!customEquity && equity > fullProfit, fullProfit, 0)) * 100;
 
    return(!catch("StorePosition(8)"));
 }
@@ -4009,13 +4003,15 @@ bool AnalyzePos.ProcessLfxProfits() {
  * @return bool - success status
  */
 bool StoreStatus() {
+   if (!__isChart) return(true);
+
    // stored vars:
    // bool positions.absoluteProfits
    string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    int value = ifInt(positions.absoluteProfits, 1, -1);
 
    // chart window
-   if (__isChart) SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
+   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
 
    // chart
    if (ObjectFind(key) == -1)
@@ -4033,16 +4029,16 @@ bool StoreStatus() {
  * @return bool - success status
  */
 bool RestoreStatus() {
+   if (!__isChart) return(true);
+
    // restored vars:
    // bool positions.absoluteProfits
    string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    bool result = false;
 
    // prefer chart window
-   if (__isChart) {
-      int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-      result = (value != 0);
-   }
+   int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
+   result = (value != 0);
 
    // then check chart
    if (!result) {
@@ -4074,6 +4070,8 @@ bool RestoreStatus() {
  * @return bool - success status
  */
 bool MonitorOpenOrders(double &openedPositions[][], int &closedPositions[][], int &failedOrders[]) {
+   if (__isAccountChange) return(true);                                          // skip to prevent synchronization errors
+
    /*
    monitoring of entry limits (pendings must be known before)
    ----------------------------------------------------------
@@ -4438,7 +4436,6 @@ string InputsToStr() {
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
-   datetime FxtToServerTime(datetime fxtTime);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);

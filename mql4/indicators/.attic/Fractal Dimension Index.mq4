@@ -25,12 +25,12 @@
  *
  *
  * @see   "etc/doc/fdi/Making Sense of Fractals [Long, 2003].pdf"                                         [Long, 2003]
- * @link  http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html          [Long, 2004]
- * @link  http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html  [Estimation of Fractal Dimension, Sevcik, 1998]
- * @link  http://unicorn.us.com/trading/el.html#FractalDim                                                [Fractal Dimension, Matulich, 2006]
- * @link  http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use              [FDI Usage, JohnLast, 2010]
+ * @link  http://web.archive.org/web/20120413090115/http://www.fractalfinance.com/fracdimin.html#         [Long, 2004]
+ * @link  http://web.archive.org/web/20080726032123/http://complexity.org.au/ci/vol05/sevcik/sevcik.html# [Estimation of Fractal Dimension, Sevcik, 1998]
+ * @link  http://unicorn.us.com/trading/el.html#_FractalDim                                               [Fractal Dimension, Matulich, 2006]
+ * @link  http://beathespread.com/pages/view/2228/fractal-dimension-indicators-and-their-use#             [FDI Usage, JohnLast, 2010]
  *
- * @link  https://www.mql5.com/en/code/8997                                                               [FGDI with fixed FDI issues, LastViking]
+ * @link  https://www.mql5.com/en/code/8997#                                                              [FGDI with fixed FDI issues, LastViking]
  */
 #include <stddefines.mqh>
 int   __InitFlags[];

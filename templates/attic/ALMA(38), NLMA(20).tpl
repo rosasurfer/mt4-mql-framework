@@ -9917,6 +9917,24 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=ALMA
+flags=339
+window_num=0
+<inputs>
+MA.Periods=38
+Color.UpTrend=3329330
+Color.DownTrend=255
+Draw.Type=Line | Dot*
+Draw.Width=3
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=NonLagMA
 flags=339
 window_num=0
@@ -9929,24 +9947,6 @@ Color.DownTrend=65535
 </expert>
 weight_0=0
 weight_1=0
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ALMA
-flags=339
-window_num=0
-<inputs>
-MA.Periods=38
-Color.UpTrend=3329330
-Color.DownTrend=255
-Draw.Type=Dot
-Draw.Width=3
-</inputs>
-</expert>
 period_flags=0
 show_data=1
 </indicator>

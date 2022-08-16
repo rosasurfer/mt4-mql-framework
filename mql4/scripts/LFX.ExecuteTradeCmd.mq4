@@ -415,7 +415,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (7) LFX-Order aktualisieren
-   datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
+   datetime now.fxt = TimeFXT(); if (!now.fxt) return(!logInfo("OpenLfxOrder.Execute(11)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
 
    lo.setType      (lo, direction);
    lo.setUnits     (lo, realUnits);
@@ -425,7 +425,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
 
 
    // (8) Logmessage ausgeben
-   logDebug("OpenLfxOrder.Execute(11)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
+   logDebug("OpenLfxOrder.Execute(12)  "+ StrToLower(OrderTypeDescription(direction)) +" "+ DoubleToStr(realUnits, 1) +" "+ comment +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'"));
 
 
    ArrayResize(symbols    , 0);
@@ -434,7 +434,7 @@ bool OpenLfxOrder.Execute(/*LFX_ORDER*/int lo[], int &subPositions) {
    ArrayResize(directions , 0);
    ArrayResize(tickets    , 0);
    ArrayResize(oe         , 0);
-   return(!catch("OpenLfxOrder.Execute(12)"));
+   return(!catch("OpenLfxOrder.Execute(13)"));
 }
 
 
@@ -451,7 +451,7 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
 
    // (1) ggf. Open-Error setzen
    if (isOpenError) /*&&*/ if (!lo.IsOpenError(lo)) {
-      datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
+      datetime now.fxt = TimeFXT(); if (!now.fxt) return(!logInfo("OpenLfxOrder.Save(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
       lo.setOpenTime(lo, -now.fxt);
    }
 
@@ -469,11 +469,11 @@ bool OpenLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isOpenError) {
       // (2.1) Order neu einlesen und gespeicherten OpenError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("OpenLfxOrder.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsOpenError(stored))                        return(!catch("OpenLfxOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("OpenLfxOrder.Save(2)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsOpenError(stored))                        return(!catch("OpenLfxOrder.Save(3)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
       // (2.2) gespeicherten OpenError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isOpenError) logDebug("OpenLfxOrder.Save(3)  over-writing stored LFX_ORDER.OpenError");
+      if (!isOpenError) logDebug("OpenLfxOrder.Save(4)  over-writing stored LFX_ORDER.OpenError");
 
       lo.setVersion(lo, lo.Version(stored));
       ArrayResize(stored, 0);
@@ -520,7 +520,7 @@ bool OpenLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], int subPositions, string trigge
       else                        message = message +" position opened at "+ NumberToStr(lo.OpenPrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx("OpenLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);
@@ -613,7 +613,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
 
 
    // (4) LFX-Order aktualisieren
-   datetime now.fxt  = TimeFXT(); if (!now.fxt) return(false);
+   datetime now.fxt  = TimeFXT(); if (!now.fxt) return(!logInfo("CloseLfxOrder.Execute(3)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
    string oldComment = lo.Comment(lo);
    lo.setCloseTime (lo, now.fxt   );
    lo.setClosePrice(lo, closePrice);
@@ -628,7 +628,7 @@ bool CloseLfxOrder.Execute(/*LFX_ORDER*/int lo[]) {
    int    counter  = StrToInteger(oldComment);
    string symbol.i = currency +"."+ counter;
 
-   logDebug("CloseLfxOrder.Execute(3)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
+   logDebug("CloseLfxOrder.Execute(4)  "+ StrToLower(OrderTypeDescription(lo.Type(lo))) +" "+ DoubleToStr(lo.Units(lo), 1) +" "+ symbol.i +" closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'") +", profit: "+ DoubleToStr(lo.Profit(lo), 2));
 
    ArrayResize(tickets, 0);
    ArrayResize(oes    , 0);
@@ -649,10 +649,9 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
 
    // (1) ggf. CloseError setzen
    if (isCloseError) /*&&*/ if (!lo.IsCloseError(lo)) {
-      datetime now.fxt = TimeFXT(); if (!now.fxt) return(false);
+      datetime now.fxt = TimeFXT(); if (!now.fxt) return(!logInfo("CloseLfxOrder.Save(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
       lo.setCloseTime(lo, -now.fxt);
    }
-
 
    // (2) Order speichern
    if (!LFX.SaveOrder(lo, NULL, F_ERR_CONCURRENT_MODIFICATION)) {    // ERR_CONCURRENT_MODIFICATION abfangen
@@ -667,12 +666,12 @@ bool CloseLfxOrder.Save(/*LFX_ORDER*/int lo[], bool isCloseError) {
       // (2.1) Order neu einlesen und gespeicherten CloseError-Status auswerten
       /*LFX_ORDER*/int stored[];
       int result = LFX.GetOrder(lo.Ticket(lo), stored);
-      if (result != 1) { if (!result) return(last_error); return(!catch("CloseLfxOrder.Save(1)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
-      if (!lo.IsCloseError(stored))                       return(!catch("CloseLfxOrder.Save(2)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
+      if (result != 1) { if (!result) return(last_error); return(!catch("CloseLfxOrder.Save(2)->LFX.GetOrder()  #"+ lo.Ticket(lo) +" not found", ERR_RUNTIME_ERROR)); }
+      if (!lo.IsCloseError(stored))                       return(!catch("CloseLfxOrder.Save(3)->LFX.SaveOrder()  concurrent modification of #"+ lo.Ticket(lo) +", expected version "+ lo.Version(lo) +" of '"+ TimeToStr(lo.ModificationTime(lo), TIME_FULL) +" FXT', found version "+ lo.Version(stored) +" of '"+ TimeToStr(lo.ModificationTime(stored), TIME_FULL) +" FXT'", ERR_CONCURRENT_MODIFICATION));
 
 
       // (2.2) gespeicherten CloseError immer überschreiben (auch bei fehlgeschlagener Ausführung), um ein evt. "Mehr" an Ausführungsdetails nicht zu verlieren
-      if (!isCloseError) logDebug("CloseLfxOrder.Save(3)  over-writing stored LFX_ORDER.CloseError");
+      if (!isCloseError) logDebug("CloseLfxOrder.Save(4)  over-writing stored LFX_ORDER.CloseError");
 
       lo.setVersion(lo, lo.Version(stored));
       ArrayResize(stored, 0);
@@ -719,7 +718,7 @@ bool CloseLfxOrder.SendSMS(/*LFX_ORDER*/int lo[], string comment, string trigger
       else                        message = message + " position closed at "+ NumberToStr(lo.ClosePrice(lo), ".4'");
       if (StringLen(trigger) > 0) message = message +" ("+ trigger +")";
 
-      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx(), TIME_MINUTES) +" "+ message))
+      if (!SendSMS(signal.sms.receiver, TimeToStr(TimeLocalEx("CloseLfxOrder.SendSMS(1)"), TIME_MINUTES) +" "+ message))
          return(false);
    }
    return(true);

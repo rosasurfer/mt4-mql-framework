@@ -18,8 +18,8 @@
  *    - trend length:        the absolute direction value is the length of the trend in bars since the last reversal
  *
  * @link  https://financestrategysystem.com/supertrend-tradestation-and-multicharts/
- * @link  http://www.forexfactory.com/showthread.php?t=214635  (Andrew Forex Trading System)
- * @link  http://www.forexfactory.com/showthread.php?t=268038  (Plateman's CCI aka SuperTrend)
+ * @link  http://www.forexfactory.com/showthread.php?t=214635#                                  [Andrew Forex Trading System]
+ * @link  http://www.forexfactory.com/showthread.php?t=268038#                                [Plateman's CCI aka SuperTrend]
  * @see   /mql4/indicators/HalfTrend.mq4
  *
  * Note: The defining element for the indicator is the ATR channel, not price or MA. Therefore the original
@@ -302,12 +302,12 @@ int onTick() {
  * @return bool - success status
  */
 bool onTrendChange(int trend) {
-   string message="", accountTime="("+ TimeToStr(TimeLocal(), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
+   string message="", accountTime="("+ TimeToStr(TimeLocalEx("onTrendChange(1)"), TIME_MINUTES|TIME_SECONDS) +", "+ GetAccountAlias() +")";
    int error = 0;
 
    if (trend == MODE_UPTREND) {
       message = indicatorName +" turned up (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(1)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_up);
@@ -318,7 +318,7 @@ bool onTrendChange(int trend) {
 
    if (trend == MODE_DOWNTREND) {
       message = indicatorName +" turned down (market: "+ NumberToStr((Bid+Ask)/2, PriceFormat) +")";
-      if (IsLogInfo()) logInfo("onTrendChange(2)  "+ message);
+      if (IsLogInfo()) logInfo("onTrendChange(3)  "+ message);
       message = Symbol() +","+ PeriodDescription() +": "+ message;
 
       if (signal.sound) error |= PlaySoundEx(signal.sound.trendChange_down);
@@ -327,7 +327,7 @@ bool onTrendChange(int trend) {
       return(!error);
    }
 
-   return(!catch("onTrendChange(3)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
+   return(!catch("onTrendChange(4)  invalid parameter trend: "+ trend, ERR_INVALID_PARAMETER));
 }
 
 

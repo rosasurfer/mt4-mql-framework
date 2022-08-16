@@ -94,9 +94,6 @@
 
 
 // Win32 structs
-#define FILETIME_size                        8
-#define FILETIME_intSize                     2
-
 #define PROCESS_INFORMATION_size            16
 #define PROCESS_INFORMATION_intSize          4
 
@@ -110,7 +107,6 @@
 #define SYSTEMTIME_intSize                   4
 
 #define TIME_ZONE_INFORMATION_size         172
-#define TIME_ZONE_INFORMATION_intSize       43
 
 #define WIN32_FIND_DATA_size               318     // doesn't end on an int boundary
 #define WIN32_FIND_DATA_intSize             80

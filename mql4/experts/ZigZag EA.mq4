@@ -43,19 +43,61 @@
  *
  *
  * TODO:
- *  - rewrite ZigZag, NonLagMA, ALMA, T3, Moving Average, MACD, Donchian
- *     MA methods
- *     auto-configuration
- *     signaling
- *     MA.ReversalFilter
- *     parameter stepper
+ *  - visible/audible alert at daily loss limit
+ *  - visible alert at profit target
  *
+ *  - time functions
+ *      TimeCurrentEx()    check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeLocalEx()      check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeFXT()
+ *      TimeGMT()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeServer()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *
+ *      FxtToGmtTime
+ *      FxtToLocalTime
+ *      FxtToServerTime
+ *
+ *      GmtToFxtTime
+ *      GmtToLocalTime                 https://stackoverflow.com/questions/66615978/how-to-get-a-datetimes-offset-from-utc
+ *      GmtToServerTime
+ *
+ *      LocalToFxtTime
+ *      LocalToGmtTime
+ *      LocalToServerTime
+ *
+ *      ServerToFxtTime
+ *      ServerToGmtTime
+ *      ServerToLocalTime
+ *
+ *  - merge Get(Prev|Next)?SessionStartTime()
+ *  - merge Get(Prev|Next)?SessionEndTime()
+ *
+ *  - implement Get(Prev|Next)?Session(Start|End)Time(..., TZ_LOCAL)
+ *  - implement (Fxt|Gmt|Server)ToLocalTime() and LocalTo(Fxt|Gmt|Server)Time()
+ *
+ *  - AverageRange
+ *     fix EMPTY_VALUE
+ *     integrate required bars in startbar calculation
+ *     MTF option for lower TF data on higher TFs (to display more data than a single screen)
+ *     one more buffer for current range
+ *
+ *  - SuperBars
+ *     fix gap between days/weeks if market is not open 24h
+ *     implement more timeframes
+ *
+ *  - move iCustom() to ta/includes
+ *  - rename Max.Bars to MaxBarsBack
+ *  - investigate an auto-updating global var MaxBarsBack to prevent possible integer overflows
  *  - implement global var indicator::CalculatedBars
  *  - support for M5 and 4BF scalping
  *  - Grid: fix price levels
- *  - ChartInfos: include current daily range in ADR calculation/display
  *
- *  - SuperBars: implement more timeframes
+ *  - ChartInfos
+ *     include current daily range in ADR calculation/display
+ *     improve pending order markers (it's not visible whether a pending target covers the full position)
+ *      if TP exists => mark partial TP
+ *      if SL exists => mark partial SL
+ *
  *  - FATAL  BTCUSD,M5  ChartInfos::ParseDateTimeEx(5)  invalid history configuration in "TODAY 09:00"  [ERR_INVALID_CONFIG_VALUE]
  *  - on chart command
  *     NOTICE  BTCUSD,202  ChartInfos::rsfLib::AquireLock(6)  couldn't get lock on mutex "mutex.ChartInfos.command" after 1 sec, retrying...
@@ -76,7 +118,6 @@
  *  - track and display total slippage
  *  - reduce slippage on reversal: Close+Open => Hedge+CloseBy
  *  - reduce slippage on short reversal: enter market via StopSell
- *  - rename to Turtle EA
  *
  *  - virtual trading
  *     analyze PL differences DAX,M1 2022.01.04
@@ -98,6 +139,7 @@
  *     ChartInfos: read/display symbol description as long name
  *
  *  - performance tracking
+ *     realtime equity charts
  *     notifications for price feed outages
  *     daily metric variants
  *
@@ -138,8 +180,8 @@
  *  - remove input Slippage and handle it dynamically (e.g. via framework config)
  *     https://www.mql5.com/en/forum/120795
  *     https://www.mql5.com/en/forum/289014#comment_9296322
- *     https://www.mql5.com/en/forum/146808#comment_3701979  [ECN restriction removed since build 500]
- *     https://www.mql5.com/en/forum/146808#comment_3701981  [query execution mode in MQL]
+ *     https://www.mql5.com/en/forum/146808#comment_3701979#  [ECN restriction removed since build 500]
+ *     https://www.mql5.com/en/forum/146808#comment_3701981#  [Query execution mode in MQL]
  *  - merge inputs TakeProfit and StopConditions
  *  - add cache parameter to HistorySet.AddTick(), e.g. 30 sec.
  *
@@ -147,10 +189,9 @@
  *     close new|all hedges
  *     support M5 scalping: close at condition (4BF, Breakeven, Trailing stop, MA turn, Donchian cross)
  *  - rewrite parameter stepping: remove commands from channel after processing
- *  - rewrite range bar generator (after some time it's bringing everything to a halt)
+ *  - rewrite range bar generator
  *  - receivers for SendEmail()/SendSMS() must not be cached and always read from the config
  *  - VPS: monitor and notify of incoming emails
- *  - realtime equity charts
  *  - visual/audible confirmation for manual orders (to detect execution errors)
  *  - notifications for open positions running into swap charges
  *  - CLI tools to rename/update/delete symbols
@@ -164,7 +205,7 @@
  *  - ChartInfos::CostumPosition() weekend configuration/timespans don't work
  *  - ChartInfos::CostumPosition() including/excluding a specific strategy is not supported
  *  - ChartInfos: don't recalculate unitsize on every tick (every few seconds is sufficient)
- *  - Superbars: ETH/RTH separation for Frankfurt session with 17:35 CET hint
+ *  - Superbars: ETH/RTH separation for Frankfurt session
  *  - reverse sign of oe.Slippage() and fix unit in log messages (pip/money)
  *  - ChartInfos: update unitsize positioning
  *  - in-chart news hints (to not forget untypical ones like press conferences), check Anuko clock again
@@ -374,14 +415,14 @@ int onTick() {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
+bool onCommand(string cmd, string params, int keys) {
+   string fullCmd = cmd +":"+ params +":"+ keys;
 
    if (cmd == "start") {
       switch (sequence.status) {

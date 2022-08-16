@@ -387,7 +387,7 @@ double CalculateProfit(string symbol, int index, int symbolsIdx[], int &tickets[
 bool RecordData() {
    if (__isTesting) return(true);
 
-   datetime now = TimeFXT();
+   datetime now = TimeFXT(); if (!now) return(!logInfo("RecordData(1)->TimeFXT() => 0", ERR_RUNTIME_ERROR));
    int dow = TimeDayOfWeekEx(now);
 
    if (dow==SATURDAY || dow==SUNDAY) {

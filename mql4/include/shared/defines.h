@@ -4,10 +4,10 @@
 
 // special constants
 #define EMPTY                          0xFFFFFFFF        // -1
-#define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)           min(datetime) = '1970-01-01 00:00:00'
-#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                        max(datetime) = '2037-12-31 23:59:59'
-#define NaT                               INT_MIN        // Not-a-Time: invalid datetime value                      (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)           (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)    min(datetime-literal) = D'1970.01.01 00:00:00'
+#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                 max(datetime-literal) = D'2037.12.31 23:59:59'
+#define NaT                               INT_MIN        // Not-a-Time: invalid datetime value                       (datetime) INT_MIN = '1901-12-13 20:45:52'
+#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)            (datetime) INT_MAX = '2038-01-19 03:14:07'
 #define WHOLE_ARRAY                             0        // MetaQuotes
 
 #define MAX_ORDER_COMMENT_LENGTH               27
@@ -177,9 +177,15 @@
 #define F_OE_DONT_CHECK_STATUS         0x00080000        //  524288  don't check order status before proceeding
 
 
-// other flags
+// other control flags
 #define F_CUSTOM_TIMEFRAME             0x00100000        // 1048576  support for custom timeframes
 #define F_PARTIAL_ID                   0x00200000        // 2097152  parser support for incomplete identifiers
+
+
+// virtual key code flags, see HandleCommands()
+#define F_VK_CAPITAL                            1        // VK_CAPITAL (capslock)
+#define F_VK_SHIFT                              2        // VK_SHIFT
+#define F_VK_LWIN                               4        // VK_LWIN (left Windows key)
 
 
 // order and operation types
@@ -332,7 +338,7 @@
 #define FEB                              FEBRUARY
 #define MAR                                 MARCH
 #define APR                                 APRIL
-//      MAY                                   MAY        // short form equals long form
+//      MAY                                   MAY        // short equals long form
 #define JUN                                  JUNE
 #define JUL                                  JULY
 #define AUG                                AUGUST
@@ -342,11 +348,19 @@
 #define DEC                              DECEMBER
 
 
+// timezone identifiers
+#define TZ_SERVER                               1        // the current trade server's timezone
+#define TZ_LOCAL                                2        // the timezone of the local system
+#define TZ_FXT                                  3        // FXT (Forex Standard Time, aka America/New_York+0700)
+#define TZ_GMT                                  4        // GMT (Greenwich Mean Time, aka UTC)
+#define TZ_UTC                             TZ_GMT        // alias
+
+
 // init() flags
 #define INIT_TIMEZONE                           1        // initialize/check the timezone configuration
 #define INIT_PIPVALUE                           2        // check availability of the current pip value (requires tick size and value)
 #define INIT_BARS_ON_HIST_UPDATE                4        //
-#define INIT_NO_BARS_REQUIRED                   8        // executable without chart history (scripts only)
+#define INIT_NO_BARS_REQUIRED                   8        // executable without price history (scripts only)
 #define INIT_BUFFERED_LOG                      16        // setup a logfile buffer for logging
 #define INIT_NO_EXTERNAL_REPORTING             32        // disable external test reporting (experts only)
 

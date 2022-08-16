@@ -312,13 +312,13 @@
 #define VK_MBUTTON               0x04     // Middle mouse button (three-button mouse)
 #define VK_XBUTTON1              0x05     // X1 mouse button
 #define VK_XBUTTON2              0x06     // X2 mouse button
-//      -                        0x07     // Undefined
+//      -                        0x07     // undefined
 #define VK_BACK                  0x08     // BACKSPACE key
 #define VK_TAB                   0x09     // TAB key
-//      -                        0x0A-0B  // Reserved
+//      -                        0x0A-0B  // reserved
 #define VK_CLEAR                 0x0C     // CLEAR key
 #define VK_RETURN                0x0D     // ENTER key
-//      -                        0x0E-0F  // Undefined
+//      -                        0x0E-0F  // undefined
 #define VK_SHIFT                 0x10     // SHIFT key
 #define VK_CONTROL               0x11     // CTRL key
 #define VK_MENU                  0x12     // ALT key
@@ -364,7 +364,7 @@
 //                               0x37     // 7 key
 //                               0x38     // 8 key
 //                               0x39     // 9 key
-//      -                        0x3A-40  // Undefined
+//      -                        0x3A-40  // undefined
 //                               0x41     // A key
 //                               0x42     // B key
 //                               0x43     // C key
@@ -394,7 +394,7 @@
 #define VK_LWIN                  0x5B     // Left Windows key (natural keyboard)
 #define VK_RWIN                  0x5C     // Right Windows key (natural keyboard)
 #define VK_APPS                  0x5D     // Applications key (natural keyboard)
-//      -                        0x5E     // Reserved
+//      -                        0x5E     // reserved
 #define VK_SLEEP                 0x5F     // Computer Sleep key
 #define VK_NUMPAD0               0x60     // Numeric keypad 0 key
 #define VK_NUMPAD1               0x61     // Numeric keypad 1 key
@@ -436,11 +436,11 @@
 #define VK_F22                   0x85     // F22 key
 #define VK_F23                   0x86     // F23 key
 #define VK_F24                   0x87     // F24 key
-//      -                        0x88-8F  // Unassigned
+//      -                        0x88-8F  // unassigned
 #define VK_NUMLOCK               0x90     // NUM LOCK key
 #define VK_SCROLL                0x91     // SCROLL LOCK key
 //                               0x92-96  // OEM specific
-//      -                        0x97-9F  // Unassigned
+//      -                        0x97-9F  // unassigned
 #define VK_LSHIFT                0xA0     // Left SHIFT key
 #define VK_RSHIFT                0xA1     // Right SHIFT key
 #define VK_LCONTROL              0xA2     // Left CONTROL key
@@ -465,7 +465,7 @@
 #define VK_LAUNCH_MEDIA_SELECT   0xB5     // Select Media key
 #define VK_LAUNCH_APP1           0xB6     // Start Application 1 key
 #define VK_LAUNCH_APP2           0xB7     // Start Application 2 key
-//      -                        0xB8-B9  // Reserved
+//      -                        0xB8-B9  // reserved
 #define VK_OEM_1                 0xBA     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the ';:' key
 #define VK_OEM_PLUS              0xBB     // For any country/region, the '+' key
 #define VK_OEM_COMMA             0xBC     // For any country/region, the ',' key
@@ -473,21 +473,21 @@
 #define VK_OEM_PERIOD            0xBE     // For any country/region, the '.' key
 #define VK_OEM_2                 0xBF     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the '/?' key
 #define VK_OEM_3                 0xC0     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the '`~' key
-//      -                        0xC1-D7  // Reserved
-//      -                        0xD8-DA  // Unassigned
+//      -                        0xC1-D7  // reserved
+//      -                        0xD8-DA  // unassigned
 #define VK_OEM_4                 0xDB     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the '[{' key
 #define VK_OEM_5                 0xDC     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the '\|' key
 #define VK_OEM_6                 0xDD     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the ']}' key
 #define VK_OEM_7                 0xDE     // Used for miscellaneous characters and can vary by keyboard. For the US standard keyboard, the 'single-quote/double-quote' key
 #define VK_OEM_8                 0xDF     // Used for miscellaneous characters and can vary by keyboard.
-//      -                        0xE0     // Reserved
+//      -                        0xE0     // reserved
 //                               0xE1     // OEM specific
 #define VK_OEM_102               0xE2     // The <> keys on the US standard keyboard, or the \\| key on the non-US 102-key keyboard
 //                               0xE3-E4  // OEM specific
 #define VK_PROCESSKEY            0xE5     // IME PROCESS key
 //                               0xE6     // OEM specific
 #define VK_PACKET                0xE7     // Used to pass Unicode characters as if they were keystrokes; @see remark in KEYBDINPUT, SendInput, WM_KEYDOWN, and WM_KEYUP
-//      -                        0xE8     // Unassigned
+//      -                        0xE8     // unassigned
 //                               0xE9-F5  // OEM specific
 #define VK_ATTN                  0xF6     // Attn key
 #define VK_CRSEL                 0xF7     // CrSel key
@@ -495,7 +495,7 @@
 #define VK_EREOF                 0xF9     // Erase EOF key
 #define VK_PLAY                  0xFA     // Play key
 #define VK_ZOOM                  0xFB     // Zoom key
-#define VK_NONAME                0xFC     // Reserved
+#define VK_NONAME                0xFC     // reserved
 #define VK_PA1                   0xFD     // PA1 key
 #define VK_OEM_CLEAR             0xFE     // Clear key
 

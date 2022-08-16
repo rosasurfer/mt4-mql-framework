@@ -3,8 +3,8 @@ symbol=USDCHF
 period=60
 digits=5
 
-leftpos=9229
-scale=1
+leftpos=13564
+scale=4
 graph=1
 fore=0
 grid=0
@@ -20,8 +20,8 @@ shift_size=50
 fixed_pos=620
 window_left=0
 window_top=0
-window_right=1292
-window_bottom=812
+window_right=1304
+window_bottom=1032
 window_type=3
 background_color=16316664
 foreground_color=0
@@ -36,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=100
+height=118
 
 <indicator>
 name=main
@@ -10001,19 +10001,42 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
-name=Moving Average
+name=ALMA
 flags=339
 window_num=0
 <inputs>
-MA.Periods=144
-MA.Method=EMA
-MA.AppliedPrice=Median
-AutoConfiguration=0
+MA.Periods=38
+Color.UpTrend=16711680
+Color.DownTrend=255
+Draw.Type=Line | Dot*
+Draw.Width=3
 </inputs>
 </expert>
 period_flags=0
 show_data=1
 </indicator>
-
 </window>
+
+<window>
+height=25
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Periods=12
+FastMA.Method=ALMA
+SlowMA.Periods=38
+SlowMA.Method=ALMA
+MainLine.Width=2
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
+</window>
+
 </chart>

@@ -325,14 +325,14 @@ int onTick() {
 /**
  * Process an incoming command.
  *
- * @param  string cmd                  - command name
- * @param  string params [optional]    - command parameters (default: none)
- * @param  string modifiers [optional] - command modifiers (default: none)
+ * @param  string cmd    - command name
+ * @param  string params - command parameters
+ * @param  int    keys   - combination of pressed modifier keys
  *
  * @return bool - success status of the executed command
  */
-bool onCommand(string cmd, string params="", string modifiers="") {
-   string fullCmd = cmd +":"+ params +":"+ modifiers;
+bool onCommand(string cmd, string params, int keys) {
+   string fullCmd = cmd +":"+ params +":"+ keys;
 
    if (cmd == "wait") {
       if (IsTestSequence() && !__isTesting)
@@ -1705,7 +1705,7 @@ bool ResetSequence(double gridbase, int level) {
    //sequence.id           = ...                         // unchanged
    sequence.cycle++;                                     // increase restart cycle
    //sequence.name         = ...                         // unchanged
-   sequence.created        = TimeLocal();
+   sequence.created        = TimeLocalEx("ResetSequence(4)");
    //sequence.isTest       = ...                         // unchanged
    //sequence.direction    = ...                         // unchanged
    sequence.status         = STATUS_WAITING;
@@ -1830,8 +1830,8 @@ bool ResetSequence(double gridbase, int level) {
    SS.All();
    SaveStatus();
 
-   if (IsLogDebug()) logDebug("ResetSequence(4)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
-   return(!catch("ResetSequence(5)"));
+   if (IsLogDebug()) logDebug("ResetSequence(5)  "+ sequence.name +" sequence reset to level "+ sequence.level +" ("+ ifString(gridbase!=0, "new gridbase "+ NumberToStr(gridbase, PriceFormat) +", ", "") +"status "+ DoubleQuoteStr(StatusDescription(sequence.status)) +")");
+   return(!catch("ResetSequence(6)"));
 }
 
 
@@ -5526,7 +5526,7 @@ bool ShowProfitTargets() {
    if (IsLastError())       return(false);
    if (!sequence.breakeven) return(true);       // BE is not calculated if test.showBreakeven = Off
 
-   datetime time = TimeCurrent(); time -= time % MINUTES;
+   datetime time = TimeCurrentEx("ShowProfitTargets(1)"); time -= time % MINUTES;
    string label = "arrow_"+ time;
    double price = sequence.breakeven;
 
@@ -5542,7 +5542,7 @@ bool ShowProfitTargets() {
    ObjectSet(label, OBJPROP_COLOR,  Blue);
    ObjectSet(label, OBJPROP_BACK,   true);
 
-   return(!catch("ShowProfitTargets(1)"));
+   return(!catch("ShowProfitTargets(2)"));
 }
 
 
@@ -5695,7 +5695,7 @@ double GetALMA(int timeframe, string params, int iBuffer, int iBar) {
       if (size > 4)                  return(!catch("GetALMA(7)  "+ sequence.name +" invalid parameter params: "+ DoubleQuoteStr(params), ERR_INVALID_PARAMETER));
       lastParams = params;
    }
-   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, iBuffer, iBar));
+   return(icALMA(timeframe, maPeriods, maAppliedPrice, distributionOffset, distributionSigma, 0, iBuffer, iBar));
 }
 
 

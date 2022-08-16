@@ -537,10 +537,10 @@ int GetServerToGmtTimeOffset(datetime serverTime) { // throws ERR_INVALID_TIMEZO
       else                                                                       offset = transitions.FXT             [year][STD_OFFSET];
    }
    else if (lTimezone=="fxt-0200" || lTimezone=="america/new_york+0500") {
-      datetime fxtTime = serverTime + PLUS_2_H;
-      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
-      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2_H;
-      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2_H;
+      datetime fxtTime = serverTime + PLUS_2h;
+      if      (fxtTime < transitions.FXT                [year][TR_TO_DST.local]) offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2h;
+      else if (fxtTime < transitions.FXT                [year][TR_TO_STD.local]) offset = transitions.FXT             [year][DST_OFFSET] + MINUS_2h;
+      else                                                                       offset = transitions.FXT             [year][STD_OFFSET] + MINUS_2h;
    }
    else return(_EMPTY_VALUE(catch("GetServerToGmtTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -3506,344 +3506,6 @@ string __StringsToStr(string values2[][], string values3[][][], string separator
 
 
 /**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToServerTime(startTime));
-}
-
-
-/**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetPrevSessionStartTime.srv(serverTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Startzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   int offset = GetServerToFxtTimeOffset(datetime serverTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-
-   datetime fxtTime = serverTime - offset;
-   if (fxtTime < 0)
-      return(_NaT(catch("GetSessionStartTime.srv(1)  illegal result "+ fxtTime +" for timezone offset of "+ (-offset/MINUTES) +" minutes", ERR_RUNTIME_ERROR)));
-
-   int dayOfWeek = TimeDayOfWeekEx(fxtTime);
-
-   if (dayOfWeek==SATURDAY || dayOfWeek==SUNDAY)
-      return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
-
-   return(fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + offset);
-}
-
-
-/**
- * Gibt die Endzeit der Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG, ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.srv(serverTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der nächsten Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionStartTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime fxtTime = ServerToFxtTime(serverTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToServerTime(startTime));
-}
-
-
-/**
- * Gibt die Endzeit der nächsten Handelssession für die angegebene Serverzeit zurück.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionEndTime.srv(datetime serverTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   datetime startTime = GetNextSessionStartTime.srv(datetime serverTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToGmtTime(startTime));
-}
-
-
-/**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionEndTime.gmt(datetime gmtTime) {
-   datetime startTime = GetPrevSessionStartTime.gmt(gmtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionStartTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToGmtTime(startTime));
-}
-
-
-/**
- * Gibt die Endzeit der Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionEndTime.gmt(datetime gmtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.gmt(datetime gmtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der nächsten Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionStartTime.gmt(datetime gmtTime) {
-   datetime fxtTime = GmtToFxtTime(gmtTime);
-   if (fxtTime == NaT)
-      return(NaT);
-
-   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(FxtToGmtTime(startTime));
-}
-
-
-/**
- * Gibt die Endzeit der nächsten Handelssession für die angegebene GMT-Zeit zurück.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionEndTime.gmt(datetime gmtTime) {
-   datetime startTime = GetNextSessionStartTime.gmt(datetime gmtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der vorherigen Handelssession für die angegebe FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionStartTime.fxt(datetime fxtTime) {
-   if (fxtTime < 0)
-      return(_NaT(catch("GetPrevSessionStartTime.fxt(1)  invalid parameter fxtTime: "+ fxtTime, ERR_INVALID_PARAMETER)));
-
-   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) - 1*DAY;
-   if (startTime < 0)
-      return(_NaT(catch("GetPrevSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
-
-   // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekEx(startTime);
-   if      (dow == SATURDAY) startTime -= 1*DAY;
-   else if (dow == SUNDAY  ) startTime -= 2*DAYS;
-
-   return(startTime);
-}
-
-
-/**
- * Gibt die Endzeit der vorherigen Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetPrevSessionEndTime.fxt(datetime fxtTime) {
-   datetime startTime = GetPrevSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionStartTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
-   if (fxtTime < 0)
-      return(_NaT(catch("GetSessionStartTime.fxt(1)  invalid parameter fxtTime: "+ fxtTime, ERR_INVALID_PARAMETER)));
-
-   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime);
-   if (startTime < 0)
-      return(_NaT(catch("GetSessionStartTime.fxt(2)  illegal result "+ startTime, ERR_RUNTIME_ERROR)));
-
-   // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekEx(startTime);
-   if (dow == SATURDAY || dow == SUNDAY)
-      return(_NaT(SetLastError(ERR_MARKET_CLOSED)));
-
-   return(startTime);
-}
-
-
-/**
- * Gibt die Endzeit der Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetSessionEndTime.fxt(datetime fxtTime) { // throws ERR_MARKET_CLOSED
-   datetime startTime = GetSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
- * Gibt die Startzeit der nächsten Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionStartTime.fxt(datetime fxtTime) {
-   if (fxtTime < 0) return(_NaT(catch("GetNextSessionStartTime.fxt()  invalid parameter fxtTime: "+ fxtTime, ERR_INVALID_PARAMETER)));
-
-   datetime startTime = fxtTime - TimeHour(fxtTime)*HOURS - TimeMinute(fxtTime)*MINUTES - TimeSeconds(fxtTime) + 1*DAY;
-
-   // Wochenenden berücksichtigen
-   int dow = TimeDayOfWeekEx(startTime);
-   if      (dow == SATURDAY) startTime += 2*DAYS;
-   else if (dow == SUNDAY  ) startTime += 1*DAY;
-
-   return(startTime);
-}
-
-
-/**
- * Gibt die Endzeit der nächsten Handelssession für die angegebene FXT-Zeit (Forex Time) zurück.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GetNextSessionEndTime.fxt(datetime fxtTime) {
-   datetime startTime = GetNextSessionStartTime.fxt(fxtTime);
-   if (startTime == NaT)
-      return(NaT);
-
-   return(startTime + 1*DAY);
-}
-
-
-/**
  * Convert a character to its hexadecimal representation.
  *
  * @param  int chr - character (1 byte)
@@ -3959,36 +3621,6 @@ int DecreasePeriod(int period = 0) {
       case PERIOD_Q1 : return(PERIOD_MN1);
    }
    return(_NULL(catch("DecreasePeriod()  invalid parameter period: "+ period, ERR_INVALID_PARAMETER)));
-}
-
-
-/**
- * Konvertiert die angegebene FXT-Zeit (Forex Time) nach GMT.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime FxtToGmtTime(datetime fxtTime) {
-   int offset = GetFxtToGmtTimeOffset(fxtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(fxtTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene FXT-Zeit (Forex Time) nach Serverzeit.
- *
- * @param  datetime fxtTime - FXT-Zeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime FxtToServerTime(datetime fxtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   int offset = GetFxtToServerTimeOffset(fxtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(fxtTime - offset);
 }
 
 
@@ -4125,25 +3757,32 @@ string GetHostName() {
 
 
 /**
- * Gibt den Offset der angegebenen FXT-Zeit (Forex Time) zu GMT zurück.
+ * Return the timezone offset of an FXT time to GMT. It holds: GMT + offset = FXT
  *
- * @param  datetime fxtTime - FXT-Zeit
+ * @param  datetime fxtTime - FXT timestamp (seconds since 01.01.1970 00:00 FXT)
  *
- * @return int - Offset in Sekunden, es gilt: GMT + Offset = FXT (immer positive Werte)
- *               EMPTY_VALUE, falls ein Fehler auftrat
+ * @return int - offset to GMT in seconds (always a positive value) or EMPTY_VALUE in case of errors
  */
 int GetFxtToGmtTimeOffset(datetime fxtTime) {
-   if (fxtTime < 0) return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset(1)  invalid parameter fxtTime: "+ fxtTime, ERR_INVALID_PARAMETER)));
+   if (fxtTime <= 0) return(_EMPTY_VALUE(catch("GetFxtToGmtTimeOffset(1)  invalid parameter fxtTime: "+ fxtTime +" (must be positive)", ERR_INVALID_PARAMETER)));
 
    int offset, year=TimeYearEx(fxtTime)-1970;
 
-   // FXT
    if      (fxtTime < transitions.FXT[year][TR_TO_DST.local]) offset = transitions.FXT[year][STD_OFFSET];
    else if (fxtTime < transitions.FXT[year][TR_TO_STD.local]) offset = transitions.FXT[year][DST_OFFSET];
    else                                                       offset = transitions.FXT[year][STD_OFFSET];
-
    return(offset);
 }
+
+
+
+
+
+
+
+
+
+
 
 
 /**
@@ -4237,9 +3876,9 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
       else                                                                  offset = -transitions.FXT             [year][STD_OFFSET];
    }
    else if (lTimezone=="fxt-0200" || lTimezone=="america/new_york+0500") {
-      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
-      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2_H;
-      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2_H;
+      if      (gmtTime < transitions.FXT             [year][TR_TO_DST.gmt]) offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2h;
+      else if (gmtTime < transitions.FXT             [year][TR_TO_STD.gmt]) offset = -transitions.FXT             [year][DST_OFFSET] + PLUS_2h;
+      else                                                                  offset = -transitions.FXT             [year][STD_OFFSET] + PLUS_2h;
    }
    else return(_EMPTY_VALUE(catch("GetGmtToServerTimeOffset(2)  unknown server timezone configuration \""+ timezone +"\"", ERR_INVALID_TIMEZONE_CONFIG)));
 
@@ -4279,7 +3918,7 @@ int GetLocalToGmtTimeOffset() {
  *
  * @return string - timezone identifier or an empty string in case of errors
  *
- * @see  http://en.wikipedia.org/wiki/Tz_database     [Olson Timezone Database]
+ * @see  http://en.wikipedia.org/wiki/Tz_database#    [Olson Timezone Database]
  */
 string GetServerTimezone() {
    // - The resolved timezone can only change when the trade account changes.
@@ -4330,36 +3969,6 @@ string GetServerTimezone() {
 
    lastTick = tick;
    return(lastResult[IDX_TIMEZONE]);
-}
-
-
-/**
- * Konvertiert die angegebene GMT-Zeit nach FXT-Zeit (Forex Time).
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime GmtToFxtTime(datetime gmtTime) {
-   int offset = GetGmtToFxtTimeOffset(gmtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(gmtTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene GMT-Zeit nach Serverzeit.
- *
- * @param  datetime gmtTime - GMT-Zeit
- *
- * @return datetime - Serverzeit oder NaT, falls ein Fehler auftrat
- */
-datetime GmtToServerTime(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_CONFIG
-   int offset = GetGmtToServerTimeOffset(gmtTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(gmtTime - offset);
 }
 
 
@@ -4456,7 +4065,7 @@ bool ObjectCreateRegister(string name, int type, int window, datetime time1, dou
       if (!size) size = 512;
       size <<= 1;                                           // prevent re-allocation on every call (initial size 1024)
       ArrayResize(__registeredObjects, size);
-      if (size >= 32768) debug("ObjectCreateRegister(2)  objects="+ (__registeredOjectsCounter+1));
+      if (size >= 131072) debug("ObjectCreateRegister(2)  objects="+ (__registeredOjectsCounter+1));
    }
    __registeredObjects[__registeredOjectsCounter] = name;
    __registeredOjectsCounter++;
@@ -4480,36 +4089,6 @@ int DeleteRegisteredObjects() {
    ArrayResize(__registeredObjects, 0);
    __registeredOjectsCounter = 0;
    return(catch("DeleteRegisteredObjects(2)"));
-}
-
-
-/**
- * Konvertiert die angegebene Serverzeit nach FXT (Forex Standard Time).
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - FXT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime ServerToFxtTime(datetime serverTime) {
-   int offset = GetServerToFxtTimeOffset(serverTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(serverTime - offset);
-}
-
-
-/**
- * Konvertiert die angegebene Serverzeit nach GMT.
- *
- * @param  datetime serverTime - Serverzeit
- *
- * @return datetime - GMT-Zeit oder NaT, falls ein Fehler auftrat
- */
-datetime ServerToGmtTime(datetime serverTime) {
-   int offset = GetServerToGmtTimeOffset(serverTime);
-   if (offset == EMPTY_VALUE)
-      return(NaT);
-   return(serverTime - offset);
 }
 
 
@@ -5608,9 +5187,9 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    if (!StringLen(comment)) string msgComment = "";
    else                            msgComment = " \""+ comment +"\"";
    // expires
-   if (expires && expires <= TimeServer(false))                return(!Order.HandleError("OrderSendEx(14)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (expires && expires <= TimeCurrentEx("OrderSendEx(14)")) return(!Order.HandleError("OrderSendEx(15)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(15)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(!Order.HandleError("OrderSendEx(16)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe));
 
    static datetime testCase.from=INT_MAX, testCase.to=INT_MIN;
    static bool done = false;
@@ -5640,10 +5219,10 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
    // loop until the trade request succeeded or a permanent error occurred
    while (true) {
       // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
-      if (IsStopped()) return(!Order.HandleError("OrderSendEx(16)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
+      if (IsStopped()) return(!Order.HandleError("OrderSendEx(17)  "+ OrderSendEx.ErrorMsg(oe), ERS_EXECUTION_STOPPING, oeFlags, oe));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderSendEx(17)  trade context busy, retrying...");
+         if (IsLogDebug()) logDebug("OrderSendEx(18)  trade context busy, retrying...");
          Sleep(300);
          continue;
       }
@@ -5665,11 +5244,11 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
       oe.setDuration(oe, GetTickCount()-time1);                            // total time in milliseconds
 
       if (ticket > 0) {
-         OrderPush("OrderSendEx(18)");
+         OrderPush("OrderSendEx(19)");
          WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderSent_A(ticket, digits, markerColor))
-            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(19)")));
+            return(_NULL(oe.setError(oe, last_error), OrderPop("OrderSendEx(20)")));
 
          // On a slow OrderSend() response or in a fast market limits/stops may have already been executed, or the order may
          // have been modified or closed. The returned values must describe the original order, not the current order status.
@@ -5687,7 +5266,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else                             dSlippage = 0;
          oe.setSlippage(oe, NormalizeDouble(dSlippage/pips, digits & 1));  // total slippage after requotes in pip
 
-         if (IsLogDebug()) logDebug("OrderSendEx(20)  "+ OrderSendEx.SuccessMsg(oe));
+         if (IsLogDebug()) logDebug("OrderSendEx(21)  "+ OrderSendEx.SuccessMsg(oe));
 
          if (__isTesting) {
             if (type<=OP_SELL && __ExecutionContext[EC.externalReporting]) {
@@ -5696,8 +5275,8 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          }
          else PlaySoundEx(ifString(requotes, "OrderRequote.wav", "OrderOk.wav"));
 
-         OrderPop("OrderSendEx(21)");
-         if (IsError(Order.HandleError("OrderSendEx(22)", GetLastError(), oeFlags, oe)))
+         OrderPop("OrderSendEx(22)");
+         if (IsError(Order.HandleError("OrderSendEx(23)", GetLastError(), oeFlags, oe)))
             return(NULL);
          return(ticket);                                                   // regular exit (NO_ERROR)
       }
@@ -5712,7 +5291,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderSendEx(23)  trade context busy, retrying...");
+            if (IsLogDebug()) logDebug("OrderSendEx(24)  trade context busy, retrying...");
             Sleep(300);
             continue;
 
@@ -5723,7 +5302,7 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
          case ERR_OFF_QUOTES:
             tempErrors++;
             if (tempErrors > 5) break;
-            logWarn("OrderSendEx(24)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
+            logWarn("OrderSendEx(25)  "+ OrderSendEx.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          case ERR_REQUOTE:
@@ -5742,19 +5321,19 @@ int OrderSendEx(string symbol/*=NULL*/, int type, double lots, double price, int
             else if (type == OP_SELLSTOP)  marketViolated = GE(oe.OpenPrice(oe), oe.Bid(oe));
             else if (type == OP_SELLLIMIT) marketViolated = LE(oe.OpenPrice(oe), oe.Bid(oe));
             if (!marketViolated) {
-               if (IsLogDebug()) logDebug("OrderSendEx(25)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
+               if (IsLogDebug()) logDebug("OrderSendEx(26)  translating returned ERR_INVALID_STOP => ERR_STOP_DISTANCE_VIOLATED");
                error = oe.setError(oe, ERR_STOP_DISTANCE_VIOLATED);
             }
             break;
 
          case NO_ERROR:
-            logWarn("OrderSendEx(26)  returned no ticket and no error => ERR_RUNTIME_ERROR");
+            logWarn("OrderSendEx(27)  returned no ticket and no error => ERR_RUNTIME_ERROR");
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
       break;
    }
-   return(!Order.HandleError("OrderSendEx(27)  "+ OrderSendEx.ErrorMsg(oe), error, oeFlags, oe, true));
+   return(!Order.HandleError("OrderSendEx(28)  "+ OrderSendEx.ErrorMsg(oe), error, oeFlags, oe, true));
 }
 
 
@@ -5899,14 +5478,14 @@ string OrderSendEx.ErrorMsg(/*ORDER_EXECUTION*/int oe[]) {
 bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takeProfit, datetime expires, color markerColor, int oeFlags, int oe[]) {
    // validate parameters
    // oe[]
-   if (ArrayDimension(oe) > 1)                                 return(!catch("OrderModifyEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAY));
+   if (ArrayDimension(oe) > 1)                                   return(!catch("OrderModifyEx(1)  invalid parameter oe[] (too many dimensions: "+ ArrayDimension(oe) +")", ERR_INCOMPATIBLE_ARRAY));
    if (ArraySize(oe) != ORDER_EXECUTION_intSize)
       ArrayResize(oe, ORDER_EXECUTION_intSize);
    ArrayInitialize(oe, 0);
    // ticket
-   if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))      return(!oe.setError(oe, ERR_INVALID_TICKET));
-   if (!IsOrderType(OrderType()))                              return(_false(Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, oeFlags, oe), OrderPop("OrderModifyEx(4)")));
-   if (OrderCloseTime() != 0)                                  return(_false(Order.HandleError("OrderModifyEx(5)  ticket #"+ ticket +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(6)")));
+   if (!SelectTicket(ticket, "OrderModifyEx(2)", O_PUSH))        return(!oe.setError(oe, ERR_INVALID_TICKET));
+   if (!IsOrderType(OrderType()))                                return(_false(Order.HandleError("OrderModifyEx(3)  #"+ ticket +" is not an order ticket", ERR_INVALID_TICKET, oeFlags, oe), OrderPop("OrderModifyEx(4)")));
+   if (OrderCloseTime() != 0)                                    return(_false(Order.HandleError("OrderModifyEx(5)  ticket #"+ ticket +" is already closed", ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(6)")));
    bool   isPendingOrder = IsPendingOrderType(OrderType());
    int    digits         = MarketInfo(OrderSymbol(), MODE_DIGITS);
    int    pipDigits      = digits & (~1);
@@ -5915,27 +5494,25 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double freezeDistance = MarketInfo(OrderSymbol(), MODE_FREEZELEVEL)/pipPoints;
    string priceFormat    = ",'R."+ pipDigits + ifString(digits==pipDigits, "", "'");
    int error = GetLastError();
-   if (IsError(error))                                         return(_false(Order.HandleError("OrderModifyEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderModifyEx(8)")));
+   if (IsError(error))                                           return(_false(Order.HandleError("OrderModifyEx(7)  symbol=\""+ OrderSymbol() +"\"", error, oeFlags, oe), OrderPop("OrderModifyEx(8)")));
    // openPrice
    openPrice = NormalizeDouble(openPrice, digits);
-   if (LT(openPrice, 0, digits))                               return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice: "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
+   if (LT(openPrice, 0, digits))                                 return(_false(Order.HandleError("OrderModifyEx(9)  illegal parameter openPrice: "+ NumberToStr(openPrice, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(10)")));
    if (EQ(openPrice, 0, digits)) openPrice = NormalizeDouble(OrderOpenPrice(), digits);
    if (!isPendingOrder) {
-      if (NE(openPrice, OrderOpenPrice(), digits))             return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry price of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
+      if (NE(openPrice, OrderOpenPrice(), digits))               return(_false(Order.HandleError("OrderModifyEx(11)  cannot modify entry price of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(12)")));
    }
    // stopLoss
    stopLoss = NormalizeDouble(stopLoss, digits);
-   if (LT(stopLoss, 0, digits))                                return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
+   if (LT(stopLoss, 0, digits))                                  return(_false(Order.HandleError("OrderModifyEx(13)  illegal parameter stopLoss: "+ NumberToStr(stopLoss, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(14)")));
    // takeProfit
    takeProfit = NormalizeDouble(takeProfit, digits);
-   if (LT(takeProfit, 0, digits))                              return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
+   if (LT(takeProfit, 0, digits))                                return(_false(Order.HandleError("OrderModifyEx(15)  illegal parameter takeProfit: "+ NumberToStr(takeProfit, priceFormat), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(16)")));
    // expires
-   if (expires != 0)
-      if (expires <= TimeServer(false))                        return(_false(Order.HandleError("OrderModifyEx(17)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(18)")));
-   if (expires != OrderExpiration())
-      if (!isPendingOrder)                                     return(_false(Order.HandleError("OrderModifyEx(19)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(20)")));
+   if (expires && expires <= TimeCurrentEx("OrderModifyEx(17)")) return(_false(Order.HandleError("OrderModifyEx(18)  illegal parameter expires: "+ ifString(expires < 0, expires, TimeToStr(expires, TIME_FULL)), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(19)")));
+   if (expires!=OrderExpiration() && !isPendingOrder)            return(_false(Order.HandleError("OrderModifyEx(20)  cannot modify expiration of already open position #"+ ticket, ERR_INVALID_TRADE_PARAMETERS, oeFlags, oe), OrderPop("OrderModifyEx(21)")));
    // markerColor
-   if (markerColor < CLR_NONE || markerColor > C'255,255,255') return(_false(Order.HandleError("OrderModifyEx(21)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(22)")));
+   if (markerColor < CLR_NONE || markerColor > C'255,255,255')   return(_false(Order.HandleError("OrderModifyEx(22)  illegal parameter markerColor: 0x"+ IntToHexStr(markerColor), ERR_INVALID_PARAMETER, oeFlags, oe), OrderPop("OrderModifyEx(23)")));
 
    // initialize oe[]
    oe.setSymbol        (oe, OrderSymbol()    );
@@ -5958,8 +5535,8 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    double prevOpenPrice=OrderOpenPrice(), prevStopLoss=OrderStopLoss(), prevTakeProfit=OrderTakeProfit();
 
    if (EQ(openPrice, prevOpenPrice, digits)) /*&&*/ if (EQ(stopLoss, prevStopLoss, digits)) /*&&*/ if (EQ(takeProfit, prevTakeProfit, digits)) {
-      logWarn("OrderModifyEx(23)  nothing to modify for ticket #"+ ticket);
-      return(_false(Order.HandleError("OrderModifyEx(24)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(25)")));
+      logWarn("OrderModifyEx(24)  nothing to modify for ticket #"+ ticket);
+      return(_false(Order.HandleError("OrderModifyEx(25)", ERR_NO_RESULT, oeFlags, oe), OrderPop("OrderModifyEx(26)")));
    }
    int  tempErrors, startTime = GetTickCount();
    bool success;
@@ -5967,10 +5544,10 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    // loop until the order was modified or a permanent error occurred
    while (true) {
       // terminal bug: After recompiling and reloading an EA IsStopped() continues to return TRUE.
-      if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(26)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(27)")));
+      if (IsStopped()) return(_false(Order.HandleError("OrderModifyEx(27)  "+ OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit), ERS_EXECUTION_STOPPING, oeFlags, oe), OrderPop("OrderModifyEx(28)")));
 
       if (IsTradeContextBusy()) {
-         if (IsLogDebug()) logDebug("OrderModifyEx(28)  trade context busy, retrying...");
+         if (IsLogDebug()) logDebug("OrderModifyEx(29)  trade context busy, retrying...");
          Sleep(300);
          continue;
       }
@@ -5986,7 +5563,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          WaitForTicket(ticket, /*select=*/true);
 
          if (!ChartMarker.OrderModified_A(ticket, digits, markerColor, __ExecutionContext[EC.currTickTime], prevOpenPrice, prevStopLoss, prevTakeProfit))
-            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(29)")));
+            return(_false(oe.setError(oe, last_error), OrderPop("OrderModifyEx(30)")));
 
          // In a fast market limits may have already been executed or the order status may have changed other-wise.
          // The returned values must describe the original order, not the current status.
@@ -5998,16 +5575,16 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          oe.setCommission(oe, ifDouble(isPendingOrder, 0, OrderCommission()));
          oe.setProfit    (oe, ifDouble(isPendingOrder, 0, OrderProfit()));
 
-         if (IsLogDebug()) logDebug("OrderModifyEx(30)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
+         if (IsLogDebug()) logDebug("OrderModifyEx(31)  "+ OrderModifyEx.SuccessMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit));
          if (!__isTesting) PlaySoundEx("OrderModified.wav");                           // regular exit (NO_ERROR)
-         return(!_bool(Order.HandleError("OrderModifyEx(31)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(32)")));
+         return(!_bool(Order.HandleError("OrderModifyEx(32)", GetLastError(), oeFlags, oe), OrderPop("OrderModifyEx(33)")));
       }
 
       error = GetLastError();
 
       switch (error) {
          case ERR_TRADE_CONTEXT_BUSY:
-            if (IsLogDebug()) logDebug("OrderModifyEx(33)  trade context busy, retrying...");
+            if (IsLogDebug()) logDebug("OrderModifyEx(34)  trade context busy, retrying...");
             Sleep(300);
             continue;
 
@@ -6015,21 +5592,21 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
          case ERR_TRADE_TIMEOUT:
             tempErrors++;
             if (tempErrors > 5) break;
-            logWarn("OrderModifyEx(34)  "+ Order.TempErrorMsg(oe, tempErrors), error);
+            logWarn("OrderModifyEx(35)  "+ Order.TempErrorMsg(oe, tempErrors), error);
             continue;
 
          // map terminal generated errors
          case ERR_INVALID_TICKET:                // unknown ticket or not an open pending order anymore (client-side)
-            if (IsLogDebug()) logDebug("OrderModifyEx(35)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
+            if (IsLogDebug()) logDebug("OrderModifyEx(36)  translating returned ERR_INVALID_TICKET => ERR_INVALID_TRADE_PARAMETERS");
             error = oe.setError(oe, ERR_INVALID_TRADE_PARAMETERS);
             break;
 
          case ERR_INVALID_STOP:
-            logWarn("OrderModifyEx(36)  detection of ERR_STOP_DISTANCE_VIOLATED not yet implemented", ERR_NOT_IMPLEMENTED);
+            logWarn("OrderModifyEx(37)  detection of ERR_STOP_DISTANCE_VIOLATED not yet implemented", ERR_NOT_IMPLEMENTED);
             break;
 
          case NO_ERROR:
-            logWarn("OrderModifyEx(37)  returned no success and no error => ERR_RUNTIME_ERROR");
+            logWarn("OrderModifyEx(38)  returned no success and no error => ERR_RUNTIME_ERROR");
             error = oe.setError(oe, ERR_RUNTIME_ERROR);
             break;
       }
@@ -6037,7 +5614,7 @@ bool OrderModifyEx(int ticket, double openPrice, double stopLoss, double takePro
    }
 
    string msg = OrderModifyEx.ErrorMsg(oe, prevOpenPrice, prevStopLoss, prevTakeProfit);
-   return(_false(Order.HandleError("OrderModifyEx(38)  "+ msg, error, oeFlags, oe, true), OrderPop("OrderModifyEx(39)")));
+   return(_false(Order.HandleError("OrderModifyEx(39)  "+ msg, error, oeFlags, oe, true), OrderPop("OrderModifyEx(40)")));
 }
 
 
@@ -7988,7 +7565,7 @@ string GetTempPath() {
       InitializeStringBuffer(buffer, bufferSize);
       chars = GetTempPathA(bufferSize, buffer[0]);
    }
-   if (!chars) return(_EMPTY_STR(catch("GetTempPath(1)->kernel32::GetTempPathA() => 0", ERR_WIN32_ERROR)));
+   if (!chars) return(_EMPTY_STR(catch("GetTempPath(1)->GetTempPathA() => 0", ERR_WIN32_ERROR)));
 
    string tmpPath = buffer[0];
    ArrayResize(buffer, 0);
@@ -8019,7 +7596,7 @@ string CreateTempFile(string path, string prefix="") {
 
    int unique = 0;                                                   // 0, wenn der Dateiname eindeutig sein soll
    int fileId = GetTempFileNameA(path, prefix, unique, buffer[0]);
-   if (!fileId) return(_EMPTY_STR(catch("GetTempFileName(4)->kernel32::GetTempFileNameA() => 0", ERR_WIN32_ERROR)));
+   if (!fileId) return(_EMPTY_STR(catch("GetTempFileName(4)->GetTempFileNameA() => 0", ERR_WIN32_ERROR)));
 
    string filename = buffer[0];
    ArrayResize(buffer, 0);

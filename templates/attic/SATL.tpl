@@ -1,10 +1,10 @@
 <chart>
-symbol=GBPAUD
+symbol=USDCHF
 period=60
 digits=5
 
-leftpos=9229
-scale=4
+leftpos=13564
+scale=2
 graph=1
 fore=0
 grid=0
@@ -13,17 +13,16 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=1
+scroll=0
 shift=1
-shift_size=10
+shift_size=50
 
 fixed_pos=620
 window_left=0
 window_top=0
-window_right=1292
-window_bottom=812
+window_right=1304
+window_bottom=1032
 window_type=3
-
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -37,7 +36,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=10
+height=100
 
 <indicator>
 name=main
@@ -9969,27 +9968,46 @@ value_0=22000
 <indicator>
 name=Custom Indicator
 <expert>
-name=MA Tunnel Monitor
+name=Grid
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=ChartInfos
+flags=347
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=SuperBars
+flags=339
+window_num=0
+</expert>
+period_flags=0
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
+name=.attic/SATL
 flags=339
 window_num=0
 <inputs>
-UseMA1=1
-MA1.Periods=9
-MA1.Method=EMA
-MA1.AppliedPrice=Median
-UseMA2=1
-MA2.Periods=36
-MA2.Method=EMA
-MA2.AppliedPrice=Median
-UseMA3=1
-MA3.Periods=144
-MA3.Method=EMA
-MA3.AppliedPrice=Median
-AutoConfiguration=1
+Draw.Type=Dot
 </inputs>
 </expert>
-period_flags=0
-show_data=1
 </indicator>
 
 </window>

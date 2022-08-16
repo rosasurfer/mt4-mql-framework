@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <!--
-Q: Where can I find the original version of the MQL4 language reference?
+Q: Where can I find the original unmodified version of the MQL4 language reference?
 A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30ebd8/doc/MQL4%20Reference.xml#
 -->
 <dictionary>
@@ -31,16 +31,17 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .doctable       { border-top:1px solid #DADADA; }
   .docvar         { font-family:monospace; font-size:10pt; font-weight:bold; margin-bottom:4pt; }
   .doctabhdr      { font-weight:bold; padding:0pt 4pt 0pt 0pt; margin:8pt 2pt 2pt 2pt;  }
-  .docmql4        { font-family:monospace; background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt 2pt 2pt 2pt; margin:2pt 0pt 2pt 15pt; font-family:monospace; }
+  .docmql4        { background-color:#F6F9FC; border:1px #d8dfea solid; padding:2pt; margin:2pt 2pt 2pt 15pt; font-family:monospace; }
+  .docmql4_inline { background-color:#F6F9FC; border:1px #d8dfea solid; padding:1pt; margin:2pt; font-family:monospace; }
   .docparams      { background-color:#F6F9FC; border:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; }
   .docenums       { background-color:#F6F9FC; border-top:1px #d8dfea solid; border-left:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; margin-left:15pt; width:95%; }
   .docenums th    { vertical-align:top; background-color:#d8dfea; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
   .docenums td    { vertical-align:top; background-color:#F6F9FC; border-bottom:1px #d8dfea solid; border-right:1px #d8dfea solid; font-family:Tahoma; font-size:9pt; }
-
+  
   .code           { font-family:monospace;            }
   .italic         { font-style:italic;                }
   .const          { color:#980000;                    }
-  .function       { color:#000093;                    }  /* same as <a/> */
+  .function       { color:#000093;                    }  /* same color as <a/> */
   .core-function  { color:Red;                        }
   .global-var     { color:#980000; font-style:italic; }
   .keyword        { color:#D000D0;                    }
@@ -50,6 +51,12 @@ A: The original file is stored at https://github.com/rosasurfer/mt4-mql/blob/e30
   .char           { color:#008080;                    }
   .type           { color:Olive;                      }
   .comment        { color:Blue;                       }
+  
+  /* 
+  .docmql4_inline can be used for inline code:
+  --------------------------------------------
+  <p>Lorem ipsum dolor <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> sit amet, consectetur adipiscing elit.</p>
+  */
   </styles>
 
 
@@ -270,8 +277,8 @@ int d = '\xAE';   // symbol code &#xAE;</pre>
         <br/>
         <b>Notes:</b>
         <br/>
-        <li>Every expression assigned to a boolean variable is implicitely casted to an integer.<br/>
-            <span class="docmql4"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> yields a boolean of <span class="const">FALSE</span>.
+        <li>Every expression assigned to a boolean variable is implicitely casted to an integer. 
+            <span class="docmql4_inline"><span class="type code">bool</span> var = <span class="number code">0.7</span>;</span> gives a boolean of <span class="const">FALSE</span>.
             <br/><br/></li>
         
         <li>An integer different from <span class="number">0</span> or <span class="number">1</span> can be assigned. The resulting variable is not a valid boolean and 
@@ -346,36 +353,37 @@ struct MqlStr {
       caption=Colors
       keywords=;color;
       <content>
-<p>Colors can be expressed in three ways: as literals, as integer values or by named color constants (web color set only).</p>
+        <p>Colors can be expressed in three ways: as literals, as integer values or by named color constants (web color set only).</p>
+        
+        <p>Literal representation consists of three parts representing numerical rate values of three main color components: red, green, blue.
+        Literals start with the letter C and are enclosed by single quotes. Numeric color component values can be in the range from 0 to 255.</p>
+        
+        <p>Integer value representation is written as a hexadecimal or decimal number. A hexadecimal number looks like 0x00BBGGRR where RR is the value of the red color component,
+        GG the value of the green color component and BB the value of the blue color component. Decimal constants are not directly reflected in RGB. They represent a decimal value
+        of the hexadecimal integer representation.</p>
+        
+        <p>See also: <a href="help://constants_colors">Web color set</a></p>
 
-<p>Literal representation consists of three parts representing numerical rate values of three main color components: red, green, blue.
-Literals start with the letter C and are enclosed by single quotes. Numeric color component values can be in the range from 0 to 255.</p>
+        <p class="doctabhdr">Examples:</p>
+        <pre class="docmql4">
+<span class="comment code">// color literals</span>
+<span class="type code">color</span> c1 = C<span class="string code">'128,128,128'</span>;    <span class="comment code">// Gray</span>
+<span class="type code">color</span> c2 = C<span class="string code">'0x00,0x00,0xFF'</span>; <span class="comment code">// Blue</span><br/>
 
-<p>Integer value representation is written as a hexadecimal or decimal number. A hexadecimal number looks like 0x00BBGGRR where RR is the value of the red color component,
-GG the value of the green color component and BB the value of the blue color component. Decimal constants are not directly reflected in RGB. They represent a decimal value
-of the hexadecimal integer representation.</p>
+<span class="comment code">// named color constants</span>
+<span class="type code">color</span> c3 = <span class="const code">Red</span>;
+<span class="type code">color</span> c4 = <span class="const code">Yellow</span>;
+<span class="type code">color</span> c5 = <span class="const code">Black</span>;<br/>
 
-<p>See also: <a href="help://constants_colors">Web color set</a></p>
-
-<p class="doctabhdr">Examples:</p>
-<pre class="docmql4">
-// color literals
-C<span class="string">'128,128,128'</span>    // gray
-C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
-
-// named color constants
-<span class="const">Red</span>
-<span class="const">Yellow</span>
-<span class="const">Black</span><br/>
-
-// integer-valued representation
-0xFFFFFF          // white
-16777215          // white
-0x008000          // green
-32768             // green
-</pre>
-
-<p>Its internal representation is a long integer number of 4 bytes. The first byte will not be considered. The other three bytes contain RGB components.</p>
+<span class="comment code">// integer representation</span>
+<span class="type code">color</span> c6 = <span class="number code">0x00FFFF</span>;          <span class="comment code">// White</span>
+<span class="type code">color</span> c7 = <span class="number code">16777215</span>;          <span class="comment code">// White</span>
+<span class="type code">color</span> c8 = <span class="number code">0x008000</span>;          <span class="comment code">// Green</span>
+<span class="type code">color</span> c9 = <span class="number code">32768</span>;             <span class="comment code">// Green</span>
+        </pre>
+        <p>The internal representation is a long integer value consuming 4 bytes. The first byte distinguishes <span class="const">White</span> 
+        (<span class="number">0x00FFFFFF</span>) from the no-color value <span class="const">CLR_NONE</span> (<span class="number">0xFFFFFFFF</span>).
+        The other three bytes contain RGB components.</p>
       </content>
     </text>
 
@@ -384,10 +392,15 @@ C<span class="string">'0x00,0x00,0xFF'</span> // blue<br/>
       caption=Datetime values
       keywords=;datetime;
       <content>
-<p>Datetime values can be expressed as literals consisting of values for year, month, date, hours, minutes and seconds. Literals are enclosed in single quotes
-and preceeded by the letter D. Either the date part (year, month, day), the time part (hours, minutes, seconds) or both of them can be omitted.
-Datetime literals cover the time range from Jan 1, 1970 to Dec 31, 2037.</p>
-<p class="doctabhdr">Examples:</p>
+        <p>Datetime values are UNIX timestamps (seconds since 01.01.1970 00:00) without timezone information. They can be expressed by literals 
+        consisting of values for year, month, date, hours, minutes and seconds.<br/>
+        Datetime literals are enclosed in single quotes and preceeded by the letter D. Either the date part (year, month, day), the time part 
+        (hours, minutes, seconds) or both of them can be omitted.<br/>
+        Datetime literals can cover the range from <span class="docmql4_inline">D<span class="string code">'1970.01.01 00:00:00'</span></span> to 
+        <span class="docmql4_inline">D<span class="string code">'2037.12.31 23:59:59'</span></span>.
+        </p>
+        
+        <p class="doctabhdr">Examples:</p>
 <pre class="docmql4">
 D<span class="string code">'2004.01.01 00:00'</span>           <span class="comment code">// New Year</span>
 D<span class="string code">'1980.07.19 12:30:27'</span>
@@ -397,7 +410,7 @@ D<span class="string code">'01.01.2004'</span>                 <span class="comm
 D<span class="string code">'12:30:27'</span>                   <span class="comment code">// evaluates to D'{compilation-date} 12:30:27'</span>
 D<span class="string code">''</span>                           <span class="comment code">// evaluates to D'{compilation-date} 00:00:00'</span>
 </pre>
-      <p>The internal representation is a long integer value consuming 4 bytes. The value represents the amount of seconds since 00:00 Jan 1, 1970.</p>
+        <p>The internal representation is a long integer value consuming 4 bytes.</p>
       </content>
     </text>
   </group>
@@ -405,7 +418,7 @@ D<span class="string code">''</span>                           <span class="comm
 
   <group>
     tag=basics_operations
-    caption=Operations &amp; Expressions
+    caption=<nobr>Operations &amp; Expressions</nobr>
     <content>
      Some characters and character sequences are of a special importance. These are so-called operation symbols, for example:
 <pre class="docmql4">
@@ -774,7 +787,7 @@ must be enclosed in parentheses and should not contain an assignment operator.</
 
     <text>
       tag=basics_operators_if
-      caption=Conditional operator if-else
+      caption=<nobr>Conditional operator if-else</nobr>
       keywords=;else;
       <content>
         <p>If the expression is <span class="const">TRUE</span>, operator1 is executed and the control is given to the operator that follows
@@ -4635,23 +4648,23 @@ Sleep(10000);
       caption=StrToTime()
       type=datetime
       <content>
-      Converts a string in the format &quot;yyyy.mm.dd hh:mm:ss&quot; to a datetime value (amount of seconds since 1st of January 1970).<br/>
+      Converts a string in the format "yyyy.mm.dd hh:mm:ss" to a UNIX timestamp (seconds since 01.01.1970 00:00).<br/>
       <br/>
       <span style="color:red">Bug:</span>
       <br/>
-      Sind die einzelnen Werte nicht in voller L&auml;nge angegeben, werden teilweise (nicht immer) die Sekunden verschluckt:<br/>
-      <span class="function">StrToTime</span>(<span class="string">"2014.4.23 14:2:50"</span>) => <span class="string">"2014.04.23 14:02:00"</span><br/>
-      Workaround: Werte in voller L&auml;nge formatieren
+      During conversion seconds <span class="italic">may</span> get lost if numeric time parts are not padded to two digits:<br/>
+      <span class="code function">TimeToStr</span>(<span class="code function">StrToTime</span>(<span class="code string">"2014.04.23 14:2:50"</span>), <span class="code const">TIME_FULL</span>) => <span class="code string">"2014.04.23 14:02:00"</span><br/>
+      Workaround: make sure single digit numbers are padded with zeros
       </content>
       <example>
-  datetime value1 = StrToTime(<span class="string">&quot;2003.8.12 17:35&quot;</span>);
-  datetime value2 = StrToTime(<span class="string">&quot;17:35&quot;</span>);            // current date with the given time
-  datetime value3 = StrToTime(<span class="string">&quot;2003.8.12&quot;</span>);        // given date with a time of &quot;00:00&quot;
+<span class="code type">datetime</span> time1 = <span class="code function">StrToTime</span>(<span class="code string">"2003.8.12 17:35"</span>);
+<span class="code type">datetime</span> time2 = <span class="code function">StrToTime</span>(<span class="code string">"17:35"</span>);             <span class="code comment">// current date with the given time</span>
+<span class="code type">datetime</span> time3 = <span class="code function">StrToTime</span>(<span class="code string">"2003.8.12"</span>);         <span class="code comment">// given date with a time of "00:00"</span>
       </example>
       <parameter>
         type=string
         name=value
-        description=String representing a date/time value formatted as &quot;yyyy.mm.dd hh:mm:ss&quot;
+        description=string representing a date/time value formatted as "yyyy.mm.dd hh:mm:ss"
       </parameter>
     </function>
 
@@ -4664,7 +4677,7 @@ Sleep(10000);
       </content>
       keywords=;TIME_DATE;TIME_MINUTES;TIME_SECONDS;
       <example>
-  string var1=TimeToStr(TimeCurrent(),TIME_DATE|TIME_SECONDS);
+string s1 = TimeToStr(TimeCurrent(), TIME_DATE|TIME_SECONDS);
       </example>
       <parameter>
         type=datetime
@@ -5260,12 +5273,90 @@ int init() {
     A group of functions to work with date/time related data and types.
     </content>
 
+
+    <function>
+      tag=dateandtime_TimeCurrent
+      caption=TimeCurrent()
+      type=datetime
+      <content>
+      Returns the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00 server time). In tester this time is modelled.<br/>
+      <br/>
+      May return <span class="number">0</span> without signaling an error under various conditions (e.g. if no locally stored ticks are available or in older builds in 
+      tester when loading standalone indicators).<br/>
+      Use the framework function <span class="docmql4_inline function">TimeCurrentEx()</span> for improved handling of such cases.<br/>
+      <br/>  
+      Use the framework function <span class="docmql4_inline function">TimeServer()</span> to get the server time irrespective of received ticks.<br/>  
+      </content>
+      <example>
+<span class="keyword code">if</span> (<span class="function code">TimeCurrent</span>()-<span class="function code">OrderOpenTime</span>() &lt; <span class="number code">360</span>) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
+}
+      </example>
+    </function>
+
+
+    <function>
+      tag=dateandtime_TimeLocal
+      caption=TimeLocal()
+      type=datetime
+      <content>
+      Returns the system's local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time). In tester this time is modelled and mapped to 
+      <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>, meaning the modelled local time matches the modelled server time.<br/> 
+      <br/>
+      Due to the mapping in tester the function is affected by the same issues as <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a> and may return 
+      <span class="number">0</span> without signaling an error.<br/> 
+      Use the framework function <span class="docmql4_inline function">TimeLocalEx()</span> for improved handling of such cases.<br/>  
+      <br/>
+      Use the framework function <span class="docmql4_inline function">GetLocalTime()</span> to get the non-modelled local time in tester.<br/>  
+      </content>
+      <example>
+<span class="keyword code">if</span> (<span class="function code">TimeLocal</span>()-D<span class="string code">'2012.01.03 10:00:00'</span> &lt; <span class="number code">360</span>) {
+   <span class="keyword code">return</span>(<span class="number code">0</span>);
+}
+      </example>
+    </function>
+
+
+    <group>
+      tag=empty
+      caption=
+      <content></content>
+    </group>
+
+
+    <function>
+      tag=dateandtime_Year
+      caption=Year()
+      type=int
+      <content>
+      Returns the year of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
+      </content>
+      <example>
+  // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
+    if(Year()==2006 &amp;&amp; Month()&lt;5)
+    return(0);
+      </example>
+    </function>
+
+    <function>
+      tag=dateandtime_Month
+      caption=Month()
+      type=int
+      <content>
+      Returns the month (1-12) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
+      </content>
+      <example>
+  if(Month()&lt;=5)
+    return(&quot;the first half year&quot;);
+      </example>
+    </function>
+
     <function>
       tag=dateandtime_Day
       caption=Day()
       type=int
       <content>
-      Returns the day of the month (1-31) of the time returned by TimeCurrent().
+      Returns the day of the month (1-31) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
 <span class="keyword">if</span> (Day() &lt; <span class="number">5</span>)
@@ -5278,7 +5369,7 @@ int init() {
       caption=DayOfWeek()
       type=int
       <content>
-      Returns the zero-based day of the week (0 = Sunday) of the time returned by TimeCurrent().
+      Returns the zero-based day of the week (0 = Sunday) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   // does not work on holidays.
@@ -5291,7 +5382,7 @@ int init() {
       caption=DayOfYear()
       type=int
       <content>
-      Returns the day of the year (1-365) of the time returned by TimeCurrent().
+      Returns the day of the year (1-365) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(DayOfYear()==245)
@@ -5304,7 +5395,7 @@ int init() {
       caption=Hour()
       type=int
       <content>
-      Returns the hour (0-23) of the time returned by TimeCurrent().
+      Returns the hour (0-23) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   bool is_siesta=false;
@@ -5318,7 +5409,7 @@ int init() {
       caption=Minute()
       type=int
       <content>
-      Returns the minute (0-59) of the time returned by TimeCurrent().
+      Returns the minute (0-59) of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(Minute()&lt;=15)
@@ -5327,24 +5418,11 @@ int init() {
     </function>
 
     <function>
-      tag=dateandtime_Month
-      caption=Month()
-      type=int
-      <content>
-      Returns the month (1-12) of the time returned by TimeCurrent().
-      </content>
-      <example>
-  if(Month()&lt;=5)
-    return(&quot;the first half year&quot;);
-      </example>
-    </function>
-
-    <function>
       tag=dateandtime_Seconds
       caption=Seconds()
       type=int
       <content>
-      Returns the seconds (0-59) of the minute of the time returned by TimeCurrent().
+      Returns the seconds (0-59) of the minute of the time returned by <a href="help://dateandtime_TimeCurrent">TimeCurrent()</a>.
       </content>
       <example>
   if(Seconds()&lt;=15)
@@ -5352,33 +5430,53 @@ int init() {
       </example>
     </function>
 
-    <function>
-      tag=dateandtime_TimeCurrent
-      caption=TimeCurrent()
-      type=datetime
-      <content>
-      Unlike to the original documentation this function doesn't return the last known server time. It returns the time of the last tick of all selected symbols
-      as a Unix timestamp. In tester this time is modelled.<br/>
-      <br/>
-      <span style="color:red">Bugs:</span>
-      <li>Wird die Funktion im Tester in einem Standalone-Indikator aufgerufen (also bei VisualMode=On), gibt sie in <span class="function">init</span>() und
-          <span class="function">start</span>() je nach Terminalversion <span class="const">NULL</span> zur&uuml;ck.</li>
-      <li>Ist der letzte Tick nicht bekannt, gibt die Funktion <span class="const">NULL</span> zur&uuml;ck, ohne einen Fehler zu melden.</li>
-      <br/>
-      <br/>
-      <span style="color:green">Note:</span><br/>
-      Don't use this function. Instead use either the variable <span class="global-var">Tick.time</span> or the function <span class="function">TimeServer</span>().<br/>
 
+    <group>
+      tag=empty
+      caption=
+      <content></content>
+    </group>
+
+
+    <function>
+      tag=dateandtime_TimeYear
+      caption=TimeYear()
+      type=int
+      <content>
+      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.<br/>
       <br/>
-      <span style="color:red">TODO:</span><br/>
-      Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
-      in Standalone-Indikatoren unter Test).<br/>
+      <span style="color:red">Bug:</span>
+      <br/>
+      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
+      <br/>
+      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
+      <br/>
       </content>
       <example>
-if (TimeCurrent()-OrderOpenTime() &lt; 360) {
-   return(0);
-}
+  int y=TimeYear(TimeCurrent());
       </example>
+      <parameter>
+        type=datetime
+        name=time
+        description=Datetime value.
+      </parameter>
+    </function>
+
+    <function>
+      tag=dateandtime_TimeMonth
+      caption=TimeMonth()
+      type=int
+      <content>
+      Returns the month (1-12) of the specified time.
+      </content>
+      <example>
+  int m=TimeMonth(TimeCurrent());
+      </example>
+      <parameter>
+        type=datetime
+        name=time
+        description=Datetime value.
+      </parameter>
     </function>
 
     <function>
@@ -5465,30 +5563,6 @@ if (TimeCurrent()-OrderOpenTime() &lt; 360) {
       </parameter>
     </function>
 
-    <function>
-      tag=dateandtime_TimeLocal
-      caption=TimeLocal()
-      type=datetime
-      <content>
-      Returns local computer time as seconds since 00:00 January 1, 1970. In the Tester local time is modelled and is the same as the modelled server time.<br/>
-      <br/>
-      <span style="color:red">Bugs:</span> Die Funktion gibt im Tester falsche Werte zur&uuml;ck, wenn sie von einem Standalone-Indikator aufgerufen wird (also bei VisualMode=On).
-      Je nach Terminalversion wird entweder die aktuelle Zeit oder ein von <span class="function">TimeCurrent</span>() falsch &uuml;bernommener Wert
-      (<span class="const">NULL</span>) zur&uuml;ckgegeben.<br/>
-      Workaround: noch nicht implementiert (siehe Notes)<br/>
-
-      <br/>
-      <span style="color:red">Notes:</span> <br/>
-      <li>Standalone-Indikatoren m&uuml;ssen alle falsch implementierten Laufzeitdaten vom zu testenden Expert &uuml;bernehmen (siehe auch <span class="function">MarketInfo</span>()-Fehler
-          in Standalone-Indikatoren unter Test).</li>
-      <li>Der Tester setzt praktisch die lokale Zeitzone auf die Server-Zeitzone. Tests laufen damit ggf. in einer anderen als der tats&auml;chlichen lokalen Zeitzone.
-          Dies <i>kann</i> Implikationen haben, wenn der Test mit der Umgebung interagiert.</li>
-      </content>
-      <example>
-if (TimeLocal()-OrderOpenTime() &lt; 360)
-   return(0);
-      </example>
-    </function>
 
     <function>
       tag=dateandtime_TimeMinute
@@ -5499,23 +5573,6 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
       </content>
       <example>
   int m=TimeMinute(TimeCurrent());
-      </example>
-      <parameter>
-        type=datetime
-        name=time
-        description=Datetime value.
-      </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_TimeMonth
-      caption=TimeMonth()
-      type=int
-      <content>
-      Returns the month (1-12) of the specified time.
-      </content>
-      <example>
-  int m=TimeMonth(TimeCurrent());
       </example>
       <parameter>
         type=datetime
@@ -5539,44 +5596,6 @@ if (TimeLocal()-OrderOpenTime() &lt; 360)
         name=time
         description=Datetime value.
       </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_TimeYear
-      caption=TimeYear()
-      type=int
-      <content>
-      Returns year for the specified date. The returned value can be within the range of 1970 to 2037.<br/>
-      <br/>
-      <span style="color:red">Bug:</span>
-      <br/>
-      Gibt f&uuml;r D<span class="string">'1970.01.01 00:00:00'</span> 1900 statt 1970 zur&uuml;ck.<br/>
-      <br/>
-      Workaround: <span class="function">TimeYearEx()</span> verwenden<br/>
-      <br/>
-      </content>
-      <example>
-  int y=TimeYear(TimeCurrent());
-      </example>
-      <parameter>
-        type=datetime
-        name=time
-        description=Datetime value.
-      </parameter>
-    </function>
-
-    <function>
-      tag=dateandtime_Year
-      caption=Year()
-      type=int
-      <content>
-      Returns the year of the time returned by TimeCurrent().
-      </content>
-      <example>
-  // return if the date is within the range from 1 Jan. to 30 Apr., 2006.
-    if(Year()==2006 &amp;&amp; Month()&lt;5)
-    return(0);
-      </example>
     </function>
   </group>
 

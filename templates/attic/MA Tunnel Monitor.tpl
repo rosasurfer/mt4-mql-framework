@@ -1,5 +1,5 @@
 <chart>
-symbol=GBPUSD
+symbol=GBPAUD
 period=60
 digits=5
 
@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -23,6 +23,7 @@ window_top=0
 window_right=1292
 window_bottom=812
 window_type=3
+
 background_color=16316664
 foreground_color=0
 barup_color=30720
@@ -36,7 +37,7 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=277
+height=10
 
 <indicator>
 name=main
@@ -9878,65 +9879,118 @@ weight=1
 background=1
 value_0=16250
 </object>
-</indicator>
 
-<indicator>
-name=Custom Indicator
-<expert>
-name=Grid
-flags=347
-window_num=0
-</expert>
+<object>
+type=1
+object_name=Horizontal Line 19000
+selectable=0
 period_flags=0
-show_data=0
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=ChartInfos
-flags=347
-window_num=0
-</expert>
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 19500
+selectable=0
 period_flags=0
-show_data=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=19500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 20500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=20500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21000
+</object>
+<object>
+type=1
+object_name=Horizontal Line 21500
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=21500
+</object>
+<object>
+type=1
+object_name=Horizontal Line 22000
+selectable=0
+period_flags=0
+create_time=1273178494
+color=13882323
+style=2
+weight=1
+background=1
+value_0=22000
+</object>
 </indicator>
 
 <indicator>
 name=Custom Indicator
 <expert>
-name=SuperBars
+name=.attic/MA Tunnel Monitor
 flags=339
 window_num=0
+<inputs>
+UseMA1=1
+MA1.Periods=9
+MA1.Method=EMA
+MA1.AppliedPrice=Median
+UseMA2=1
+MA2.Periods=36
+MA2.Method=EMA
+MA2.AppliedPrice=Median
+UseMA3=1
+MA3.Periods=144
+MA3.Method=EMA
+MA3.AppliedPrice=Median
+AutoConfiguration=1
+</inputs>
 </expert>
 period_flags=0
-show_data=0
-</indicator>
-</window>
-
-<window>
-height=73
-fixed_height=0
-<indicator>
-name=Average True Range
-period=1
-apply=0
-color=4294967295
-style=0
-weight=1
-period_flags=0
 show_data=1
 </indicator>
 
-<indicator>
-name=Moving Average
-period=20
-method=3
-apply=7
-color=16711680
-weight=2
-period_flags=0
-show_data=1
-</indicator>
 </window>
 </chart>
