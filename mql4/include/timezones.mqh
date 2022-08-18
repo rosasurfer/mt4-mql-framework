@@ -32,21 +32,25 @@
  *  @see  https://itecnote.com/tecnote/how-to-convert-gmt-to-localtime-in-win32-c/
  *  @see  http://web.archive.org/web/20080605162533/http://www.eggheadcafe.com/software/aspnet/31656478/get-current-time-in-diffe.aspx
  *  @see  https://zetcode.com/gui/winapi/datetime/
+ *
+ *  @see  https://www.codeguru.com/cplusplus/a-time-zone-api-supplement/
+ *  @see  https://forums.codeguru.com/showthread.php?479121-How-can-I-check-if-DST-was-in-effect-for-a-given-time
+ *
+ *  @see  https://www.codeproject.com/Questions/66570/How-to-use-SystemTimeToTzSpecificLocalTime
+ *  @see  https://www.codeproject.com/Articles/144159/Time-Format-Conversion-Made-Easy
+ *
+ *  @see  https://stackoverflow.com/questions/466071/how-do-i-get-a-specific-time-zone-information-struct-in-win32
+ *  @see  https://stackoverflow.com/questions/597554/how-to-convert-between-timezones-with-win32-api
+ *  @see  https://stackoverflow.com/questions/3623471/how-do-you-get-info-for-an-arbitrary-time-zone-in-windows
+ *  @see  https://stackoverflow.com/questions/66615978/how-to-get-a-datetimes-offset-from-utc#                                           [Conversion test cases]
+ *
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformation#                       [GetTimeZoneInformation()]
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-gettimezoneinformationforyear#         [GetTimeZoneInformationForYear()]
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/ns-timezoneapi-dynamic_time_zone_information#    [struct DYNAMIC_TIME_ZONE_INFORMATION]
- *  @see  https://social.msdn.microsoft.com/Forums/windowsapps/en-US/ef486e53-a27b-4dc9-8b5b-b56abdbb8723/how-to-get-a-different-timezone-from-gettimezoneinformationforyear?forum=vclanguage
- *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-systemtimetotzspecificlocaltime
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-tzspecificlocaltimetosystemtime
- *  @see  https://www.codeproject.com/Questions/66570/How-to-use-SystemTimeToTzSpecificLocalTime
- *  @see  https://forums.codeguru.com/showthread.php?479121-How-can-I-check-if-DST-was-in-effect-for-a-given-time
- *  @see  https://www.codeproject.com/Articles/144159/Time-Format-Conversion-Made-Easy
- *  @see  https://stackoverflow.com/questions/3623471/how-do-you-get-info-for-an-arbitrary-time-zone-in-windows
- *  @see  https://www.codeguru.com/cplusplus/a-time-zone-api-supplement/
- *  @see  https://stackoverflow.com/questions/597554/how-to-convert-between-timezones-with-win32-api
- *  @see  https://stackoverflow.com/questions/466071/how-do-i-get-a-specific-time-zone-information-struct-in-win32
- *  @see  https://stackoverflow.com/questions/3623471/how-do-you-get-info-for-an-arbitrary-time-zone-in-windows
  *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-tzspecificlocaltimetosystemtimeex
+ *  @see  https://docs.microsoft.com/en-us/windows/win32/api/timezoneapi/nf-timezoneapi-systemtimetotzspecificlocaltime
+ *  @see  https://social.msdn.microsoft.com/Forums/windowsapps/en-US/ef486e53-a27b-4dc9-8b5b-b56abdbb8723/how-to-get-a-different-timezone-from-gettimezoneinformationforyear?forum=vclanguage
  */
 
 
