@@ -108,7 +108,6 @@
    int      GetServerToFxtTimeOffset(datetime serverTime);
    int      GetServerToGmtTimeOffset(datetime serverTime);
 
-   int      GetLocalToGmtTimeOffset();
    bool     GetTimezoneTransitions(datetime serverTime, int prevTransition[], int nextTransition[]);
 
 

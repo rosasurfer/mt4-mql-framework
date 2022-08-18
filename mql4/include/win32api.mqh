@@ -36,7 +36,6 @@
    void GetStartupInfoA(int lpStartupInfo[]);
    int  GetTempFileNameA(string lpPathName, string lpPrefix, int unique, string lpTempFileName);
    int  GetTempPathA(int bufferSize, string lpBuffer);
-   int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
    int  LoadLibraryA(string lpLibFileName);
    bool MoveFileA(string lpOldFileName, string lpNewFileName);
    void OutputDebugStringA(string lpMessage);                     // without admin rights calls are ignored

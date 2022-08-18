@@ -250,12 +250,6 @@
 #define SM_SAMEDISPLAYFORMAT                      81
 
 
-// GetTimeZoneInformation() constants
-#define TIME_ZONE_ID_UNKNOWN                       0
-#define TIME_ZONE_ID_STANDARD                      1
-#define TIME_ZONE_ID_DAYLIGHT                      2
-
-
 // GetWindow() constants
 #define GW_HWNDFIRST                               0
 #define GW_HWNDLAST                                1
