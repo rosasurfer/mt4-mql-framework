@@ -103,9 +103,6 @@
 #define STARTUPINFO_size                    68
 #define STARTUPINFO_intSize                 17
 
-#define SYSTEMTIME_size                     16
-#define SYSTEMTIME_intSize                   4
-
 #define TIME_ZONE_INFORMATION_size         172
 
 #define WIN32_FIND_DATA_size               318     // doesn't end on an int boundary
