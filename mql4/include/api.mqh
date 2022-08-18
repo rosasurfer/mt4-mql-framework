@@ -649,7 +649,6 @@ int      GetGmtToServerTimeOffset(datetime gmtTime);;
 string   GetHostName();;
 int      GetIniKeys(string fileName, string section, string &keys[]);;
 int      GetIniSections(string fileName, string &names[]);;
-int      GetLocalToGmtTimeOffset();;
 string   GetLongSymbolName(string symbol);;
 string   GetLongSymbolNameOrAlt(string symbol, string altValue = "");;
 string   GetLongSymbolNameStrict(string symbol);;
