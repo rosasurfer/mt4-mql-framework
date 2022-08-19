@@ -3,19 +3,18 @@
  *
  *
  * The ZigZag indicator provided by MetaQuotes is of little use. The used algorithm is flawed and the implementation
- * performes badly. Furthermore the indicator repaints past ZigZag points and can't be used for automation.
+ * performes badly. Furthermore the indicator repaints past ZigZag reversal points and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
  * the ZigZag direction changed the semaphore will not change anymore. Like the MetaQuotes version the indicator uses a
  * Donchian channel for determining legs and reversals but this indicator draws vertical line segments if a large bar crosses
- * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developed over
- * time, and it supports automated period stepping via hotkey (parameter change without input dialog). The indicator supports
+ * both upper and lower Donchian channel band. Additionally it can display the trail of a ZigZag leg as it developes over
+ * time and supports manual period stepping via hotkey (parameter change via keyboard). Finally the indicator supports
  * signaling of new ZigZag reversals.
  *
  * TODO:
  *  - ShowCrossings=first: after retracement + new crossing all crossings are drawn
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
- *  - add signal onZigZagBreakout
  *  - document inputs
  *  - document usage of iCustom()
  */
@@ -53,8 +52,8 @@ extern bool   Signal.onReversal.SMS          = false;
 
 extern string ___d__________________________ = "=== New high/low sound alerts ===";
 extern bool   Sound.onCrossing               = false;                   // on channel widening (all channel crossings)
-extern string Sound.onCrossing.Up            = "AlertDefault.wav";
-extern string Sound.onCrossing.Down          = "Chotoneto.wav";
+extern string Sound.onCrossing.Up            = "Price Advance.wav";
+extern string Sound.onCrossing.Down          = "Price Decline.wav";
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
