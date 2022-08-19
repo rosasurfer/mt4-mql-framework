@@ -12,10 +12,65 @@
  * time and supports manual period stepping via hotkey (parameter change via keyboard). Finally the indicator supports
  * signaling of new ZigZag reversals.
  *
+ *
+ * Input parameters
+ * ----------------
+ * • ZigZag.Periods: Lookback periods of the Donchian channel.
+ *
+ * • ZigZag.Periods.Step: Controls parameter 'ZigZag.Periods' via the keyboard. If non-zero it enables the parameter stepper
+ *    and defines its step size. If zero the parameter stepper is disabled.
+ *
+ * • ZigZag.Type: Whether to display ZigZag lines or ZigZag semaphores. Can be shortened as long as distinct.
+ *
+ * • ZigZag.Width: Controls the ZigZag's line width/semaphore size.
+ *
+ * • ZigZag.Semaphores.Wingdings: Controls the WingDing symbol used for ZigZag semaphores.
+ *
+ * • ZigZag.Color: Controls the color of ZigZag lines/semaphores.
+ *
+ * • Donchian.ShowChannel: Whether to display the Donchian channel used by the internal calculation.
+ *
+ * • Donchian.ShowCrossings: Controls the displayed Donchian channel crossings.
+ *    "Off":   No crossings are displayed.
+ *    "First": Only the first crossing per direction is displayed (the moment when the ZigZag creates a new leg).
+ *    "All":   All crossings are displayed. Displays the trail of the ZigZag leg as it developes over time.
+ *
+ * • Donchian.Crossings.Width: Controls the size of the displayed Donchian channel crossings.
+ *
+ * • Donchian.Crossings.Wingdings: Controls the WingDing symbol used for Donchian channel crossings.
+ *
+ * • Donchian.Upper.Color: Controls the color of upper Donchian channel band and crossings.
+ *
+ * • Donchian.Lower.Color: Controls the color of lower Donchian channel band and crossings.
+ *
+ * • Max.Bars: Maximum number of bars back to calculate the indicator (performance).
+ *
+ * • Signal.onReversal: Whether to signal ZigZag reversals (the moment when the ZigZag creates a new leg).
+ *
+ * • Signal.onReversal.Sound: Whether to signal ZigZag reversals by sound.
+ *
+ * • Signal.onReversal.SoundUp: Sound file used for signaling ZigZag reversals to the upside.
+ *
+ * • Signal.onReversal.SoundDown: Sound file used for signaling ZigZag reversals to the downside.
+ *
+ * • Signal.onReversal.Popup: Whether to signal ZigZag reversals by a popup (MetaTrader alert dialog).
+ *
+ * • Signal.onReversal.Mail: Whether to signal ZigZag reversals by e-mail.
+ *
+ * • Signal.onReversal.SMS: Whether to signal ZigZag reversals by text message.
+ *
+ * • Sound.onCrossing: Whether to signal all Donchian channel crossings (widening of the channel).
+ *
+ * • Sound.onCrossing.Up: Sound file used for signaling a Donchian channel widening to the upside.
+ *
+ * • Sound.onCrossing.Down: Sound file used for signaling a Donchian channel widening to the downside.
+ *
+ * • AutoConfiguration: If enabled all input parameters can be overwritten with custom default values (via framework config).
+ *
+ *
  * TODO:
  *  - ShowCrossings=first: after retracement + new crossing all crossings are drawn
  *  - implement magic values (INT_MIN, INT_MAX) for double crossings
- *  - document inputs
  *  - document usage of iCustom()
  */
 #include <stddefines.mqh>
@@ -26,11 +81,11 @@ int __DeinitFlags[];
 
 extern string ___a__________________________ = "=== ZigZag settings ===";
 extern int    ZigZag.Periods                 = 40;                      // lookback periods of the Donchian channel
-extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (hotkeys)
+extern int    ZigZag.Periods.Step            = 0;                       // step size for a stepped input parameter (keyboard)
 extern string ZigZag.Type                    = "Line | Semaphores*";    // a ZigZag line or reversal points (may be shortened)
 extern int    ZigZag.Width                   = 1;
-extern color  ZigZag.Color                   = Blue;
 extern int    ZigZag.Semaphores.Wingdings    = 108;                     // a large dot
+extern color  ZigZag.Color                   = Blue;
 
 extern string ___b__________________________ = "=== Donchian settings ===";
 extern bool   Donchian.ShowChannel           = true;                    // whether to display the Donchian channel
@@ -562,8 +617,6 @@ bool onChannelCrossing(int direction) {
 
       if      (!error)                      lastSound = GetTickCount();
       else if (error == ERR_FILE_NOT_FOUND) Sound.onCrossing = false;
-
-      //debug("onChannelCrossing(0.1)  new "+ ifString(direction==D_LONG, "High", "Low") +": "+ NumberToStr(upperBand[0], PriceFormat));
    }
    return(!catch("onChannelCrossing(2)"));
 }
@@ -608,7 +661,7 @@ bool onCommand(string cmd, string params, int keys) {
  * Step up/down the input parameter "ZigZag.Periods".
  *
  * @param  int direction - STEP_UP | STEP_DOWN
- * @param  int keys      - modifier keys (not used)
+ * @param  int keys      - modifier keys (not used by this indicator)
  *
  * @return bool - success status
  */
@@ -953,8 +1006,8 @@ string InputsToStr() {
                             "ZigZag.Periods.Step=",          ZigZag.Periods.Step                         +";"+ NL,
                             "ZigZag.Type=",                  DoubleQuoteStr(ZigZag.Type)                 +";"+ NL,
                             "ZigZag.Width=",                 ZigZag.Width                                +";"+ NL,
-                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                    +";"+ NL,
                             "ZigZag.Semaphores.Wingdings=",  ZigZag.Semaphores.Wingdings                 +";"+ NL,
+                            "ZigZag.Color=",                 ColorToStr(ZigZag.Color)                    +";"+ NL,
 
                             "Donchian.ShowChannel=",         BoolToStr(Donchian.ShowChannel)             +";"+ NL,
                             "Donchian.ShowCrossings=",       DoubleQuoteStr(Donchian.ShowCrossings)      +";"+ NL,
