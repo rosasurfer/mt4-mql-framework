@@ -3887,33 +3887,6 @@ int GetGmtToServerTimeOffset(datetime gmtTime) { // throws ERR_INVALID_TIMEZONE_
 
 
 /**
- * Gibt den Offset der aktuellen lokalen Zeit zu GMT (Greenwich Mean Time) zurück. Kann nicht im Tester verwendet werden, da
- * (1) dieser Offset der aktuelle Offset der aktuellen Zeit ist und
- * (2) die lokale Zeitzone im Tester modelliert wird und nicht mit der tatsächlichen lokalen Zeitzone übereinstimmt.
- *
- * @return int - Offset in Sekunden oder, es gilt: GMT + Offset = LocalTime
- *               EMPTY_VALUE, falls  ein Fehler auftrat
- */
-int GetLocalToGmtTimeOffset() {
-   if (__isTesting) return(_EMPTY_VALUE(catch("GetLocalToGmtTimeOffset()", ERR_FUNC_NOT_ALLOWED_IN_TESTER)));
-
-   /*TIME_ZONE_INFORMATION*/int tzi[]; InitializeByteBuffer(tzi, TIME_ZONE_INFORMATION_size);
-
-   int offset, type=GetTimeZoneInformation(tzi);
-
-   if (type != TIME_ZONE_ID_UNKNOWN) {
-      offset = tzi_Bias(tzi);
-      if (type == TIME_ZONE_ID_DAYLIGHT)
-         offset += tzi_DaylightBias(tzi);
-      offset *= -60;
-   }
-
-   ArrayResize(tzi, 0);
-   return(offset);
-}
-
-
-/**
  * Return the current trade server's timezone identifier.
  *
  * @return string - timezone identifier or an empty string in case of errors

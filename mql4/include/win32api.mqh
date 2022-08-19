@@ -15,7 +15,6 @@
    int  CreateFileA(string lpFileName, int dwDesiredAccess, int dwShareMode, int lpSecurityAttributes, int dwCreationDisposition, int dwFlagsAndAttributes, int hTemplateFile);
    bool CreateProcessA(string lpApplicationName, string lpCmdLine, int lpProcessAttributes[], int lpThreadAttributes[], int bInheritHandles, int creationFlags, int lpEnvironment[], string lpCurrentDirectory, int lpStartupInfo[], int lpProcessInformation[]);
    bool DeleteFileA(string lpFileName);
-   bool FileTimeToSystemTime(int lpFileTime[], int lpSystemTime[]);
    bool FindClose(int hFindFile);
    int  FindFirstFileA(string lpFileName, int lpFindFileData[]);
    bool FindNextFileA(int hFindFile, int lpFindFileData[]);
@@ -35,24 +34,14 @@
    int  GetProcAddress(int hModule, string lpProcedureName);
    bool GetProcessTimes(int hProcess, int lpCreationTime[], int lpExitTime[], int lpKernelTime[], int lpUserTime[]);
    void GetStartupInfoA(int lpStartupInfo[]);
-   void GetSystemTime(int lpSystemTime[]);
    int  GetTempFileNameA(string lpPathName, string lpPrefix, int unique, string lpTempFileName);
    int  GetTempPathA(int bufferSize, string lpBuffer);
-   int  GetTimeZoneInformation(int lpTimeZoneInformation[]);
-   /*
-   bool SystemTimeToTzSpecificLocalTime(
-      LPTIME_ZONE_INFORMATION lpTimeZoneInformation,              // pointer to time zone of interest
-      LPSYSTEMTIME lpUniversalTime,                               // pointer to universal time of interest
-      LPSYSTEMTIME lpLocalTime                                    // pointer to structure to receive local time
-   );
-   */
    int  LoadLibraryA(string lpLibFileName);
    bool MoveFileA(string lpOldFileName, string lpNewFileName);
    void OutputDebugStringA(string lpMessage);                     // without admin rights calls are ignored
    bool ReadProcessMemory(int hProcess, int baseAddress, int lpBuffer[], int bytes, int lpNumberOfBytesRead[]);
    void RtlMoveMemory(int destAddress, int srcAddress, int bytes);
    int  SleepEx(int milliseconds, int alertable);
-   bool SystemTimeToFileTime(int lpSystemTime[], int lpFileTime[]);
    int  VirtualAlloc(int lpAddress[], int size, int flAllocationType, int flProtect);
    int  WaitForSingleObject(int hObject, int milliseconds);
    int  WinExec(string lpCmdLine, int cmdShow);
