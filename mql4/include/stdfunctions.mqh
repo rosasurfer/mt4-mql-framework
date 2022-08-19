@@ -4673,7 +4673,7 @@ string GetAccountAlias(string company="", int account=NULL) {
 
    string result = GetGlobalConfigString("Accounts", account +".alias");
    if (!StringLen(result)) {
-      logNotice("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
+      logInfo("GetAccountAlias(2)  no account alias found for account "+ DoubleQuoteStr(company +":"+ account));
       result = account;
       result = StrRepeat("*", StringLen(result)-4) + StrRight(result, 4);
    }
@@ -7241,8 +7241,8 @@ double icZigZag(int timeframe, int periods, int iBuffer, int iBar) {
                           0,                                // int    ZigZag.Periods.Step
                           "Line",                           // string ZigZag.Type
                           1,                                // int    ZigZag.Width
-                          CLR_NONE,                         // color  ZigZag.Color
                           108,                              // int    ZigZag.Semaphores.Wingdings
+                          CLR_NONE,                         // color  ZigZag.Color
 
                           "",                               // string ____________________________
                           false,                            // bool   Donchian.ShowChannel
