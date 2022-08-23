@@ -2,8 +2,8 @@
  * A ZigZag indicator with non-repainting price reversals suitable for automation.
  *
  *
- * The ZigZag indicator provided by MetaQuotes is of little use. The used algorithm is flawed and the implementation
- * performes badly. Furthermore the indicator repaints past ZigZag reversal points and can't be used for automation.
+ * The ZigZag indicator provided by MetaQuotes is of little use. The algorithm is flawed and the implementation performes
+ * badly. Furthermore the indicator repaints past ZigZag reversal points and can't be used for automation.
  *
  * This indicator fixes those issues. The display can be changed from ZigZag lines to reversal points (aka semaphores). Once
  * the ZigZag direction changed the semaphore will not change anymore. Like the MetaQuotes version the indicator uses a
