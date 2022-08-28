@@ -146,7 +146,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(6)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(6)", error);
    return(last_error);
 }
 
