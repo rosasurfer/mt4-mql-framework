@@ -374,7 +374,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(8)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(8)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
