@@ -3963,7 +3963,7 @@ int MarketWatch.Symbols() {
 /**
  * Extended version of TimeCurrent().
  *
- * Returns the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00
+ * Return the server time of the last tick of all subscribed symbols as a Unix timestamp (seconds since 01.01.1970 00:00
  * server time). In tester this time is modelled. Use TimeServer() to get the server time irrespective of received ticks.
  *
  * The underlying call to TimeCurrent() may return 0 without signaling an error under various conditions (e.g. if no locally
@@ -3991,9 +3991,39 @@ datetime TimeCurrentEx(string caller, bool useLastBar=false, bool strict=true) {
 
 
 /**
+ * Return the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
+ *
+ * In tester this time is modelled. Use GetFxtTime() to get the non-modelled FXT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeFXT() {
+   datetime time = TimeGMT(); if (!time)       return(!logInfo("TimeFXT(1)->TimeGMT() => 0",        __ExecutionContext[EC.mqlError]));
+   time = GmtToFxtTime(time); if (time == NaT) return(!logInfo("TimeFXT(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
+ * Return the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
+ *
+ * In tester this time is modelled. Use GetGmtTime() to get the non-modelled GMT time in tester.
+ *
+ * @return datetime - time or NULL (0) in case of errors
+ */
+datetime TimeGMT() {
+   if (!__isTesting) return(GetGmtTime());
+
+   datetime time = TimeServer("TimeGMT(1)"); if (!time)       return(NULL);
+   time = ServerToGmtTime(time);             if (time == NaT) return(!logInfo("TimeGMT(2)->ServerToGmtTime() => NaT", __ExecutionContext[EC.mqlError]));
+   return(time);
+}
+
+
+/**
  * Extended version of TimeLocal().
  *
- * Returns the system's local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
+ * Return the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
  *
  * In tester this time is modelled and mapped to TimeCurrent(), meaning the modelled local time matches the modelled server
  * time. This mapping may return 0 without signaling an error under various conditions (e.g. if no locally stored ticks are
@@ -4019,37 +4049,7 @@ datetime TimeLocalEx(string caller, bool strict = true) {
 
 
 /**
- * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
- *
- * In tester this time is modelled. Use GetFxtTime() to get the non-modelled FXT time in tester.
- *
- * @return datetime - time or NULL (0) in case of errors
- */
-datetime TimeFXT() {
-   datetime time = TimeGMT(); if (!time)       return(!logInfo("TimeFXT(1)->TimeGMT() => 0",        __ExecutionContext[EC.mqlError]));
-   time = GmtToFxtTime(time); if (time == NaT) return(!logInfo("TimeFXT(2)->GmtToFxtTime() => NaT", __ExecutionContext[EC.mqlError]));
-   return(time);
-}
-
-
-/**
- * Returns the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
- *
- * In tester this time is modelled. Use GetGmtTime() to get the non-modelled GMT time in tester.
- *
- * @return datetime - time or NULL (0) in case of errors
- */
-datetime TimeGMT() {
-   if (!__isTesting) return(GetGmtTime());
-
-   datetime time = TimeServer("TimeGMT(1)"); if (!time)       return(NULL);
-   time = ServerToGmtTime(time);             if (time == NaT) return(!logInfo("TimeGMT(2)->ServerToGmtTime() => NaT", __ExecutionContext[EC.mqlError]));
-   return(time);
-}
-
-
-/**
- * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * Return the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
  * known tick time which is updated on new ticks only.
  *
  * In tester this time is modelled. Use GetServerTime() to get the non-modelled server time in tester.
@@ -4084,7 +4084,7 @@ datetime TimeServer(string caller="", bool useLastBar=false) {
 
 
 /**
- * Returns the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
+ * Return the current FXT time as a Unix timestamp (seconds since 01.01.1970 00:00 FXT).
  *
  * Not modelled in tester. Use TimeFXT() to get the modelled FXT time in tester.
  *
@@ -4098,7 +4098,31 @@ datetime GetFxtTime() {
 
 
 /**
- * Returns the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
+ * Return the current GMT time as a Unix timestamp (seconds since 01.01.1970 00:00 GMT).
+ *
+ * Not modelled in tester. Use TimeGmt() to get the modelled GMT time in tester.
+ *
+ * @return datetime
+ */
+datetime GetGmtTime() {
+   return(GetGmtTime32());
+}
+
+
+/**
+ * Return the current local time as a Unix timestamp (seconds since 01.01.1970 00:00 local time).
+ *
+ * Not modelled in tester. Use TimeLocal() to get the modelled local time in tester.
+ *
+ * @return datetime
+ */
+datetime GetLocalTime() {
+   return(GetLocalTime32());
+}
+
+
+/**
+ * Return the current server time as a Unix timestamp (seconds since 01.01.1970 00:00 server time). Differs from the last
  * known tick time which is updated on new ticks only.
  *
  * Not modelled in tester. Use TimeServer() to get the modelled server time in tester.
@@ -7410,10 +7434,12 @@ void __DummyCalls() {
    GetCurrencyId(NULL);
    GetExternalAssets();
    GetFxtTime();
+   GetGmtTime();
    GetIniBool(NULL, NULL, NULL);
    GetIniColor(NULL, NULL, NULL);
    GetIniDouble(NULL, NULL, NULL);
    GetIniInt(NULL, NULL, NULL);
+   GetLocalTime();
    GetMqlSandboxPath();
    GetNextSessionStartTime(NULL, NULL);
    GetNextSessionEndTime(NULL, NULL);

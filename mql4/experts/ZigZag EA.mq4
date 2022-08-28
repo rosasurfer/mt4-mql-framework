@@ -47,22 +47,22 @@
  *  - visible alert at profit target
  *
  *  - time functions
- *      TimeCurrentEx()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeLocalEx()         check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeCurrentEx()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeLocalEx()            check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *      TimeFXT()
- *      TimeGMT()             check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeServer()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeGMT()                check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeServer()             check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *
  *      FxtToGmtTime
  *      FxtToLocalTime
  *      FxtToServerTime
  *
  *      GmtToFxtTime
- *      GmtToLocalTime        OK
+ *      GmtToLocalTime     OK    finish unit tests
  *      GmtToServerTime
  *
  *      LocalToFxtTime
- *      LocalToGmtTime        OK
+ *      LocalToGmtTime     OK    finish unit tests
  *      LocalToServerTime
  *
  *      ServerToFxtTime
