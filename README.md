@@ -17,6 +17,62 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
 
 <tr>
     <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1370/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1370
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1370/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td nowrap> most current build </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1369/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1369
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1369/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1367/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1367
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1367/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1361/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1361
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1361/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1360/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             Terminal build 1360
         </a>
@@ -26,7 +82,7 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
             MetaEditor
         </a>
     </td>
-    <td nowrap> most current build </td>
+    <td> </td>
 </tr>
 
 <tr>
@@ -37,6 +93,20 @@ MetaTrader 4 can be downloaded either from the broker's website or directly from
     </td>
     <td nowrap>
         <a href="http://www.rosasurfer.com/.mt4/1359/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            MetaEditor
+        </a>
+    </td>
+    <td> </td>
+</tr>
+
+<tr>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1358/terminal.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
+            Terminal build 1358
+        </a>
+    </td>
+    <td nowrap>
+        <a href="http://www.rosasurfer.com/.mt4/1358/metaeditor.exe"><img src="https://user-images.githubusercontent.com/12749283/57028778-a698fd00-6c48-11e9-89f1-0c4d669dbe1d.png" title="download" alt="download" border="0">
             MetaEditor
         </a>
     </td>
