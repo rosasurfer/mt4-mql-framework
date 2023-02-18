@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=8
+scale=2
 graph=1
 fore=0
 grid=0
@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -10011,6 +10011,7 @@ ZigZag.Type=Line | Semaphores*
 ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
+Donchian.Crossings.Wingdings=108
 Donchian.Upper.Color=16748574
 Donchian.Lower.Color=16711935
 </inputs>
