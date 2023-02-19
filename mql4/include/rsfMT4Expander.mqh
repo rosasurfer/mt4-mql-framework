@@ -70,8 +70,8 @@
    datetime GetLocalTime32();
    string   GmtTimeFormatA(datetime time, string format);
    string   LocalTimeFormatA(datetime time, string format);
-   datetime GmtToLocalTime(datetime time);
-   datetime LocalToGmtTime(datetime time);
+ //datetime GmtToLocalTime(datetime time);                     // TODO: finish tests (see ZigZag EA)
+ //datetime LocalToGmtTime(datetime time);                     // TODO: finish tests (see ZigZag EA)
 
    // file functions
    int      CreateDirectoryA(string path, int flags);
