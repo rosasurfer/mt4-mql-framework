@@ -1,12 +1,12 @@
 /**
- * Displays order/market data and account infos on the chart.
+ * This indicator displays market data, account infos and trade statistics on the chart.
  *
  *  - The current price and spread.
  *  - The current instrument name (only in terminals <= build 509).
- *  - The calculated unitsize (if configured).
- *  - The open position and used leverage.
- *  - The current account stopout level.
- *  - PL of customizable open positions and/or trade history.
+ *  - The pre-calculated unitsize for a standard position.
+ *  - The currently open total position with resulting risk and leverage values.
+ *  - PL of open positions and/or trade history.
+ *  - Current PL target levels and the current account stopout level.
  *  - A warning when the account's open order limit is approached.
  *
  *
@@ -21,8 +21,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // or: "tl | tr | bl | br"
-extern string Track.Orders    = "on | off | auto*";
+extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // or shorter: "tl | tr | bl | br"
+extern string Track.Orders    = "on | off | auto*";                                    // whether to signal position open/close events
 extern bool   Offline.Ticker  = true;                                                  // whether to enable self-ticking offline charts
 extern string ___a__________________________;
 
@@ -219,21 +219,21 @@ int onTick() {
 
    if (__isChart) HandleCommands();                                                 // process incoming commands
 
-   if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // aktualisiert die Kursanzeige oben rechts
+   if (!UpdatePrice())                     if (IsLastError()) return(last_error);   // update the current price (top-right)
 
    if (mode.extern) {
-      if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // bei einem LFX-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und links (detailliert)
+      if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and total open position (bottom-right)
    }
    else {
-      if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // bei einem Trade-Terminal eingehende QuickChannel-Messages verarbeiten
-      if (!UpdateSpread())                 if (IsLastError()) return(last_error);
-      if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // akualisiert die UnitSize-Anzeige unten rechts
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // aktualisiert die Positionsanzeigen unten rechts (gesamt) und unten links (detailliert)
-      if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // aktualisiert die Markierung des Stopout-Levels im Chart
-      if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // aktualisiert die Anzeige der Anzahl der offenen Orders
+      if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
+      if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // update the current spread (top-right)
+      if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // update the pre-calculated unit size of a standard position (bottom-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and total open position (bottom-right)
+      if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // update the account's stopout level marker
+      if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // update the counter for the account's open order limit
 
-      if (mode.intern && orderTracker.enabled) {                                    // monitor execution of order limits
+      if (orderTracker.enabled) {                                                   // monitor execution of order limits
          double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
          int    closedPositions[][2]; ArrayResize(closedPositions, 0);              // {ticket, closedType}
          int    failedOrders   [];    ArrayResize(failedOrders,    0);              // {ticket}
@@ -1118,7 +1118,7 @@ bool CreateLabels() {
 
 
 /**
- * Aktualisiert die Kursanzeige oben rechts.
+ * Update the current price (top-right).
  *
  * @return bool - success status
  */
@@ -1145,15 +1145,15 @@ bool UpdatePrice() {
 
 
 /**
- * Update the spread display.
+ * Update the current spread (top-right).
  *
  * @return bool - success status
  */
 bool UpdateSpread() {
    string sSpread = " ";
-   if (Bid > 0)                                          // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
-      sSpread = PipToStr((Ask-Bid)/Pip);                 // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
-
+   if (Bid > 0) {                                        // don't use MarketInfo(MODE_SPREAD) as in tester it's invalid
+      sSpread = PipToStr((Ask-Bid)/Pip);                 // no display if the symbol is not yet subscribed (e.g. start, account/template change, offline chart)
+   }
    ObjectSetText(label.spread, sSpread, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
@@ -1476,7 +1476,7 @@ bool UpdateAccountDisplay() {
 
 
 /**
- * Aktualisiert die Anzeige des aktuellen Stopout-Levels.
+ * Update the account's stopout level marker.
  *
  * @return bool - success status
  */
@@ -1917,6 +1917,10 @@ int SearchLfxTicket(int ticket) {
  *   12.34                                           - dem PL einer Position zuzuschlagender Betrag                           [TERM_ADJUSTMENT    , 12.34           , ...             , ...     , ...     ]
  *   E123.00                                         - für Equityberechnungen zu verwendender Wert                            [TERM_EQUITY        , 123.00          , ...             , ...     , ...     ]
  *
+ *   Targets:
+ *    TP=1%
+ *    SL=5%,10%
+ *
  *   Kommentar (Text nach dem ersten Semikolon ";")  - wird als Beschreibung angezeigt
  *   Kommentare in Kommentaren (nach weiterem ";")   - werden ignoriert
  *
@@ -1924,11 +1928,11 @@ int SearchLfxTicket(int ticket) {
  *  Beispiel:
  *  ---------
  *   [CustomPositions]
- *   GBPAUD.0 = #111111, 0.1#222222      ;  komplettes Ticket #111111 und 0.1 Lot von Ticket #222222
- *   GBPAUD.1 = 0.2L, #222222            ;; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
- *   GBPAUD.3 = L,S,-34.56               ;; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines Verlustes von -34.56
- *   GBPAUD.3 = 0.5L                     ;; Zeile wird ignoriert, da der Schlüssel "GBPAUD.3" bereits verarbeitet wurde
- *   GBPAUD.2 = 0.3S                     ;; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (6)
+ *   GBPAUD.0 = #111111, 0.1#222222       ; komplettes Ticket #111111 und 0.1 Lot von Ticket #222222
+ *   GBPAUD.1 = 0.2L, #222222             ; virtuelle 0.2 Lot Long-Position und Rest von #222222 (2)
+ *   GBPAUD.3 = L,S,-34.56                ; alle verbleibenden Positionen, inkl. eines Restes von #222222, zzgl. eines Verlustes von -34.56
+ *   GBPAUD.3 = 0.5L                      ; Zeile wird ignoriert, da der Schlüssel "GBPAUD.3" bereits verarbeitet wurde
+ *   GBPAUD.2 = 0.3S                      ; virtuelle 0.3 Lot Short-Position, wird als letzte angezeigt (6)
  *
  *
  *  Resultierendes Array:
