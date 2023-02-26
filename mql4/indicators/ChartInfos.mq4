@@ -166,12 +166,10 @@ int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
 int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
 string  cornerDescriptions[] = {"top-left", "top-right", "bottom-left", "bottom-right"};
 
-// font settings for custom positions
+// font settings for detailed positions
 string  positions.fontName          = "MS Sans Serif";
 int     positions.fontSize          = 8;
-color   positions.fontColor.intern  = Blue;
-color   positions.fontColor.extern  = Red;
-color   positions.fontColor.remote  = Blue;
+color   positions.fontColor.open    = Blue;
 color   positions.fontColor.virtual = Green;
 color   positions.fontColor.history = C'128,128,0';
 
@@ -223,15 +221,15 @@ int onTick() {
 
    if (mode.extern) {
       if (!QC.HandleLfxTerminalMessages()) if (IsLastError()) return(last_error);   // process incoming LFX commands
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and total open position (bottom-right)
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and the total open position (bottom-right)
    }
    else {
       if (!QC.HandleTradeCommands())       if (IsLastError()) return(last_error);   // process incoming trade commands
       if (!UpdateSpread())                 if (IsLastError()) return(last_error);   // update the current spread (top-right)
       if (!UpdateUnitSize())               if (IsLastError()) return(last_error);   // update the pre-calculated unit size of a standard position (bottom-right)
-      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and total open position (bottom-right)
-      if (!UpdateStopoutLevel())           if (IsLastError()) return(last_error);   // update the account's stopout level marker
-      if (!UpdateOrderCounter())           if (IsLastError()) return(last_error);   // update the counter for the account's open order limit
+      if (!UpdatePositions())              if (IsLastError()) return(last_error);   // update detailed P/L statistics (bottom-left) and the total open position (bottom-right)
+      if (!UpdateAccountStopoutLevel())    if (IsLastError()) return(last_error);   // update the account's stopout level marker
+      if (!UpdateAccountOrderCounter())    if (IsLastError()) return(last_error);   // update the counter for the account's open order limit
 
       if (orderTracker.enabled) {                                                   // monitor execution of order limits
          double openedPositions[][2]; ArrayResize(openedPositions, 0);              // {ticket, entryLimit}
@@ -1208,7 +1206,7 @@ bool UpdateUnitSize() {
 
 
 /**
- * Update the position displays bottom-right (total position) and bottom-left (custom positions).
+ * Update detailed P/L statistics (bottom-left) and the total open position (bottom-right).
  *
  * @return bool - success status
  */
@@ -1221,7 +1219,7 @@ bool UpdatePositions() {
       if (!mm.done)             return(true);                  // on terminal not yet ready
    }
 
-   // total position bottom-right
+   // total open position bottom-right
    string sCurrentPosition = "";
    if      (!isPosition)    sCurrentPosition = " ";
    else if (!totalPosition) sCurrentPosition = StringConcatenate("Position:    ±", NumberToStr(longPosition, ",'.+"), " lot (hedged)");
@@ -1289,7 +1287,7 @@ bool UpdatePositions() {
    if (mode.extern) positions = lfxOrders.openPositions;
    else             positions = iePositions;
 
-   // create new rows/columns as needed
+   // create new rows as needed
    while (lines < positions) {
       lines++;
       xPrev = 0;
@@ -1307,7 +1305,7 @@ bool UpdatePositions() {
       }
    }
 
-   // remove existing surplus rows/columns
+   // remove existing surplus rows
    while (lines > positions) {
       for (col=0; col < cols; col++) {
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
@@ -1321,14 +1319,13 @@ bool UpdatePositions() {
    color  fontColor;
    int    line;
 
-   // Anzeige interne/externe Positionsdaten
-   if (!mode.extern) {
+   // Anzeige interne Positionsdaten
+   if (mode.intern) {
       for (int i=iePositions-1; i >= 0; i--) {
          line++;
          if      (positions.iData[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
          else if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) fontColor = positions.fontColor.history;
-         else if (mode.intern)                                             fontColor = positions.fontColor.intern;
-         else                                                              fontColor = positions.fontColor.extern;
+         else                                                              fontColor = positions.fontColor.open;
 
          if (!positions.dData[i][I_ADJUSTED_PROFIT])     sAdjustedProfit = "";
          else                                            sAdjustedProfit = StringConcatenate(" (", DoubleToStr(positions.dData[i][I_ADJUSTED_PROFIT], 2), ")");
@@ -1385,9 +1382,9 @@ bool UpdatePositions() {
       }
    }
 
-   // Anzeige Remote-Positionsdaten
+   // Anzeige externe Positionsdaten
    if (mode.extern) {
-      fontColor = positions.fontColor.remote;
+      fontColor = positions.fontColor.open;
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
          if (lfxOrders.bCache[i][BC.isOpenPosition]) {
             line++;
@@ -1418,7 +1415,7 @@ bool UpdatePositions() {
  *
  * @return bool - success status
  */
-bool UpdateOrderCounter() {
+bool UpdateAccountOrderCounter() {
    static int   showLimit   =INT_MAX,   warnLimit=INT_MAX,    alertLimit=INT_MAX, maxOpenOrders;
    static color defaultColor=SlateGray, warnColor=DarkOrange, alertColor=Red;
 
@@ -1447,7 +1444,7 @@ bool UpdateOrderCounter() {
    int error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateOrderCounter(1)", error));
+   return(!catch("UpdateAccountOrderCounter(1)", error));
 }
 
 
@@ -1480,7 +1477,7 @@ bool UpdateAccountDisplay() {
  *
  * @return bool - success status
  */
-bool UpdateStopoutLevel() {
+bool UpdateAccountStopoutLevel() {
    if (!positions.analyzed) /*&&*/ if (!AnalyzePositions())
       return(false);
 
@@ -1488,7 +1485,7 @@ bool UpdateStopoutLevel() {
       ObjectDelete(label.stopoutLevel);
       int error = GetLastError();
       if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                   // on ObjectDrag or opened "Properties" dialog
-         return(!catch("UpdateStopoutLevel(1)", error));
+         return(!catch("UpdateAccountStopoutLevel(1)", error));
       return(true);
    }
 
@@ -1503,7 +1500,7 @@ bool UpdateStopoutLevel() {
    if (error || !Bid || !tickSize || !tickValue) {
       if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
-      return(!catch("UpdateStopoutLevel(2)", error));
+      return(!catch("UpdateAccountStopoutLevel(2)", error));
    }
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
@@ -1523,7 +1520,7 @@ bool UpdateStopoutLevel() {
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateStopoutLevel(3)", error));
+   return(!catch("UpdateAccountStopoutLevel(3)", error));
 }
 
 
