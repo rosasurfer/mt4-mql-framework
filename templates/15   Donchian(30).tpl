@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=4
+scale=2
 graph=1
 fore=0
 grid=0
@@ -10006,7 +10006,7 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
+ZigZag.Periods=30
 ZigZag.Type=Line | Semaphores*
 ZigZag.Width=0
 ZigZag.Color=16711680
@@ -10022,26 +10022,6 @@ weight_4=0
 weight_5=0
 color_6=4294967295
 color_7=4294967295
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=NonLagMA
-flags=339
-window_num=0
-<inputs>
-WaceCycle.Periods=20
-MA.ReversalFilter=0.7
-Draw.Width=3
-Color.UpTrend=16711935
-Color.DownTrend=65535
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
 period_flags=0
 show_data=1
 </indicator>
