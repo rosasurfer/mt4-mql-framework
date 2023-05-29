@@ -10033,7 +10033,7 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
-WaceCycle.Periods=25
+WaveCycle.Periods=25
 MA.ReversalFilter=0.7
 Draw.Width=3
 Color.UpTrend=16711935
