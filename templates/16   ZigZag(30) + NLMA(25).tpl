@@ -10027,7 +10027,7 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=30
-ZigZag.Type=Line | Semaphores*
+ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
