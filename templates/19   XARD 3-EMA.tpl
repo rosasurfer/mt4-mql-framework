@@ -37,7 +37,9 @@ askline_color=9639167
 stops_color=17919
 
 <window>
-height=300
+; resulting height = ratio height-top-wnd/height-btm-wnd
+height=5000
+fixed_height=0
 
 <indicator>
 name=main
@@ -10280,7 +10282,7 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=30
-ZigZag.Type=Line | Semaphores*
+ZigZag.Type=Line* | Semaphores
 ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
@@ -10298,6 +10300,27 @@ color_7=4294967295
 period_flags=0
 show_data=1
 </indicator>
+</window>
 
+
+<window>
+height=1
+fixed_height=0
+<indicator>
+name=Custom Indicator
+<expert>
+name=MACD
+flags=339
+window_num=1
+<inputs>
+FastMA.Periods=36
+FastMA.Method=SMA | LWMA | EMA* | ALMA
+SlowMA.Periods=144
+SlowMA.Method=SMA | LWMA | EMA* | ALMA
+</inputs>
+</expert>
+period_flags=0
+show_data=1
+</indicator>
 </window>
 </chart>
