@@ -1,7 +1,13 @@
 /**
- * Bracketeer
+ * Brackets
  *
- * Marks breakout ranges for bracketing and displays bracket details.
+ * Marks breakout ranges and displays bracket details.
+ *
+ * TODDO:
+ *  - visualization
+ *     line length: 60 minutes up to 2 minutes before High/Low
+ *     line width:  3
+ *     color:       Magenta
  */
 #include <stddefines.mqh>
 int   __InitFlags[];
