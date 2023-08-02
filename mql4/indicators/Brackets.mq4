@@ -16,10 +16,7 @@ int __DeinitFlags[];
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string BracketWindow    = "09:00-10:00";    // 00:00-00:00
-extern string BracketInterval  = "D1";             // D1 | ECB | FOMC
-extern int    StopLevelPercent = 67;               // stop level in percent of the bracket range (in marker description)
 extern int    NumberOfBrackets = 1;
-extern bool   SkipHolidays     = false;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
