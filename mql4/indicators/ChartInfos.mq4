@@ -3404,7 +3404,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(totalPosition, true);                         // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.dData[size][I_BREAKEVEN_PRICE] = RoundCeil(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pip, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pip, Digits);
       return(!catch("StorePosition(5)"));
    }
 
@@ -3467,7 +3467,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0)
-         positions.dData[size][I_BREAKEVEN_PRICE] = RoundFloor((fullProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
+         positions.dData[size][I_BREAKEVEN_PRICE] = NormalizeDouble((fullProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
       return(!catch("StorePosition(7)"));
    }
 
