@@ -10006,7 +10006,7 @@ name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=36
+ZigZag.Periods=10
 ZigZag.Type=Line* | Semaphores
 ZigZag.Width=2
 ZigZag.Color=16711680
