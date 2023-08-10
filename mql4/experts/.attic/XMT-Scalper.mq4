@@ -448,7 +448,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
-   SetLogfile(GetLogFilename());                            // open the logfile (flushes the buffer)
+   if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));    // open the logfile (flushes the buffer)
 
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
@@ -462,12 +462,12 @@ int afterInit() {
 
    if (!InitMetrics()) return(last_error);
 
-   if (__isTesting) {                                       // read test configuration
+   if (__isTesting) {                                                   // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
-   return(catch("afterInit(1)"));
+   return(catch("afterInit(2)"));
 }
 
 
