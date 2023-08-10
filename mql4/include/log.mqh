@@ -649,7 +649,7 @@ int log2Terminal(string message, int error, int level) {
 
 /**
  * Configure a custom logfile for the program. During init cycles an open file is auto-closed and needs to be reopened after
- * the cycle using this function.
+ * the cycle by using this function.
  *
  * - If the passed value is empty the custom logfile is disabled and an open file is closed.
  * - If the passed value is non-empty the custom logfile is enabled and opened. If the flag INIT_BUFFERED_LOG of the program
