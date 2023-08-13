@@ -1587,7 +1587,7 @@ bool UpdateStopoutLevel() {
  *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured history
  * @return bool - success status
  */
-bool AnalyzePositions(int flags = NULL) {                                        // reparse configuration on chart command flags
+ bool AnalyzePositions(int flags = NULL) {                                        // reparse configuration on chart command flags
    if (flags & (F_LOG_TICKETS|F_SHOW_CUSTOM_POSITIONS) != 0) positions.analyzed = false;
    if (mode.extern)        positions.analyzed = true;
    if (positions.analyzed) return(true);
@@ -2292,7 +2292,6 @@ bool CustomPositions.ReadConfig() {
       ArrayResize(positions.config, 1);                              // initialisiert Term mit NULL
       ArrayPushString(positions.config.comments, "");
    }
-
    return(!catch("CustomPositions.ReadConfig(41)"));
 }
 
