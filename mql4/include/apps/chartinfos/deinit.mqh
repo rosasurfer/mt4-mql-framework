@@ -4,9 +4,9 @@
  * @return int - error status
  */
 int onDeinit() {
-   // ggf. Offline-Ticker deinstallieren
-   if (tickTimerId > NULL) {
-      int id = tickTimerId; tickTimerId = NULL;
+   // uninstall a running chart ticker
+   if (__tickTimerId > NULL) {
+      int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
 

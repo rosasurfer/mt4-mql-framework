@@ -185,7 +185,6 @@ double   combinedTrend   [];                                   // combined known
 int      zigzagDrawType;
 int      crossingDrawType;
 int      maxValues;
-int      tickTimerId;
 double   tickSize;
 datetime lastTick;
 int      lastSound;
@@ -315,11 +314,10 @@ int onInit() {
    // Indicator events like reversals occur "on tick", not on "bar open" or "bar close". We need a chart ticker to prevent
    // invalid signals caused by ticks during data pumping.
    if (!__isTesting) {
-      int millis  = 2000;                                         // a virtual tick every 2 seconds
-      int hWnd    = __ExecutionContext[EC.hChart];
-      int timerId = SetupTickTimer(hWnd, millis, NULL);
-      if (!timerId) return(catch("onInit(12)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
-      tickTimerId = timerId;
+      int hWnd = __ExecutionContext[EC.hChart];
+      int millis = 2000;                                         // a virtual tick every 2 seconds
+      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__tickTimerId) return(catch("onInit(12)->SetupTickTimer() failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(13)"));
 }
@@ -334,8 +332,8 @@ int onDeinit() {
    StoreStatus();
 
    // release the chart ticker
-   if (tickTimerId > NULL) {
-      int id = tickTimerId; tickTimerId = NULL;
+   if (__tickTimerId > NULL) {
+      int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
