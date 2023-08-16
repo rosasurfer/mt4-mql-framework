@@ -23,7 +23,6 @@ int __DeinitFlags[];
 
 extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // or shorter: "tl | tr | bl | br"
 extern string Track.Orders    = "on | off | auto*";                                    // whether to signal position open/close events
-extern bool   Offline.Ticker  = true;                                                  // whether to enable self-ticking offline charts
 extern string ___a__________________________;
 
 extern string Signal.Sound    = "on | off | auto*";
@@ -184,9 +183,6 @@ int     positions.fontSize          = 8;
 color   positions.fontColor.open    = Blue;
 color   positions.fontColor.virtual = Green;
 color   positions.fontColor.history = C'128,128,0';
-
-// other
-int     tickTimerId;                                              // ID eines ggf. installierten Offline-Tickers
 
 // order tracking
 #define TI_TICKET          0                                      // order tracker indexes
@@ -1341,7 +1337,7 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="", labelProfitMarker="", labelLossMarker="";
+   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
    color  fontColor;
    int    line;
 
@@ -1358,9 +1354,6 @@ bool UpdatePositions() {
 
          if (positions.iData[i][I_COMMENT_INDEX] == -1) sComment = " ";
          else                                           sComment = positions.config.comments[positions.iData[i][I_COMMENT_INDEX]];
-
-         labelProfitMarker = StringConcatenate(label.customPosition, ".line", line, "_pm");
-         labelLossMarker   = StringConcatenate(label.customPosition, ".line", line, "_lm");
 
          // history only
          if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
@@ -1399,24 +1392,6 @@ bool UpdatePositions() {
                   if (!positions.dData[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
                   else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
-
-               // update used PL markers
-               if (positions.dData[i][I_PROFIT_MARKER_PRICE] != NULL) {
-                  ObjectSet    (labelProfitMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-                  ObjectSet    (labelProfitMarker, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-                  ObjectSet    (labelProfitMarker, OBJPROP_COLOR,      DodgerBlue);
-                  ObjectSet    (labelProfitMarker, OBJPROP_BACK,       false);
-                  ObjectSet    (labelProfitMarker, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
-                  ObjectSetText(labelProfitMarker, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_LEVEL], "+.+") +"%");
-               }
-               if (positions.dData[i][I_LOSS_MARKER_PRICE] != NULL) {
-                  ObjectSet    (labelLossMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-                  ObjectSet    (labelLossMarker, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-                  ObjectSet    (labelLossMarker, OBJPROP_COLOR,      OrangeRed);
-                  ObjectSet    (labelLossMarker, OBJPROP_BACK,       false);
-                  ObjectSet    (labelLossMarker, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
-                  ObjectSetText(labelLossMarker, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_LEVEL], "+.+") +"%");
-               }
             }
 
             // hedged and not-hedged
@@ -1427,9 +1402,32 @@ bool UpdatePositions() {
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
 
-         // hide unused PL markers
-         if (!positions.dData[i][I_PROFIT_MARKER_PRICE]) ObjectSet(labelProfitMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-         if (!positions.dData[i][I_LOSS_MARKER_PRICE  ]) ObjectSet(labelLossMarker,   OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         // update PL markers
+         label = StringConcatenate(label.customPosition, ".line", line, "_pm");
+         if (!positions.dData[i][I_PROFIT_MARKER_PRICE]) {
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         }
+         else {
+            ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+            ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+            ObjectSet    (label, OBJPROP_COLOR,      DodgerBlue);
+            ObjectSet    (label, OBJPROP_BACK,       false);
+            ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
+            ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_LEVEL], "+.+") +"%");
+         }
+
+         label = StringConcatenate(label.customPosition, ".line", line, "_lm");
+         if (!positions.dData[i][I_LOSS_MARKER_PRICE]) {
+            ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         }
+         else {
+            ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+            ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+            ObjectSet    (label, OBJPROP_COLOR,      OrangeRed);
+            ObjectSet    (label, OBJPROP_BACK,       false);
+            ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
+            ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_LEVEL], "+.+") +"%");
+         }
       }
    }
 
@@ -3620,6 +3618,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             positions.dData[size][I_LOSS_MARKER_LEVEL] = lossMarkerLevel;
          }
       }
+
+      //debug("StorePosition(0.1)  pipValue(1 lot) = "+ PipValue(1, true));
       return(!catch("StorePosition(7)"));
    }
 
@@ -4574,7 +4574,6 @@ double GetADR() {
 string InputsToStr() {
    return(StringConcatenate("UnitSize.Corner=", DoubleQuoteStr(UnitSize.Corner), ";", NL,
                             "Track.Orders=",    DoubleQuoteStr(Track.Orders),    ";", NL,
-                            "Offline.Ticker=",  BoolToStr(Offline.Ticker),       ";", NL,
                             "Signal.Sound=",    DoubleQuoteStr(Signal.Sound),    ";", NL,
                             "Signal.Mail=",     DoubleQuoteStr(Signal.Mail),     ";", NL,
                             "Signal.SMS=",      DoubleQuoteStr(Signal.SMS),      ";")
