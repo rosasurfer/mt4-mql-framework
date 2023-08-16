@@ -1341,7 +1341,7 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
+   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="", labelProfitMarker="", labelLossMarker="";
    color  fontColor;
    int    line;
 
@@ -1358,6 +1358,9 @@ bool UpdatePositions() {
 
          if (positions.iData[i][I_COMMENT_INDEX] == -1) sComment = " ";
          else                                           sComment = positions.config.comments[positions.iData[i][I_COMMENT_INDEX]];
+
+         labelProfitMarker = StringConcatenate(label.customPosition, ".line", line, "_pm");
+         labelLossMarker   = StringConcatenate(label.customPosition, ".line", line, "_lm");
 
          // history only
          if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
@@ -1397,31 +1400,22 @@ bool UpdatePositions() {
                   else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
 
-               // update PL markers
-               label = StringConcatenate(label.customPosition, ".line", line, "_pm");
+               // update used PL markers
                if (positions.dData[i][I_PROFIT_MARKER_PRICE] != NULL) {
-                  ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-                  ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-                  ObjectSet    (label, OBJPROP_COLOR,      DodgerBlue);
-                  ObjectSet    (label, OBJPROP_BACK,       false);
-                  ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
-                  ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_LEVEL], "+.+") +"%");
+                  ObjectSet    (labelProfitMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+                  ObjectSet    (labelProfitMarker, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+                  ObjectSet    (labelProfitMarker, OBJPROP_COLOR,      DodgerBlue);
+                  ObjectSet    (labelProfitMarker, OBJPROP_BACK,       false);
+                  ObjectSet    (labelProfitMarker, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
+                  ObjectSetText(labelProfitMarker, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_LEVEL], "+.+") +"%");
                }
-               else {
-                  ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-               }
-
-               label = StringConcatenate(label.customPosition, ".line", line, "_lm");
                if (positions.dData[i][I_LOSS_MARKER_PRICE] != NULL) {
-                  ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
-                  ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-                  ObjectSet    (label, OBJPROP_COLOR,      OrangeRed);
-                  ObjectSet    (label, OBJPROP_BACK,       false);
-                  ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
-                  ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_LEVEL], "+.+") +"%");
-               }
-               else {
-                  ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+                  ObjectSet    (labelLossMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
+                  ObjectSet    (labelLossMarker, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
+                  ObjectSet    (labelLossMarker, OBJPROP_COLOR,      OrangeRed);
+                  ObjectSet    (labelLossMarker, OBJPROP_BACK,       false);
+                  ObjectSet    (labelLossMarker, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
+                  ObjectSetText(labelLossMarker, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" @ "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_LEVEL], "+.+") +"%");
                }
             }
 
@@ -1432,6 +1426,10 @@ bool UpdatePositions() {
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
          }
+
+         // hide unused PL markers
+         if (!positions.dData[i][I_PROFIT_MARKER_PRICE]) ObjectSet(labelProfitMarker, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
+         if (!positions.dData[i][I_LOSS_MARKER_PRICE  ]) ObjectSet(labelLossMarker,   OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
       }
    }
 
