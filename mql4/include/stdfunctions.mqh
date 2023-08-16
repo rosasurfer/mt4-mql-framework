@@ -768,7 +768,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
    if (isConstant)
       return(Pip/tickSize * staticTickValue * lots);
 
-   // dynamic but correct value
+   // dynamic and correct value
    if (isCorrect) {
       double dynamicTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       error = GetLastError();
@@ -831,7 +831,7 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
 
 /**
- * Return a symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
+ * Return any symbol's pip value for the specified lot amount. Errors are returned and optionally logged.
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  double lots              - lot amount
@@ -2733,7 +2733,7 @@ int SumInts(int values[]) {
  * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
  *
  * @param  _In_  string symbol            - symbol
- * @param  _In_  int    type              - MarketInfo() data identifier
+ * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
  *                                          if specified errors are logged with level LOG_NOTICE
@@ -2741,13 +2741,13 @@ int SumInts(int values[]) {
  *
  * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */
-double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
-   double value = MarketInfo(symbol, type);
+double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
+   double value = MarketInfo(symbol, mode);
 
    error = GetLastError();
 
    if (!error) {
-      switch (type) {
+      switch (mode) {
          case MODE_TICKSIZE:
          case MODE_TICKVALUE:
             if (!value) error = ERR_INVALID_MARKET_DATA;
@@ -2756,7 +2756,7 @@ double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
    }
    if (!error) return(value);
 
-   if (caller!="" && IsLogNotice()) logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoTypeToStr(type) +") => "+ NumberToStr(value, ".1+"), error);
+   if (caller!="" && IsLogNotice()) logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoModeToStr(mode) +") => "+ NumberToStr(value, ".1+"), error);
    return(NULL);
 }
 
@@ -2764,12 +2764,12 @@ double MarketInfoEx(string symbol, int type, int &error, string caller = "") {
 /**
  * Return a human-readable representation of a MarketInfo data identifier.
  *
- * @param  int type - MarketInfo() data type
+ * @param  int mode - MarketInfo() data identifier
  *
  * @return string
  */
-string MarketInfoTypeToStr(int type) {
-   switch (type) {
+string MarketInfoModeToStr(int mode) {
+   switch (mode) {
       case MODE_LOW              : return("MODE_LOW");
       case MODE_HIGH             : return("MODE_HIGH");
       case MODE_TIME             : return("MODE_TIME");
@@ -2799,7 +2799,7 @@ string MarketInfoTypeToStr(int type) {
       case MODE_MARGINREQUIRED   : return("MODE_MARGINREQUIRED");
       case MODE_FREEZELEVEL      : return("MODE_FREEZELEVEL");
    }
-   return(""+ type);
+   return(""+ mode);
 }
 
 
@@ -7515,7 +7515,7 @@ void __DummyCalls() {
    MaMethodDescription(NULL);
    MaMethodToStr(NULL);
    MarketInfoEx(NULL, NULL, iNull);
-   MarketInfoTypeToStr(NULL);
+   MarketInfoModeToStr(NULL);
    MarketWatch.Symbols();
    MathDiv(NULL, NULL);
    MathModFix(NULL, NULL);
