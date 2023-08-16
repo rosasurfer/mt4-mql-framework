@@ -1966,8 +1966,8 @@ int SearchLfxTicket(int ticket) {
  * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
  * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT    , 12.34           , ...             , ...  , ...  ] |
  * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                           | [TERM_EQUITY        , 123.00          , ...             , ...  , ...  ] |
- * | PT=3%                                          | draw a profit marker at PL of the specified size                      | [TERM_PROFIT_MARKER , 3.0             , ...             , ...  , ...  ] |
- * | LT=-5%                                         | draw a loss marker at PL of the specified size                        | [TERM_LOSS_MARKER   , -5.0            , ...             , ...  , ...  ] |
+ * | PM=3%                                          | draw a profit marker at PL of the specified size                      | [TERM_PROFIT_MARKER , 3.0             , ...             , ...  , ...  ] |
+ * | LM=-5%                                         | draw a loss marker at PL of the specified size                        | [TERM_LOSS_MARKER   , -5.0            , ...             , ...  , ...  ] |
  * +------------------------------------------------+-----------------------------------------------------------------------+-------------------------------------------------------------------------+
  * | text after a semikolon ";" aka .ini comment    | displayed as position description                                     | string: stored in positions.config.comments[]                           |
  * | text after a 2nd semikolon ";;"                | comment (ignored)                                                     |                                                                         |
@@ -2122,37 +2122,37 @@ bool CustomPositions.ReadConfig() {
                   containsEquityValue = true;
                }
 
-               else if (StrStartsWith(values[n], "PT")) {            // profit target: PT=3%
+               else if (StrStartsWith(values[n], "PM")) {            // profit marker: PM=3%
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(11)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrEndsWith(sValue, "%"))                     return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing % at end of PT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrEndsWith(sValue, "%"))                     return(!catch("CustomPositions.ReadConfig(12)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing % at end of PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(13)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in PM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_PROFIT_MARKER;
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 <= -100)                            return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PT term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 <= -100)                            return(!catch("CustomPositions.ReadConfig(14)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in PM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
-                  if (containsProfitMarker)                          return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PT terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (containsProfitMarker)                          return(!catch("CustomPositions.ReadConfig(15)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple PM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   containsProfitMarker = true;
                }
 
-               else if (StrStartsWith(values[n], "LT")) {            // loss target: LT=-5%
+               else if (StrStartsWith(values[n], "LM")) {            // loss marker: LM=-5%
                   sValue = StrTrim(StrSubstr(values[n], 2));
-                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrStartsWith(sValue, "="))                   return(!catch("CustomPositions.ReadConfig(16)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing = in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrSubstr(sValue, 1));
-                  if (!StrEndsWith(sValue, "%"))                     return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing % at end of LT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrEndsWith(sValue, "%"))                     return(!catch("CustomPositions.ReadConfig(17)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (missing % at end of LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   sValue = StrTrim(StrLeft(sValue, -1));
-                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LT term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (!StrIsNumeric(sValue))                         return(!catch("CustomPositions.ReadConfig(18)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (non-numeric value in LM term \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termType   = TERM_LOSS_MARKER;
                   termValue1 = StrToDouble(sValue);
-                  if (termValue1 <= -100)                            return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LT term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (termValue1 <= -100)                            return(!catch("CustomPositions.ReadConfig(19)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (illegal value in LM term \""+ values[n] +"\", must be > -100) in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   termValue2 = NULL;
                   termCache1 = NULL;
                   termCache2 = NULL;
-                  if (containsLossMarker)                            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LT terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
+                  if (containsLossMarker)                            return(!catch("CustomPositions.ReadConfig(20)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (multiple LM terms \""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
                   containsLossMarker = true;
                }
 
