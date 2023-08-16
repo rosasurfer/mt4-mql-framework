@@ -1249,7 +1249,7 @@ bool UpdatePositions() {
       string sCurrentLeverage = "";
       if (mm.unleveragedLots != 0) sCurrentLeverage = StringConcatenate("L", NumberToStr(MathAbs(totalPosition)/mm.unleveragedLots, ",'.1R"), "    ");
 
-      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(totalPosition, "+, .+"), " lot");
+      sCurrentPosition = StringConcatenate("Position:    ", sRisk, sCurrentUnits, sCurrentLeverage, NumberToStr(totalPosition, "+,'.+"), " lot");
    }
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
