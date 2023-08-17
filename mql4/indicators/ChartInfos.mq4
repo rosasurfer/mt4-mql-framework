@@ -1543,13 +1543,12 @@ bool UpdateStopoutLevel() {
    double usedMargin = AccountMargin();
    int    soMode     = AccountStopoutMode();
    double soEquity   = AccountStopoutLevel();  if (soMode != MSM_ABSOLUTE) soEquity = usedMargin * soEquity/100;
-   double tickSize   = MarketInfo(Symbol(), MODE_TICKSIZE );
-   double tickValue  = MarketInfo(Symbol(), MODE_TICKVALUE) * MathAbs(totalPosition);  // TickValue der aktuellen Position
-   error = GetLastError();
-   if (error || !Bid || !tickSize || !tickValue) {
-      if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
+   double tickSize   = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "UpdateStopoutLevel(2)");
+   double tickValue  = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "UpdateStopoutLevel(3)")) * MathAbs(totalPosition);  // TickValue der aktuellen Position
+   if (!Bid || !tickSize || !tickValue) {
+      if (!Bid || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));                             // Symbol noch nicht subscribed (possible on start, change of account/template, offline chart, MarketWatch -> Hide all)
-      return(!catch("UpdateStopoutLevel(2)", error));
+      return(!catch("UpdateStopoutLevel(4)", error));
    }
    double soDistance = (equity - soEquity)/tickValue * tickSize;
    double soPrice;
@@ -1569,7 +1568,7 @@ bool UpdateStopoutLevel() {
    error = GetLastError();
    if (!error || error==ERR_OBJECT_DOES_NOT_EXIST)                                     // on ObjectDrag or opened "Properties" dialog
       return(true);
-   return(!catch("UpdateStopoutLevel(3)", error));
+   return(!catch("UpdateStopoutLevel(5)", error));
 }
 
 
@@ -1854,13 +1853,13 @@ bool CalculateUnitSize() {
    mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
    // recalculate lot value and unleveraged unitsize
-   double tickSize  = MarketInfo(Symbol(), MODE_TICKSIZE);
-   double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   int error = GetLastError();
-   if (error || !Close[0] || !tickSize || !tickValue || !mm.equity) {   // may happen on terminal start, on account change, on template change or in offline charts
+   int error;
+   double tickSize  = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "CalculateUnitSize(1)");
+   double tickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "CalculateUnitSize(2)");
+   if (!Close[0] || !tickSize || !tickValue || !mm.equity) {            // may happen on terminal start, on account change, on template change or in offline charts
       if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
-      return(!catch("CalculateUnitSize(1)", error));
+      return(!catch("CalculateUnitSize(3)", error));
    }
    mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
@@ -1916,7 +1915,7 @@ bool CalculateUnitSize() {
    }
 
    mm.done = true;
-   return(!catch("CalculateUnitSize(2)"));
+   return(!catch("CalculateUnitSize(4)"));
 }
 
 
