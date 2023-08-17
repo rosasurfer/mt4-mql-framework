@@ -952,7 +952,7 @@ bool IsEntrySignal(int &signal) {
    int error = GetLastError();
    if (!high || error) {
       if (error == ERS_HISTORY_UPDATE) SetLastError(error);
-      else if (!error)                 catch("IsEntrySignal(1)  "+ sequence.name +" invalid bar high: 0", ERR_INVALID_MARKET_DATA);
+      else if (!error)                 catch("IsEntrySignal(1)  "+ sequence.name +" invalid bar high: 0", ERR_SYMBOL_NOT_AVAILABLE);
       else                             catch("IsEntrySignal(2)  "+ sequence.name, error);
       return(false);
    }
