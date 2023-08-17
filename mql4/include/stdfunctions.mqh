@@ -2732,15 +2732,15 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
       string sValue = GetAccountConfigString(section, key);
       if (!StringLen(sValue)) {
          error = ERR_INVALID_CONFIG_VALUE;
-         return(!catch("MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
+         return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
       }
       if (mode == MODE_TICKVALUE) {
          if (StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
-            return(MarketInfoEx("US2000", mode, error, "MarketInfoEx(2)"));
+            return(MarketInfoEx("US2000", mode, error, ifString(StringLen(caller), caller +"->MarketInfoEx(2)", "")));
          }
       }
       error = ERR_NOT_IMPLEMENTED;
-      return(!catch("MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
+      return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
    }
 
    // no custom override
@@ -2751,13 +2751,13 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
       switch (mode) {
          case MODE_TICKSIZE:
          case MODE_TICKVALUE:
-            if (!dValue) error = ERR_INVALID_MARKET_DATA;
+            if (!dValue) error = ERR_SYMBOL_NOT_AVAILABLE;
             break;
       }
    }
    if (!error) return(dValue);
 
-   if (StringLen(caller) && IsLogInfo()) logInfo(caller +"->MarketInfoEx(\""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
+   if (StringLen(caller) && IsLogInfo()) logInfo(caller +"->MarketInfoEx(4: \""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
    return(NULL);
 }
 
@@ -6542,7 +6542,7 @@ double NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT) {
    double lotstep = MarketInfo(symbol, MODE_LOTSTEP);
    if (!lotstep) {
       int error = GetLastError();
-      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_INVALID_MARKET_DATA))));
+      return(_EMPTY_VALUE(catch("NormalizeLots(1)  MarketInfo("+ symbol +", MODE_LOTSTEP) not available: 0", intOr(error, ERR_SYMBOL_NOT_AVAILABLE))));
    }
 
    switch (mode) {

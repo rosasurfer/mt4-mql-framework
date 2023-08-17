@@ -1854,12 +1854,12 @@ bool CalculateUnitSize() {
 
    // recalculate lot value and unleveraged unitsize
    int error;
-   double tickSize  = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "CalculateUnitSize(1)");
-   double tickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "CalculateUnitSize(2)");
-   if (!Close[0] || !tickSize || !tickValue || !mm.equity) {            // may happen on terminal start, on account change, on template change or in offline charts
+   double tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error);
+   double tickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error);    // don't log ERR_SYMBOL_NOT_AVAILABLE
+   if (!Close[0] || !tickSize || !tickValue || !mm.equity) {            // may happen on terminal start, on account/template change, in offline charts
       if (!error || error==ERR_SYMBOL_NOT_AVAILABLE)
          return(SetLastError(ERS_TERMINAL_NOT_YET_READY));
-      return(!catch("CalculateUnitSize(3)", error));
+      return(!catch("CalculateUnitSize(1)", error));
    }
    mm.lotValue        = Close[0]/tickSize * tickValue;                  // value of 1 lot in account currency
    mm.unleveragedLots = mm.equity/mm.lotValue;                          // unleveraged unitsize
@@ -1915,7 +1915,7 @@ bool CalculateUnitSize() {
    }
 
    mm.done = true;
-   return(!catch("CalculateUnitSize(4)"));
+   return(!catch("CalculateUnitSize(2)"));
 }
 
 
