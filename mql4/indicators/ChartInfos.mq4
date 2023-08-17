@@ -1838,7 +1838,9 @@ bool CustomPositions.LogTickets(int tickets[], int commentIndex, int flags = NUL
 bool CalculateUnitSize() {
    if (mode.extern || mm.done) return(true);                         // skip for external accounts
 
-   // @see declaration of global vars mm.* for their descriptions
+   //debug("CalculateUnitSize(0.1)  recalculating...");
+
+   // see declaration of global vars mm.* for their descriptions
    mm.lotValue                = 0;
    mm.unleveragedLots         = 0;
    mm.leveragedLots           = 0;
@@ -3601,6 +3603,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_ADJUSTED_PROFIT    ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_FULL_PROFIT_ABS    ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
       positions.dData[size][I_FULL_PROFIT_PCT    ] = MathDiv(fullProfit, equity100Pct) * 100;
+
+      //debug("StorePosition(0.1)  pipValue="+ PipValue(1, true));
 
       pipValue = PipValue(-totalPosition, true);                        // suppress errors as the value may not yet be available
       if (pipValue != 0) {
