@@ -725,66 +725,53 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
 
    static double tickSize;
    if (!tickSize) {
-      tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);                // schlägt fehl, wenn kein Tick vorhanden ist
-      int error = GetLastError();                                    // Symbol (noch) nicht subscribed (Start, Account-/Templatewechsel), kann noch "auftauchen"
-      if (IsError(error)) {                                          // ERR_SYMBOL_NOT_AVAILABLE: synthetisches Symbol im Offline-Chart
-         if (!suppressErrors) catch("PipValue(1)", error);
-         return(0);
-      }
-      if (!tickSize) {
-         if (!suppressErrors) catch("PipValue(2)  illegal MarketInfo(MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA);
+      int error;
+      tickSize = MarketInfoEx(Symbol(), MODE_TICKSIZE, error, "PipValue(1)"); // fails if there's no tick yet (it may arrive later), e.g.
+      if (error != NO_ERROR) {                                                // symbol not yet subscribed, terminal start, account/template change
+         if (!suppressErrors) catch("PipValue(2)", error);                    // ERR_SYMBOL_NOT_AVAILABLE: synthetic symbol in offline chart
          return(0);
       }
    }
 
    static double staticTickValue;
-   static bool   isResolved, isConstant, isCorrect, isCalculatable, doWarn;
+   static bool flagsResolved, isConstant, isApproximation, isCalculatable, giveTesterWarning;
 
-   if (!isResolved) {
-      if (StrEndsWith(Symbol(), AccountCurrency())) {                // TickValue ist constant and kann gecacht werden
-         staticTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-         error = GetLastError();
+   if (!flagsResolved) {
+      if (StrEndsWith(Symbol(), AccountCurrency())) {                         // TickValue is constant and can be cached
+         staticTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(3)");
          if (error != NO_ERROR) {
-            if (!suppressErrors) catch("PipValue(3)", error);
-            return(0);
-         }
-         if (!staticTickValue) {
-            if (!suppressErrors) catch("PipValue(4)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
+            if (!suppressErrors) catch("PipValue(4)", error);
             return(0);
          }
          isConstant = true;
-         isCorrect = true;
+         isApproximation = false;
       }
       else {
-         isConstant = false;                                         // TickValue ist dynamisch
-         isCorrect = !__isTesting;                                   // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
+         isConstant = false;                                                  // TickValue is dynamic
+         isApproximation = __isTesting;                                       // MarketInfo() gibt im Tester statt des tatsächlichen den Online-Wert zurück (nur annähernd genau).
       }
-      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());   // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
-      doWarn = (!isCorrect && !isCalculatable);                      // muß nach einmaliger Warnung der Online-Wert verwendet werden.
-      isResolved = true;
+      isCalculatable = StrStartsWith(Symbol(), AccountCurrency());            // Der tatsächliche Wert kann u.U. berechnet werden. Ist das nicht möglich,
+      giveTesterWarning = (isApproximation && !isCalculatable);               // muß im Tester nach einmaliger Warnung der Online-Wert verwendet werden.
+      flagsResolved = true;
    }
 
    // constant value
-   if (isConstant)
+   if (isConstant) {
       return(Pip/tickSize * staticTickValue * lots);
+   }
 
-   // dynamic and correct value
-   if (isCorrect) {
-      double dynamicTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-      error = GetLastError();
+   // dynamic and exact value
+   if (!isApproximation) {
+      double dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(5)");
       if (error != NO_ERROR) {
-         if (!suppressErrors) catch("PipValue(5)", error);
-         return(0);
-      }
-      if (!dynamicTickValue) {
-         if (!suppressErrors) catch("PipValue(6)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
+         if (!suppressErrors) catch("PipValue(6)", error);
          return(0);
       }
       return(Pip/tickSize * dynamicTickValue * lots);
    }
 
-   // dynamic and incorrect value
-   if (isCalculatable) {                                             // TickValue can be calculated
+   // dynamic and approximated value
+   if (isCalculatable) {
       if      (Symbol() == "EURAUD") dynamicTickValue =   1/Close[0];
       else if (Symbol() == "EURCAD") dynamicTickValue =   1/Close[0];
       else if (Symbol() == "EURCHF") dynamicTickValue =   1/Close[0];
@@ -803,28 +790,21 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
       else if (Symbol() == "GBPJPY") dynamicTickValue = 100/Close[0];
       else if (Symbol() == "USDJPY") dynamicTickValue = 100/Close[0];
       else                           return(!catch("PipValue(7)  calculation of TickValue for "+ Symbol() +" in tester not yet implemented", ERR_NOT_IMPLEMENTED));
-      return(Pip/tickSize * dynamicTickValue * lots);                // return the calculated value
+      return(Pip/tickSize * dynamicTickValue * lots);                         // return the calculated value
    }
 
-   // dynamic and incorrect value: we must live with the approximated online value
-   dynamicTickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
-   error = GetLastError();
+   // dynamic and approximated value: warn if in tester and continue with the approximation
+   dynamicTickValue = MarketInfoEx(Symbol(), MODE_TICKVALUE, error, "PipValue(8)");
    if (error != NO_ERROR) {
-      if (!suppressErrors) catch("PipValue(8)", error);
+      if (!suppressErrors) catch("PipValue(9)", error);
       return(0);
    }
-   if (!dynamicTickValue) {
-      if (!suppressErrors) catch("PipValue(9)  illegal MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA);
-      return(0);
-   }
-
-   // emit a single warning at test start
-   if (doWarn) {
+   if (giveTesterWarning) {
       string message = "Exact tickvalue not available."+ NL
                       +"The test will use the current online tickvalue ("+ dynamicTickValue +") which is an approximation. "
                       +"Test with another account currency if you need exact values.";
       logWarn("PipValue(10)  "+ message);
-      doWarn = false;
+      giveTesterWarning = false;
    }
    return(Pip/tickSize * dynamicTickValue * lots);
 }
@@ -837,13 +817,13 @@ double PipValue(double lots=1.0, bool suppressErrors=false) {
  * @param  _In_  double lots              - lot amount
  * @param  _Out_ int    &error            - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
- *                                          if specified errors are logged with level LOG_NOTICE
- *                                          if not specified errors are not logged (default)
+ *                                           if specified errors are logged with level LOG_NOTICE
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - pip value or NULL (0) in case of errors (check parameter 'error')
  */
 double PipValueEx(string symbol, double lots, int &error, string caller = "") {
-   if (caller != "") caller = StringConcatenate(caller, "->PipValueEx()");
+   if (caller != "") caller = StringConcatenate(caller, "->PipValueEx(1)");
 
    double tickSize  = MarketInfoEx(symbol, MODE_TICKSIZE,  error, caller); if (error != NO_ERROR) return(NULL);
    double tickValue = MarketInfoEx(symbol, MODE_TICKVALUE, error, caller); if (error != NO_ERROR) return(NULL);   // TODO: if (QuoteCurrency == AccountCurrency) { required-only-once }
@@ -2730,33 +2710,54 @@ int SumInts(int values[]) {
 
 
 /**
- * Replacement for the built-in function MarketInfo() with better error handling. Errors are returned and optionally logged.
+ * Replacement for the built-in function MarketInfo() with custom data overrides and better error handling.
+ * Errors are optionally logged and always returned.
  *
  * @param  _In_  string symbol            - symbol
  * @param  _In_  int    mode              - MarketInfo() data identifier
  * @param  _Out_ int    &error            - variable receiving the error status
  * @param  _In_  string caller [optional] - location identifier of the caller, controls error logging:
- *                                          if specified errors are logged with level LOG_NOTICE
- *                                          if not specified errors are not logged (default)
+ *                                           if specified errors are logged
+ *                                           if not specified errors are not logged (default)
  *
  * @return double - MarketInfo() data or NULL (0) in case of errors (check parameter 'error')
  */
 double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
-   double value = MarketInfo(symbol, mode);
+   string section = "MarketInfo";
+   string sMode   = MarketInfoModeToStr(mode);
+   string key     = symbol +","+ sMode;
+
+   // check for and return a custom override
+   if (IsAccountConfigKey(section, key)) {
+      string sValue = GetAccountConfigString(section, key);
+      if (!StringLen(sValue)) {
+         error = ERR_INVALID_CONFIG_VALUE;
+         return(!catch("MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
+      }
+      if (mode == MODE_TICKVALUE) {
+         if (StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
+            return(MarketInfoEx("US2000", mode, error, "MarketInfoEx(2)"));
+         }
+      }
+      error = ERR_NOT_IMPLEMENTED;
+      return(!catch("MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
+   }
+
+   // no custom override
+   double dValue = MarketInfo(symbol, mode);
 
    error = GetLastError();
-
    if (!error) {
       switch (mode) {
          case MODE_TICKSIZE:
          case MODE_TICKVALUE:
-            if (!value) error = ERR_INVALID_MARKET_DATA;
+            if (!dValue) error = ERR_INVALID_MARKET_DATA;
             break;
       }
    }
-   if (!error) return(value);
+   if (!error) return(dValue);
 
-   if (caller!="" && IsLogNotice()) logNotice(caller +"->MarketInfoEx(\""+ symbol +"\", "+ MarketInfoModeToStr(mode) +") => "+ NumberToStr(value, ".1+"), error);
+   if (StringLen(caller) && IsLogInfo()) logInfo(caller +"->MarketInfoEx(\""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
    return(NULL);
 }
 
