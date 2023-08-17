@@ -3603,7 +3603,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_FULL_PROFIT_ABS    ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
       positions.dData[size][I_FULL_PROFIT_PCT    ] = MathDiv(fullProfit, equity100Pct) * 100;
 
-      pipValue = PipValue(-totalPosition, true);                        // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
+      pipValue = PipValue(-totalPosition, true);                        // suppress errors as the value may not yet be available
       if (pipValue != 0) {
          positions.dData[size][I_BREAKEVEN_PRICE] = NormalizeDouble((fullProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
 
@@ -3618,8 +3618,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             positions.dData[size][I_LOSS_MARKER_LEVEL] = lossMarkerLevel;
          }
       }
-
-      //debug("StorePosition(0.1)  pipValue(1 lot) = "+ PipValue(1, true));
       return(!catch("StorePosition(7)"));
    }
 
