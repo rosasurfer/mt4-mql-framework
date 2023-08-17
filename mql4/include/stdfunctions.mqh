@@ -2727,20 +2727,22 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    string sMode   = MarketInfoModeToStr(mode);
    string key     = symbol +","+ sMode;
 
-   // check for and return a custom override
-   if (IsAccountConfigKey(section, key)) {
-      string sValue = GetAccountConfigString(section, key);
-      if (!StringLen(sValue)) {
-         error = ERR_INVALID_CONFIG_VALUE;
-         return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
-      }
-      if (mode == MODE_TICKVALUE) {
-         if (StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
-            return(MarketInfoEx("US2000", mode, error, ifString(StringLen(caller), caller +"->MarketInfoEx(2)", "")));
+   if (key == "VIX_U3,MODE_TICKVALUE") {                 // TODO: hard-code cases to minimize expensive logic
+      // check for and return a custom override
+      if (IsAccountConfigKey(section, key)) {
+         string sValue = GetAccountConfigString(section, key);
+         if (!StringLen(sValue)) {
+            error = ERR_INVALID_CONFIG_VALUE;
+            return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(1)  invalid config value ["+ section +"] "+ key +" = (empty)", error));
          }
+         if (mode == MODE_TICKVALUE) {
+            if (StrCompareI(symbol, "VIX_Q3") || StrCompareI(symbol, "VIX_U3")) {
+               return(MarketInfoEx("US2000", mode, error, ifString(StringLen(caller), caller +"->MarketInfoEx(2)", "")));
+            }
+         }
+         error = ERR_NOT_IMPLEMENTED;
+         return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
       }
-      error = ERR_NOT_IMPLEMENTED;
-      return(!catch(ifString(StringLen(caller), caller +"->", "") +"MarketInfoEx(3)  custom override for \""+ key +"\" not implemented", error));
    }
 
    // no custom override
@@ -2757,7 +2759,7 @@ double MarketInfoEx(string symbol, int mode, int &error, string caller = "") {
    }
    if (!error) return(dValue);
 
-   if (StringLen(caller) && IsLogInfo()) logInfo(caller +"->MarketInfoEx(4: \""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
+   if (caller != "") /*&&*/ if (IsLogInfo()) logInfo(caller +"->MarketInfoEx(4: \""+ symbol +"\", "+ sMode +") => "+ NumberToStr(dValue, ".1+"), error);
    return(NULL);
 }
 
