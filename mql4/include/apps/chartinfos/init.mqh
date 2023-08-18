@@ -154,6 +154,7 @@ int afterInit() {
          if (!__tickTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
       }
    }
+   //debug("afterInit(0.1)  IsConnected="+ IsConnected() +"  wndTitle="+ GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]));
    return(catch("afterInit(3)"));
 }
 
