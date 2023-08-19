@@ -1,7 +1,7 @@
 /**
  * Brackets
  *
- * Marks breakout ranges and displays bracket details.
+ * Marks/updates manually configurable breakout ranges as they develop and displays range details.
  *
  * TODDO:
  *  - visualization
@@ -15,7 +15,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string BracketWindow    = "09:00-10:00";    // 00:00-00:00
+extern string BracketWindow    = "09:00-10:00";          // 00:00-00:00
 extern int    NumberOfBrackets = 1;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,7 +33,7 @@ extern int    NumberOfBrackets = 1;
  * @return int - error status
  */
 int onInit() {
-   SetIndexLabel(0, NULL);                         // disable "Data" window display
+   SetIndexLabel(0, NULL);                               // disable "Data" window display
    return(catch("onInit(1)"));
 }
 
