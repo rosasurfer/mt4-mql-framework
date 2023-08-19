@@ -83,7 +83,7 @@ string  positions.config.comments[];                              // comments of
 #define TERM_OPEN_LONG                  2
 #define TERM_OPEN_SHORT                 3
 #define TERM_OPEN                       4
-#define TERM_OPEN_ALL                   5
+#define TERM_OPEN_TOTAL                 5
 #define TERM_HISTORY_SYMBOL             6
 #define TERM_HISTORY_ALL                7
 #define TERM_PL_ADJUSTMENT              8
@@ -1958,7 +1958,7 @@ int SearchLfxTicket(int ticket) {
  * | 0.2L                                           | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)          | [TERM_OPEN_LONG     , 0.2             , NULL            , ...  , ...  ] |
  * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)       | [TERM_OPEN_SHORT    , 0.3             , 1.2345          , ...  , ...  ] |
  * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)  | [TERM_OPEN          , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
- * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_ALL      , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
+ * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_TOTAL    , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
  * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY_SYMBOL, 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
  * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
  * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT    , 12.34           , ...             , ...  , ...  ] |
@@ -2173,7 +2173,7 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "O")) {             // O[T] = die verbleibenden Positionen [aller Symbole] eines Zeitraums
                   if (!CustomPositions.ParseOpenTerm(values[n], openComment, isTotal, from, to)) return(false);
-                  termType   = ifInt(!isTotal, TERM_OPEN, TERM_OPEN_ALL);
+                  termType   = ifInt(!isTotal, TERM_OPEN, TERM_OPEN_TOTAL);
                   termValue1 = from;
                   termValue2 = to;
                   termCache1 = NULL;
@@ -3090,9 +3090,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       }
    }
 
-   else if (termType == TERM_OPEN_ALL) {
+   else if (termType == TERM_OPEN_TOTAL) {
       // offene Positionen aller Symbole eines Zeitraumes
-      logWarn("ExtractPosition(1)  type=TERM_OPEN_ALL not yet implemented");
+      logWarn("ExtractPosition(1)  type=TERM_OPEN_TOTAL not yet implemented");
    }
 
    else if (termType==TERM_HISTORY_SYMBOL || termType==TERM_HISTORY_ALL) {
