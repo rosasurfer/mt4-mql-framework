@@ -85,7 +85,7 @@ string  positions.config.comments[];                              // comments of
 #define TERM_OPEN                       4
 #define TERM_OPEN_TOTAL                 5
 #define TERM_HISTORY                    6
-#define TERM_HISTORY_ALL                7
+#define TERM_HISTORY_TOTAL              7
 #define TERM_PL_ADJUSTMENT              8
 #define TERM_EQUITY                     9
 #define TERM_PROFIT_MARKER             10
@@ -1948,27 +1948,27 @@ int SearchLfxTicket(int ticket) {
  * {type, value1, value2, value3, value4}. Ein NULL-Element {NULL, ...} markiert EOL (Zeilenende bzw. leere Konfiguration).
  * Nach Rückkehr ist das Array niemals leer (enthält imer mindestens einen EOL-Marker).
  *
- * +------------------------------------------------+-----------------------------------------------------------------------+-------------------------------------------------------------------------+
- * | Notation                                       | Description                                                           | Content of positions.config[][] (7)                                     |
- * +------------------------------------------------+-----------------------------------------------------------------------+-------------------------------------------------------------------------+
- * |    #123456                                     | komplettes Ticket oder verbleibender Rest eines Tickets               | [TERM_TICKET        , 123456          , EMPTY           , ...  , ...  ] |
- * | 0.1#123456                                     | O.1 Lot eines Tickets (1)                                             | [TERM_TICKET        , 123456          , 0.1             , ...  , ...  ] |
- * |    L                                           | ohne Lotsize: alle übrigen offenen Long-Positionen                    | [TERM_OPEN_LONG     , EMPTY           , ...             , ...  , ...  ] |
- * |    S                                           | ohne Lotsize: alle übrigen offenen Short-Positionen                   | [TERM_OPEN_SHORT    , EMPTY           , ...             , ...  , ...  ] |
- * | 0.2L                                           | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)          | [TERM_OPEN_LONG     , 0.2             , NULL            , ...  , ...  ] |
- * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)       | [TERM_OPEN_SHORT    , 0.3             , 1.2345          , ...  , ...  ] |
- * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)  | [TERM_OPEN          , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
- * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_TOTAL    , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
- * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY       , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
- * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
- * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT    , 12.34           , ...             , ...  , ...  ] |
- * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                           | [TERM_EQUITY        , 123.00          , ...             , ...  , ...  ] |
- * | PM=3%                                          | draw a profit marker at PL of the specified size                      | [TERM_PROFIT_MARKER , 3.0             , ...             , ...  , ...  ] |
- * | LM=-5%                                         | draw a loss marker at PL of the specified size                        | [TERM_LOSS_MARKER   , -5.0            , ...             , ...  , ...  ] |
- * +------------------------------------------------+-----------------------------------------------------------------------+-------------------------------------------------------------------------+
- * | text after a semikolon ";" aka .ini comment    | displayed as position description                                     | string: stored in positions.config.comments[]                           |
- * | text after a 2nd semikolon ";;"                | comment (ignored)                                                     |                                                                         |
- * +------------------------------------------------+-----------------------------------------------------------------------+-------------------------------------------------------------------------+
+ * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
+ * | Notation                                       | Description                                                           | Content of positions.config[][] (7)                                    |
+ * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
+ * |    #123456                                     | komplettes Ticket oder verbleibender Rest eines Tickets               | [TERM_TICKET       , 123456          , EMPTY           , ...  , ...  ] |
+ * | 0.1#123456                                     | O.1 Lot eines Tickets (1)                                             | [TERM_TICKET       , 123456          , 0.1             , ...  , ...  ] |
+ * |    L                                           | ohne Lotsize: alle übrigen offenen Long-Positionen                    | [TERM_OPEN_LONG    , EMPTY           , ...             , ...  , ...  ] |
+ * |    S                                           | ohne Lotsize: alle übrigen offenen Short-Positionen                   | [TERM_OPEN_SHORT   , EMPTY           , ...             , ...  , ...  ] |
+ * | 0.2L                                           | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)          | [TERM_OPEN_LONG    , 0.2             , NULL            , ...  , ...  ] |
+ * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)       | [TERM_OPEN_SHORT   , 0.3             , 1.2345          , ...  , ...  ] |
+ * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)  | [TERM_OPEN         , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
+ * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_TOTAL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
+ * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY      , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
+ * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
+ * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT   , 12.34           , ...             , ...  , ...  ] |
+ * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                           | [TERM_EQUITY       , 123.00          , ...             , ...  , ...  ] |
+ * | PM=3%                                          | draw a profit marker at PL of the specified size                      | [TERM_PROFIT_MARKER, 3.0             , ...             , ...  , ...  ] |
+ * | LM=-5%                                         | draw a loss marker at PL of the specified size                        | [TERM_LOSS_MARKER  , -5.0            , ...             , ...  , ...  ] |
+ * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
+ * | text after a semikolon ";" aka .ini comment    | displayed as position description                                     | string: stored in positions.config.comments[]                          |
+ * | text after a 2nd semikolon ";;"                | comment (ignored)                                                     |                                                                        |
+ * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
  *
  *  Example configuration (6)
  *  -------------------------
@@ -2097,7 +2097,7 @@ bool CustomPositions.ReadConfig() {
                      isPositionEmpty = false;
                      continue;                                       // gruppiert: die Konfiguration wurde bereits in CustomPositions.ParseHstTerm() gespeichert
                   }
-                  termType   = ifInt(!isTotal, TERM_HISTORY, TERM_HISTORY_ALL);
+                  termType   = ifInt(!isTotal, TERM_HISTORY, TERM_HISTORY_TOTAL);
                   termValue1 = from;                                 // nicht gruppiert
                   termValue2 = to;
                   termCache1 = EMPTY_VALUE;                          // EMPTY_VALUE, da NULL bei TERM_HISTORY_* ein gültiger Wert ist
@@ -2609,7 +2609,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(positions.config, 0);
          ArrayResize(positions.config, confSize+1);
-         positions.config[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_ALL);
+         positions.config[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
          positions.config[confSize][I_TERM_VALUE1] = groupFrom;
          positions.config[confSize][I_TERM_VALUE2] = groupTo;
          positions.config[confSize][I_TERM_CACHE1] = EMPTY_VALUE;
@@ -3095,7 +3095,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       logWarn("ExtractPosition(1)  type=TERM_OPEN_TOTAL not yet implemented");
    }
 
-   else if (termType==TERM_HISTORY || termType==TERM_HISTORY_ALL) {
+   else if (termType==TERM_HISTORY || termType==TERM_HISTORY_TOTAL) {
       // geschlossene Positionen des aktuellen oder aller Symbole eines Zeitraumes
       from              = termValue1;
       to                = termValue2;
