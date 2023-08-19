@@ -84,7 +84,7 @@ string  positions.config.comments[];                              // comments of
 #define TERM_OPEN_SHORT                 3
 #define TERM_OPEN                       4
 #define TERM_OPEN_TOTAL                 5
-#define TERM_HISTORY_SYMBOL             6
+#define TERM_HISTORY                    6
 #define TERM_HISTORY_ALL                7
 #define TERM_PL_ADJUSTMENT              8
 #define TERM_EQUITY                     9
@@ -1959,7 +1959,7 @@ int SearchLfxTicket(int ticket) {
  * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)       | [TERM_OPEN_SHORT    , 0.3             , 1.2345          , ...  , ...  ] |
  * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)  | [TERM_OPEN          , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
  * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_TOTAL    , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
- * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY_SYMBOL, 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
+ * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY       , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
  * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_ALL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
  * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT    , 12.34           , ...             , ...  , ...  ] |
  * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                           | [TERM_EQUITY        , 123.00          , ...             , ...  , ...  ] |
@@ -2097,7 +2097,7 @@ bool CustomPositions.ReadConfig() {
                      isPositionEmpty = false;
                      continue;                                       // gruppiert: die Konfiguration wurde bereits in CustomPositions.ParseHstTerm() gespeichert
                   }
-                  termType   = ifInt(!isTotal, TERM_HISTORY_SYMBOL, TERM_HISTORY_ALL);
+                  termType   = ifInt(!isTotal, TERM_HISTORY, TERM_HISTORY_ALL);
                   termValue1 = from;                                 // nicht gruppiert
                   termValue2 = to;
                   termCache1 = EMPTY_VALUE;                          // EMPTY_VALUE, da NULL bei TERM_HISTORY_* ein gültiger Wert ist
@@ -2609,7 +2609,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
          // Gruppe der globalen Konfiguration hinzufügen
          int confSize = ArrayRange(positions.config, 0);
          ArrayResize(positions.config, confSize+1);
-         positions.config[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY_SYMBOL, TERM_HISTORY_ALL);
+         positions.config[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_ALL);
          positions.config[confSize][I_TERM_VALUE1] = groupFrom;
          positions.config[confSize][I_TERM_VALUE2] = groupTo;
          positions.config[confSize][I_TERM_CACHE1] = EMPTY_VALUE;
@@ -3095,7 +3095,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       logWarn("ExtractPosition(1)  type=TERM_OPEN_TOTAL not yet implemented");
    }
 
-   else if (termType==TERM_HISTORY_SYMBOL || termType==TERM_HISTORY_ALL) {
+   else if (termType==TERM_HISTORY || termType==TERM_HISTORY_ALL) {
       // geschlossene Positionen des aktuellen oder aller Symbole eines Zeitraumes
       from              = termValue1;
       to                = termValue2;
@@ -3116,19 +3116,19 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             if (OrderType() == OP_BALANCE) {
                // Dividenden                                                     // "Ex Dividend US2000" oder
                if (StrStartsWithI(OrderComment(), "ex dividend ")) {             // "Ex Dividend 17/03/15 US2000"
-                  if (termType == TERM_HISTORY_SYMBOL)                           // single history
+                  if (termType == TERM_HISTORY)                                  // single history
                      if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
                }
                // Rollover adjustments
                else if (StrStartsWithI(OrderComment(), "adjustment ")) {         // "Adjustment BRENT"
-                  if (termType == TERM_HISTORY_SYMBOL)                           // single history
+                  if (termType == TERM_HISTORY)                                  // single history
                      if (!StrEndsWithI(OrderComment(), " "+ Symbol())) continue; // ok, wenn zum aktuellen Symbol gehörend
                }
                else continue;                                                    // sonstige Balance-Einträge
             }
             else {
-               if (OrderType() > OP_SELL)                                             continue;
-               if (termType==TERM_HISTORY_SYMBOL) /*&&*/ if (OrderSymbol()!=Symbol()) continue;  // ggf. Positionen aller Symbole
+               if (OrderType() > OP_SELL)                                      continue;
+               if (termType==TERM_HISTORY) /*&&*/ if (OrderSymbol()!=Symbol()) continue;    // ggf. Positionen aller Symbole
             }
 
             sortKeys[n][0] = OrderCloseTime();
