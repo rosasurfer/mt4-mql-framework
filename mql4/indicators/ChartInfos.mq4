@@ -107,11 +107,10 @@ double  positions.dData[][12];                                    //            
 bool    positions.analyzed;
 bool    positions.absoluteProfits;                                // default: online=FALSE, tester=TRUE
 
-#define CONFIG_AUTO                     0                         // ConfigTypes:      normale unkonfigurierte offene Position (intern oder extern)
-#define CONFIG_REAL                     1                         //                   individuell konfigurierte reale Position
-#define CONFIG_VIRTUAL                  2                         //                   individuell konfigurierte virtuelle Position
+#define CONFIG_REAL                     1                         // config types: real position
+#define CONFIG_VIRTUAL                  2                         //               virtual position
 
-#define POSITION_LONG                   1                         // PositionTypes
+#define POSITION_LONG                   1                         // position types
 #define POSITION_SHORT                  2                         // (werden in typeDescriptions[] als Arrayindizes benutzt)
 #define POSITION_HEDGE                  3
 #define POSITION_HISTORY                4
