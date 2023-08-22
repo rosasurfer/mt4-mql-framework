@@ -83,13 +83,12 @@ string  positions.config.comments[];                              // comments of
 #define TERM_OPEN_LONG                  2
 #define TERM_OPEN_SHORT                 3
 #define TERM_OPEN                       4
-#define TERM_OPEN_TOTAL                 5
-#define TERM_HISTORY                    6
-#define TERM_HISTORY_TOTAL              7
-#define TERM_PL_ADJUSTMENT              8
-#define TERM_EQUITY                     9
-#define TERM_PROFIT_MARKER             10
-#define TERM_LOSS_MARKER               11
+#define TERM_HISTORY                    5
+#define TERM_HISTORY_TOTAL              6                         // intentionally TERM_OPEN_TOTAL is not implemented
+#define TERM_PL_ADJUSTMENT              7
+#define TERM_EQUITY                     8
+#define TERM_PROFIT_MARKER              9
+#define TERM_LOSS_MARKER               10
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions (configured and unconfigured)
@@ -1950,29 +1949,29 @@ int SearchLfxTicket(int ticket) {
  * {type, value1, value2, value3, value4}. Ein NULL-Element {NULL, ...} markiert EOL (Zeilenende bzw. leere Konfiguration).
  * Nach Rückkehr ist das Array niemals leer (enthält imer mindestens einen EOL-Marker).
  *
- * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
- * | Notation                                       | Description                                                           | Content of positions.config[][] (7)                                    |
- * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
- * |    #123456                                     | komplettes Ticket oder verbleibender Rest eines Tickets               | [TERM_TICKET       , 123456          , EMPTY           , ...  , ...  ] |
- * | 0.1#123456                                     | O.1 Lot eines Tickets (1)                                             | [TERM_TICKET       , 123456          , 0.1             , ...  , ...  ] |
- * |    L                                           | ohne Lotsize: alle übrigen offenen Long-Positionen                    | [TERM_OPEN_LONG    , EMPTY           , ...             , ...  , ...  ] |
- * |    S                                           | ohne Lotsize: alle übrigen offenen Short-Positionen                   | [TERM_OPEN_SHORT   , EMPTY           , ...             , ...  , ...  ] |
- * | 0.2L                                           | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)          | [TERM_OPEN_LONG    , 0.2             , NULL            , ...  , ...  ] |
- * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)       | [TERM_OPEN_SHORT   , 0.3             , 1.2345          , ...  , ...  ] |
- * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)  | [TERM_OPEN         , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
- * | OT{DateTime}-{DateTime}                        | offene Positionen aller Symbole von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN_TOTAL   , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
- * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)   | [TERM_HISTORY      , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
- * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)  | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
- * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                          | [TERM_ADJUSTMENT   , 12.34           , ...             , ...  , ...  ] |
- * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                           | [TERM_EQUITY       , 123.00          , ...             , ...  , ...  ] |
- * | PM=1.2345                                      | draw a profit marker and calculate PL at the specified price          | [TERM_PROFIT_MARKER, 1.2345          , ...             , ...  , ...  ] |
- * | PM=3%                                          | draw a profit marker at a PL of the specified percent amount          | [TERM_PROFIT_MARKER, ...             , 3.0             , ...  , ...  ] |
- * | LM=2.3456                                      | draw a loss marker and calculate PL at the specified price            | [TERM_LOSS_MARKER  , 2.3456          , ...             , ...  , ...  ] |
- * | LM=-5%                                         | draw a loss marker at a PL of the specified percent amount            | [TERM_LOSS_MARKER  , ...             , -5.0            , ...  , ...  ] |
- * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
- * | text after a semikolon ";" aka .ini comment    | displayed as position description                                     | string: stored in positions.config.comments[]                          |
- * | text after a 2nd semikolon ";;"                | comment (ignored)                                                     |                                                                        |
- * +------------------------------------------------+-----------------------------------------------------------------------+------------------------------------------------------------------------+
+ * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
+ * | Notation                                       | Description                                                                   | Content of positions.config[][] (7)                                    |
+ * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
+ * |    #123456                                     | komplettes Ticket oder verbleibender Rest eines Tickets                       | [TERM_TICKET       , 123456          , EMPTY           , ...  , ...  ] |
+ * | 0.1#123456                                     | O.1 Lot eines Tickets (1)                                                     | [TERM_TICKET       , 123456          , 0.1             , ...  , ...  ] |
+ * |    L                                           | ohne Lotsize: alle übrigen offenen Long-Positionen                            | [TERM_OPEN_LONG    , EMPTY           , ...             , ...  , ...  ] |
+ * |    S                                           | ohne Lotsize: alle übrigen offenen Short-Positionen                           | [TERM_OPEN_SHORT   , EMPTY           , ...             , ...  , ...  ] |
+ * | 0.2L                                           | mit Lotsize: virtuelle Long-Position zum aktuellen Preis (2)                  | [TERM_OPEN_LONG    , 0.2             , NULL            , ...  , ...  ] |
+ * | 0.3S[@]1.2345                                  | mit Lotsize: virtuelle Short-Position zum angegebenen Preis (2)               | [TERM_OPEN_SHORT   , 0.3             , 1.2345          , ...  , ...  ] |
+ * | O{DateTime}                                    | offene Positionen des aktuellen Symbols eines Standard-Zeitraums (3)          | [TERM_OPEN         , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
+ * | O{DateTime}-{DateTime}                         | offene Positionen des aktuellen Symbols von und bis zu einem Zeitpunkt (3)(4) | [TERM_OPEN         , 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
+ * | H{DateTime}             [Monthly|Weekly|Daily] | Trade-History des aktuellen Symbols eines Standard-Zeitraums (3)(5)           | [TERM_HISTORY      , 2014.01.01 00:00, 2014.12.31 23:59, ...  , ...  ] |
+ * | HT{DateTime}-{DateTime} [Monthly|Weekly|Daily] | Trade-History aller Symbole von und bis zu einem Zeitpunkt (3)(4)(5)          | [TERM_HISTORY_TOTAL, 2014.02.01 08:00, 2014.02.10 18:00, ...  , ...  ] |
+ * | 12.34                                          | dem PL einer Position zuzuschlagender Betrag                                  | [TERM_ADJUSTMENT   , 12.34           , ...             , ...  , ...  ] |
+ * | E=123.00                                       | für Equityberechnungen zu verwendender Wert                                   | [TERM_EQUITY       , 123.00          , ...             , ...  , ...  ] |
+ * | PM=1.2345                                      | draw a profit marker and calculate PL at the specified price                  | [TERM_PROFIT_MARKER, 1.2345          , ...             , ...  , ...  ] |
+ * | PM=3%                                          | draw a profit marker at a PL of the specified percent amount                  | [TERM_PROFIT_MARKER, ...             , 3.0             , ...  , ...  ] |
+ * | LM=2.3456                                      | draw a loss marker and calculate PL at the specified price                    | [TERM_LOSS_MARKER  , 2.3456          , ...             , ...  , ...  ] |
+ * | LM=-5%                                         | draw a loss marker at a PL of the specified percent amount                    | [TERM_LOSS_MARKER  , ...             , -5.0            , ...  , ...  ] |
+ * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
+ * | text after a semikolon ";" aka .ini comment    | displayed as position description                                             | string: stored in positions.config.comments[]                          |
+ * | text after a 2nd semikolon ";;"                | comment (ignored)                                                             |                                                                        |
+ * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
  *
  *  Example configuration (6)
  *  -------------------------
@@ -2179,9 +2178,9 @@ bool CustomPositions.ReadConfig() {
                   termCache2 = NULL;
                }
 
-               else if (StrStartsWith(values[n], "O")) {             // O[T] = die verbleibenden Positionen [aller Symbole] eines Zeitraums
-                  if (!CustomPositions.ParseOpenTerm(values[n], openComment, isTotal, from, to)) return(false);
-                  termType   = ifInt(!isTotal, TERM_OPEN, TERM_OPEN_TOTAL);
+               else if (StrStartsWith(values[n], "O")) {             // O = die verbleibenden Positionen [aller Symbole] eines Zeitraums
+                  if (!CustomPositions.ParseOpenTerm(values[n], openComment, from, to)) return(false);
+                  termType   = TERM_OPEN;                            // intentionally TERM_OPEN_TOTAL is not implemented
                   termValue1 = from;
                   termValue2 = to;
                   termCache1 = NULL;
@@ -2306,7 +2305,6 @@ bool CustomPositions.ReadConfig() {
  *
  * @param  _In_    string   term         - Konfigurations-Term
  * @param  _InOut_ string   openComments - vorhandene OpenPositions-Kommentare (werden ggf. erweitert)
- * @param  _Out_   bool     isTotal      - ob die offenen Positionen alle verfügbaren Symbole (TRUE) oder nur das aktuelle Symbol (FALSE) umfassen
  * @param  _Out_   datetime from         - Beginnzeitpunkt der zu berücksichtigenden Positionen
  * @param  _Out_   datetime to           - Endzeitpunkt der zu berücksichtigenden Positionen
  *
@@ -2315,32 +2313,24 @@ bool CustomPositions.ReadConfig() {
  *
  * Format:
  * -------
- *  O{DateTime}                                       • Trade-History eines Symbols eines Standard-Zeitraums
- *  OT{DateTime}-{DateTime}                           • Trade-History aller Symbole von und bis zu einem Zeitpunkt
+ *  O{DateTime}
+ *  O{DateTime}-{DateTime}                            • intentionally TERM_OPEN_TOTAL is not implemented
  *
  *  {DateTime} = 2014[.01[.15 [W|12:34[:56]]]]        oder
  *  {DateTime} = (This|Last)(Day|Week|Month|Year)     oder
  *  {DateTime} = Today                                • Synonym für ThisDay
  *  {DateTime} = Yesterday                            • Synonym für LastDay
  */
-bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTotal, datetime &from, datetime &to) {
-   isTotal = isTotal!=0;
+bool CustomPositions.ParseOpenTerm(string term, string &openComments, datetime &from, datetime &to) {
    string origTerm = term;
 
    term = StrToUpper(StrTrim(term));
-   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(origTerm) +" (not TERM_OPEN_*)", ERR_INVALID_PARAMETER));
+   if (!StrStartsWith(term, "O")) return(!catch("CustomPositions.ParseOpenTerm(1)  invalid parameter term: "+ DoubleQuoteStr(origTerm) +" (not TERM_OPEN)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
-
-   if     (!StrStartsWith(term, "T"    )) isTotal = false;
-   else if (StrStartsWith(term, "THIS" )) isTotal = false;
-   else if (StrStartsWith(term, "TODAY")) isTotal = false;
-   else                                   isTotal = true;
-   if (isTotal) term = StrTrim(StrSubstr(term, 1));
 
    bool     isSingleTimespan, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
    string   comment = "";
-
 
    // (1) Beginn- und Endzeitpunkt parsen
    int pos = StringFind(term, "-");
@@ -2472,7 +2462,6 @@ bool CustomPositions.ParseOpenTerm(string term, string &openComments, bool &isTo
          else                    comment = GmtTimeFormat(dtFrom, "%d.%m.%Y %H:%M:%S") +" to "+ GmtTimeFormat(dtTo,          "%d.%m.%Y %H:%M:%S"); // 2014.01.15 12:34:56 - 2015.01.15 12:34:56
       }
    }
-   if (isTotal) comment = comment +" (gesamt)";
    from = dtFrom;
    to   = dtTo;
 
@@ -3100,11 +3089,6 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       }
    }
 
-   else if (termType == TERM_OPEN_TOTAL) {
-      // offene Positionen aller Symbole eines Zeitraumes
-      logWarn("ExtractPosition(1)  type=TERM_OPEN_TOTAL not yet implemented");
-   }
-
    else if (termType==TERM_HISTORY || termType==TERM_HISTORY_TOTAL) {
       // geschlossene Positionen des aktuellen oder aller Symbole eines Zeitraumes
       from              = termValue1;
@@ -3165,7 +3149,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          bool     hst.valid      []; ArrayResize(hst.valid,       orders);
 
          for (i=0; i < orders; i++) {
-            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(2)")) return(false);
+            if (!SelectTicket(sortKeys[i][2], "ExtractPosition(1)")) return(false);
             hst.tickets    [i] = OrderTicket();
             hst.types      [i] = OrderType();
             hst.lotSizes   [i] = OrderLots();
@@ -3185,15 +3169,15 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             if (hst.tickets[i] && EQ(hst.lotSizes[i], 0)) {                      // lotSize = 0: Hedge-Position
                // TODO: Prüfen, wie sich OrderComment() bei custom comments verhält.
                if (!StrStartsWithI(hst.comments[i], "close hedge by #"))
-                  return(!catch("ExtractPosition(3)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+                  return(!catch("ExtractPosition(2)  #"+ hst.tickets[i] +" - unknown comment for assumed hedging position "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                // Gegenstück suchen
                hst.ticket = StrToInteger(StringSubstr(hst.comments[i], 16));
                for (n=0; n < orders; n++) {
                   if (hst.tickets[n] == hst.ticket) break;
                }
-               if (n == orders) return(!catch("ExtractPosition(4)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
-               if (i == n     ) return(!catch("ExtractPosition(5)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (n == orders) return(!catch("ExtractPosition(3)  cannot find counterpart for hedging position #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
+               if (i == n     ) return(!catch("ExtractPosition(4)  both hedged and hedging position have the same ticket #"+ hst.tickets[i] +" "+ DoubleQuoteStr(hst.comments[i]), ERR_RUNTIME_ERROR));
 
                int first  = Min(i, n);
                int second = Max(i, n);
@@ -3231,7 +3215,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          else    lastProfit = NormalizeDouble(lastProfit, 2);
          termCache1         = lastProfit;
          termCache2         = _orders;
-         //debug("ExtractPosition(6)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ ifString(IsEmptyValue(lastProfit), "empty", DoubleToStr(lastProfit, 2)) +"  closed trades="+ n);
+         //debug("ExtractPosition(0.1)  from="+ ifString(from, TimeToStr(from), "start") +"  to="+ ifString(to, TimeToStr(to), "end") +"  profit="+ ifString(IsEmptyValue(lastProfit), "empty", DoubleToStr(lastProfit, 2)) +"  closed trades="+ n);
       }
       // lastProfit zu closedProfit hinzufügen, wenn geschlossene Trades existierten (Ausgangsdaten bleiben unverändert)
       if (lastProfit != EMPTY_VALUE) {
@@ -3293,7 +3277,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          // partielles Ticket
          for (i=0; i < sizeTickets; i++) {
             if (tickets[i] == ticket) {
-               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(7)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
+               if (GT(lotsize, lots[i])) return(!catch("ExtractPosition(5)  illegal partial lotsize "+ NumberToStr(lotsize, ".+") +" for ticket #"+ tickets[i] +" (only "+ NumberToStr(lots[i], ".+") +" lot remaining)", ERR_RUNTIME_ERROR));
                if (EQ(lotsize, lots[i])) {
                   // komplettes Ticket übernehmen
                   if (!ExtractPosition(TERM_TICKET, ticket, EMPTY, termCache1, termCache2,
@@ -3326,9 +3310,9 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          }
       }
    }
-   else return(!catch("ExtractPosition(8)  illegal or unknown termType: "+ termType, ERR_RUNTIME_ERROR));
+   else return(!catch("ExtractPosition(6)  illegal or unknown termType: "+ termType, ERR_RUNTIME_ERROR));
 
-   return(!catch("ExtractPosition(9)"));
+   return(!catch("ExtractPosition(7)"));
 }
 
 
@@ -3475,6 +3459,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
          positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
 
+         debug("StorePosition(0.1)  flat:     absProfit="+ NumberToStr(fullProfit, ".3") +"  equity="+ NumberToStr(equity, ".3") +"  100%="+ NumberToStr(equity100Pct, ".3") +"  %Profit="+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], ".3"));
          return(!catch("StorePosition(3)"));
       }
    }
@@ -3675,6 +3660,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
    positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
 
+   debug("StorePosition(0.2)  history:  absProfit="+ NumberToStr(fullProfit, ".3") +"  equity="+ NumberToStr(equity, ".3") +"  100%="+ NumberToStr(equity100Pct, ".3") +"  %Profit="+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], ".3"));
    return(!catch("StorePosition(8)"));
 }
 
