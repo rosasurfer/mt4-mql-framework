@@ -2970,8 +2970,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          // alle übrigen Long-Positionen
          if (longPosition > 0) {
             for (int i=0; i < sizeTickets; i++) {
-               if (!tickets[i])
-                  continue;
+               if (!tickets[i]) continue;
+
                if (types[i] == OP_BUY) {
                   // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
                   ArrayPushInt   (customTickets,     tickets    [i]);
@@ -3017,8 +3017,8 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
          // alle übrigen Short-Positionen
          if (shortPosition > 0) {
             for (i=0; i < sizeTickets; i++) {
-               if (!tickets[i])
-                  continue;
+               if (!tickets[i]) continue;
+
                if (types[i] == OP_SELL) {
                   // Daten nach custom.* übernehmen und Ticket ggf. auf NULL setzen
                   ArrayPushInt   (customTickets,     tickets    [i]);
@@ -3061,7 +3061,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
       from = termValue1;
       to   = termValue2;
 
-      // offene Positionen des aktuellen Symbols eines Zeitraumes
+      // alle offenen Positionen des aktuellen Symbols eines Zeitraumes
       if (longPosition || shortPosition) {
          for (i=0; i < sizeTickets; i++) {
             if (!tickets[i])                 continue;
@@ -3348,7 +3348,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int commentIndex) {
    isVirtual = isVirtual!=0;
 
-   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, hedgedProfit, openProfit, fullProfit, equity, equity100Pct, pipValue, pipDistance;
+   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, hedgedProfit, openProfit, fullProfit, origPL, equity, equity100Pct, pipValue, pipDistance;
    int size, ticketsSize=ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit noch AdjustedProfit, wird sie übersprungen.
@@ -3377,6 +3377,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       hedgedLots     = MathMin(longPosition, shortPosition);
       remainingLong  = hedgedLots;
       remainingShort = hedgedLots;
+      origPL         = 0;
 
       for (int i=0; i < ticketsSize; i++) {
          if (!tickets[i]) continue;
@@ -3386,6 +3387,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (remainingLong >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                openPrice    += lots[i] * openPrices[i];
+               origPL       += swaps[i] + commissions[i] + profits[i];
                swap         += swaps[i];
                commission   += commissions[i];
                remainingLong = NormalizeDouble(remainingLong - lots[i], 3);
@@ -3395,6 +3397,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
                factor        = remainingLong/lots[i];
                openPrice    += remainingLong * openPrices[i];
+               origPL       += swaps[i] + factor * (commissions[i] + profits[i]);
                swap         += swaps[i];                swaps      [i]  = 0;
                commission   += factor * commissions[i]; commissions[i] -= factor * commissions[i];
                                                         profits    [i] -= factor * profits    [i];
@@ -3407,6 +3410,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             if (remainingShort >= lots[i]) {
                // Daten komplett übernehmen, Ticket auf NULL setzen
                closePrice    += lots[i] * openPrices[i];
+               origPL        += swaps[i] + commissions[i] + profits[i];
                swap          += swaps[i];
                //commission  += commissions[i];                                        // Commission wird nur für Long-Leg übernommen
                remainingShort = NormalizeDouble(remainingShort - lots[i], 3);
@@ -3414,12 +3418,13 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
             }
             else {
                // Daten anteilig übernehmen: Swap komplett, Commission, Profit und Lotsize des Tickets reduzieren
-               factor         = remainingShort/lots[i];
-               closePrice    += remainingShort * openPrices[i];
-               swap          += swaps[i]; swaps      [i]  = 0;
-                                          commissions[i] -= factor * commissions[i];   // Commission wird nur für Long-Leg übernommen
-                                          profits    [i] -= factor * profits    [i];
-                                          lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
+               factor          = remainingShort/lots[i];
+               closePrice     += remainingShort * openPrices[i];
+               origPL         += swaps[i] + factor * (commissions[i] + profits[i]);
+               swap           += swaps[i]; swaps      [i]  = 0;
+                                           commissions[i] -= factor * commissions[i];  // Commission wird nur für Long-Leg übernommen
+                                           profits    [i] -= factor * profits    [i];
+                                           lots       [i]  = NormalizeDouble(lots[i]-remainingShort, 3);
                remainingShort = 0;
             }
          }
@@ -3456,10 +3461,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
          positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
-         positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
+         positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > origPL, origPL, 0);
          positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
 
-         debug("StorePosition(0.1)  flat:     absProfit="+ NumberToStr(fullProfit, ".3") +"  equity="+ NumberToStr(equity, ".3") +"  100%="+ NumberToStr(equity100Pct, ".3") +"  %Profit="+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], ".3"));
+         //debug("StorePosition(0.1)  flat:     pl="+ NumberToStr(fullProfit, "R.2") +"/"+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], "R.2") +"%  equity100%="+ NumberToStr(equity100Pct, "R.2"));
          return(!catch("StorePosition(3)"));
       }
    }
@@ -3660,7 +3665,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
    positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
 
-   debug("StorePosition(0.2)  history:  absProfit="+ NumberToStr(fullProfit, ".3") +"  equity="+ NumberToStr(equity, ".3") +"  100%="+ NumberToStr(equity100Pct, ".3") +"  %Profit="+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], ".3"));
+   //debug("StorePosition(0.2)  history:  pl="+ NumberToStr(fullProfit, "R.2") +"/"+ NumberToStr(positions.dData[size][I_FULL_PROFIT_PCT], "R.2") +"%  equity100%="+ NumberToStr(equity100Pct, "R.2"));
    return(!catch("StorePosition(8)"));
 }
 
@@ -4595,6 +4600,7 @@ string InputsToStr() {
 
 
 #import "rsfLib.ex4"
+   string   DoublesToStr(double array[], string separator);
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayDropInt          (int    &array[], int value);
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
