@@ -103,7 +103,7 @@ double  totalPosition;
 double  longPosition;
 double  shortPosition;
 int     positions.iData[][3];                                     // position details: [ConfigType, PositionType, CommentIndex]
-double  positions.dData[][13];                                    //                   [DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, ProfitMarkerPrice, ProfitMarkerPercent, LossMarkerPrice, LossMarkerPercent, Equity, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
+double  positions.dData[][12];                                    //                   [DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, ProfitMarkerPrice, ProfitMarkerPercent, LossMarkerPrice, LossMarkerPercent, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
 bool    positions.analyzed;
 bool    positions.absoluteProfits;                                // default: online=FALSE, tester=TRUE
 
@@ -129,12 +129,11 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_PROFIT_MARKER_PERCENT         4
 #define I_LOSS_MARKER_PRICE             5
 #define I_LOSS_MARKER_PERCENT           6
-#define I_OPEN_EQUITY                   7
-#define I_OPEN_PROFIT                   8
-#define I_CLOSED_PROFIT                 9
-#define I_ADJUSTED_PROFIT              10
-#define I_FULL_PROFIT_ABS              11
-#define I_FULL_PROFIT_PCT              12
+#define I_OPEN_PROFIT                   7
+#define I_CLOSED_PROFIT                 8
+#define I_ADJUSTED_PROFIT               9
+#define I_FULL_PROFIT_ABS              10
+#define I_FULL_PROFIT_PCT              11
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
@@ -3456,8 +3455,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
          positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
          positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-
-         positions.dData[size][I_OPEN_EQUITY          ] = equity;         openProfit   = hedgedProfit;
+                                                                          openProfit   = hedgedProfit;
          positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
          positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
@@ -3522,8 +3520,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
       positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
       positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-
-      positions.dData[size][I_OPEN_EQUITY          ] = equity;         openProfit   = hedgedProfit + commission + swap + floatingProfit;
+                                                                       openProfit   = hedgedProfit + commission + swap + floatingProfit;
       positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
@@ -3607,8 +3604,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
       positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
       positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-
-      positions.dData[size][I_OPEN_EQUITY          ] = equity;         openProfit   = hedgedProfit + commission + swap + floatingProfit;
+                                                                       openProfit   = hedgedProfit + commission + swap + floatingProfit;
       positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
@@ -3657,8 +3653,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
    positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
    positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-
-   positions.dData[size][I_OPEN_EQUITY          ] = equity;         openProfit   = 0;
+                                                                    openProfit   = 0;
    positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
    positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
