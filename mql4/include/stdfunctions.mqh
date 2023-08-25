@@ -2583,9 +2583,9 @@ datetime DateTime1(int year, int month=1, int day=1, int hours=0, int minutes=0,
 
 
 /**
- * Create a datetime value from a ParseTime() result array.
+ * Create a datetime value from a ParseDateTime() result array.
  *
- * @param  int parsed[]         - ParseTime() result array
+ * @param  int parsed[]         - ParseDateTime() result array
  * @param  int flags [optional] - flags controling datetime creation (see notes)
  *
  * @return datetime - datetime value oder NaT (Not-a-Time) in case of erors

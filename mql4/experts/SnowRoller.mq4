@@ -61,7 +61,7 @@ extern datetime Sessionbreak.EndTime   = D'1970.01.01 01:02:10';        // serve
 #include <functions/HandleCommands.mqh>
 #include <functions/IsBarOpen.mqh>
 #include <functions/JoinInts.mqh>
-#include <functions/ParseTime.mqh>
+#include <functions/ParseDateTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 #include <win32api.mqh>
 
@@ -6332,7 +6332,7 @@ bool ValidateInputs() {
          else if (key == "@time") {
             if (start.time.condition)                             return(!onInputError("ValidateInputs(30)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))                 return(!onInputError("ValidateInputs(31)  "+ sequence.name +" invalid StartConditions "+ DoubleQuoteStr(StartConditions)));
             start.time.value       = DateTime2(pt);
             start.time.description = "time("+ TimeToStr(start.time.value) +")";
             start.time.condition   = true;
@@ -6412,7 +6412,7 @@ bool ValidateInputs() {
 
          else if (key == "@time") {
             if (stop.time.condition)                              return(!onInputError("ValidateInputs(45)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, pt))                     return(!onInputError("ValidateInputs(46)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))                 return(!onInputError("ValidateInputs(46)  "+ sequence.name +" invalid StopConditions "+ DoubleQuoteStr(StopConditions)));
             stop.time.value       = DateTime2(pt);
             stop.time.description = "time("+ TimeToStr(stop.time.value) +")";
             stop.time.condition   = true;

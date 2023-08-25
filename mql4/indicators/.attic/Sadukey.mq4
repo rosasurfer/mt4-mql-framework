@@ -27,7 +27,7 @@ extern int    Max.Bars        = 10000;                               // max. val
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
-#include <functions/ParseTime.mqh>
+#include <functions/ParseDateTime.mqh>
 #include <functions/legend.mqh>
 #include <functions/trend.mqh>
 
@@ -83,7 +83,7 @@ int onInit() {
    sValue = StrTrim(StartDate);
    if (sValue!="" && sValue!="yyyy.mm.dd") {
       int pt[];
-      bool success = ParseTime(sValue, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
+      bool success = ParseDateTime(sValue, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
       if (!success)            return(catch("onInit(2)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
       startTime = DateTime2(pt);
    }

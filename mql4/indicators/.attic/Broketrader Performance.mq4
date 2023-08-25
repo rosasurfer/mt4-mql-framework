@@ -30,7 +30,7 @@ extern string StartDate              = "2019.01.01";        // Broketrader start
 #include <functions/iBarShiftNext.mqh>
 #include <functions/iBarShiftPrevious.mqh>
 #include <functions/iChangedBars.mqh>
-#include <functions/ParseTime.mqh>
+#include <functions/ParseDateTime.mqh>
 
 #define MODE_OPEN            0                              // indicator buffer ids
 #define MODE_CLOSED          1
@@ -82,7 +82,7 @@ int onInit() {
    Timeframe = TimeframeDescription(systemTimeframe);
    // StartDate
    int pt[];
-   bool success = ParseTime(StartDate, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
+   bool success = ParseDateTime(StartDate, DATE_YYYYMMDD|DATE_DDMMYYYY|TIME_OPTIONAL, pt);
    if (!success)                   return(catch("onInit(7)  invalid input parameter StartDate: "+ DoubleQuoteStr(StartDate), ERR_INVALID_INPUT_PARAMETER));
    systemStartDate = DateTime2(pt);
 
