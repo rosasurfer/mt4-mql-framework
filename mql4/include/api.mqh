@@ -348,7 +348,7 @@ string   JoinDoubles(double &values[], string separator = ", ");;
 string   JoinDoublesEx(double &values[], int digits, string separator = ", ");;
 string   JoinInts(int &values[], string separator = ", ");;
 bool     ManageDoubleIndicatorBuffer(int id, double buffer[]);;
-bool     ParseTime(string value, int flags, int &result[]);;
+bool     ParseDateTime(string value, int flags, int &result[]);;
 bool     RearrangeLegends();;
 bool     RemoveLegend();;
 bool     UpdateTrendDirection(double &values[], int offset, double &trend[], double &uptrend[], double &downtrend[], double &uptrend2[], bool enableColoring=false, bool enableUptrend2=false, int lineStyle=EMPTY, int normalizeDigits=EMPTY_VALUE);;

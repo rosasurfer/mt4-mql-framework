@@ -2738,13 +2738,12 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *
  * @return datetime - Zeitpunkt oder NaT (Not-A-Time), falls ein Fehler auftrat
  *
- *
  * Format:
  * -------
  *  {value} = 2014[.01[.15 [W|12:34[:56]]]]    oder
  *  {value} = (This|Last)(Day|Week|Month|Year) oder
- *  {value} = Today                            • Synonym für ThisDay
- *  {value} = Yesterday                        • Synonym für LastDay
+ *  {value} = Today                            Synonym für ThisDay
+ *  {value} = Yesterday                        Synonym für LastDay
  */
 datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
    string values[], origValue=value, sYY, sMM, sDD, sTime, sHH, sII, sSS;
