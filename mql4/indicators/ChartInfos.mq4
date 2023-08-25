@@ -3533,7 +3533,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
          if (profitMarkerPrice != NULL) {
             positions.dData[size][I_PROFIT_MARKER_PRICE  ] = profitMarkerPrice;
-            positions.dData[size][I_PROFIT_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit - (profitMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.dData[size][I_PROFIT_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPercent)) {
             positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
@@ -4599,7 +4599,6 @@ string InputsToStr() {
 
 
 #import "rsfLib.ex4"
-   string   DoublesToStr(double array[], string separator);
    bool     AquireLock(string mutexName, bool wait);
    int      ArrayDropInt          (int    &array[], int value);
    int      ArrayInsertDoubleArray(double &array[][], int offset, double values[]);
@@ -4609,6 +4608,7 @@ string InputsToStr() {
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
+   string   DoublesToStr(double array[], string separator);
    string   GetHostName();
    string   GetLongSymbolNameOrAlt(string symbol, string altValue);
    string   GetSymbolName(string symbol);
