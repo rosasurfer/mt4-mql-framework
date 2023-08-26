@@ -2740,10 +2740,10 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
  *
  * Format:
  * -------
- *  {value} = 2014[.01[.15 [W|12:34[:56]]]]    oder
- *  {value} = (This|Last)(Day|Week|Month|Year) oder
- *  {value} = Today                            Synonym für ThisDay
- *  {value} = Yesterday                        Synonym für LastDay
+ * "2014[.01[.15 [W|12:34[:56]]]]"    oder
+ * "(This|Last)(Day|Week|Month|Year)" oder
+ * "Today"                            Synonym für "ThisDay"
+ * "Yesterday"                        Synonym für "LastDay"
  */
 datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek, bool &isDay, bool &isHour, bool &isMinute) {
    string values[], origValue=value, sYY, sMM, sDD, sTime, sHH, sII, sSS;
@@ -2931,11 +2931,11 @@ datetime ParseDateTimeEx(string value, bool &isYear, bool &isMonth, bool &isWeek
  * Extrahiert aus dem Bestand der übergebenen Positionen {fromVars} eine Teilposition und fügt sie dem Bestand einer
  * CustomPosition {customVars} hinzu.
  *
- * @param  _In_    int    termType        -+
- * @param  _In_    double termValue1       |
- * @param  _In_    double termValue2       +--> struct POSITION_CONFIG_TERM { int type; double value1; double value2; double cache1; double cache2; }
- * @param  _InOut_ double termCache1       |
- * @param  _InOut_ double termCache2      -+
+ * @param  _In_    int    termType   -+
+ * @param  _In_    double termValue1  |
+ * @param  _In_    double termValue2  +--> struct POSITION_CONFIG_TERM { int type; double value1; double value2; double cache1; double cache2; }
+ * @param  _InOut_ double termCache1  |
+ * @param  _InOut_ double termCache2 -+
  *
  * @param  _InOut_ mixed  fromVars            - Variablen, aus denen die Teilposition extrahiert wird (Bestand verringert sich)
  *                 ....

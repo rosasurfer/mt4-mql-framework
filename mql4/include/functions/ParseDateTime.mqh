@@ -18,7 +18,7 @@
  *   "12:30:27"                     // optional date part, requires flag DATE_OPTIONAL
  *   "12:30"                        // time part with optional seconds
  *
- * • Content example of the returned result[] array:
+ * • Content of the returned result[] array for datetime string "2006.12.24 10:45":
  *   int[] = {
  *      PT_YEAR     => 2006,
  *      PT_MONTH    => 12,          // January = 1
@@ -28,7 +28,7 @@
  *      PT_SECOND   => 0,
  *      PT_HAS_DATE => 1,           // whether the passed string contains a date part
  *      PT_HAS_TIME => 1,           // whether the passed string contains a time part
- *      PT_ERROR    => string*      // pointer to error message (if any)
+ *      PT_ERROR    => string*      // pointer to error message (if any) or NULL
  *   }
  */
 bool ParseDateTime(string value, int flags, int &result[]) {
@@ -36,7 +36,7 @@ bool ParseDateTime(string value, int flags, int &result[]) {
    ArrayInitialize(result, 0);
 
    value = StrTrim(value);
-   if (value == "") return(ParseDateTime.Error("ParseDateTime(1)  invalid time value (empty)", result));
+   if (value == "") return(ParseDateTime.Error("ParseDateTime(1)  invalid date/time value (empty)", result));
 
    if (!flags) flags = DATE_YYYYMMDD | DATE_DDMMYYYY | DATE_OPTIONAL | TIME_OPTIONAL;
    bool isDATE_OPTIONAL = (flags & DATE_OPTIONAL == DATE_OPTIONAL);
@@ -49,7 +49,7 @@ bool ParseDateTime(string value, int flags, int &result[]) {
 
    // split into date and time values
    int size = Explode(value, " ", exprs, NULL);
-   if (size > 2)    return(ParseDateTime.Error("ParseDateTime(2)  invalid number of space characters in \""+ value +"\"", result));
+   if (size > 2)    return(ParseDateTime.Error("ParseDateTime(2)  invalid number of space chars in \""+ value +"\"", result));
 
    // check existing and optional parts
    if (!isDATE_OPTIONAL && !isTIME_OPTIONAL) {           // no optional parts, requires a full date/time
@@ -169,16 +169,15 @@ bool ParseDateTime(string value, int flags, int &result[]) {
  * @param  _Out_ int    result[] - array to be returned by the ParseDateTime() call
  *
  * @return bool - success status of the ParseDateTime() call
- *
- * @access private
  */
 bool ParseDateTime.Error(string msg, int &result[]) {
-   string array[1];
    if (IsLogDebug()) debug(msg);
 
    if (StrStartsWith(msg, "ParseDateTime(")) {
       msg = StrTrimLeft(StrRightFrom(msg, ")"));
    }
+
+   string array[1];
    array[0] = msg;
 
    result[PT_ERROR] = GetStringAddress(array[0]);
