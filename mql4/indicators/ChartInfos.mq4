@@ -1407,7 +1407,7 @@ bool UpdatePositions() {
          else {
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      DodgerBlue);
+            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_PROFIT_MARKER_PERCENT], DarkTurquoise, DodgerBlue));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
             ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" x "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+") +"%");
@@ -1420,7 +1420,7 @@ bool UpdatePositions() {
          else {
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      OrangeRed);
+            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_LOSS_MARKER_PERCENT], DarkTurquoise, OrangeRed));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
             ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" x "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+") +"%");
