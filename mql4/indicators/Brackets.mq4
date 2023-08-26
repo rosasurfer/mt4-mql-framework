@@ -23,6 +23,7 @@ extern int    NumberOfBrackets = 1;                      // -1: process all avai
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/ParseDateTime.mqh>
 
 #property indicator_chart_window
 
@@ -68,17 +69,40 @@ int onTick() {
 
 
 /**
- * Parse the given TimeWindow representation and return the resulting bracket parameters.
+ * Parse the given bracket timeframe description and return the resulting bracket parameters.
  *
- * @param  _In_  string timeWindow - bracket window representation
- * @param  _Out_ int    from       - bracket start time in minutes since Midnight servertime
- * @param  _Out_ int    to         - bracket end time in minutes since Midnight servertime
- * @param  _Out_ int    period     - price period to use for bracket calculations
+ * @param  _In_  string timeframe - bracket timeframe description
+ * @param  _Out_ int    from      - bracket start time in minutes since Midnight servertime
+ * @param  _Out_ int    to        - bracket end time in minutes since Midnight servertime
+ * @param  _Out_ int    period    - price period to use for bracket calculations
  *
  * @return bool - success status
  */
-bool ParseTimeWindow(string timeWindow, int &from, int &to, int &period) {
-   return(false);
+bool ParseTimeWindow(string timeframe, int &from, int &to, int &period) {
+   if (!StrContains(timeframe, "-")) return(false);
+   int result[];
+
+   string sFrom = StrTrim(StrLeftTo(timeframe, "-"));
+   if (!ParseDateTime(sFrom, DATE_OPTIONAL, result)) return(false);
+   if (result[PT_HAS_DATE] || result[PT_SECOND])     return(false);
+   int _from = result[PT_HOUR]*60 + result[PT_MINUTE];
+
+   string sTo = StrTrim(StrRightFrom(timeframe, "-"));
+   if (!ParseDateTime(sTo, DATE_OPTIONAL, result)) return(false);
+   if (result[PT_HAS_DATE] || result[PT_SECOND])   return(false);
+   int _to = result[PT_HOUR]*60 + result[PT_MINUTE];
+
+   if (_from >= _to) return(false);
+   from = _from;
+   to = _to;
+
+   if      (!(from % PERIOD_H1  + to % PERIOD_H1))  period = PERIOD_H1;
+   else if (!(from % PERIOD_M30 + to % PERIOD_M30)) period = PERIOD_M30;
+   else if (!(from % PERIOD_M15 + to % PERIOD_M15)) period = PERIOD_M15;
+   else if (!(from % PERIOD_M5  + to % PERIOD_M5))  period = PERIOD_M5;
+   else                                             period = PERIOD_M1;
+
+   return(true);
 }
 
 
