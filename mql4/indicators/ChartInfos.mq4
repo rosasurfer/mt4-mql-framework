@@ -110,8 +110,8 @@ bool    positions.absoluteProfits;                                // default: on
 #define CONFIG_REAL                     1                         // config types: real position
 #define CONFIG_VIRTUAL                  2                         //               virtual position
 
-#define POSITION_LONG                   1                         // position types
-#define POSITION_SHORT                  2                         // (werden in typeDescriptions[] als Arrayindizes benutzt)
+#define POSITION_LONG                   1                         // position types (werden in typeDescriptions[] als Arrayindizes benutzt)
+#define POSITION_SHORT                  2
 #define POSITION_HEDGE                  3
 #define POSITION_HISTORY                4
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
@@ -1334,7 +1334,7 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="";
+   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="", pmText="";
    color  fontColor;
    int    line;
 
@@ -1405,12 +1405,16 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
+            pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
+            if (!positions.dData[i][I_PROFIT_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
+            else                                              pmText = StringConcatenate(pmText, "   PL=", NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+"), "%");
+
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_PROFIT_MARKER_PERCENT], DarkTurquoise, DodgerBlue));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
-            ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" x "+ sBreakeven +"  PL "+ NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+") +"%");
+            ObjectSetText(label, pmText);
          }
 
          label = StringConcatenate(label.customPosition, ".line", line, "_lm");
@@ -1418,12 +1422,16 @@ bool UpdatePositions() {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
+            pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
+            if (!positions.dData[i][I_LOSS_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
+            else                                            pmText = StringConcatenate(pmText, "   PL=", NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+"), "%");
+
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
             ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_LOSS_MARKER_PERCENT], DarkTurquoise, OrangeRed));
             ObjectSet    (label, OBJPROP_BACK,       false);
             ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
-            ObjectSetText(label, ifString(positions.iData[i][I_POSITION_TYPE]==POSITION_LONG, "L ", "S ") + sLotSize +" x "+ sBreakeven +"  DD "+ NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+") +"%");
+            ObjectSetText(label, pmText);
          }
       }
    }
