@@ -15,7 +15,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string TimeWindow       = "09:00-10:00";          // server timezone
+extern string TimeWindow       = "09:00-10:00";          // server timezone                                                   // TODO: replace by FXT everywhere
 extern int    NumberOfBrackets = 1;                      // -1: process all available data
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -23,14 +23,18 @@ extern int    NumberOfBrackets = 1;                      // -1: process all avai
 #include <core/indicator.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
+#include <functions/iCopyRates.mqh>
 #include <functions/ParseDateTime.mqh>
 
 #property indicator_chart_window
 
-int bracketStart;                                        // minutes after Midnight servertime
-int bracketEnd;                                          // ...
-int bracketPeriod;                                       // price period to use for bracket calculations
-int maxBrackets;
+int    bracketStart;                                     // minutes after Midnight
+int    bracketEnd;                                       // ...
+int    maxBrackets;
+
+double rates[][6];                                       // rates used for bracket calculation
+int    ratesTimeframe;
+int    ratesChangedBars;
 
 
 /**
@@ -45,16 +49,18 @@ int onInit() {
    // TimeWindow: 09:00-10:00
    string sValue = TimeWindow;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "TimeWindow", sValue);
-   if (!ParseTimeWindow(sValue, bracketStart, bracketEnd, bracketPeriod)) return(catch("onInit(1)  invalid input parameter TimeWindow: "+ sValue, ERR_INVALID_INPUT_PARAMETER));
+   if (!ParseTimeWindow(sValue, bracketStart, bracketEnd, ratesTimeframe)) return(catch("onInit(1)  invalid input parameter TimeWindow: \""+ sValue +"\"", ERR_INVALID_INPUT_PARAMETER));
+   ratesTimeframe = Min(ratesTimeframe, PERIOD_M5);      // don't use calculation periods > M5 as some brokers/symbols may provide incorrectly aligned timeframe periods
+   if (ratesTimeframe == PERIOD_M1)                                        return(catch("onInit(2)  unsupported TimeWindow: \""+ sValue +"\" (M1 resolution not implemented)", ERR_NOT_IMPLEMENTED));
 
    // NumberOfBrackets
    int iValue = NumberOfBrackets;
    if (AutoConfiguration) iValue = GetConfigInt(indicator, "NumberOfBrackets", iValue);
-   if (iValue < -1)                                                       return(catch("onInit(2)  invalid input parameter NumberOfBrackets: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
+   if (iValue < -1)                                                        return(catch("onInit(3)  invalid input parameter NumberOfBrackets: "+ iValue, ERR_INVALID_INPUT_PARAMETER));
    maxBrackets = ifInt(iValue==-1, INT_MAX, iValue);
 
    SetIndexLabel(0, NULL);                               // disable "Data" window display
-   return(catch("onInit(3)"));
+   return(catch("onInit(4)"));
 }
 
 
@@ -64,7 +70,51 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
+   ratesChangedBars = iCopyRates(rates, NULL, ratesTimeframe);
+   if (ratesChangedBars < 0) return(last_error);
+
+   UpdateBrackets();
    return(last_error);
+}
+
+
+/**
+ * Update bracket visualizations.
+ *
+ * @return bool - success status
+ *
+ * TODO: all calculations must use FXT times
+ */
+bool UpdateBrackets() {
+   // update bracket calculations
+   for (int i=0; i < ratesChangedBars; i++) {
+   }
+
+   // update bracket visualization (usually the chart timeframe will be different than the calculation timeframe)
+   for (i=0; i < ChangedBars; i++) {
+   }
+
+
+
+
+
+   datetime midnight=Tick.time-Tick.time % DAYS, rangeStart, rangeEnd;
+
+   // recalculate/redraw brackets from young to old
+   for (i=0; i < maxBrackets; i++) {
+      rangeStart = midnight + bracketStart*MINUTES;
+      rangeEnd   = midnight + bracketEnd*MINUTES;
+      midnight  -= 1*DAY;
+
+      if (ratesChangedBars > 2) debug("UpdateBrackets(0.2)  ratesChangedBars="+ ratesChangedBars +"  rangeStart="+ TimeToStr(rangeStart, TIME_FULL) +"  rangeEnd="+ TimeToStr(rangeEnd, TIME_FULL));
+   }
+
+   //debug("UpdateBrackets(0.1)  ratesChangedBars="+ ratesChangedBars +"  chartChangedBars="+ ChangedBars);
+   //static bool done = false;
+   //if (!done) debug("UpdateBrackets(0.2)  rangeStart="+ TimeToStr(rangeStart, TIME_FULL) +"  rangeEnd="+ TimeToStr(rangeEnd, TIME_FULL));
+   //done = true;
+
+   return(true);
 }
 
 
