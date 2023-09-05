@@ -1003,19 +1003,19 @@ int ArrayPushInt(int &array[], int value) {
  * Append an integer array to the end of a 2-dimensional integer array.
  *
  * @param  int array[][] - array to extend
- * @param  int value[]   - array to append (size must match the 2nd dimension of the array to extend)
+ * @param  int values[]  - array to append (size must match the 2nd dimension of the array to extend)
  *
  * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
  */
-int ArrayPushInts(int array[][], int value[]) {
-   if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushInts(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
-   if (ArrayDimension(value) != 1) return(_EMPTY(catch("ArrayPushInts(2)  too many dimensions of parameter value: "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAY)));
+int ArrayPushInts(int array[][], int values[]) {
+   if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayPushInts(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(values) != 1) return(_EMPTY(catch("ArrayPushInts(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushInts(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(values) != dim2)   return(_EMPTY(catch("ArrayPushInts(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY)));
 
    ArrayResize(array, dim1+1);
-   int src  = GetIntsAddress(value);
+   int src  = GetIntsAddress(values);
    int dest = GetIntsAddress(array) + dim1*dim2*4;
    CopyMemory(dest, src, dim2*4);
    return(dim1+1);
@@ -1045,19 +1045,19 @@ int ArrayPushDouble(double &array[], double value) {
  * Append a double array to the end of a 2-dimensional double array.
  *
  * @param  double array[][] - array to extend
- * @param  double value[]   - array to append (size must match the 2nd dimension of the array to extend)
+ * @param  double values[]  - array to append (size must match the 2nd dimension of the array to extend)
  *
  * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
  */
-int ArrayPushDoubles(double array[][], double value[]) {
-   if (ArrayDimension(array) != 2) return(_EMPTY(catch("ArrayPushDoubles(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
-   if (ArrayDimension(value) != 1) return(_EMPTY(catch("ArrayPushDoubles(2)  too many dimensions of parameter value: "+ ArrayDimension(value), ERR_INCOMPATIBLE_ARRAY)));
+int ArrayPushDoubles(double array[][], double values[]) {
+   if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayPushDoubles(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(values) != 1) return(_EMPTY(catch("ArrayPushDoubles(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int dim1 = ArrayRange(array, 0);
    int dim2 = ArrayRange(array, 1);
-   if (ArraySize(value) != dim2)   return(_EMPTY(catch("ArrayPushDoubles(3)  array size mis-match of parameters array and value: array["+ dim1 +"]["+ dim2 +"] / value["+ ArraySize(value) +"]", ERR_INCOMPATIBLE_ARRAY)));
+   if (ArraySize(values) != dim2)   return(_EMPTY(catch("ArrayPushDoubles(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY)));
 
    ArrayResize(array, dim1+1);
-   int src  = GetDoublesAddress(value);
+   int src  = GetDoublesAddress(values);
    int dest = GetDoublesAddress(array) + dim1*dim2*8;
    CopyMemory(dest, src, dim2*8);
    return(dim1+1);
