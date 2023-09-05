@@ -441,7 +441,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
    // Each SuperBar consists of 3 objects: an OBJ_RECTANGLE representing the SuperBar body, an OBJ_TREND line with the close
    // price in the tooltip representing the SuperBar's close, and an OBJ_LABEL holding a reference to the close marker. On data
-   // pumping an already drawed SuperBar and/or it's close price may change. With the reference in the label the close marker
+   // pumping an already drawn SuperBar and/or it's close price may change. With the reference in the label the close marker
    // can be found and updated without iterating over all chart objects.
    string nameRectangle="", nameRectangleBg="", nameTrendline="", nameOldTrendline="", nameLabel="";
 

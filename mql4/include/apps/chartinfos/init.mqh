@@ -208,30 +208,30 @@ bool OrderTracker.Configure() {
 /**
  * Find the applicable configuration for the [UnitSize] calculation and return the configured value.
  *
- * @param _In_  string id     - unitsize configuration identifier
+ * @param _In_  string name   - unitsize configuration identifier
  * @param _Out_ string &value - configuration value
  *
  * @return bool - success status
  */
-bool ReadUnitSizeConfigValue(string id, string &value) {
+bool ReadUnitSizeConfigValue(string name, string &value) {
    string section="Unitsize", sValue="";
    value = "";
 
-   string key = Symbol() +"."+ id;
+   string key = Symbol() +"."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = StdSymbol() +"."+ id;
+   key = StdSymbol() +"."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = "Default."+ id;
+   key = "Default."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;
