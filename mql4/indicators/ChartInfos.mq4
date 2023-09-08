@@ -82,13 +82,15 @@ string  positions.config.comments[];                              // comments of
 #define TERM_TICKET                     1                         // notation term types of the custom position configuration
 #define TERM_OPEN_LONG                  2
 #define TERM_OPEN_SHORT                 3
-#define TERM_OPEN                       4
+#define TERM_OPEN                       4                         // intentionally TERM_OPEN_TOTAL is not implemented
 #define TERM_HISTORY                    5
-#define TERM_HISTORY_TOTAL              6                         // intentionally TERM_OPEN_TOTAL is not implemented
+#define TERM_HISTORY_TOTAL              6
 #define TERM_PL_ADJUSTMENT              7
 #define TERM_EQUITY                     8
-#define TERM_PROFIT_MARKER              9
-#define TERM_LOSS_MARKER               10
+#define TERM_MFE                        9
+#define TERM_MAE                       10
+#define TERM_PROFIT_MARKER             11
+#define TERM_LOSS_MARKER               12
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions (configured and unconfigured)
@@ -116,11 +118,11 @@ bool    positions.absoluteProfits;                                // default: on
 #define POSITION_HISTORY                4
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
-#define I_CONFIG_TYPE                   0                         // Arrayindizes von positions.iData[]
+#define I_CONFIG_TYPE                   0                         // array indexes of positions.iData[]
 #define I_POSITION_TYPE                 1
 #define I_COMMENT_INDEX                 2
 
-#define I_DIRECTIONAL_LOTS              0                         // Arrayindizes von positions.dData[]
+#define I_DIRECTIONAL_LOTS              0                         // array indexes of positions.dData[]
 #define I_HEDGED_LOTS                   1
 #define I_PIP_DISTANCE                  2
 #define I_BREAKEVEN_PRICE  I_PIP_DISTANCE
@@ -131,8 +133,8 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_OPEN_PROFIT                   7
 #define I_CLOSED_PROFIT                 8
 #define I_ADJUSTED_PROFIT               9
-#define I_FULL_PROFIT_ABS              10
-#define I_FULL_PROFIT_PCT              11
+#define I_PROFIT_ABS                   10
+#define I_PROFIT_PCT                   11
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
@@ -1355,15 +1357,15 @@ bool UpdatePositions() {
          // history only
          if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
             // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), " ",                                                                     positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                          positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                           positions.fontSize, positions.fontName, fontColor);
          }
 
          // directional or hedged
@@ -1371,32 +1373,32 @@ bool UpdatePositions() {
             // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
             // hedged
             if (positions.iData[i][I_POSITION_TYPE] == POSITION_HEDGE) {
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",             positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                                         positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                      positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",        positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                                    positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
                   else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true, true);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                                       positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                                  positions.fontSize, positions.fontName, fontColor);
             }
 
             // not hedged
             else {
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                      positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+");
                   else                                    sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.dData[i][I_HEDGED_LOTS], ".+");
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                                                positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                                           positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                                      positions.fontSize, positions.fontName, fontColor);
                   if (!positions.dData[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
                   else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                      positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                 positions.fontSize, positions.fontName, fontColor);
             }
 
             // hedged and not-hedged
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                          positions.fontSize, positions.fontName, fontColor);
             if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_FULL_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_FULL_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                           positions.fontSize, positions.fontName, fontColor);
          }
 
          // update PL markers
@@ -1407,7 +1409,7 @@ bool UpdatePositions() {
          else {
             pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
             if (!positions.dData[i][I_PROFIT_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
-            else                                              pmText = StringConcatenate(pmText, "   PL=", NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+"), "%");
+            else                                              pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+"), "%");
 
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
@@ -1424,7 +1426,7 @@ bool UpdatePositions() {
          else {
             pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
             if (!positions.dData[i][I_LOSS_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
-            else                                            pmText = StringConcatenate(pmText, "   PL=", NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+"), "%");
+            else                                            pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+"), "%");
 
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
@@ -3464,8 +3466,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
          positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
          positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-         positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-         positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
+         positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+         positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
 
          //debug("StorePosition(0.1)  hedged:  realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
          return(!catch("StorePosition(3)"));
@@ -3531,8 +3533,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-      positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
+      positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
 
       pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
@@ -3618,8 +3620,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
       positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
       positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-      positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
+      positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
 
       pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
@@ -3668,8 +3670,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
    positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
    positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
-   positions.dData[size][I_FULL_PROFIT_ABS      ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
-   positions.dData[size][I_FULL_PROFIT_PCT      ] = MathDiv(fullProfit, equity100Pct) * 100;
+   positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
+   positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
 
    //debug("StorePosition(0.4)  history: realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2"));
    return(!catch("StorePosition(8)"));
