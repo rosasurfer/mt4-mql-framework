@@ -10303,26 +10303,4 @@ period_flags=0
 show_data=1
 </indicator>
 </window>
-
-
-<window>
-height=1
-fixed_height=0
-<indicator>
-name=Custom Indicator
-<expert>
-name=MACD
-flags=339
-window_num=1
-<inputs>
-FastMA.Periods=36
-FastMA.Method=SMA | LWMA | EMA* | ALMA
-SlowMA.Periods=144
-SlowMA.Method=SMA | LWMA | EMA* | ALMA
-</inputs>
-</expert>
-period_flags=0
-show_data=1
-</indicator>
-</window>
 </chart>
