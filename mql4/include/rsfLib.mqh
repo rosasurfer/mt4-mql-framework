@@ -16,6 +16,7 @@
    int      ArrayPushDouble     (double &array[],   double value   );
    int      ArrayPushDoubles    (double &array[][], double values[]);
    int      ArrayPushString     (string &array[],   string value   );
+   int      ArrayPushStrings    (string &array[][], string values[]);
 
    bool     ArrayPopBool        (bool   &array[]);
    int      ArrayPopInt         (int    &array[]);

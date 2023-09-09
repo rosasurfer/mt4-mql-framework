@@ -1049,7 +1049,7 @@ int ArrayPushDouble(double &array[], double value) {
  *
  * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
  */
-int ArrayPushDoubles(double array[][], double values[]) {
+int ArrayPushDoubles(double &array[][], double values[]) {
    if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayPushDoubles(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
    if (ArrayDimension(values) != 1) return(_EMPTY(catch("ArrayPushDoubles(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
    int dim1 = ArrayRange(array, 0);
@@ -1080,6 +1080,32 @@ int ArrayPushString(string &array[], string value) {
    array[size] = value;
 
    return(size+1);
+}
+
+
+/**
+ * Append a string array to the end of a 2-dimensional string array.
+ *
+ * @param  string array[][] - array to extend
+ * @param  string values[]  - array to append (size must match the 2nd dimension of the array to extend)
+ *
+ * @return int - new number of rows of the extended array or EMPTY (-1) in case of errors
+ */
+int ArrayPushStrings(string &array[][], string values[]) {
+   if (ArrayDimension(array) != 2)  return(_EMPTY(catch("ArrayPushStrings(1)  illegal dimensions of parameter array: "+ ArrayDimension(array), ERR_INCOMPATIBLE_ARRAY)));
+   if (ArrayDimension(values) != 1) return(_EMPTY(catch("ArrayPushStrings(2)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
+   int dim1 = ArrayRange(array, 0);
+   int dim2 = ArrayRange(array, 1);
+   if (ArraySize(values) != dim2)   return(_EMPTY(catch("ArrayPushStrings(3)  array size mis-match of parameters array and values: array["+ dim1 +"]["+ dim2 +"] / values["+ ArraySize(values) +"]", ERR_INCOMPATIBLE_ARRAY)));
+
+   ArrayResize(array, dim1+1);
+
+   for (int i=0; i < dim2; i++) {
+      if (!StrIsNull(values[i])) {
+         array[dim1][i] = values[i];
+      }
+   }
+   return(dim1+1);
 }
 
 

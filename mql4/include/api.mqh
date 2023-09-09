@@ -595,6 +595,7 @@ int      ArrayPushDoubles(double &array[][], double values[]);;
 int      ArrayPushInt(int &array[], int value);;
 int      ArrayPushInts(int &array[][], int values[]);;
 int      ArrayPushString(string &array[], string value);;
+int      ArrayPushStrings(string &array[][], string values[]);;
 int      ArraySetInts(int &array[][], int offset, int values[]);;
 bool     ArrayShiftBool(bool &array[]);;
 double   ArrayShiftDouble(double &array[]);;
