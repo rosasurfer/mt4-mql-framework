@@ -128,7 +128,7 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (__isTesting) {
-      positions.absoluteProfits = true;
+      positions.showAbsProfits = true;
    }
    else {
       // setup a chart ticker

@@ -67,74 +67,78 @@ double mm.leverage;                                               // resulting l
 double mm.riskPercent;                                            // resulting risk
 double mm.riskRange;                                              // resulting price range
 
-// configuration of custom positions
-#define POSITION_CONFIG_TERM_size       5                         // in doubles
-
-double  positions.config[][POSITION_CONFIG_TERM_size];            // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
-string  positions.config.comments[];                              // comments of custom position configuration, size matches positions.config[]
-
-#define I_TERM_TYPE                     0                         // indexes of positions.config[][]
-#define I_TERM_VALUE1                   1
-#define I_TERM_VALUE2                   2
-#define I_TERM_CACHE1                   3                         // field for caching intermediate results
-#define I_TERM_CACHE2                   4                         // ...
-
-#define TERM_TICKET                     1                         // notation term types of the custom position configuration
-#define TERM_OPEN_LONG                  2
-#define TERM_OPEN_SHORT                 3
-#define TERM_OPEN                       4                         // intentionally TERM_OPEN_TOTAL is not implemented
-#define TERM_HISTORY                    5
-#define TERM_HISTORY_TOTAL              6
-#define TERM_PL_ADJUSTMENT              7
-#define TERM_EQUITY                     8
-#define TERM_MFE                        9
-#define TERM_MAE                       10
-#define TERM_PROFIT_MARKER             11
-#define TERM_LOSS_MARKER               12
-
-// control flags for AnalyzePositions()
-#define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions (configured and unconfigured)
-#define F_LOG_SKIP_EMPTY                2                         // skip empty array elements when logging tickets
-#define F_SHOW_CUSTOM_POSITIONS         4                         // call ShowOpenOrders() for configured positions (not for unconfigured or pending ones)
-#define F_SHOW_CUSTOM_HISTORY           8                         // call ShowTradeHistory() for the configured history (not for total history)
-
 // internal + external position data
-bool    isPendings;                                               // ob Pending-Limite im Markt liegen (Orders oder Positions)
+bool    isPendings;                                               // ob Pending-Limits im Markt liegen (Orders oder Positions)
 bool    isPosition;                                               // ob offene Positionen existieren, die Gesamtposition kann flat sein: (longPosition || shortPosition)
 double  totalPosition;
 double  longPosition;
 double  shortPosition;
-int     positions.iData[][3];                                     // position details: [ConfigType, PositionType, CommentIndex]
-double  positions.dData[][12];                                    //                   [DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, ProfitMarkerPrice, ProfitMarkerPercent, LossMarkerPrice, LossMarkerPercent, OpenProfit, ClosedProfit, AdjustedProfit, FullProfitAbs, FullProfitPct]
-bool    positions.analyzed;
-bool    positions.absoluteProfits;                                // default: online=FALSE, tester=TRUE
 
-#define CONFIG_REAL                     1                         // config types: real position
-#define CONFIG_VIRTUAL                  2                         //               virtual position
+// configuration of custom positions
+string  configLine.data[][2];                                     // config line details: [LineKey, LineComment]
 
-#define POSITION_LONG                   1                         // position types (werden in typeDescriptions[] als Arrayindizes benutzt)
-#define POSITION_SHORT                  2
-#define POSITION_HEDGE                  3
-#define POSITION_HISTORY                4
+#define I_LINE_KEY                      0                         // indexes of configLine.data[]
+#define I_LINE_COMMENT                  1                         //
+
+double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
+
+#define I_TERM_TYPE                     0                         // indexes of configTerms[]
+#define I_TERM_VALUE1                   1
+#define I_TERM_VALUE2                   2
+#define I_TERM_CACHE1                   3                         // cache for intermediate calculation results
+#define I_TERM_CACHE2                   4                         // ...
+
+#define TERM_TICKET                     1                         // supported config terms (possible values of configTerms[][I_TERM_TYPE])
+#define TERM_OPEN_LONG                  2                         // ...
+#define TERM_OPEN_SHORT                 3                         //
+#define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
+#define TERM_HISTORY                    5                         //
+#define TERM_HISTORY_TOTAL              6                         //
+#define TERM_PL_ADJUSTMENT              7                         //
+#define TERM_EQUITY                     8                         //
+#define TERM_MFE                        9                         //
+#define TERM_MAE                       10                         //
+#define TERM_PROFIT_MARKER             11                         //
+#define TERM_LOSS_MARKER               12                         //
+
+// custom positions
+double  positions.data[][17];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, OpenProfit, ClosedProfit, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
+bool    positions.analyzed;                                       //
+bool    positions.showAbsProfits;                                 // default: online=FALSE, tester=TRUE
+
+#define CUSTOM_REAL_POSITION            1                         // config line types: real custom position
+#define CUSTOM_VIRTUAL_POSITION         2                         //                    virtual custom position
+
+#define POSITION_LONG                   1                         // position type ids, also array indexes of typeDescriptions[]
+#define POSITION_SHORT                  2                         //
+#define POSITION_HEDGE                  3                         //
+#define POSITION_HISTORY                4                         //
 string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 
-#define I_CONFIG_TYPE                   0                         // array indexes of positions.iData[]
-#define I_POSITION_TYPE                 1
-#define I_COMMENT_INDEX                 2
+#define I_CONFIG_LINE                   0                         // indexes of positions.data[]
+#define I_CUSTOM_TYPE                   1                         //
+#define I_POSITION_TYPE                 2                         //
+#define I_DIRECTIONAL_LOTS              3                         //
+#define I_HEDGED_LOTS                   4                         //
+#define I_PIP_DISTANCE                  5                         //
+#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-all-hedged=PipDistance
+#define I_OPEN_PROFIT                   6                         //
+#define I_CLOSED_PROFIT                 7                         //
+#define I_ADJUSTED_PROFIT               8                         //
+#define I_TOTAL_PROFIT                  9                         //
+#define I_TOTAL_PROFIT_MIN             10                         //
+#define I_TOTAL_PROFIT_MAX             11                         //
+#define I_TOTAL_PROFIT_PCT             12                         //
+#define I_PROFIT_MARKER_PRICE          13                         //
+#define I_PROFIT_MARKER_PCT            14                         //
+#define I_LOSS_MARKER_PRICE            15                         //
+#define I_LOSS_MARKER_PCT              16                         //
 
-#define I_DIRECTIONAL_LOTS              0                         // array indexes of positions.dData[]
-#define I_HEDGED_LOTS                   1
-#define I_PIP_DISTANCE                  2
-#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE
-#define I_PROFIT_MARKER_PRICE           3
-#define I_PROFIT_MARKER_PERCENT         4
-#define I_LOSS_MARKER_PRICE             5
-#define I_LOSS_MARKER_PERCENT           6
-#define I_OPEN_PROFIT                   7
-#define I_CLOSED_PROFIT                 8
-#define I_ADJUSTED_PROFIT               9
-#define I_PROFIT_ABS                   10
-#define I_PROFIT_PCT                   11
+// control flags for AnalyzePositions()
+#define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
+#define F_LOG_SKIP_EMPTY                2                         // skip empty array elements when logging tickets
+#define F_SHOW_CUSTOM_POSITIONS         4                         // call ShowOpenOrders() for custom positions
+#define F_SHOW_CUSTOM_HISTORY           8                         // call ShowTradeHistory() for custom history
 
 // Cache-Variablen für LFX-Orders. Ihre Größe entspricht der Größe von lfxOrders[].
 // Dienen der Beschleunigung, um nicht ständig die LFX_ORDER-Getter aufrufen zu müssen.
@@ -290,8 +294,8 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-open-orders") {
       if (keys & F_VK_SHIFT != 0) {
          flags = F_SHOW_CUSTOM_POSITIONS;                         // with VK_SHIFT:
-         ArrayResize(positions.config,          0);               // reparse configuration and show only custom positions
-         ArrayResize(positions.config.comments, 0);               //
+         ArrayResize(configTerms,     0);                         // reparse configuration and show only custom positions
+         ArrayResize(configLine.data, 0);                         //
       }                                                           //
       else flags = NULL;                                          // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
@@ -300,8 +304,8 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       if (keys & F_VK_SHIFT != 0) {
          flags = F_SHOW_CUSTOM_HISTORY;                           // with VK_SHIFT:
-         ArrayResize(positions.config,          0);               // reparse configuration and show only custom history
-         ArrayResize(positions.config.comments, 0);               //
+         ArrayResize(configTerms,     0);                         // reparse configuration and show only custom history
+         ArrayResize(configLine.data, 0);                         //
       }                                                           //
       else flags = NULL;                                          // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
@@ -315,8 +319,8 @@ bool onCommand(string cmd, string params, int keys) {
       string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
       if (!UpdateAccountDisplay()) return(false);
-      ArrayResize(positions.config,          0);                  // let the position configuration be reparsed
-      ArrayResize(positions.config.comments, 0);
+      ArrayResize(configTerms,     0);                            // let the position configuration be reparsed
+      ArrayResize(configLine.data, 0);
    }
    else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
@@ -872,8 +876,8 @@ int ShowTradeHistory(int customTickets[], int flags = NULL) {
       ObjectSet(openLabel, OBJPROP_COLOR,     markerColors[type]);
       ObjectSet(openLabel, OBJPROP_TIME1,     openTime);
       ObjectSet(openLabel, OBJPROP_PRICE1,    openPrice);
-         if (positions.absoluteProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
-         else                                          text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
+         if (positions.showAbsProfits || !openEquity) text = ifString(profit > 0, "+", "") + DoubleToStr(profit, 2);
+         else                                         text = ifString(profit > 0, "+", "") + DoubleToStr(profit/openEquity * 100, 2) +"%";
       ObjectSetText(openLabel, text);
 
       // Trendlinie anzeigen
@@ -945,12 +949,12 @@ string OrderMarkerText(int type, int magic, string comment) {
 
 
 /**
- * Schaltet die Anzeige der PnL-Beträge der Positionen zwischen "absolut" und "prozentual" um.
+ * Schaltet die Anzeige der PL-Beträge der Positionen zwischen "absolut" und "prozentual" um.
  *
  * @return bool - success status
  */
 bool CustomPositions.ToggleProfits() {
-   positions.absoluteProfits = !positions.absoluteProfits;     // toggle status and update positions
+   positions.showAbsProfits = !positions.showAbsProfits;       // toggle status and update positions
    return(UpdatePositions());
 }
 
@@ -1223,7 +1227,7 @@ bool UpdatePositions() {
    }
    if (mode.intern && !mm.done) {
       if (!CalculateUnitSize()) return(false);
-      if (!mm.done)             return(true);                  // on terminal not yet ready
+      if (!mm.done)             return(true);                                    // terminal not yet ready
    }
 
    // total open position bottom-right
@@ -1249,7 +1253,7 @@ bool UpdatePositions() {
    ObjectSetText(label.totalPosition, sCurrentPosition, 9, "Tahoma", SlateGray);
 
    int error = GetLastError();
-   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)              // on ObjectDrag or opened "Properties" dialog
+   if (error && error!=ERR_OBJECT_DOES_NOT_EXIST)                                // on ObjectDrag or opened "Properties" dialog
       return(!catch("UpdatePositions(1)", error));
 
    // pending order marker bottom-right
@@ -1262,28 +1266,29 @@ bool UpdatePositions() {
    ObjectSetText(label, "n", 6, "Webdings", Orange);           // a Webdings "dot"
 
    // prepare rows for custom positions bottom-left
-   static int  lines, cols, percentCol, commentCol, xPrev, xOffset[], xDist, yStart=6, yDist;
-   static bool lastAbsoluteProfits;
-   if (!ArraySize(xOffset) || positions.absoluteProfits!=lastAbsoluteProfits) {
+   static int lines, cols, percentCol, commentCol, xPrev, xOffset[], xDist, yStart=6, yDist;
+   static bool lastShowAbsProfits;
+   if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits) {
       ArrayResize(xOffset, 0);
-      if (positions.absoluteProfits) {
-         // 8 columns: Type:  Lots  BE:  BePrice  Profit:  Amount  Percent  Comment
-         int cols8[] = {9,    46,   83,  28,      66,      39,     87,      61};    // offsets to the previous column
+
+      if (positions.showAbsProfits) {
+         // 8 columns: Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  Comment
+         int cols8[] = {9,    46,   83,  28,      66,      39,   87,      61};   // offsets to the previous column
          ArrayCopy(xOffset, cols8);
       }
       else {
          // 7 columns: Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
-         int cols7[] = {9,    46,   83,  28,      66,      39,      61};
+         int cols7[] = {9,    46,   83,  28,      66,      39,      140};        // old comment offset was 61
          ArrayCopy(xOffset, cols7);
       }
-      cols                = ArraySize(xOffset);
-      percentCol          = cols - 2;
-      commentCol          = cols - 1;
-      lastAbsoluteProfits = positions.absoluteProfits;
+      cols               = ArraySize(xOffset);
+      percentCol         = cols - 2;
+      commentCol         = cols - 1;
+      lastShowAbsProfits = positions.showAbsProfits;
 
       // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
-         for (int col=0; col < 8; col++) {                     // always test all possible columns
+         for (int col=0; col < 8; col++) {                                       // always test all possible columns
             label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
             if (ObjectFind(label) != -1) ObjectDelete(label);
          }
@@ -1296,7 +1301,7 @@ bool UpdatePositions() {
    }
 
    // create new rows as needed
-   int positions = ArrayRange(positions.iData, 0);
+   int positions = ArrayRange(positions.data, 0);
    if (mode.extern) positions = lfxOrders.openPositions;
 
    while (lines < positions) {
@@ -1335,104 +1340,110 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-   string sLotSize="", sDistance="", sBreakeven="", sAdjustedProfit="", sProfitPct="", sComment="", pmText="";
-   color  fontColor;
-   int    line;
+   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}   {Comment}"
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sComment="", pmText="";
+   color fontColor;
+   int line;
 
    // update display of internal custom positions
    if (mode.intern) {
       for (int i=positions-1; i >= 0; i--) {
          line++;
-         if      (positions.iData[i][I_CONFIG_TYPE  ] == CONFIG_VIRTUAL  ) fontColor = positions.fontColor.virtual;
-         else if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) fontColor = positions.fontColor.history;
-         else                                                              fontColor = positions.fontColor.open;
+         if      (positions.data[i][I_CUSTOM_TYPE  ] == CUSTOM_VIRTUAL_POSITION) fontColor = positions.fontColor.virtual;
+         else if (positions.data[i][I_POSITION_TYPE] == POSITION_HISTORY)        fontColor = positions.fontColor.history;
+         else                                                                    fontColor = positions.fontColor.open;
 
-         if (!positions.dData[i][I_ADJUSTED_PROFIT])    sAdjustedProfit = "";
-         else                                           sAdjustedProfit = StringConcatenate(" (", DoubleToStr(positions.dData[i][I_ADJUSTED_PROFIT], 2), ")");
+         sPositionType = typeDescriptions[_int(positions.data[i][I_POSITION_TYPE])];
 
-         if (positions.iData[i][I_COMMENT_INDEX] == -1) sComment = " ";
-         else                                           sComment = positions.config.comments[positions.iData[i][I_COMMENT_INDEX]];
+         if (positions.showAbsProfits) {
+            sProfitAbs = DoubleToStr(positions.data[i][I_TOTAL_PROFIT], 2);
+            if (positions.data[i][I_ADJUSTED_PROFIT] != NULL) sProfitAbs = StringConcatenate(sProfitAbs, " (", NumberToStr(positions.data[i][I_ADJUSTED_PROFIT], "+.2"), ")");
+         }
+         sProfitPct    = StringConcatenate(DoubleToStr(positions.data[i][I_TOTAL_PROFIT_PCT], 2), "%");
+         sProfitMinMax = StringConcatenate("      (", DoubleToStr(positions.data[i][I_TOTAL_PROFIT_MIN], 1), "/", DoubleToStr(positions.data[i][I_TOTAL_PROFIT_MAX], 1), ")");
+
+         if (positions.data[i][I_CONFIG_LINE] == -1) sComment = " ";
+         else                                        sComment = configLine.data[_int(positions.data[i][I_CONFIG_LINE])][I_LINE_COMMENT];
 
          // history only
-         if (positions.iData[i][I_POSITION_TYPE] == POSITION_HISTORY) {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), " ",                                                                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                          positions.fontSize, positions.fontName, fontColor);
-            if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                           positions.fontSize, positions.fontName, fontColor);
+         if (positions.data[i][I_POSITION_TYPE] == POSITION_HISTORY) {
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}   {Comment}"
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), sPositionType,                                         positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                             positions.fontSize, positions.fontName, fontColor);
+            if (positions.showAbsProfits)
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), sProfitPct + sProfitMinMax,                            positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
          }
 
          // directional or hedged
          else {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}   {Comment}"
             // hedged
-            if (positions.iData[i][I_POSITION_TYPE] == POSITION_HEDGE) {
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                      positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"),      NumberToStr(positions.dData[i][I_HEDGED_LOTS  ], ".+") +" lot",        positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                                    positions.fontSize, positions.fontName, fontColor);
-                  if (!positions.dData[i][I_PIP_DISTANCE]) sDistance = "...";
-                  else                                     sDistance = PipToStr(positions.dData[i][I_PIP_DISTANCE], true, true);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                                  positions.fontSize, positions.fontName, fontColor);
+            if (positions.data[i][I_POSITION_TYPE] == POSITION_HEDGE) {
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), sPositionType,                                                 positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), NumberToStr(positions.data[i][I_HEDGED_LOTS  ], ".+") +" lot", positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "Dist:",                                                       positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.data[i][I_PIP_DISTANCE]) sDistance = "...";
+                  else                                     sDistance = PipToStr(positions.data[i][I_PIP_DISTANCE], true, true);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sDistance,                                                     positions.fontSize, positions.fontName, fontColor);
             }
 
             // not hedged
             else {
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), typeDescriptions[positions.iData[i][I_POSITION_TYPE]],                      positions.fontSize, positions.fontName, fontColor);
-                  if (!positions.dData[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+");
-                  else                                    sLotSize = NumberToStr(positions.dData[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.dData[i][I_HEDGED_LOTS], ".+");
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                                           positions.fontSize, positions.fontName, fontColor);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                                      positions.fontSize, positions.fontName, fontColor);
-                  if (!positions.dData[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
-                  else                                        sBreakeven = NumberToStr(positions.dData[i][I_BREAKEVEN_PRICE], PriceFormat);
-               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                                 positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), sPositionType,                                                 positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.data[i][I_HEDGED_LOTS]) sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+");
+                  else                                   sLotSize = NumberToStr(positions.data[i][I_DIRECTIONAL_LOTS], ".+") +" ±"+ NumberToStr(positions.data[i][I_HEDGED_LOTS], ".+");
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"), sLotSize +" lot",                                              positions.fontSize, positions.fontName, fontColor);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"), "BE:",                                                         positions.fontSize, positions.fontName, fontColor);
+                  if (!positions.data[i][I_BREAKEVEN_PRICE]) sBreakeven = "...";
+                  else                                       sBreakeven = NumberToStr(positions.data[i][I_BREAKEVEN_PRICE], PriceFormat);
+               ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"), sBreakeven,                                                    positions.fontSize, positions.fontName, fontColor);
             }
 
             // hedged and not-hedged
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                          positions.fontSize, positions.fontName, fontColor);
-            if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(positions.dData[i][I_PROFIT_ABS], 2) + sAdjustedProfit, positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(positions.dData[i][I_PROFIT_PCT], 2) +"%",              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                           positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                             positions.fontSize, positions.fontName, fontColor);
+            if (positions.showAbsProfits)
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), sProfitAbs,                                            positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), sProfitPct + sProfitMinMax,                            positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                              positions.fontSize, positions.fontName, fontColor);
          }
 
          // update PL markers
          label = StringConcatenate(label.customPosition, ".line", line, "_pm");
-         if (!positions.dData[i][I_PROFIT_MARKER_PRICE]) {
+         if (!positions.data[i][I_PROFIT_MARKER_PRICE]) {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
-            if (!positions.dData[i][I_PROFIT_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
-            else                                              pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.dData[i][I_PROFIT_MARKER_PERCENT], "+.1+"), "%");
+            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
+            if (!positions.data[i][I_PROFIT_MARKER_PCT]) pmText = StringConcatenate(pmText, "   BE");
+            else                                         pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.data[i][I_PROFIT_MARKER_PCT], "+.1+"), "%");
 
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_PROFIT_MARKER_PERCENT], DarkTurquoise, DodgerBlue));
+            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.data[i][I_PROFIT_MARKER_PCT], DarkTurquoise, DodgerBlue));
             ObjectSet    (label, OBJPROP_BACK,       false);
-            ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_PROFIT_MARKER_PRICE]);
+            ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_PROFIT_MARKER_PRICE]);
             ObjectSetText(label, pmText);
          }
 
          label = StringConcatenate(label.customPosition, ".line", line, "_lm");
-         if (!positions.dData[i][I_LOSS_MARKER_PRICE]) {
+         if (!positions.data[i][I_LOSS_MARKER_PRICE]) {
             ObjectSet(label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
          }
          else {
-            pmText = StringSubstr(typeDescriptions[positions.iData[i][I_POSITION_TYPE]], 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
-            if (!positions.dData[i][I_LOSS_MARKER_PERCENT]) pmText = StringConcatenate(pmText, "   BE");
-            else                                            pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.dData[i][I_LOSS_MARKER_PERCENT], "+.1+"), "%");
+            pmText = StringSubstr(sPositionType, 0, 1) +" "+ sLotSize +" x "+ sBreakeven;
+            if (!positions.data[i][I_LOSS_MARKER_PCT]) pmText = StringConcatenate(pmText, "   BE");
+            else                                       pmText = StringConcatenate(pmText, "   PL  ", NumberToStr(positions.data[i][I_LOSS_MARKER_PCT], "+.1+"), "%");
 
             ObjectSet    (label, OBJPROP_TIMEFRAMES, OBJ_PERIODS_ALL);
             ObjectSet    (label, OBJPROP_STYLE,      STYLE_DASHDOTDOT);
-            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.dData[i][I_LOSS_MARKER_PERCENT], DarkTurquoise, OrangeRed));
+            ObjectSet    (label, OBJPROP_COLOR,      ifInt(!positions.data[i][I_LOSS_MARKER_PCT], DarkTurquoise, OrangeRed));
             ObjectSet    (label, OBJPROP_BACK,       false);
-            ObjectSet    (label, OBJPROP_PRICE1,     positions.dData[i][I_LOSS_MARKER_PRICE]);
+            ObjectSet    (label, OBJPROP_PRICE1,     positions.data[i][I_LOSS_MARKER_PRICE]);
             ObjectSetText(label, pmText);
          }
       }
@@ -1444,20 +1455,20 @@ bool UpdatePositions() {
       for (i=ArrayRange(lfxOrders, 0)-1; i >= 0; i--) {
          if (lfxOrders.bCache[i][BC.isOpenPosition]) {
             line++;
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Amount} ]{Percent}   {Comment}"
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],                              positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units",                positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), "BE:",                                                                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),                   positions.fontSize, positions.fontName, fontColor);
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                               positions.fontSize, positions.fontName, fontColor);
-            if (positions.absoluteProfits)
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),                          positions.fontSize, positions.fontName, fontColor);
-               double profitPct = lfxOrders.dCache[i][DC.profit] / los.OpenEquity(lfxOrders, i) * 100;
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                                          positions.fontSize, positions.fontName, fontColor);
-               sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
-               if (StringGetChar(sComment, 0) == '#')
-                  sComment = StringConcatenate(lfxCurrency, ".", StrSubstr(sComment, 1));
-            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                                positions.fontSize, positions.fontName, fontColor);
+            double profitPct = lfxOrders.dCache[i][DC.profit] / los.OpenEquity(lfxOrders, i) * 100;
+            sComment = StringConcatenate(los.Comment(lfxOrders, i), " ");
+            if (StringGetChar(sComment, 0) == '#') sComment = StringConcatenate(lfxCurrency, ".", StrSubstr(sComment, 1));
+
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}   {Comment}"
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), typeDescriptions[los.Type(lfxOrders, i)+1],               positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), NumberToStr(los.Units    (lfxOrders, i), ".+") +" units", positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), "BE:",                                                    positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col3"           ), NumberToStr(los.OpenPrice(lfxOrders, i), PriceFormat),    positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col4"           ), "Profit:",                                                positions.fontSize, positions.fontName, fontColor);
+            if (positions.showAbsProfits)
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col5"           ), DoubleToStr(lfxOrders.dCache[i][DC.profit], 2),           positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", percentCol), DoubleToStr(profitPct, 2) +"%",                           positions.fontSize, positions.fontName, fontColor);
+            ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col", commentCol), sComment,                                                 positions.fontSize, positions.fontName, fontColor);
          }
       }
    }
@@ -1615,7 +1626,7 @@ bool UpdateStopoutLevel() {
       int sortKeys[][2];                                                         // Sortierschlüssel der offenen Positionen: {OpenTime, Ticket}
       ArrayResize(sortKeys, orders);
 
-      // Sortierschlüssel auslesen und dabei PnL von LFX-Positionen erfassen (alle Symbole).
+      // Sortierschlüssel auslesen und dabei PL von LFX-Positionen erfassen (alle Symbole).
       for (int n, i=0; i < orders; i++) {
          if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;                 // FALSE: während des Auslesens wurde woanders ein offenes Ticket entfernt
          if (OrderType() > OP_SELL) {
@@ -1697,16 +1708,10 @@ bool UpdateStopoutLevel() {
    totalPosition = NormalizeDouble(longPosition - shortPosition, 2);
    isPosition    = longPosition || shortPosition;
 
-   // Positionen analysieren und in positions.*Data[] speichern
-   if (ArrayRange(positions.iData, 0) > 0) {
-      ArrayResize(positions.iData, 0);
-      ArrayResize(positions.dData, 0);
-   }
-
    // individuelle Konfiguration parsen
    int prevError = last_error;
    SetLastError(NO_ERROR);
-   if (!ArrayRange(positions.config, 0)) /*&&*/ if (!CustomPositions.ReadConfig()) {
+   if (!ArrayRange(configTerms, 0)) /*&&*/ if (!CustomPositions.ReadConfig()) {
       positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
       if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       return(positions.analyzed);
@@ -1714,31 +1719,33 @@ bool UpdateStopoutLevel() {
    SetLastError(prevError);
 
    // individuelle Positionen aus offenen Positionen extrahieren und in positions.*Data[] speichern
-   int    termType, confLineIndex, confSize = ArrayRange(positions.config, 0);
+   int    termType, iConfLine, confSize = ArrayRange(configTerms, 0);
    double termValue1, termValue2, termCache1, termCache2, customLongPosition, customShortPosition, customTotalPosition, closedProfit=EMPTY_VALUE, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent=EMPTY_VALUE, lossMarkerPrice, lossMarkerPercent=EMPTY_VALUE, _longPosition=longPosition, _shortPosition=shortPosition, _totalPosition=totalPosition;
+   int    customTickets[], customTypes[];
+   double customLots[], customOpenPrices[], customCommissions[], customSwaps[], customProfits[];
    bool   isCustomVirtual;
-   int    customTickets    [];
-   int    customTypes      [];
-   double customLots       [];
-   double customOpenPrices [];
-   double customCommissions[];
-   double customSwaps      [];
-   double customProfits    [];
 
-   for (i=0, confLineIndex=0; i < confSize; i++) {
-      termType   = positions.config[i][I_TERM_TYPE  ];
-      termValue1 = positions.config[i][I_TERM_VALUE1];
-      termValue2 = positions.config[i][I_TERM_VALUE2];
-      termCache1 = positions.config[i][I_TERM_CACHE1];
-      termCache2 = positions.config[i][I_TERM_CACHE2];
+   debug("AnalyzePositions(0.1)  size(configTerms)="+ confSize +"  configLine.data="+ StringsToStr(configLine.data, NULL));
+
+   if (ArrayRange(positions.data, 0) > 0) {
+      ArrayResize(positions.data, 0);
+   }
+
+   for (i=0, iConfLine=0; i < confSize; i++) {
+      termType   = configTerms[i][I_TERM_TYPE  ];
+      termValue1 = configTerms[i][I_TERM_VALUE1];
+      termValue2 = configTerms[i][I_TERM_VALUE2];
+      termCache1 = configTerms[i][I_TERM_CACHE1];
+      termCache2 = configTerms[i][I_TERM_CACHE2];
 
       if (!termType) {                                                           // termType NULL => EOL (Ende einer individuellen Konfigurationszeile)
-         if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, confLineIndex, flags);
+         if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, iConfLine, flags);
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
          // individuelle Position speichern
-         if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent, confLineIndex))
+         if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent, iConfLine)) {
             return(false);
+         }
          isCustomVirtual     = false;
          customLongPosition  = 0;
          customShortPosition = 0;
@@ -1757,25 +1764,27 @@ bool UpdateStopoutLevel() {
          ArrayResize(customCommissions, 0);
          ArrayResize(customSwaps,       0);
          ArrayResize(customProfits,     0);
-         confLineIndex++;
+         iConfLine++;
          continue;
       }
       // individuelle Position extrahieren
       if (!ExtractPosition(termType, termValue1, termValue2, termCache1, termCache2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots,       openTimes, openPrices,       commissions,       swaps,       profits,
                            customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots,            customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent,
-                           isCustomVirtual, flags))
+                           isCustomVirtual, flags)) {
          return(false);
-      positions.config[i][I_TERM_CACHE1] = termCache1;
-      positions.config[i][I_TERM_CACHE2] = termCache2;
+      }
+      configTerms[i][I_TERM_CACHE1] = termCache1;
+      configTerms[i][I_TERM_CACHE2] = termCache2;
    }
 
-   if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(tickets, -1, flags);
+   // eine verbleibende offene Position als letzten Eintrag behandeln (wird von keiner Konfiguration abgedeckt)
+   iConfLine = -1;
+   if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(tickets, iConfLine, flags);
 
-   // evt. verbleibende offene Position als letzten Eintrag speichern (wird von keiner Konfiguration abgedeckt)
-   if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, NULL, EMPTY_VALUE, -1))
+   if (!StorePosition(false, _longPosition, _shortPosition, _totalPosition, tickets, types, lots, openPrices, commissions, swaps, profits, EMPTY_VALUE, NULL, NULL, NULL, EMPTY_VALUE, NULL, EMPTY_VALUE, iConfLine)) {
       return(false);
-
+   }
    positions.analyzed = true;
    return(!catch("AnalyzePositions(2)"));
 }
@@ -1785,12 +1794,12 @@ bool UpdateStopoutLevel() {
  * Log tickets of custom positions.
  *
  * @param  int tickets[]
- * @param  int commentIndex
+ * @param  int configLine       - config line index
  * @param  int flags [optional] - control flags, supported values:
  *                                F_LOG_SKIP_EMPTY: skip empty array elements when logging tickets
  * @return bool - success status
  */
-bool CustomPositions.LogTickets(int tickets[], int commentIndex, int flags = NULL) {
+bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL) {
    int copy[]; ArrayResize(copy, 0);
    if (ArraySize(tickets) > 0) {
       ArrayCopy(copy, tickets);
@@ -1798,12 +1807,12 @@ bool CustomPositions.LogTickets(int tickets[], int commentIndex, int flags = NUL
    }
 
    if (ArraySize(copy) > 0) {
-      string sIndex="-", sComment="";
+      string sLine="-", sComment="";
 
-      if (commentIndex > -1) {
-         sIndex = commentIndex;
-         if (StringLen(positions.config.comments[commentIndex]) > 0) {
-            sComment = "\""+ positions.config.comments[commentIndex] +"\" = ";
+      if (configLine > -1) {
+         sLine = configLine;
+         if (StringLen(configLine.data[configLine][I_LINE_COMMENT]) > 0) {
+            sComment = "\""+ configLine.data[configLine][I_LINE_COMMENT] +"\" = ";
          }
       }
 
@@ -1811,7 +1820,7 @@ bool CustomPositions.LogTickets(int tickets[], int commentIndex, int flags = NUL
       sPosition = ifString(sPosition=="0 lot", "", sPosition +" = ");
       string sTickets = TicketsToStr.Lots(copy, NULL);
 
-      debug("LogTickets(1)  conf("+ sIndex +"): "+ sComment + sPosition + sTickets);
+      debug("LogTickets(1)  conf("+ sLine +"): "+ sComment + sPosition + sTickets);
    }
    return(!catch("CustomPositions.LogTickets(2)"));
 }
@@ -1953,12 +1962,12 @@ int SearchLfxTicket(int ticket) {
  * @return bool - success status
  *
  *
- * Fills positions.config[] with parsed configuration data of the current chart symbol. The array enthält danach Elemente
+ * Fills configTerms[] with parsed configuration data of the current chart symbol. The array enthält danach Elemente
  * {type, value1, value2, value3, value4}. Ein NULL-Element {NULL, ...} markiert EOL (Zeilenende bzw. leere Konfiguration).
  * Nach Rückkehr ist das Array niemals leer (enthält imer mindestens einen EOL-Marker).
  *
  * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
- * | Notation                                       | Description                                                                   | Content of positions.config[][] (7)                                    |
+ * | Notation                                       | Description                                                                   | Content of configTerms[][] (7)                                         |
  * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
  * |    #123456                                     | komplettes Ticket oder verbleibender Rest eines Tickets                       | [TERM_TICKET       , 123456          , EMPTY           , ...  , ...  ] |
  * | 0.1#123456                                     | O.1 Lot eines Tickets (1)                                                     | [TERM_TICKET       , 123456          , 0.1             , ...  , ...  ] |
@@ -1977,7 +1986,7 @@ int SearchLfxTicket(int ticket) {
  * | LM=2.3456                                      | draw a loss marker and calculate PL at the specified price                    | [TERM_LOSS_MARKER  , 2.3456          , ...             , ...  , ...  ] |
  * | LM=-5%                                         | draw a loss marker at a PL of the specified percent amount                    | [TERM_LOSS_MARKER  , ...             , -5.0            , ...  , ...  ] |
  * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
- * | text after a semikolon ";" aka .ini comment    | displayed as position description                                             | string: stored in positions.config.comments[]                          |
+ * | text after a semikolon ";" aka .ini comment    | displayed as position description                                             | string: stored in configLine.data[]                                    |
  * | text after a 2nd semikolon ";;"                | comment (ignored)                                                             |                                                                        |
  * +------------------------------------------------+-------------------------------------------------------------------------------+------------------------------------------------------------------------+
  *
@@ -1992,7 +2001,7 @@ int SearchLfxTicket(int ticket) {
  *
  *  Resulting array of the above example (7)
  *  ----------------------------------------
- *  double positions.config = [
+ *  double configTerms = [
  *     [TERM_TICKET, 111111, EMPTY, ..., ...],
  *     [TERM_TICKET, 222222, 0.1  , ..., ...],
  *     [NULL  , ...  , ..., ..., ...],             // EOL marker of GBPAUD.a
@@ -2023,12 +2032,12 @@ int SearchLfxTicket(int ticket) {
  *  (7) "..." denotes fields not used by the term
  */
 bool CustomPositions.ReadConfig() {
-   if (ArrayRange(positions.config, 0) > 0) {
-      ArrayResize(positions.config,          0);
-      ArrayResize(positions.config.comments, 0);
+   if (ArrayRange(configTerms, 0) > 0) {
+      ArrayResize(configTerms,     0);
+      ArrayResize(configLine.data, 0);
    }
 
-   string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
+   string   keys[], values[], sData[]={"", ""}, iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
    double   termType, termValue1, termValue2, termCache1, termCache2, dValue, lotSize, minLotSize=MarketInfo(symbol, MODE_MINLOT), lotStep=MarketInfo(symbol, MODE_LOTSTEP);
    int      valuesSize, confSize, pos, ticket, positionStartOffset;
    datetime from, to;
@@ -2270,39 +2279,41 @@ bool CustomPositions.ReadConfig() {
                // Die Konfiguration virtueller Positionen muß mit einem virtuellen Term beginnen, damit die realen Lots nicht um die virtuellen Lots reduziert werden, siehe (2).
                if ((termType==TERM_OPEN_LONG || termType==TERM_OPEN_SHORT) && termValue1!=EMPTY) {
                   if (!isPositionEmpty && !isPositionVirtual) {
-                     double tmp[POSITION_CONFIG_TERM_size] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL};   // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
-                     ArrayInsertDoubleArray(positions.config, positionStartOffset, tmp);
+                     double tmp[] = {TERM_OPEN_LONG, 0, NULL, NULL, NULL};    // am Anfang der Zeile virtuellen 0-Term einfügen: 0L
+                     ArrayInsertDoubleArray(configTerms, positionStartOffset, tmp);
                   }
                   isPositionVirtual = true;
                }
 
                // Konfigurations-Term speichern
-               confSize = ArrayRange(positions.config, 0);
-               ArrayResize(positions.config, confSize+1);
-               positions.config[confSize][I_TERM_TYPE  ] = termType;
-               positions.config[confSize][I_TERM_VALUE1] = termValue1;
-               positions.config[confSize][I_TERM_VALUE2] = termValue2;
-               positions.config[confSize][I_TERM_CACHE1] = termCache1;
-               positions.config[confSize][I_TERM_CACHE2] = termCache2;
+               confSize = ArrayRange(configTerms, 0);
+               ArrayResize(configTerms, confSize+1);
+               configTerms[confSize][I_TERM_TYPE  ] = termType;
+               configTerms[confSize][I_TERM_VALUE1] = termValue1;
+               configTerms[confSize][I_TERM_VALUE2] = termValue2;
+               configTerms[confSize][I_TERM_CACHE1] = termCache1;
+               configTerms[confSize][I_TERM_CACHE2] = termCache2;
                isPositionEmpty = false;
             }
 
             if (!isPositionEmpty) {                                  // Zeile mit Leer-Term abschließen (markiert Zeilenende)
-               confSize = ArrayRange(positions.config, 0);
-               ArrayResize(positions.config, confSize+1);            // initialisiert Term mit NULL
+               confSize = ArrayRange(configTerms, 0);
+               ArrayResize(configTerms, confSize+1);                 // initialisiert Term mit NULL
                if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
                else                         comment = confComment;   // configured comments override generated ones
-               ArrayPushString(positions.config.comments, comment);
+               sData[I_LINE_KEY    ] = keys[i];
+               sData[I_LINE_COMMENT] = comment;
+               ArrayPushStrings(configLine.data, sData);
                positionStartOffset = confSize + 1;                   // Start-Offset der nächsten Custom-Position speichern (falls noch eine weitere Position folgt)
             }
          }
       }
    }
 
-   confSize = ArrayRange(positions.config, 0);
+   confSize = ArrayRange(configTerms, 0);
    if (!confSize) {                                                  // leere Konfiguration mit Leer-Term markieren
-      ArrayResize(positions.config, 1);                              // initialisiert Term mit NULL
-      ArrayPushString(positions.config.comments, "");
+      ArrayResize(configTerms,     1);                               // initialisiert Term mit NULL
+      ArrayResize(configLine.data, 1);
    }
    return(!catch("CustomPositions.ReadConfig(41)"));
 }
@@ -2510,7 +2521,7 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    isTotalHistory    = isTotalHistory   !=0;
 
    string term.orig = StrTrim(term);
-          term      = StrToUpper(term.orig);
+   term = StrToUpper(term.orig);
    if (!StrStartsWith(term, "H")) return(!catch("CustomPositions.ParseHstTerm(1)  invalid parameter term: "+ DoubleQuoteStr(term.orig) +" (not TERM_HISTORY_*)", ERR_INVALID_PARAMETER));
    term = StrTrim(StrSubstr(term, 1));
 
@@ -2520,9 +2531,9 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
    else                                   isTotalHistory = true;
    if (isTotalHistory) term = StrTrim(StrSubstr(term, 1));
 
-   bool     isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
+   bool isSingleTimespan, groupByDay, groupByWeek, groupByMonth, isFullYear1, isFullYear2, isFullMonth1, isFullMonth2, isFullWeek1, isFullWeek2, isFullDay1, isFullDay2, isFullHour1, isFullHour2, isFullMinute1, isFullMinute2;
    datetime dtFrom, dtTo;
-   string   comment = "";
+   string sData[]={"", ""}, comment="";
 
 
    // (1) auf Group-Modifier prüfen
@@ -2612,19 +2623,21 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
          if (isTotalHistory)    comment = comment +" (total)";
 
          // Gruppe der globalen Konfiguration hinzufügen
-         int confSize = ArrayRange(positions.config, 0);
-         ArrayResize(positions.config, confSize+1);
-         positions.config[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
-         positions.config[confSize][I_TERM_VALUE1] = groupFrom;
-         positions.config[confSize][I_TERM_VALUE2] = groupTo;
-         positions.config[confSize][I_TERM_CACHE1] = EMPTY_VALUE;
-         positions.config[confSize][I_TERM_CACHE2] = EMPTY_VALUE;
+         int confSize = ArrayRange(configTerms, 0);
+         ArrayResize(configTerms, confSize+1);
+         configTerms[confSize][I_TERM_TYPE]   = ifInt(!isTotalHistory, TERM_HISTORY, TERM_HISTORY_TOTAL);
+         configTerms[confSize][I_TERM_VALUE1] = groupFrom;
+         configTerms[confSize][I_TERM_VALUE2] = groupTo;
+         configTerms[confSize][I_TERM_CACHE1] = EMPTY_VALUE;
+         configTerms[confSize][I_TERM_CACHE2] = EMPTY_VALUE;
          isEmptyPosition = false;
 
          // Zeile mit Zeilenende abschließen (außer bei der letzten Gruppe)
          if (nextGroupFrom <= dtTo) {
-            ArrayResize    (positions.config, confSize+2);           // initialisiert Element mit NULL
-            ArrayPushString(positions.config.comments, comment + ifString(StringLen(positionComment), ", ", "") + positionComment);
+            ArrayResize(configTerms, confSize+2);                    // initialisiert Element mit NULL
+            sData[I_LINE_KEY    ] = "";
+            sData[I_LINE_COMMENT] = comment + ifString(StringLen(positionComment), ", ", "") + positionComment;
+            ArrayPushStrings(configLine.data, sData);
             if (firstGroup) positionComment = "";                    // für folgende Gruppen wird der konfigurierte Kommentar nicht ständig wiederholt
          }
       }
@@ -3348,24 +3361,22 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
  * @param  _In_    double profitMarkerPercent
  * @param  _In_    double lossMarkerPrice
  * @param  _In_    double lossMarkerPercent
- * @param  _In_    int    commentIndex
+ * @param  _In_    int    iConfigLine
  *
  * @return bool - success status
  */
-bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int commentIndex) {
+bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int iConfigLine) {
    isVirtual = isVirtual!=0;
 
-   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, hedgedProfit, openProfit, fullProfit, terminalProfit, fullTerminalProfit, equity, equity100Pct, pipValue, pipDistance;
-   int size, ticketsSize=ArraySize(tickets);
+   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, fullTerminalProfit, equity, equity100Pct, pipValue, pipDistance;
+   int ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
    // Ein Test auf size(tickets) != 0 reicht nicht aus, da einige Tickets in tickets[] bereits auf NULL gesetzt worden sein können.
    if (!longPosition) /*&&*/ if (!shortPosition) /*&&*/ if (!totalPosition) /*&&*/ if (closedProfit==EMPTY_VALUE) /*&&*/ if (!adjustedProfit) {
       return(true);
    }
-   if (closedProfit == EMPTY_VALUE) {
-      closedProfit = 0;                                                    // 0.00 ist gültiger PL
-   }
+   if (closedProfit == EMPTY_VALUE) closedProfit = 0;                      // 0.00 ist gültiger PL
 
    static double externalAssets = EMPTY_VALUE;
    if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
@@ -3374,6 +3385,11 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    else {                    equity  = externalAssets;
       if (mode.intern)       equity += (AccountEquity()-AccountCredit());
    }
+
+   int n = ArrayRange(positions.data, 0);
+   ArrayResize(positions.data, n+1);
+
+   //debug("StorePosition(0.1)  positions.iData="+ IntsToStr(positions.iData, NULL) +"  positions.data="+ DoublesToStr(positions.data, NULL));
 
    // Die Position besteht aus einem gehedgtem Anteil (konstanter Profit) und einem direktionalen Anteil (variabler Profit).
    // - kein direktionaler Anteil:  BE-Distance in Pip berechnen
@@ -3447,29 +3463,28 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       // (1.1) Kein direktionaler Anteil: Hedge-Position speichern und Rückkehr
       if (!totalPosition) {
-         size = ArrayRange(positions.iData, 0);
-         ArrayResize(positions.iData, size+1);
-         ArrayResize(positions.dData, size+1);
+         positions.data[n][I_CONFIG_LINE        ] = iConfigLine;
+         positions.data[n][I_CUSTOM_TYPE        ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
+         positions.data[n][I_POSITION_TYPE      ] = POSITION_HEDGE;
 
-         positions.iData[size][I_CONFIG_TYPE          ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-         positions.iData[size][I_POSITION_TYPE        ] = POSITION_HEDGE;
-         positions.iData[size][I_COMMENT_INDEX        ] = commentIndex;
+         positions.data[n][I_DIRECTIONAL_LOTS   ] = 0;
+         positions.data[n][I_HEDGED_LOTS        ] = hedgedLots;
+         positions.data[n][I_PIP_DISTANCE       ] = pipDistance;
+                                                                    openProfit         = hedgedProfit;
+         positions.data[n][I_OPEN_PROFIT        ] = openProfit;
+         positions.data[n][I_CLOSED_PROFIT      ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
+         positions.data[n][I_ADJUSTED_PROFIT    ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
+         positions.data[n][I_TOTAL_PROFIT       ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+         positions.data[n][I_TOTAL_PROFIT_PCT   ] = MathDiv(totalProfit, equity100Pct) * 100;
+         positions.data[n][I_TOTAL_PROFIT_MIN   ] = NULL;
+         positions.data[n][I_TOTAL_PROFIT_MAX   ] = NULL;
 
-         positions.dData[size][I_DIRECTIONAL_LOTS     ] = 0;
-         positions.dData[size][I_HEDGED_LOTS          ] = hedgedLots;
-         positions.dData[size][I_PIP_DISTANCE         ] = pipDistance;
-         positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NULL;
-         positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
-         positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
-         positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-                                                                          openProfit         = hedgedProfit;
-         positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
-         positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
-         positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-         positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-         positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
+         positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
+         positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
+         positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
+         positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
-         //debug("StorePosition(0.1)  hedged:  realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
+         //debug("StorePosition(0.1)  hedged:  realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
          return(!catch("StorePosition(3)"));
       }
    }
@@ -3514,51 +3529,50 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       if (remainingLong != 0) return(!catch("StorePosition(4)  illegal remaining long position = "+ NumberToStr(remainingLong, ".+") +" of long position = "+ NumberToStr(totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(positions.iData, 0);
-      ArrayResize(positions.iData, size+1);
-      ArrayResize(positions.dData, size+1);
+      positions.data[n][I_CONFIG_LINE        ] = iConfigLine;
+      positions.data[n][I_CUSTOM_TYPE        ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
+      positions.data[n][I_POSITION_TYPE      ] = POSITION_LONG;
 
-      positions.iData[size][I_CONFIG_TYPE          ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-      positions.iData[size][I_POSITION_TYPE        ] = POSITION_LONG;
-      positions.iData[size][I_COMMENT_INDEX        ] = commentIndex;
+      positions.data[n][I_DIRECTIONAL_LOTS   ] = totalPosition;
+      positions.data[n][I_HEDGED_LOTS        ] = hedgedLots;
+      positions.data[n][I_BREAKEVEN_PRICE    ] = NULL;
+                                                                 openProfit         = hedgedProfit + commission + swap + floatingProfit;
+      positions.data[n][I_OPEN_PROFIT        ] = openProfit;
+      positions.data[n][I_CLOSED_PROFIT      ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_ADJUSTED_PROFIT    ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_TOTAL_PROFIT       ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.data[n][I_TOTAL_PROFIT_PCT   ] = MathDiv(totalProfit, equity100Pct) * 100;
+      positions.data[n][I_TOTAL_PROFIT_MIN   ] = NULL;
+      positions.data[n][I_TOTAL_PROFIT_MAX   ] = NULL;
 
-      positions.dData[size][I_DIRECTIONAL_LOTS     ] = totalPosition;
-      positions.dData[size][I_HEDGED_LOTS          ] = hedgedLots;
-      positions.dData[size][I_BREAKEVEN_PRICE      ] = NULL;
-      positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NULL;
-      positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
-      positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
-      positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-                                                                       openProfit         = hedgedProfit + commission + swap + floatingProfit;
-      positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
-      positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-      positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
+      positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
       pipValue = PipValue(totalPosition, true);                         // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.dData[size][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit)/pipValue*Pip, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit)/pipValue*Pip, Digits);
 
          if (profitMarkerPrice != NULL) {
-            positions.dData[size][I_PROFIT_MARKER_PRICE  ] = profitMarkerPrice;
-            positions.dData[size][I_PROFIT_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (openPrice/totalPosition-profitMarkerPrice)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
-            positions.dData[size][I_PROFIT_MARKER_PERCENT] = profitMarkerPercent;
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
          }
 
          if (lossMarkerPrice != NULL) {
-            positions.dData[size][I_LOSS_MARKER_PRICE  ] = lossMarkerPrice;
-            positions.dData[size][I_LOSS_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit + (lossMarkerPrice-openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.dData[size][I_LOSS_MARKER_PRICE  ] = NormalizeDouble(openPrice/totalPosition - (fullProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
-            positions.dData[size][I_LOSS_MARKER_PERCENT] = lossMarkerPercent;
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble(openPrice/totalPosition - (totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip, Digits);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
          }
       }
-      //debug("StorePosition(0.2)  long:    realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
+      //debug("StorePosition(0.2)  long:    realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
       return(!catch("StorePosition(5)"));
    }
 
@@ -3601,79 +3615,77 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       if (remainingShort != 0) return(!catch("StorePosition(6)  illegal remaining short position = "+ NumberToStr(remainingShort, ".+") +" of short position = "+ NumberToStr(-totalPosition, ".+"), ERR_RUNTIME_ERROR));
 
       // Position speichern
-      size = ArrayRange(positions.iData, 0);
-      ArrayResize(positions.iData, size+1);
-      ArrayResize(positions.dData, size+1);
+      positions.data[n][I_CONFIG_LINE        ] = iConfigLine;
+      positions.data[n][I_CUSTOM_TYPE        ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
+      positions.data[n][I_POSITION_TYPE      ] = POSITION_SHORT;
 
-      positions.iData[size][I_CONFIG_TYPE          ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-      positions.iData[size][I_POSITION_TYPE        ] = POSITION_SHORT;
-      positions.iData[size][I_COMMENT_INDEX        ] = commentIndex;
+      positions.data[n][I_DIRECTIONAL_LOTS   ] = -totalPosition;
+      positions.data[n][I_HEDGED_LOTS        ] = hedgedLots;
+      positions.data[n][I_BREAKEVEN_PRICE    ] = NULL;
+                                                                 openProfit         = hedgedProfit + commission + swap + floatingProfit;
+      positions.data[n][I_OPEN_PROFIT        ] = openProfit;
+      positions.data[n][I_CLOSED_PROFIT      ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_ADJUSTED_PROFIT    ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_TOTAL_PROFIT       ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.data[n][I_TOTAL_PROFIT_PCT   ] = MathDiv(totalProfit, equity100Pct) * 100;
+      positions.data[n][I_TOTAL_PROFIT_MIN   ] = NULL;
+      positions.data[n][I_TOTAL_PROFIT_MAX   ] = NULL;
 
-      positions.dData[size][I_DIRECTIONAL_LOTS     ] = -totalPosition;
-      positions.dData[size][I_HEDGED_LOTS          ] = hedgedLots;
-      positions.dData[size][I_BREAKEVEN_PRICE      ] = NULL;
-      positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NULL;
-      positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
-      positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
-      positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-                                                                       openProfit         = hedgedProfit + commission + swap + floatingProfit;
-      positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
-      positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;   fullProfit         = openProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
-      positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
+      positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
+      positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
+      positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
       pipValue = PipValue(-totalPosition, true);                        // suppress a possible ERR_SYMBOL_NOT_AVAILABLE
       if (pipValue != 0) {
-         positions.dData[size][I_BREAKEVEN_PRICE] = NormalizeDouble((fullProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
+         positions.data[n][I_BREAKEVEN_PRICE] = NormalizeDouble((totalProfit-floatingProfit)/pipValue*Pip - openPrice/totalPosition, Digits);
 
          if (profitMarkerPrice != NULL) {
-            positions.dData[size][I_PROFIT_MARKER_PRICE  ] = profitMarkerPrice;
-            positions.dData[size][I_PROFIT_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_PROFIT_MARKER_PRICE] = profitMarkerPrice;
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (profitMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(profitMarkerPercent)) {
-            positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NormalizeDouble((fullProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
-            positions.dData[size][I_PROFIT_MARKER_PERCENT] = profitMarkerPercent;
+            positions.data[n][I_PROFIT_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-profitMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
+            positions.data[n][I_PROFIT_MARKER_PCT  ] = profitMarkerPercent;
          }
 
          if (lossMarkerPrice != NULL) {
-            positions.dData[size][I_LOSS_MARKER_PRICE  ] = lossMarkerPrice;
-            positions.dData[size][I_LOSS_MARKER_PERCENT] = NormalizeDouble((fullProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
+            positions.data[n][I_LOSS_MARKER_PRICE] = lossMarkerPrice;
+            positions.data[n][I_LOSS_MARKER_PCT  ] = NormalizeDouble((totalProfit - floatingProfit - (lossMarkerPrice + openPrice/totalPosition)/Pip*pipValue)/equity100Pct*100, 1);
          }
          else if (!IsEmptyValue(lossMarkerPercent)) {
-            positions.dData[size][I_LOSS_MARKER_PRICE  ] = NormalizeDouble((fullProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
-            positions.dData[size][I_LOSS_MARKER_PERCENT] = lossMarkerPercent;
+            positions.data[n][I_LOSS_MARKER_PRICE] = NormalizeDouble((totalProfit-floatingProfit-lossMarkerPercent/100*equity100Pct)/pipValue*Pip - openPrice/totalPosition, Digits);
+            positions.data[n][I_LOSS_MARKER_PCT  ] = lossMarkerPercent;
          }
       }
-      //debug("StorePosition(0.3)  short:   realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
+      //debug("StorePosition(0.3)  short:   realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2") +"  fullTerminalPL="+ NumberToStr(fullTerminalProfit, "R.2"));
       return(!catch("StorePosition(7)"));
    }
 
    // ohne offene Positionen muß ClosedProfit (kann 0.00 sein) oder AdjustedProfit gesetzt sein
    // History mit leerer Position speichern
-   size = ArrayRange(positions.iData, 0);
-   ArrayResize(positions.iData, size+1);
-   ArrayResize(positions.dData, size+1);
+   positions.data[n][I_CONFIG_LINE        ] = iConfigLine;
+   positions.data[n][I_CUSTOM_TYPE        ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
+   positions.data[n][I_POSITION_TYPE      ] = POSITION_HISTORY;
 
-   positions.iData[size][I_CONFIG_TYPE          ] = ifInt(isVirtual, CONFIG_VIRTUAL, CONFIG_REAL);
-   positions.iData[size][I_POSITION_TYPE        ] = POSITION_HISTORY;
-   positions.iData[size][I_COMMENT_INDEX        ] = commentIndex;
+   positions.data[n][I_DIRECTIONAL_LOTS   ] = NULL;
+   positions.data[n][I_HEDGED_LOTS        ] = NULL;
+   positions.data[n][I_BREAKEVEN_PRICE    ] = NULL;
+                                                              openProfit   = 0;
+   positions.data[n][I_OPEN_PROFIT        ] = openProfit;
+   positions.data[n][I_CLOSED_PROFIT      ] = closedProfit;
+   positions.data[n][I_ADJUSTED_PROFIT    ] = adjustedProfit; totalProfit  = openProfit + closedProfit + adjustedProfit;
+   positions.data[n][I_TOTAL_PROFIT       ] = totalProfit;    equity100Pct = equity - ifDouble(!customEquity && equity > totalProfit, totalProfit, 0);
+   positions.data[n][I_TOTAL_PROFIT_PCT   ] = MathDiv(totalProfit, equity100Pct) * 100;
+   positions.data[n][I_TOTAL_PROFIT_MIN   ] = NULL;
+   positions.data[n][I_TOTAL_PROFIT_MAX   ] = NULL;
 
-   positions.dData[size][I_DIRECTIONAL_LOTS     ] = NULL;
-   positions.dData[size][I_HEDGED_LOTS          ] = NULL;
-   positions.dData[size][I_BREAKEVEN_PRICE      ] = NULL;
-   positions.dData[size][I_PROFIT_MARKER_PRICE  ] = NULL;
-   positions.dData[size][I_PROFIT_MARKER_PERCENT] = NULL;
-   positions.dData[size][I_LOSS_MARKER_PRICE    ] = NULL;
-   positions.dData[size][I_LOSS_MARKER_PERCENT  ] = NULL;
-                                                                    openProfit   = 0;
-   positions.dData[size][I_OPEN_PROFIT          ] = openProfit;
-   positions.dData[size][I_CLOSED_PROFIT        ] = closedProfit;
-   positions.dData[size][I_ADJUSTED_PROFIT      ] = adjustedProfit; fullProfit   = openProfit + closedProfit + adjustedProfit;
-   positions.dData[size][I_PROFIT_ABS           ] = fullProfit;     equity100Pct = equity - ifDouble(!customEquity && equity > fullProfit, fullProfit, 0);
-   positions.dData[size][I_PROFIT_PCT           ] = MathDiv(fullProfit, equity100Pct) * 100;
+   positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
+   positions.data[n][I_PROFIT_MARKER_PCT  ] = NULL;
+   positions.data[n][I_LOSS_MARKER_PRICE  ] = NULL;
+   positions.data[n][I_LOSS_MARKER_PCT    ] = NULL;
 
-   //debug("StorePosition(0.4)  history: realPL="+ NumberToStr(fullProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2"));
+   //debug("StorePosition(0.4)  history: realPL="+ NumberToStr(totalProfit, "R.2") +"  balance="+ NumberToStr(AccountBalance(), "R.2") +"  equity100%="+ NumberToStr(equity100Pct, "R.2"));
    return(!catch("StorePosition(8)"));
 }
 
@@ -4188,9 +4200,9 @@ bool StoreStatus() {
    if (!__isChart) return(true);
 
    // stored vars:
-   // bool positions.absoluteProfits
-   string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int value = ifInt(positions.absoluteProfits, 1, -1);
+   // bool positions.showAbsProfits
+   string key = ProgramName() +".status.positions.showAbsProfits";   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   int value = ifInt(positions.showAbsProfits, 1, -1);
 
    // chart window
    SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
@@ -4214,8 +4226,8 @@ bool RestoreStatus() {
    if (!__isChart) return(true);
 
    // restored vars:
-   // bool positions.absoluteProfits
-   string key = ProgramName() +".status.positions.absoluteProfits";    // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
+   // bool positions.showAbsProfitsProfits
+   string key = ProgramName() +".status.positions.showAbsProfits";   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
    bool result = false;
 
    // prefer chart window
@@ -4229,7 +4241,7 @@ bool RestoreStatus() {
          result = (value != 0);
       }
    }
-   if (result) positions.absoluteProfits = (value > 0);
+   if (result) positions.showAbsProfits = (value > 0);
 
    return(!catch("RestoreStatus(1)"));
 }
@@ -4614,6 +4626,7 @@ string InputsToStr() {
    int      ArrayInsertDoubles    (double &array[], int offset, double values[]);
    int      ArrayPushDouble       (double &array[], double value);
    int      ArrayPushDoubles      (double &array[], double values[]);
+   int      ArrayPushStrings      (string &array[][], string values[]);
    int      ArraySpliceDoubles    (double &array[], int offset, int length);
    int      ChartInfos.CopyLfxOrders(bool direction, int orders[][], int iData[][], bool bData[][], double dData[][]);
    bool     ChartMarker.OrderSent_A(int ticket, int digits, color markerColor);
