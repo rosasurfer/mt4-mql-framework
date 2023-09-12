@@ -1274,12 +1274,12 @@ bool UpdatePositions() {
 
       if (positions.showAbsProfits) {
          // 8 columns: Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  Comment
-         int cols8[] = {9,    46,   83,  28,      66,      39,   87,      61};   // offsets to the previous column
+         int cols8[] = {9,    46,   83,  28,      68,      39,   87,      61};   // offsets to the previous column
          ArrayCopy(xOffset, cols8);
       }
       else {
          // 7 columns: Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
-         int cols7[] = {9,    46,   83,  28,      66,      39,      140};        // old comment offset was 61
+         int cols7[] = {9,    46,   83,  28,      68,      39,      140};        // old comment offset was 61
          ArrayCopy(xOffset, cols7);
       }
       cols               = ArraySize(xOffset);
@@ -2314,24 +2314,32 @@ bool CustomPositions.ReadConfig() {
 
    // mark an empty configuration with a EOL term
    if (!ArrayRange(confTerms, 0)) {
-      ArrayResize(confTerms, 1);                                     // ArrayResize() initialisiert mit NULL
+      ArrayResize(confTerms, 1);                                     // ArrayResize() initializes with NULL
       ArrayResize(confsData, 1);
       ArrayResize(confdData, 1);
    }
 
-   // synchronize the parsed data with existing stats
-   if (ArraySize(config.sData) || ArraySize(config.dData)) {
-      debug("CustomPositions.ReadConfig(0.1)  existing sData="+ StringsToStr(config.sData, NULL) +"  dData="+ DoublesToStr(config.dData, NULL));
+   // copy/keep existing position stats
+   if (ArraySize(config.sData) > 0) {
+      int newLines = ArrayRange(confsData, 0);
+      int oldLines = ArrayRange(config.sData, 0);
+
+      for (i=0; i < newLines; i++) {
+         for (n=0; n < oldLines; n++) {
+            if (config.sData[n][I_CONF_KEY] == confsData[i][I_CONF_KEY]) {
+               confdData[i][I_PROFIT_MIN] = config.dData[n][I_PROFIT_MIN];
+               confdData[i][I_PROFIT_MAX] = config.dData[n][I_PROFIT_MAX];
+               debug("CustomPositions.ReadConfig(0.1)  "+ DoubleQuoteStr(confsData[i][I_CONF_KEY]) +": keep existing stats");
+               break;
+            }
+         }
+      }
    }
 
-   // finally overwrite global vars (on error they stay untouched)
-   ArrayResize(configTerms,  0);
-   ArrayResize(config.sData, 0);
-   ArrayResize(config.dData, 0);
-
-   ArrayCopy(configTerms,  confTerms);
-   ArrayCopy(config.sData, confsData);
-   ArrayCopy(config.dData, confdData);
+   // finally overwrite global vars (on errors they are untouched)
+   ArrayResize(configTerms,  0); ArrayCopy(configTerms,  confTerms);
+   ArrayResize(config.sData, 0); ArrayCopy(config.sData, confsData);
+   ArrayResize(config.dData, 0); ArrayCopy(config.dData, confdData);
 
    return(!catch("CustomPositions.ReadConfig(41)"));
 }
