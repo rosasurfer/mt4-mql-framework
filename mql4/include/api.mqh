@@ -230,6 +230,7 @@ color    NameToColor(string name);;
 bool     NE(double double1, double double2, int digits = 8);;
 double   NormalizeLots(double lots, string symbol="", int mode=MODE_DEFAULT);;
 string   NumberToStr(double value, string mask);;
+string   ObjectTypeToStr(int type);;
 string   OperationTypeDescription(int type);;
 string   OperationTypeToStr(int type);;
 bool     OrderLogMessage(int ticket);;

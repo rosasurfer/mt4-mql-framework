@@ -4056,7 +4056,7 @@ bool ObjectCreateRegister(string name, int type, int window, datetime time1, dou
       default:
          success = ObjectCreate(name, type, window, time1, price1, time2, price2, time3, price3);
    }
-   if (!success) return(!catch("ObjectCreateRegister(1)  name=\""+ name +"\"  type="+ type +"  window="+ window, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
+   if (!success) return(!catch("ObjectCreateRegister(1)  name=\""+ name +"\"  type="+ ObjectTypeToStr(type) +"  window="+ window, intOr(GetLastError(), ERR_RUNTIME_ERROR)));
 
    // register the object for auto-removal
    int size = ArraySize(__registeredObjects);
