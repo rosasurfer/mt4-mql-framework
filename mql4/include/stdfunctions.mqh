@@ -7570,6 +7570,7 @@ void __DummyCalls() {
    NE(NULL, NULL);
    NormalizeLots(NULL);
    NumberToStr(NULL, NULL);
+   ObjectTypeToStr(NULL);
    OrderLogMessage(NULL);
    OrderPop(NULL);
    OrderPush(NULL);

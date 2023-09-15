@@ -1269,11 +1269,12 @@ bool UpdatePositions() {
    ObjectSetText(label, "n", 6, "Webdings", Orange);                       // a Webdings "dot"
 
    // prepare rows for custom positions bottom-left
-   static int lines, cols, percentCol=-1, mfeCol=-1, commentCol=-1, xOffset[], xPrev, xDist, yStart=6, yDist;
+   static int lines, cols, maxCols=9, percentCol=-1, mfeCol=-1, commentCol=-1, xOffset[], xPrev, xDist, yStart=6, yDist;
    static bool lastShowAbsProfits, lastShowMfe;
    if (!ArraySize(xOffset) || positions.showAbsProfits!=lastShowAbsProfits || positions.showMfe!=lastShowMfe) {
       // offsets:     Type:  Lots  BE:  BePrice  Profit:  Percent  Comment
       int offsets[] = {9,    46,   83,  28,      68,      39,      61};
+      ArrayResize(offsets, 7);
       percentCol = 5;
       commentCol = 6;
 
@@ -1300,7 +1301,7 @@ bool UpdatePositions() {
 
       // nach Reinitialisierung alle vorhandenen Zeilen löschen
       while (lines > 0) {
-         for (int col=0; col < 9; col++) {                                 // test for all possible columns
+         for (int col=0; col < maxCols; col++) {                           // test for all possible columns
             label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
             if (ObjectFind(label) != -1) ObjectDelete(label);
          }
@@ -1341,7 +1342,7 @@ bool UpdatePositions() {
 
    // remove existing surplus rows
    while (lines > positions) {
-      for (col=0; col < cols; col++) {
+      for (col=0; col < maxCols; col++) {                                  // test for all possible columns
          label = StringConcatenate(label.customPosition, ".line", lines, "_col", col);
          if (ObjectFind(label) != -1) ObjectDelete(label);
       }
@@ -1377,7 +1378,7 @@ bool UpdatePositions() {
          sComment      = " ";
 
          configLine = positions.data[i][I_CONFIG_LINE];                    // (int) double
-         if (configLine >= 0) {
+         if (configLine > -1) {
             if (positions.showMfe && config.dData[configLine][I_MFE_ENABLED]) {
                sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MIN], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAX], 2), ")");
             }
@@ -1623,7 +1624,7 @@ bool UpdateStopoutLevel() {
  *                                F_SHOW_CUSTOM_HISTORY:   call ShowTradeHistory() for the configured history
  * @return bool - success status
  */
- bool AnalyzePositions(int flags = NULL) {                                        // reparse configuration on chart command flags
+ bool AnalyzePositions(int flags = NULL) {                                       // reparse configuration on chart command flags
    if (flags & (F_LOG_TICKETS|F_SHOW_CUSTOM_POSITIONS) != 0) positions.analyzed = false;
    if (mode.extern) positions.analyzed = true;
    if (positions.analyzed) return(true);
@@ -1734,8 +1735,8 @@ bool UpdateStopoutLevel() {
    SetLastError(NO_ERROR);
 
    if (!ArraySize(configTerms)) /*&&*/ if (!CustomPositions.ReadConfig()) {
-      positions.analyzed = !last_error;                                       // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
-      if (!last_error) SetLastError(prevError);                               // in diesem Fall nächster Versuch beim nächsten Tick.
+      positions.analyzed = !last_error;                                          // MarketInfo()-Daten stehen ggf. noch nicht zur Verfügung,
+      if (!last_error) SetLastError(prevError);                                  // in diesem Fall nächster Versuch beim nächsten Tick.
       return(positions.analyzed);
    }
    SetLastError(prevError);
@@ -1758,6 +1759,7 @@ bool UpdateStopoutLevel() {
       termResult2 = configTerms[i][I_TERM_RESULT2];
 
       if (!termType) {                                                           // termType NULL => EOL (Ende einer CustomPositions-Konfigurationszeile)
+         if (i == 0) line = -1;                                                  // an empty configuration has no lines
          if (flags & F_LOG_TICKETS != 0) CustomPositions.LogTickets(customTickets, line, flags);
          if (flags & F_SHOW_CUSTOM_POSITIONS && ArraySize(customTickets)) ShowOpenOrders(customTickets);
 
@@ -1765,7 +1767,16 @@ bool UpdateStopoutLevel() {
          if (!StorePosition(isCustomVirtual, customLongPosition, customShortPosition, customTotalPosition, customTickets, customTypes, customLots, customOpenPrices, customCommissions, customSwaps, customProfits, closedProfit, adjustedProfit, customEquity, profitMarkerPrice, profitMarkerPercent, lossMarkerPrice, lossMarkerPercent, line, lineSkipped)) {
             return(false);
          }
-         positions.showMfe   = positions.showMfe || (!lineSkipped && config.dData[line][I_MFE_ENABLED]);
+         if (line > -1) {
+            if (lineSkipped) {
+               config.dData[line][I_PROFIT_MIN] = 0;                             // reset existing MFE/MAE stats
+               config.dData[line][I_PROFIT_MAX] = 0;
+            }
+            else {
+               positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
+            }
+         }
+
          isCustomVirtual     = false;
          customLongPosition  = 0;
          customShortPosition = 0;
@@ -2356,21 +2367,19 @@ bool CustomPositions.ReadConfig() {
    // mark an empty configuration with a EOL term
    if (!ArrayRange(confTerms, 0)) {
       ArrayResize(confTerms, 1);                                     // initializes with NULL
-      ArrayResize(confsData, 1);
-      ArrayResize(confdData, 1);
    }
 
-   // copy/keep existing position stats
-   if (ArraySize(config.sData) > 0) {
-      int newLines = ArrayRange(confsData, 0);
-      int oldLines = ArrayRange(config.sData, 0);
+   // keep existing position stats
+   int oldLines = ArrayRange(config.sData, 0);
+   int newLines = ArrayRange(confsData, 0);
 
+   if (oldLines > 0) {
       for (i=0; i < newLines; i++) {
          for (n=0; n < oldLines; n++) {
-            if (config.sData[n][I_CONF_KEY] == confsData[i][I_CONF_KEY]) {
+            if (confsData[i][I_CONF_KEY] == config.sData[n][I_CONF_KEY] && confdData[i][I_MFE_ENABLED]) {
                confdData[i][I_PROFIT_MIN] = config.dData[n][I_PROFIT_MIN];
                confdData[i][I_PROFIT_MAX] = config.dData[n][I_PROFIT_MAX];
-               debug("CustomPositions.ReadConfig(0.1)  "+ DoubleQuoteStr(confsData[i][I_CONF_KEY]) +": keep existing stats");
+               debug("CustomPositions.ReadConfig(0.1)  "+ DoubleQuoteStr(confsData[i][I_CONF_KEY]) +": keeping existing MFE/MAE stats");
                break;
             }
          }
@@ -2378,11 +2387,9 @@ bool CustomPositions.ReadConfig() {
    }
 
    // finally overwrite global vars (on errors they are untouched)
-   ArrayResize(configTerms,  0); ArrayCopy(configTerms,  confTerms);
-   ArrayResize(config.sData, 0); ArrayCopy(config.sData, confsData);
-   ArrayResize(config.dData, 0); ArrayCopy(config.dData, confdData);
-
-   debug("CustomPositions.ReadConfig(0.2)  config.sData="+ StringsToStr(config.sData, NULL) +"  config.dData="+ DoublesToStr(config.dData, NULL));
+   ArrayResize(configTerms,  0); if (ArraySize(confTerms) > 0) ArrayCopy(configTerms,  confTerms);
+   ArrayResize(config.sData, 0); if (ArraySize(confsData) > 0) ArrayCopy(config.sData, confsData);
+   ArrayResize(config.dData, 0); if (ArraySize(confdData) > 0) ArrayCopy(config.dData, confdData);
    return(!catch("CustomPositions.ReadConfig(46)"));
 }
 
