@@ -5500,6 +5500,44 @@ string MessageBoxButtonToStr(int id) {
 
 
 /**
+ * Return a human-readable form of an object type identifier.
+ *
+ * @param  int type - object type id
+ *
+ * @return string
+ */
+string ObjectTypeToStr(int type) {
+   switch (type) {
+      case OBJ_VLINE        : return("OBJ_VLINE"        );
+      case OBJ_HLINE        : return("OBJ_HLINE"        );
+      case OBJ_TREND        : return("OBJ_TREND"        );
+      case OBJ_TRENDBYANGLE : return("OBJ_TRENDBYANGLE" );
+      case OBJ_REGRESSION   : return("OBJ_REGRESSION"   );
+      case OBJ_CHANNEL      : return("OBJ_CHANNEL"      );
+      case OBJ_STDDEVCHANNEL: return("OBJ_STDDEVCHANNEL");
+      case OBJ_GANNLINE     : return("OBJ_GANNLINE"     );
+      case OBJ_GANNFAN      : return("OBJ_GANNFAN"      );
+      case OBJ_GANNGRID     : return("OBJ_GANNGRID"     );
+      case OBJ_FIBO         : return("OBJ_FIBO"         );
+      case OBJ_FIBOTIMES    : return("OBJ_FIBOTIMES"    );
+      case OBJ_FIBOFAN      : return("OBJ_FIBOFAN"      );
+      case OBJ_FIBOARC      : return("OBJ_FIBOARC"      );
+      case OBJ_EXPANSION    : return("OBJ_EXPANSION"    );
+      case OBJ_FIBOCHANNEL  : return("OBJ_FIBOCHANNEL"  );
+      case OBJ_RECTANGLE    : return("OBJ_RECTANGLE"    );
+      case OBJ_TRIANGLE     : return("OBJ_TRIANGLE"     );
+      case OBJ_ELLIPSE      : return("OBJ_ELLIPSE"      );
+      case OBJ_PITCHFORK    : return("OBJ_PITCHFORK"    );
+      case OBJ_CYCLES       : return("OBJ_CYCLES"       );
+      case OBJ_TEXT         : return("OBJ_TEXT"         );
+      case OBJ_ARROW        : return("OBJ_ARROW"        );
+      case OBJ_LABEL        : return("OBJ_LABEL"        );
+   }
+   return(_EMPTY_STR(catch("ObjectTypeToStr(1)  unknown object type: "+ type, ERR_RUNTIME_ERROR)));
+}
+
+
+/**
  * Gibt den Integer-Wert eines OperationType-Bezeichners zurück.
  *
  * @param  string value
