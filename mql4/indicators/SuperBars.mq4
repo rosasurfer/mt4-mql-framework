@@ -348,13 +348,13 @@ bool UpdateSuperBars() {
    }
 
    // With enabled ETH sessions the range of ChangedBars must also include the range of iChangedBars(PERIOD_M15).
-   int  changedBars=ChangedBars, localSuperTimeframe=superTimeframe;
+   int  changedBars=ChangedBars, _superTimeframe=superTimeframe;
    bool drawETH;
    if (isTimeframeChange)
       changedBars = Bars;                                            // on isTimeframeChange mark all bars as changed
 
    if (ethEnabled && superTimeframe==PERIOD_D1_ETH) {
-      localSuperTimeframe = PERIOD_D1;                               // for iPreviousPeriod() which bails on non-standard timeframes
+      _superTimeframe = PERIOD_D1;                                   // for iPreviousPeriod() which bails on non-standard timeframes
       // TODO: On isTimeframeChange the following block is obsolete (it holds: changedBars = Bars). However in this case
       //       DrawSuperBar() must again detect and handle ERS_HISTORY_UPDATE and ERR_SERIES_NOT_AVAILABLE.
       int changedBarsM15 = iChangedBars(NULL, PERIOD_M15);
@@ -384,7 +384,7 @@ bool UpdateSuperBars() {
    // loop over all superbars from young to old
    for (int i=0; i < maxBars; i++) {
       // get start/end times of every previous timeframe period, starting with the current unfinshed one
-      if (!iPreviousPeriod(localSuperTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
+      if (!iPreviousPeriod(_superTimeframe, openTimeFxt, closeTimeFxt, openTimeSrv, closeTimeSrv, !weekendEnabled)) return(false);
 
       // In periods >= PERIOD_D1 rate times are set to full days only which yields incorrect bar times in non-FXT timezones. The incorrect timestamp shifts the start of
       // such a period wrongly to the previous/next period. Must be fixed if start of the period falls on a trading day (no need for fixing on a weekend/non-trading day).
@@ -441,7 +441,7 @@ bool DrawSuperBar(int openBar, int closeBar, datetime openTimeFxt, datetime open
 
    // Each SuperBar consists of 3 objects: an OBJ_RECTANGLE representing the SuperBar body, an OBJ_TREND line with the close
    // price in the tooltip representing the SuperBar's close, and an OBJ_LABEL holding a reference to the close marker. On data
-   // pumping an already drawed SuperBar and/or it's close price may change. With the reference in the label the close marker
+   // pumping an already drawn SuperBar and/or it's close price may change. With the reference in the label the close marker
    // can be found and updated without iterating over all chart objects.
    string nameRectangle="", nameRectangleBg="", nameTrendline="", nameOldTrendline="", nameLabel="";
 

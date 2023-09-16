@@ -9939,7 +9939,7 @@ name=NonLagMA
 flags=339
 window_num=0
 <inputs>
-WaceCycle.Periods=20
+WaveCycle.Periods=20
 MA.ReversalFilter=0
 Color.UpTrend=14772545
 Color.DownTrend=65535

@@ -56,7 +56,7 @@ extern string Sound.onProjectionLevel.4      = "Inside Bar Level 4.wav";
 #define CLOSE     4
 #define VOLUME    5
 
-int      timeframe;                             // IB timeframe to process
+int      timeframeIB;                           // IB timeframe to process
 int      maxInsideBars;
 string   labels[];                              // chart object labels
 
@@ -92,9 +92,9 @@ int onInit() {
    // Timeframe
    string sValue = Timeframe;
    if (AutoConfiguration) sValue = GetConfigString(indicator, "Timeframe", sValue);
-   timeframe = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
-   if (timeframe == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
-   Timeframe = TimeframeDescription(timeframe);
+   timeframeIB = StrToTimeframe(sValue, F_ERR_INVALID_PARAMETER);
+   if (timeframeIB == -1) return(catch("onInit(1)  invalid input parameter Timeframe: "+ DoubleQuoteStr(sValue), ERR_INVALID_INPUT_PARAMETER));
+   Timeframe = TimeframeDescription(timeframeIB);
 
    // NumberOfInsideBars
    int iValue = NumberOfInsideBars;
@@ -205,8 +205,8 @@ int onInit() {
    // display options
    SetIndexLabel(0, NULL);                                     // disable "Data" window display
    string label = CreateStatusLabel();
-   string fontName = "";                                       // "" => menu font family
-   int    fontSize = 8;                                        // 8  => menu font size
+   string fontName = "";                                       // "" => system menu font family
+   int    fontSize = 8;                                        // 8  => system menu font size
    string text = ProgramName() +": "+ Timeframe + signalInfo;
    ObjectSetText(label, text, fontSize, fontName, Black);      // status display
 
@@ -220,21 +220,26 @@ int onInit() {
  * @return int - error status
  */
 int onTick() {
-   double ratesM1[][6], ratesM5[][6];
-   int changedBarsM1, changedBarsM5;
+   double rates[][6];
+   int changedBars;
 
-   if (!CopyRates(ratesM1, ratesM5, changedBarsM1, changedBarsM5)) return(last_error);
+   if (timeframeIB == PERIOD_M1) {
+      if (!CopyRates(rates, changedBars, PERIOD_M1)) return(last_error);
+   }
+   else {
+      if (!CopyRates(rates, changedBars, PERIOD_M5)) return(last_error);
+   }
 
-   switch (timeframe) {
-      case PERIOD_M1 : CheckInsideBars   (ratesM1, changedBarsM1, PERIOD_M1); break;
-      case PERIOD_M5 : CheckInsideBars   (ratesM5, changedBarsM5, PERIOD_M5); break;
-      case PERIOD_M15: CheckInsideBarsM15(ratesM5, changedBarsM5);            break;
-      case PERIOD_M30: CheckInsideBarsM30(ratesM5, changedBarsM5);            break;
-      case PERIOD_H1 : CheckInsideBarsH1 (ratesM5, changedBarsM5);            break;
-      case PERIOD_H4 : CheckInsideBarsH4 (ratesM5, changedBarsM5);            break;
-      case PERIOD_D1 : CheckInsideBarsD1 (ratesM5, changedBarsM5);            break;
-      case PERIOD_W1 : CheckInsideBarsW1 (ratesM5, changedBarsM5);            break;
-      case PERIOD_MN1: CheckInsideBarsMN1(ratesM5, changedBarsM5);            break;
+   switch (timeframeIB) {
+      case PERIOD_M1 :
+      case PERIOD_M5 : CheckInsideBars   (rates, changedBars, timeframeIB); break;
+      case PERIOD_M15: CheckInsideBarsM15(rates, changedBars);              break;
+      case PERIOD_M30: CheckInsideBarsM30(rates, changedBars);              break;
+      case PERIOD_H1 : CheckInsideBarsH1 (rates, changedBars);              break;
+      case PERIOD_H4 : CheckInsideBarsH4 (rates, changedBars);              break;
+      case PERIOD_D1 : CheckInsideBarsD1 (rates, changedBars);              break;
+      case PERIOD_W1 : CheckInsideBarsW1 (rates, changedBars);              break;
+      case PERIOD_MN1: CheckInsideBarsMN1(rates, changedBars);              break;
    }
 
    if (monitorProjections && latestIB.openTime) MonitorProjections();
@@ -263,28 +268,18 @@ int onAccountChange(int previous, int current) {
 
 
 /**
- * Copy rates and get the number of changed bars per required timeframe.
+ * Copy the rates of the specified timeframe to the target array and resolve the number of changed bars since the last tick.
  *
- * @param  _Out_ double &ratesM1[][]   - array receiving the M1 rates
- * @param  _Out_ double &ratesM5[][]   - array receiving the M5 rates
- * @param  _Out_ int    &changedBarsM1 - variable receiving the number of changed M1 bars
- * @param  _Out_ int    &changedBarsM5 - variable receiving the number of changed M5 bars
+ * @param  _Out_ double rates[][]   - array receiving the rates
+ * @param  _Out_ int    changedBars - variable receiving the number of changed bars
+ * @param  _In_  int    timeframe   - rates timeframe
  *
  * @return bool - success status
  */
-bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int &changedBarsM5) {
-   int changed;
-
-   if (timeframe == PERIOD_M1) {
-      changed = iCopyRates(ratesM1, NULL, PERIOD_M1);
-      if (changed < 0) return(false);
-      changedBarsM1 = changed;
-   }
-   else {
-      changed = iCopyRates(ratesM5, NULL, PERIOD_M5);
-      if (changed < 0) return(false);
-      changedBarsM5 = changed;
-   }
+bool CopyRates(double &rates[][], int &changedBars, int timeframe) {
+   int changed = iCopyRates(rates, NULL, timeframe);
+   if (changed < 0) return(false);
+   changedBars = changed;
    return(true);
 }
 
@@ -293,14 +288,14 @@ bool CopyRates(double &ratesM1[][], double &ratesM5[][], int &changedBarsM1, int
  * Check the specified rates array for new or changed inside bars.
  *
  * @param  double rates[][]   - rates array
- * @param  int    changedBars - number of changed bars in the rates array
- * @param  int    timeframe   - timeframe of the rates array
+ * @param  int    changedBars - number of changed bars in rates array
+ * @param  int    timeframe   - rates timeframe
  *
  * @return bool - success status
  */
 bool CheckInsideBars(double rates[][], int changedBars, int timeframe) {
-   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of those timeframes
-   // are correctly aligned. On timeframes > M5 this assumption can be wrong (if odd bar alignment).
+   // The logic for periods M1 and M5 operates directly on the corresponding rates. It assumes that bars of M1/M5 are correctly
+   // aligned. On timeframes > M5 this assumption may be wrong for some brokers/symbols.
    int bars = ArrayRange(rates, 0), more;
 
    if (changedBars > 1) {                                         // skip regular ticks (they don't change IB status)

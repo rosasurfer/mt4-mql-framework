@@ -4,10 +4,10 @@
 
 // special constants
 #define EMPTY                          0xFFFFFFFF        // -1
-#define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)    min(datetime-literal) = D'1970.01.01 00:00:00'
-#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                 max(datetime-literal) = D'2037.12.31 23:59:59'
-#define NaT                               INT_MIN        // Not-a-Time: invalid datetime value                       (datetime) INT_MIN = '1901-12-13 20:45:52'
-#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32 bit pointer (x86)            (datetime) INT_MAX = '2038-01-19 03:14:07'
+#define EMPTY_VALUE                       INT_MAX        // MetaQuotes: empty custom indicator value (integer)    min(datetime-literal) = D'1970.01.01 00:00:00'; (datetime)INT_MIN = '1901-12-13 20:45:52'
+#define NaC                            0xFFFFFFFE        // Not-a-Color: invalid color value (-2)                 max(datetime-literal) = D'2037.12.31 23:59:59'; (datetime)INT_MAX = '2038-01-19 03:14:07'
+#define NaT                               INT_MIN        // Not-a-Time: invalid datetime value (32-bit)
+#define MIN_VALID_POINTER              0x00010000        // minimum value of a valid 32-bit pointer
 #define WHOLE_ARRAY                             0        // MetaQuotes
 
 #define MAX_ORDER_COMMENT_LENGTH               27

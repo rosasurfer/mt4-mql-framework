@@ -47,22 +47,22 @@
  *  - visible alert at profit target
  *
  *  - time functions
- *      TimeCurrentEx()       check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeLocalEx()         check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeCurrentEx()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeLocalEx()            check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *      TimeFXT()
- *      TimeGMT()             check scripts/standalone-indicators in tester/offline charts in old/current terminals
- *      TimeServer()          check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeGMT()                check scripts/standalone-indicators in tester/offline charts in old/current terminals
+ *      TimeServer()             check scripts/standalone-indicators in tester/offline charts in old/current terminals
  *
  *      FxtToGmtTime
  *      FxtToLocalTime
  *      FxtToServerTime
  *
  *      GmtToFxtTime
- *      GmtToLocalTime        OK
+ *      GmtToLocalTime     OK    finish unit tests
  *      GmtToServerTime
  *
  *      LocalToFxtTime
- *      LocalToGmtTime        OK
+ *      LocalToGmtTime     OK    finish unit tests
  *      LocalToServerTime
  *
  *      ServerToFxtTime
@@ -237,7 +237,7 @@ extern bool   EA.RecorderAutoScale = false;                 // use adaptive mult
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/HandleCommands.mqh>
-#include <functions/ParseTime.mqh>
+#include <functions/ParseDateTime.mqh>
 #include <structs/rsf/OrderExecution.mqh>
 
 #define STRATEGY_ID               107           // unique strategy id (between 101-1023, 10 bit)
@@ -3003,7 +3003,7 @@ bool ValidateInputs() {
          if (key == "@time") {
             if (start.time.condition)                    return(!onInputError("ValidateInputs(13)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions) +" (multiple time conditions)"));
             int pt[];
-            if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))        return(!onInputError("ValidateInputs(14)  "+ sequence.name +" invalid input parameter StartConditions: "+ DoubleQuoteStr(StartConditions)));
             datetime dtValue = DateTime2(pt, DATE_OF_ERA);
             start.time.condition   = true;
             start.time.value       = dtValue;
@@ -3033,7 +3033,7 @@ bool ValidateInputs() {
 
          if (key == "@time") {
             if (stop.time.condition)                     return(!onInputError("ValidateInputs(20)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions) +" (multiple time conditions)"));
-            if (!ParseTime(sValue, NULL, pt))            return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
+            if (!ParseDateTime(sValue, NULL, pt))        return(!onInputError("ValidateInputs(21)  "+ sequence.name +" invalid input parameter StopConditions: "+ DoubleQuoteStr(StopConditions)));
             dtValue = DateTime2(pt, DATE_OF_ERA);
             stop.time.condition   = true;
             stop.time.value       = dtValue;
@@ -3271,12 +3271,12 @@ double QuoteUnitValue(double lots = 1.0) {
 
    double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
    int error = GetLastError();
-   if (error || !tickValue)   return(!catch("QuoteUnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_INVALID_MARKET_DATA)));
+   if (error || !tickValue)   return(!catch("QuoteUnitValue(1)  MarketInfo(MODE_TICKVALUE) = "+ tickValue, intOr(error, ERR_SYMBOL_NOT_AVAILABLE)));
 
    static double tickSize; if (!tickSize) {
       tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);
       error = GetLastError();
-      if (error || !tickSize) return(!catch("QuoteUnitValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_INVALID_MARKET_DATA)));
+      if (error || !tickSize) return(!catch("QuoteUnitValue(2)  MarketInfo(MODE_TICKSIZE) = "+ tickSize, intOr(error, ERR_SYMBOL_NOT_AVAILABLE)));
    }
    return(tickValue/tickSize * lots);
 }

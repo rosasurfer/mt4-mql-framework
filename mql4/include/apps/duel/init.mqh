@@ -159,9 +159,9 @@ int onInitRecompile() {
  *
  * @return int - error status
  */
-int afterInit() {
-   if (__isTesting || !IsTestSequence()) {         // open the log file (flushes the log buffer) but don't touch the file
-      SetLogfile(GetLogFilename());                // of a finished test (i.e. a test loaded into an online chart)
+int afterInit() {                                  // open the log file (flushes the log buffer) but don't touch the file
+   if (__isTesting || !IsTestSequence()) {         // of a finished test (i.e. a test loaded into an online chart)
+      if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
    }
 
    if (__isTesting) {                              // read test configuration
@@ -171,5 +171,5 @@ int afterInit() {
    }
 
    StoreSequenceId();                              // store the sequence id for other templates/restart/recompilation etc.
-   return(catch("afterInit(1)"));
+   return(catch("afterInit(2)"));
 }

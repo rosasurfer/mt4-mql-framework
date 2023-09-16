@@ -167,7 +167,6 @@ datetime staleLimit;                                     // time limit (server t
 int      hSet[];                                         // HistorySet handles
 string   recordingDirectory = "";                        // directory to store recorded history
 int      recordingFormat;                                // format of new history files: 400 | 401
-int      tickTimerId;                                    // id of the tick timer registered for the chart
 
 int AUDLFX.orders[][LFX_ORDER_intSize];                  // array of LFX orders
 int CADLFX.orders[][LFX_ORDER_intSize];
@@ -317,11 +316,10 @@ int onInit() {
       if (!RefreshLfxOrders())          return(last_error);
 
       // setup a chart ticker
-      int hWnd         = __ExecutionContext[EC.hChart];
-      int milliseconds = 500;                            // a virtual tick every 500 milliseconds
-      int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
-      if (!timerId) return(catch("onInit(7)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-      tickTimerId = timerId;
+      int millis = 500;                                 // a virtual tick every 500 milliseconds
+      int hWnd = __ExecutionContext[EC.hChart];
+      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__tickTimerId) return(catch("onInit(7)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onInit(8)"));
 }
@@ -348,8 +346,8 @@ int onDeinit() {
    }
 
    // uninstall the chart ticker
-   if (tickTimerId > NULL) {
-      int id = tickTimerId; tickTimerId = NULL;
+   if (__tickTimerId > NULL) {
+      int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));
