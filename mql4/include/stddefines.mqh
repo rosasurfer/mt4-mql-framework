@@ -139,7 +139,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define DATE_OF_TODAY               2           // relative to today
 
 
-// ParseTime() flags
+// ParseDateTime() flags
 #define DATE_YYYYMMDD               1           // 1980.07.19
 #define DATE_DDMMYYYY               2           // 19.07.1980
 //efine DATE_YEAR_OPTIONAL          4
@@ -153,7 +153,7 @@ double  N_INF;                                                    // -1.#INF: ne
 #define TIME_OPTIONAL             224           // (TIME_HOURS_OPTIONAL | TIME_MINUTES_OPTIONAL | TIME_SECONDS_OPTIONAL)
 
 
-// ParseTime() result element indexes
+// ParseDateTime() result indexes
 #define PT_YEAR                     0
 #define PT_MONTH                    1
 #define PT_DAY                      2

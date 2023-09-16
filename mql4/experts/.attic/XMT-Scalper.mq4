@@ -448,7 +448,7 @@ int onInitTemplate() {
  * @return int - error status
  */
 int afterInit() {
-   SetLogfile(GetLogFilename());                            // open the logfile (flushes the buffer)
+   if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));    // open the logfile (flushes the buffer)
 
    // initialize global vars
    if (UseSpreadMultiplier) { minBarSize = 0;              sMinBarSize = "-";                                }
@@ -462,12 +462,12 @@ int afterInit() {
 
    if (!InitMetrics()) return(last_error);
 
-   if (__isTesting) {                                       // read test configuration
+   if (__isTesting) {                                                   // read test configuration
       string section = ProgramName() +".Tester";
       test.onPositionOpenPause = GetConfigBool(section, "OnPositionOpenPause", false);
       test.reduceStatusWrites  = GetConfigBool(section, "ReduceStatusWrites",   true);
    }
-   return(catch("afterInit(1)"));
+   return(catch("afterInit(2)"));
 }
 
 
@@ -952,7 +952,7 @@ bool IsEntrySignal(int &signal) {
    int error = GetLastError();
    if (!high || error) {
       if (error == ERS_HISTORY_UPDATE) SetLastError(error);
-      else if (!error)                 catch("IsEntrySignal(1)  "+ sequence.name +" invalid bar high: 0", ERR_INVALID_MARKET_DATA);
+      else if (!error)                 catch("IsEntrySignal(1)  "+ sequence.name +" invalid bar high: 0", ERR_SYMBOL_NOT_AVAILABLE);
       else                             catch("IsEntrySignal(2)  "+ sequence.name, error);
       return(false);
    }

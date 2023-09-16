@@ -4,7 +4,7 @@ period=30
 digits=5
 
 leftpos=9229
-scale=8
+scale=2
 graph=1
 fore=0
 grid=0
@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -10002,15 +10002,37 @@ show_data=0
 <indicator>
 name=Custom Indicator
 <expert>
+name=Inside Bars
+flags=339
+window_num=0
+<inputs>
+Timeframe=H1
+NumberOfInsideBars=2
+</inputs>
+</expert>
+shift_0=0
+draw_0=0
+color_0=0
+style_0=0
+weight_0=0
+period_flags=3
+show_data=0
+</indicator>
+
+<indicator>
+name=Custom Indicator
+<expert>
 name=ZigZag
 flags=339
 window_num=0
 <inputs>
-ZigZag.Periods=10
-ZigZag.Type=Line | Semaphores*
+ZigZag.Periods=30
+ZigZag.Type=Line* | Semaphores
+ZigZag.Width=0
 ZigZag.Color=16711680
 Donchian.ShowChannel=1
-Donchian.Upper.Color=16748574
+Donchian.Crossings.Wingdings=108
+Donchian.Upper.Color=16711680
 Donchian.Lower.Color=16711935
 </inputs>
 </expert>
@@ -10020,26 +10042,6 @@ weight_4=0
 weight_5=0
 color_6=4294967295
 color_7=4294967295
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=NonLagMA
-flags=339
-window_num=0
-<inputs>
-WaceCycle.Periods=20
-MA.ReversalFilter=0.7
-Draw.Width=3
-Color.UpTrend=16711935
-Color.DownTrend=65535
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
 period_flags=0
 show_data=1
 </indicator>

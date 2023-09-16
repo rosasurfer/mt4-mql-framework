@@ -44,7 +44,6 @@ string symbolDescriptions[] = {"Equity of account {account-number}", "Equity of 
 
 string recordingDirectory = "";                 // directory to store data
 int    recordingFormat;                         // format of new history files: 400 | 401
-int    tickTimerId;                             // id of the tick timer registered for the chart
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -79,11 +78,10 @@ int onInit() {
 
    // setup a chart ticker (online only)
    if (!__isTesting) {
-      int hWnd         = __ExecutionContext[EC.hChart];
-      int milliseconds = 1000;                           // a virtual tick every second (1000 milliseconds)
-      int timerId      = SetupTickTimer(hWnd, milliseconds, NULL);
-      if (!timerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-      tickTimerId = timerId;
+      int hWnd = __ExecutionContext[EC.hChart];
+      int millis = 1000;                                // a virtual tick every second (1000 milliseconds)
+      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      if (!__tickTimerId) return(catch("onInit(6)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 
    // indicator labels and display options
@@ -112,8 +110,8 @@ int onDeinit() {
    }
 
    // uninstall the chart ticker
-   if (tickTimerId > NULL) {
-      int id = tickTimerId; tickTimerId = NULL;
+   if (__tickTimerId > NULL) {
+      int id = __tickTimerId; __tickTimerId = NULL;
       if (!ReleaseTickTimer(id)) return(catch("onDeinit(1)->ReleaseTickTimer(timerId="+ id +") failed", ERR_RUNTIME_ERROR));
    }
    return(catch("onDeinit(2)"));

@@ -128,9 +128,9 @@ int onInitRecompile() {
  *
  * @return int - error status
  */
-int afterInit() {
-   if (__isTesting || !IsTestSequence()) {            // open the log file (flushes the log buffer) but don't touch the file
-      SetLogfile(GetLogFilename());                   // of a finished test (i.e. a test loaded into an online chart)
+int afterInit() {                                     // open the log file (flushes the log buffer) but don't touch the file
+   if (__isTesting || !IsTestSequence()) {            // of a finished test (i.e. a test loaded into an online chart)
+      if (!SetLogfile(GetLogFilename())) return(catch("afterInit(1)"));
    }
 
    string section = ProgramName();
@@ -152,5 +152,5 @@ int afterInit() {
       // a finished test loaded into an online chart
       sequence.status = STATUS_STOPPED;               // TODO: move to SynchronizeStatus()
    }
-   return(last_error);
+   return(catch("afterInit(2)"));
 }

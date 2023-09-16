@@ -53,11 +53,11 @@ int init() {
    if (initFlags & INIT_PIPVALUE && 1) {
       double tickSize = MarketInfo(Symbol(), MODE_TICKSIZE);         // schlägt fehl, wenn kein Tick vorhanden ist
       if (IsError(catch("init(4)"))) if (CheckErrors("init(5)")) return(last_error);
-      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_INVALID_MARKET_DATA)));
+      if (!tickSize)                                             return(_last_error(CheckErrors("init(6)  MarketInfo(MODE_TICKSIZE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
 
       double tickValue = MarketInfo(Symbol(), MODE_TICKVALUE);
       if (IsError(catch("init(7)"))) if (CheckErrors("init(8)")) return(last_error);
-      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_INVALID_MARKET_DATA)));
+      if (!tickValue)                                            return(_last_error(CheckErrors("init(9)  MarketInfo(MODE_TICKVALUE=0)", ERR_SYMBOL_NOT_AVAILABLE)));
    }
    if (initFlags & INIT_BARS_ON_HIST_UPDATE && 1) {}                 // not yet implemented
 
@@ -146,7 +146,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(6)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(6)", error);
    return(last_error);
 }
 

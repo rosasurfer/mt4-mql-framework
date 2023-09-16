@@ -1,11 +1,11 @@
 <chart>
 symbol=GBPUSD
-period=30
+period=15
 digits=5
 
 leftpos=9229
-scale=8
-graph=1
+scale=2
+graph=0
 fore=0
 grid=0
 volume=0
@@ -13,9 +13,9 @@ ohlc=0
 askline=0
 days=0
 descriptions=1
-scroll=0
+scroll=1
 shift=1
-shift_size=50
+shift_size=10
 
 fixed_pos=620
 window_left=0
@@ -10007,11 +10007,15 @@ flags=339
 window_num=0
 <inputs>
 ZigZag.Periods=10
-ZigZag.Type=Line | Semaphores*
+ZigZag.Type=Line* | Semaphores
+ZigZag.Width=2
 ZigZag.Color=16711680
+
 Donchian.ShowChannel=1
-Donchian.Upper.Color=16748574
-Donchian.Lower.Color=16711935
+Donchian.ShowCrossings=off | first* | all
+Donchian.Crossings.Wingdings=108
+Donchian.Upper.Color=16711680
+Donchian.Lower.Color=255
 </inputs>
 </expert>
 style_2=2
@@ -10020,28 +10024,6 @@ weight_4=0
 weight_5=0
 color_6=4294967295
 color_7=4294967295
-period_flags=0
-show_data=1
-</indicator>
-
-<indicator>
-name=Custom Indicator
-<expert>
-name=Tillson T3 Moving Average
-flags=339
-window_num=0
-<inputs>
-T3.Periods=10
-T3.Periods.MatulichScale=1
-T3.VolumeFactor=0.7
-MA.ReversalFilter=0.1
-Draw.Width=3
-Color.UpTrend=16711935
-Color.DownTrend=65535
-</inputs>
-</expert>
-weight_0=0
-weight_1=0
 period_flags=0
 show_data=1
 </indicator>

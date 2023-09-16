@@ -128,16 +128,17 @@ int onInitRecompile() {
  */
 int afterInit() {
    if (__isTesting) {
-      positions.absoluteProfits = true;
+      positions.showAbsProfits = true;
    }
    else {
-      // offline ticker
-      if (Offline.Ticker) /*&&*/ if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
-         int hWnd    = __ExecutionContext[EC.hChart];
-         int millis  = 1000;
-         int timerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
-         if (!timerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
-         tickTimerId = timerId;
+      // setup a chart ticker
+      int hWnd = __ExecutionContext[EC.hChart];
+      int millis = 1000;                                          // once every second
+
+      if (StrStartsWithI(GetAccountServer(), "XTrade-")) {
+         // offline ticker to update chart data in synthetic charts
+         __tickTimerId = SetupTickTimer(hWnd, millis, TICK_CHART_REFRESH|TICK_IF_WINDOW_VISIBLE);
+         if (!__tickTimerId) return(catch("afterInit(1)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
 
          // display ticker status
          string label = ProgramName() +".TickerStatus";
@@ -147,8 +148,14 @@ int afterInit() {
          ObjectSet    (label, OBJPROP_YDISTANCE, 38);
          ObjectSetText(label, "n", 6, "Webdings", LimeGreen);     // a "dot" marker, Green = online
       }
+      else {
+         // virtual ticks to update chart infos on a slow data feed
+         __tickTimerId = SetupTickTimer(hWnd, millis, TICK_IF_WINDOW_VISIBLE);
+         if (!__tickTimerId) return(catch("afterInit(2)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
+      }
    }
-   return(catch("afterInit(2)"));
+   //debug("afterInit(0.1)  IsConnected="+ IsConnected() +"  wndTitle="+ GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]));
+   return(catch("afterInit(3)"));
 }
 
 
@@ -201,30 +208,30 @@ bool OrderTracker.Configure() {
 /**
  * Find the applicable configuration for the [UnitSize] calculation and return the configured value.
  *
- * @param _In_  string id     - unitsize configuration identifier
+ * @param _In_  string name   - unitsize configuration identifier
  * @param _Out_ string &value - configuration value
  *
  * @return bool - success status
  */
-bool ReadUnitSizeConfigValue(string id, string &value) {
+bool ReadUnitSizeConfigValue(string name, string &value) {
    string section="Unitsize", sValue="";
    value = "";
 
-   string key = Symbol() +"."+ id;
+   string key = Symbol() +"."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = StdSymbol() +"."+ id;
+   key = StdSymbol() +"."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;
       return(true);
    }
 
-   key = "Default."+ id;
+   key = "Default."+ name;
    if (IsConfigKey(section, key)) {
       if (!ValidateUnitSizeConfigValue(section, key, sValue)) return(false);
       value = sValue;

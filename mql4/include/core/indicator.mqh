@@ -9,8 +9,10 @@ extern int    __lpSuperContext;
 
 int    __CoreFunction = NULL;                                        // currently executed MQL core function: CF_INIT|CF_START|CF_DEINIT
 double __rates[][6];                                                 // current price series
+int    __tickTimerId;                                                // timer id for virtual ticks
 bool   __trackExecutionTime = false;                                 // whether to track the execution time of a full recalculation (ValidBars = 0)
 bool   __isAccountChange    = false;
+bool   __isOfflineChart     = -1;                                    // initialized in start(), not before
 
 
 /**
@@ -236,6 +238,7 @@ int start() {
    else                                Tick.isVirtual = (ChangedBars > 2);
    prevVolume = Volume[0];
 
+
    // detect and handle account changes
    // ---------------------------------
    // The tick on which AccountNumber() reports a new account the first time is executed either on new history (if it exists)
@@ -289,19 +292,19 @@ int start() {
    //
    static int prevBars;
    static datetime prevFirstBarTime, prevLastBarTime;
-   static bool isOfflineChart = -1; if (isOfflineChart == -1) {
-      if      (__isTesting)                 isOfflineChart = false;
-      else if (IsCustomTimeframe(Period())) isOfflineChart = true;
+   if (__isOfflineChart == -1) {                                                    // cannot be initialize in init()
+      if      (__isTesting)                 __isOfflineChart = false;
+      else if (IsCustomTimeframe(Period())) __isOfflineChart = true;
       else {
          string wndTitle = GetInternalWindowTextA(__ExecutionContext[EC.hChartWindow]);
          if (StringLen(wndTitle) > 0) {
-            isOfflineChart = StrEndsWith(wndTitle, "(offline)");
+            __isOfflineChart = StrEndsWith(wndTitle, "(offline)");
          }
       }
    }
 
    if (!__isAccountChange && prevBars && !ValidBars) {
-      if (isOfflineChart==true || !IsConnected()) {
+      if (__isOfflineChart==true || !IsConnected()) {
          bool sameFirst = (Time[0] == prevFirstBarTime);                            // Offline charts may replace existing bars when reloading data from disk.
          bool sameLast = (Time[Bars-1] == prevLastBarTime);                         // Regular charts will replace existing bars on account change if the trade server changes.
 
@@ -374,7 +377,7 @@ int start() {
    // check all errors
    error = GetLastError();
    if (error || last_error|__ExecutionContext[EC.mqlError]|__ExecutionContext[EC.dllError])
-      CheckErrors("start(8)  error="+ error +"  last_error="+ last_error +"  mqlError="+ __ExecutionContext[EC.mqlError] +"  dllError="+ __ExecutionContext[EC.dllError], error);
+      CheckErrors("start(8)", error);
    if (last_error == ERS_HISTORY_UPDATE) __STATUS_HISTORY_UPDATE = true;
    return(last_error);
 }
