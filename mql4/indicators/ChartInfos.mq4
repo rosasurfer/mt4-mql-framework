@@ -76,10 +76,10 @@ double  shortPosition;
 
 // configuration of custom positions
 string  config.sData[][2];                                        // config entry details: [LineKey, LineComment]
-double  config.dData[][3];                                        //                       [MfaMaeEnabled, MinProfit, MaxProfit]
+double  config.dData[][3];                                        //                       [MfeMaeEnabled, MinProfit, MaxProfit]
 
-#define I_CONF_KEY                      0                         // indexes of config.sData[]
-#define I_CONF_COMMENT                  1                         //
+#define I_CONFIG_KEY                    0                         // indexes of config.sData[]
+#define I_CONFIG_COMMENT                1                         //
 
 #define I_MFE_ENABLED                   0                         // indexes of config.dData[]
 #define I_PROFIT_MIN                    1                         //
@@ -1382,7 +1382,7 @@ bool UpdatePositions() {
             if (positions.showMfe && config.dData[configLine][I_MFE_ENABLED]) {
                sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MIN], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAX], 2), ")");
             }
-            sComment = config.sData[configLine][I_CONF_COMMENT];
+            sComment = config.sData[configLine][I_CONFIG_COMMENT];
          }
 
          // history only
@@ -1842,8 +1842,8 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
 
       if (configLine > -1) {
          sLine = configLine;
-         if (StringLen(config.sData[configLine][I_CONF_COMMENT]) > 0) {
-            sComment = "\""+ config.sData[configLine][I_CONF_COMMENT] +"\" = ";
+         if (StringLen(config.sData[configLine][I_CONFIG_COMMENT]) > 0) {
+            sComment = "\""+ config.sData[configLine][I_CONFIG_COMMENT] +"\" = ";
          }
       }
 
@@ -2350,8 +2350,8 @@ bool CustomPositions.ReadConfig() {
                ArrayResize(confsData, lines+1);
                if (!StringLen(confComment)) comment = openComment + ifString(StringLen(openComment) && StringLen(hstComment ), ", ", "") + hstComment;
                else                         comment = confComment;   // configured comments override generated ones
-               confsData[lines][I_CONF_KEY    ] = keys[i];
-               confsData[lines][I_CONF_COMMENT] = comment;
+               confsData[lines][I_CONFIG_KEY    ] = keys[i];
+               confsData[lines][I_CONFIG_COMMENT] = comment;
 
                ArrayResize(confdData, lines+1);
                if (enableMfe) {
@@ -2376,10 +2376,9 @@ bool CustomPositions.ReadConfig() {
    if (oldLines > 0) {
       for (i=0; i < newLines; i++) {
          for (n=0; n < oldLines; n++) {
-            if (confsData[i][I_CONF_KEY] == config.sData[n][I_CONF_KEY] && confdData[i][I_MFE_ENABLED]) {
+            if (confsData[i][I_CONFIG_KEY] == config.sData[n][I_CONFIG_KEY] && confdData[i][I_MFE_ENABLED]) {
                confdData[i][I_PROFIT_MIN] = config.dData[n][I_PROFIT_MIN];
                confdData[i][I_PROFIT_MAX] = config.dData[n][I_PROFIT_MAX];
-               debug("CustomPositions.ReadConfig(0.1)  "+ DoubleQuoteStr(confsData[i][I_CONF_KEY]) +": keeping existing MFE/MAE stats");
                break;
             }
          }
@@ -2711,8 +2710,8 @@ bool CustomPositions.ParseHstTerm(string term, string &positionComment, string &
             int lines = ArrayRange(confdData, 0);
             ArrayResize(confdData, lines+1);
             ArrayResize(confsData, lines+1);
-            confsData[lines][I_CONF_KEY    ] = "";
-            confsData[lines][I_CONF_COMMENT] = comment + ifString(StringLen(positionComment), ", ", "") + positionComment;
+            confsData[lines][I_CONFIG_KEY    ] = "";
+            confsData[lines][I_CONFIG_COMMENT] = comment + ifString(StringLen(positionComment), ", ", "") + positionComment;
             if (firstGroup) positionComment = "";                    // für folgende Gruppen wird der konfigurierte Kommentar nicht ständig wiederholt
          }
       }
@@ -4290,58 +4289,89 @@ bool AnalyzePos.ProcessLfxProfits() {
 
 
 /**
- * Store runtime status in chart (for terminal restart) and chart window (for loading of templates).
+ * Store the runtime status.
+ *  - in the chart:        for init cycles and terminal restart
+ *  - in the chart window: for loading of templates
  *
  * @return bool - success status
  */
 bool StoreStatus() {
    if (!__isChart) return(true);
 
-   // stored vars:
    // bool positions.showAbsProfits
-   string key = ProgramName() +".status.positions.showAbsProfits";   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   int value = ifInt(positions.showAbsProfits, 1, -1);
+   string key = ProgramName() +".positions.showAbsProfits";
+   int iValue = ifInt(positions.showAbsProfits, 1, -1);                    // GetWindowInteger() cannot restore integer 0
+   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, iValue);          // chart window
+   Chart.StoreInt(key, iValue);                                            // chart
 
-   // chart window
-   SetWindowIntegerA(__ExecutionContext[EC.hChart], key, value);
-
-   // chart
-   if (ObjectFind(key) == -1)
-      ObjectCreate(key, OBJ_LABEL, 0, 0, 0);
-   ObjectSet    (key, OBJPROP_TIMEFRAMES, OBJ_PERIODS_NONE);
-   ObjectSetText(key, ""+ value);
+   // MFE/MAE stats of custom positions
+   string keys="", configKey="", sValue="";
+   int size = ArrayRange(config.sData, 0);
+   for (int i=0; i < size; i++) {
+      if (config.dData[i][I_MFE_ENABLED] > 0) {
+         configKey = config.sData[i][I_CONFIG_KEY];
+         key = ProgramName() +"."+ Symbol() +".config."+ configKey +".mae|mfe";
+         sValue = NumberToStr(config.dData[i][I_PROFIT_MIN], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAX], ".1+");
+         SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);     // chart window
+         Chart.StoreString(key, sValue);                                   // chart
+         keys = keys +"="+ configKey;                                      // config keys can't contain equal signs "="
+      }
+   }
+   if (keys != "") {
+      key = ProgramName() +"."+ Symbol() +".config.keys";
+      sValue = StrRight(keys, -1);
+      SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);        // chart window
+      Chart.StoreString(key, sValue);                                      // chart
+   }
 
    return(!catch("StoreStatus(1)"));
 }
 
 
 /**
- * Restore a runtime status stored in the chart or the chart window.
+ * Restore a stored runtime status.
  *
  * @return bool - success status
  */
 bool RestoreStatus() {
    if (!__isChart) return(true);
 
-   // restored vars:
    // bool positions.showAbsProfitsProfits
-   string key = ProgramName() +".status.positions.showAbsProfits";   // TODO: Schlüssel global verwalten und Instanz-ID des Indikators integrieren
-   bool result = false;
+   string key = ProgramName() +".positions.showAbsProfits";
+   int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);  // prefer data from chart window
+   if (!iValue) Chart.RestoreInt(key, iValue);                             // on error check chart
+   positions.showAbsProfits = (iValue > 0);
 
-   // prefer chart window
-   int value = GetWindowIntegerA(__ExecutionContext[EC.hChart], key);
-   result = (value != 0);
+   // MFE/MAE stats of custom positions
+   bool fromChart=false, fromWindow=false;
+   string configKeys[], sValue="";
+   key = ProgramName() +"."+ Symbol() +".config.keys";
+   sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
 
-   // then check chart
-   if (!result) {
-      if (ObjectFind(key) == 0) {
-         value = StrToInteger(ObjectDescription(key));
-         result = (value != 0);
-      }
+   if      (StringLen(sValue) > 0)            fromWindow = true;           // prefer data from chart window
+   else if (Chart.RestoreString(key, sValue)) fromChart  = true;           // on error check chart
+   else return(!catch("RestoreStatus(1)"));
+
+   ArrayResize(config.sData, 0);
+   ArrayResize(config.dData, 0);
+
+   int size = Explode(sValue, "=", configKeys, NULL);
+   for (int i=0; i < size; i++) {
+      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".mae|mfe";
+      sValue = "";
+      if (fromWindow) sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      else            Chart.RestoreString(key, sValue);
+
+      ArrayResize(config.sData, i+1);
+      config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
+      config.sData[i][I_CONFIG_COMMENT] = "";
+
+      ArrayResize(config.dData, i+1);
+      config.dData[i][I_MFE_ENABLED] = 1;
+      config.dData[i][I_PROFIT_MIN ] = StrToDouble(StrLeftTo(sValue, "|"));
+      config.dData[i][I_PROFIT_MAX ] = StrToDouble(StrRightFrom(sValue, "|"));
    }
-   if (result) positions.showAbsProfits = (value > 0);
-
-   return(!catch("RestoreStatus(1)"));
+   return(!catch("RestoreStatus(2)"));
 }
 
 
