@@ -52,6 +52,7 @@ int displayedPrice = PRICE_MEDIAN;                                // price type:
 
 // unitsize calculation, see CalculateUnitSize()
 bool   mm.done;                                                   // processing flag
+double mm.externalAssets;                                         // external assets
 double mm.equity;                                                 // equity value used for calculations, incl. external assets and floating losses (but not floating/unrealized profits)
 
 double mm.cfgLeverage;
@@ -300,7 +301,7 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-open-orders") {
       if (keys & F_VK_SHIFT != 0) {
          flags = F_SHOW_CUSTOM_POSITIONS;                         // with VK_SHIFT:
-         ArrayResize(configTerms, 0);                             // reparse configuration and show only custom positions
+         ArrayResize(configTerms, 0);                             // reparse configuration and show custom positions only
       }                                                           //
       else flags = NULL;                                          // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
@@ -309,7 +310,7 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "toggle-trade-history") {
       if (keys & F_VK_SHIFT != 0) {
          flags = F_SHOW_CUSTOM_HISTORY;                           // with VK_SHIFT:
-         ArrayResize(configTerms, 0);                             // reparse configuration and show only custom history
+         ArrayResize(configTerms, 0);                             // reparse configuration and show custom history only
       }                                                           //
       else flags = NULL;                                          // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
@@ -1225,12 +1226,12 @@ bool UpdateUnitSize() {
  * @return bool - success status
  */
 bool UpdatePositions() {
-   if (!positions.analyzed) {
-      if (!AnalyzePositions())  return(false);
-   }
    if (mode.intern && !mm.done) {
       if (!CalculateUnitSize()) return(false);
       if (!mm.done)             return(true);                              // terminal not yet ready
+   }
+   if (!positions.analyzed) {
+      if (!AnalyzePositions())  return(false);
    }
 
    // total open position bottom-right
@@ -1629,6 +1630,11 @@ bool UpdateStopoutLevel() {
    if (mode.extern) positions.analyzed = true;
    if (positions.analyzed) return(true);
 
+   if (mode.intern && !mm.done) {
+      if (!CalculateUnitSize()) return(false);
+      if (!mm.done)             return(false);
+   }
+
    int      tickets    [], openPositions;                                        // position details
    int      types      [];
    double   lots       [];
@@ -1885,9 +1891,10 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
  * @return bool - success status
  */
 bool CalculateUnitSize() {
-   if (mode.extern || mm.done) return(true);                         // skip for external accounts
+   if (mm.done) return(true);
+   mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number, true);
 
-   //debug("CalculateUnitSize(0.1)  recalculating...");
+   if (mode.extern) return(true);                                       // skip for external accounts
 
    // see declaration of global vars mm.* for their descriptions
    mm.lotValue                = 0;
@@ -1901,7 +1908,7 @@ bool CalculateUnitSize() {
    // recalculate equity used for calculations
    double accountEquity = AccountEquity()-AccountCredit();
    if (AccountBalance() > 0) accountEquity = MathMin(AccountBalance(), accountEquity);
-   mm.equity = accountEquity + GetExternalAssets(tradeAccount.company, tradeAccount.number);
+   mm.equity = accountEquity + mm.externalAssets;
 
    // recalculate lot value and unleveraged unitsize
    int error;
@@ -3457,11 +3464,8 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
    if (closedProfit == EMPTY_VALUE) closedProfit = 0;                      // 0.00 ist gültiger PL
 
-   static double externalAssets = EMPTY_VALUE;
-   if (IsEmptyValue(externalAssets)) externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
-
    if (customEquity != NULL) equity  = customEquity;
-   else {                    equity  = externalAssets;
+   else {                    equity  = mm.externalAssets;
       if (mode.intern)       equity += (AccountEquity()-AccountCredit());
    }
 
