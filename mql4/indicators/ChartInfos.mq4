@@ -289,9 +289,9 @@ int onAccountChange(int previous, int current) {
  */
 bool onCommand(string cmd, string params, int keys) {
    if (cmd == "log-custom-positions") {
-      int flags = F_LOG_TICKETS;                                  // log tickets
-      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;          // without VK_SHIFT: skip empty tickets (default)
-      if (!AnalyzePositions(flags)) return(false);                // with VK_SHIFT:    log empty tickets
+      int flags = F_LOG_TICKETS;                                              // log tickets
+      if (!keys & F_VK_SHIFT) flags |= F_LOG_SKIP_EMPTY;                      // without VK_SHIFT: skip empty tickets (default)
+      if (!AnalyzePositions(flags)) return(false);                            // with VK_SHIFT:    log empty tickets
    }
 
    else if (cmd == "toggle-account-balance") {
@@ -300,19 +300,21 @@ bool onCommand(string cmd, string params, int keys) {
 
    else if (cmd == "toggle-open-orders") {
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_POSITIONS;                         // with VK_SHIFT:
-         ArrayResize(configTerms, 0);                             // reparse configuration and show custom positions only
-      }                                                           //
-      else flags = NULL;                                          // without VK_SHIFT: show all open positions
+         flags = F_SHOW_CUSTOM_POSITIONS;                                     // with VK_SHIFT:    show custom positions only
+         ArrayResize(configTerms, 0);                                         // reparse configuration
+         GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
+      }
+      else flags = NULL;                                                      // without VK_SHIFT: show all open positions
       if (!ToggleOpenOrders(flags)) return(false);
    }
 
    else if (cmd == "toggle-trade-history") {
       if (keys & F_VK_SHIFT != 0) {
-         flags = F_SHOW_CUSTOM_HISTORY;                           // with VK_SHIFT:
-         ArrayResize(configTerms, 0);                             // reparse configuration and show custom history only
-      }                                                           //
-      else flags = NULL;                                          // without VK_SHIFT: show all available history
+         flags = F_SHOW_CUSTOM_HISTORY;                                       // with VK_SHIFT:    show custom history only
+         ArrayResize(configTerms, 0);                                         // reparse configuration
+         GetExternalAssets(tradeAccount.company, tradeAccount.number, true);  // invalidate cached external assets
+      }
+      else flags = NULL;                                                      // without VK_SHIFT: show all available history
       if (!ToggleTradeHistory(flags)) return(false);
    }
 
@@ -323,8 +325,9 @@ bool onCommand(string cmd, string params, int keys) {
    else if (cmd == "trade-account") {
       string key = StrReplace(params, ",", ":");
       if (!InitTradeAccount(key))  return(false);
+      GetExternalAssets(tradeAccount.company, tradeAccount.number, true);     // invalidate cached external assets
       if (!UpdateAccountDisplay()) return(false);
-      ArrayResize(configTerms, 0);                                // reparse configuration
+      ArrayResize(configTerms, 0);                                            // reparse configuration
    }
    else return(!logNotice("onCommand(1)  unsupported command: \""+ cmd +":"+ params +":"+ keys +"\""));
 
@@ -1232,6 +1235,7 @@ bool UpdatePositions() {
    }
    if (!positions.analyzed) {
       if (!AnalyzePositions())  return(false);
+      if (!positions.analyzed)  return(true);                              // terminal not yet ready
    }
 
    // total open position bottom-right
@@ -1632,7 +1636,7 @@ bool UpdateStopoutLevel() {
 
    if (mode.intern && !mm.done) {
       if (!CalculateUnitSize()) return(false);
-      if (!mm.done)             return(false);
+      if (!mm.done)             return(true);                                    // terminal not yet ready
    }
 
    int      tickets    [], openPositions;                                        // position details
@@ -1892,9 +1896,9 @@ bool CustomPositions.LogTickets(int tickets[], int configLine, int flags = NULL)
  */
 bool CalculateUnitSize() {
    if (mm.done) return(true);
-   mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number, true);
+   mm.externalAssets = GetExternalAssets(tradeAccount.company, tradeAccount.number);
 
-   if (mode.extern) return(true);                                       // skip for external accounts
+   if (mode.extern) return(true);                                       // skip remaining part for external accounts
 
    // see declaration of global vars mm.* for their descriptions
    mm.lotValue                = 0;
