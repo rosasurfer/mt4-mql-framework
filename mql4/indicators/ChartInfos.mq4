@@ -1808,6 +1808,7 @@ bool UpdateStopoutLevel() {
          line++;
          continue;
       }
+
       // individuelle Position extrahieren
       if (!ExtractPosition(termType, termValue1, termValue2, termResult1, termResult2,
                            _longPosition,      _shortPosition,      _totalPosition,      tickets,       types,       lots, openTimes, openPrices,       commissions,       swaps,       profits,
@@ -2253,12 +2254,22 @@ bool CustomPositions.ReadConfig() {
 
                else if (StrStartsWith(values[n], "MFE")) {           // enable MFE/MAE tracker
                   if (values[n] != "MFE")                            return(!catch("CustomPositions.ReadConfig(26)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  enableMfe = true;
+                  termType    = TERM_MFE;
+                  termValue1  = NULL;
+                  termValue2  = NULL;
+                  termResult1 = NULL;
+                  termResult2 = NULL;
+                  enableMfe   = true;
                }
 
                else if (StrStartsWith(values[n], "MAE")) {           // enable MFE/MAE tracker
                   if (values[n] != "MAE")                            return(!catch("CustomPositions.ReadConfig(27)  invalid configuration value ["+ section +"]->"+ keys[i] +"=\""+ iniValue +"\" (\""+ values[n] +"\") in \""+ file +"\"", ERR_INVALID_CONFIG_VALUE));
-                  enableMfe = true;
+                  termType    = TERM_MAE;
+                  termValue1  = NULL;
+                  termValue2  = NULL;
+                  termResult1 = NULL;
+                  termResult2 = NULL;
+                  enableMfe   = true;
                }
 
                else if (StrIsNumeric(values[n])) {                   // PL adjustment
@@ -2375,7 +2386,7 @@ bool CustomPositions.ReadConfig() {
       }
    }
 
-   // mark an empty configuration with a EOL term
+   // mark an empty configuration with an EOL term
    if (!ArrayRange(confTerms, 0)) {
       ArrayResize(confTerms, 1);                                     // initializes with NULL
    }
@@ -3415,6 +3426,10 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
             }
          }
       }
+   }
+
+   else if (termType==TERM_MFE || termType==TERM_MAE) {
+      // nothing to do
    }
    else return(!catch("ExtractPosition(6)  illegal or unknown termType: "+ termType, ERR_RUNTIME_ERROR));
 
@@ -4741,6 +4756,33 @@ double GetADR() {
 
 
 /**
+ * Return a readable version of a custom position config term type (values of configTerms[][I_TERM_TYPE]).
+ *
+ * @param  int type
+ *
+ * @return string
+ */
+string ConfigTermTypeToStr(int type) {
+   switch (type) {
+      case NULL              : return("NULL"              );
+      case TERM_TICKET       : return("TERM_TICKET"       );
+      case TERM_OPEN_LONG    : return("TERM_OPEN_LONG"    );
+      case TERM_OPEN_SHORT   : return("TERM_OPEN_SHORT"   );
+      case TERM_OPEN         : return("TERM_OPEN"         );
+      case TERM_HISTORY      : return("TERM_HISTORY"      );
+      case TERM_HISTORY_TOTAL: return("TERM_HISTORY_TOTAL");
+      case TERM_PL_ADJUSTMENT: return("TERM_PL_ADJUSTMENT");
+      case TERM_EQUITY       : return("TERM_EQUITY"       );
+      case TERM_MFE          : return("TERM_MFE"          );
+      case TERM_MAE          : return("TERM_MAE"          );
+      case TERM_PROFIT_MARKER: return("TERM_PROFIT_MARKER");
+      case TERM_LOSS_MARKER  : return("TERM_LOSS_MARKER"  );
+   }
+   return(_EMPTY_STR(catch("ConfigTermTypeToStr(1)  invalid parameter type: "+ type, ERR_INVALID_PARAMETER)));
+}
+
+
+/**
  * Return a string representation of the input parameters (for logging purposes).
  *
  * @return string
@@ -4752,6 +4794,7 @@ string InputsToStr() {
                             "Signal.Mail=",     DoubleQuoteStr(Signal.Mail),     ";", NL,
                             "Signal.SMS=",      DoubleQuoteStr(Signal.SMS),      ";")
    );
+   ConfigTermTypeToStr(NULL);
 }
 
 
