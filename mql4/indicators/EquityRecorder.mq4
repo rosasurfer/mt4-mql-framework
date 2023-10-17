@@ -13,8 +13,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Recording.HistoryDirectory = "Synthetic-History";      // name of the directory to store recorded data
-extern int    Recording.HistoryFormat    = 401;                      // written history format: 400 | 401
+extern string HistoryDirectory = "Synthetic-History";      // name of the directory to store recorded data
+extern int    HistoryFormat    = 401;                      // written history format: 400 | 401
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -41,8 +41,8 @@ int      hSet      [2];                                  // HistorySet handles
 string symbolSuffixes    [] = {".EA"                               , ".EX"                                                    };
 string symbolDescriptions[] = {"Equity of account {account-number}", "Equity of account {account-number} plus external assets"};
 
-string recordingDirectory = "";                          // directory to store data
-int    recordingFormat;                                  // format of new history files: 400 | 401
+string historyDirectory = "";                            // directory to store history data
+int    historyFormat;                                    // format of new history files: 400 | 401
 
 string indicatorName = "";
 string legendLabel   = "";
@@ -57,23 +57,23 @@ int onInit() {
    // read auto-configuration
    string indicator = ProgramName();
    if (AutoConfiguration) {
-      Recording.HistoryDirectory = GetConfigString(indicator, "Recording.HistoryDirectory", Recording.HistoryDirectory);
-      Recording.HistoryFormat    = GetConfigInt   (indicator, "Recording.HistoryFormat",    Recording.HistoryFormat);
+      HistoryDirectory = GetConfigString(indicator, "HistoryDirectory", HistoryDirectory);
+      HistoryFormat    = GetConfigInt   (indicator, "HistoryFormat",    HistoryFormat);
    }
 
    // validate inputs
-   // Recording.HistoryDirectory
-   recordingDirectory = StrTrim(Recording.HistoryDirectory);
-   if (IsAbsolutePath(recordingDirectory))                           return(catch("onInit(1)  illegal input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not an allowed directory name)", ERR_INVALID_INPUT_PARAMETER));
+   // HistoryDirectory
+   historyDirectory = StrTrim(HistoryDirectory);
+   if (IsAbsolutePath(historyDirectory))                       return(catch("onInit(1)  illegal input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (illegal directory name)", ERR_INVALID_INPUT_PARAMETER));
    int illegalChars[] = {':', '*', '?', '"', '<', '>', '|'};
-   if (StrContainsChars(recordingDirectory, illegalChars))           return(catch("onInit(2)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (not a valid directory name)", ERR_INVALID_INPUT_PARAMETER));
-   recordingDirectory = StrReplace(recordingDirectory, "\\", "/");
-   if (StrStartsWith(recordingDirectory, "/"))                       return(catch("onInit(3)  invalid input parameter Recording.HistoryDirectory: "+ DoubleQuoteStr(Recording.HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
-   if (!UseTradeServerPath(recordingDirectory, "onInit(4)"))         return(last_error);
+   if (StrContainsChars(historyDirectory, illegalChars))       return(catch("onInit(2)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (invalid directory name)", ERR_INVALID_INPUT_PARAMETER));
+   historyDirectory = StrReplace(historyDirectory, "\\", "/");
+   if (StrStartsWith(historyDirectory, "/"))                   return(catch("onInit(3)  invalid input parameter HistoryDirectory: "+ DoubleQuoteStr(HistoryDirectory) +" (must not start with a slash)", ERR_INVALID_INPUT_PARAMETER));
+   if (!UseTradeServerPath(historyDirectory, "onInit(4)"))     return(last_error);
 
-   // Recording.HistoryFormat
-   if (Recording.HistoryFormat!=400 && Recording.HistoryFormat!=401) return(catch("onInit(5)  invalid input parameter Recording.HistoryFormat: "+ Recording.HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
-   recordingFormat = Recording.HistoryFormat;
+   // HistoryFormat
+   if (HistoryFormat!=400 && HistoryFormat!=401)               return(catch("onInit(5)  invalid input parameter HistoryFormat: "+ HistoryFormat +" (must be 400 or 401)", ERR_INVALID_INPUT_PARAMETER));
+   historyFormat = HistoryFormat;
 
    // setup a chart ticker (online only)
    if (!__isTesting) {
@@ -193,9 +193,9 @@ bool RecordEquity() {
          string symbol      = StrLeft(GetAccountNumber(), 8) + symbolSuffixes[i];
          string description = StrReplace(symbolDescriptions[i], "{account-number}", GetAccountNumber());
 
-         hSet[i] = HistorySet1.Get(symbol, recordingDirectory);
+         hSet[i] = HistorySet1.Get(symbol, historyDirectory);
          if (hSet[i] == -1)
-            hSet[i] = HistorySet1.Create(symbol, description, 2, recordingFormat, recordingDirectory);
+            hSet[i] = HistorySet1.Create(symbol, description, 2, historyFormat, historyDirectory);
          if (!hSet[i]) return(false);
       }
       if (!HistorySet1.AddTick(hSet[i], now, currEquity[i], NULL)) return(false);
@@ -210,7 +210,7 @@ bool RecordEquity() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Recording.HistoryDirectory=", DoubleQuoteStr(Recording.HistoryDirectory), ";", NL,
-                            "Recording.HistoryFormat=",    Recording.HistoryFormat,                    ";")
+   return(StringConcatenate("HistoryDirectory=", DoubleQuoteStr(HistoryDirectory), ";", NL,
+                            "HistoryFormat=",    HistoryFormat,                    ";")
    );
 }
