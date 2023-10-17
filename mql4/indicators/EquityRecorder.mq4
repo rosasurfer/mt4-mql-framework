@@ -22,7 +22,7 @@ extern int    HistoryFormat    = 401;                      // written history fo
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <rsfHistory.mqh>
-#include <functions/ComputeFloatingPnLs.mqh>
+#include <functions/ComputeFloatingPnL.mqh>
 #include <functions/legend.mqh>
 
 #property indicator_chart_window
