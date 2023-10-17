@@ -76,16 +76,16 @@ double  longPosition;
 double  shortPosition;
 
 // configuration of custom positions
-string  config.sData[][2];                                        // config entry details: [LineKey, LineComment]
-double  config.dData[][4];                                        //                       [BemEnabled, MfeEnabled, MinProfit, MaxProfit]
+string  config.sData[][2];                                        // config entry details: [Key, Comment]
+double  config.dData[][4];                                        //                       [BemEnabled, MfeEnabled, MFE, MAE]
 
 #define I_CONFIG_KEY                    0                         // indexes of config.sData[]
 #define I_CONFIG_COMMENT                1                         //
 
 #define I_BEM_ENABLED                   0                         // indexes of config.dData[]
 #define I_MFE_ENABLED                   1                         //
-#define I_PROFIT_MIN                    2                         //
-#define I_PROFIT_MAX                    3                         //
+#define I_PROFIT_MFE                    2                         //
+#define I_PROFIT_MAE                    3                         //
 
 double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
 
@@ -136,8 +136,8 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_ADJUSTED_PROFIT               8                         //
 #define I_PROFIT                        9                         // total profit
 #define I_PROFIT_PCT                   10                         //
-#define I_PROFIT_PCT_MIN               11                         //
-#define I_PROFIT_PCT_MAX               12                         //
+#define I_PROFIT_PCT_MFE               11                         //
+#define I_PROFIT_PCT_MAE               12                         //
 #define I_PROFIT_MARKER_PRICE          13                         //
 #define I_PROFIT_MARKER_PCT            14                         //
 #define I_LOSS_MARKER_PRICE            15                         //
@@ -1293,9 +1293,9 @@ bool UpdatePositions() {
          commentCol++;
       }
       if (positions.showMfe) {
-         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  MFE/MAE  Comment
+         //           Type:  Lots  BE:  BePrice  Profit:  Abs   Percent  MAE/MFE  Comment
          // offsets = {9,    46,   83,  28,      68,      39,   87,      51,      90};
-         ArrayPushInt(offsets, 90);                                        // add column for MFE/MAE
+         ArrayPushInt(offsets, 90);                                        // add column for MAE/MFE
          mfeCol = percentCol + 1;
          offsets[mfeCol] = 51;
          commentCol++;
@@ -1367,7 +1367,7 @@ bool UpdatePositions() {
       lines--;
    }
 
-   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MinMax}]   {Comment}"
+   // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
    string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sComment="", pmText="";
    color fontColor;
    int line, configLine, index;
@@ -1394,14 +1394,14 @@ bool UpdatePositions() {
          configLine = positions.data[i][I_CONFIG_LINE];                    // (int) double
          if (configLine > -1) {
             if (positions.showMfe && config.dData[configLine][I_MFE_ENABLED]) {
-               sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MIN], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAX], 2), ")");
+               sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAE], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MFE], 2), ")");
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
          }
 
          // history only
          if (positions.data[i][I_POSITION_TYPE] == POSITION_HISTORY) {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MinMax}]   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"           ), sPositionType,                                         positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col1"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
             ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col2"           ), " ",                                                   positions.fontSize, positions.fontName, fontColor);
@@ -1417,7 +1417,7 @@ bool UpdatePositions() {
 
          // directional or hedged
          else {
-            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MinMax}]   {Comment}"
+            // "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
             // hedged
             if (positions.data[i][I_POSITION_TYPE] == POSITION_HEDGE) {
                ObjectSetText(StringConcatenate(label.customPosition, ".line", line, "_col0"), sPositionType,                                                 positions.fontSize, positions.fontName, fontColor);
@@ -1801,8 +1801,8 @@ bool UpdateStopoutLevel() {
          }
          if (line > -1) {
             if (lineSkipped) {
-               config.dData[line][I_PROFIT_MIN] = 0;                             // reset existing MFE/MAE stats
-               config.dData[line][I_PROFIT_MAX] = 0;
+               config.dData[line][I_PROFIT_MFE] = 0;                             // reset existing MFE/MAE stats
+               config.dData[line][I_PROFIT_MAE] = 0;
             }
             else {
                positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
@@ -2417,8 +2417,8 @@ bool CustomPositions.ReadConfig() {
       for (i=0; i < newLines; i++) {
          for (n=0; n < oldLines; n++) {
             if (confsData[i][I_CONFIG_KEY] == config.sData[n][I_CONFIG_KEY] && confdData[i][I_MFE_ENABLED]) {
-               confdData[i][I_PROFIT_MIN] = config.dData[n][I_PROFIT_MIN];
-               confdData[i][I_PROFIT_MAX] = config.dData[n][I_PROFIT_MAX];
+               confdData[i][I_PROFIT_MFE] = config.dData[n][I_PROFIT_MFE];
+               confdData[i][I_PROFIT_MAE] = config.dData[n][I_PROFIT_MAE];
                break;
             }
          }
@@ -3596,10 +3596,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
          if (configLine >= 0) {
-            config.dData[configLine][I_PROFIT_MIN] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MIN]);
-            config.dData[configLine][I_PROFIT_MAX] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MAX]);
-            positions.data[n][I_PROFIT_PCT_MIN]    = MathDiv(config.dData[configLine][I_PROFIT_MIN], equity100Pct) * 100;
-            positions.data[n][I_PROFIT_PCT_MAX]    = MathDiv(config.dData[configLine][I_PROFIT_MAX], equity100Pct) * 100;
+            config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+            config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+            positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+            positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
          }
 
          positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3667,10 +3667,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
-         config.dData[configLine][I_PROFIT_MIN] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MIN]);
-         config.dData[configLine][I_PROFIT_MAX] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MAX]);
-         positions.data[n][I_PROFIT_PCT_MIN]    = MathDiv(config.dData[configLine][I_PROFIT_MIN], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAX]    = MathDiv(config.dData[configLine][I_PROFIT_MAX], equity100Pct) * 100;
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3758,10 +3758,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
-         config.dData[configLine][I_PROFIT_MIN] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MIN]);
-         config.dData[configLine][I_PROFIT_MAX] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MAX]);
-         positions.data[n][I_PROFIT_PCT_MIN]    = MathDiv(config.dData[configLine][I_PROFIT_MIN], equity100Pct) * 100;
-         positions.data[n][I_PROFIT_PCT_MAX]    = MathDiv(config.dData[configLine][I_PROFIT_MAX], equity100Pct) * 100;
+         config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+         config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+         positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+         positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
       }
 
       positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -3812,10 +3812,10 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
    if (configLine >= 0) {
-      config.dData[configLine][I_PROFIT_MIN] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MIN]);
-      config.dData[configLine][I_PROFIT_MAX] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MAX]);
-      positions.data[n][I_PROFIT_PCT_MIN]    = MathDiv(config.dData[configLine][I_PROFIT_MIN], equity100Pct) * 100;
-      positions.data[n][I_PROFIT_PCT_MAX]    = MathDiv(config.dData[configLine][I_PROFIT_MAX], equity100Pct) * 100;
+      config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
+      config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
+      positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
+      positions.data[n][I_PROFIT_PCT_MAE]    = MathDiv(config.dData[configLine][I_PROFIT_MAE], equity100Pct) * 100;
    }
 
    positions.data[n][I_PROFIT_MARKER_PRICE] = NULL;
@@ -4352,7 +4352,7 @@ bool StoreStatus() {
       if (config.dData[i][I_MFE_ENABLED] > 0) {
          configKey = config.sData[i][I_CONFIG_KEY];
          key = ProgramName() +"."+ Symbol() +".config."+ configKey +".mae|mfe";
-         sValue = NumberToStr(config.dData[i][I_PROFIT_MIN], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MAX], ".1+");
+         sValue = NumberToStr(config.dData[i][I_PROFIT_MAE], ".1+") +"|"+ NumberToStr(config.dData[i][I_PROFIT_MFE], ".1+");
          SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);     // chart window
          Chart.StoreString(key, sValue);                                   // chart
          keys = keys +"="+ configKey;                                      // config keys can't contain equal signs "="
@@ -4409,8 +4409,8 @@ bool RestoreStatus() {
 
       ArrayResize(config.dData, i+1);
       config.dData[i][I_MFE_ENABLED] = 1;
-      config.dData[i][I_PROFIT_MIN ] = StrToDouble(StrLeftTo(sValue, "|"));
-      config.dData[i][I_PROFIT_MAX ] = StrToDouble(StrRightFrom(sValue, "|"));
+      config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrRightFrom(sValue, "|"));
+      config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrLeftTo(sValue, "|"));
    }
    return(!catch("RestoreStatus(2)"));
 }
