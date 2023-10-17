@@ -113,8 +113,8 @@ double  configTerms[][5];                                         // parsed cust
 // custom positions
 double  positions.data[][15];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
 bool    positions.analyzed;                                       //
-bool    positions.showAbsProfits;                                 // default: online=FALSE, tester=TRUE
-bool    positions.showMfe;                                        //
+bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
+bool    positions.showMfe;                                        // for column adjustment: whether at least one active config entry has the MFE tracker enabled
 
 #define CUSTOM_REAL_POSITION            1                         // config line types: real custom position
 #define CUSTOM_VIRTUAL_POSITION         2                         //                    virtual custom position
