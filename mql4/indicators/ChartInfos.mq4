@@ -77,15 +77,16 @@ double  shortPosition;
 
 // configuration of custom positions
 string  config.sData[][2];                                        // config entry details: [Key, Comment]
-double  config.dData[][4];                                        //                       [BemEnabled, MfeEnabled, MFE, MAE]
+double  config.dData[][5];                                        //                       [Equity100Pct, MfeEnabled, MFE, MAE, BemEnabled]
 
 #define I_CONFIG_KEY                    0                         // indexes of config.sData[]
 #define I_CONFIG_COMMENT                1                         //
 
-#define I_BEM_ENABLED                   0                         // indexes of config.dData[]
+#define I_EQUITY_100                    0                         // indexes of config.dData[]
 #define I_MFE_ENABLED                   1                         //
 #define I_PROFIT_MFE                    2                         //
 #define I_PROFIT_MAE                    3                         //
+#define I_BEM_ENABLED                   4                         //
 
 double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
 
@@ -110,7 +111,7 @@ double  configTerms[][5];                                         // parsed cust
 #define TERM_LOSS_MARKER               13                         //
 
 // custom positions
-double  positions.data[][17];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, OpenProfit, ClosedProfit, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
+double  positions.data[][15];                                     // position details: [ConfigLine, CustomType, PositionType, DirectionalLots, HedgedLots, PipDistance|BreakevenPrice, AdjustedProfit, TotalProfit, TotalProfitMin, TotalProfitMax, TotalProfitPct, ProfitMarkerPrice, ProfitMarkerPct, LossMarkerPrice, LossMarkerPct]
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // default: online=FALSE, tester=TRUE
 bool    positions.showMfe;                                        //
@@ -130,18 +131,16 @@ string  typeDescriptions[] = {"", "Long:", "Short:", "Hedge:", "History:"};
 #define I_DIRECTIONAL_LOTS              3                         //
 #define I_HEDGED_LOTS                   4                         //
 #define I_PIP_DISTANCE                  5                         //
-#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-all-hedged=PipDistance
-#define I_OPEN_PROFIT                   6                         //
-#define I_CLOSED_PROFIT                 7                         //
-#define I_ADJUSTED_PROFIT               8                         //
-#define I_PROFIT                        9                         // total profit
-#define I_PROFIT_PCT                   10                         //
-#define I_PROFIT_PCT_MFE               11                         //
-#define I_PROFIT_PCT_MAE               12                         //
-#define I_PROFIT_MARKER_PRICE          13                         //
-#define I_PROFIT_MARKER_PCT            14                         //
-#define I_LOSS_MARKER_PRICE            15                         //
-#define I_LOSS_MARKER_PCT              16                         //
+#define I_BREAKEVEN_PRICE  I_PIP_DISTANCE                         // union: on-position=BreakevenPrice, on-hedged=PipDistance
+#define I_ADJUSTED_PROFIT               6                         //
+#define I_PROFIT                        7                         // total profit
+#define I_PROFIT_PCT                    8                         //
+#define I_PROFIT_PCT_MFE                9                         //
+#define I_PROFIT_PCT_MAE               10                         //
+#define I_PROFIT_MARKER_PRICE          11                         //
+#define I_PROFIT_MARKER_PCT            12                         //
+#define I_LOSS_MARKER_PRICE            13                         //
+#define I_LOSS_MARKER_PCT              14                         //
 
 // control flags for AnalyzePositions()
 #define F_LOG_TICKETS                   1                         // log tickets of resulting custom positions
@@ -1397,6 +1396,8 @@ bool UpdatePositions() {
                sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAE], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MFE], 2), ")");
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
+            //if (sComment == ".") sComment = "e100="+ DoubleToStr(config.dData[configLine][I_EQUITY_100], 2);
+            //else                 sComment = sComment +"  e100="+ DoubleToStr(config.dData[configLine][I_EQUITY_100], 2);
          }
 
          // history only
@@ -2104,7 +2105,7 @@ int SearchLfxTicket(int ticket) {
 bool CustomPositions.ReadConfig() {
    double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(configTerms,  1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match configTerms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
-   double confdData[][4]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
+   double confdData[][5]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
@@ -3488,7 +3489,7 @@ bool ExtractPosition(int termType, double termValue1, double termValue2, double 
 bool StorePosition(bool isVirtual, double longPosition, double shortPosition, double totalPosition, int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], double closedProfit, double adjustedProfit, double customEquity, double profitMarkerPrice, double profitMarkerPercent, double lossMarkerPrice, double lossMarkerPercent, int configLine, bool &skipped) {
    isVirtual = isVirtual!=0;
 
-   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, fullTerminalProfit, equity, equity100Pct, pipValue, pipDistance;
+   double hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, swap, commission, openProfit, floatingProfit, hedgedProfit, totalProfit, terminalProfit, totalProfitMT4, equity, equity100Pct, pipValue, pipDistance;
    int ticketsSize = ArraySize(tickets);
 
    // Enthält die Position weder OpenProfit (offene Positionen), ClosedProfit (History) noch AdjustedProfit, wird sie übersprungen.
@@ -3575,7 +3576,7 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       // BE-Distance und Profit berechnen
       pipValue = PipValue(hedgedLots, true);                                           // Fehler unterdrücken, INIT_PIPVALUE ist u.U. nicht gesetzt
       if (pipValue != 0) {
-         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLots/Pip + (commission+swap)/pipValue, 8);
+         pipDistance  = NormalizeDouble((closePrice-openPrice)/hedgedLots/Pip + (swap+commission)/pipValue, 8);
          hedgedProfit = pipDistance * pipValue;
       }
 
@@ -3584,18 +3585,15 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.data[n][I_CONFIG_LINE     ] = configLine;
          positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
          positions.data[n][I_POSITION_TYPE   ] = POSITION_HEDGE;
-
          positions.data[n][I_DIRECTIONAL_LOTS] = 0;
-         positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;
-         positions.data[n][I_PIP_DISTANCE    ] = pipDistance;
-                                                                 openProfit         = hedgedProfit;
-         positions.data[n][I_OPEN_PROFIT     ] = openProfit;
-         positions.data[n][I_CLOSED_PROFIT   ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
-         positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-         positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+         positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit     = hedgedProfit;
+         positions.data[n][I_PIP_DISTANCE    ] = pipDistance;    totalProfit    = openProfit + closedProfit + adjustedProfit;
+         positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
+         positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
          positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
          if (configLine >= 0) {
+            config.dData[configLine][I_EQUITY_100] = equity100Pct;
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
             config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
             positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3655,18 +3653,15 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_CONFIG_LINE     ] = configLine;
       positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
       positions.data[n][I_POSITION_TYPE   ] = POSITION_LONG;
-
       positions.data[n][I_DIRECTIONAL_LOTS] = totalPosition;
-      positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;
-      positions.data[n][I_BREAKEVEN_PRICE ] = NULL;
-                                                              openProfit         = hedgedProfit + commission + swap + floatingProfit;
-      positions.data[n][I_OPEN_PROFIT     ] = openProfit;
-      positions.data[n][I_CLOSED_PROFIT   ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
-      positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit     = hedgedProfit + swap + commission + floatingProfit;
+      positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit    = openProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
+         config.dData[configLine][I_EQUITY_100] = equity100Pct;
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3746,18 +3741,15 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
       positions.data[n][I_CONFIG_LINE     ] = configLine;
       positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
       positions.data[n][I_POSITION_TYPE   ] = POSITION_SHORT;
-
       positions.data[n][I_DIRECTIONAL_LOTS] = -totalPosition;
-      positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;
-      positions.data[n][I_BREAKEVEN_PRICE ] = NULL;
-                                                              openProfit         = hedgedProfit + commission + swap + floatingProfit;
-      positions.data[n][I_OPEN_PROFIT     ] = openProfit;
-      positions.data[n][I_CLOSED_PROFIT   ] = closedProfit;   totalProfit        = openProfit + closedProfit + adjustedProfit;
-      positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; fullTerminalProfit = terminalProfit + closedProfit + adjustedProfit;
-      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct       = equity - ifDouble(!customEquity && equity > fullTerminalProfit, fullTerminalProfit, 0);
+      positions.data[n][I_HEDGED_LOTS     ] = hedgedLots;     openProfit     = hedgedProfit + swap + commission + floatingProfit;
+      positions.data[n][I_BREAKEVEN_PRICE ] = NULL;           totalProfit    = openProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfitMT4 = terminalProfit + closedProfit + adjustedProfit;
+      positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct   = equity - ifDouble(!customEquity && equity > totalProfitMT4, totalProfitMT4, 0);
       positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
       if (configLine >= 0) {
+         config.dData[configLine][I_EQUITY_100] = equity100Pct;
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3800,18 +3792,15 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.data[n][I_CONFIG_LINE     ] = configLine;
    positions.data[n][I_CUSTOM_TYPE     ] = ifInt(isVirtual, CUSTOM_VIRTUAL_POSITION, CUSTOM_REAL_POSITION);
    positions.data[n][I_POSITION_TYPE   ] = POSITION_HISTORY;
-
    positions.data[n][I_DIRECTIONAL_LOTS] = NULL;
    positions.data[n][I_HEDGED_LOTS     ] = NULL;
    positions.data[n][I_BREAKEVEN_PRICE ] = NULL;
-                                                           openProfit   = 0;
-   positions.data[n][I_OPEN_PROFIT     ] = openProfit;
-   positions.data[n][I_CLOSED_PROFIT   ] = closedProfit;
-   positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfit  = openProfit + closedProfit + adjustedProfit;
+   positions.data[n][I_ADJUSTED_PROFIT ] = adjustedProfit; totalProfit  = closedProfit + adjustedProfit;
    positions.data[n][I_PROFIT          ] = totalProfit;    equity100Pct = equity - ifDouble(!customEquity && equity > totalProfit, totalProfit, 0);
    positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
    if (configLine >= 0) {
+      config.dData[configLine][I_EQUITY_100] = equity100Pct;
       config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
       config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
       positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
