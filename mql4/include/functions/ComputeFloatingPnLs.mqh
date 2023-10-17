@@ -1,13 +1,13 @@
 /**
  * Compute floating PnL values of all open positions.
  *
- * @param  _Out_ string symbols[]                - symbols of open positions
- * @param  _Out_ double profits[]                - PnL value per symbol
- * @param  _In_  bool   withoutSpread [optional] - Whether to omit the spread of open positions. Not applied to hedged positions.
- *                                                 Useful if spread widening shall not impact the result (default: no).
+ * @param  _Out_ string symbols[]               - symbols of open positions
+ * @param  _Out_ double profits[]               - PnL value per symbol
+ * @param  _In_  bool   ignoreSpread [optional] - Whether to not track the spread of open positions. Not applied to hedged positions.
+ *                                                Use if spread widening shall not impact the result (default: no).
  * @return bool - success status
  */
-bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool withoutSpread=false) {
+bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false) {
    string _symbols[]; ArrayResize(_symbols, 0);
    double _profits[]; ArrayResize(_profits, 0);
 
@@ -61,7 +61,7 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool withoutSprea
    ArrayResize(_profits, size);
 
    for (i=0; i < size; i++) {
-      _profits[i] = ComputeFloatingPnL(_symbols[i], i, iSymbols, tickets, types, lots, openPrices, commissions, swaps, orderProfits, withoutSpread); if (_profits[i] == EMPTY_VALUE) return(false);
+      _profits[i] = ComputeFloatingPnL(_symbols[i], i, iSymbols, tickets, types, lots, openPrices, commissions, swaps, orderProfits, ignoreSpread); if (_profits[i] == EMPTY_VALUE) return(false);
       _profits[i] = NormalizeDouble(_profits[i], 2);
    }
 
@@ -81,22 +81,22 @@ bool ComputeFloatingPnLs(string &symbols[], double &profits[], bool withoutSprea
  *
  * Should be called from ComputeFloatingPnLs() only.
  *
- * @param  _In_    string symbol                   - symbol
- * @param  _In_    int    symbolIndex              - symbol index in symbols[]
- * @param  _In_    int    iSymbols   []            - order data
- * @param  _InOut_ int    tickets    []            - ...
- * @param  _In_    int    types      []            - ...
- * @param  _InOut_ double lots       []            - ...
- * @param  _In_    double openPrices []            - ...
- * @param  _InOut_ double commissions[]            - ...
- * @param  _InOut_ double swaps      []            - ...
- * @param  _InOut_ double profits    []            - ...
- * @param  _In_    bool   withoutSpread [optional] - Whether to omit the spread of open positions. Not applied to hedged positions.
- *                                                   Useful if spread widening shall not impact the result (default: no).
+ * @param  _In_    string symbol                  - symbol
+ * @param  _In_    int    symbolIndex             - symbol index in symbols[]
+ * @param  _In_    int    iSymbols   []           - order data
+ * @param  _InOut_ int    tickets    []           - ...
+ * @param  _In_    int    types      []           - ...
+ * @param  _InOut_ double lots       []           - ...
+ * @param  _In_    double openPrices []           - ...
+ * @param  _InOut_ double commissions[]           - ...
+ * @param  _InOut_ double swaps      []           - ...
+ * @param  _InOut_ double profits    []           - ...
+ * @param  _In_    bool   ignoreSpread [optional] - Whether to not track the spread of open positions. Not applied to hedged positions.
+ *                                                  Use if spread widening shall not impact the result (default: no).
  *
  * @return double  - PnL value of the symbol or EMPTY_VALUE in case of errors
  */
-double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool withoutSpread=false) {
+double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false) {
    double longPosition, shortPosition, totalPosition, hedgedLots, remainingLong, remainingShort, factor, openPrice, closePrice, commission, swap, floatingProfit, fullProfit, hedgedProfit, spread, spreadPips, spreadProfit, pipValue, pipDistance;
    int error, ticketsSize = ArraySize(tickets);
 
@@ -116,7 +116,7 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
    int    pipDigits = digits & (~1);
    double pipSize   = NormalizeDouble(1/MathPow(10, pipDigits), pipDigits);
 
-   if (withoutSpread) {
+   if (ignoreSpread) {
       spread     = MarketInfoEx(symbol, MODE_SPREAD, error, "ComputeFloatingPnL(2)"); if (error != NULL) return(EMPTY_VALUE);
       spreadPips = spread/MathPow(10, digits & 1);                            // spread in pip
    }
@@ -208,7 +208,7 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
          }
       }
       // if enabled add the PnL value of the spread to ignore spread spikes/widening
-      if (withoutSpread) {
+      if (ignoreSpread) {
          spreadProfit = spreadPips * PipValueEx(symbol, totalPosition, error, "ComputeFloatingPnL(7)"); if (error != NULL) return(EMPTY_VALUE);
       }
       fullProfit = NormalizeDouble(hedgedProfit + floatingProfit + spreadProfit + swap + commission, 2);
@@ -234,7 +234,7 @@ double ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &t
          }
       }
       // if enabled add the PnL value of the spread to ignore spread spikes/widening
-      if (withoutSpread) {
+      if (ignoreSpread) {
          spreadProfit = spreadPips * PipValueEx(symbol, -totalPosition, error, "ComputeFloatingPnL(9)"); if (error != NULL) return(EMPTY_VALUE);
       }
       fullProfit = NormalizeDouble(hedgedProfit + floatingProfit + spreadProfit + swap + commission, 2);

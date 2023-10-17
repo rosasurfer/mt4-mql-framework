@@ -329,8 +329,8 @@ bool     WaitForTicket(int ticket, bool select=false);;
 
 // include/functions/
 void     Bands.UpdateLegend(string label, string name, string status, color bandsColor, double upperValue, double lowerValue, int digits, datetime barOpenTime);;
-double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool withoutSpread=false);;
-bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool withoutSpread=false);;
+double   ComputeFloatingPnL(string symbol, int symbolIndex, int iSymbols[], int &tickets[], int types[], double &lots[], double openPrices[], double &commissions[], double &swaps[], double &profits[], bool ignoreSpread=false);;
+bool     ComputeFloatingPnLs(string &symbols[], double &profits[], bool ignoreSpread=false);;
 bool     ConfigureSignals(string name, string &configValue, bool &enabled);;
 bool     ConfigureSignalsByMail(string configValue, bool &enabled, string &sender, string &receiver);;
 bool     ConfigureSignalsBySMS(string configValue, bool &enabled, string &receiver);;
