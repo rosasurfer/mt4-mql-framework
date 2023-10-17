@@ -37,7 +37,7 @@ extern bool IgnoreSpread = true;    // whether to not track the spread of open p
 #include <core/expert.mqh>
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
-#include <functions/ComputeFloatingPnLs.mqh>
+#include <functions/ComputeFloatingPnL.mqh>
 
 
 /**
