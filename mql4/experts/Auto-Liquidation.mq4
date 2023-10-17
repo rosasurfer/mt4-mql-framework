@@ -30,7 +30,7 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string Parameter = "dummy";
+extern bool IgnoreSpread = true;    // whether to not track the spread of open positions (TRUE to prevent liquidation by spread widening)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -62,8 +62,8 @@ int onTick() {
 
    // compute floating PnL and resulting equity
    string symbols[];
-   double profits[];                               // w/o spread: we don't want liquidation to be triggered by spread widening
-   if (!ComputeFloatingPnLs(symbols, profits, true)) return(last_error);
+   double profits[];
+   if (!ComputeFloatingPnLs(symbols, profits, IgnoreSpread)) return(last_error);
 
    int size = ArraySize(symbols);
    double equity = AccountBalance();
@@ -84,5 +84,5 @@ int onTick() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("Parameter=", DoubleQuoteStr(Parameter), ";"));
+   return(StringConcatenate("IgnoreSpread=", BoolToStr(IgnoreSpread), ";"));
 }
