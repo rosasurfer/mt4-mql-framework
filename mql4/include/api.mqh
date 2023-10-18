@@ -686,7 +686,6 @@ int      MergeDoubleArrays(double &array1[], double &array2[], double &merged[])
 int      MergeIntArrays(int &array1[], int &array2[], int &merged[]);;
 int      MergeStringArrays(string &array1[], string &array2[], string &merged[]);;
 color    ModifyColor(color rgb, double hue, double saturation, double lightness);;
-string   MoneysToStr(double &array[], string separator);;
 bool     ObjectCreateRegister(string name, int type, int window, datetime time1, double price1, datetime time2, double price2, datetime time3, double price3);;
 string   OperationTypesToStr(int &array[], string separator);;
 int      OrderSendEx(string symbol=NULL, int type, double lots, double price, int slippage, double stopLoss, double takeProfit, string comment, int magicNumber, datetime expires, color markerColor, int oeFlags, int &oe[]);;
