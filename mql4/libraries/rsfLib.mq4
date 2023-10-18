@@ -4523,7 +4523,7 @@ string DoublesToStr(double values[][], string separator = ", ") {
 
 
 /**
- * Internal helper for DoublesToStr(), works around the compiler's dimension check.
+ * Helper for DoublesToStr(), works around the compiler's dimension check.
  *
  * @access private
  */
@@ -4746,40 +4746,6 @@ string __IntsToStr(int values2[][], int values3[][][], string separator) {
    }
 
    return(_EMPTY_STR(catch("__IntsToStr(1)  too many dimensions of parameter values: "+ dimensions, ERR_INCOMPATIBLE_ARRAY)));
-}
-
-
-/**
- * Convert an array with money amounts to a human-readable string (with 2 digits per value).
- *
- * @param  double values[]
- * @param  string separator - value separator (default: ", ")
- *
- * @return string - human-readable string or an empty string in case of errors
- */
-string MoneysToStr(double values[], string separator = ", ") {
-   if (ArrayDimension(values) > 1) return(_EMPTY_STR(catch("MoneysToStr(1)  too many dimensions of parameter values: "+ ArrayDimension(values), ERR_INCOMPATIBLE_ARRAY)));
-
-   int size = ArraySize(values);
-   if (ArraySize(values) == 0)
-      return("{}");
-
-   if (separator == "0")               // (string) NULL
-      separator = ", ";
-
-   string strings[];
-   ArrayResize(strings, size);
-
-   for (int i=0; i < size; i++) {
-      strings[i] = DoubleToStr(values[i], 2);
-      if (!StringLen(strings[i]))
-         return("");
-   }
-
-   string joined = JoinStrings(strings, separator);
-   if (!StringLen(joined))
-      return("");
-   return(StringConcatenate("{", joined, "}"));
 }
 
 
