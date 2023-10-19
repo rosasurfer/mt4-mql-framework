@@ -6283,8 +6283,8 @@ string OrderCloseByEx.ErrorMsg(int first, int second, /*ORDER_EXECUTION*/int oe[
  *
  * @return bool - success status
  *
- * Notes: (1) If total positions should be hedged before closing them (default) all fields oe.CloseTime and oe.ClosePrice
- *            contain the values of the symbol's hedging transaction.
+ * Notes: (1) If positions are hedged before closing them (default) all fields oe.CloseTime and oe.ClosePrice contain the
+ *            values of the hedging transaction.
  *
  *        (2) The values oe.Swap, oe.Commission and oe.Profit returned by the trade server may differ from the real values
  *            as partial amounts may be accounted to an opposite closing position. All remaining partial amounts are returned
@@ -6580,7 +6580,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
  *                                                        ERR_INVALID_TRADE_PARAMETERS if a ticket is already closed
  * @param  _Out_ int oes[][]   - array of execution details (struct ORDER_EXECUTION)
  *
- * @return int - the resulting ticket id of an offsetting transaction (a new position or a partial remainder) or
+ * @return int - the resulting ticket of an offsetting transaction (a new position or a partial remainder) or
  *               -1 if one of the positions was fully closed or
  *                0 if the total position was already flat or in case of errors (check oe.Error)
  *
@@ -6598,7 +6598,7 @@ bool OrdersCloseSameSymbol(int tickets[], int slippage, color markerColor, int o
  *        (4) In case of errors the error is stored in oe.Error of all tickets. Typical trade operation errors are:
  *            - ERR_INVALID_TICKET:           one of the ids is not a valid ticket id
  *            - ERR_INVALID_TRADE_PARAMETERS: one of the tickets is not an open position (anymore)
- *            - ERR_MIXED_SYMBOLS:            the tickets belong to mixed symbols
+ *            - ERR_MIXED_SYMBOLS:            passed tickets belong to mixed symbols
  */
 int OrdersHedge(int tickets[], int slippage, int oeFlags, int oes[][]) {
    // validate parameters

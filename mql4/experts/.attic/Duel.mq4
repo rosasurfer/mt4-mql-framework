@@ -3019,7 +3019,7 @@ bool ValidateInputs() {
 
 
 /**
- * Error handler for invalid input parameters. Depending on the execution context a (non-)terminating error is set.
+ * Error handler for invalid input parameters. Depending on the execution context a non-/terminating error is set.
  *
  * @param  string message - error message
  *
