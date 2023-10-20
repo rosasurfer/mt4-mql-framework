@@ -11,12 +11,12 @@
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
-int __virtualTicks  = 800;                         // every 0.8 seconds (must be short as it watches all symbols)
+int __virtualTicks  = 800;                         // milliseconds (must be short as the EA watches all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
 extern string DrawdownLimit = "200.00 | 5%*";      // absolute or percentage limit
-extern bool   IgnoreSpread  = false;               // whether to not track the spread of open positions (to prevent liquidation by spread widening)
+extern bool   IgnoreSpread  = true;                // whether to not track the spread of open positions (to prevent liquidation by spread widening)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -26,18 +26,17 @@ extern bool   IgnoreSpread  = false;               // whether to not track the s
 #include <functions/ComputeFloatingPnL.mqh>
 
 
-double prevEquity;                                 // equity value at the previous tick
-bool   isPctLimit;                                 // whether a percent limit is configured
-double absLimit;                                   // configured absolute drawdown limit
-double pctLimit;                                   // configured percentage drawdown limit
+double   prevEquity;                               // equity value at the previous tick
+bool     isPctLimit;                               // whether a percent limit is configured
+double   absLimit;                                 // configured absolute drawdown limit
+double   pctLimit;                                 // configured percentage drawdown limit
+datetime lastLiquidationTime;
 
 string watchedSymbols  [];
 double watchedPositions[][2];
 
 #define I_DRAWDOWN_LIMIT   0                       // indexes of watchedPositions[]
 #define I_PROFIT           1
-
-datetime lastLiquidationTime;
 
 
 /**
