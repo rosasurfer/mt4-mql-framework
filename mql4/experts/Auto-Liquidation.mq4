@@ -130,7 +130,7 @@ int onTick() {
       today -= (today % DAY);
       datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
       if (lastLiquidation == today) {
-         logWarn("onTick(2)  liquidating illegal new position (auto-liquidation until end of day)");
+         logWarn("onTick(2)  liquidating all new positions (auto-liquidation until end of day)");
          ArrayResize(watchedSymbols, 0);
          ArrayResize(watchedPositions, 0);
          CloseOpenOrders();
