@@ -11,6 +11,7 @@
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
+int __virtualTicks  = 800;                         // every 0.8 seconds (must be short as it watches all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -31,13 +32,12 @@ double absLimit;                                   // configured absolute drawdo
 double pctLimit;                                   // configured percentage drawdown limit
 
 string watchedSymbols  [];
-double watchedPositions[][3];
+double watchedPositions[][2];
 
-#define I_START_EQUITY     0                       // indexes of watchedPositions[]
-#define I_DRAWDOWN_LIMIT   1
-#define I_PROFIT           2
+#define I_DRAWDOWN_LIMIT   0                       // indexes of watchedPositions[]
+#define I_PROFIT           1
 
-datetime liquidationTime;                          // last liquidation time
+datetime lastLiquidationTime;
 
 
 /**
@@ -104,7 +104,7 @@ int onTick() {
 
          if (watchedSize > i+1) {
             ArrayCopy(watchedSymbols,   watchedSymbols,   i,   i+1);
-            ArrayCopy(watchedPositions, watchedPositions, i*3, (i+1)*3);
+            ArrayCopy(watchedPositions, watchedPositions, i*2, (i+1)*2);
          }
          watchedSize--;
          ArrayResize(watchedSymbols,   watchedSize);
@@ -123,33 +123,47 @@ int onTick() {
          ArrayResize(openPositions, openSize);
       }
    }
+
+   if (openSize > 0) {
+      // auto-liquidate new positions after previous auto-liquidation on the same day
+      datetime today = TimeFXT();
+      today -= (today % DAY);
+      datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
+      if (lastLiquidation == today) {
+         logWarn("onTick(2)  liquidate illegal new position (auto-liquidation until end of day)");
+         ArrayResize(watchedSymbols, 0);
+         ArrayResize(watchedPositions, 0);
+         CloseOpenOrders();
+         return(catch("onTick(3)"));
+      }
+   }
+
+   // watch new position
    for (i=0; prevEquity && i < openSize; i++) {
-      // watch new position
       ArrayResize(watchedSymbols,   watchedSize+1);
       ArrayResize(watchedPositions, watchedSize+1);
       watchedSymbols  [watchedSize]                   = openSymbols[i];
-      watchedPositions[watchedSize][I_START_EQUITY  ] = prevEquity;
       watchedPositions[watchedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
       watchedPositions[watchedSize][I_PROFIT        ] = openPositions[i];
-      logInfo("onTick(2)  watching "+ watchedSymbols[watchedSize] +" position, drawdownLimit="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
+      logInfo("onTick(4)  watching "+ watchedSymbols[watchedSize] +" position, drawdownLimit="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
       watchedSize++;
    }
    prevEquity = equity;
 
-   // monitor drawdown and trigger liquidation
+   // monitor drawdown limit
    for (i=0; i < watchedSize; i++) {
       double profit  = watchedPositions[i][I_PROFIT];
       double ddLimit = watchedPositions[i][I_DRAWDOWN_LIMIT];
       if (profit < ddLimit) {
-         logWarn("onTick(3)  "+ watchedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, liquidating positions...");
-         liquidationTime = TimeFXT();
+         lastLiquidationTime = TimeFXT();
+         logWarn("onTick(5)  "+ watchedSymbols[i] +": drawdown limit of "+ DrawdownLimit +" reached, liquidating positions...");
          ArrayResize(watchedSymbols, 0);
          ArrayResize(watchedPositions, 0);
-         if (!CloseOpenOrders()) return(last_error);
+         CloseOpenOrders();
          break;
       }
    }
-   return(catch("onTick(4)"));
+   return(catch("onTick(6)"));
 }
 
 
