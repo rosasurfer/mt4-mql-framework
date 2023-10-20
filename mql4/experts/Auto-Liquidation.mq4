@@ -100,7 +100,7 @@ int onTick() {
       int n = SearchStringArray(openSymbols, watchedSymbols[i]);
       if (n == -1) {
          // position closed, remove watched position
-         logInfo("onTick(1)  watched "+ watchedSymbols[i] +" position closed");
+         logInfo("onTick(1)  "+ watchedSymbols[i] +" position closed");
 
          if (watchedSize > i+1) {
             ArrayCopy(watchedSymbols,   watchedSymbols,   i,   i+1);
@@ -130,7 +130,7 @@ int onTick() {
       today -= (today % DAY);
       datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
       if (lastLiquidation == today) {
-         logWarn("onTick(2)  liquidate illegal new position (auto-liquidation until end of day)");
+         logWarn("onTick(2)  liquidating illegal new position (auto-liquidation until end of day)");
          ArrayResize(watchedSymbols, 0);
          ArrayResize(watchedPositions, 0);
          CloseOpenOrders();
