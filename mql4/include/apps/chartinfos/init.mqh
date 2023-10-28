@@ -5,20 +5,18 @@
  */
 int onInit() {
    // validate inputs
-   // UnitSize.Corner: "top-left | top-right | bottom-left | bottom-right*" and  "tl | tr | bl | br"
+   // UnitSize.Corner: "top | bottom*" (may be shortened)
    string sValues[], sValue = UnitSize.Corner;
    if (Explode(sValue, "*", sValues, 2) > 1) {
       int size = Explode(sValues[0], "|", sValues, NULL);
       sValue = sValues[size-1];
    }
    sValue = StrToLower(StrTrim(sValue));
-   if      (sValue=="top-left"     || sValue=="tl") unitSize.corner = CORNER_TOP_LEFT;
-   else if (sValue=="top-right"    || sValue=="tr") unitSize.corner = CORNER_TOP_RIGHT;
-   else if (sValue=="bottom-left"  || sValue=="bl") unitSize.corner = CORNER_BOTTOM_LEFT;
-   else if (sValue=="bottom-right" || sValue=="br") unitSize.corner = CORNER_BOTTOM_RIGHT;
+   if      (StrStartsWith("top",    sValue)) unitSize.corner = CORNER_TOP_RIGHT;
+   else if (StrStartsWith("bottom", sValue)) unitSize.corner = CORNER_BOTTOM_RIGHT;
    else return(catch("onInit(1)  invalid input parameter UnitSize.Corner: "+ UnitSize.Corner, ERR_INVALID_INPUT_PARAMETER));
    totalPosition.corner = unitSize.corner;
-   UnitSize.Corner      = cornerDescriptions[unitSize.corner];
+   UnitSize.Corner      = ifString(unitSize.corner==CORNER_TOP_RIGHT, "top", "bottom");
 
    // init labels, status and used trade account
    if (!CreateLabels())         return(last_error);
