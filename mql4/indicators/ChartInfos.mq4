@@ -21,8 +21,8 @@ int __DeinitFlags[];
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string UnitSize.Corner = "top-left | top-right | bottom-left | bottom-right*";  // or shorter: "tl | tr | bl | br"
-extern string Track.Orders    = "on | off | auto*";                                    // whether to signal position open/close events
+extern string UnitSize.Corner = "top | bottom*";                  // may be shortened
+extern string Track.Orders    = "on | off | auto*";               // whether to signal position open/close events
 extern string ___a__________________________;
 
 extern string Signal.Sound    = "on | off | auto*";
@@ -186,7 +186,6 @@ string  label.stopoutLevel   = "";
 // chart position of total position and unitsize
 int     totalPosition.corner = CORNER_BOTTOM_RIGHT;
 int     unitSize.corner      = CORNER_BOTTOM_RIGHT;
-string  cornerDescriptions[] = {"top-left", "top-right", "bottom-left", "bottom-right"};
 
 // font settings for detailed positions
 string  positions.fontName          = "MS Sans Serif";
@@ -1088,9 +1087,7 @@ bool CreateLabels() {
    corner = unitSize.corner;
    xDist  = 9;
    switch (corner) {
-      case CORNER_TOP_LEFT:                 break;
       case CORNER_TOP_RIGHT:    yDist = 58; break;                // y(spread) + 20
-      case CORNER_BOTTOM_LEFT:              break;
       case CORNER_BOTTOM_RIGHT: yDist = 9;  break;
    }
    if (ObjectFind(label.unitSize) == -1) if (!ObjectCreateRegister(label.unitSize, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
@@ -1102,7 +1099,7 @@ bool CreateLabels() {
    // total position
    corner = totalPosition.corner;
    xDist  = 9;
-   yDist  = ObjectGet(label.unitSize, OBJPROP_YDISTANCE) + 20;    // 1 line above unitsize
+   yDist += 20;                                                   // 1 line above/below unitsize
    if (ObjectFind(label.totalPosition) == -1) if (!ObjectCreateRegister(label.totalPosition, OBJ_LABEL, 0, 0, 0, 0, 0, 0, 0)) return(false);
    ObjectSet    (label.totalPosition, OBJPROP_CORNER,   corner);
    ObjectSet    (label.totalPosition, OBJPROP_XDISTANCE, xDist);
