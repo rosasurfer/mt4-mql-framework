@@ -1195,10 +1195,6 @@ bool UpdateUnitSize() {
    string text = "";
 
    if (mode.intern) {
-      if (mm.riskPercent != NULL) {
-         text = StringConcatenate("R", DoubleToStr(mm.riskPercent, 0), "%/");
-      }
-
       if (mm.riskRange != NULL) {
          double range = mm.riskRange;
          if (mm.cfgRiskRangeIsADR) {
@@ -1209,6 +1205,10 @@ bool UpdateUnitSize() {
          if (Close[0] > 300 && range >= 3) string sRange = NumberToStr(range, ",'.2+");
          else                                     sRange = NumberToStr(NormalizeDouble(range/Pip, 1), ".+") +" pip";
          text = StringConcatenate(text, sRange);
+      }
+
+      if (mm.riskPercent != NULL) {
+         text = StringConcatenate(text, "/R", DoubleToStr(mm.riskPercent, 0), "%");
       }
 
       if (mm.leverage != NULL) {
