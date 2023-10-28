@@ -2,12 +2,12 @@
  * Auto-Liquidation
  *
  * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
- * open positions and their floating PnL (all symbols, not only the symbol of the chart where the EA s attached).
+ * open positions and floating PnL of all symbols (not only the chart symbol where the EA is attached).
  *
  * Positions of symbols without trade permission are immediately closed.
  *
- * Once a predefined drawdown limit of a permitted position has been reached it closes all open positions and pending orders
- * of the account.
+ * Permitted positions are monitored until a predefined drawdown limit is reached. Then the EA closes all open positions and
+ * deletes all pending orders of the account, and further trading is prohibited until the end of the day.
  *
  * The EA should run in a separate terminal connected 24/7 to the trade server. For best operation it's strongly advised to
  * setup a hosted environment (VM or dedicated server).
@@ -15,7 +15,7 @@
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_TIMEZONE, INIT_BUFFERED_LOG, INIT_NO_EXTERNAL_REPORTING};
 int __DeinitFlags[];
-int __virtualTicks  = 800;                         // milliseconds (must be short as the EA watches all symbols)
+int __virtualTicks = 800;                          // milliseconds (must be short as the EA watches all symbols)
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
@@ -36,8 +36,8 @@ double   absLimit;                                 // configured absolute drawdo
 double   pctLimit;                                 // configured percentage drawdown limit
 datetime lastLiquidationTime;
 
-string watchedSymbols  [];
-double watchedPositions[][2];
+string   watchedSymbols  [];
+double   watchedPositions[][2];
 
 #define I_DRAWDOWN_LIMIT   0                       // indexes of watchedPositions[]
 #define I_PROFIT           1
