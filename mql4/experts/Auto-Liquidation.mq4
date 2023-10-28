@@ -1,9 +1,13 @@
 /**
  * Auto-Liquidation
  *
- * This EA's purpose is protection of the trading account and enforcing adherence to a daily loss/drawdown limit (DDL). It
- * monitors floating PnL of open positions. Once a predefined drawdown limit has been reached it closes all positions and
- * pending orders. The EA monitors positions of all symbols, not only the symbol of the chart where it's attached.
+ * This EA's purpose is to protect the trading account and enforce adherence to a daily loss/drawdown limit (DDL). It monitors
+ * open positions and their floating PnL (all symbols, not only the symbol of the chart where the EA s attached).
+ *
+ * Positions of symbols without trade permission are immediately closed.
+ *
+ * Once a predefined drawdown limit of a permitted position has been reached it closes all open positions and pending orders
+ * of the account.
  *
  * The EA should run in a separate terminal connected 24/7 to the trade server. For best operation it's strongly advised to
  * setup a hosted environment (VM or dedicated server).
@@ -15,8 +19,9 @@ int __virtualTicks  = 800;                         // milliseconds (must be shor
 
 ////////////////////////////////////////////////////// Configuration ////////////////////////////////////////////////////////
 
-extern string DrawdownLimit = "200.00 | 5%*";      // absolute or percentage limit
-extern bool   IgnoreSpread  = true;                // whether to not track the spread of open positions (to prevent liquidation by spread widening)
+extern string PermittedSymbols = "";               // symbols allowed to trade ("*": all symbols)
+extern string DrawdownLimit    = "200.00 | 5%*";   // absolute or percentage drawdown limit
+extern bool   IgnoreSpread     = true;             // whether to not track the spread of open positions (prevents liquidation by spread widening)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -24,7 +29,6 @@ extern bool   IgnoreSpread  = true;                // whether to not track the s
 #include <stdfunctions.mqh>
 #include <rsfLib.mqh>
 #include <functions/ComputeFloatingPnL.mqh>
-
 
 double   prevEquity;                               // equity value at the previous tick
 bool     isPctLimit;                               // whether a percent limit is configured
@@ -45,7 +49,10 @@ double watchedPositions[][2];
  * @return int - error status
  */
 int onInit() {
-   // validate inputs: DrawdownLimit
+   // validate inputs
+   // PermittedSymbols
+
+   // DrawdownLimit
    string sValue="", values[];
    if (Explode(DrawdownLimit, "*", values, 2) > 1) {
       int size = Explode(values[0], "|", values, NULL);
@@ -202,6 +209,7 @@ bool CloseOpenOrders() {
  * @return string
  */
 string InputsToStr() {
-   return(StringConcatenate("DrawdownLimit=", DoubleQuoteStr(DrawdownLimit), ";", NL,
-                            "IgnoreSpread=",  BoolToStr(IgnoreSpread),       ";"));
+   return(StringConcatenate("PermittedSymbols=", DoubleQuoteStr(PermittedSymbols), ";", NL,
+                            "DrawdownLimit=",    DoubleQuoteStr(DrawdownLimit),    ";", NL,
+                            "IgnoreSpread=",     BoolToStr(IgnoreSpread),          ";"));
 }
