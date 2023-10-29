@@ -36,11 +36,13 @@ double   absLimit;                                 // configured absolute drawdo
 double   pctLimit;                                 // configured percentage drawdown limit
 datetime lastLiquidationTime;
 
+string   permittedSymbols[];
 string   watchedSymbols  [];
-double   watchedPositions[][2];
+double   watchedPositions[][3];
 
-#define I_DRAWDOWN_LIMIT   0                       // indexes of watchedPositions[]
-#define I_PROFIT           1
+#define I_START_EQUITY     0                       // indexes of watchedPositions[]
+#define I_DRAWDOWN_LIMIT   1                       //
+#define I_PROFIT           2                       //
 
 
 /**
@@ -51,11 +53,19 @@ double   watchedPositions[][2];
 int onInit() {
    // validate inputs
    // PermittedSymbols
+   string sValue="", values[];
+   int size = Explode(PermittedSymbols, ",", values, NULL);
+   for (int i=0; i < size; i++) {
+      sValue = StrTrim(values[i]);
+      if (StringLen(sValue) > MAX_SYMBOL_LENGTH) return(catch("onInit(1)  invalid parameter PermittedSymbols: "+ DoubleQuoteStr(PermittedSymbols) +" (max symbol length = "+ MAX_SYMBOL_LENGTH +")", ERR_INVALID_PARAMETER));
+      if (SearchStringArrayI(permittedSymbols, sValue) == -1) {
+         ArrayPushString(permittedSymbols, sValue);
+      }
+   }
 
    // DrawdownLimit
-   string sValue="", values[];
    if (Explode(DrawdownLimit, "*", values, 2) > 1) {
-      int size = Explode(values[0], "|", values, NULL);
+      size = Explode(values[0], "|", values, NULL);
       sValue = StrTrim(values[size-1]);
    }
    else {
@@ -63,22 +73,22 @@ int onInit() {
    }
    isPctLimit = StrEndsWith(sValue, "%");
    if (isPctLimit) sValue = StrTrimRight(StrLeft(sValue, -1));
-   if (!StrIsNumeric(sValue)) return(catch("onInit(1)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
+   if (!StrIsNumeric(sValue))                    return(catch("onInit(2)  invalid parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit), ERR_INVALID_PARAMETER));
    double dValue = NormalizeDouble(-MathAbs(StrToDouble(sValue)), 2);
    if (isPctLimit) {
       pctLimit = dValue;
       absLimit = NULL;
-      if (!pctLimit)          return(catch("onInit(2)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
-      if (pctLimit <= -100)   return(catch("onInit(3)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
+      if (!pctLimit)                             return(catch("onInit(3)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (pctLimit <= -100)                      return(catch("onInit(4)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be > -100)", ERR_INVALID_PARAMETER));
       DrawdownLimit = NumberToStr(pctLimit, ".+") +"%";
    }
    else {
       pctLimit = NULL;
       absLimit = dValue;
-      if (!absLimit)          return(catch("onInit(4)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
+      if (!absLimit)                             return(catch("onInit(5)  illegal parameter DrawdownLimit: "+ DoubleQuoteStr(DrawdownLimit) +" (must be != 0)", ERR_INVALID_PARAMETER));
       DrawdownLimit = DoubleToStr(absLimit, 2);
    }
-   return(catch("onInit(5)"));
+   return(catch("onInit(6)"));
 }
 
 
@@ -107,10 +117,10 @@ int onTick() {
       if (n == -1) {
          // position closed, remove watched position
          logInfo("onTick(1)  "+ watchedSymbols[i] +" position closed");
-
          if (watchedSize > i+1) {
-            ArrayCopy(watchedSymbols,   watchedSymbols,   i,   i+1);
-            ArrayCopy(watchedPositions, watchedPositions, i*2, (i+1)*2);
+            int dim2 = ArrayRange(watchedPositions, 1);
+            ArrayCopy(watchedSymbols,   watchedSymbols,   i,       i+1);
+            ArrayCopy(watchedPositions, watchedPositions, i*dim2, (i+1)*dim2);
          }
          watchedSize--;
          ArrayResize(watchedSymbols,   watchedSize);
@@ -130,8 +140,8 @@ int onTick() {
       }
    }
 
+   // auto-liquidate new positions after previous liquidation on the same day
    if (openSize > 0) {
-      // auto-liquidate new positions after previous auto-liquidation on the same day
       datetime today = TimeFXT();
       today -= (today % DAY);
       datetime lastLiquidation = lastLiquidationTime - lastLiquidationTime % DAY;
@@ -144,11 +154,19 @@ int onTick() {
       }
    }
 
-   // watch new position
+   // process new positions
    for (i=0; prevEquity && i < openSize; i++) {
+      // close non-permitted positions
+      if (SearchStringArrayI(permittedSymbols, openSymbols[i]) == -1) {
+         logWarn("onTick(2)  closing non-permitted "+ openSymbols[i] +" position");
+         CloseOpenOrders(openSymbols[i]);
+         continue;
+      }
+      // watch new position
       ArrayResize(watchedSymbols,   watchedSize+1);
       ArrayResize(watchedPositions, watchedSize+1);
       watchedSymbols  [watchedSize]                   = openSymbols[i];
+      watchedPositions[watchedSize][I_START_EQUITY  ] = prevEquity;
       watchedPositions[watchedSize][I_DRAWDOWN_LIMIT] = ifDouble(isPctLimit, NormalizeDouble(prevEquity * pctLimit/100, 2), absLimit);
       watchedPositions[watchedSize][I_PROFIT        ] = openPositions[i];
       logInfo("onTick(4)  watching "+ watchedSymbols[watchedSize] +" position, drawdownLimit="+ DoubleToStr(watchedPositions[watchedSize][I_DRAWDOWN_LIMIT], 2));
@@ -174,11 +192,13 @@ int onTick() {
 
 
 /**
- * Close all open positions and pending orders.
+ * Close open positions and pending orders.
+ *
+ * @param string symbol [optional] - symbol to close (default: all symbols)
  *
  * @return bool - success status
  */
-bool CloseOpenOrders() {
+bool CloseOpenOrders(string symbol = "") {
    int orders = OrdersTotal(), pendings[], positions[];
    ArrayResize(pendings, 0);
    ArrayResize(positions, 0);
@@ -186,7 +206,9 @@ bool CloseOpenOrders() {
    for (int i=0; i < orders; i++) {
       if (!OrderSelect(i, SELECT_BY_POS, MODE_TRADES)) break;
       if (OrderType() > OP_SELLSTOP)                   continue;
-
+      if (symbol != "") {
+         if (!StrCompareI(OrderSymbol(), symbol))      continue;
+      }
       if (OrderType() > OP_SELL) ArrayPushInt(pendings, OrderTicket());
       else                       ArrayPushInt(positions, OrderTicket());
    }
