@@ -10077,9 +10077,9 @@ S1MAupclr=16760576
 STR05=<<<==== [05] BOXtxt Settings ====>>>
 showBOXtxt=false
 STR06=<<<==== [06] Alert Settings ====>>>
-inpAlertsOn=false
-inpAlertsOnCurrent=false
-inpAlertsSound=false
+inpAlertsOn=true
+inpAlertsOnCurrent=true
+inpAlertsSound=true
 inpAlertsMessage=false
 inpAlertsEmail=false
 inpAlertsPushNotif=false

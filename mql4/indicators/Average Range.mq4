@@ -10,7 +10,7 @@ int __DeinitFlags[];
 extern int    MA.Periods      = 20;                            // averaging periods
 extern int    MA.Periods.Step = 0;                             // step size for a stepped input parameter (hotkeys)
 extern string MA.Method       = "SMA | LWMA* | EMA | SMMA";    // averaging type
-extern bool   TrueRange       = false;                         // whether to use standard or true range for the calculation
+extern bool   TrueRange       = true;                          // whether to calculate the standard or true range
 
 extern int    Line.Width      = 2;
 extern color  Line.Color      = Blue;

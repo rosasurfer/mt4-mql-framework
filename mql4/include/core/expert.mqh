@@ -216,11 +216,10 @@ int init() {
    if (CheckErrors("init(14)")) return(last_error);
    ShowStatus(last_error);
 
-   // setup virtual ticks to continue operation on a stalled data feed
+   // setup virtual ticks
    if (!__isTesting) {
-      int hWnd    = __ExecutionContext[EC.hChart];
-      int millis  = 10 * 1000;                                                // every 10 seconds
-      __tickTimerId = SetupTickTimer(hWnd, millis, NULL);
+      int hWnd = __ExecutionContext[EC.hChart];
+      __tickTimerId = SetupTickTimer(hWnd, __virtualTicks, NULL);
       if (!__tickTimerId) return(catch("init(15)->SetupTickTimer(hWnd="+ IntToHexStr(hWnd) +") failed", ERR_RUNTIME_ERROR));
    }
 

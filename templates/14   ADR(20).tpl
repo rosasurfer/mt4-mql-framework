@@ -10011,7 +10011,7 @@ window_num=1
 <inputs>
 MA.Periods=20
 MA.Method=SMA | LWMA* | EMA | SMMA
-TrueRange=0
+TrueRange=1
 </inputs>
 </expert>
 color_0=16711680
