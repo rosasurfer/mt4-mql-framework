@@ -99,7 +99,7 @@ double  configTerms[][5];                                         // parsed cust
 #define I_TERM_RESULT2                  4                         // ...
 
 #define TERM_TICKET                     1                         // supported config terms (possible values of configTerms[][I_TERM_TYPE])
-#define TERM_OPEN_LONG                  2                         // ...
+#define TERM_OPEN_LONG                  2                         //
 #define TERM_OPEN_SHORT                 3                         //
 #define TERM_OPEN                       4                         // intentionally there's no TERM_OPEN_TOTAL
 #define TERM_HISTORY                    5                         //
