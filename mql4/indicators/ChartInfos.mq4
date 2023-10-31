@@ -2074,8 +2074,8 @@ int SearchLfxTicket(int ticket) {
  * | MFE=0                                           | enables tracking of MFE/MAE and sets MFE to the specified value (8)           | ...                                                                |
  * | MAE=0                                           | enables tracking of MFE/MAE and sets MAE to the specified value (8)           | ...                                                                |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
- * | any text after a semikolon ";" aka .ini comment | displayed as position description                                             | stored in config.sData[]                                           |
- * | any text after a 2nd semikolon ";...;"          | configuration comment, ignored                                                |                                                                    |
+ * | any text after a semicolon ";" aka .ini comment | displayed as position description                                             | stored in config.sData[]                                           |
+ * | any text after a 2nd semicolon ";...;"          | configuration comment, ignored                                                |                                                                    |
  * +-------------------------------------------------+-------------------------------------------------------------------------------+--------------------------------------------------------------------+
  *
  *  Example configuration (6)
