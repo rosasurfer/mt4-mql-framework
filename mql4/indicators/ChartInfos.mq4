@@ -4397,32 +4397,32 @@ bool StoreStatus() {
 bool RestoreStatus() {
    if (!__isChart) return(true);
 
-   // bool positions.showAbsProfitsProfits
+   // bool positions.showAbsProfits
    string key = ProgramName() +".positions.showAbsProfits";
-   int iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);  // prefer data from chart window
-   if (!iValue) Chart.RestoreInt(key, iValue);                             // on error check chart
-   positions.showAbsProfits = (iValue > 0);
+   int iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key); // +1 || -1
+   int iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   positions.showAbsProfits = (iValue1==1 || iValue2==1);
 
    // bool positions.showMaxExposure
    key = ProgramName() +".positions.showMaxExposure";
-   iValue = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);      // prefer data from chart window
-   if (!iValue) Chart.RestoreInt(key, iValue);                             // on error check chart
-   positions.showMaxExposure = (iValue > 0);
+   iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);     // +1 || -1
+   iValue2 = 0;
+   Chart.RestoreInt(key, iValue2);
+   positions.showMaxExposure = (iValue1==1 || iValue2==1);
 
    // config keys of custom positions
-   bool fromChart=false, fromWindow=false;
-   string configKeys[], sValue="";
+   string configKeys[], sValue="", sValue2="";
    key = ProgramName() +"."+ Symbol() +".config.keys";
    sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
-   if      (StringLen(sValue) > 0)            fromWindow = true;           // prefer data from chart window
-   else if (Chart.RestoreString(key, sValue)) fromChart  = true;           // on error check chart
-   else return(!catch("RestoreStatus(1)"));
-
-   ArrayResize(config.sData, 0);
-   ArrayResize(config.dData, 0);
+   Chart.RestoreString(key, sValue2);
+   if (!StringLen(sValue)) sValue = sValue2;
 
    // MaxExposure/MFE/MAE stats of custom positions
+   ArrayResize(config.sData, 0);
+   ArrayResize(config.dData, 0);
    int size = Explode(sValue, "=", configKeys, NULL);
+
    for (int i=0; i < size; i++) {
       ArrayResize(config.sData, i+1);
       ArrayResize(config.dData, i+1);
@@ -4430,21 +4430,23 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_COMMENT] = "";
 
       key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".max-exposure";
-      sValue = "";
-      if (fromWindow) sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
-      else            Chart.RestoreString(key, sValue);
+      sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      sValue2 = "";
+      Chart.RestoreString(key, sValue2);
+      if (!StringLen(sValue)) sValue = sValue2;
       config.dData[i][I_MAX_LOTS] = StrToDouble(StrLeftTo(sValue, "|"));
       config.dData[i][I_MAX_RISK] = StrToDouble(StrRightFrom(sValue, "|"));
 
       key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".mfe|mae";
-      sValue = "";
-      if (fromWindow) sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
-      else            Chart.RestoreString(key, sValue);
+      sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
+      sValue2 = "";
+      Chart.RestoreString(key, sValue2);
+      if (!StringLen(sValue)) sValue = sValue2;
       config.dData[i][I_MFE_ENABLED] = (sValue != "");
       config.dData[i][I_PROFIT_MFE ] = StrToDouble(StrLeftTo(sValue, "|"));
       config.dData[i][I_PROFIT_MAE ] = StrToDouble(StrRightFrom(sValue, "|"));
    }
-   return(!catch("RestoreStatus(2)"));
+   return(!catch("RestoreStatus(1)"));
 }
 
 
