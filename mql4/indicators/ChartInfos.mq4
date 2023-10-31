@@ -77,18 +77,17 @@ double  shortPosition;
 
 // configuration of custom positions
 string  config.sData[][2];                                        // config entry details: [Key, Comment]
-double  config.dData[][7];                                        //                       [Equity100Pct, MfeEnabled, MFE, MAE, BemEnabled, MaxLots, MaxRisk]
+double  config.dData[][6];                                        //                       [BemEnabled, MfeEnabled, MFE, MAE, MaxLots, MaxRisk]
 
 #define I_CONFIG_KEY                    0                         // indexes of config.sData[]
 #define I_CONFIG_COMMENT                1                         //
 
-#define I_EQUITY_100                    0                         // indexes of config.dData[]
+#define I_BEM_ENABLED                   0                         // indexes of config.dData[]
 #define I_MFE_ENABLED                   1                         //
 #define I_PROFIT_MFE                    2                         //
 #define I_PROFIT_MAE                    3                         //
-#define I_BEM_ENABLED                   4                         //
-#define I_MAX_LOTS                      5                         //
-#define I_MAX_RISK                      6                         //
+#define I_MAX_LOTS                      4                         //
+#define I_MAX_RISK                      5                         //
 
 double  configTerms[][5];                                         // parsed custom position configuration, @see CustomPositions.ReadConfig() for format
 
@@ -1818,8 +1817,10 @@ bool UpdateStopoutLevel() {
          }
          if (line > -1) {
             if (lineSkipped) {
-               config.dData[line][I_PROFIT_MFE] = 0;                             // reset existing MFE/MAE stats
+               config.dData[line][I_PROFIT_MFE] = 0;                             // reset existing stats
                config.dData[line][I_PROFIT_MAE] = 0;
+               config.dData[line][I_MAX_LOTS  ] = 0;
+               config.dData[line][I_MAX_RISK  ] = 0;
             }
             else {
                positions.showMfe = positions.showMfe || config.dData[line][I_MFE_ENABLED];
@@ -2121,7 +2122,7 @@ int SearchLfxTicket(int ticket) {
 bool CustomPositions.ReadConfig() {
    double confTerms[][5]; ArrayResize(confTerms, 0); if (ArrayRange(confTerms, 1) != ArrayRange(configTerms,  1)) return(!catch("CustomPositions.ReadConfig(1)  array mis-match configTerms[] / confTerms[]", ERR_INCOMPATIBLE_ARRAY));
    string confsData[][2]; ArrayResize(confsData, 0); if (ArrayRange(confsData, 1) != ArrayRange(config.sData, 1)) return(!catch("CustomPositions.ReadConfig(2)  array mis-match config.sData[] / confsData[]", ERR_INCOMPATIBLE_ARRAY));
-   double confdData[][7]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
+   double confdData[][6]; ArrayResize(confdData, 0); if (ArrayRange(confdData, 1) != ArrayRange(config.dData, 1)) return(!catch("CustomPositions.ReadConfig(3)  array mis-match config.dData[] / confdData[]", ERR_INCOMPATIBLE_ARRAY));
 
    // parse configuration
    string   keys[], values[], iniValue="", sValue="", comment="", confComment="", openComment="", hstComment="", sNull, symbol=Symbol(), stdSymbol=StdSymbol();
@@ -2434,12 +2435,12 @@ bool CustomPositions.ReadConfig() {
       for (i=0; i < newLines; i++) {
          for (n=0; n < oldLines; n++) {
             if (confsData[i][I_CONFIG_KEY] == config.sData[n][I_CONFIG_KEY]) {
-               confdData[i][I_MAX_LOTS] = config.dData[n][I_MAX_LOTS];
-               confdData[i][I_MAX_RISK] = config.dData[n][I_MAX_RISK];
                if (confdData[i][I_MFE_ENABLED] && 1) {
                   confdData[i][I_PROFIT_MFE] = config.dData[n][I_PROFIT_MFE];
                   confdData[i][I_PROFIT_MAE] = config.dData[n][I_PROFIT_MAE];
                }
+               confdData[i][I_MAX_LOTS] = config.dData[n][I_MAX_LOTS];
+               confdData[i][I_MAX_RISK] = config.dData[n][I_MAX_RISK];
                break;
             }
          }
@@ -3613,7 +3614,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
          positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
          if (configLine >= 0) {
-            config.dData[configLine][I_EQUITY_100] = equity100Pct;
             config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
             config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
             positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3682,7 +3682,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       if (configLine >= 0) {
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(totalPosition, config.dData[configLine][I_MAX_LOTS]);
-         config.dData[configLine][I_EQUITY_100] = equity100Pct;
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3771,7 +3770,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
 
       if (configLine >= 0) {
          config.dData[configLine][I_MAX_LOTS  ] = MathMax(-totalPosition, config.dData[configLine][I_MAX_LOTS]);
-         config.dData[configLine][I_EQUITY_100] = equity100Pct;
          config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
          config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
          positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
@@ -3822,7 +3820,6 @@ bool StorePosition(bool isVirtual, double longPosition, double shortPosition, do
    positions.data[n][I_PROFIT_PCT      ] = MathDiv(totalProfit, equity100Pct) * 100;
 
    if (configLine >= 0) {
-      config.dData[configLine][I_EQUITY_100] = equity100Pct;
       config.dData[configLine][I_PROFIT_MFE] = MathMax(totalProfit, config.dData[configLine][I_PROFIT_MFE]);
       config.dData[configLine][I_PROFIT_MAE] = MathMin(totalProfit, config.dData[configLine][I_PROFIT_MAE]);
       positions.data[n][I_PROFIT_PCT_MFE]    = MathDiv(config.dData[configLine][I_PROFIT_MFE], equity100Pct) * 100;
