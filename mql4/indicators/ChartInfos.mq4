@@ -116,7 +116,7 @@ double  positions.data[][15];                                     // position de
 bool    positions.analyzed;                                       //
 bool    positions.showAbsProfits;                                 // for column adjustment (default: online=FALSE, tester=TRUE)
 bool    positions.showMfe;                                        // for column adjustment: whether at least one active config entry has the MFE tracker enabled
-bool    positions.showMaxExposure;                                // default: FALSE
+bool    positions.showMaxRisk;                                    // default: FALSE
 
 #define CUSTOM_REAL_POSITION            1                         // config line types: real custom position
 #define CUSTOM_VIRTUAL_POSITION         2                         //                    virtual custom position
@@ -324,8 +324,8 @@ bool onCommand(string cmd, string params, int keys) {
       if (!CustomPositions.ToggleProfits()) return(false);
    }
 
-   else if (cmd == "toggle-max-exposure") {
-      if (!CustomPositions.ToggleMaxExp()) return(false);
+   else if (cmd == "toggle-risk") {
+      if (!CustomPositions.ToggleRisk()) return(false);
    }
 
    else if (cmd == "trade-account") {
@@ -966,8 +966,8 @@ string OrderMarkerText(int type, int magic, string comment) {
  *
  * @return bool - success status
  */
-bool CustomPositions.ToggleMaxExp() {
-   positions.showMaxExposure = !positions.showMaxExposure;     // toggle status and update positions
+bool CustomPositions.ToggleRisk() {
+   positions.showMaxRisk = !positions.showMaxRisk;             // toggle status and update positions
    return(UpdatePositions());
 }
 
@@ -1381,7 +1381,7 @@ bool UpdatePositions() {
    }
 
    // write custom position rows from bottom to top: "{Type}: {Lots}   BE|Dist: {Price|Pip}   Profit: [{Abs} ]{Percent}[ {MAE/MFE}]   {Comment}"
-   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sMaxExposure="", sComment="", pmText="";
+   string sPositionType="", sLotSize="", sDistance="", sBreakeven="", sAdjustment="", sProfitAbs="", sProfitPct="", sProfitMinMax="", sMaxRisk="", sComment="", pmText="";
    color fontColor;
    int line, configLine, index;
 
@@ -1410,7 +1410,7 @@ bool UpdatePositions() {
                sProfitMinMax = StringConcatenate("(", DoubleToStr(positions.data[i][I_PROFIT_PCT_MAE], 2), "/", DoubleToStr(positions.data[i][I_PROFIT_PCT_MFE], 2), ")");
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
-            if (positions.showMaxExposure) {
+            if (positions.showMaxRisk) {
                sComment = StringConcatenate("max: ", NumberToStr(config.dData[configLine][I_MAX_LOTS], ".+"), " lot/R?%   ", sComment);
             }
          }
@@ -4353,18 +4353,18 @@ bool StoreStatus() {
    SetWindowIntegerA(__ExecutionContext[EC.hChart], key, iValue);          // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
-   // bool positions.showMaxExposure
-   key = ProgramName() +".positions.showMaxExposure";
-   iValue = ifInt(positions.showMaxExposure, 1, -1);                       // GetWindowInteger() cannot restore integer 0
+   // bool positions.showMaxRisk
+   key = ProgramName() +".positions.showMaxRisk";
+   iValue = ifInt(positions.showMaxRisk, 1, -1);                           // GetWindowInteger() cannot restore integer 0
    SetWindowIntegerA(__ExecutionContext[EC.hChart], key, iValue);          // chart window
    Chart.StoreInt(key, iValue);                                            // chart
 
-   // MaxExposure/MFE/MAE stats of custom positions
+   // Risk/MFE/MAE stats of custom positions
    string keys="", configKey="", sValue="";
    int size = ArrayRange(config.sData, 0);
    for (int i=0; i < size; i++) {
       configKey = config.sData[i][I_CONFIG_KEY];
-      key = ProgramName() +"."+ Symbol() +".config."+ configKey +".max-exposure";
+      key = ProgramName() +"."+ Symbol() +".config."+ configKey +".risk";
       sValue = NumberToStr(config.dData[i][I_MAX_LOTS], ".1+") +"|"+ NumberToStr(config.dData[i][I_MAX_RISK], ".1+");
       SetWindowStringA(__ExecutionContext[EC.hChart], key, sValue);        // chart window
       Chart.StoreString(key, sValue);                                      // chart
@@ -4404,12 +4404,12 @@ bool RestoreStatus() {
    Chart.RestoreInt(key, iValue2);
    positions.showAbsProfits = (iValue1==1 || iValue2==1);
 
-   // bool positions.showMaxExposure
-   key = ProgramName() +".positions.showMaxExposure";
+   // bool positions.showMaxRisk
+   key = ProgramName() +".positions.showMaxRisk";
    iValue1 = RemoveWindowIntegerA(__ExecutionContext[EC.hChart], key);     // +1 || -1
    iValue2 = 0;
    Chart.RestoreInt(key, iValue2);
-   positions.showMaxExposure = (iValue1==1 || iValue2==1);
+   positions.showMaxRisk = (iValue1==1 || iValue2==1);
 
    // config keys of custom positions
    string configKeys[], sValue="", sValue2="";
@@ -4418,7 +4418,7 @@ bool RestoreStatus() {
    Chart.RestoreString(key, sValue2);
    if (!StringLen(sValue)) sValue = sValue2;
 
-   // MaxExposure/MFE/MAE stats of custom positions
+   // Risk/MFE/MAE stats of custom positions
    ArrayResize(config.sData, 0);
    ArrayResize(config.dData, 0);
    int size = Explode(sValue, "=", configKeys, NULL);
@@ -4429,7 +4429,7 @@ bool RestoreStatus() {
       config.sData[i][I_CONFIG_KEY    ] = configKeys[i];
       config.sData[i][I_CONFIG_COMMENT] = "";
 
-      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".max-exposure";
+      key = ProgramName() +"."+ Symbol() +".config."+ configKeys[i] +".risk";
       sValue = RemoveWindowStringA(__ExecutionContext[EC.hChart], key);
       sValue2 = "";
       Chart.RestoreString(key, sValue2);

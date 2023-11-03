@@ -1,7 +1,7 @@
 /**
- * CustomPositions.ToggleMaxExposure
+ * CustomPositions.ToggleRisk
  *
- * Send a command to the ChartInfos indicator to toggle the MaxExposure display of custom positions.
+ * Send a command to the ChartInfos indicator to toggle the MaxRisk display of custom positions.
  */
 #include <stddefines.mqh>
 int   __InitFlags[] = {INIT_NO_BARS_REQUIRED};
@@ -16,6 +16,6 @@ int __DeinitFlags[];
  * @return int - error status
  */
 int onStart() {
-   SendChartCommand("ChartInfos.command", "toggle-max-exposure");
+   SendChartCommand("ChartInfos.command", "toggle-risk");
    return(catch("onStart(1)"));
 }
