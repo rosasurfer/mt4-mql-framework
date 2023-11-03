@@ -1411,7 +1411,7 @@ bool UpdatePositions() {
             }
             sComment = config.sData[configLine][I_CONFIG_COMMENT];
             if (positions.showMaxRisk) {
-               sComment = StringConcatenate("max: ", NumberToStr(config.dData[configLine][I_MAX_LOTS], ".+"), " lot/R?%   ", sComment);
+               sComment = StringConcatenate("(", NumberToStr(config.dData[configLine][I_MAX_LOTS], ".+"), " lot/R?%)   ", sComment);
             }
          }
 

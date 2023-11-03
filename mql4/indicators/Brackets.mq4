@@ -100,22 +100,22 @@ bool UpdateBrackets() {
    #define I_HIGH       2
    #define I_LOW        3
 
-   // update/re-calculate brackets
-   if (changedRateBars > 2) {
+   // re-calculate brackets
+   if (changedRateBars > 2) {                                                                            // skip single ticks
       ArrayResize(brackets, maxBrackets);
       ArrayInitialize(brackets, NULL);
 
       int i=0, fromBar, toBar, highBar, lowBar;
       datetime opentime=rates[0][BAR.time], midnight=opentime - opentime%DAYS + 1*DAY, rangeStart, rangeEnd;
-      //debug("UpdateBrackets(0.1)  changedRateBars="+ changedRateBars +"  rates[0]="+ GmtTimeFormat(opentime, "%a, %Y.%m.%d %H:%M"));
+      //debug("UpdateBrackets(0.1)  Tick="+ Ticks +"  changedRateBars="+ changedRateBars +"  rates[0]="+ GmtTimeFormat(opentime, "%a, %Y.%m.%d %H:%M"));
 
       while (i < maxBrackets) {
          midnight  -= 1*DAY;
          rangeStart = midnight + bracketStart*MINUTES;
          rangeEnd   = midnight + bracketEnd*MINUTES;
-         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // no such data (rangeStart is too young)
-         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // no such data (rangeEnd is too old)
-         if (fromBar < toBar) continue;                                                                  // no such data (time gap in rates)
+         fromBar    = iBarShiftNext    (NULL, ratesTimeframe, rangeStart); if (fromBar == -1) continue;  // no such data (rangeStart too young)
+         toBar      = iBarShiftPrevious(NULL, ratesTimeframe, rangeEnd-1); if (toBar   == -1) break;     // no such data (rangeEnd too old)
+         if (fromBar < toBar) continue;                                                                  // no such data (gap in rates)
 
          highBar = iHighest(NULL, ratesTimeframe, MODE_HIGH, fromBar-toBar+1, toBar);
          lowBar  = iLowest (NULL, ratesTimeframe, MODE_LOW,  fromBar-toBar+1, toBar);
@@ -125,7 +125,7 @@ bool UpdateBrackets() {
          brackets[i][I_HIGH     ] = rates[highBar][BAR.high];
          brackets[i][I_LOW      ] = rates[lowBar ][BAR.low ];
 
-         //debug("UpdateBrackets(0.2)  from["+ fromBar +"]="+ GmtTimeFormat(rates[fromBar][BAR.time], "%a, %Y.%m.%d %H:%M") +"  to["+ toBar +"]="+ GmtTimeFormat(rates[toBar][BAR.time], "%a, %Y.%m.%d %H:%M") +"  H="+ NumberToStr(rates[highBar][BAR.high], PriceFormat) +"  L="+ NumberToStr(rates[lowBar][BAR.low], PriceFormat));
+         //debug("UpdateBrackets(0.2)  Tick="+ Ticks +"  bracket from["+ fromBar +"]="+ GmtTimeFormat(rates[fromBar][BAR.time], "%a, %Y.%m.%d %H:%M") +"  to["+ toBar +"]="+ GmtTimeFormat(rates[toBar][BAR.time], "%a, %Y.%m.%d %H:%M"));
          i++;
       }
       if (i < maxBrackets) ArrayResize(brackets, i);
@@ -133,7 +133,7 @@ bool UpdateBrackets() {
 
    // update bracket visualization
    if (changedRateBars > 2) {
-      int size = ArrayRange(brackets, 0);
+      int size=ArrayRange(brackets, 0), pid=__ExecutionContext[EC.pid];
       datetime chartStart, chartEnd;
       double high, low;
       string label = "";
@@ -147,24 +147,30 @@ bool UpdateBrackets() {
          chartEnd   = Min(rangeEnd-1, Tick.time);
 
          // high
-         label = "Bracket high "+ TimeWindow +": "+ NumberToStr(high, PriceFormat) +" ["+ i +"]";
-         if (ObjectCreateRegister(label, OBJ_TREND, 0, chartStart, high, chartEnd, high, 0, 0)) {
-            ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet(label, OBJPROP_WIDTH, 3);
-            ObjectSet(label, OBJPROP_COLOR, Magenta);
-            ObjectSet(label, OBJPROP_RAY,   false);
-            ObjectSet(label, OBJPROP_BACK,  true);
-         }
+         label = "Bracket high "+ TimeWindow +": "+ NumberToStr(high, PriceFormat) +" ["+ pid +"]["+ i +"]";
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet(label, OBJPROP_TIME1,  chartStart );
+         ObjectSet(label, OBJPROP_PRICE1, high       );
+         ObjectSet(label, OBJPROP_TIME2,  chartEnd   );
+         ObjectSet(label, OBJPROP_PRICE2, high       );
+         ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
+         ObjectSet(label, OBJPROP_WIDTH,  3          );
+         ObjectSet(label, OBJPROP_COLOR,  Magenta    );
+         ObjectSet(label, OBJPROP_RAY,    false      );
+         ObjectSet(label, OBJPROP_BACK,   true       );
 
          // low
-         label = "Bracket low "+ TimeWindow +": "+ NumberToStr(low, PriceFormat) +" ["+ i +"]";
-         if (ObjectCreateRegister(label, OBJ_TREND, 0, chartStart, low, chartEnd, low, 0, 0)) {
-            ObjectSet(label, OBJPROP_STYLE, STYLE_SOLID);
-            ObjectSet(label, OBJPROP_WIDTH, 3);
-            ObjectSet(label, OBJPROP_COLOR, Magenta);
-            ObjectSet(label, OBJPROP_RAY,   false);
-            ObjectSet(label, OBJPROP_BACK,  true);
-         }
+         label = "Bracket low "+ TimeWindow +": "+ NumberToStr(low, PriceFormat) +" ["+ pid +"]["+ i +"]";
+         if (ObjectFind(label) == -1) if (!ObjectCreateRegister(label, OBJ_TREND, 0, 0, 0, 0, 0, 0, 0)) return(false);
+         ObjectSet(label, OBJPROP_TIME1,  chartStart );
+         ObjectSet(label, OBJPROP_PRICE1, low        );
+         ObjectSet(label, OBJPROP_TIME2,  chartEnd   );
+         ObjectSet(label, OBJPROP_PRICE2, low        );
+         ObjectSet(label, OBJPROP_STYLE,  STYLE_SOLID);
+         ObjectSet(label, OBJPROP_WIDTH,  3          );
+         ObjectSet(label, OBJPROP_COLOR,  Magenta    );
+         ObjectSet(label, OBJPROP_RAY,    false      );
+         ObjectSet(label, OBJPROP_BACK,   true       );
       }
    }
    return(true);
